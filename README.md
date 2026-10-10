@@ -14,10 +14,13 @@ The project currently includes:
 - FluentSQLiteDriver for SQLite support.
 - Swift 6-compatible asynchronous application startup.
 - SQLite database configuration.
-- Temporary `GET /health` endpoint.
-- Automated health endpoint test.
+- `GET /health` endpoint.
+- Domain and ForgeKeeper models aligned with the Gem Life database.
+- Fluent migrations for the `domains` and `forgekeeper` tables.
+- A domain service and CRUD routes.
+- Automated health and domain CRUD endpoint tests.
 
-The CRUD layer, authentication, production hosting, and remote private-network access are planned next.
+Authentication, production hosting, and remote private-network access remain planned work.
 
 ## Requirements
 
@@ -33,12 +36,20 @@ GemsForgeAPI/
 ├── Package.swift
 ├── Package.resolved
 ├── README.md
-├── PROJECT_SETUP_NOTES.md
 ├── Sources/
-│   └── main.swift
-└── Tests/
-    └── GemsForgeAPITests/
-        └── HealthTests.swift
+│   ├── main.swift
+│   ├── DatabaseConfiguration.swift
+│   ├── Migrations/
+│   ├── Models/
+│   ├── Routes/
+│   └── Services/
+├── Tests/
+│   └── GemsForgeAPITests/
+└── docs/
+    ├── Architecture.md
+    ├── Database-Migrations.md
+    ├── Local-Development.md
+    └── Services.md
 ```
 
 ### Entry file
@@ -49,9 +60,15 @@ GemsForgeAPI/
 
 `Package.swift` is the Swift Package Manager manifest. It declares the project dependencies and determines which libraries are available to the application and test targets.
 
-### Tests
+### Documentation
 
-Tests are stored separately under `Tests/GemsForgeAPITests`. This prevents application sources from being included in the test target and keeps the project structure predictable.
+- [`docs/Architecture.md`](docs/Architecture.md) explains the project layers,
+  entry point, dependency registry, database flow, and testing boundary.
+- [`docs/Database-Migrations.md`](docs/Database-Migrations.md) explains schema
+  changes and migration ordering.
+- [`docs/Local-Development.md`](docs/Local-Development.md) explains building,
+  testing, running, branching, and private-hosting assumptions.
+- [`docs/Services.md`](docs/Services.md) explains the database service layer.
 
 ## Dependencies
 
@@ -108,21 +125,13 @@ To connect Xcode to GitHub:
 
 For this project, GitHub source control authentication is used to let Xcode recognize the repository, display branches, review changes, and perform Git operations. Never store a personal access token in the repository or share it in chat.
 
-## Planned architecture
+## Architecture and development
 
-The API will be developed in this order:
-
-1. Entry point and application configuration.
-2. Dependency registration.
-3. Domain models.
-4. Database migrations.
-5. Database services or repositories.
-6. CRUD routes.
-7. Authentication and authorization.
-8. Automated tests.
-9. Private hosting and backups.
-
-Route handlers should coordinate requests and responses without containing all database logic. Database access belongs in services or repositories so it can be tested, changed, and reused independently.
+See [`docs/Architecture.md`](docs/Architecture.md) and
+[`docs/Local-Development.md`](docs/Local-Development.md) for the current
+architecture and development workflow. Route handlers coordinate requests and
+responses, while database access belongs in services so it can be tested,
+changed, and reused independently.
 
 ## Privacy and hosting direction
 
@@ -138,6 +147,7 @@ Development work is tracked in the private GitHub repository and its Kanban proj
 - Initial milestone: `v0.1 - MVP API`
 - Workflow: Backlog → Ready → In progress → In review → Done
 
-## Development notes
+## Personal setup notes
 
-See [`PROJECT_SETUP_NOTES.md`](PROJECT_SETUP_NOTES.md) for the step-by-step project history and explanations of the setup process.
+`PROJECT_SETUP_NOTES.md` is a local, ignored file containing the personal
+chronological setup history. It is intentionally not part of the repository.
