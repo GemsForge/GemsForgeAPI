@@ -92,6 +92,22 @@ The current verification checkpoint is the health test:
 GET /health → 200 OK → ok
 ```
 
+## Authenticating GitHub for source control
+
+Xcode has its own GitHub authentication area, separate from the GitHub connection used by Codex and separate from the Git credentials used by the command line.
+
+To connect Xcode to GitHub:
+
+1. Open Xcode Settings and select **Source Control**.
+2. Enable source control if it is disabled.
+3. Choose **Account…** and sign in to the `GemsForge` GitHub account.
+4. Create a GitHub personal access token when Xcode requests one.
+5. Use a limited expiration period and select only the scopes required by the intended Xcode workflow.
+6. Enter the account name and token into Xcode, then sign in.
+7. Reopen the project so Xcode refreshes its repository and branch information.
+
+For this project, GitHub source control authentication is used to let Xcode recognize the repository, display branches, review changes, and perform Git operations. Never store a personal access token in the repository or share it in chat.
+
 ## Planned architecture
 
 The API will be developed in this order:
