@@ -1,33 +1,32 @@
 import Fluent
 import Vapor
 
+/// Represents one of the four top-level Gem Life domains.
+///
+/// This model maps to the existing `domains` table. It describes the major
+/// areas of the personal operating system; it does not store individual
+/// records such as expenses, services, or employment history.
 final class Domain: Model, Content, @unchecked Sendable {
+    // Fluent uses this value to map the model to the SQLite table.
     static let schema = "domains"
 
+    // The database uses stable values such as POS, FOUNDATION, LIFE, and KNOWLEDGE.
     @ID(custom: "id")
     var id: String?
 
-    @Parent(key: "domain_class_id")
-    var domainClass: DomainClass
+    // The human-readable name of the domain, such as "Life".
+    @Field(key: "title")
+    var title: String
 
-    @Field(key: "name")
-    var name: String
+    // A short explanation of what information belongs in the domain.
+    @Field(key: "description")
+    var description: String
 
-    @Field(key: "symbol")
-    var symbol: String
+    // Optional notes provide additional context without changing the core definition.
+    @OptionalField(key: "notes")
+    var notes: String?
 
-    @Field(key: "definition")
-    var definition: String
-
-    @Field(key: "primary_question")
-    var primaryQuestion: String
-
-    @Field(key: "sort_order")
-    var sortOrder: Int
-
-    @Field(key: "is_active")
-    var isActive: Bool
-
+    // Fluent fills these automatically when a record is created or updated.
     @Timestamp(key: "created_at", on: .create)
     var createdAt: Date?
 
@@ -36,23 +35,16 @@ final class Domain: Model, Content, @unchecked Sendable {
 
     init() {}
 
+    /// Creates a domain with values that can be stored in the database.
     init(
         id: String? = nil,
-        domainClassID: String,
-        name: String,
-        symbol: String,
-        definition: String,
-        primaryQuestion: String,
-        sortOrder: Int,
-        isActive: Bool = true
+        title: String,
+        description: String,
+        notes: String? = nil
     ) {
         self.id = id
-        self.$domainClass.id = domainClassID
-        self.name = name
-        self.symbol = symbol
-        self.definition = definition
-        self.primaryQuestion = primaryQuestion
-        self.sortOrder = sortOrder
-        self.isActive = isActive
+        self.title = title
+        self.description = description
+        self.notes = notes
     }
 }

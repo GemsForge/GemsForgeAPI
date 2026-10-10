@@ -14,5 +14,10 @@ extension Application {
             ),
             as: .sqlite
         )
+
+        // Fluent runs migrations in the order they are registered. The order
+        // matters because each child table references its parent table.
+        migrations.add(CreateDomains())
+        migrations.add(CreateForgeKeeper())
     }
 }

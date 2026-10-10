@@ -8,3 +8,6 @@ GemsForgeAPI.sqlite-shm
 GemsForgeAPI.sqlite-wal
 .env
 .DS_Store
+
+# Personal chronological setup notes; kept locally and not committed.
+PROJECT_SETUP_NOTES.md
