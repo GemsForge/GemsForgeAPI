@@ -11,6 +11,8 @@ enum EntryPoint {
             "ok"
         }
 
+        registerDomainRoutes(app)
+
         try await app.execute()
         try await app.asyncShutdown()
     }
