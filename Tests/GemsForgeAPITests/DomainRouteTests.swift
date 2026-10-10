@@ -65,4 +65,77 @@ final class DomainRouteTests: XCTestCase {
             }
         }
     }
+
+    func testDomainRejectsInvalidPayloadAndDuplicateID() async throws {
+        try await withApp(configure: { app in
+            app.databases.use(.sqlite(.memory), as: .sqlite)
+            app.migrations.add(CreateDomains())
+            app.migrations.add(CreateForgeKeeper())
+            try await app.autoMigrate()
+            registerDomainRoutes(app)
+        }) { app in
+            let invalidPayload = DomainRequest(
+                id: "LIFE",
+                title: "",
+                description: "",
+                notes: nil
+            )
+
+            try await app.test(.POST, "domains", beforeRequest: { request in
+                try request.content.encode(invalidPayload)
+            }) { response async throws in
+                XCTAssertEqual(response.status, .badRequest)
+            }
+
+            let validPayload = DomainRequest(
+                id: "LIFE",
+                title: "Life",
+                description: "Everyday responsibilities.",
+                notes: nil
+            )
+
+            try await app.test(.POST, "domains", beforeRequest: { request in
+                try request.content.encode(validPayload)
+            }) { response async throws in
+                XCTAssertEqual(response.status, .ok)
+            }
+
+            try await app.test(.POST, "domains", beforeRequest: { request in
+                try request.content.encode(validPayload)
+            }) { response async throws in
+                XCTAssertEqual(response.status, .conflict)
+            }
+        }
+    }
+
+    func testDomainMissingRecordsReturnNotFound() async throws {
+        try await withApp(configure: { app in
+            app.databases.use(.sqlite(.memory), as: .sqlite)
+            app.migrations.add(CreateDomains())
+            app.migrations.add(CreateForgeKeeper())
+            try await app.autoMigrate()
+            registerDomainRoutes(app)
+        }) { app in
+            try await app.test(.GET, "domains/MISSING") { response async throws in
+                XCTAssertEqual(response.status, .notFound)
+            }
+
+            let payload = DomainRequest(
+                id: "MISSING",
+                title: "Missing",
+                description: "This record does not exist yet.",
+                notes: nil
+            )
+
+            try await app.test(.PUT, "domains/MISSING", beforeRequest: { request in
+                try request.content.encode(payload)
+            }) { response async throws in
+                XCTAssertEqual(response.status, .notFound)
+            }
+
+            try await app.test(.DELETE, "domains/MISSING") { response async throws in
+                XCTAssertEqual(response.status, .notFound)
+            }
+        }
+    }
 }
