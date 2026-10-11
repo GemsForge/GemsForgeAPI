@@ -33,20 +33,20 @@ final class EmploymentRouteTests: XCTestCase {
                 try request.content.encode(payload)
             }) { response async throws in
                 XCTAssertEqual(response.status, .ok)
-                let record = try response.content.decode(Employment.self)
+                let record = try response.content.decode(EmploymentResponse.self)
                 XCTAssertEqual(record.id, "EMP-0001")
                 XCTAssertEqual(record.positionTitle, "Founder")
             }
 
             try await app.test(.GET, "employment") { response async throws in
                 XCTAssertEqual(response.status, .ok)
-                let records = try response.content.decode([Employment].self)
+                let records = try response.content.decode([EmploymentResponse].self)
                 XCTAssertEqual(records.count, 1)
             }
 
             try await app.test(.GET, "employment/EMP-0001") { response async throws in
                 XCTAssertEqual(response.status, .ok)
-                let record = try response.content.decode(Employment.self)
+                let record = try response.content.decode(EmploymentResponse.self)
                 XCTAssertEqual(record.employerName, "GemsForge")
             }
 
@@ -72,7 +72,7 @@ final class EmploymentRouteTests: XCTestCase {
                 try request.content.encode(updatedPayload)
             }) { response async throws in
                 XCTAssertEqual(response.status, .ok)
-                let record = try response.content.decode(Employment.self)
+                let record = try response.content.decode(EmploymentResponse.self)
                 XCTAssertEqual(record.positionTitle, "Founder and Analyst")
             }
 
