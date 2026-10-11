@@ -110,9 +110,9 @@ domains
 the parent table. The API model maps to the existing names, including
 `DomainID`, `Description`, `DateCreated`, and `DateUpdated`.
 
-The database path defaults to
-`/Users/gemsforge/DBeaver/GemLife_DB_rebuild.sqlite` and can be overridden with
-the `DATABASE_PATH` environment variable.
+The database path is supplied through the required `DATABASE_PATH` environment
+variable. The real local value is kept in Xcode's Scheme settings rather than
+in source code.
 
 The four root domain identifiers are `POS`, `FOUNDATION`, `LIFE`, and
 `KNOWLEDGE`. These identifiers are stable values and should not be casually

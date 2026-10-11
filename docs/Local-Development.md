@@ -49,10 +49,11 @@ that URL is expected. It does not indicate that the server failed to start.
 
 ## Database location
 
-The application defaults to the existing Gem Life database:
+The application requires the existing Gem Life database path through
+`DATABASE_PATH`:
 
 ```text
-/Users/gemsforge/DBeaver/GemLife_DB_rebuild.sqlite
+/absolute/path/to/GemLife_DB_rebuild.sqlite
 ```
 
 To use another database location:
@@ -61,8 +62,16 @@ To use another database location:
 DATABASE_PATH=/path/to/GemsForgeAPI.sqlite swift run
 ```
 
-The running API reads and writes the configured database. Do not point it at a
-copy unless that copy has the same schema. Do not commit SQLite database files,
+The running API reads and writes the configured database. Configure the value
+in the Xcode Scheme or export it in a terminal:
+
+```bash
+export DATABASE_PATH="/absolute/path/to/GemLife_DB_rebuild.sqlite"
+swift run
+```
+
+Do not point it at a copy unless that copy has the same schema. Do not commit
+SQLite database files,
 credentials, environment files, Xcode derived data, or personal setup notes.
 The repository `.gitignore` protects these local-only files.
 

@@ -86,15 +86,15 @@ The API uses SQLite during initial development. By default, the database file is
 GemsForgeAPI.sqlite
 ```
 
-The API connects to the existing Gem Life database at:
+The API connects to the SQLite database selected through the required
+`DATABASE_PATH` environment variable:
 
 ```text
-/Users/gemsforge/DBeaver/GemLife_DB_rebuild.sqlite
+/absolute/path/to/GemLife_DB_rebuild.sqlite
 ```
 
-The location can be overridden with the `DATABASE_PATH` environment variable.
 The API does not create or migrate the existing production-style tables during
-startup.
+startup. See [`.env.example`](.env.example) for the configuration placeholder.
 
 ## Running the project
 
