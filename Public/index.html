@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gem Life Console</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">GemsForgeAPI · local testing</p>
+        <h1>Gem Life Console</h1>
+      </div>
+      <div class="connection-pill"><span></span> Local API</div>
+    </header>
+
+    <main class="workspace">
+      <aside class="sidebar">
+        <div class="section-heading">
+          <span>Domains</span>
+          <button id="refresh-button" class="icon-button" title="Refresh data">↻</button>
+        </div>
+        <div id="domain-list" class="domain-list" aria-live="polite">
+          <div class="loading">Loading domains…</div>
+        </div>
+        <div class="sidebar-note">
+          <strong>Stable core</strong>
+          <p>Domains organize the pages that live in ForgeKeeper.</p>
+        </div>
+
+        <div class="sidebar-section">
+          <div class="section-heading"><span>Reference data</span></div>
+          <button id="hues-button" class="resource-button" type="button">
+            <span class="resource-mark">●</span>
+            <span><strong>Gem Hues</strong><small>Foundation palette</small></span>
+            <span class="arrow">›</span>
+          </button>
+        </div>
+      </aside>
+
+      <section class="content">
+        <div id="notice" class="notice" hidden></div>
+        <div class="content-heading" id="pages-heading">
+          <div>
+            <p class="eyebrow">ForgeKeeper pages</p>
+            <h2 id="selected-domain-title">Choose a domain</h2>
+            <p id="selected-domain-description" class="muted">Select a domain to inspect its pages.</p>
+          </div>
+          <button id="roots-button" class="secondary-button" type="button">Show all root pages</button>
+        </div>
+
+        <div id="page-list" class="page-list">
+          <div class="empty-state">
+            <div class="empty-icon">✦</div>
+            <h3>No domain selected</h3>
+            <p>Your API-connected page explorer will appear here.</p>
+          </div>
+        </div>
+
+        <div id="hue-view" hidden>
+          <div class="hue-heading">
+            <div>
+              <p class="eyebrow">Foundation reference data</p>
+              <h2>Gem Hues</h2>
+              <p class="muted">Colors from the Gem Hues table, with their stored image references.</p>
+            </div>
+            <span class="record-count" id="hue-count"></span>
+          </div>
+          <div id="hue-list" class="hue-list" aria-live="polite"></div>
+          <section id="hue-detail" class="hue-detail" hidden></section>
+        </div>
+
+        <section class="import-card" id="import-card">
+          <div class="import-copy">
+            <p class="eyebrow">Coming next</p>
+            <h3>Upload pages from Apple Notes</h3>
+            <p>Drop a structured export here once the ForgeKeeper create/import workflow is defined.</p>
+          </div>
+          <label class="upload-placeholder">
+            <span class="upload-symbol">↑</span>
+            <span>Notes import draft</span>
+            <small>Not connected yet</small>
+            <input id="notes-file" type="file" accept=".json,.txt,.md" disabled>
+          </label>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="edit-dialog">
+    <form method="dialog" id="edit-form" class="edit-form">
+      <div class="dialog-heading">
+        <div>
+          <p class="eyebrow">ForgeKeeper page</p>
+          <h2>Edit metadata</h2>
+        </div>
+        <button value="cancel" class="icon-button" aria-label="Close editor">×</button>
+      </div>
+      <input id="edit-id" type="hidden">
+      <label>Title<input id="edit-title" name="title" required></label>
+      <label>Description<textarea id="edit-description" name="description" rows="4" required></textarea></label>
+      <label>Parent page<select id="edit-parent" name="parentID"><option value="">Root page</option></select></label>
+      <div class="dialog-actions">
+        <button value="cancel" class="secondary-button">Cancel</button>
+        <button id="save-button" value="default" class="primary-button">Save changes</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="/app.js"></script>
+</body>
+</html>
