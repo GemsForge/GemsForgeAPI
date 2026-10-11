@@ -17,5 +17,10 @@ DerivedData/
 # macOS metadata.
 .DS_Store
 
+# React testing console dependencies and build output.
+Console/node_modules/
+Console/dist/
+Console/.vite/
+
 # Personal chronological setup notes; kept locally and not committed.
 PROJECT_SETUP_NOTES.md

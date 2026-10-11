@@ -19,6 +19,8 @@ The project currently includes:
 - Fluent migrations that mirror the existing schema for isolated tests.
 - Domain and ForgeKeeper services and routes.
 - ForgeKeeper read, hierarchy, and partial-update endpoints.
+- A local React + TypeScript testing console for domains, ForgeKeeper pages,
+  and Gem Hues, with the original HTML prototype retained as a fallback.
 - Automated health, domain, and ForgeKeeper endpoint tests.
 
 Authentication, production hosting, and remote private-network access remain planned work.
@@ -37,6 +39,14 @@ GemsForgeAPI/
 ├── Package.swift
 ├── Package.resolved
 ├── README.md
+├── Console/
+│   ├── package.json
+│   ├── src/
+│   └── README.md
+├── Public/
+│   ├── index.html
+│   ├── app.js
+│   └── styles.css
 ├── Sources/
 │   ├── main.swift
 │   ├── DatabaseConfiguration.swift
@@ -53,6 +63,11 @@ GemsForgeAPI/
     ├── Local-Development.md
     └── Services.md
 ```
+
+The active local browser testing console is the React + TypeScript project in
+`Console/`. The original console remains served from `Public/` as a fallback.
+See [`docs/Testing-Console.md`](docs/Testing-Console.md) for the workflow and
+current Notes-import boundary.
 
 ### Entry file
 

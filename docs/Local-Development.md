@@ -48,6 +48,37 @@ For the full existing-database verification checkpoint, see
 [`ForgeKeeper.md`](ForgeKeeper.md). It uses a temporary port and read-only
 endpoints so an existing Xcode server on port `8080` is not disturbed.
 
+## Browser testing console
+
+The repository retains the original local browser console in `Public/` as a
+fallback. The active testing console is the React + TypeScript project in
+`Console/`.
+
+Start the API on port `8081`, then run the console in a second terminal:
+
+```bash
+cd Console
+VITE_API_TARGET="http://127.0.0.1:8081" npm run dev
+```
+
+Open the React console:
+
+```text
+http://127.0.0.1:5173/
+```
+
+The API-served prototype remains available at the root of the Vapor server:
+
+```text
+http://127.0.0.1:8080/
+```
+
+Both consoles display stable domains, retrieve ForgeKeeper pages, navigate to
+immediate children, exercise page PATCH requests, and render Gem Hue records
+and image previews. The Notes upload area is currently a design placeholder
+because page creation/import has not yet been defined as an API workflow. See
+[`Testing-Console.md`](Testing-Console.md).
+
 The root URL `/` is not an application route, so a `404 Not Found` response at
 that URL is expected. It does not indicate that the server failed to start.
 
