@@ -13,6 +13,7 @@ enum EntryPoint {
 
         registerDomainRoutes(app)
         registerForgeKeeperRoutes(app)
+        registerGemHueRoutes(app)
 
         try await app.execute()
         try await app.asyncShutdown()
