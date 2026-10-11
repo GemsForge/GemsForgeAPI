@@ -63,3 +63,22 @@ server by the existing `CreateFileMetadata` migration. The browser can request
 that named table, but it cannot submit its own columns or SQL. Execution first
 checks the token, verifies the table is absent, creates a backup, applies the
 server-side migration, and re-inspects the schema.
+
+## Migration history
+
+Issue #79 adds a read-only audit endpoint:
+
+```text
+GET /live-database/migrations/history
+```
+
+Approved live table and schema changes write one record to
+`SchemaMigrationAudits` after execution. Each record includes the named
+migration, timestamp, result, safe database filename, backup filename, and
+failure details when verification or execution fails. The API never stores the
+absolute database path or secrets in an audit record.
+
+The audit table is created idempotently when the live migration workflow first
+needs it, so an existing personal database can adopt migration history without
+being replaced or reset. The testing console can use the history endpoint to
+show whether a reviewed change succeeded, failed, or still needs attention.
