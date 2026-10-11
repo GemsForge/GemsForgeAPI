@@ -8,6 +8,20 @@ func registerForgeKeeperRoutes(_ app: Application) {
         try await ForgeKeeperService(database: request.db).list()
     }
 
+    pages.get("roots") { request async throws -> [ForgeKeeper] in
+        try await ForgeKeeperService(database: request.db).listRoots()
+    }
+
+    pages.get(":id", "children") { request async throws -> [ForgeKeeper] in
+        guard let id = request.parameters.get("id", as: Int.self),
+              try await ForgeKeeperService(database: request.db).find(id: id) != nil
+        else {
+            throw Abort(.notFound)
+        }
+
+        return try await ForgeKeeperService(database: request.db).listChildren(of: id)
+    }
+
     pages.get(":id") { request async throws -> ForgeKeeper in
         guard let id = request.parameters.get("id", as: Int.self),
               let page = try await ForgeKeeperService(database: request.db).find(id: id)
