@@ -1,4 +1,4 @@
-import type { Address, Domain, Education, Employment, ForgeKeeperPage, ForgeKeeperPatch, GemHue } from "./types";
+import type { Address, Domain, Education, Employment, ExpenseTransaction, ForgeKeeperPage, ForgeKeeperPatch, GemHue } from "./types";
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const response = await fetch(path, {
@@ -37,4 +37,7 @@ export const api = {
   listAddresses: () => request<Address[]>("/addresses"),
   getAddress: (addressID: string) =>
     request<Address>(`/addresses/${encodeURIComponent(addressID)}`),
+  listTransactions: () => request<ExpenseTransaction[]>("/transactions"),
+  getTransaction: (transactionID: string) =>
+    request<ExpenseTransaction>(`/transactions/${encodeURIComponent(transactionID)}`),
 };

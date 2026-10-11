@@ -202,3 +202,16 @@ The service keeps file storage separate from database persistence so a later
 upload feature can define its own security and lifecycle rules. See
 [`File-Metadata.md`](File-Metadata.md) for the complete field map and route
 contract.
+
+## ServiceAccountService
+
+`ServiceAccountService` performs persistence operations for recurring services
+and obligations in the existing `Services` table. The API calls these records
+Service Accounts to distinguish them from individual expense transactions.
+
+The service provides `list()`, `find(id:)`, `save(_:)`, and `delete(id:)`.
+Future transaction-to-service relationships must be defined explicitly rather
+than inferred from display names or duplicated into transaction rows.
+
+See [`Service-Accounts.md`](Service-Accounts.md) for the field map, endpoint
+contract, and migration boundary.

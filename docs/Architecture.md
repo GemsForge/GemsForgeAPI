@@ -58,6 +58,7 @@ GemsForgeAPI/
 │   │   ├── CreateEmployment.swift
 │   │   ├── CreateExpenseTransactions.swift
 │   │   ├── CreateFileMetadata.swift
+│   │   ├── CreateServiceAccounts.swift
 │   │   ├── CreateForgeKeeper.swift
 │   │   ├── CreateGemHues.swift
 │   │   └── CreateGemHueImages.swift
@@ -72,6 +73,7 @@ GemsForgeAPI/
 │   │       ├── Employment.swift
 │   │       ├── ExpenseTransaction.swift
 │   │       ├── FileMetadata.swift
+│   │       ├── ServiceAccount.swift
 │   │       ├── ForgeKeeper.swift
 │   │       ├── GemHue.swift
 │   │       └── GemHueImage.swift
@@ -82,6 +84,7 @@ GemsForgeAPI/
 │   │   ├── EmploymentRoutes.swift
 │   │   ├── ExpenseTransactionRoutes.swift
 │   │   ├── FileMetadataRoutes.swift
+│   │   ├── ServiceAccountRoutes.swift
 │   │   ├── ForgeKeeperRoutes.swift
 │   │   └── GemHueRoutes.swift
 │   └── Services/
@@ -91,6 +94,7 @@ GemsForgeAPI/
 │       ├── EmploymentService.swift
 │       ├── ExpenseTransactionService.swift
 │       ├── FileMetadataService.swift
+│       ├── ServiceAccountService.swift
 │       ├── ForgeKeeperService.swift
 │       └── GemHueService.swift
 ├── Tests/
@@ -99,6 +103,7 @@ GemsForgeAPI/
 │       ├── DomainRouteTests.swift
 │       ├── ExpenseTransactionRouteTests.swift
 │       └── FileMetadataRouteTests.swift
+│       └── ServiceAccountRouteTests.swift
 └── docs/
     ├── Architecture.md
     ├── Database-Migrations.md
@@ -222,6 +227,16 @@ FileMetadata feature files are organized with the other table-backed features:
 
 See [`File-Metadata.md`](File-Metadata.md) for the field map, endpoint
 contract, and file-operation boundary.
+
+Service Accounts map the existing `Services` table under the clearer API
+concept used for recurring services and obligations. They are distinct from
+individual expense transactions. The API preserves the table's historical
+name and existing identifiers while exposing `/service-accounts` routes.
+
+The Service Account migration is test-only; the production API does not create
+or alter the real `Services` table at startup. See
+[`Service-Accounts.md`](Service-Accounts.md) for the field map and relationship
+boundary.
 
 Gem Hues are Foundation reference data rather than a domain child. Their table
 and image model, service, and routes live alongside the other table-backed
