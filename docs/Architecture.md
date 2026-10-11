@@ -58,6 +58,7 @@ GemsForgeAPI/
 │   │   ├── CreateEmployment.swift
 │   │   ├── CreateExpenseTransactions.swift
 │   │   ├── CreateBudgetCategories.swift
+│   │   ├── CreateBudgetSubcategories.swift
 │   │   ├── CreateFileMetadata.swift
 │   │   ├── CreateServiceAccounts.swift
 │   │   ├── CreateServiceLogoAssets.swift
@@ -75,6 +76,7 @@ GemsForgeAPI/
 │   │       ├── Employment.swift
 │   │       ├── ExpenseTransaction.swift
 │   │       ├── ExpenseCategory.swift
+│   │       ├── ExpenseSubcategory.swift
 │   │       ├── FileMetadata.swift
 │   │       ├── ServiceAccount.swift
 │   │       ├── ServiceLogoAsset.swift
@@ -88,6 +90,7 @@ GemsForgeAPI/
 │   │   ├── EmploymentRoutes.swift
 │   │   ├── ExpenseTransactionRoutes.swift
 │   │   ├── ExpenseCategoryRoutes.swift
+│   │   ├── ExpenseSubcategoryRoutes.swift
 │   │   ├── FileMetadataRoutes.swift
 │   │   ├── ServiceAccountRoutes.swift
 │   │   ├── ServiceLogoRoutes.swift
@@ -100,6 +103,7 @@ GemsForgeAPI/
 │       ├── EmploymentService.swift
 │       ├── ExpenseTransactionService.swift
 │       ├── ExpenseCategoryService.swift
+│       ├── ExpenseSubcategoryService.swift
 │       ├── FileMetadataService.swift
 │       ├── ServiceAccountService.swift
 │       ├── ServiceLogoService.swift
@@ -111,6 +115,7 @@ GemsForgeAPI/
 │       ├── DomainRouteTests.swift
 │       ├── ExpenseTransactionRouteTests.swift
 │       ├── ExpenseCategoryRouteTests.swift
+│       ├── ExpenseSubcategoryRouteTests.swift
 │       ├── FileMetadataRouteTests.swift
 │       ├── ServiceAccountRouteTests.swift
 │       └── ServiceLogoRouteTests.swift
@@ -239,6 +244,24 @@ features:
 
 See [`Expense-Categories.md`](Expense-Categories.md) for the field map,
 relationships, and deletion boundary.
+
+Expense Subcategories are hierarchical reference data in the existing
+`BudgetSubcategories` table. Each record requires a valid parent category, and
+names are unique within that parent. The API preserves the database's
+composite relationship to categories and keeps emoji presentation separate.
+
+Expense Subcategory feature files are organized with the other table-backed
+features:
+
+- `Sources/Models/Table/ExpenseSubcategory.swift` maps the existing table.
+- `Sources/Services/ExpenseSubcategoryService.swift` owns persistence.
+- `Sources/Routes/ExpenseSubcategoryRoutes.swift` exposes the HTTP contract.
+- `Sources/Migrations/CreateBudgetSubcategories.swift` supports isolated tests.
+- `Tests/GemsForgeAPITests/ExpenseSubcategoryRouteTests.swift` verifies CRUD,
+  filtering, parent validation, and hierarchy rules.
+
+See [`Expense-Subcategories.md`](Expense-Subcategories.md) for the field map,
+relationship rules, and migration boundary.
 
 FileMetadata is the local-file bridge for future image, document, and other
 asset workflows. It stores portable file descriptions in SQLite rather than

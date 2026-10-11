@@ -202,6 +202,21 @@ The service does not store emoji presentation values. See
 [`Expense-Categories.md`](Expense-Categories.md) for the field map and
 relationship boundary.
 
+## ExpenseSubcategoryService
+
+`ExpenseSubcategoryService` persists hierarchical classifications in the
+existing `BudgetSubcategories` table. It provides:
+
+- `list(categoryID:)` for all subcategories or one parent category.
+- `find(id:)` for one stable subcategory identifier.
+- `save(_:)` for create and update operations.
+- `delete(id:)` for unused subcategories; transaction foreign keys remain the
+  final protection for referenced records.
+
+The route layer verifies that the parent category exists and that the name is
+unique within that parent. See [`Expense-Subcategories.md`](Expense-Subcategories.md)
+for the field map and hierarchy contract.
+
 ## FileMetadataService
 
 `FileMetadataService` persists descriptions of files stored in the local asset
