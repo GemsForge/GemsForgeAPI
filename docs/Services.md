@@ -187,6 +187,21 @@ The service provides:
 See [`Expense-Transactions.md`](Expense-Transactions.md) for the field map,
 endpoint contract, migration boundary, and verification checkpoint.
 
+## ExpenseCategoryService
+
+`ExpenseCategoryService` persists reusable expense classifications in the
+existing `BudgetCategories` table. It provides:
+
+- `list()` for categories ordered by name.
+- `find(id:)` for one stable category identifier.
+- `save(_:)` for create and update operations.
+- `delete(id:)` for unused categories; transaction foreign keys remain the
+  final protection for referenced records.
+
+The service does not store emoji presentation values. See
+[`Expense-Categories.md`](Expense-Categories.md) for the field map and
+relationship boundary.
+
 ## FileMetadataService
 
 `FileMetadataService` persists descriptions of files stored in the local asset
