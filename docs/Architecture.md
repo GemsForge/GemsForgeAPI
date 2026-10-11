@@ -57,6 +57,7 @@ GemsForgeAPI/
 │   │   ├── CreateEducation.swift
 │   │   ├── CreateEmployment.swift
 │   │   ├── CreateExpenseTransactions.swift
+│   │   ├── CreateServiceAccounts.swift
 │   │   ├── CreateForgeKeeper.swift
 │   │   ├── CreateGemHues.swift
 │   │   └── CreateGemHueImages.swift
@@ -70,6 +71,7 @@ GemsForgeAPI/
 │   │       ├── Education.swift
 │   │       ├── Employment.swift
 │   │       ├── ExpenseTransaction.swift
+│   │       ├── ServiceAccount.swift
 │   │       ├── ForgeKeeper.swift
 │   │       ├── GemHue.swift
 │   │       └── GemHueImage.swift
@@ -79,6 +81,7 @@ GemsForgeAPI/
 │   │   ├── EducationRoutes.swift
 │   │   ├── EmploymentRoutes.swift
 │   │   ├── ExpenseTransactionRoutes.swift
+│   │   ├── ServiceAccountRoutes.swift
 │   │   ├── ForgeKeeperRoutes.swift
 │   │   └── GemHueRoutes.swift
 │   └── Services/
@@ -87,13 +90,15 @@ GemsForgeAPI/
 │       ├── EducationService.swift
 │       ├── EmploymentService.swift
 │       ├── ExpenseTransactionService.swift
+│       ├── ServiceAccountService.swift
 │       ├── ForgeKeeperService.swift
 │       └── GemHueService.swift
 ├── Tests/
 │   └── GemsForgeAPITests/
 │       ├── HealthTests.swift
 │       ├── DomainRouteTests.swift
-│       └── ExpenseTransactionRouteTests.swift
+│       ├── ExpenseTransactionRouteTests.swift
+│       └── ServiceAccountRouteTests.swift
 └── docs/
     ├── Architecture.md
     ├── Database-Migrations.md
@@ -198,6 +203,16 @@ features:
   only.
 - `Tests/GemsForgeAPITests/ExpenseTransactionRouteTests.swift` verifies CRUD
   behavior with an in-memory database.
+
+Service Accounts map the existing `Services` table under the clearer API
+concept used for recurring services and obligations. They are distinct from
+individual expense transactions. The API preserves the table's historical
+name and existing identifiers while exposing `/service-accounts` routes.
+
+The Service Account migration is test-only; the production API does not create
+or alter the real `Services` table at startup. See
+[`Service-Accounts.md`](Service-Accounts.md) for the field map and relationship
+boundary.
 
 Gem Hues are Foundation reference data rather than a domain child. Their table
 and image model, service, and routes live alongside the other table-backed

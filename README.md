@@ -75,6 +75,7 @@ GemsForgeAPI/
     ├── Services.md
     ├── Addresses.md
     ├── Expense-Transactions.md
+    ├── Service-Accounts.md
     └── Testing-Console.md
 ```
 
@@ -112,6 +113,9 @@ current Notes-import boundary.
 - [`docs/Expense-Transactions.md`](docs/Expense-Transactions.md) documents the
   existing Transactions table mapping, API contract, test migration, and
   verification boundary.
+- [`docs/Service-Accounts.md`](docs/Service-Accounts.md) documents the
+  existing Services table mapping, Service Account API contract, and recurring
+  expense relationship boundary.
 - [`docs/Testing-Console.md`](docs/Testing-Console.md) documents the active
   React testing console, supported read workflows, and API proxy.
 
