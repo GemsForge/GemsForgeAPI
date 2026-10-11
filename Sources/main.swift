@@ -22,6 +22,7 @@ enum EntryPoint {
 
         try app.configureDatabase()
         registerLocalDatabaseRoutes(app, configuration: .fromEnvironment())
+        registerLiveSchemaRoutes(app)
 
         app.get("health") { _ async in
             "ok"
