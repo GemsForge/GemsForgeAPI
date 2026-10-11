@@ -8,6 +8,8 @@ func registerLiveMigrationRoutes(_ app: Application, backupConfiguration: LiveDa
         backupConfiguration: backupConfiguration
     )
     let migrations = app.grouped("live-database", "migrations")
+    let schemaChanges = app.grouped("live-database", "schema-changes")
+    let approvedChanges = ApprovedSchemaChangeService(backupConfiguration: backupConfiguration)
 
     migrations.post("preview") { request async throws -> LiveMigrationPlan in
         do {
@@ -42,6 +44,33 @@ func registerLiveMigrationRoutes(_ app: Application, backupConfiguration: LiveDa
             case .unsupportedTable:
                 throw Abort(.badRequest, reason: error.description)
             case .migrationFailed, .verificationFailed:
+                throw Abort(.unprocessableEntity, reason: error.description)
+            }
+        }
+    }
+
+    schemaChanges.post("preview") { request async throws -> ApprovedSchemaChangePreview in
+        do {
+            let input = try request.content.decode(ApprovedSchemaChangePreviewRequest.self)
+            return try await approvedChanges.preview(input)
+        } catch let error as ApprovedSchemaChangeError {
+            throw Abort(.badRequest, reason: error.description)
+        }
+    }
+
+    schemaChanges.post("execute") { request async throws -> ApprovedSchemaChangeExecutionResponse in
+        do {
+            let input = try request.content.decode(LiveTableCreationRequest.self)
+            return try await approvedChanges.execute(input, using: request.db)
+        } catch let error as ApprovedSchemaChangeError {
+            switch error {
+            case .expiredOrUnknownToken, .alreadyApplied:
+                throw Abort(.conflict, reason: error.description)
+            case .unsupportedChange:
+                throw Abort(.badRequest, reason: error.description)
+            case .backupNotConfigured:
+                throw Abort(.serviceUnavailable, reason: error.description)
+            case .sqliteDatabaseRequired, .migrationFailed, .verificationFailed:
                 throw Abort(.unprocessableEntity, reason: error.description)
             }
         }
