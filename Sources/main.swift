@@ -23,7 +23,7 @@ enum EntryPoint {
         try app.configureDatabase()
         registerLocalDatabaseRoutes(app, configuration: .fromEnvironment())
         registerLiveSchemaRoutes(app)
-        registerLiveMigrationRoutes(app)
+        registerLiveMigrationRoutes(app, backupConfiguration: .fromEnvironment())
 
         app.get("health") { _ async in
             "ok"
