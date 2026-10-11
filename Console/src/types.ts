@@ -41,6 +41,24 @@ export interface Education {
   notes: string | null;
 }
 
+export interface Employment {
+  id: string;
+  employerName: string;
+  employerType: string;
+  industry: string | null;
+  website: string | null;
+  positionTitle: string;
+  employmentType: string;
+  startDate: string | null;
+  endDate: string | null;
+  employmentStatus: string;
+  workAddressID: string | null;
+  employerContact: string | null;
+  employerContactNumber: string | null;
+  employerContactEmail: string | null;
+  notes: string | null;
+}
+
 export interface ForgeKeeperPatch {
   title: string;
   description: string;

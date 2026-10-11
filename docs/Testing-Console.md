@@ -51,6 +51,9 @@ Open `http://127.0.0.1:5173/`.
 - Open Education as Life-area data without forcing it into the Domains hierarchy.
 - View all 8 Education records returned by `GET /education`.
 - Select an Education record to retrieve its details through `GET /education/:id`.
+- Open Employment as Life-area data without forcing it into the Domains hierarchy.
+- View all five Employment records returned by `GET /employment`.
+- Select an Employment record to retrieve its details through `GET /employment/:id`.
 
 The React project keeps the API client and UI features separate:
 
@@ -60,6 +63,7 @@ Console/src/features/domains/         → domain navigation
 Console/src/features/forgekeeper/     → page reads and PATCH testing
 Console/src/features/gem-hues/        → hue records and image previews
 Console/src/features/education/        → Life-area education reads
+Console/src/features/employment/       → Life-area employment reads
 ```
 
 The Gem Hues view exercises all current read services:
@@ -83,6 +87,19 @@ The Education view exercises the current read services:
 GET /education
 GET /education/:educationID
 ```
+
+Employment is displayed as Life-area data, but the current `Employment` table
+does not contain a `DomainID` column. The console therefore gives it a separate
+Life data navigation item. Its read view exercises:
+
+```text
+GET /employment
+GET /employment/:employmentID
+```
+
+Employment contact fields are shown only in this local testing console. A
+future authenticated product UI should apply an explicit privacy policy before
+exposing those fields.
 
 ## Notes import status
 
