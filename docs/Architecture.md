@@ -6,7 +6,7 @@ system. Its first persistence layer is SQLite accessed through Fluent.
 ## Request and data flow
 
 ```text
-HTTP request
+React testing console, fallback browser console, or other HTTP client
     ↓
 Sources/main.swift
     ↓
@@ -37,6 +37,17 @@ GemsForgeAPI/
 ├── Package.swift
 ├── Package.resolved
 ├── README.md
+├── Console/
+│   ├── package.json
+│   ├── src/
+│   │   ├── api.ts
+│   │   ├── types.ts
+│   │   └── features/
+│   └── README.md
+├── Public/
+│   ├── index.html
+│   ├── app.js
+│   └── styles.css
 ├── Sources/
 │   ├── main.swift
 │   ├── DatabaseConfiguration.swift
