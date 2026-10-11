@@ -1,5 +1,6 @@
 import Foundation
 import Fluent
+import Vapor
 
 /// Maps one logo asset from the existing `ServiceLogoAssets` table.
 ///
