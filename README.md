@@ -76,6 +76,7 @@ GemsForgeAPI/
     ├── Addresses.md
     ├── Expense-Transactions.md
     ├── File-Metadata.md
+    ├── Service-Logos.md
     ├── Service-Accounts.md
     └── Testing-Console.md
 ```
@@ -116,6 +117,9 @@ current Notes-import boundary.
   verification boundary.
 - [`docs/File-Metadata.md`](docs/File-Metadata.md) documents the local-file
   bridge, metadata fields, API contract, and isolated migration boundary.
+- [`docs/Service-Logos.md`](docs/Service-Logos.md) documents the existing logo
+  table, metadata-only responses, explicit image route, and FileMetadata
+  migration boundary.
 - [`docs/Service-Accounts.md`](docs/Service-Accounts.md) documents the
   existing Services table mapping, Service Account API contract, and recurring
   expense relationship boundary.
