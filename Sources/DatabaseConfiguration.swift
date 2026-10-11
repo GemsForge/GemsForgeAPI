@@ -10,14 +10,13 @@ extension Application {
     func configureDatabase() {
         databases.use(
             .sqlite(
-                .file(Environment.get("DATABASE_PATH") ?? "GemsForgeAPI.sqlite")
+                .file(
+                    Environment.get("DATABASE_PATH")
+                        ?? "/Users/gemsforge/DBeaver/GemLife_DB_rebuild.sqlite"
+                )
             ),
             as: .sqlite
         )
 
-        // Fluent runs migrations in the order they are registered. The order
-        // matters because each child table references its parent table.
-        migrations.add(CreateDomains())
-        migrations.add(CreateForgeKeeper())
     }
 }

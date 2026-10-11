@@ -49,16 +49,22 @@ that URL is expected. It does not indicate that the server failed to start.
 
 ## Database location
 
-Without additional configuration, the application creates
-`GemsForgeAPI.sqlite` in its working directory. To use another location:
+The application defaults to the existing Gem Life database:
+
+```text
+/Users/gemsforge/DBeaver/GemLife_DB_rebuild.sqlite
+```
+
+To use another database location:
 
 ```bash
 DATABASE_PATH=/path/to/GemsForgeAPI.sqlite swift run
 ```
 
-Do not commit SQLite database files, credentials, environment files, Xcode
-derived data, or personal setup notes. The repository `.gitignore` protects
-these local-only files.
+The running API reads and writes the configured database. Do not point it at a
+copy unless that copy has the same schema. Do not commit SQLite database files,
+credentials, environment files, Xcode derived data, or personal setup notes.
+The repository `.gitignore` protects these local-only files.
 
 ## Development workflow
 

@@ -8,29 +8,25 @@ import Vapor
 /// records such as expenses, services, or employment history.
 final class Domain: Model, Content, @unchecked Sendable {
     // Fluent uses this value to map the model to the SQLite table.
-    static let schema = "domains"
+    static let schema = "Domains"
 
     // The database uses stable values such as POS, FOUNDATION, LIFE, and KNOWLEDGE.
-    @ID(custom: "id")
+    @ID(custom: "DomainID")
     var id: String?
 
     // The human-readable name of the domain, such as "Life".
-    @Field(key: "title")
+    @Field(key: "Title")
     var title: String
 
     // A short explanation of what information belongs in the domain.
-    @Field(key: "description")
+    @Field(key: "Description")
     var description: String
 
-    // Optional notes provide additional context without changing the core definition.
-    @OptionalField(key: "notes")
-    var notes: String?
-
     // Fluent fills these automatically when a record is created or updated.
-    @Timestamp(key: "created_at", on: .create)
+    @Timestamp(key: "DateCreated", on: .create)
     var createdAt: Date?
 
-    @Timestamp(key: "updated_at", on: .update)
+    @Timestamp(key: "DateUpdated", on: .update)
     var updatedAt: Date?
 
     init() {}
@@ -39,12 +35,10 @@ final class Domain: Model, Content, @unchecked Sendable {
     init(
         id: String? = nil,
         title: String,
-        description: String,
-        notes: String? = nil
+        description: String
     ) {
         self.id = id
         self.title = title
         self.description = description
-        self.notes = notes
     }
 }

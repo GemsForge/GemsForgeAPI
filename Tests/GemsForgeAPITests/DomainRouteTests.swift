@@ -17,7 +17,6 @@ final class DomainRouteTests: XCTestCase {
                 id: "LIFE",
                 title: "Life",
                 description: "Everyday responsibilities and resources.",
-                notes: "Initial domain"
             )
 
             try await app.test(.POST, "domains", beforeRequest: { request in
@@ -45,7 +44,6 @@ final class DomainRouteTests: XCTestCase {
                 id: "LIFE",
                 title: "Life & Wellness",
                 description: "Updated domain description.",
-                notes: nil
             )
 
             try await app.test(.PUT, "domains/LIFE", beforeRequest: { request in
@@ -78,7 +76,6 @@ final class DomainRouteTests: XCTestCase {
                 id: "LIFE",
                 title: "",
                 description: "",
-                notes: nil
             )
 
             try await app.test(.POST, "domains", beforeRequest: { request in
@@ -90,8 +87,7 @@ final class DomainRouteTests: XCTestCase {
             let validPayload = DomainRequest(
                 id: "LIFE",
                 title: "Life",
-                description: "Everyday responsibilities.",
-                notes: nil
+                description: "Everyday responsibilities."
             )
 
             try await app.test(.POST, "domains", beforeRequest: { request in
@@ -123,8 +119,7 @@ final class DomainRouteTests: XCTestCase {
             let payload = DomainRequest(
                 id: "MISSING",
                 title: "Missing",
-                description: "This record does not exist yet.",
-                notes: nil
+                description: "This record does not exist yet."
             )
 
             try await app.test(.PUT, "domains/MISSING", beforeRequest: { request in
