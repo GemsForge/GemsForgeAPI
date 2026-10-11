@@ -12,6 +12,7 @@ export default defineConfig(({ mode }) => {
       proxy: {
         "/domains": apiTarget,
         "/education": apiTarget,
+        "/employment": apiTarget,
         "/forgekeeper": apiTarget,
         "/gemhues": apiTarget,
         "/health": apiTarget
