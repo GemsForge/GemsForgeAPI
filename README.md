@@ -24,7 +24,7 @@ The project currently includes:
 - Employment model, CRUD service, and routes mapped to the existing Life-area
   table.
 - A local React + TypeScript testing console for domains, ForgeKeeper pages,
-  Gem Hues, and Education, with the original HTML prototype retained as a
+  Gem Hues, Education, and Employment, with the original HTML prototype retained as a
   fallback.
 - Automated health, domain, and ForgeKeeper endpoint tests.
 
