@@ -114,6 +114,8 @@ For the planned live schema workflow, configure a separate backup directory
 with `LIVE_DATABASE_BACKUP_DIRECTORY`. The backup service uses SQLite's
 consistent `VACUUM INTO` snapshot operation and never replaces the source
 database. See [`Live-Database-Backups.md`](Live-Database-Backups.md).
+The complete preview, confirmation, audit, and recovery procedure is in
+[`Live-Schema-Management.md`](Live-Schema-Management.md).
 
 ## Create an isolated local database
 
