@@ -7,6 +7,8 @@ interface DomainSidebarProps {
   onRefresh: () => void;
   huesSelected: boolean;
   onSelectHues: () => void;
+  educationSelected: boolean;
+  onSelectEducation: () => void;
 }
 
 export function DomainSidebar({
@@ -16,6 +18,8 @@ export function DomainSidebar({
   onRefresh,
   huesSelected,
   onSelectHues,
+  educationSelected,
+  onSelectEducation,
 }: DomainSidebarProps) {
   return (
     <aside className="sidebar">
@@ -45,6 +49,14 @@ export function DomainSidebar({
         <button className={`resource-button ${huesSelected ? "selected" : ""}`} onClick={onSelectHues}>
           <span className="resource-mark">●</span>
           <span><strong>Gem Hues</strong><small>Foundation palette</small></span>
+          <span className="arrow">›</span>
+        </button>
+      </div>
+      <div className="sidebar-section">
+        <div className="section-heading"><span>Life data</span></div>
+        <button className={`resource-button ${educationSelected ? "selected" : ""}`} onClick={onSelectEducation}>
+          <span className="resource-mark life-mark">✦</span>
+          <span><strong>Education</strong><small>Life-area records</small></span>
           <span className="arrow">›</span>
         </button>
       </div>
