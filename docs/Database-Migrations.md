@@ -15,8 +15,9 @@ The model describes how Swift reads and writes records. The migration describes
 how the corresponding database table is created. Both sides need to agree on
 table names and column names.
 
-The `domains` table includes an optional `notes` field for additional context
-that does not belong in the title or description.
+The migrations in this repository mirror the existing `Domains` and
+`ForgeKeeper` tables for isolated tests. They are not startup instructions for
+the real Gem Life database.
 
 ## Why the order matters
 
@@ -51,5 +52,6 @@ database.schema("domains")
 - `.required` means the column cannot be `NULL`.
 - `.create()` applies the table definition.
 
-The migration files are located in `Sources/Migrations/`. They are registered
-in `Sources/DatabaseConfiguration.swift`.
+The migration files are located in `Sources/Migrations/` and are registered by
+the test application setup. The production-style application connects to the
+existing database through `DATABASE_PATH` without running these migrations.

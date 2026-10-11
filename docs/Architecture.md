@@ -44,12 +44,17 @@ GemsForgeAPI/
 │   │   ├── CreateDomains.swift
 │   │   └── CreateForgeKeeper.swift
 │   ├── Models/
-│   │   ├── Domain.swift
-│   │   └── ForgeKeeper.swift
+│   │   ├── DTOs/
+│   │   │   └── ForgeKeeperPatchRequest.swift
+│   │   └── Table/
+│   │       ├── Domain.swift
+│   │       └── ForgeKeeper.swift
 │   ├── Routes/
-│   │   └── DomainRoutes.swift
+│   │   ├── DomainRoutes.swift
+│   │   └── ForgeKeeperRoutes.swift
 │   └── Services/
-│       └── DomainService.swift
+│       ├── DomainService.swift
+│       └── ForgeKeeperService.swift
 ├── Tests/
 │   └── GemsForgeAPITests/
 │       ├── HealthTests.swift
@@ -93,7 +98,8 @@ code should import only the library it directly uses.
 
 `Sources/DatabaseConfiguration.swift` registers the existing Gem Life SQLite
 file. The application does not automatically create or migrate these tables at
-startup because they already exist outside the API project.
+startup because they already exist outside the API project. The migrations in
+the repository mirror the schema for isolated tests.
 
 The test target uses isolated in-memory SQLite databases and registers test
 migrations that mirror the existing schema. Those test migrations are not
@@ -116,7 +122,8 @@ in source code.
 
 The four root domain identifiers are `POS`, `FOUNDATION`, `LIFE`, and
 `KNOWLEDGE`. These identifiers are stable values and should not be casually
-renamed because other records can refer to them.
+renamed because other records can refer to them. See
+[`ForgeKeeper.md`](ForgeKeeper.md) for the complete endpoint and schema map.
 
 ## Testing boundary
 

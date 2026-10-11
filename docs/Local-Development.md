@@ -44,6 +44,10 @@ The expected response is:
 ok
 ```
 
+For the full existing-database verification checkpoint, see
+[`ForgeKeeper.md`](ForgeKeeper.md). It uses a temporary port and read-only
+endpoints so an existing Xcode server on port `8080` is not disturbed.
+
 The root URL `/` is not an application route, so a `404 Not Found` response at
 that URL is expected. It does not indicate that the server failed to start.
 

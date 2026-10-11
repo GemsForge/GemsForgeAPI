@@ -16,9 +16,10 @@ The project currently includes:
 - SQLite database configuration.
 - `GET /health` endpoint.
 - Domain and ForgeKeeper models aligned with the Gem Life database.
-- Fluent migrations for the `domains` and `forgekeeper` tables.
-- A domain service and CRUD routes.
-- Automated health and domain CRUD endpoint tests.
+- Fluent migrations that mirror the existing schema for isolated tests.
+- Domain and ForgeKeeper services and routes.
+- ForgeKeeper read, hierarchy, and partial-update endpoints.
+- Automated health, domain, and ForgeKeeper endpoint tests.
 
 Authentication, production hosting, and remote private-network access remain planned work.
 
@@ -48,6 +49,7 @@ GemsForgeAPI/
 └── docs/
     ├── Architecture.md
     ├── Database-Migrations.md
+    ├── ForgeKeeper.md
     ├── Local-Development.md
     └── Services.md
 ```
@@ -69,6 +71,8 @@ GemsForgeAPI/
 - [`docs/Local-Development.md`](docs/Local-Development.md) explains building,
   testing, running, branching, and private-hosting assumptions.
 - [`docs/Services.md`](docs/Services.md) explains the database service layer.
+- [`docs/ForgeKeeper.md`](docs/ForgeKeeper.md) documents the existing schema
+  mapping, endpoints, configuration, and verification checkpoint.
 
 ## Dependencies
 
