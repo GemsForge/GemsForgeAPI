@@ -59,12 +59,15 @@ GemsForgeAPI/
 │   │   │   └── ForgeKeeperPatchRequest.swift
 │   │   └── Table/
 │   │       ├── Domain.swift
+│   │       ├── Education.swift
 │   │       └── ForgeKeeper.swift
 │   ├── Routes/
 │   │   ├── DomainRoutes.swift
+│   │   ├── EducationRoutes.swift
 │   │   └── ForgeKeeperRoutes.swift
 │   └── Services/
 │       ├── DomainService.swift
+│       ├── EducationService.swift
 │       └── ForgeKeeperService.swift
 ├── Tests/
 │   └── GemsForgeAPITests/
@@ -135,6 +138,10 @@ The four root domain identifiers are `POS`, `FOUNDATION`, `LIFE`, and
 `KNOWLEDGE`. These identifiers are stable values and should not be casually
 renamed because other records can refer to them. See
 [`ForgeKeeper.md`](ForgeKeeper.md) for the complete endpoint and schema map.
+
+Education is currently classified conceptually as Life-area data, but its table
+does not contain a `DomainID` relationship. The API preserves that schema and
+does not force Education records into the Domains hierarchy.
 
 ## Testing boundary
 

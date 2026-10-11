@@ -25,6 +25,27 @@ place to evolve.
 The service does not create migrations and does not define HTTP endpoints. Those
 responsibilities remain with the migration and route layers.
 
+## EducationService
+
+`EducationService` performs database operations for Life-area education records
+in the existing `Education` table. The table is not linked to `Domains`, so the
+service does not apply a domain filter.
+
+```text
+Education route
+    ↓
+EducationService
+    ↓
+Education table model
+    ↓
+Education table
+```
+
+The service provides `list()`, `find(id:)`, `save(_:)`, and `delete(id:)`.
+The local testing console uses the read operations first: `list()` and
+`find(id:)`. See [`Education.md`](Education.md) for the field map and endpoint
+contract.
+
 ## ForgeKeeperService
 
 `ForgeKeeperService` performs persistence operations for pages in the existing
