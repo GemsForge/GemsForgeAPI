@@ -48,6 +48,9 @@ Open `http://127.0.0.1:5173/`.
 - Open Gem Hues as Foundation reference data.
 - View all 23 Gem Hues with swatches, hex codes, and classifications.
 - Select a Gem Hue to retrieve its full record and render its stored image blob.
+- Open Education as Life-area data without forcing it into the Domains hierarchy.
+- View all 8 Education records returned by `GET /education`.
+- Select an Education record to retrieve its details through `GET /education/:id`.
 
 The React project keeps the API client and UI features separate:
 
@@ -56,6 +59,7 @@ Console/src/api.ts                    → typed HTTP requests
 Console/src/features/domains/         → domain navigation
 Console/src/features/forgekeeper/     → page reads and PATCH testing
 Console/src/features/gem-hues/        → hue records and image previews
+Console/src/features/education/        → Life-area education reads
 ```
 
 The Gem Hues view exercises all current read services:
@@ -68,6 +72,17 @@ GET /gemhues/:hueID/image
 
 Gem Hues are displayed as Foundation reference data, but the current database
 schema does not yet link `GemHues` directly to `Domains`.
+
+Education is displayed as Life-area data, but the current `Education` table
+does not contain a `DomainID` column. The console therefore gives it a separate
+Life data navigation item rather than placing it under a selected domain.
+
+The Education view exercises the current read services:
+
+```text
+GET /education
+GET /education/:educationID
+```
 
 ## Notes import status
 

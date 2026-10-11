@@ -11,6 +11,7 @@ export default defineConfig(({ mode }) => {
       port: 5173,
       proxy: {
         "/domains": apiTarget,
+        "/education": apiTarget,
         "/forgekeeper": apiTarget,
         "/gemhues": apiTarget,
         "/health": apiTarget

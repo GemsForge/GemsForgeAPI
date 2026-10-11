@@ -46,9 +46,9 @@ columns. Education therefore does not use Fluent timestamp property wrappers.
 | `PUT` | `/education/:id` | Replaces the editable fields of an existing record. |
 | `DELETE` | `/education/:id` | Deletes one record. |
 
-The local React testing console should initially use only the two GET endpoints.
-Write controls remain outside the UI until the database contract has been
-verified through read-only testing.
+The local React testing console uses only the two GET endpoints. Write controls
+remain outside the UI until the database contract has been verified through
+read-only testing.
 
 ## Migration boundary
 

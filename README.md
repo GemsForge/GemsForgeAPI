@@ -22,7 +22,8 @@ The project currently includes:
 - Education model, CRUD service, and routes mapped to the existing Life-area
   table.
 - A local React + TypeScript testing console for domains, ForgeKeeper pages,
-  and Gem Hues, with the original HTML prototype retained as a fallback.
+  Gem Hues, and Education, with the original HTML prototype retained as a
+  fallback.
 - Automated health, domain, and ForgeKeeper endpoint tests.
 
 Authentication, production hosting, and remote private-network access remain planned work.
