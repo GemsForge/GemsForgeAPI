@@ -155,6 +155,20 @@ the API host. The personal database is not a creation target, and existing
 files cannot be replaced. See [`Local-Database-Creation.md`](Local-Database-Creation.md)
 for environment setup and the complete migration list.
 
+### Live Schema
+
+Live Schema is the read-only first step toward managing tables in the existing
+Gem Life database. Its API endpoint is:
+
+```text
+GET /live-database/schema
+```
+
+The endpoint reports application tables, columns, primary keys, foreign keys,
+and indexes without changing the database or exposing its absolute path. The
+React display is tracked separately so the API and UI remain separate focused
+changes. See [`Live-Schema-Inspection.md`](Live-Schema-Inspection.md).
+
 ## Notes import status
 
 The Notes upload area is intentionally a visual placeholder. The current API

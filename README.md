@@ -30,6 +30,8 @@ The project currently includes:
 - A disabled-by-default local database creation workflow that applies the
   approved development migration profile to a new SQLite file without
   modifying the personal database.
+- A read-only live schema inspection endpoint for the configured Gem Life
+  database.
 - A local React + TypeScript testing console for domains, ForgeKeeper pages,
   Gem Hues, Education, Employment, and Addresses, with the original HTML prototype retained as a
   fallback.
@@ -140,6 +142,8 @@ current Notes-import boundary.
   React testing console, supported read workflows, and API proxy.
 - [`docs/Local-Database-Creation.md`](docs/Local-Database-Creation.md) documents
   the guarded local SQLite creation workflow and its migration profile.
+- [`docs/Live-Schema-Inspection.md`](docs/Live-Schema-Inspection.md) documents
+  the read-only live schema endpoint and its safety boundary.
 
 ## Dependencies
 
