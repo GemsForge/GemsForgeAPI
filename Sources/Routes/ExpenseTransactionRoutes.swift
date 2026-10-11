@@ -16,6 +16,7 @@ struct ExpenseTransactionRequest: Content {
     let total: Double?
     let discount: Double?
     let notes: String?
+    let image: String?
 }
 
 private func validate(_ input: ExpenseTransactionRequest, requiresID: Bool = false) throws {
@@ -41,6 +42,10 @@ private func validate(_ input: ExpenseTransactionRequest, requiresID: Bool = fal
             throw Abort(.badRequest, reason: "TransactionID is required when creating a transaction.")
         }
     }
+
+    if let image = input.image?.trimmingCharacters(in: .whitespacesAndNewlines), image.isEmpty {
+        throw Abort(.badRequest, reason: "Image must be a valid FileMetadataID when provided.")
+    }
 }
 
 private func makeTransaction(from input: ExpenseTransactionRequest, id: String?) -> ExpenseTransaction {
@@ -58,7 +63,8 @@ private func makeTransaction(from input: ExpenseTransactionRequest, id: String?)
         paidPrice: input.paidPrice,
         total: input.total,
         discount: input.discount,
-        notes: input.notes
+        notes: input.notes,
+        image: input.image?.trimmingCharacters(in: .whitespacesAndNewlines)
     )
 }
 
@@ -76,12 +82,18 @@ func registerExpenseTransactionRoutes(_ app: Application) {
         try validate(input, requiresID: true)
 
         let id = input.id!.trimmingCharacters(in: .whitespacesAndNewlines)
-        if try await ExpenseTransactionService(database: request.db).find(id: id) != nil {
+        let service = ExpenseTransactionService(database: request.db)
+        if try await service.find(id: id) != nil {
             throw Abort(.conflict, reason: "A transaction with this ID already exists.")
         }
 
+        if let imageID = input.image,
+           try await FileMetadataService(database: request.db).find(id: imageID) == nil {
+            throw Abort(.unprocessableEntity, reason: "The referenced image metadata does not exist.")
+        }
+
         let transaction = makeTransaction(from: input, id: id)
-        try await ExpenseTransactionService(database: request.db).save(transaction)
+        try await service.save(transaction)
         return transaction
     }
 
@@ -105,6 +117,10 @@ func registerExpenseTransactionRoutes(_ app: Application) {
 
         let input = try request.content.decode(ExpenseTransactionRequest.self)
         try validate(input)
+        if let imageID = input.image,
+           try await FileMetadataService(database: request.db).find(id: imageID) == nil {
+            throw Abort(.unprocessableEntity, reason: "The referenced image metadata does not exist.")
+        }
         let replacement = makeTransaction(from: input, id: id)
         transaction.receiptID = replacement.receiptID
         transaction.item = replacement.item
@@ -119,8 +135,26 @@ func registerExpenseTransactionRoutes(_ app: Application) {
         transaction.total = replacement.total
         transaction.discount = replacement.discount
         transaction.notes = replacement.notes
+        transaction.image = replacement.image
         try await ExpenseTransactionService(database: request.db).save(transaction)
         return transaction
+    }
+
+    transactions.get(":id", "image") { request async throws -> FileMetadata in
+        guard let id = request.parameters.get("id"),
+              let transaction = try await ExpenseTransactionService(database: request.db).find(id: id)
+        else {
+            throw Abort(.notFound)
+        }
+
+        guard let imageID = transaction.image,
+              let metadata = try await FileMetadataService(database: request.db).find(id: imageID)
+        else {
+            throw Abort(.notFound)
+        }
+
+        // FileMetadata exposes only a portable relative path, never raw image bytes.
+        return metadata
     }
 
     transactions.delete(":id") { request async throws -> HTTPStatus in
