@@ -186,3 +186,19 @@ The service provides:
 
 See [`Expense-Transactions.md`](Expense-Transactions.md) for the field map,
 endpoint contract, migration boundary, and verification checkpoint.
+
+## FileMetadataService
+
+`FileMetadataService` persists descriptions of files stored in the local asset
+directory. It does not read, write, move, or delete files on disk. The service
+provides:
+
+- `list()` for metadata records ordered by file kind and name.
+- `find(id:)` for one metadata record.
+- `save(_:)` for create and replace operations.
+- `delete(id:)` for metadata deletion only.
+
+The service keeps file storage separate from database persistence so a later
+upload feature can define its own security and lifecycle rules. See
+[`File-Metadata.md`](File-Metadata.md) for the complete field map and route
+contract.

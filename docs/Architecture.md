@@ -57,6 +57,7 @@ GemsForgeAPI/
 │   │   ├── CreateEducation.swift
 │   │   ├── CreateEmployment.swift
 │   │   ├── CreateExpenseTransactions.swift
+│   │   ├── CreateFileMetadata.swift
 │   │   ├── CreateForgeKeeper.swift
 │   │   ├── CreateGemHues.swift
 │   │   └── CreateGemHueImages.swift
@@ -70,6 +71,7 @@ GemsForgeAPI/
 │   │       ├── Education.swift
 │   │       ├── Employment.swift
 │   │       ├── ExpenseTransaction.swift
+│   │       ├── FileMetadata.swift
 │   │       ├── ForgeKeeper.swift
 │   │       ├── GemHue.swift
 │   │       └── GemHueImage.swift
@@ -79,6 +81,7 @@ GemsForgeAPI/
 │   │   ├── EducationRoutes.swift
 │   │   ├── EmploymentRoutes.swift
 │   │   ├── ExpenseTransactionRoutes.swift
+│   │   ├── FileMetadataRoutes.swift
 │   │   ├── ForgeKeeperRoutes.swift
 │   │   └── GemHueRoutes.swift
 │   └── Services/
@@ -87,16 +90,19 @@ GemsForgeAPI/
 │       ├── EducationService.swift
 │       ├── EmploymentService.swift
 │       ├── ExpenseTransactionService.swift
+│       ├── FileMetadataService.swift
 │       ├── ForgeKeeperService.swift
 │       └── GemHueService.swift
 ├── Tests/
 │   └── GemsForgeAPITests/
 │       ├── HealthTests.swift
 │       ├── DomainRouteTests.swift
-│       └── ExpenseTransactionRouteTests.swift
+│       ├── ExpenseTransactionRouteTests.swift
+│       └── FileMetadataRouteTests.swift
 └── docs/
     ├── Architecture.md
     ├── Database-Migrations.md
+    ├── File-Metadata.md
     ├── Local-Development.md
     └── Services.md
 ```
@@ -198,6 +204,24 @@ features:
   only.
 - `Tests/GemsForgeAPITests/ExpenseTransactionRouteTests.swift` verifies CRUD
   behavior with an in-memory database.
+
+FileMetadata is the local-file bridge for future image, document, and other
+asset workflows. It stores portable file descriptions in SQLite rather than
+large binary file contents. The current feature deliberately stops at metadata:
+the upload workflow that writes files to disk will be designed separately.
+
+FileMetadata feature files are organized with the other table-backed features:
+
+- `Sources/Models/Table/FileMetadata.swift` maps the metadata table.
+- `Sources/Services/FileMetadataService.swift` owns metadata persistence only.
+- `Sources/Routes/FileMetadataRoutes.swift` exposes metadata CRUD and safety
+  validation.
+- `Sources/Migrations/CreateFileMetadata.swift` supports isolated tests only.
+- `Tests/GemsForgeAPITests/FileMetadataRouteTests.swift` verifies the route
+  contract and path/ownership validation.
+
+See [`File-Metadata.md`](File-Metadata.md) for the field map, endpoint
+contract, and file-operation boundary.
 
 Gem Hues are Foundation reference data rather than a domain child. Their table
 and image model, service, and routes live alongside the other table-backed
