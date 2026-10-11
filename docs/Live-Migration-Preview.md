@@ -36,6 +36,26 @@ The preview/confirmation service is intentionally not an arbitrary SQL runner.
 It gives the UI a reviewable contract while keeping schema execution in the
 separate approved-table issue.
 
+## Approved additive schema changes
+
+Issue #76 adds named, server-owned changes at:
+
+```text
+POST /live-database/schema-changes/preview
+POST /live-database/schema-changes/execute
+```
+
+The initial catalog contains two separate changes for `FileMetadata`:
+
+- `file-metadata-add-domain-id` adds a nullable `DomainID` foreign key to
+  `Domains`.
+- `file-metadata-index-relative-path` adds an index for `RelativePath`.
+
+Each change is previewed and executed independently. The browser submits only
+the approved change ID and short-lived token. It cannot submit SQL or alter the
+column, index, or foreign-key definition. Destructive changes remain out of
+scope until a separate design review.
+
 ## Current approved table
 
 Issue #74 starts with the `file-metadata` table. Its schema is defined on the
