@@ -171,6 +171,11 @@ to inspect its columns, primary keys, relationships, and indexes. This is
 still read-only; migration preview and live changes remain separate follow-up
 issues. See [`Live-Schema-Inspection.md`](Live-Schema-Inspection.md).
 
+The preview and confirmation contract is documented in
+[`Live-Migration-Preview.md`](Live-Migration-Preview.md). It is not yet exposed
+as a console control because schema execution still requires the backup and
+approved-table workflow.
+
 ## Notes import status
 
 The Notes upload area is intentionally a visual placeholder. The current API
