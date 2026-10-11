@@ -7,7 +7,8 @@ import { GemHuesView } from "./features/gem-hues/GemHuesView";
 import { EducationView } from "./features/education/EducationView";
 import { EmploymentView } from "./features/employment/EmploymentView";
 import { AddressesView } from "./features/addresses/AddressesView";
-import type { Address, Domain, Education, Employment, ForgeKeeperPage, ForgeKeeperPatch, GemHue } from "./types";
+import { TransactionsView } from "./features/transactions/TransactionsView";
+import type { Address, Domain, Education, Employment, ExpenseTransaction, ForgeKeeperPage, ForgeKeeperPatch, GemHue } from "./types";
 
 export function App() {
   const [domains, setDomains] = useState<Domain[]>([]);
@@ -16,8 +17,9 @@ export function App() {
   const [education, setEducation] = useState<Education[]>([]);
   const [employment, setEmployment] = useState<Employment[]>([]);
   const [addresses, setAddresses] = useState<Address[]>([]);
+  const [transactions, setTransactions] = useState<ExpenseTransaction[]>([]);
   const [selectedDomainID, setSelectedDomainID] = useState<string | null>(null);
-  const [view, setView] = useState<"pages" | "hues" | "education" | "employment" | "addresses">("pages");
+  const [view, setView] = useState<"pages" | "hues" | "education" | "employment" | "addresses" | "transactions">("pages");
   const [notice, setNotice] = useState<{ message: string; kind: "error" | "success" } | null>(null);
 
   useEffect(() => { void refreshDomains(); }, []);
@@ -42,10 +44,11 @@ export function App() {
   async function openEducation() { try { setView("education"); setEducation(await api.listEducation()); } catch (error) { showError(error); } }
   async function openEmployment() { try { setView("employment"); setEmployment(await api.listEmployment()); } catch (error) { showError(error); } }
   async function openAddresses() { try { setView("addresses"); setAddresses(await api.listAddresses()); } catch (error) { showError(error); } }
+  async function openTransactions() { try { setView("transactions"); setTransactions(await api.listTransactions()); } catch (error) { showError(error); } }
   function showError(error: unknown) { setNotice({ message: error instanceof Error ? error.message : "Request failed.", kind: "error" }); }
   function showSuccess(message: string) { setNotice({ message, kind: "success" }); window.setTimeout(() => setNotice(null), 3500); }
 
   const selectedDomain = domains.find((domain) => domain.id === selectedDomainID) ?? null;
 
-  return <div className="app-shell"><header className="topbar"><div><p className="eyebrow">GemsForgeAPI · React testing console</p><h1>Gem Life Console</h1></div><div className="connection-pill"><span /> Local API</div></header><main className="workspace"><DomainSidebar domains={domains} selectedDomainID={selectedDomainID} onSelect={(id) => void selectDomain(id)} onRefresh={() => void refreshDomains()} huesSelected={view === "hues"} onSelectHues={() => void openHues()} educationSelected={view === "education"} onSelectEducation={() => void openEducation()} employmentSelected={view === "employment"} onSelectEmployment={() => void openEmployment()} addressesSelected={view === "addresses"} onSelectAddresses={() => void openAddresses()} /><section className="content"><Notice message={notice?.message ?? null} kind={notice?.kind} />{view === "hues" ? <GemHuesView hues={hues} /> : view === "education" ? <EducationView records={education} /> : view === "employment" ? <EmploymentView records={employment} /> : view === "addresses" ? <AddressesView records={addresses} /> : <ForgeKeeperView domain={selectedDomain} pages={pages} onLoadRoots={() => void loadRoots()} onLoadChildren={(id) => void loadChildren(id)} onPatch={patchPage} />}</section></main></div>;
+  return <div className="app-shell"><header className="topbar"><div><p className="eyebrow">GemsForgeAPI · React testing console</p><h1>Gem Life Console</h1></div><div className="connection-pill"><span /> Local API</div></header><main className="workspace"><DomainSidebar domains={domains} selectedDomainID={selectedDomainID} onSelect={(id) => void selectDomain(id)} onRefresh={() => void refreshDomains()} huesSelected={view === "hues"} onSelectHues={() => void openHues()} educationSelected={view === "education"} onSelectEducation={() => void openEducation()} employmentSelected={view === "employment"} onSelectEmployment={() => void openEmployment()} addressesSelected={view === "addresses"} onSelectAddresses={() => void openAddresses()} transactionsSelected={view === "transactions"} onSelectTransactions={() => void openTransactions()} /><section className="content"><Notice message={notice?.message ?? null} kind={notice?.kind} />{view === "hues" ? <GemHuesView hues={hues} /> : view === "education" ? <EducationView records={education} /> : view === "employment" ? <EmploymentView records={employment} /> : view === "addresses" ? <AddressesView records={addresses} /> : view === "transactions" ? <TransactionsView records={transactions} /> : <ForgeKeeperView domain={selectedDomain} pages={pages} onLoadRoots={() => void loadRoots()} onLoadChildren={(id) => void loadChildren(id)} onPatch={patchPage} />}</section></main></div>;
 }
