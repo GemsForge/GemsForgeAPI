@@ -1,3 +1,4 @@
+import Fluent
 import Vapor
 
 /// The fields accepted when creating or replacing an employment record.
@@ -17,6 +18,53 @@ struct EmploymentRequest: Content {
     let employerContactNumber: String?
     let employerContactEmail: String?
     let notes: String?
+}
+
+/// API response that expands the work-address relationship for client rendering.
+struct EmploymentResponse: Content {
+    let id: String?
+    let employerName: String
+    let employerType: String
+    let industry: String?
+    let website: String?
+    let positionTitle: String
+    let employmentType: String
+    let startDate: String?
+    let endDate: String?
+    let employmentStatus: String
+    let address: AddressReferenceResponse?
+    let employerContact: String?
+    let employerContactNumber: String?
+    let employerContactEmail: String?
+    let notes: String?
+
+    init(_ record: Employment, address: AddressReferenceResponse?) {
+        id = record.id
+        employerName = record.employerName
+        employerType = record.employerType
+        industry = record.industry
+        website = record.website
+        positionTitle = record.positionTitle
+        employmentType = record.employmentType
+        startDate = record.startDate
+        endDate = record.endDate
+        employmentStatus = record.employmentStatus
+        self.address = address
+        employerContact = record.employerContact
+        employerContactNumber = record.employerContactNumber
+        employerContactEmail = record.employerContactEmail
+        notes = record.notes
+    }
+}
+
+private func employmentResponse(_ record: Employment, on database: any Database) async throws -> EmploymentResponse {
+    let address: Address?
+    if let id = record.workAddressID {
+        address = try await Address.find(id, on: database)
+    } else {
+        address = nil
+    }
+    return EmploymentResponse(record, address: address.map(AddressReferenceResponse.init))
 }
 
 private func validate(_ input: EmploymentRequest, requiresID: Bool = false) throws {
@@ -39,12 +87,17 @@ private func validate(_ input: EmploymentRequest, requiresID: Bool = false) thro
 func registerEmploymentRoutes(_ app: Application) {
     let employment = app.grouped("employment")
 
-    employment.get { request async throws -> [Employment] in
+    employment.get { request async throws -> [EmploymentResponse] in
         // Returns Life-area employment records without assigning them to a domain.
-        try await EmploymentService(database: request.db).list()
+        let records = try await EmploymentService(database: request.db).list()
+        var responses: [EmploymentResponse] = []
+        for record in records {
+            responses.append(try await employmentResponse(record, on: request.db))
+        }
+        return responses
     }
 
-    employment.post { request async throws -> Employment in
+    employment.post { request async throws -> EmploymentResponse in
         let input = try request.content.decode(EmploymentRequest.self)
         try validate(input, requiresID: true)
 
@@ -72,10 +125,10 @@ func registerEmploymentRoutes(_ app: Application) {
         )
 
         try await EmploymentService(database: request.db).save(record)
-        return record
+        return try await employmentResponse(record, on: request.db)
     }
 
-    employment.get(":id") { request async throws -> Employment in
+    employment.get(":id") { request async throws -> EmploymentResponse in
         guard let id = request.parameters.get("id"),
               let record = try await EmploymentService(database: request.db).find(id: id)
         else {
@@ -83,10 +136,10 @@ func registerEmploymentRoutes(_ app: Application) {
         }
 
         // Returns one employment record by its stable EmploymentID.
-        return record
+        return try await employmentResponse(record, on: request.db)
     }
 
-    employment.put(":id") { request async throws -> Employment in
+    employment.put(":id") { request async throws -> EmploymentResponse in
         guard let id = request.parameters.get("id"),
               let record = try await EmploymentService(database: request.db).find(id: id)
         else {
@@ -110,7 +163,7 @@ func registerEmploymentRoutes(_ app: Application) {
         record.employerContactEmail = input.employerContactEmail
         record.notes = input.notes
         try await EmploymentService(database: request.db).save(record)
-        return record
+        return try await employmentResponse(record, on: request.db)
     }
 
     employment.delete(":id") { request async throws -> HTTPStatus in

@@ -27,6 +27,7 @@ enum EntryPoint {
         }
 
         registerDomainRoutes(app)
+        registerAddressRoutes(app)
         registerEducationRoutes(app)
         registerEmploymentRoutes(app)
         registerForgeKeeperRoutes(app)

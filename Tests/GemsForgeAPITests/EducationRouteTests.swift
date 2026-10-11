@@ -7,8 +7,18 @@ final class EducationRouteTests: XCTestCase {
     func testEducationCRUD() async throws {
         try await withApp(configure: { app in
             app.databases.use(.sqlite(.memory), as: .sqlite)
+            app.migrations.add(CreateAddresses())
             app.migrations.add(CreateEducation())
             try await app.autoMigrate()
+            try await Address(
+                id: "ADDR-0001",
+                addressType: "Residence",
+                addressLine1: "123 Test Street",
+                city: "Atlanta",
+                state: "GA",
+                postalCode: "30301",
+                addressStatus: "Current"
+            ).create(on: app.db)
             registerEducationRoutes(app)
         }) { app in
             let payload = EducationRequest(
@@ -32,21 +42,23 @@ final class EducationRouteTests: XCTestCase {
                 try request.content.encode(payload)
             }) { response async throws in
                 XCTAssertEqual(response.status, .ok)
-                let record = try response.content.decode(Education.self)
+                let record = try response.content.decode(EducationResponse.self)
                 XCTAssertEqual(record.id, "EDU-0001")
                 XCTAssertEqual(record.institutionName, "Georgia State University")
+                XCTAssertEqual(record.address?.city, "Atlanta")
             }
 
             try await app.test(.GET, "education") { response async throws in
                 XCTAssertEqual(response.status, .ok)
-                let records = try response.content.decode([Education].self)
+                let records = try response.content.decode([EducationResponse].self)
                 XCTAssertEqual(records.count, 1)
             }
 
             try await app.test(.GET, "education/EDU-0001") { response async throws in
                 XCTAssertEqual(response.status, .ok)
-                let record = try response.content.decode(Education.self)
+                let record = try response.content.decode(EducationResponse.self)
                 XCTAssertEqual(record.program, "Computer Science")
+                XCTAssertEqual(record.address?.postalCode, "30301")
             }
 
             let updatedPayload = EducationRequest(
@@ -70,7 +82,7 @@ final class EducationRouteTests: XCTestCase {
                 try request.content.encode(updatedPayload)
             }) { response async throws in
                 XCTAssertEqual(response.status, .ok)
-                let record = try response.content.decode(Education.self)
+                let record = try response.content.decode(EducationResponse.self)
                 XCTAssertEqual(record.program, "Information Systems")
             }
 
@@ -87,6 +99,7 @@ final class EducationRouteTests: XCTestCase {
     func testEducationRejectsInvalidPayloadAndMissingRecords() async throws {
         try await withApp(configure: { app in
             app.databases.use(.sqlite(.memory), as: .sqlite)
+            app.migrations.add(CreateAddresses())
             app.migrations.add(CreateEducation())
             try await app.autoMigrate()
             registerEducationRoutes(app)
