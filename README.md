@@ -74,6 +74,7 @@ GemsForgeAPI/
     ├── Local-Development.md
     ├── Services.md
     ├── Addresses.md
+    ├── Expense-Transactions.md
     └── Testing-Console.md
 ```
 
@@ -108,6 +109,9 @@ current Notes-import boundary.
   migration boundary.
 - [`docs/Addresses.md`](docs/Addresses.md) documents the Addresses table,
   endpoints, migration boundary, and embedded address responses.
+- [`docs/Expense-Transactions.md`](docs/Expense-Transactions.md) documents the
+  existing Transactions table mapping, API contract, test migration, and
+  verification boundary.
 - [`docs/Testing-Console.md`](docs/Testing-Console.md) documents the active
   React testing console, supported read workflows, and API proxy.
 

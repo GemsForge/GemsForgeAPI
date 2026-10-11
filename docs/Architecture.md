@@ -56,6 +56,7 @@ GemsForgeAPI/
 │   │   ├── CreateDomains.swift
 │   │   ├── CreateEducation.swift
 │   │   ├── CreateEmployment.swift
+│   │   ├── CreateExpenseTransactions.swift
 │   │   ├── CreateForgeKeeper.swift
 │   │   ├── CreateGemHues.swift
 │   │   └── CreateGemHueImages.swift
@@ -68,6 +69,7 @@ GemsForgeAPI/
 │   │       ├── Domain.swift
 │   │       ├── Education.swift
 │   │       ├── Employment.swift
+│   │       ├── ExpenseTransaction.swift
 │   │       ├── ForgeKeeper.swift
 │   │       ├── GemHue.swift
 │   │       └── GemHueImage.swift
@@ -76,6 +78,7 @@ GemsForgeAPI/
 │   │   ├── DomainRoutes.swift
 │   │   ├── EducationRoutes.swift
 │   │   ├── EmploymentRoutes.swift
+│   │   ├── ExpenseTransactionRoutes.swift
 │   │   ├── ForgeKeeperRoutes.swift
 │   │   └── GemHueRoutes.swift
 │   └── Services/
@@ -83,12 +86,14 @@ GemsForgeAPI/
 │       ├── DomainService.swift
 │       ├── EducationService.swift
 │       ├── EmploymentService.swift
+│       ├── ExpenseTransactionService.swift
 │       ├── ForgeKeeperService.swift
 │       └── GemHueService.swift
 ├── Tests/
 │   └── GemsForgeAPITests/
 │       ├── HealthTests.swift
-│       └── DomainRouteTests.swift
+│       ├── DomainRouteTests.swift
+│       └── ExpenseTransactionRouteTests.swift
 └── docs/
     ├── Architecture.md
     ├── Database-Migrations.md
@@ -174,6 +179,24 @@ Employment feature files are organized with the other table-backed features:
 - `Sources/Routes/EmploymentRoutes.swift` exposes the HTTP contract.
 - `Sources/Migrations/CreateEmployment.swift` supports isolated tests only.
 - `Tests/GemsForgeAPITests/EmploymentRouteTests.swift` verifies the route
+  behavior with an in-memory database.
+
+Expense Transactions are Life-area financial records in the existing
+`Transactions` table. The current table stores category and subcategory IDs,
+but it does not yet contain a Service Account or image relationship. Those
+relationships remain separate focused changes so the API preserves the
+database schema instead of inventing links.
+
+Expense Transaction feature files are organized with the other table-backed
+features:
+
+- `Sources/Models/Table/ExpenseTransaction.swift` maps the existing table.
+- `Sources/Services/ExpenseTransactionService.swift` owns persistence
+  operations.
+- `Sources/Routes/ExpenseTransactionRoutes.swift` exposes the HTTP contract.
+- `Sources/Migrations/CreateExpenseTransactions.swift` supports isolated tests
+  only.
+- `Tests/GemsForgeAPITests/ExpenseTransactionRouteTests.swift` verifies CRUD
   behavior with an in-memory database.
 
 Gem Hues are Foundation reference data rather than a domain child. Their table

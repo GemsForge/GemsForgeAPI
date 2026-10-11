@@ -169,3 +169,20 @@ and notes are not returned in a collection response.
 
 The current console uses these read operations only. Gem Hues are not assigned
 to a domain in the current database schema.
+
+## ExpenseTransactionService
+
+`ExpenseTransactionService` performs persistence operations for expense records
+in the existing `Transactions` table. The service preserves the database's
+existing category and subcategory references and does not create a Service
+Account or file relationship before those focused schema contracts are defined.
+
+The service provides:
+
+- `list()` for the documented expense transaction collection.
+- `find(id:)` for one transaction by its stable transaction ID.
+- `save(_:)` for the test and API write workflow.
+- `delete(id:)` for the test and API delete workflow.
+
+See [`Expense-Transactions.md`](Expense-Transactions.md) for the field map,
+endpoint contract, migration boundary, and verification checkpoint.

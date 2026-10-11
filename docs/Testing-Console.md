@@ -58,6 +58,10 @@ Open `http://127.0.0.1:5173/`.
 - Select an address to retrieve its complete details through `GET /addresses/:id`.
 - Education and Employment details render their embedded `address` response
   objects instead of displaying address IDs.
+- Expense Transactions are available to the API through `GET /transactions`
+  and `GET /transactions/:transactionID`. Testing-console support remains a
+  separate follow-up under issue #41 so the console can be updated as the
+  Expense Tracker feature set grows.
 
 The React project keeps the API client and UI features separate:
 
