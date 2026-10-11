@@ -33,6 +33,7 @@ Vite proxies API paths to Vapor so the browser can use same-origin requests:
 /education
 /employment
 /addresses
+/transactions
 /health
 ```
 
@@ -49,7 +50,8 @@ src/
     ├── gem-hues/                  hue reads and image previews
     ├── education/                 Life-area education reads
     ├── employment/                Life-area employment reads
-    └── addresses/                 Life-area address reads
+    ├── addresses/                 Life-area address reads
+    └── transactions/              Life-area expense transaction reads
 ```
 
 The console currently preserves the prototype's styling and behavior while

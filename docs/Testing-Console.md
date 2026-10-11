@@ -122,6 +122,18 @@ expands the relationship into an `address` object in Education and Employment
 read responses. This lets the console render related locations without a
 second lookup request.
 
+The Expense Tracker view exercises the existing Transactions table through:
+
+```text
+GET /transactions
+GET /transactions/:transactionID
+```
+
+The console renders the transaction item, date, stable ID, amount, category and
+subcategory IDs, receipt and merchant references, quantity, price fields, and
+notes. It is intentionally read-only in this slice; write controls remain
+outside the testing-console issue until the API contracts are reviewed.
+
 ## Notes import status
 
 The Notes upload area is intentionally a visual placeholder. The current API

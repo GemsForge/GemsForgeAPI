@@ -14,6 +14,7 @@ export default defineConfig(({ mode }) => {
         "/education": apiTarget,
         "/employment": apiTarget,
         "/addresses": apiTarget,
+        "/transactions": apiTarget,
         "/forgekeeper": apiTarget,
         "/gemhues": apiTarget,
         "/health": apiTarget
