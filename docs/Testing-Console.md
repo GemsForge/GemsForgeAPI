@@ -54,6 +54,10 @@ Open `http://127.0.0.1:5173/`.
 - Open Employment as Life-area data without forcing it into the Domains hierarchy.
 - View all five Employment records returned by `GET /employment`.
 - Select an Employment record to retrieve its details through `GET /employment/:id`.
+- Open Addresses as Life-area data and inspect address records directly.
+- Select an address to retrieve its complete details through `GET /addresses/:id`.
+- Education and Employment details render their embedded `address` response
+  objects instead of displaying address IDs.
 
 The React project keeps the API client and UI features separate:
 
@@ -64,6 +68,7 @@ Console/src/features/forgekeeper/     → page reads and PATCH testing
 Console/src/features/gem-hues/        → hue records and image previews
 Console/src/features/education/        → Life-area education reads
 Console/src/features/employment/       → Life-area employment reads
+Console/src/features/addresses/        → Life-area address reads
 ```
 
 The Gem Hues view exercises all current read services:
@@ -100,6 +105,18 @@ GET /employment/:employmentID
 Employment contact fields are shown only in this local testing console. A
 future authenticated product UI should apply an explicit privacy policy before
 exposing those fields.
+
+The Addresses view exercises:
+
+```text
+GET /addresses
+GET /addresses/:addressID
+```
+
+The API keeps foreign-key IDs in database models and write payloads, but
+expands the relationship into an `address` object in Education and Employment
+read responses. This lets the console render related locations without a
+second lookup request.
 
 ## Notes import status
 

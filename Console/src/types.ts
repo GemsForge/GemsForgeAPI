@@ -4,6 +4,21 @@ export interface Domain {
   description: string;
 }
 
+export interface Address {
+  id: string;
+  addressType: string;
+  addressLine1: string | null;
+  addressLine2: string | null;
+  city: string | null;
+  state: string | null;
+  postalCode: string | null;
+  country: string;
+  startDate: string | null;
+  endDate: string | null;
+  addressStatus: string;
+  notes?: string | null;
+}
+
 export interface ForgeKeeperPage {
   id: number;
   parentID: number | null;
@@ -36,7 +51,7 @@ export interface Education {
   endDate: string | null;
   awardedDate: string | null;
   status: string;
-  locationAddressID: string | null;
+  address: Address | null;
   website: string | null;
   notes: string | null;
 }
@@ -52,7 +67,7 @@ export interface Employment {
   startDate: string | null;
   endDate: string | null;
   employmentStatus: string;
-  workAddressID: string | null;
+  address: Address | null;
   employerContact: string | null;
   employerContactNumber: string | null;
   employerContactEmail: string | null;

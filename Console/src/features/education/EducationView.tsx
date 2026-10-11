@@ -66,13 +66,18 @@ function EducationDetail({ record }: { record: Education }) {
         <Field label="Start date" value={record.startDate} />
         <Field label="End date" value={record.endDate} />
         <Field label="Awarded date" value={record.awardedDate} />
-        <Field label="Address ID" value={record.locationAddressID} />
+        <div className="education-address"><dt>Location</dt><dd><AddressSummary address={record.address} /></dd></div>
         <Field label="Credential ID" value={record.credentialID} />
         <div><dt>Website</dt><dd>{record.website ? <a href={record.website} target="_blank" rel="noreferrer">{record.website}</a> : "—"}</dd></div>
         <div className="education-notes"><dt>Notes</dt><dd>{record.notes || "—"}</dd></div>
       </dl>
     </article>
   );
+}
+
+function AddressSummary({ address }: { address: Education["address"] }) {
+  if (!address) return <>—</>;
+  return <>{[address.addressLine1, address.city, address.state, address.postalCode].filter(Boolean).join(", ")}</>;
 }
 
 function Field({ label, value }: { label: string; value: string | null }) {

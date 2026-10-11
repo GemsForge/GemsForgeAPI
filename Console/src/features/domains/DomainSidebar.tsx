@@ -11,6 +11,8 @@ interface DomainSidebarProps {
   onSelectEducation: () => void;
   employmentSelected: boolean;
   onSelectEmployment: () => void;
+  addressesSelected: boolean;
+  onSelectAddresses: () => void;
 }
 
 export function DomainSidebar({
@@ -24,6 +26,8 @@ export function DomainSidebar({
   onSelectEducation,
   employmentSelected,
   onSelectEmployment,
+  addressesSelected,
+  onSelectAddresses,
 }: DomainSidebarProps) {
   return (
     <aside className="sidebar">
@@ -66,6 +70,11 @@ export function DomainSidebar({
         <button className={`resource-button ${employmentSelected ? "selected" : ""}`} onClick={onSelectEmployment}>
           <span className="resource-mark life-mark">◆</span>
           <span><strong>Employment</strong><small>Life-area records</small></span>
+          <span className="arrow">›</span>
+        </button>
+        <button className={`resource-button ${addressesSelected ? "selected" : ""}`} onClick={onSelectAddresses}>
+          <span className="resource-mark life-mark">⌂</span>
+          <span><strong>Addresses</strong><small>Life-area records</small></span>
           <span className="arrow">›</span>
         </button>
       </div>
