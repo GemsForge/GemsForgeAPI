@@ -19,6 +19,8 @@ The project currently includes:
 - Fluent migrations that mirror the existing schema for isolated tests.
 - Domain and ForgeKeeper services and routes.
 - ForgeKeeper read, hierarchy, and partial-update endpoints.
+- Education model, CRUD service, and routes mapped to the existing Life-area
+  table.
 - A local React + TypeScript testing console for domains, ForgeKeeper pages,
   and Gem Hues, with the original HTML prototype retained as a fallback.
 - Automated health, domain, and ForgeKeeper endpoint tests.
@@ -60,6 +62,7 @@ GemsForgeAPI/
     ├── Architecture.md
     ├── Database-Migrations.md
     ├── ForgeKeeper.md
+    ├── Education.md
     ├── Local-Development.md
     └── Services.md
 ```
@@ -88,6 +91,8 @@ current Notes-import boundary.
 - [`docs/Services.md`](docs/Services.md) explains the database service layer.
 - [`docs/ForgeKeeper.md`](docs/ForgeKeeper.md) documents the existing schema
   mapping, endpoints, configuration, and verification checkpoint.
+- [`docs/Education.md`](docs/Education.md) documents the Education table
+  mapping, service operations, endpoint contract, and migration boundary.
 
 ## Dependencies
 
