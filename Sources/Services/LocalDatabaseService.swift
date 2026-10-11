@@ -1,0 +1,139 @@
+import Fluent
+import FluentSQLiteDriver
+import Vapor
+
+enum LocalDatabaseProfile: String, Codable, CaseIterable, Sendable {
+    case gemLifeDevelopment = "gem-life-development"
+
+    var displayName: String {
+        switch self {
+        case .gemLifeDevelopment:
+            return "Gem Life development database"
+        }
+    }
+
+    var migrationNames: [String] {
+        [
+            "CreateAddresses",
+            "CreateDomains",
+            "CreateEducation",
+            "CreateEmployment",
+            "CreateBudgetCategories",
+            "CreateBudgetSubcategories",
+            "CreateExpenseTransactions",
+            "CreateEmojiLabelDefinitions",
+            "CreateFileMetadata",
+            "CreateServiceAccounts",
+            "CreateServiceLogoAssets",
+            "CreateForgeKeeper",
+            "CreateGemHues",
+            "CreateGemHueImages"
+        ]
+    }
+
+    func registerMigrations(on app: Application) {
+        switch self {
+        case .gemLifeDevelopment:
+            app.migrations.add(CreateAddresses())
+            app.migrations.add(CreateDomains())
+            app.migrations.add(CreateEducation())
+            app.migrations.add(CreateEmployment())
+            app.migrations.add(CreateBudgetCategories())
+            app.migrations.add(CreateBudgetSubcategories())
+            app.migrations.add(CreateExpenseTransactions())
+            app.migrations.add(CreateEmojiLabelDefinitions())
+            app.migrations.add(CreateFileMetadata())
+            app.migrations.add(CreateServiceAccounts())
+            app.migrations.add(CreateServiceLogoAssets())
+            app.migrations.add(CreateForgeKeeper())
+            app.migrations.add(CreateGemHues())
+            app.migrations.add(CreateGemHueImages())
+        }
+    }
+}
+
+struct LocalDatabaseCreationRequest: Content {
+    let databaseName: String
+    let profile: String
+    let confirmCreation: Bool
+}
+
+struct LocalDatabaseProfileResponse: Content {
+    let id: String
+    let name: String
+    let migrations: [String]
+}
+
+struct LocalDatabaseCapabilitiesResponse: Content {
+    let enabled: Bool
+    let ready: Bool
+    let profiles: [LocalDatabaseProfileResponse]
+    let safetyRules: [String]
+}
+
+struct LocalDatabaseCreationResponse: Content {
+    let databaseName: String
+    let profile: String
+    let migrationCount: Int
+    let status: String
+}
+
+/// Creates isolated local SQLite databases and applies only approved migrations.
+struct LocalDatabaseService: Sendable {
+    private let configuration: LocalDatabaseConfiguration
+
+    init(configuration: LocalDatabaseConfiguration) {
+        self.configuration = configuration
+    }
+
+    func capabilities() -> LocalDatabaseCapabilitiesResponse {
+        LocalDatabaseCapabilitiesResponse(
+            enabled: configuration.enabled,
+            ready: configuration.isReady,
+            profiles: LocalDatabaseProfile.allCases.map {
+                LocalDatabaseProfileResponse(id: $0.rawValue, name: $0.displayName, migrations: $0.migrationNames)
+            },
+            safetyRules: [
+                "Only simple .sqlite filenames are accepted.",
+                "Existing files cannot be replaced.",
+                "The configured personal database path is protected.",
+                "Only approved migration profiles can be applied.",
+                "This feature is disabled unless explicitly enabled for local development."
+            ]
+        )
+    }
+
+    func create(request: LocalDatabaseCreationRequest) async throws -> LocalDatabaseCreationResponse {
+        guard request.confirmCreation else {
+            throw LocalDatabaseError.confirmationRequired
+        }
+
+        guard let profile = LocalDatabaseProfile(rawValue: request.profile) else {
+            throw LocalDatabaseError.unsupportedProfile
+        }
+
+        let targetURL = try configuration.targetURL(for: request.databaseName)
+        guard FileManager.default.createFile(atPath: targetURL.path, contents: nil) else {
+            throw LocalDatabaseError.databaseAlreadyExists
+        }
+
+        let databaseApp = try await Application.make(.testing)
+        databaseApp.databases.use(.sqlite(.file(targetURL.path)), as: .sqlite)
+        profile.registerMigrations(on: databaseApp)
+
+        do {
+            try await databaseApp.autoMigrate()
+            try await databaseApp.asyncShutdown()
+        } catch {
+            try? await databaseApp.asyncShutdown()
+            throw LocalDatabaseError.migrationFailed(error.localizedDescription)
+        }
+
+        return LocalDatabaseCreationResponse(
+            databaseName: targetURL.lastPathComponent,
+            profile: profile.rawValue,
+            migrationCount: profile.migrationNames.count,
+            status: "created-and-migrated"
+        )
+    }
+}

@@ -96,3 +96,23 @@ export interface ForgeKeeperPatch {
   description: string;
   parentID: number | null;
 }
+
+export interface LocalDatabaseProfile {
+  id: string;
+  name: string;
+  migrations: string[];
+}
+
+export interface LocalDatabaseCapabilities {
+  enabled: boolean;
+  ready: boolean;
+  profiles: LocalDatabaseProfile[];
+  safetyRules: string[];
+}
+
+export interface LocalDatabaseCreationResult {
+  databaseName: string;
+  profile: string;
+  migrationCount: number;
+  status: string;
+}

@@ -16,9 +16,15 @@ how the corresponding database table is created. Both sides need to agree on
 table names and column names.
 
 The migrations in this repository mirror the existing Gem Life tables for
-isolated tests. They are not startup instructions for the real Gem Life
-database. Migrations change schema; services read and change records in an
-already-existing schema.
+isolated tests and disposable local development databases. They are not
+startup instructions for the real Gem Life database. Migrations change schema;
+services read and change records in an already-existing schema.
+
+The local database console can create a new SQLite file and apply the approved
+`gem-life-development` profile. It does not run migrations against the
+personal database selected by `DATABASE_PATH`. This keeps schema creation
+explicit and prevents the API from changing the existing Gem Life data store
+on startup.
 
 ## Why the order matters
 
@@ -31,13 +37,37 @@ domains
 ```
 
 The child tables contain foreign keys to their parent tables. Therefore the
-migrations are registered in this order:
+core migrations are registered in this order:
 
 1. `CreateDomains`
 2. `CreateForgeKeeper`
 
 Fluent runs `revert` in the opposite order so child tables are removed before
 their parent tables.
+
+The full local development profile currently applies these migrations in order:
+
+```text
+CreateAddresses
+CreateDomains
+CreateEducation
+CreateEmployment
+CreateBudgetCategories
+CreateBudgetSubcategories
+CreateExpenseTransactions
+CreateEmojiLabelDefinitions
+CreateFileMetadata
+CreateServiceAccounts
+CreateServiceLogoAssets
+CreateForgeKeeper
+CreateGemHues
+CreateGemHueImages
+```
+
+This profile is a test/development schema assembled from the repository's
+isolated migrations. It is intentionally different from connecting to the
+existing personal database: creating a new local file may prepare tables,
+while normal API startup must preserve the existing database baseline.
 
 ## What the schema builder means
 

@@ -17,7 +17,8 @@ export default defineConfig(({ mode }) => {
         "/transactions": apiTarget,
         "/forgekeeper": apiTarget,
         "/gemhues": apiTarget,
-        "/health": apiTarget
+        "/health": apiTarget,
+        "/local-databases": apiTarget
       }
     }
   };

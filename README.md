@@ -27,6 +27,9 @@ The project currently includes:
   table, with embedded address responses for Education and Employment.
 - Gem Hues model, image model, read services, and routes mapped to Foundation
   reference data.
+- A disabled-by-default local database creation workflow that applies the
+  approved development migration profile to a new SQLite file without
+  modifying the personal database.
 - A local React + TypeScript testing console for domains, ForgeKeeper pages,
   Gem Hues, Education, Employment, and Addresses, with the original HTML prototype retained as a
   fallback.
@@ -79,6 +82,7 @@ GemsForgeAPI/
     ├── Expense-Subcategories.md
     ├── Emoji-Labels.md
     ├── File-Metadata.md
+    ├── Local-Database-Creation.md
     ├── Service-Logos.md
     ├── Service-Accounts.md
     └── Testing-Console.md
@@ -134,6 +138,8 @@ current Notes-import boundary.
   expense relationship boundary.
 - [`docs/Testing-Console.md`](docs/Testing-Console.md) documents the active
   React testing console, supported read workflows, and API proxy.
+- [`docs/Local-Database-Creation.md`](docs/Local-Database-Creation.md) documents
+  the guarded local SQLite creation workflow and its migration profile.
 
 ## Dependencies
 
@@ -166,6 +172,12 @@ startup. See [`.env.example`](.env.example) for the configuration placeholder.
 The committed `.env.example` is documentation only. The real `.env` file, if
 used for terminal development, is local and ignored. Xcode users can set the
 same variable in the Run scheme instead.
+
+The optional local database creation console is disabled by default. When
+needed for development, configure `LOCAL_DATABASE_CREATION_ENABLED=true` and
+`LOCAL_DATABASE_DIRECTORY` to an existing safe directory. The API accepts only
+new simple `.sqlite` filenames and never overwrites an existing file or the
+personal database. See [`docs/Local-Database-Creation.md`](docs/Local-Database-Creation.md).
 
 ## Running the project
 

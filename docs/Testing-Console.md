@@ -73,6 +73,7 @@ Console/src/features/gem-hues/        → hue records and image previews
 Console/src/features/education/        → Life-area education reads
 Console/src/features/employment/       → Life-area employment reads
 Console/src/features/addresses/        → Life-area address reads
+Console/src/features/databases/        → isolated local database creation
 ```
 
 The Gem Hues view exercises all current read services:
@@ -133,6 +134,26 @@ The console renders the transaction item, date, stable ID, amount, category and
 subcategory IDs, receipt and merchant references, quantity, price fields, and
 notes. It is intentionally read-only in this slice; write controls remain
 outside the testing-console issue until the API contracts are reviewed.
+
+### Local Databases
+
+The Developer → Local Databases view provides a guarded way to create a new
+SQLite database for development and testing. It is disabled unless the API
+environment explicitly enables it and points to an existing safe directory.
+
+The view calls:
+
+```text
+GET /local-databases/capabilities
+POST /local-databases
+```
+
+The capability response previews the approved migration profile and safety
+rules. Creating a database requires explicit confirmation in the console. The
+browser submits only a simple filename and profile; filesystem paths stay on
+the API host. The personal database is not a creation target, and existing
+files cannot be replaced. See [`Local-Database-Creation.md`](Local-Database-Creation.md)
+for environment setup and the complete migration list.
 
 ## Notes import status
 
