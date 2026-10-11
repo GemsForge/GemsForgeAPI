@@ -65,7 +65,7 @@ function EmploymentDetail({ record }: { record: Employment }) {
         <Field label="Industry" value={record.industry} />
         <Field label="Start date" value={record.startDate} />
         <Field label="End date" value={record.endDate} />
-        <Field label="Work address ID" value={record.workAddressID} />
+        <div className="employment-address"><dt>Work address</dt><dd><AddressSummary address={record.address} /></dd></div>
         <div><dt>Website</dt><dd>{record.website ? <a href={record.website} target="_blank" rel="noreferrer">{record.website}</a> : "—"}</dd></div>
         <Field label="Contact" value={record.employerContact} />
         <Field label="Contact number" value={record.employerContactNumber} />
@@ -74,6 +74,11 @@ function EmploymentDetail({ record }: { record: Employment }) {
       </dl>
     </article>
   );
+}
+
+function AddressSummary({ address }: { address: Employment["address"] }) {
+  if (!address) return <>—</>;
+  return <>{[address.addressLine1, address.city, address.state, address.postalCode].filter(Boolean).join(", ")}</>;
 }
 
 function Field({ label, value }: { label: string; value: string | null }) {
