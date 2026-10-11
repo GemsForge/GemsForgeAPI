@@ -116,3 +116,38 @@ export interface LocalDatabaseCreationResult {
   migrationCount: number;
   status: string;
 }
+
+export interface LiveSchemaColumn {
+  name: string;
+  dataType: string;
+  nullable: boolean;
+  primaryKey: boolean;
+  defaultValue: string | null;
+}
+
+export interface LiveSchemaForeignKey {
+  column: string;
+  referencedTable: string;
+  referencedColumn: string;
+  onUpdate: string;
+  onDelete: string;
+}
+
+export interface LiveSchemaIndex {
+  name: string;
+  unique: boolean;
+  columns: string[];
+}
+
+export interface LiveSchemaTable {
+  name: string;
+  columns: LiveSchemaColumn[];
+  foreignKeys: LiveSchemaForeignKey[];
+  indexes: LiveSchemaIndex[];
+}
+
+export interface LiveSchema {
+  databaseName: string;
+  tableCount: number;
+  tables: LiveSchemaTable[];
+}

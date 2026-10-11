@@ -19,6 +19,7 @@ export default defineConfig(({ mode }) => {
         "/gemhues": apiTarget,
         "/health": apiTarget,
         "/local-databases": apiTarget
+        ,"/live-database": apiTarget
       }
     }
   };
