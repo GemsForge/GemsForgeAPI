@@ -9,7 +9,7 @@ the official Gem Life product UI.
 From the repository root:
 
 ```bash
-DATABASE_PATH="/Users/gemsforge/DBeaver/GemLife_DB_rebuild.sqlite" \
+DATABASE_PATH="/absolute/path/to/GemLife_DB_rebuild.sqlite" \
 swift run GemsForgeAPI serve --hostname 127.0.0.1 --port 8081
 ```
 
@@ -54,6 +54,11 @@ src/
 
 The console currently preserves the prototype's styling and behavior while
 separating API access and feature UI into maintainable modules.
+
+The console is intentionally a local testing client, not the official Gem Life
+product UI. It currently exposes read workflows for existing data and the
+ForgeKeeper PATCH workflow. It is not an authorization boundary or a
+replacement for API tests.
 
 ## Build
 

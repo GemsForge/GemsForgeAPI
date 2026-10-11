@@ -25,6 +25,20 @@ place to evolve.
 The service does not create migrations and does not define HTTP endpoints. Those
 responsibilities remain with the migration and route layers.
 
+## Layer distinction
+
+```text
+Migrations → change database structure
+Services   → read and change database records
+Routes     → expose services through HTTP
+Models     → describe database records in Swift
+Tests      → verify the behavior
+```
+
+For example, adding a `Status` column is a migration, updating a domain title
+is a service operation, `PATCH /domains/:id` is a route, and a table model
+represents the row being read or changed.
+
 ## EducationService
 
 `EducationService` performs database operations for Life-area education records
@@ -143,3 +157,15 @@ objects.
 The service provides `list()`, `find(id:)`, `save(_:)`, and `delete(id:)`.
 The Addresses list route applies a summary DTO so street lines, postal codes,
 and notes are not returned in a collection response.
+
+## GemHueService
+
+`GemHueService` reads Foundation reference data from the existing `GemHues` and
+`GemHueImages` tables:
+
+- `list()` returns the Gem Hue records.
+- `find(id:)` returns one Gem Hue by ID.
+- `image(id:)` returns the associated image blob when one exists.
+
+The current console uses these read operations only. Gem Hues are not assigned
+to a domain in the current database schema.

@@ -11,7 +11,7 @@ only.
 Configure `DATABASE_PATH`, then run the API from the repository directory:
 
 ```bash
-export DATABASE_PATH="/Users/gemsforge/DBeaver/GemLife_DB_rebuild.sqlite"
+export DATABASE_PATH="/absolute/path/to/GemLife_DB_rebuild.sqlite"
 swift run GemsForgeAPI serve --hostname 127.0.0.1 --port 8080
 ```
 
@@ -20,7 +20,7 @@ Open `http://127.0.0.1:8080/` in a browser.
 If Xcode already has an API instance on port `8080`, use a temporary port:
 
 ```bash
-DATABASE_PATH="/Users/gemsforge/DBeaver/GemLife_DB_rebuild.sqlite" \
+DATABASE_PATH="/absolute/path/to/GemLife_DB_rebuild.sqlite" \
 swift run GemsForgeAPI serve --hostname 127.0.0.1 --port 8081
 ```
 

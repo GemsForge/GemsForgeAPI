@@ -74,7 +74,7 @@ temporary port so it does not conflict with an Xcode instance already using
 `8080`:
 
 ```bash
-DATABASE_PATH=/Users/gemsforge/DBeaver/GemLife_DB_rebuild.sqlite \
+DATABASE_PATH=/absolute/path/to/GemLife_DB_rebuild.sqlite \
 swift run GemsForgeAPI serve --hostname 127.0.0.1 --port 8081
 ```
 

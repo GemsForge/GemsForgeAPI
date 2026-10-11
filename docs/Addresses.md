@@ -47,6 +47,6 @@ table already exists there.
 
 ## Verification
 
-Read-only requests against `/Users/gemsforge/DBeaver/GemLife_DB_rebuild.sqlite`
-confirmed embedded addresses for `EDU-0001` and `EMP-0002`, as well as direct
-address retrieval for `ADDR-0016`. No real records were changed.
+Read-only requests against the configured Gem Life SQLite database confirmed
+embedded addresses for `EDU-0001` and `EMP-0002`, as well as direct address
+retrieval for `ADDR-0016`. No real records were changed.
