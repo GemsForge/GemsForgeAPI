@@ -57,6 +57,7 @@ GemsForgeAPI/
 │   │   ├── CreateEducation.swift
 │   │   ├── CreateEmployment.swift
 │   │   ├── CreateExpenseTransactions.swift
+│   │   ├── CreateBudgetCategories.swift
 │   │   ├── CreateFileMetadata.swift
 │   │   ├── CreateServiceAccounts.swift
 │   │   ├── CreateServiceLogoAssets.swift
@@ -73,6 +74,7 @@ GemsForgeAPI/
 │   │       ├── Education.swift
 │   │       ├── Employment.swift
 │   │       ├── ExpenseTransaction.swift
+│   │       ├── ExpenseCategory.swift
 │   │       ├── FileMetadata.swift
 │   │       ├── ServiceAccount.swift
 │   │       ├── ServiceLogoAsset.swift
@@ -85,6 +87,7 @@ GemsForgeAPI/
 │   │   ├── EducationRoutes.swift
 │   │   ├── EmploymentRoutes.swift
 │   │   ├── ExpenseTransactionRoutes.swift
+│   │   ├── ExpenseCategoryRoutes.swift
 │   │   ├── FileMetadataRoutes.swift
 │   │   ├── ServiceAccountRoutes.swift
 │   │   ├── ServiceLogoRoutes.swift
@@ -96,6 +99,7 @@ GemsForgeAPI/
 │       ├── EducationService.swift
 │       ├── EmploymentService.swift
 │       ├── ExpenseTransactionService.swift
+│       ├── ExpenseCategoryService.swift
 │       ├── FileMetadataService.swift
 │       ├── ServiceAccountService.swift
 │       ├── ServiceLogoService.swift
@@ -106,12 +110,14 @@ GemsForgeAPI/
 │       ├── HealthTests.swift
 │       ├── DomainRouteTests.swift
 │       ├── ExpenseTransactionRouteTests.swift
+│       ├── ExpenseCategoryRouteTests.swift
 │       ├── FileMetadataRouteTests.swift
 │       ├── ServiceAccountRouteTests.swift
 │       └── ServiceLogoRouteTests.swift
 └── docs/
     ├── Architecture.md
     ├── Database-Migrations.md
+    ├── Expense-Categories.md
     ├── File-Metadata.md
     ├── Local-Development.md
     ├── Service-Logos.md
@@ -215,6 +221,24 @@ features:
   only.
 - `Tests/GemsForgeAPITests/ExpenseTransactionRouteTests.swift` verifies CRUD
   behavior with an in-memory database.
+
+Expense Categories are reusable reference data in the existing
+`BudgetCategories` table. The API preserves the table and stable integer IDs,
+keeps emoji presentation separate, and lets the database protect categories
+referenced by transactions.
+
+Expense Category feature files are organized with the other table-backed
+features:
+
+- `Sources/Models/Table/ExpenseCategory.swift` maps the existing table.
+- `Sources/Services/ExpenseCategoryService.swift` owns category persistence.
+- `Sources/Routes/ExpenseCategoryRoutes.swift` exposes the HTTP contract.
+- `Sources/Migrations/CreateBudgetCategories.swift` supports isolated tests.
+- `Tests/GemsForgeAPITests/ExpenseCategoryRouteTests.swift` verifies CRUD and
+  validation behavior.
+
+See [`Expense-Categories.md`](Expense-Categories.md) for the field map,
+relationships, and deletion boundary.
 
 FileMetadata is the local-file bridge for future image, document, and other
 asset workflows. It stores portable file descriptions in SQLite rather than
