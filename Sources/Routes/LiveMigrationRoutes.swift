@@ -10,6 +10,14 @@ func registerLiveMigrationRoutes(_ app: Application, backupConfiguration: LiveDa
     let migrations = app.grouped("live-database", "migrations")
     let schemaChanges = app.grouped("live-database", "schema-changes")
     let approvedChanges = ApprovedSchemaChangeService(backupConfiguration: backupConfiguration)
+    let auditDatabaseIdentity = backupConfiguration?.databaseIdentity ?? "configured Gem Life database"
+
+    migrations.get("history") { request async throws -> [SchemaMigrationAudit] in
+        try await LiveMigrationAuditService(
+            database: request.db,
+            databaseIdentity: auditDatabaseIdentity
+        ).history()
+    }
 
     migrations.post("preview") { request async throws -> LiveMigrationPlan in
         do {

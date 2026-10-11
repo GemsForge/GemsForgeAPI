@@ -155,23 +155,52 @@ struct ApprovedSchemaChangeService: Sendable {
             throw ApprovedSchemaChangeError.backupNotConfigured
         }
 
+        let audit = LiveMigrationAuditService(
+            database: database,
+            databaseIdentity: backupConfiguration.databaseIdentity
+        )
+        try await audit.ensureTable()
+
         let backup: LiveDatabaseBackupResult
         do {
             backup = try await LiveDatabaseBackupService(configuration: backupConfiguration).createBackup(using: database)
         } catch let error as LiveDatabaseBackupError {
+            try? await audit.record(
+                migrationName: approval.change.rawValue,
+                result: "failed",
+                failureDetails: error.description
+            )
             throw ApprovedSchemaChangeError.migrationFailed(error.description)
         }
 
         do {
             try await approval.change.apply(on: database)
         } catch {
+            try? await audit.record(
+                migrationName: approval.change.rawValue,
+                result: "failed",
+                backupFileName: backup.backupFileName,
+                failureDetails: error.localizedDescription
+            )
             throw ApprovedSchemaChangeError.migrationFailed(error.localizedDescription)
         }
 
         let updatedSchema = try await LiveSchemaService(database: database).inspect()
         guard approval.change.isAlreadyApplied(in: updatedSchema) else {
+            try? await audit.record(
+                migrationName: approval.change.rawValue,
+                result: "verification-failed",
+                backupFileName: backup.backupFileName,
+                failureDetails: "The expected schema change was not found after migration."
+            )
             throw ApprovedSchemaChangeError.verificationFailed
         }
+
+        try await audit.record(
+            migrationName: approval.change.rawValue,
+            result: "succeeded",
+            backupFileName: backup.backupFileName
+        )
 
         return ApprovedSchemaChangeExecutionResponse(
             changeID: approval.change.rawValue,
