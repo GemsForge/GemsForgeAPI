@@ -32,6 +32,8 @@ The project currently includes:
   modifying the personal database.
 - A read-only live schema inspection endpoint for the configured Gem Life
   database.
+- A read-only Live Schema view in the React testing console for inspecting the
+  configured database before schema changes.
 - A local React + TypeScript testing console for domains, ForgeKeeper pages,
   Gem Hues, Education, Employment, and Addresses, with the original HTML prototype retained as a
   fallback.
