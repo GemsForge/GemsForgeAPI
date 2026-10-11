@@ -6,34 +6,38 @@ import Vapor
 /// Pages belong to a top-level `Domain` and can optionally belong to another
 /// ForgeKeeper page through `parentID`, allowing nested page hierarchies.
 final class ForgeKeeper: Model, Content, @unchecked Sendable {
-    static let schema = "forgekeeper"
+    // Matches the existing table name in GemLife_DB_rebuild.sqlite.
+    static let schema = "ForgeKeeper"
 
-    @ID(custom: "id")
-    var id: String?
+    // The existing database uses an auto-incrementing integer key.
+    @ID(custom: "ForgeKeeperID")
+    var id: Int?
 
-    @OptionalParent(key: "parent_id")
+    // ParentID is nullable for a root page and points back to ForgeKeeper.
+    @OptionalParent(key: "ParentID")
     var parent: ForgeKeeper?
 
-    @Parent(key: "domain_id")
+    // Every page belongs to one of the four top-level Gem Life domains.
+    @Parent(key: "DomainID")
     var domain: Domain
 
-    @Field(key: "title")
+    @Field(key: "Title")
     var title: String
 
-    @Field(key: "description")
+    @Field(key: "Description")
     var description: String
 
-    @Timestamp(key: "created_at", on: .create)
+    @Timestamp(key: "DateCreated", on: .create)
     var createdAt: Date?
 
-    @Timestamp(key: "updated_at", on: .update)
+    @Timestamp(key: "DateUpdated", on: .update)
     var updatedAt: Date?
 
     init() {}
 
     init(
-        id: String? = nil,
-        parentID: String? = nil,
+        id: Int? = nil,
+        parentID: Int? = nil,
         domainID: String,
         title: String,
         description: String
