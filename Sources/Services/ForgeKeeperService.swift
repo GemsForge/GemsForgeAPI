@@ -19,7 +19,15 @@ struct ForgeKeeperService: Sendable {
             .all()
     }
 
-    /// Finds one page by its database identifier.
+    /// Returns all pages belonging to one top-level Gem Life domain.
+    func list(domainID: String) async throws -> [ForgeKeeper] {
+        try await ForgeKeeper.query(on: database)
+            .filter(\.$domain.$id == domainID)
+            .sort(\.$title)
+            .all()
+    }
+
+    /// Returns one ForgeKeeper page by its database identifier.
     func find(id: Int) async throws -> ForgeKeeper? {
         try await ForgeKeeper.find(id, on: database)
     }

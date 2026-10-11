@@ -12,6 +12,7 @@ enum EntryPoint {
         }
 
         registerDomainRoutes(app)
+        registerForgeKeeperRoutes(app)
 
         try await app.execute()
         try await app.asyncShutdown()
