@@ -8,6 +8,7 @@ import { EducationView } from "./features/education/EducationView";
 import { EmploymentView } from "./features/employment/EmploymentView";
 import { AddressesView } from "./features/addresses/AddressesView";
 import { TransactionsView } from "./features/transactions/TransactionsView";
+import { LocalDatabaseView } from "./features/databases/LocalDatabaseView";
 import type { Address, Domain, Education, Employment, ExpenseTransaction, ForgeKeeperPage, ForgeKeeperPatch, GemHue } from "./types";
 
 export function App() {
@@ -19,7 +20,7 @@ export function App() {
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [transactions, setTransactions] = useState<ExpenseTransaction[]>([]);
   const [selectedDomainID, setSelectedDomainID] = useState<string | null>(null);
-  const [view, setView] = useState<"pages" | "hues" | "education" | "employment" | "addresses" | "transactions">("pages");
+  const [view, setView] = useState<"pages" | "hues" | "education" | "employment" | "addresses" | "transactions" | "databases">("pages");
   const [notice, setNotice] = useState<{ message: string; kind: "error" | "success" } | null>(null);
 
   useEffect(() => { void refreshDomains(); }, []);
@@ -50,5 +51,5 @@ export function App() {
 
   const selectedDomain = domains.find((domain) => domain.id === selectedDomainID) ?? null;
 
-  return <div className="app-shell"><header className="topbar"><div><p className="eyebrow">GemsForgeAPI · React testing console</p><h1>Gem Life Console</h1></div><div className="connection-pill"><span /> Local API</div></header><main className="workspace"><DomainSidebar domains={domains} selectedDomainID={selectedDomainID} onSelect={(id) => void selectDomain(id)} onRefresh={() => void refreshDomains()} huesSelected={view === "hues"} onSelectHues={() => void openHues()} educationSelected={view === "education"} onSelectEducation={() => void openEducation()} employmentSelected={view === "employment"} onSelectEmployment={() => void openEmployment()} addressesSelected={view === "addresses"} onSelectAddresses={() => void openAddresses()} transactionsSelected={view === "transactions"} onSelectTransactions={() => void openTransactions()} /><section className="content"><Notice message={notice?.message ?? null} kind={notice?.kind} />{view === "hues" ? <GemHuesView hues={hues} /> : view === "education" ? <EducationView records={education} /> : view === "employment" ? <EmploymentView records={employment} /> : view === "addresses" ? <AddressesView records={addresses} /> : view === "transactions" ? <TransactionsView records={transactions} /> : <ForgeKeeperView domain={selectedDomain} pages={pages} onLoadRoots={() => void loadRoots()} onLoadChildren={(id) => void loadChildren(id)} onPatch={patchPage} />}</section></main></div>;
+  return <div className="app-shell"><header className="topbar"><div><p className="eyebrow">GemsForgeAPI · React testing console</p><h1>Gem Life Console</h1></div><div className="connection-pill"><span /> Local API</div></header><main className="workspace"><DomainSidebar domains={domains} selectedDomainID={selectedDomainID} onSelect={(id) => void selectDomain(id)} onRefresh={() => void refreshDomains()} huesSelected={view === "hues"} onSelectHues={() => void openHues()} educationSelected={view === "education"} onSelectEducation={() => void openEducation()} employmentSelected={view === "employment"} onSelectEmployment={() => void openEmployment()} addressesSelected={view === "addresses"} onSelectAddresses={() => void openAddresses()} transactionsSelected={view === "transactions"} onSelectTransactions={() => void openTransactions()} databasesSelected={view === "databases"} onSelectDatabases={() => setView("databases")} /><section className="content"><Notice message={notice?.message ?? null} kind={notice?.kind} />{view === "hues" ? <GemHuesView hues={hues} /> : view === "education" ? <EducationView records={education} /> : view === "employment" ? <EmploymentView records={employment} /> : view === "addresses" ? <AddressesView records={addresses} /> : view === "transactions" ? <TransactionsView records={transactions} /> : view === "databases" ? <LocalDatabaseView onError={showError} onSuccess={showSuccess} /> : <ForgeKeeperView domain={selectedDomain} pages={pages} onLoadRoots={() => void loadRoots()} onLoadChildren={(id) => void loadChildren(id)} onPatch={patchPage} />}</section></main></div>;
 }

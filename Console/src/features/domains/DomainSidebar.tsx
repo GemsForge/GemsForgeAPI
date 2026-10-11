@@ -15,6 +15,8 @@ interface DomainSidebarProps {
   onSelectAddresses: () => void;
   transactionsSelected: boolean;
   onSelectTransactions: () => void;
+  databasesSelected: boolean;
+  onSelectDatabases: () => void;
 }
 
 export function DomainSidebar({
@@ -32,6 +34,8 @@ export function DomainSidebar({
   onSelectAddresses,
   transactionsSelected,
   onSelectTransactions,
+  databasesSelected,
+  onSelectDatabases,
 }: DomainSidebarProps) {
   return (
     <aside className="sidebar">
@@ -84,6 +88,14 @@ export function DomainSidebar({
         <button className={`resource-button ${transactionsSelected ? "selected" : ""}`} onClick={onSelectTransactions}>
           <span className="resource-mark life-mark">$</span>
           <span><strong>Expense Tracker</strong><small>Life-area records</small></span>
+          <span className="arrow">›</span>
+        </button>
+      </div>
+      <div className="sidebar-section">
+        <div className="section-heading"><span>Developer</span></div>
+        <button className={`resource-button ${databasesSelected ? "selected" : ""}`} onClick={onSelectDatabases}>
+          <span className="resource-mark">⌘</span>
+          <span><strong>Local Databases</strong><small>Safe test database creation</small></span>
           <span className="arrow">›</span>
         </button>
       </div>

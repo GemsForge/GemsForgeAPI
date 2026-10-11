@@ -1,4 +1,4 @@
-import type { Address, Domain, Education, Employment, ExpenseTransaction, ForgeKeeperPage, ForgeKeeperPatch, GemHue } from "./types";
+import type { Address, Domain, Education, Employment, ExpenseTransaction, ForgeKeeperPage, ForgeKeeperPatch, GemHue, LocalDatabaseCapabilities, LocalDatabaseCreationResult } from "./types";
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const response = await fetch(path, {
@@ -40,4 +40,10 @@ export const api = {
   listTransactions: () => request<ExpenseTransaction[]>("/transactions"),
   getTransaction: (transactionID: string) =>
     request<ExpenseTransaction>(`/transactions/${encodeURIComponent(transactionID)}`),
+  getLocalDatabaseCapabilities: () => request<LocalDatabaseCapabilities>("/local-databases/capabilities"),
+  createLocalDatabase: (payload: { databaseName: string; profile: string; confirmCreation: boolean }) =>
+    request<LocalDatabaseCreationResult>("/local-databases", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
 };
