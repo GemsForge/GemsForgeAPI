@@ -1,4 +1,4 @@
-import type { Address, Domain, Education, Employment, ExpenseTransaction, ForgeKeeperPage, ForgeKeeperPatch, GemHue, LocalDatabaseCapabilities, LocalDatabaseCreationResult } from "./types";
+import type { Address, Domain, Education, Employment, ExpenseTransaction, ForgeKeeperPage, ForgeKeeperPatch, GemHue, LiveSchema, LocalDatabaseCapabilities, LocalDatabaseCreationResult } from "./types";
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const response = await fetch(path, {
@@ -46,4 +46,5 @@ export const api = {
       method: "POST",
       body: JSON.stringify(payload),
     }),
+  getLiveSchema: () => request<LiveSchema>("/live-database/schema"),
 };

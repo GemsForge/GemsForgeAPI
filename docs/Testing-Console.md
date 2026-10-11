@@ -166,8 +166,10 @@ GET /live-database/schema
 
 The endpoint reports application tables, columns, primary keys, foreign keys,
 and indexes without changing the database or exposing its absolute path. The
-React display is tracked separately so the API and UI remain separate focused
-changes. See [`Live-Schema-Inspection.md`](Live-Schema-Inspection.md).
+React display is available under **Developer → Live Schema**. Select a table
+to inspect its columns, primary keys, relationships, and indexes. This is
+still read-only; migration preview and live changes remain separate follow-up
+issues. See [`Live-Schema-Inspection.md`](Live-Schema-Inspection.md).
 
 ## Notes import status
 
