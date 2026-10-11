@@ -120,6 +120,38 @@ master
     └── feat-or-docs/<issue>-<short-description>
 ```
 
+### Commit message policy
+
+Commit messages use the Conventional Commits shape:
+
+```text
+type(scope): #issue short imperative description
+```
+
+The `type` and `scope` are always lowercase. Keep the scope specific to the
+primary focus of the commit and include the issue number for tracked work.
+Separate significant changes into focused commits rather than combining a
+model, service, route, migration, test, and documentation change into one
+large commit.
+
+Use these established types:
+
+- `feat` — new application behavior.
+- `fix` — correction of an existing defect.
+- `refactor` — internal restructuring without intended behavior change.
+- `test` — tests or test infrastructure.
+- `docs` — documentation and project procedure.
+- `chore` — maintenance and tooling.
+
+Examples:
+
+```text
+feat(crud): #34 add expense tracker model
+docs(database): #48 clarify local database configuration
+test(service): #34 cover transaction persistence
+chore(ui): #35 organize testing console
+```
+
 The expected sequence is:
 
 1. Start from an up-to-date `master` branch.
@@ -128,7 +160,8 @@ The expected sequence is:
 4. Add or update tests for behavior changes.
 5. Run `swift test` and inspect the result.
 6. Review the changed files.
-7. Commit only the approved significant change.
+7. Review the staged files and commit only the approved significant change,
+   using the lowercase commit-message policy above.
 8. Push the branch and open a pull request targeting `master`.
 9. Include a closing keyword such as `Closes #8` in the pull request body.
 10. Merge only after review and verification, then delete the merged branch.
