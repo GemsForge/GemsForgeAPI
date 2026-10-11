@@ -77,6 +77,7 @@ GemsForgeAPI/
     ├── Expense-Transactions.md
     ├── Expense-Categories.md
     ├── Expense-Subcategories.md
+    ├── Emoji-Labels.md
     ├── File-Metadata.md
     ├── Service-Logos.md
     ├── Service-Accounts.md
@@ -121,6 +122,8 @@ current Notes-import boundary.
   existing BudgetCategories table, category API, and reference-data rules.
 - [`docs/Expense-Subcategories.md`](docs/Expense-Subcategories.md) documents
   the existing BudgetSubcategories table, hierarchy rules, and API contract.
+- [`docs/Emoji-Labels.md`](docs/Emoji-Labels.md) documents the reusable emoji
+  label registry and its separation from taxonomy identity.
 - [`docs/File-Metadata.md`](docs/File-Metadata.md) documents the local-file
   bridge, metadata fields, API contract, and isolated migration boundary.
 - [`docs/Service-Logos.md`](docs/Service-Logos.md) documents the existing logo
