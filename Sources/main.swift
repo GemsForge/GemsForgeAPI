@@ -31,6 +31,7 @@ enum EntryPoint {
         registerEducationRoutes(app)
         registerEmploymentRoutes(app)
         registerExpenseTransactionRoutes(app)
+        registerExpenseCategoryRoutes(app)
         registerFileMetadataRoutes(app)
         registerServiceAccountRoutes(app)
         registerServiceLogoRoutes(app)
