@@ -1,3 +1,4 @@
+import Fluent
 import Vapor
 
 /// The fields accepted when creating or replacing an education record.
@@ -16,6 +17,52 @@ struct EducationRequest: Content {
     let locationAddressID: String?
     let website: String?
     let notes: String?
+}
+
+/// API response that expands the address relationship for client rendering.
+struct EducationResponse: Content {
+    let id: String?
+    let educationType: String
+    let institutionName: String
+    let program: String?
+    let fieldOfStudy: String?
+    let credential: String?
+    let credentialID: String?
+    let startDate: String?
+    let endDate: String?
+    let awardedDate: String?
+    let status: String
+    let address: AddressReferenceResponse?
+    let website: String?
+    let notes: String?
+
+    init(_ record: Education, address: AddressReferenceResponse?) {
+        id = record.id
+        educationType = record.educationType
+        institutionName = record.institutionName
+        program = record.program
+        fieldOfStudy = record.fieldOfStudy
+        credential = record.credential
+        credentialID = record.credentialID
+        startDate = record.startDate
+        endDate = record.endDate
+        awardedDate = record.awardedDate
+        status = record.status
+        self.address = address
+        website = record.website
+        notes = record.notes
+    }
+}
+
+private func educationResponse(_ record: Education, on database: any Database) async throws -> EducationResponse {
+    let address: Address?
+    if let id = record.locationAddressID {
+        // The optional relationship is expanded only when the referenced address exists.
+        address = try await Address.find(id, on: database)
+    } else {
+        address = nil
+    }
+    return EducationResponse(record, address: address.map(AddressReferenceResponse.init))
 }
 
 private func validate(_ input: EducationRequest, requiresID: Bool = false) throws {
@@ -38,12 +85,17 @@ private func validate(_ input: EducationRequest, requiresID: Bool = false) throw
 func registerEducationRoutes(_ app: Application) {
     let education = app.grouped("education")
 
-    education.get { request async throws -> [Education] in
+    education.get { request async throws -> [EducationResponse] in
         // Returns Life-area education records without assigning them to a domain.
-        try await EducationService(database: request.db).list()
+        let records = try await EducationService(database: request.db).list()
+        var responses: [EducationResponse] = []
+        for record in records {
+            responses.append(try await educationResponse(record, on: request.db))
+        }
+        return responses
     }
 
-    education.post { request async throws -> Education in
+    education.post { request async throws -> EducationResponse in
         let input = try request.content.decode(EducationRequest.self)
         try validate(input, requiresID: true)
 
@@ -70,10 +122,10 @@ func registerEducationRoutes(_ app: Application) {
         )
 
         try await EducationService(database: request.db).save(record)
-        return record
+        return try await educationResponse(record, on: request.db)
     }
 
-    education.get(":id") { request async throws -> Education in
+    education.get(":id") { request async throws -> EducationResponse in
         guard let id = request.parameters.get("id"),
               let record = try await EducationService(database: request.db).find(id: id)
         else {
@@ -81,10 +133,10 @@ func registerEducationRoutes(_ app: Application) {
         }
 
         // Returns one education record by its stable EducationID.
-        return record
+        return try await educationResponse(record, on: request.db)
     }
 
-    education.put(":id") { request async throws -> Education in
+    education.put(":id") { request async throws -> EducationResponse in
         guard let id = request.parameters.get("id"),
               let record = try await EducationService(database: request.db).find(id: id)
         else {
@@ -107,7 +159,7 @@ func registerEducationRoutes(_ app: Application) {
         record.website = input.website
         record.notes = input.notes
         try await EducationService(database: request.db).save(record)
-        return record
+        return try await educationResponse(record, on: request.db)
     }
 
     education.delete(":id") { request async throws -> HTTPStatus in
