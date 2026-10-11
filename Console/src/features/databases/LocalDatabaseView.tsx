@@ -17,7 +17,7 @@ export function LocalDatabaseView({ onError, onSuccess }: LocalDatabaseViewProps
 
   useEffect(() => {
     void api.getLocalDatabaseCapabilities().then(setCapabilities).catch(onError);
-  }, [onError]);
+  }, []);
 
   const selectedProfile = capabilities?.profiles.find((item) => item.id === profile) ?? capabilities?.profiles[0];
 
