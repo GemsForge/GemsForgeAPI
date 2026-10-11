@@ -76,6 +76,7 @@ GemsForgeAPI/
     ├── Addresses.md
     ├── Expense-Transactions.md
     ├── Expense-Categories.md
+    ├── Expense-Subcategories.md
     ├── File-Metadata.md
     ├── Service-Logos.md
     ├── Service-Accounts.md
@@ -118,6 +119,8 @@ current Notes-import boundary.
   verification boundary.
 - [`docs/Expense-Categories.md`](docs/Expense-Categories.md) documents the
   existing BudgetCategories table, category API, and reference-data rules.
+- [`docs/Expense-Subcategories.md`](docs/Expense-Subcategories.md) documents
+  the existing BudgetSubcategories table, hierarchy rules, and API contract.
 - [`docs/File-Metadata.md`](docs/File-Metadata.md) documents the local-file
   bridge, metadata fields, API contract, and isolated migration boundary.
 - [`docs/Service-Logos.md`](docs/Service-Logos.md) documents the existing logo
