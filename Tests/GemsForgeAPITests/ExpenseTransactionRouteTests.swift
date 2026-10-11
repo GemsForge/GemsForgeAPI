@@ -8,6 +8,8 @@ final class ExpenseTransactionRouteTests: XCTestCase {
         try await withApp(configure: { app in
             app.databases.use(.sqlite(.memory), as: .sqlite)
             app.migrations.add(CreateExpenseTransactions())
+            app.migrations.add(AddTransactionImage())
+            app.migrations.add(CreateFileMetadata())
             try await app.autoMigrate()
             registerExpenseTransactionRoutes(app)
         }) { app in
@@ -25,7 +27,8 @@ final class ExpenseTransactionRouteTests: XCTestCase {
                 paidPrice: 7.50,
                 total: 15.00,
                 discount: 1.00,
-                notes: "Test transaction."
+                notes: "Test transaction.",
+                image: nil
             )
 
             try await app.test(.POST, "transactions", beforeRequest: { request in
@@ -66,7 +69,8 @@ final class ExpenseTransactionRouteTests: XCTestCase {
                 paidPrice: 7.00,
                 total: 14.00,
                 discount: 2.00,
-                notes: "Updated transaction."
+                notes: "Updated transaction.",
+                image: nil
             )
 
             try await app.test(.PUT, "transactions/TRX-0001", beforeRequest: { request in
@@ -92,6 +96,8 @@ final class ExpenseTransactionRouteTests: XCTestCase {
         try await withApp(configure: { app in
             app.databases.use(.sqlite(.memory), as: .sqlite)
             app.migrations.add(CreateExpenseTransactions())
+            app.migrations.add(AddTransactionImage())
+            app.migrations.add(CreateFileMetadata())
             try await app.autoMigrate()
             registerExpenseTransactionRoutes(app)
         }) { app in
@@ -109,7 +115,8 @@ final class ExpenseTransactionRouteTests: XCTestCase {
                 paidPrice: -1,
                 total: nil,
                 discount: nil,
-                notes: nil
+                notes: nil,
+                image: nil
             )
 
             try await app.test(.POST, "transactions", beforeRequest: { request in
@@ -130,6 +137,85 @@ final class ExpenseTransactionRouteTests: XCTestCase {
 
             try await app.test(.DELETE, "transactions/MISSING") { response async throws in
                 XCTAssertEqual(response.status, .notFound)
+            }
+        }
+    }
+
+    func testExpenseTransactionCanExposeFileMetadataReference() async throws {
+        try await withApp(configure: { app in
+            app.databases.use(.sqlite(.memory), as: .sqlite)
+            app.migrations.add(CreateExpenseTransactions())
+            app.migrations.add(AddTransactionImage())
+            app.migrations.add(CreateFileMetadata())
+            try await app.autoMigrate()
+            registerExpenseTransactionRoutes(app)
+        }) { app in
+            let metadata = FileMetadata(
+                id: "FILE-0001",
+                relativePath: "transactions/TRX-0001/receipt.png",
+                fileName: "receipt.png",
+                fileKind: "receipt",
+                mimeType: "image/png",
+                byteSize: 128,
+                ownerType: "ExpenseTransaction",
+                ownerID: "TRX-0001"
+            )
+            try await metadata.save(on: app.db)
+
+            let payload = ExpenseTransactionRequest(
+                id: "TRX-0001",
+                receiptID: nil,
+                item: "Test receipt",
+                firstReceiptItem: true,
+                categoryID: 10,
+                subcategoryID: nil,
+                merchantCode: nil,
+                transactionDate: "2026-10-10",
+                quantity: 1,
+                regularPrice: 12,
+                paidPrice: 12,
+                total: 12,
+                discount: nil,
+                notes: nil,
+                image: "FILE-0001"
+            )
+
+            try await app.test(.POST, "transactions", beforeRequest: { request in
+                try request.content.encode(payload)
+            }) { response async throws in
+                XCTAssertEqual(response.status, .ok)
+                let transaction = try response.content.decode(ExpenseTransaction.self)
+                XCTAssertEqual(transaction.image, "FILE-0001")
+            }
+
+            try await app.test(.GET, "transactions/TRX-0001/image") { response async throws in
+                XCTAssertEqual(response.status, .ok)
+                let returnedMetadata = try response.content.decode(FileMetadata.self)
+                XCTAssertEqual(returnedMetadata.id, "FILE-0001")
+                XCTAssertEqual(returnedMetadata.relativePath, "transactions/TRX-0001/receipt.png")
+            }
+
+            try await app.test(.POST, "transactions", beforeRequest: { request in
+                let invalidReference = ExpenseTransactionRequest(
+                    id: "TRX-0002",
+                    receiptID: payload.receiptID,
+                    item: payload.item,
+                    firstReceiptItem: payload.firstReceiptItem,
+                    categoryID: payload.categoryID,
+                    subcategoryID: payload.subcategoryID,
+                    merchantCode: payload.merchantCode,
+                    transactionDate: payload.transactionDate,
+                    quantity: payload.quantity,
+                    regularPrice: payload.regularPrice,
+                    paidPrice: payload.paidPrice,
+                    total: payload.total,
+                    discount: payload.discount,
+                    notes: payload.notes,
+                    image: "FILE-MISSING"
+                )
+                try request.content.encode(invalidReference)
+            }) { response async throws in
+                XCTAssertEqual(response.status, .unprocessableEntity)
             }
         }
     }

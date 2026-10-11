@@ -56,6 +56,10 @@ final class ExpenseTransaction: Model, Content, @unchecked Sendable {
     @OptionalField(key: "Notes")
     var notes: String?
 
+    // Stores the FileMetadataID for an attached image, never the image bytes.
+    @OptionalField(key: "Image")
+    var image: String?
+
     // DateCreated and DateUpdated remain database-managed text columns.
 
     init() {}
@@ -76,7 +80,8 @@ final class ExpenseTransaction: Model, Content, @unchecked Sendable {
         paidPrice: Double? = nil,
         total: Double? = nil,
         discount: Double? = nil,
-        notes: String? = nil
+        notes: String? = nil,
+        image: String? = nil
     ) {
         self.id = id
         self.receiptID = receiptID
@@ -92,5 +97,6 @@ final class ExpenseTransaction: Model, Content, @unchecked Sendable {
         self.total = total
         self.discount = discount
         self.notes = notes
+        self.image = image
     }
 }

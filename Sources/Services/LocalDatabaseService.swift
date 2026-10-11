@@ -21,6 +21,7 @@ enum LocalDatabaseProfile: String, Codable, CaseIterable, Sendable {
             "CreateBudgetCategories",
             "CreateBudgetSubcategories",
             "CreateExpenseTransactions",
+            "AddTransactionImage",
             "CreateEmojiLabelDefinitions",
             "CreateFileMetadata",
             "CreateServiceAccounts",
@@ -41,6 +42,7 @@ enum LocalDatabaseProfile: String, Codable, CaseIterable, Sendable {
             app.migrations.add(CreateBudgetCategories())
             app.migrations.add(CreateBudgetSubcategories())
             app.migrations.add(CreateExpenseTransactions())
+            app.migrations.add(AddTransactionImage())
             app.migrations.add(CreateEmojiLabelDefinitions())
             app.migrations.add(CreateFileMetadata())
             app.migrations.add(CreateServiceAccounts())
