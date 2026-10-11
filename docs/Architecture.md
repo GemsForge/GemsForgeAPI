@@ -102,7 +102,7 @@ GemsForgeAPI/
 │       ├── HealthTests.swift
 │       ├── DomainRouteTests.swift
 │       ├── ExpenseTransactionRouteTests.swift
-│       └── FileMetadataRouteTests.swift
+│       ├── FileMetadataRouteTests.swift
 │       └── ServiceAccountRouteTests.swift
 └── docs/
     ├── Architecture.md
