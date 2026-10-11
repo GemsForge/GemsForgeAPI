@@ -1,4 +1,4 @@
-import type { Domain, ForgeKeeperPage, ForgeKeeperPatch, GemHue } from "./types";
+import type { Domain, Education, ForgeKeeperPage, ForgeKeeperPatch, GemHue } from "./types";
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const response = await fetch(path, {
@@ -28,4 +28,7 @@ export const api = {
   listGemHues: () => request<GemHue[]>("/gemhues"),
   getGemHue: (hueID: string) => request<GemHue>(`/gemhues/${encodeURIComponent(hueID)}`),
   getGemHueImage: (hueID: string) => fetch(`/gemhues/${encodeURIComponent(hueID)}/image`),
+  listEducation: () => request<Education[]>("/education"),
+  getEducation: (educationID: string) =>
+    request<Education>(`/education/${encodeURIComponent(educationID)}`),
 };
