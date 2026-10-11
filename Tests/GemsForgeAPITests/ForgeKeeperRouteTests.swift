@@ -150,4 +150,61 @@ final class ForgeKeeperRouteTests: XCTestCase {
             }
         }
     }
+
+    func testForgeKeeperRoutesReadRootsAndImmediateChildren() async throws {
+        try await withApp(configure: { app in
+            app.databases.use(.sqlite(.memory), as: .sqlite)
+            app.migrations.add(CreateDomains())
+            app.migrations.add(CreateForgeKeeper())
+            try await app.autoMigrate()
+            registerForgeKeeperRoutes(app)
+        }) { app in
+            let life = Domain(id: "LIFE", title: "Life", description: "Life domain.")
+            try await life.create(on: app.db)
+
+            let service = ForgeKeeperService(database: app.db)
+            let root = ForgeKeeper(
+                domainID: "LIFE",
+                title: "Household",
+                description: "Root page."
+            )
+            let child = ForgeKeeper(
+                domainID: "LIFE",
+                title: "Kitchen",
+                description: "Child page."
+            )
+            try await service.save(root)
+            child.$parent.id = try XCTUnwrap(root.id)
+            try await service.save(child)
+
+            try await app.test(.GET, "forgekeeper/roots") { response async throws in
+                XCTAssertEqual(response.status, .ok)
+                let roots = try response.content.decode([ForgeKeeper].self)
+                XCTAssertEqual(roots.map(\.title), ["Household"])
+                XCTAssertNil(roots.first?.$parent.id)
+            }
+
+            try await app.test(.GET, "forgekeeper/\(try XCTUnwrap(root.id))/children") { response async throws in
+                XCTAssertEqual(response.status, .ok)
+                let children = try response.content.decode([ForgeKeeper].self)
+                XCTAssertEqual(children.map(\.title), ["Kitchen"])
+                XCTAssertEqual(children.first?.$parent.id, root.id)
+                XCTAssertEqual(children.first?.$domain.id, "LIFE")
+            }
+        }
+    }
+
+    func testForgeKeeperChildrenRouteReturnsNotFoundForMissingParent() async throws {
+        try await withApp(configure: { app in
+            app.databases.use(.sqlite(.memory), as: .sqlite)
+            app.migrations.add(CreateDomains())
+            app.migrations.add(CreateForgeKeeper())
+            try await app.autoMigrate()
+            registerForgeKeeperRoutes(app)
+        }) { app in
+            try await app.test(.GET, "forgekeeper/999/children") { response async throws in
+                XCTAssertEqual(response.status, .notFound)
+            }
+        }
+    }
 }

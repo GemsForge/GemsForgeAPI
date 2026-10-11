@@ -33,6 +33,22 @@ struct ForgeKeeperService: Sendable {
             .all()
     }
 
+    /// Returns root pages that do not have a parent page.
+    func listRoots() async throws -> [ForgeKeeper] {
+        try await ForgeKeeper.query(on: database)
+            .filter(\.$parent.$id == nil)
+            .sort(\.$title)
+            .all()
+    }
+
+    /// Returns the immediate child pages belonging to one parent page.
+    func listChildren(of parentID: Int) async throws -> [ForgeKeeper] {
+        try await ForgeKeeper.query(on: database)
+            .filter(\.$parent.$id == parentID)
+            .sort(\.$title)
+            .all()
+    }
+
     /// Returns one ForgeKeeper page by its database identifier.
     func find(id: Int) async throws -> ForgeKeeper? {
         try await ForgeKeeper.find(id, on: database)
