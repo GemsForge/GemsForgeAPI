@@ -91,27 +91,28 @@ code should import only the library it directly uses.
 
 ## Database flow
 
-`Sources/DatabaseConfiguration.swift` registers the SQLite file and adds the
-migrations in dependency order:
+`Sources/DatabaseConfiguration.swift` registers the existing Gem Life SQLite
+file. The application does not automatically create or migrate these tables at
+startup because they already exist outside the API project.
 
-```text
-CreateDomains
-    ↓
-CreateForgeKeeper
-```
+The test target uses isolated in-memory SQLite databases and registers test
+migrations that mirror the existing schema. Those test migrations are not
+executed against the Gem Life database.
 
-`forgekeeper.domain_id` references `domains.id`, so the domains table must be
-created first. Fluent applies migrations when the application starts. The
-database path defaults to `GemsForgeAPI.sqlite` and can be overridden with the
-`DATABASE_PATH` environment variable.
+The existing table relationship is:
 
-The current Gem Life structure is:
-
-```text
 domains
     └── forgekeeper
             └── parent/child pages
 ```
+
+`ForgeKeeper.DomainID` references `Domains.DomainID`, so the Domains table is
+the parent table. The API model maps to the existing names, including
+`DomainID`, `Description`, `DateCreated`, and `DateUpdated`.
+
+The database path is supplied through the required `DATABASE_PATH` environment
+variable. The real local value is kept in Xcode's Scheme settings rather than
+in source code.
 
 The four root domain identifiers are `POS`, `FOUNDATION`, `LIFE`, and
 `KNOWLEDGE`. These identifiers are stable values and should not be casually

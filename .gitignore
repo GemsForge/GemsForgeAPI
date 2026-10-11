@@ -3,10 +3,18 @@
 DerivedData/
 *.xcodeproj/xcuserdata/
 *.xcworkspace/xcuserdata/
-GemsForgeAPI.sqlite
-GemsForgeAPI.sqlite-shm
-GemsForgeAPI.sqlite-wal
+
+# Local SQLite databases and SQLite journal files.
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+
+# Local environment files; keep only the safe template in Git.
 .env
+.env.*
+!.env.example
+
+# macOS metadata.
 .DS_Store
 
 # Personal chronological setup notes; kept locally and not committed.

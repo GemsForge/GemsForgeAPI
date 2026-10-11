@@ -3,21 +3,28 @@ import FluentSQLiteDriver
 import Vapor
 
 extension Application {
-    /// Registers the SQLite database used by the local development environment.
+    /// Registers the SQLite database selected by the local environment.
     ///
-    /// `DATABASE_PATH` can override the default database filename without
-    /// requiring a source-code change.
-    func configureDatabase() {
+    /// The application requires `DATABASE_PATH` so it cannot silently connect
+    /// to a different SQLite file.
+    func configureDatabase() throws {
+        guard let databasePath = Environment.get("DATABASE_PATH"),
+              !databasePath.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        else {
+            throw DatabaseConfigurationError.missingDatabasePath
+        }
+
         databases.use(
-            .sqlite(
-                .file(Environment.get("DATABASE_PATH") ?? "GemsForgeAPI.sqlite")
-            ),
+            .sqlite(.file(databasePath)),
             as: .sqlite
         )
+    }
+}
 
-        // Fluent runs migrations in the order they are registered. The order
-        // matters because each child table references its parent table.
-        migrations.add(CreateDomains())
-        migrations.add(CreateForgeKeeper())
+enum DatabaseConfigurationError: Error, CustomStringConvertible {
+    case missingDatabasePath
+
+    var description: String {
+        "DATABASE_PATH is required. Configure it in the Xcode Scheme or export it before starting the API."
     }
 }

@@ -1,20 +1,19 @@
 import Fluent
 
-/// Creates the four top-level Gem Life domains.
+/// Defines the existing Domains schema for isolated tests.
 struct CreateDomains: AsyncMigration {
     func prepare(on database: any Database) async throws {
-        try await database.schema("domains")
-            .field("id", .string, .identifier(auto: false))
-            .field("title", .string, .required)
-            .field("description", .string, .required)
-            .field("notes", .string)
-            .field("created_at", .datetime)
-            .field("updated_at", .datetime)
-            .unique(on: "title")
+        try await database.schema("Domains")
+            .field("DomainID", .string, .identifier(auto: false))
+            .field("Title", .string, .required)
+            .field("Description", .string)
+            .field("DateCreated", .datetime, .required)
+            .field("DateUpdated", .datetime, .required)
+            .unique(on: "Title")
             .create()
     }
 
     func revert(on database: any Database) async throws {
-        try await database.schema("domains").delete()
+        try await database.schema("Domains").delete()
     }
 }

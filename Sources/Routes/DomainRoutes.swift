@@ -5,7 +5,6 @@ struct DomainRequest: Content {
     let id: String?
     let title: String
     let description: String
-    let notes: String?
 }
 
 private func validate(_ input: DomainRequest) throws {
@@ -37,8 +36,7 @@ func registerDomainRoutes(_ app: Application) {
         let domain = Domain(
             id: input.id,
             title: input.title,
-            description: input.description,
-            notes: input.notes
+            description: input.description
         )
 
         try await DomainService(database: request.db).save(domain)
@@ -66,7 +64,6 @@ func registerDomainRoutes(_ app: Application) {
         try validate(input)
         domain.title = input.title
         domain.description = input.description
-        domain.notes = input.notes
         try await DomainService(database: request.db).save(domain)
         return domain
     }
