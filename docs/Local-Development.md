@@ -74,8 +74,8 @@ http://127.0.0.1:8080/
 ```
 
 Both consoles display stable domains, retrieve ForgeKeeper pages, navigate to
-immediate children, exercise page PATCH requests, and render Gem Hue records
-and image previews. The Notes upload area is currently a design placeholder
+immediate children, exercise page PATCH requests, render Gem Hue records and
+image previews, and read Education records. The Notes upload area is currently a design placeholder
 because page creation/import has not yet been defined as an API workflow. See
 [`Testing-Console.md`](Testing-Console.md).
 
