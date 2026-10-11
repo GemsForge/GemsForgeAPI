@@ -21,6 +21,8 @@ The project currently includes:
 - ForgeKeeper read, hierarchy, and partial-update endpoints.
 - Education model, CRUD service, and routes mapped to the existing Life-area
   table.
+- Employment model, CRUD service, and routes mapped to the existing Life-area
+  table.
 - A local React + TypeScript testing console for domains, ForgeKeeper pages,
   Gem Hues, and Education, with the original HTML prototype retained as a
   fallback.
@@ -94,6 +96,9 @@ current Notes-import boundary.
   mapping, endpoints, configuration, and verification checkpoint.
 - [`docs/Education.md`](docs/Education.md) documents the Education table
   mapping, service operations, endpoint contract, and migration boundary.
+- [`docs/Employment.md`](docs/Employment.md) documents the Employment table
+  mapping, service operations, endpoint contract, sensitive fields, and
+  migration boundary.
 
 ## Dependencies
 
