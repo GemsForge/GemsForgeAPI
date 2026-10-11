@@ -45,6 +45,14 @@ final class ApprovedSchemaChangeRouteTests: XCTestCase {
             XCTAssertTrue(fileMetadata.columns.contains { $0.name == "DomainID" })
             XCTAssertTrue(fileMetadata.indexes.contains { $0.name == "idx_FileMetadata_RelativePath" })
             XCTAssertTrue(fileMetadata.foreignKeys.contains { $0.column == "DomainID" && $0.referencedTable == "Domains" })
+
+            try await app.test(.GET, "live-database/migrations/history") { response async throws in
+                XCTAssertEqual(response.status, .ok)
+                let history = try response.content.decode([SchemaMigrationAudit].self)
+                XCTAssertEqual(history.count, ApprovedSchemaChange.allCases.count)
+                XCTAssertTrue(history.allSatisfy { $0.result == "succeeded" })
+                XCTAssertTrue(history.allSatisfy { $0.databaseIdentity == sourceURL.lastPathComponent })
+            }
         }
     }
 
