@@ -73,4 +73,81 @@ final class ForgeKeeperRouteTests: XCTestCase {
             }
         }
     }
+
+    func testForgeKeeperRoutePatchesEditableFieldsWithoutChangingIdentity() async throws {
+        try await withApp(configure: { app in
+            app.databases.use(.sqlite(.memory), as: .sqlite)
+            app.migrations.add(CreateDomains())
+            app.migrations.add(CreateForgeKeeper())
+            try await app.autoMigrate()
+            registerForgeKeeperRoutes(app)
+        }) { app in
+            let life = Domain(id: "LIFE", title: "Life", description: "Life domain.")
+            try await life.create(on: app.db)
+
+            let service = ForgeKeeperService(database: app.db)
+            let parent = ForgeKeeper(
+                domainID: "LIFE",
+                title: "Household",
+                description: "Household pages."
+            )
+            let page = ForgeKeeper(
+                domainID: "LIFE",
+                title: "Old title",
+                description: "Old description."
+            )
+            try await service.save(parent)
+            try await service.save(page)
+            let originalID = try XCTUnwrap(page.id)
+
+            try await app.test(.PATCH, "forgekeeper/\(originalID)", beforeRequest: { request in
+                try request.content.encode(ForgeKeeperPatchRequest(
+                    title: "Updated title",
+                    description: "Updated description.",
+                    parentID: try XCTUnwrap(parent.id)
+                ))
+            }) { response async throws in
+                XCTAssertEqual(response.status, .ok)
+                let updated = try response.content.decode(ForgeKeeper.self)
+                XCTAssertEqual(updated.id, originalID)
+                XCTAssertEqual(updated.title, "Updated title")
+                XCTAssertEqual(updated.description, "Updated description.")
+                XCTAssertEqual(updated.$domain.id, "LIFE")
+                XCTAssertEqual(updated.$parent.id, parent.id)
+            }
+        }
+    }
+
+    func testForgeKeeperPatchRejectsInvalidParentAndEmptyRequest() async throws {
+        try await withApp(configure: { app in
+            app.databases.use(.sqlite(.memory), as: .sqlite)
+            app.migrations.add(CreateDomains())
+            app.migrations.add(CreateForgeKeeper())
+            try await app.autoMigrate()
+            registerForgeKeeperRoutes(app)
+        }) { app in
+            let life = Domain(id: "LIFE", title: "Life", description: "Life domain.")
+            try await life.create(on: app.db)
+
+            let page = ForgeKeeper(
+                domainID: "LIFE",
+                title: "Page",
+                description: "Page description."
+            )
+            try await ForgeKeeperService(database: app.db).save(page)
+            let id = try XCTUnwrap(page.id)
+
+            try await app.test(.PATCH, "forgekeeper/\(id)", beforeRequest: { request in
+                try request.content.encode(ForgeKeeperPatchRequest())
+            }) { response async throws in
+                XCTAssertEqual(response.status, .badRequest)
+            }
+
+            try await app.test(.PATCH, "forgekeeper/\(id)", beforeRequest: { request in
+                try request.content.encode(ForgeKeeperPatchRequest(parentID: 999))
+            }) { response async throws in
+                XCTAssertEqual(response.status, .badRequest)
+            }
+        }
+    }
 }
