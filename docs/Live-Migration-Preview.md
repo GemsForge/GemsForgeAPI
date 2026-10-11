@@ -30,8 +30,16 @@ additional safeguards.
 4. Create and verify a database backup.
 5. Ask the user to confirm the exact preview.
 6. Confirm the short-lived token.
-7. Execute only the approved operation through the later schema workflow.
+7. Execute only the approved operation through `POST /live-database/migrations/execute`.
 
 The preview/confirmation service is intentionally not an arbitrary SQL runner.
 It gives the UI a reviewable contract while keeping schema execution in the
 separate approved-table issue.
+
+## Current approved table
+
+Issue #74 starts with the `file-metadata` table. Its schema is defined on the
+server by the existing `CreateFileMetadata` migration. The browser can request
+that named table, but it cannot submit its own columns or SQL. Execution first
+checks the token, verifies the table is absent, creates a backup, applies the
+server-side migration, and re-inspects the schema.
