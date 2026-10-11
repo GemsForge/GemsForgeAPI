@@ -8,6 +8,18 @@ struct LiveDatabaseBackupConfiguration: Sendable {
     let sourceURL: URL
     let destinationDirectory: URL
 
+    static func fromEnvironment() -> Self? {
+        guard let sourcePath = Environment.get("DATABASE_PATH"),
+              let destinationPath = Environment.get("LIVE_DATABASE_BACKUP_DIRECTORY") else {
+            return nil
+        }
+
+        return Self(
+            sourceURL: URL(fileURLWithPath: sourcePath).standardizedFileURL,
+            destinationDirectory: URL(fileURLWithPath: destinationPath).standardizedFileURL
+        )
+    }
+
     var isReady: Bool {
         let fileManager = FileManager.default
         var sourceIsDirectory = ObjCBool(false)
