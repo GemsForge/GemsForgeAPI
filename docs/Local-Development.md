@@ -110,6 +110,37 @@ SQLite database files,
 credentials, environment files, Xcode derived data, or personal setup notes.
 The repository `.gitignore` protects these local-only files.
 
+## Create an isolated local database
+
+The API can create a new SQLite file for development and testing. This feature
+is disabled by default and is separate from the personal database selected by
+`DATABASE_PATH`.
+
+1. Create a dedicated local directory yourself, such as:
+
+   ```text
+   /Users/your-name/GemsForgeAPI-local-databases
+   ```
+
+2. Set these environment variables in the Xcode Run scheme or terminal:
+
+   ```text
+   LOCAL_DATABASE_CREATION_ENABLED=true
+   LOCAL_DATABASE_DIRECTORY=/absolute/path/to/local/test-databases
+   ```
+
+3. Open the React testing console and select **Developer → Local Databases**.
+
+The console sends only a database filename and migration profile. It never
+sends an absolute filesystem path. The API accepts simple `.sqlite` filenames,
+requires explicit confirmation, rejects path traversal, refuses to overwrite
+existing files, and protects the personal `DATABASE_PATH` file. The approved
+`gem-life-development` profile applies the isolated migrations listed in
+[`Local-Database-Creation.md`](Local-Database-Creation.md).
+
+Keep this capability local. Do not expose the route through a public or
+forwarded network connection.
+
 ## Development workflow
 
 Each meaningful change should have its own issue and feature branch based on
