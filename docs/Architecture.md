@@ -52,23 +52,39 @@ GemsForgeAPI/
 │   ├── main.swift
 │   ├── DatabaseConfiguration.swift
 │   ├── Migrations/
+│   │   ├── CreateAddresses.swift
 │   │   ├── CreateDomains.swift
-│   │   └── CreateForgeKeeper.swift
+│   │   ├── CreateEducation.swift
+│   │   ├── CreateEmployment.swift
+│   │   ├── CreateForgeKeeper.swift
+│   │   ├── CreateGemHues.swift
+│   │   └── CreateGemHueImages.swift
 │   ├── Models/
 │   │   ├── DTOs/
+│   │   │   ├── AddressDTOs.swift
 │   │   │   └── ForgeKeeperPatchRequest.swift
 │   │   └── Table/
+│   │       ├── Address.swift
 │   │       ├── Domain.swift
 │   │       ├── Education.swift
-│   │       └── ForgeKeeper.swift
+│   │       ├── Employment.swift
+│   │       ├── ForgeKeeper.swift
+│   │       ├── GemHue.swift
+│   │       └── GemHueImage.swift
 │   ├── Routes/
+│   │   ├── AddressRoutes.swift
 │   │   ├── DomainRoutes.swift
 │   │   ├── EducationRoutes.swift
-│   │   └── ForgeKeeperRoutes.swift
+│   │   ├── EmploymentRoutes.swift
+│   │   ├── ForgeKeeperRoutes.swift
+│   │   └── GemHueRoutes.swift
 │   └── Services/
+│       ├── AddressService.swift
 │       ├── DomainService.swift
 │       ├── EducationService.swift
-│       └── ForgeKeeperService.swift
+│       ├── EmploymentService.swift
+│       ├── ForgeKeeperService.swift
+│       └── GemHueService.swift
 ├── Tests/
 │   └── GemsForgeAPITests/
 │       ├── HealthTests.swift
@@ -85,7 +101,8 @@ GemsForgeAPI/
 `Sources/main.swift` is the executable entry point. It:
 
 1. Creates a Vapor `Application`.
-2. Calls `app.configureDatabase()` to register SQLite and migrations.
+2. Calls `app.configureDatabase()` to register the SQLite database selected by
+   `DATABASE_PATH`.
 3. Registers the health endpoint.
 4. Registers the domain routes.
 5. Starts the server with `app.execute()`.
@@ -111,9 +128,9 @@ code should import only the library it directly uses.
 ## Database flow
 
 `Sources/DatabaseConfiguration.swift` registers the existing Gem Life SQLite
-file. The application does not automatically create or migrate these tables at
-startup because they already exist outside the API project. The migrations in
-the repository mirror the schema for isolated tests.
+file selected by `DATABASE_PATH`. The application does not automatically create
+or migrate these tables at startup because they already exist outside the API
+project. The migrations in the repository mirror the schema for isolated tests.
 
 The test target uses isolated in-memory SQLite databases and registers test
 migrations that mirror the existing schema. Those test migrations are not
@@ -121,6 +138,7 @@ executed against the Gem Life database.
 
 The existing table relationship is:
 
+```text
 domains
     └── forgekeeper
             └── parent/child pages
@@ -157,6 +175,13 @@ Employment feature files are organized with the other table-backed features:
 - `Sources/Migrations/CreateEmployment.swift` supports isolated tests only.
 - `Tests/GemsForgeAPITests/EmploymentRouteTests.swift` verifies the route
   behavior with an in-memory database.
+
+Gem Hues are Foundation reference data rather than a domain child. Their table
+and image model, service, and routes live alongside the other table-backed
+features. Education, Employment, and Addresses are classified as Life-area
+data, but their existing tables do not contain a `DomainID`; the API preserves
+that schema instead of inventing a relationship. Address references are
+expanded into response DTOs when they resolve.
 
 ## Testing boundary
 

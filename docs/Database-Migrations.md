@@ -15,9 +15,10 @@ The model describes how Swift reads and writes records. The migration describes
 how the corresponding database table is created. Both sides need to agree on
 table names and column names.
 
-The migrations in this repository mirror the existing `Domains` and
-`ForgeKeeper` tables for isolated tests. They are not startup instructions for
-the real Gem Life database.
+The migrations in this repository mirror the existing Gem Life tables for
+isolated tests. They are not startup instructions for the real Gem Life
+database. Migrations change schema; services read and change records in an
+already-existing schema.
 
 ## Why the order matters
 
@@ -55,3 +56,5 @@ database.schema("domains")
 The migration files are located in `Sources/Migrations/` and are registered by
 the test application setup. The production-style application connects to the
 existing database through `DATABASE_PATH` without running these migrations.
+Each schema change should use a focused migration rather than editing an older
+migration that may already have run elsewhere.

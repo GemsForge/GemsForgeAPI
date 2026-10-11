@@ -25,10 +25,13 @@ The project currently includes:
   table.
 - Addresses model, CRUD service, and routes mapped to the existing Life-area
   table, with embedded address responses for Education and Employment.
+- Gem Hues model, image model, read services, and routes mapped to Foundation
+  reference data.
 - A local React + TypeScript testing console for domains, ForgeKeeper pages,
   Gem Hues, Education, Employment, and Addresses, with the original HTML prototype retained as a
   fallback.
-- Automated health, domain, and ForgeKeeper endpoint tests.
+- Automated route, service, model, and integration-focused tests using isolated
+  in-memory databases.
 
 Authentication, production hosting, and remote private-network access remain planned work.
 
@@ -69,7 +72,9 @@ GemsForgeAPI/
     ├── ForgeKeeper.md
     ├── Education.md
     ├── Local-Development.md
-    └── Services.md
+    ├── Services.md
+    ├── Addresses.md
+    └── Testing-Console.md
 ```
 
 The active local browser testing console is the React + TypeScript project in
@@ -103,6 +108,8 @@ current Notes-import boundary.
   migration boundary.
 - [`docs/Addresses.md`](docs/Addresses.md) documents the Addresses table,
   endpoints, migration boundary, and embedded address responses.
+- [`docs/Testing-Console.md`](docs/Testing-Console.md) documents the active
+  React testing console, supported read workflows, and API proxy.
 
 ## Dependencies
 
@@ -114,10 +121,12 @@ Swift Package Manager resolves the exact dependency versions recorded in `Packag
 
 ## Database configuration
 
-The API uses SQLite during initial development. By default, the database file is created as:
+The API uses SQLite during initial development. There is no implicit database
+fallback: the application requires an explicit `DATABASE_PATH` value so it
+cannot silently connect to or create the wrong file.
 
 ```text
-GemsForgeAPI.sqlite
+/absolute/path/to/GemLife_DB_rebuild.sqlite
 ```
 
 The API connects to the SQLite database selected through the required
@@ -130,12 +139,16 @@ The API connects to the SQLite database selected through the required
 The API does not create or migrate the existing production-style tables during
 startup. See [`.env.example`](.env.example) for the configuration placeholder.
 
+The committed `.env.example` is documentation only. The real `.env` file, if
+used for terminal development, is local and ignored. Xcode users can set the
+same variable in the Run scheme instead.
+
 ## Running the project
 
 Open the project directory in Xcode:
 
 ```text
-/Users/gemsforge/GemsForgeAPI
+<path-to-clone>/GemsForgeAPI
 ```
 
 The project can also be built and tested with Swift Package Manager:
@@ -143,6 +156,13 @@ The project can also be built and tested with Swift Package Manager:
 ```bash
 swift build
 swift test
+```
+
+To run the API against a selected database:
+
+```bash
+DATABASE_PATH="/absolute/path/to/GemLife_DB_rebuild.sqlite" \
+swift run GemsForgeAPI serve --hostname 127.0.0.1 --port 8080
 ```
 
 The current verification checkpoint is the health test:
