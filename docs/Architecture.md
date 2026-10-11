@@ -143,6 +143,21 @@ Education is currently classified conceptually as Life-area data, but its table
 does not contain a `DomainID` relationship. The API preserves that schema and
 does not force Education records into the Domains hierarchy.
 
+Employment is also classified conceptually as Life-area data, but its table
+does not contain a `DomainID` relationship. The API preserves that schema and
+does not force Employment records into the Domains hierarchy. Its employer
+contact fields are sensitive and should remain behind local or authenticated
+access.
+
+Employment feature files are organized with the other table-backed features:
+
+- `Sources/Models/Table/Employment.swift` maps the existing table.
+- `Sources/Services/EmploymentService.swift` owns persistence operations.
+- `Sources/Routes/EmploymentRoutes.swift` exposes the HTTP contract.
+- `Sources/Migrations/CreateEmployment.swift` supports isolated tests only.
+- `Tests/GemsForgeAPITests/EmploymentRouteTests.swift` verifies the route
+  behavior with an in-memory database.
+
 ## Testing boundary
 
 Route tests create an application configured with an in-memory SQLite database,

@@ -111,3 +111,24 @@ try await service.delete(id: pageID)
 
 Deletion is currently used by isolated tests and remains separate from the
 read-focused production workflow until a deliberate API endpoint is approved.
+
+## EmploymentService
+
+`EmploymentService` performs persistence operations for Life-area employment
+records in the existing `Employment` table. The table is not linked to
+`Domains`, so the service does not apply a domain filter.
+
+```text
+Employment route
+    ↓
+EmploymentService
+    ↓
+Employment table model
+    ↓
+Employment table
+```
+
+The service provides `list()`, `find(id:)`, `save(_:)`, and `delete(id:)`.
+`list()` orders records by start date and employer name. The local testing
+console will use the read operations first. See [`Employment.md`](Employment.md)
+for the field map, endpoint contract, and privacy boundary.
