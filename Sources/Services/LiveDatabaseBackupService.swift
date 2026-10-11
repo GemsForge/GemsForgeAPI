@@ -8,6 +8,12 @@ struct LiveDatabaseBackupConfiguration: Sendable {
     let sourceURL: URL
     let destinationDirectory: URL
 
+    /// A safe identifier for audit records that does not disclose the
+    /// database's absolute filesystem path.
+    var databaseIdentity: String {
+        sourceURL.lastPathComponent
+    }
+
     static func fromEnvironment() -> Self? {
         guard let sourcePath = Environment.get("DATABASE_PATH"),
               let destinationPath = Environment.get("LIVE_DATABASE_BACKUP_DIRECTORY") else {
