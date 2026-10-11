@@ -48,3 +48,20 @@
 .database-rules { padding:1rem; border:1px solid rgba(240,189,115,.2); border-radius:.75rem; background:rgba(93,65,36,.12); color:var(--muted); font-size:.76rem; line-height:1.45; }
 .database-rules strong { color:var(--gold); }
 .database-rules p { margin:.35rem 0 0; }
+.schema-layout { display:grid; grid-template-columns:minmax(18rem,.8fr) minmax(0,1.4fr); gap:1rem; align-items:start; }
+.schema-panel { padding:1.3rem; border:1px solid rgba(120,209,189,.24); border-radius:1rem; background:rgba(23,49,56,.42); }
+.schema-table-list { display:grid; gap:.55rem; }
+.schema-table-button { display:grid; grid-template-columns:2.4rem 1fr auto; align-items:center; gap:.75rem; width:100%; padding:.8rem; border:1px solid var(--line); border-radius:.75rem; color:var(--ink); text-align:left; background:rgba(12,27,32,.55); }
+.schema-table-button:hover,.schema-table-button.selected { border-color:rgba(120,209,189,.42); background:var(--panel-light); }
+.schema-table-icon { display:grid; place-items:center; width:2.4rem; height:2.4rem; border-radius:.7rem; background:rgba(120,209,189,.16); color:var(--mint); font-size:1.2rem; }
+.schema-table-button strong,.schema-table-button small { display:block; }
+.schema-table-button small { margin-top:.2rem; color:var(--muted); font-size:.7rem; }
+.schema-columns { display:grid; gap:.5rem; }
+.schema-column { display:flex; justify-content:space-between; align-items:center; gap:1rem; padding:.75rem; border-bottom:1px solid var(--line); }
+.schema-column strong,.schema-column small { display:block; }
+.schema-column small { margin-top:.2rem; color:var(--muted); font-size:.72rem; }
+.schema-column > span { color:var(--gold); font-size:.7rem; white-space:nowrap; }
+.schema-section { margin-top:1.3rem; padding-top:1rem; border-top:1px solid var(--line); }
+.schema-section h4 { margin:0 0 .6rem; color:var(--gold); font-size:.7rem; letter-spacing:.08em; text-transform:uppercase; }
+.schema-section p { margin:.35rem 0 0; color:var(--muted); font-size:.78rem; }
+@media (max-width:760px) { .schema-layout { grid-template-columns:1fr; } }
