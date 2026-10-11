@@ -217,6 +217,19 @@ The route layer verifies that the parent category exists and that the name is
 unique within that parent. See [`Expense-Subcategories.md`](Expense-Subcategories.md)
 for the field map and hierarchy contract.
 
+## EmojiLabelDefinitionService
+
+`EmojiLabelDefinitionService` persists reusable presentation labels in the
+isolated `EmojiLabelDefinitions` registry. It provides:
+
+- `list(includeInactive:)` for active labels or the complete registry.
+- `find(id:)` for one stable label identifier.
+- `save(_:)` for create and update operations.
+- `delete(id:)` for removing an unused definition.
+
+The service does not make emoji part of category or subcategory identity. See
+[`Emoji-Labels.md`](Emoji-Labels.md) for the field map and separation rule.
+
 ## FileMetadataService
 
 `FileMetadataService` persists descriptions of files stored in the local asset

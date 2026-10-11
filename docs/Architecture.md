@@ -59,6 +59,7 @@ GemsForgeAPI/
 │   │   ├── CreateExpenseTransactions.swift
 │   │   ├── CreateBudgetCategories.swift
 │   │   ├── CreateBudgetSubcategories.swift
+│   │   ├── CreateEmojiLabelDefinitions.swift
 │   │   ├── CreateFileMetadata.swift
 │   │   ├── CreateServiceAccounts.swift
 │   │   ├── CreateServiceLogoAssets.swift
@@ -77,6 +78,7 @@ GemsForgeAPI/
 │   │       ├── ExpenseTransaction.swift
 │   │       ├── ExpenseCategory.swift
 │   │       ├── ExpenseSubcategory.swift
+│   │       ├── EmojiLabelDefinition.swift
 │   │       ├── FileMetadata.swift
 │   │       ├── ServiceAccount.swift
 │   │       ├── ServiceLogoAsset.swift
@@ -91,6 +93,7 @@ GemsForgeAPI/
 │   │   ├── ExpenseTransactionRoutes.swift
 │   │   ├── ExpenseCategoryRoutes.swift
 │   │   ├── ExpenseSubcategoryRoutes.swift
+│   │   ├── EmojiLabelDefinitionRoutes.swift
 │   │   ├── FileMetadataRoutes.swift
 │   │   ├── ServiceAccountRoutes.swift
 │   │   ├── ServiceLogoRoutes.swift
@@ -104,6 +107,7 @@ GemsForgeAPI/
 │       ├── ExpenseTransactionService.swift
 │       ├── ExpenseCategoryService.swift
 │       ├── ExpenseSubcategoryService.swift
+│       ├── EmojiLabelDefinitionService.swift
 │       ├── FileMetadataService.swift
 │       ├── ServiceAccountService.swift
 │       ├── ServiceLogoService.swift
@@ -116,6 +120,7 @@ GemsForgeAPI/
 │       ├── ExpenseTransactionRouteTests.swift
 │       ├── ExpenseCategoryRouteTests.swift
 │       ├── ExpenseSubcategoryRouteTests.swift
+│       ├── EmojiLabelDefinitionRouteTests.swift
 │       ├── FileMetadataRouteTests.swift
 │       ├── ServiceAccountRouteTests.swift
 │       └── ServiceLogoRouteTests.swift
@@ -262,6 +267,24 @@ features:
 
 See [`Expense-Subcategories.md`](Expense-Subcategories.md) for the field map,
 relationship rules, and migration boundary.
+
+Emoji Label Definitions are reusable presentation metadata in the isolated
+`EmojiLabelDefinitions` registry. Existing category and subcategory identity
+does not depend on emoji values, and the current real database has no emoji
+columns to remove.
+
+Emoji Label feature files are organized with the other table-backed features:
+
+- `Sources/Models/Table/EmojiLabelDefinition.swift` maps the registry.
+- `Sources/Services/EmojiLabelDefinitionService.swift` owns persistence.
+- `Sources/Routes/EmojiLabelDefinitionRoutes.swift` exposes the HTTP contract.
+- `Sources/Migrations/CreateEmojiLabelDefinitions.swift` supports isolated
+  tests only.
+- `Tests/GemsForgeAPITests/EmojiLabelDefinitionRouteTests.swift` verifies
+  filtering, CRUD, uniqueness, and validation.
+
+See [`Emoji-Labels.md`](Emoji-Labels.md) for the field map and presentation
+boundary.
 
 FileMetadata is the local-file bridge for future image, document, and other
 asset workflows. It stores portable file descriptions in SQLite rather than
