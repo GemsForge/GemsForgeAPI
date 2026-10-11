@@ -148,6 +148,27 @@ existing files, and protects the personal `DATABASE_PATH` file. The approved
 Keep this capability local. Do not expose the route through a public or
 forwarded network connection.
 
+## Local image uploads
+
+The API accepts image uploads at `POST /file-uploads` when
+`ASSET_DIRECTORY` is configured. The directory is intentionally separate from
+the SQLite file. The API writes each upload beneath an `uploads/` subdirectory
+using a generated filename, then stores only its portable relative path and
+metadata in `FileMetadata`.
+
+Configure:
+
+```text
+ASSET_DIRECTORY=/absolute/path/to/your/local-assets
+ASSET_MAX_BYTES=10485760
+```
+
+`ASSET_MAX_BYTES` defaults to 10 MiB. Only image MIME types are accepted, and
+the API rejects path traversal, oversized files, and mismatched owner fields.
+The response never exposes the absolute asset directory. Uploading a file does
+not alter the personal database schema; it creates a `FileMetadata` record in
+the configured database.
+
 ## Development workflow
 
 Each meaningful change should have its own issue and feature branch based on

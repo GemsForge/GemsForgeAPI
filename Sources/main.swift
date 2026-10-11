@@ -38,6 +38,7 @@ enum EntryPoint {
         registerExpenseSubcategoryRoutes(app)
         registerEmojiLabelDefinitionRoutes(app)
         registerFileMetadataRoutes(app)
+        registerLocalImageUploadRoutes(app, configuration: .fromEnvironment())
         registerServiceAccountRoutes(app)
         registerServiceLogoRoutes(app)
         registerForgeKeeperRoutes(app)
