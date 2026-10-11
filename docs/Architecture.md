@@ -57,6 +57,7 @@ GemsForgeAPI/
 │   │   ├── CreateEducation.swift
 │   │   ├── CreateEmployment.swift
 │   │   ├── CreateExpenseTransactions.swift
+│   │   ├── CreateFileMetadata.swift
 │   │   ├── CreateServiceAccounts.swift
 │   │   ├── CreateForgeKeeper.swift
 │   │   ├── CreateGemHues.swift
@@ -71,6 +72,7 @@ GemsForgeAPI/
 │   │       ├── Education.swift
 │   │       ├── Employment.swift
 │   │       ├── ExpenseTransaction.swift
+│   │       ├── FileMetadata.swift
 │   │       ├── ServiceAccount.swift
 │   │       ├── ForgeKeeper.swift
 │   │       ├── GemHue.swift
@@ -81,6 +83,7 @@ GemsForgeAPI/
 │   │   ├── EducationRoutes.swift
 │   │   ├── EmploymentRoutes.swift
 │   │   ├── ExpenseTransactionRoutes.swift
+│   │   ├── FileMetadataRoutes.swift
 │   │   ├── ServiceAccountRoutes.swift
 │   │   ├── ForgeKeeperRoutes.swift
 │   │   └── GemHueRoutes.swift
@@ -90,6 +93,7 @@ GemsForgeAPI/
 │       ├── EducationService.swift
 │       ├── EmploymentService.swift
 │       ├── ExpenseTransactionService.swift
+│       ├── FileMetadataService.swift
 │       ├── ServiceAccountService.swift
 │       ├── ForgeKeeperService.swift
 │       └── GemHueService.swift
@@ -98,10 +102,12 @@ GemsForgeAPI/
 │       ├── HealthTests.swift
 │       ├── DomainRouteTests.swift
 │       ├── ExpenseTransactionRouteTests.swift
+│       ├── FileMetadataRouteTests.swift
 │       └── ServiceAccountRouteTests.swift
 └── docs/
     ├── Architecture.md
     ├── Database-Migrations.md
+    ├── File-Metadata.md
     ├── Local-Development.md
     └── Services.md
 ```
@@ -203,6 +209,24 @@ features:
   only.
 - `Tests/GemsForgeAPITests/ExpenseTransactionRouteTests.swift` verifies CRUD
   behavior with an in-memory database.
+
+FileMetadata is the local-file bridge for future image, document, and other
+asset workflows. It stores portable file descriptions in SQLite rather than
+large binary file contents. The current feature deliberately stops at metadata:
+the upload workflow that writes files to disk will be designed separately.
+
+FileMetadata feature files are organized with the other table-backed features:
+
+- `Sources/Models/Table/FileMetadata.swift` maps the metadata table.
+- `Sources/Services/FileMetadataService.swift` owns metadata persistence only.
+- `Sources/Routes/FileMetadataRoutes.swift` exposes metadata CRUD and safety
+  validation.
+- `Sources/Migrations/CreateFileMetadata.swift` supports isolated tests only.
+- `Tests/GemsForgeAPITests/FileMetadataRouteTests.swift` verifies the route
+  contract and path/ownership validation.
+
+See [`File-Metadata.md`](File-Metadata.md) for the field map, endpoint
+contract, and file-operation boundary.
 
 Service Accounts map the existing `Services` table under the clearer API
 concept used for recurring services and obligations. They are distinct from
