@@ -33,6 +33,7 @@ enum EntryPoint {
         registerExpenseTransactionRoutes(app)
         registerFileMetadataRoutes(app)
         registerServiceAccountRoutes(app)
+        registerServiceLogoRoutes(app)
         registerForgeKeeperRoutes(app)
         registerGemHueRoutes(app)
 

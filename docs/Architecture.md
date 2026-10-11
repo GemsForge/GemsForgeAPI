@@ -59,6 +59,7 @@ GemsForgeAPI/
 │   │   ├── CreateExpenseTransactions.swift
 │   │   ├── CreateFileMetadata.swift
 │   │   ├── CreateServiceAccounts.swift
+│   │   ├── CreateServiceLogoAssets.swift
 │   │   ├── CreateForgeKeeper.swift
 │   │   ├── CreateGemHues.swift
 │   │   └── CreateGemHueImages.swift
@@ -74,6 +75,7 @@ GemsForgeAPI/
 │   │       ├── ExpenseTransaction.swift
 │   │       ├── FileMetadata.swift
 │   │       ├── ServiceAccount.swift
+│   │       ├── ServiceLogoAsset.swift
 │   │       ├── ForgeKeeper.swift
 │   │       ├── GemHue.swift
 │   │       └── GemHueImage.swift
@@ -85,6 +87,7 @@ GemsForgeAPI/
 │   │   ├── ExpenseTransactionRoutes.swift
 │   │   ├── FileMetadataRoutes.swift
 │   │   ├── ServiceAccountRoutes.swift
+│   │   ├── ServiceLogoRoutes.swift
 │   │   ├── ForgeKeeperRoutes.swift
 │   │   └── GemHueRoutes.swift
 │   └── Services/
@@ -95,6 +98,7 @@ GemsForgeAPI/
 │       ├── ExpenseTransactionService.swift
 │       ├── FileMetadataService.swift
 │       ├── ServiceAccountService.swift
+│       ├── ServiceLogoService.swift
 │       ├── ForgeKeeperService.swift
 │       └── GemHueService.swift
 ├── Tests/
@@ -103,12 +107,14 @@ GemsForgeAPI/
 │       ├── DomainRouteTests.swift
 │       ├── ExpenseTransactionRouteTests.swift
 │       ├── FileMetadataRouteTests.swift
-│       └── ServiceAccountRouteTests.swift
+│       ├── ServiceAccountRouteTests.swift
+│       └── ServiceLogoRouteTests.swift
 └── docs/
     ├── Architecture.md
     ├── Database-Migrations.md
     ├── File-Metadata.md
     ├── Local-Development.md
+    ├── Service-Logos.md
     └── Services.md
 ```
 
@@ -236,6 +242,25 @@ name and existing identifiers while exposing `/service-accounts` routes.
 The Service Account migration is test-only; the production API does not create
 or alter the real `Services` table at startup. See
 [`Service-Accounts.md`](Service-Accounts.md) for the field map and relationship
+boundary.
+
+Service Logos map the existing `ServiceLogoAssets` table. The current table
+contains legacy image BLOBs, so the API returns metadata for list/detail
+responses and serves bytes only through an explicit image route. The model is
+not `Content`, preventing accidental BLOB embedding. A future schema change
+can connect the asset to FileMetadata without altering this compatibility
+boundary.
+
+Service Logo feature files are organized with the other table-backed features:
+
+- `Sources/Models/Table/ServiceLogoAsset.swift` maps the existing logo table.
+- `Sources/Services/ServiceLogoService.swift` owns read persistence.
+- `Sources/Routes/ServiceLogoRoutes.swift` exposes metadata and image routes.
+- `Sources/Migrations/CreateServiceLogoAssets.swift` supports isolated tests.
+- `Tests/GemsForgeAPITests/ServiceLogoRouteTests.swift` verifies the response
+  and missing-asset behavior.
+
+See [`Service-Logos.md`](Service-Logos.md) for the field map and migration
 boundary.
 
 Gem Hues are Foundation reference data rather than a domain child. Their table
