@@ -113,6 +113,8 @@ current Notes-import boundary.
   changes and migration ordering.
 - [`docs/Local-Development.md`](docs/Local-Development.md) explains building,
   testing, running, branching, and private-hosting assumptions.
+- [`docs/Live-Schema-Management.md`](docs/Live-Schema-Management.md) explains
+  the reviewed live-schema workflow, audit history, and recovery procedure.
 - [`docs/Services.md`](docs/Services.md) explains the database service layer.
 - [`docs/ForgeKeeper.md`](docs/ForgeKeeper.md) documents the existing schema
   mapping, endpoints, configuration, and verification checkpoint.
