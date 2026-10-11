@@ -110,6 +110,11 @@ SQLite database files,
 credentials, environment files, Xcode derived data, or personal setup notes.
 The repository `.gitignore` protects these local-only files.
 
+For the planned live schema workflow, configure a separate backup directory
+with `LIVE_DATABASE_BACKUP_DIRECTORY`. The backup service uses SQLite's
+consistent `VACUUM INTO` snapshot operation and never replaces the source
+database. See [`Live-Database-Backups.md`](Live-Database-Backups.md).
+
 ## Create an isolated local database
 
 The API can create a new SQLite file for development and testing. This feature
