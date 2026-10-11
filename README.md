@@ -23,6 +23,8 @@ The project currently includes:
   table.
 - Employment model, CRUD service, and routes mapped to the existing Life-area
   table.
+- Addresses model, CRUD service, and routes mapped to the existing Life-area
+  table, with embedded address responses for Education and Employment.
 - A local React + TypeScript testing console for domains, ForgeKeeper pages,
   Gem Hues, Education, and Employment, with the original HTML prototype retained as a
   fallback.
@@ -99,6 +101,8 @@ current Notes-import boundary.
 - [`docs/Employment.md`](docs/Employment.md) documents the Employment table
   mapping, service operations, endpoint contract, sensitive fields, and
   migration boundary.
+- [`docs/Addresses.md`](docs/Addresses.md) documents the Addresses table,
+  endpoints, migration boundary, and embedded address responses.
 
 ## Dependencies
 

@@ -132,3 +132,14 @@ The service provides `list()`, `find(id:)`, `save(_:)`, and `delete(id:)`.
 `list()` orders records by start date and employer name. The local testing
 console will use the read operations first. See [`Employment.md`](Employment.md)
 for the field map, endpoint contract, and privacy boundary.
+
+## AddressService
+
+`AddressService` performs persistence operations for the existing `Addresses`
+table. Education and Employment routes use the address model through this
+database boundary when expanding their foreign-key references into response
+objects.
+
+The service provides `list()`, `find(id:)`, `save(_:)`, and `delete(id:)`.
+The Addresses list route applies a summary DTO so street lines, postal codes,
+and notes are not returned in a collection response.
