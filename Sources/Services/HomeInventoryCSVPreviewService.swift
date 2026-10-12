@@ -65,7 +65,7 @@ struct HomeInventoryCSVPreviewService: Sendable {
         for header in headers where !Self.supportedHeaders.contains(header) {
             throw HomeInventoryCSVPreviewError.unsupportedHeader(header)
         }
-        for required in ["InventoryID", "ItemName", "Quantity"] where !headers.contains(required) {
+        for required in ["ItemName", "Quantity"] where !headers.contains(required) {
             throw HomeInventoryCSVPreviewError.missingRequiredHeader(required)
         }
 
@@ -80,13 +80,15 @@ struct HomeInventoryCSVPreviewService: Sendable {
                 continue
             }
 
-            let values = Dictionary(uniqueKeysWithValues: zip(headers, row).map { ($0.0, $0.1.trimmingCharacters(in: .whitespacesAndNewlines)) })
+            var values = Dictionary(uniqueKeysWithValues: zip(headers, row).map { ($0.0, $0.1.trimmingCharacters(in: .whitespacesAndNewlines)) })
             var errors: [String] = []
-            let id = values["InventoryID"] ?? ""
+            let suppliedID = values["InventoryID"] ?? ""
+            let id = suppliedID.isEmpty ? HomeInventoryIdentifier.generate() : suppliedID
+            values["InventoryID"] = id
             let itemName = values["ItemName"] ?? ""
             let quantity = values["Quantity"] ?? ""
 
-            if !HomeInventoryIdentifier.isValid(id) { errors.append("InventoryID must use the INV-0000 format.") }
+            if !HomeInventoryIdentifier.isValid(id) { errors.append("InventoryID must be a valid UUID when supplied.") }
             if itemName.isEmpty { errors.append("ItemName is required.") }
             if Int(quantity).map({ $0 > 0 }) != true { errors.append("Quantity must be a positive whole number.") }
 
@@ -116,6 +118,7 @@ struct HomeInventoryCSVPreviewService: Sendable {
             readyToImport: !validRows.isEmpty && invalidRows.isEmpty,
             warnings: [
                 "Preview only: no database rows were created or changed.",
+                "InventoryID is optional; the API generates a UUID when it is omitted.",
                 "Images are not imported from CSV; attach them through FileMetadata after import."
             ]
         )

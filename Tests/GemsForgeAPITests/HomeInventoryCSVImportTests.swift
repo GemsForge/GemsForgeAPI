@@ -4,7 +4,7 @@ import XCTest
 @testable import GemsForgeAPI
 
 final class HomeInventoryCSVImportTests: XCTestCase {
-    private let validCSV = "InventoryID,ItemName,Category,Description,Quantity,PurchaseDate,PurchasePrice,CurrentValue,Condition,Location,Notes\nINV-0001,Desk lamp,Lighting,Reading lamp,1,2026-10-11,29.99,20.00,Good,Office,\nINV-0002,Chair,Furniture,,2,,,,Fair,Dining room,"
+    private let validCSV = "ItemName,Category,Description,Quantity,PurchaseDate,PurchasePrice,CurrentValue,Condition,Location,Notes\nDesk lamp,Lighting,Reading lamp,1,2026-10-11,29.99,20.00,Good,Office,\nChair,Furniture,,2,,,,Fair,Dining room,"
 
     func testConfirmedCSVImportCreatesTheWholeBatch() async throws {
         try await withApp(configure: { app in
@@ -24,7 +24,8 @@ final class HomeInventoryCSVImportTests: XCTestCase {
             }
 
             let records = try await HomeInventory.query(on: app.db).all()
-            XCTAssertEqual(records.map { $0.id }.compactMap { $0 }.sorted(), ["INV-0001", "INV-0002"])
+            XCTAssertEqual(records.count, 2)
+            XCTAssertTrue(records.compactMap { $0.id }.allSatisfy(HomeInventoryIdentifier.isValid))
         }
     }
 
@@ -36,7 +37,7 @@ final class HomeInventoryCSVImportTests: XCTestCase {
             try await app.autoMigrate()
             registerHomeInventoryCSVRoutes(app)
         }) { app in
-            let invalidCSV = validCSV + "\nBAD-1,Invalid row,, ,0,,,,,,"
+            let invalidCSV = validCSV + "\nnot-a-uuid,Invalid row,, ,0,,,,,,"
             try await app.test(.POST, "home-inventory/import", beforeRequest: { request in
                 try request.content.encode(HomeInventoryCSVImportRequest(csv: invalidCSV, confirmImport: true))
             }) { response in

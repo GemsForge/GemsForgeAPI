@@ -12,7 +12,7 @@ final class HomeInventoryCSVPreviewTests: XCTestCase {
             try await app.autoMigrate()
             registerHomeInventoryCSVRoutes(app)
         }) { app in
-            let csv = "InventoryID,ItemName,Category,Description,Quantity,PurchaseDate,PurchasePrice,CurrentValue,Condition,Location,Notes\nINV-0001,Desk lamp,Lighting,Reading lamp,1,2026-10-11,29.99,20.00,Good,Office,"
+            let csv = "ItemName,Category,Description,Quantity,PurchaseDate,PurchasePrice,CurrentValue,Condition,Location,Notes\nDesk lamp,Lighting,Reading lamp,1,2026-10-11,29.99,20.00,Good,Office,"
             try await app.test(.POST, "home-inventory/import/preview", beforeRequest: { request in
                 try request.content.encode(HomeInventoryCSVPreviewRequest(csv: csv))
             }) { response async throws in
@@ -21,6 +21,7 @@ final class HomeInventoryCSVPreviewTests: XCTestCase {
                 XCTAssertTrue(preview.readyToImport)
                 XCTAssertEqual(preview.validRows.count, 1)
                 XCTAssertTrue(preview.invalidRows.isEmpty)
+                XCTAssertTrue(HomeInventoryIdentifier.isValid(try XCTUnwrap(preview.validRows[0].values["InventoryID"])))
             }
 
             let storedRows = try await HomeInventory.query(on: app.db).all()
@@ -36,7 +37,7 @@ final class HomeInventoryCSVPreviewTests: XCTestCase {
             try await app.autoMigrate()
             registerHomeInventoryCSVRoutes(app)
         }) { app in
-            let csv = "InventoryID,ItemName,Quantity\nINV-0001,Chair,1\nINV-0001,Duplicate chair,1\nBAD-1,Missing valid ID,0"
+            let csv = "InventoryID,ItemName,Quantity\n550E8400-E29B-41D4-A716-446655440000,Chair,1\n550E8400-E29B-41D4-A716-446655440000,Duplicate chair,1\nnot-a-uuid,Missing valid ID,0"
             try await app.test(.POST, "home-inventory/import/preview", beforeRequest: { request in
                 try request.content.encode(HomeInventoryCSVPreviewRequest(csv: csv))
             }) { response async throws in

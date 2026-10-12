@@ -14,7 +14,7 @@ final class HomeInventoryAttachmentRouteTests: XCTestCase {
             registerHomeInventoryRoutes(app)
             registerAttachmentReferenceRoutes(app)
         }) { app in
-            let inventory = HomeInventory(id: "INV-0001", itemName: "Desk lamp")
+            let inventory = HomeInventory(id: "550E8400-E29B-41D4-A716-446655440000", itemName: "Desk lamp")
             try await inventory.create(on: app.db)
 
             let first = FileMetadata(
@@ -35,7 +35,7 @@ final class HomeInventoryAttachmentRouteTests: XCTestCase {
                 AttachmentReferenceRequest(fileMetadataID: "FILE-0002"),
                 AttachmentReferenceRequest(fileMetadataID: nil)
             ] {
-                try await app.test(.PATCH, "home-inventory/INV-0001/attachment", beforeRequest: { httpRequest in
+                try await app.test(.PATCH, "home-inventory/550E8400-E29B-41D4-A716-446655440000/attachment", beforeRequest: { httpRequest in
                     try httpRequest.content.encode(request)
                 }) { response in
                     XCTAssertEqual(response.status, .ok)
@@ -44,7 +44,7 @@ final class HomeInventoryAttachmentRouteTests: XCTestCase {
 
             let firstOwner = try await FileMetadata.find("FILE-0001", on: app.db)?.ownerID
             let secondOwner = try await FileMetadata.find("FILE-0002", on: app.db)?.ownerID
-            let inventoryImage = try await HomeInventory.find("INV-0001", on: app.db)?.imageFileMetadataID
+            let inventoryImage = try await HomeInventory.find("550E8400-E29B-41D4-A716-446655440000", on: app.db)?.imageFileMetadataID
             XCTAssertNil(firstOwner)
             XCTAssertNil(secondOwner)
             XCTAssertNil(inventoryImage)

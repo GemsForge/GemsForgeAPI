@@ -2,7 +2,7 @@ import Vapor
 
 /// The fields accepted when manually adding a HomeInventory record.
 struct HomeInventoryRequest: Content {
-    let id: String
+    let id: String?
     let itemName: String
     let category: String?
     let itemDescription: String?
@@ -16,9 +16,9 @@ struct HomeInventoryRequest: Content {
 }
 
 private func validate(_ input: HomeInventoryRequest) throws {
-    let id = input.id.trimmingCharacters(in: .whitespacesAndNewlines)
-    guard HomeInventoryIdentifier.isValid(id) else {
-        throw Abort(.badRequest, reason: "InventoryID must use the INV-0000 format.")
+    if let id = input.id?.trimmingCharacters(in: .whitespacesAndNewlines), !id.isEmpty,
+       !HomeInventoryIdentifier.isValid(id) {
+        throw Abort(.badRequest, reason: "InventoryID must be a valid UUID when supplied.")
     }
 
     guard !input.itemName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
@@ -48,7 +48,8 @@ func registerHomeInventoryRoutes(_ app: Application) {
         let input = try request.content.decode(HomeInventoryRequest.self)
         try validate(input)
 
-        let id = input.id.trimmingCharacters(in: .whitespacesAndNewlines)
+        let suppliedID = input.id?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let id = suppliedID.flatMap { $0.isEmpty ? nil : $0 } ?? HomeInventoryIdentifier.generate()
         let service = HomeInventoryService(database: request.db)
         guard try await service.find(id: id) == nil else {
             throw Abort(.conflict, reason: "A HomeInventory record with this InventoryID already exists.")
