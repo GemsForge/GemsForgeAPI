@@ -67,6 +67,9 @@ can consume the same visual language without copying literal color values.
 The provider is mounted at the application entry point; feature components
 will migrate to Tamagui primitives in focused follow-up issues.
 
+Shared primitives live in `src/components/ui`. Feature views should compose
+these primitives instead of repeating buttons, cards, and labelled fields.
+
 ## Schema builder
 
 The Developer → Build & Import view is a local testing workflow for creating a
