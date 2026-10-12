@@ -32,7 +32,8 @@ enum LocalDatabaseProfile: String, Codable, CaseIterable, Sendable {
             "CreateHomeInventory",
             "AddAddressAttachmentReference",
             "AddServiceAccountAttachmentReference",
-            "AddEducationAttachmentReference"
+            "AddEducationAttachmentReference",
+            "AddHomeInventoryAttachmentReference"
         ]
     }
 
@@ -58,6 +59,7 @@ enum LocalDatabaseProfile: String, Codable, CaseIterable, Sendable {
             app.migrations.add(AddAddressAttachmentReference())
             app.migrations.add(AddServiceAccountAttachmentReference())
             app.migrations.add(AddEducationAttachmentReference())
+            app.migrations.add(AddHomeInventoryAttachmentReference())
         }
     }
 }

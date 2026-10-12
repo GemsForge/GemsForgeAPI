@@ -41,4 +41,21 @@ func registerAttachmentReferenceRoutes(_ app: Application) {
         try await ExpenseTransactionService(database: request.db).save(transaction)
         return transaction
     }
+
+    app.patch("home-inventory", ":id", "attachment") { request async throws -> HomeInventory in
+        guard let id = request.parameters.get("id"),
+              let inventory = try await HomeInventoryService(database: request.db).find(id: id)
+        else { throw Abort(.notFound) }
+
+        let input = try request.content.decode(AttachmentReferenceRequest.self)
+        try await AttachmentReferenceService(database: request.db).replace(
+            oldMetadataID: inventory.imageFileMetadataID,
+            newMetadataID: input.fileMetadataID,
+            ownerType: "HomeInventory",
+            ownerID: id
+        )
+        inventory.imageFileMetadataID = input.fileMetadataID
+        try await HomeInventoryService(database: request.db).save(inventory)
+        return inventory
+    }
 }

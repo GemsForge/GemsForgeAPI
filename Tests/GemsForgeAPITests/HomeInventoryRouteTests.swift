@@ -8,6 +8,7 @@ final class HomeInventoryRouteTests: XCTestCase {
         try await withApp(configure: { app in
             app.databases.use(.sqlite(.memory), as: .sqlite)
             app.migrations.add(CreateHomeInventory())
+            app.migrations.add(AddHomeInventoryAttachmentReference())
             try await app.autoMigrate()
             registerHomeInventoryRoutes(app)
         }) { app in
@@ -46,6 +47,7 @@ final class HomeInventoryRouteTests: XCTestCase {
         try await withApp(configure: { app in
             app.databases.use(.sqlite(.memory), as: .sqlite)
             app.migrations.add(CreateHomeInventory())
+            app.migrations.add(AddHomeInventoryAttachmentReference())
             try await app.autoMigrate()
             registerHomeInventoryRoutes(app)
         }) { app in

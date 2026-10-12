@@ -49,7 +49,7 @@ final class LocalDatabaseRouteTests: XCTestCase {
                 XCTAssertEqual(response.status, .ok)
                 let result = try response.content.decode(LocalDatabaseCreationResponse.self)
                 XCTAssertEqual(result.databaseName, "test.sqlite")
-                XCTAssertEqual(result.migrationCount, 19)
+                XCTAssertEqual(result.migrationCount, 20)
                 XCTAssertEqual(result.status, "created-and-migrated")
             }
 
