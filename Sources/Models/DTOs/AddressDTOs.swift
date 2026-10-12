@@ -14,6 +14,7 @@ struct AddressRequest: Content {
     let endDate: String?
     let addressStatus: String
     let notes: String?
+    var imageFileMetadataID: String? = nil
 }
 
 /// Safe list representation that omits street lines, postal code, and notes.
@@ -26,6 +27,7 @@ struct AddressSummaryResponse: Content {
     let startDate: String?
     let endDate: String?
     let addressStatus: String
+    let imageFileMetadataID: String?
 
     init(_ address: Address) {
         id = address.id
@@ -36,6 +38,7 @@ struct AddressSummaryResponse: Content {
         startDate = address.startDate
         endDate = address.endDate
         addressStatus = address.addressStatus
+        imageFileMetadataID = address.imageFileMetadataID
     }
 }
 
@@ -53,6 +56,7 @@ struct AddressDetailResponse: Content {
     let endDate: String?
     let addressStatus: String
     let notes: String?
+    let imageFileMetadataID: String?
 
     init(_ address: Address) {
         id = address.id
@@ -67,6 +71,7 @@ struct AddressDetailResponse: Content {
         endDate = address.endDate
         addressStatus = address.addressStatus
         notes = address.notes
+        imageFileMetadataID = address.imageFileMetadataID
     }
 }
 

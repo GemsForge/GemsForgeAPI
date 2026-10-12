@@ -8,7 +8,9 @@ final class EducationRouteTests: XCTestCase {
         try await withApp(configure: { app in
             app.databases.use(.sqlite(.memory), as: .sqlite)
             app.migrations.add(CreateAddresses())
+            app.migrations.add(AddAddressAttachmentReference())
             app.migrations.add(CreateEducation())
+            app.migrations.add(AddEducationAttachmentReference())
             try await app.autoMigrate()
             try await Address(
                 id: "ADDR-0001",
@@ -100,7 +102,9 @@ final class EducationRouteTests: XCTestCase {
         try await withApp(configure: { app in
             app.databases.use(.sqlite(.memory), as: .sqlite)
             app.migrations.add(CreateAddresses())
+            app.migrations.add(AddAddressAttachmentReference())
             app.migrations.add(CreateEducation())
+            app.migrations.add(AddEducationAttachmentReference())
             try await app.autoMigrate()
             registerEducationRoutes(app)
         }) { app in

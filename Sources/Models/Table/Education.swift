@@ -54,6 +54,10 @@ final class Education: Model, Content, @unchecked Sendable {
     @OptionalField(key: "Notes")
     var notes: String?
 
+    /// FileMetadataID for an attached certificate or education document.
+    @OptionalField(key: "DocumentFileMetadataID")
+    var documentFileMetadataID: String?
+
     init() {}
 
     /// Creates an Education model using the columns available in the existing table.
@@ -71,7 +75,8 @@ final class Education: Model, Content, @unchecked Sendable {
         status: String = "Completed",
         locationAddressID: String? = nil,
         website: String? = nil,
-        notes: String? = nil
+        notes: String? = nil,
+        documentFileMetadataID: String? = nil
     ) {
         self.id = id
         self.educationType = educationType
@@ -87,5 +92,6 @@ final class Education: Model, Content, @unchecked Sendable {
         self.locationAddressID = locationAddressID
         self.website = website
         self.notes = notes
+        self.documentFileMetadataID = documentFileMetadataID
     }
 }

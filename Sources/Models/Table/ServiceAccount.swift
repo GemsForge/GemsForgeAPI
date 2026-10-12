@@ -70,6 +70,10 @@ final class ServiceAccount: Model, Content, @unchecked Sendable {
     @OptionalField(key: "ServiceKey")
     var serviceKey: String?
 
+    /// FileMetadataID for the Service Account logo, if one is attached.
+    @OptionalField(key: "LogoFileMetadataID")
+    var logoFileMetadataID: String?
+
     // DateCreated and DateUpdated remain database-managed text columns.
 
     init() {}
@@ -95,7 +99,8 @@ final class ServiceAccount: Model, Content, @unchecked Sendable {
         accountNumber: String? = nil,
         emailUpdated: String? = nil,
         associatedAddress: String? = nil,
-        serviceKey: String? = nil
+        serviceKey: String? = nil,
+        logoFileMetadataID: String? = nil
     ) {
         self.id = id
         self.service = service
@@ -117,5 +122,6 @@ final class ServiceAccount: Model, Content, @unchecked Sendable {
         self.emailUpdated = emailUpdated
         self.associatedAddress = associatedAddress
         self.serviceKey = serviceKey
+        self.logoFileMetadataID = logoFileMetadataID
     }
 }
