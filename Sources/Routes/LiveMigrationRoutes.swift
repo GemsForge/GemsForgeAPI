@@ -10,6 +10,7 @@ func registerLiveMigrationRoutes(_ app: Application, backupConfiguration: LiveDa
     let migrations = app.grouped("live-database", "migrations")
     let schemaChanges = app.grouped("live-database", "schema-changes")
     let approvedChanges = ApprovedSchemaChangeService(backupConfiguration: backupConfiguration)
+    let userTables = UserTableCreationService(backupConfiguration: backupConfiguration)
     let auditDatabaseIdentity = backupConfiguration?.databaseIdentity ?? "configured Gem Life database"
 
     migrations.get("history") { request async throws -> [SchemaMigrationAudit] in
@@ -52,6 +53,33 @@ func registerLiveMigrationRoutes(_ app: Application, backupConfiguration: LiveDa
             case .unsupportedTable:
                 throw Abort(.badRequest, reason: error.description)
             case .migrationFailed, .verificationFailed:
+                throw Abort(.unprocessableEntity, reason: error.description)
+            }
+        }
+    }
+
+    app.post("live-database", "tables", "preview") { request async throws -> UserTablePreviewResponse in
+        do {
+            let input = try request.content.decode(TableBuilderRequest.self)
+            return try await userTables.preview(input, using: request.db)
+        } catch let error as TableBuilderContractService.ValidationError {
+            throw Abort(.badRequest, reason: error.description)
+        } catch let error as UserTableCreationError {
+            throw Abort(.conflict, reason: error.description)
+        }
+    }
+
+    app.post("live-database", "tables", "execute") { request async throws -> UserTableCreationResponse in
+        do {
+            let input = try request.content.decode(LiveTableCreationRequest.self)
+            return try await userTables.execute(confirmationToken: input.confirmationToken, using: request.db)
+        } catch let error as UserTableCreationError {
+            switch error {
+            case .expiredOrUnknownToken, .tableAlreadyExists:
+                throw Abort(.conflict, reason: error.description)
+            case .backupNotConfigured:
+                throw Abort(.serviceUnavailable, reason: error.description)
+            case .sqliteDatabaseRequired, .migrationFailed, .verificationFailed:
                 throw Abort(.unprocessableEntity, reason: error.description)
             }
         }
