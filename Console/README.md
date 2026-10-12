@@ -35,6 +35,8 @@ Vite proxies API paths to Vapor so the browser can use same-origin requests:
 /addresses
 /transactions
 /health
+/schema-builder
+/live-database
 ```
 
 ## Structure
@@ -56,6 +58,20 @@ src/
 
 The console currently preserves the prototype's styling and behavior while
 separating API access and feature UI into maintainable modules.
+
+## Schema builder
+
+The Developer → Build & Import view is a local testing workflow for creating a
+new table in the configured database. Enter an UpperCamelCase table name, add
+at least one property, choose its SQLite type, and use **Add property** for
+additional columns. The API supplies the required unique `TEXT` `ID` primary
+key; the UI never asks the user to define it.
+
+The flow previews the generated definition before execution. Execution requires
+the API environment variables `DATABASE_PATH` and
+`LIVE_DATABASE_BACKUP_DIRECTORY`, because the API creates a backup before
+changing the database. Duplicate table names are reported in the builder and
+require choosing a different name.
 
 The console is intentionally a local testing client, not the official Gem Life
 product UI. It currently exposes read workflows for existing data and the
