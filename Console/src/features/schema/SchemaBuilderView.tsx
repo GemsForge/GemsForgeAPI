@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { api } from "../../api";
-import type { HomeInventoryCSVPreview, TableBuilderColumn, TableBuilderRequest, UserTablePreview } from "../../types";
+import type { HomeInventoryCSVPreview, SchemaBuilderGuidance, TableBuilderColumn, TableBuilderRequest, UserTablePreview } from "../../types";
 import { LiveSchemaView } from "./LiveSchemaView";
 
 interface SchemaBuilderViewProps {
@@ -23,6 +23,14 @@ export function SchemaBuilderView({ onError, onSuccess }: SchemaBuilderViewProps
   const [csv, setCsv] = useState("");
   const [csvPreview, setCsvPreview] = useState<HomeInventoryCSVPreview | null>(null);
   const [busy, setBusy] = useState(false);
+  const [guidance, setGuidance] = useState<SchemaBuilderGuidance | null>(null);
+  const [guidanceError, setGuidanceError] = useState<string | null>(null);
+
+  useEffect(() => {
+    void api.getSchemaBuilderGuidance()
+      .then(setGuidance)
+      .catch((error: unknown) => setGuidanceError(error instanceof Error ? error.message : "Schema guidance could not be loaded."));
+  }, []);
 
   const definition: TableBuilderRequest = { tableName, columns };
 
@@ -58,11 +66,18 @@ export function SchemaBuilderView({ onError, onSuccess }: SchemaBuilderViewProps
   return <>
     <div className="content-heading"><div><p className="eyebrow">Milestone 2 · schema builder</p><h2>Build & import</h2><p className="muted">Describe a table, preview the generated schema, then explicitly approve its creation. CSV import follows the same preview-first workflow.</p></div><span className="record-count ready">Preview first</span></div>
 
+    <section className="schema-guidance database-panel">
+      <div className="database-panel-heading"><div><p className="eyebrow">API guidance · v{guidance?.version ?? "—"}</p><h3>Build safely</h3></div><span className="life-mark database-icon">?</span></div>
+      {guidanceError ? <p className="error-text">{guidanceError} The builder remains available, but type explanations are unavailable.</p> : null}
+      {!guidance && !guidanceError ? <p className="muted">Loading schema rules…</p> : null}
+      {guidance ? <div className="schema-guidance-grid"><div><strong>SQLite types</strong>{guidance.supportedTypes.map((type) => <p className="guidance-item" key={type.value}><code>{type.label}</code> {type.description}</p>)}</div><div><strong>Rules & safety</strong>{guidance.rules.map((rule) => <p className={`guidance-item guidance-${rule.severity}`} key={rule.key}><b>{rule.title}:</b> {rule.description}</p>)}</div></div> : null}
+    </section>
+
     <div className="database-layout">
       <section className="database-panel">
         <div className="database-panel-heading"><div><p className="eyebrow">Schema builder</p><h3>New SQLite table</h3></div><span className="life-mark database-icon">＋</span></div>
         <label className="database-field">Table name<input value={tableName} onChange={(event) => setTableName(event.target.value)} /></label>
-        <div className="builder-columns"><div className="builder-column-heading"><strong>Columns</strong><button className="secondary-button" onClick={() => setColumns([...columns, { name: "NewColumn", dataType: "TEXT", nullable: true, defaultValue: null, primaryKey: false, unique: false }])}>Add column</button></div>{columns.map((column, index) => <div className="builder-column" key={`${index}-${column.name}`}><input aria-label="Column name" value={column.name} onChange={(event) => updateColumn(index, { name: event.target.value })} /><select aria-label="SQLite type" value={column.dataType} onChange={(event) => updateColumn(index, { dataType: event.target.value as TableBuilderColumn["dataType"] })}>{types.map((type) => <option key={type}>{type}</option>)}</select><label className="inline-check"><input type="checkbox" checked={!column.nullable} disabled={column.primaryKey} onChange={(event) => updateColumn(index, { nullable: !event.target.checked })} /> required</label><label className="inline-check"><input type="checkbox" checked={column.primaryKey} onChange={(event) => updateColumn(index, { primaryKey: event.target.checked, unique: event.target.checked, nullable: false })} /> key</label><input aria-label="Default value" placeholder="Default" value={column.defaultValue ?? ""} onChange={(event) => updateColumn(index, { defaultValue: event.target.value || null })} />{columns.length > 1 ? <button className="icon-button" onClick={() => setColumns(columns.filter((_, columnIndex) => columnIndex !== index))}>×</button> : null}</div>)}</div>
+        <div className="builder-columns"><div className="builder-column-heading"><strong>Columns</strong><button className="secondary-button" onClick={() => setColumns([...columns, { name: "NewColumn", dataType: "TEXT", nullable: true, defaultValue: null, primaryKey: false, unique: false }])}>Add column</button></div>{columns.map((column, index) => <div className="builder-column" key={`${index}-${column.name}`}><div><input aria-label="Column name" value={column.name} onChange={(event) => updateColumn(index, { name: event.target.value })} /><small className="field-hint">Names must be unique and use letters, numbers, or underscores.</small></div><div><select aria-label="SQLite type" value={column.dataType} onChange={(event) => updateColumn(index, { dataType: event.target.value as TableBuilderColumn["dataType"] })}>{(guidance?.supportedTypes ?? types.map((value) => ({ value, label: value, description: "" }))).map((type) => <option key={type.value}>{type.value}</option>)}</select>{guidance ? <small className="field-hint">{guidance.supportedTypes.find((type) => type.value === column.dataType)?.description}</small> : null}</div><label className="inline-check"><input type="checkbox" checked={!column.nullable} disabled={column.primaryKey} onChange={(event) => updateColumn(index, { nullable: !event.target.checked })} /> required</label><label className="inline-check"><input type="checkbox" checked={column.primaryKey} onChange={(event) => updateColumn(index, { primaryKey: event.target.checked, unique: event.target.checked, nullable: false })} /> key</label><div><input aria-label="Default value" placeholder="Default" value={column.defaultValue ?? ""} onChange={(event) => updateColumn(index, { defaultValue: event.target.value || null })} /><small className="field-hint">Use a number, quoted text, NULL, or a CURRENT_* value.</small></div>{columns.length > 1 ? <button className="icon-button" onClick={() => setColumns(columns.filter((_, columnIndex) => columnIndex !== index))}>×</button> : null}</div>)}</div>
         <button className="primary-button" disabled={busy || !tableName.trim()} onClick={() => void previewTable()}>{busy ? "Working…" : "Preview table"}</button>
         {preview ? <div className="builder-preview"><h4>Ready for approval</h4><p className="muted">{preview.definition.tableName} · {preview.definition.columns.length} columns</p>{preview.warnings.map((warning) => <p key={warning}>• {warning}</p>)}<button className="primary-button" disabled={busy} onClick={() => void createTable()}>Create table with backup</button></div> : null}
       </section>

@@ -1,4 +1,4 @@
-import type { Address, Domain, Education, Employment, ExpenseTransaction, FileMetadata, ForgeKeeperPage, ForgeKeeperPatch, GemHue, HomeInventoryCSVImportResult, HomeInventoryCSVPreview, LiveSchema, LocalDatabaseCapabilities, LocalDatabaseCreationResult, TableBuilderRequest, UserTableCreationResult, UserTablePreview } from "./types";
+import type { Address, Domain, Education, Employment, ExpenseTransaction, FileMetadata, ForgeKeeperPage, ForgeKeeperPatch, GemHue, HomeInventoryCSVImportResult, HomeInventoryCSVPreview, LiveSchema, LocalDatabaseCapabilities, LocalDatabaseCreationResult, SchemaBuilderGuidance, TableBuilderRequest, UserTableCreationResult, UserTablePreview } from "./types";
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const response = await fetch(path, {
@@ -69,6 +69,7 @@ export const api = {
       body: JSON.stringify(payload),
     }),
   getLiveSchema: () => request<LiveSchema>("/live-database/schema"),
+  getSchemaBuilderGuidance: () => request<SchemaBuilderGuidance>("/schema-builder/metadata"),
   previewUserTable: (definition: TableBuilderRequest) => request<UserTablePreview>("/live-database/tables/preview", { method: "POST", body: JSON.stringify(definition) }),
   createUserTable: (confirmationToken: string) => request<UserTableCreationResult>("/live-database/tables/execute", { method: "POST", body: JSON.stringify({ confirmationToken }) }),
   previewHomeInventoryCSV: (csv: string) => request<HomeInventoryCSVPreview>("/home-inventory/import/preview", { method: "POST", body: JSON.stringify({ csv }) }),

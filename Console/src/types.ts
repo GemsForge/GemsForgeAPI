@@ -179,6 +179,25 @@ export interface TableBuilderRequest {
   columns: TableBuilderColumn[];
 }
 
+export interface SchemaBuilderTypeGuidance {
+  value: TableBuilderColumn["dataType"];
+  label: string;
+  description: string;
+}
+
+export interface SchemaBuilderRuleGuidance {
+  key: string;
+  title: string;
+  description: string;
+  severity: "error" | "warning" | "info";
+}
+
+export interface SchemaBuilderGuidance {
+  version: string;
+  supportedTypes: SchemaBuilderTypeGuidance[];
+  rules: SchemaBuilderRuleGuidance[];
+}
+
 export interface UserTablePreview {
   definition: TableBuilderRequest;
   warnings: string[];
