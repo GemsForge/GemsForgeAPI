@@ -164,3 +164,52 @@ export interface LiveSchema {
   tableCount: number;
   tables: LiveSchemaTable[];
 }
+
+export interface TableBuilderColumn {
+  name: string;
+  dataType: "ANY" | "BLOB" | "INTEGER" | "NUMERIC" | "REAL" | "TEXT";
+  nullable: boolean;
+  defaultValue: string | null;
+  primaryKey: boolean;
+  unique: boolean;
+}
+
+export interface TableBuilderRequest {
+  tableName: string;
+  columns: TableBuilderColumn[];
+}
+
+export interface UserTablePreview {
+  definition: TableBuilderRequest;
+  warnings: string[];
+  confirmationToken: string;
+  expiresAt: string;
+  status: string;
+}
+
+export interface UserTableCreationResult {
+  table: string;
+  backupFileName: string;
+  backupSizeBytes: number;
+  status: string;
+}
+
+export interface HomeInventoryCSVRowPreview {
+  rowNumber: number;
+  values: Record<string, string>;
+  errors: string[];
+}
+
+export interface HomeInventoryCSVPreview {
+  headers: string[];
+  validRows: HomeInventoryCSVRowPreview[];
+  invalidRows: HomeInventoryCSVRowPreview[];
+  readyToImport: boolean;
+  warnings: string[];
+}
+
+export interface HomeInventoryCSVImportResult {
+  importedCount: number;
+  identifiers: string[];
+  status: string;
+}

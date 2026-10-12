@@ -71,3 +71,14 @@
 .schema-section h4 { margin:0 0 .6rem; color:var(--gold); font-size:.7rem; letter-spacing:.08em; text-transform:uppercase; }
 .schema-section p { margin:.35rem 0 0; color:var(--muted); font-size:.78rem; }
 @media (max-width:760px) { .schema-layout { grid-template-columns:1fr; } }
+.builder-columns { display: grid; gap: 12px; margin: 18px 0; }
+.builder-column-heading { display: flex; justify-content: space-between; align-items: center; }
+.builder-column { display: grid; grid-template-columns: 1.2fr .9fr auto auto 1fr auto; gap: 8px; align-items: center; }
+.builder-column input, .builder-column select { min-width: 0; }
+.inline-check { display: flex; gap: 5px; align-items: center; white-space: nowrap; font-size: .78rem; color: var(--muted); }
+.button-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.builder-preview { margin-top: 18px; padding: 14px; border: 1px solid var(--line); border-radius: 12px; background: rgba(255,255,255,.03); }
+.builder-preview h4 { margin: 0 0 8px; }
+.builder-preview p { margin: 7px 0; font-size: .82rem; }
+.error-text { color: #ff9a9a; }
+@media (max-width: 900px) { .builder-column { grid-template-columns: 1fr 1fr; } }
