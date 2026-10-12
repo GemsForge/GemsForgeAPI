@@ -18,7 +18,7 @@ import type { Address, Domain, Education, Employment, ExpenseTransaction, ForgeK
 
 type View = "pages" | "hues" | "education" | "employment" | "addresses" | "transactions" | "databases" | "schema";
 
-function viewForPath(pathname: string): View {
+export function viewForPath(pathname: string): View {
   if (pathname.startsWith("/gemhues")) return "hues";
   if (pathname.startsWith("/education")) return "education";
   if (pathname.startsWith("/employment")) return "employment";
