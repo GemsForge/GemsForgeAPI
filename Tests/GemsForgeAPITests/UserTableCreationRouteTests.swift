@@ -10,7 +10,6 @@ final class UserTableCreationRouteTests: XCTestCase {
             registerLiveMigrationRoutes(app)
         }) { app in
             let request = TableBuilderRequest(tableName: "HomeInventoryDraft", columns: [
-                TableBuilderColumnRequest(name: "InventoryID", dataType: .text, nullable: false, defaultValue: nil, primaryKey: true, unique: false),
                 TableBuilderColumnRequest(name: "ItemName", dataType: .text, nullable: false, defaultValue: nil, primaryKey: false, unique: false),
                 TableBuilderColumnRequest(name: "Quantity", dataType: .integer, nullable: false, defaultValue: "1", primaryKey: false, unique: false)
             ])
@@ -44,7 +43,6 @@ final class UserTableCreationRouteTests: XCTestCase {
             registerLiveMigrationRoutes(app, backupConfiguration: configuration)
         }) { app in
             let request = TableBuilderRequest(tableName: "HomeInventoryDraft", columns: [
-                TableBuilderColumnRequest(name: "InventoryID", dataType: .text, nullable: false, defaultValue: nil, primaryKey: true, unique: false),
                 TableBuilderColumnRequest(name: "ItemName", dataType: .text, nullable: false, defaultValue: nil, primaryKey: false, unique: false),
                 TableBuilderColumnRequest(name: "Quantity", dataType: .integer, nullable: false, defaultValue: "1", primaryKey: false, unique: false)
             ])
@@ -67,7 +65,7 @@ final class UserTableCreationRouteTests: XCTestCase {
 
             let schema = try await LiveSchemaService(database: app.db).inspect()
             let table = try XCTUnwrap(schema.tables.first { $0.name == "HomeInventoryDraft" })
-            XCTAssertEqual(table.columns.map { $0.name }, ["InventoryID", "ItemName", "Quantity"])
+            XCTAssertEqual(table.columns.map { $0.name }, ["ID", "ItemName", "Quantity"])
         }
     }
 }

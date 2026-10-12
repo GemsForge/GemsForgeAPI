@@ -12,11 +12,12 @@ final class SchemaBuilderGuidanceAlignmentTests: XCTestCase {
             let definition = try validator.validate(TableBuilderRequest(
                 tableName: "Example",
                 columns: [
-                    TableBuilderColumnRequest(name: "ID", dataType: .text, nullable: false, defaultValue: nil, primaryKey: true, unique: false),
                     TableBuilderColumnRequest(name: "Value", dataType: type, nullable: true, defaultValue: nil, primaryKey: false, unique: false)
                 ]
             ))
 
+            XCTAssertEqual(definition.columns[0].name, "ID")
+            XCTAssertTrue(definition.columns[0].primaryKey)
             XCTAssertEqual(definition.columns[1].dataType, type)
         }
     }
@@ -24,9 +25,10 @@ final class SchemaBuilderGuidanceAlignmentTests: XCTestCase {
     func testGuidedUnsafeInputsAreRejectedByTheValidator() {
         let invalidRequests = [
             TableBuilderRequest(tableName: "bad-name", columns: validColumns()),
-            TableBuilderRequest(tableName: "Example", columns: validColumns(duplicateName: "ID")),
+            TableBuilderRequest(tableName: "Example", columns: validColumns(duplicateName: "Value")),
             TableBuilderRequest(tableName: "Example", columns: validColumns(defaultValue: "(SELECT 1)")),
-            TableBuilderRequest(tableName: "Example", columns: validColumns(missingPrimaryKey: true))
+            TableBuilderRequest(tableName: "Example", columns: validColumns(reservedName: "ID")),
+            TableBuilderRequest(tableName: "Example", columns: [])
         ]
 
         for request in invalidRequests {
@@ -37,10 +39,11 @@ final class SchemaBuilderGuidanceAlignmentTests: XCTestCase {
     private func validColumns(
         duplicateName: String? = nil,
         defaultValue: String? = nil,
-        missingPrimaryKey: Bool = false
+        reservedName: String? = nil
     ) -> [TableBuilderColumnRequest] {
-        [
-            TableBuilderColumnRequest(name: missingPrimaryKey ? "Value" : "ID", dataType: .text, nullable: false, defaultValue: nil, primaryKey: !missingPrimaryKey, unique: false),
+        let firstName = reservedName ?? duplicateName ?? "Name"
+        return [
+            TableBuilderColumnRequest(name: firstName, dataType: .text, nullable: false, defaultValue: nil, primaryKey: false, unique: false),
             TableBuilderColumnRequest(name: duplicateName ?? "Value", dataType: .text, nullable: true, defaultValue: defaultValue, primaryKey: false, unique: false)
         ]
     }

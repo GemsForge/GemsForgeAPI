@@ -182,6 +182,39 @@ The preview and confirmation contract is documented in
 as a console control because schema execution still requires the backup and
 approved-table workflow.
 
+### Schema Builder
+
+The Developer → Build & Import view creates a new table in the configured live
+database through a preview-first workflow. It is intended for local testing
+and requires the API to have both `DATABASE_PATH` and
+`LIVE_DATABASE_BACKUP_DIRECTORY` configured. The backup directory must already
+exist and must be separate from the database file.
+
+The console collects the table name and user-defined property columns. It does
+not collect an `ID` column or a primary-key choice. The API owns the stable
+identifier and adds a required, unique `TEXT` `ID` primary key to the generated
+definition. At least one property is required, table names use UpperCamelCase,
+and property names must be unique safe identifiers.
+
+The supported SQLite affinity choices are `ANY`, `BLOB`, `INTEGER`, `NUMERIC`,
+`REAL`, and `TEXT`. Defaults are limited to approved SQLite literals, such as
+numbers, quoted strings, `NULL`, and `CURRENT_*` values. Review the generated
+definition before approving creation.
+
+The workflow uses these endpoints:
+
+```text
+GET  /schema-builder/metadata
+POST /live-database/tables/preview
+POST /live-database/tables/execute
+```
+
+Preview does not change the database. Execution creates a backup first and
+then creates the table. If the requested table name already exists, the API
+makes no change and the console tells the user to choose a different name and
+preview again. The API also rejects user-submitted `ID` columns and
+client-managed primary keys.
+
 ## Notes import status
 
 The Notes upload area is intentionally a visual placeholder. The current API

@@ -40,10 +40,10 @@ struct SchemaBuilderGuidanceService: Sendable {
                 .init(value: .text, label: "TEXT", description: "Stores human-readable text, identifiers, and dates."),
             ],
             rules: [
-                .init(key: "table-name", title: "Use a safe table name", description: "Table names must begin with a letter or underscore, use only letters, numbers, and underscores, stay within 128 characters, and avoid SQLite or Fluent internal prefixes.", severity: "error"),
+                .init(key: "table-name", title: "Use UpperCamelCase", description: "Table names must use UpperCamelCase, begin with an uppercase letter, contain only letters and numbers, and stay within 128 characters.", severity: "error"),
                 .init(key: "column-name", title: "Use safe column names", description: "Column names follow the same safe identifier rules as table names and must be unique without regard to case.", severity: "error"),
-                .init(key: "primary-key", title: "Choose one stable primary key", description: "Every user-defined table needs exactly one INTEGER or TEXT primary key. Primary keys are required, unique, and cannot have defaults.", severity: "error"),
-                .init(key: "columns", title: "Keep tables focused", description: "A user-defined table may contain up to 50 columns so previews remain understandable and validation remains predictable.", severity: "warning"),
+                .init(key: "primary-key", title: "The API supplies the ID", description: "The API adds a required, unique TEXT ID primary key to every new table. Define property columns only; do not submit an ID or primary key.", severity: "info"),
+                .init(key: "columns", title: "Add at least one property", description: "A user-defined table must contain at least one property column. The API adds ID automatically, and up to 49 user properties are supported.", severity: "warning"),
                 .init(key: "defaults", title: "Use literal defaults", description: "Defaults may be NULL, CURRENT_TIME, CURRENT_DATE, CURRENT_TIMESTAMP, a number, or a quoted SQLite string literal. Arbitrary expressions are rejected.", severity: "error"),
                 .init(key: "nullable", title: "Use required fields intentionally", description: "Mark a column required only when every future record must provide a value. Primary keys are always required.", severity: "warning"),
                 .init(key: "files", title: "Keep files outside SQLite", description: "Store uploaded images and documents in the local file store and keep their path, checksum, and metadata in FileMetadata instead of embedding large BLOB values in user tables.", severity: "info"),
