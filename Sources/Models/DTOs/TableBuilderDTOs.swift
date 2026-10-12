@@ -43,12 +43,12 @@ struct TableBuilderRequest: Content, Sendable {
 
 /// A normalized definition that later migration code can safely translate into
 /// SQLite statements after preview and explicit confirmation.
-struct ValidatedTableDefinition: Sendable, Equatable {
+struct ValidatedTableDefinition: Content, Sendable, Equatable {
     let tableName: String
     let columns: [ValidatedTableColumn]
 }
 
-struct ValidatedTableColumn: Sendable, Equatable {
+struct ValidatedTableColumn: Content, Sendable, Equatable {
     let name: String
     let dataType: SQLiteColumnType
     let nullable: Bool
