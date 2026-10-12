@@ -9,6 +9,7 @@ final class HomeInventoryMigrationTests: XCTestCase {
         let app = try await Application.make(.testing)
         app.databases.use(.sqlite(.memory), as: .sqlite)
         app.migrations.add(CreateHomeInventory())
+        app.migrations.add(AddHomeInventoryAttachmentReference())
 
         try await app.autoMigrate()
 
