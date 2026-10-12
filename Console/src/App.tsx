@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { BrowserRouter, Route, Routes, useNavigate } from "react-router-dom";
 import { api } from "./api";
 import { useDomainsQuery } from "./data/domainQueries";
+import { useAddressesQuery, useEducationQuery, useEmploymentQuery, useGemHuesQuery, useTransactionsQuery } from "./data/lifeQueries";
 import { Notice } from "./components/Notice";
 import { GemLifeShell } from "./components/layout/GemLifeShell";
 import { DomainSidebar } from "./features/domains/DomainSidebar";
@@ -32,21 +33,26 @@ function ConsoleApp() {
   const navigate = useNavigate();
   const [domains, setDomains] = useState<Domain[]>([]);
   const [pages, setPages] = useState<ForgeKeeperPage[]>([]);
-  const [hues, setHues] = useState<GemHue[]>([]);
-  const [education, setEducation] = useState<Education[]>([]);
-  const [employment, setEmployment] = useState<Employment[]>([]);
-  const [addresses, setAddresses] = useState<Address[]>([]);
-  const [transactions, setTransactions] = useState<ExpenseTransaction[]>([]);
   const [selectedDomainID, setSelectedDomainID] = useState<string | null>(null);
   const [view, setView] = useState<View>(() => viewForPath(window.location.pathname));
   const [notice, setNotice] = useState<{ message: string; kind: "error" | "success" } | null>(null);
 
   const domainsQuery = useDomainsQuery();
+  const huesQuery = useGemHuesQuery(view === "hues");
+  const educationQuery = useEducationQuery(view === "education");
+  const employmentQuery = useEmploymentQuery(view === "employment");
+  const addressesQuery = useAddressesQuery(view === "addresses");
+  const transactionsQuery = useTransactionsQuery(view === "transactions");
 
   useEffect(() => {
     if (domainsQuery.data) setDomains(domainsQuery.data);
     if (domainsQuery.error) showError(domainsQuery.error);
-  }, [domainsQuery.data, domainsQuery.error]);
+    if (huesQuery.error) showError(huesQuery.error);
+    if (educationQuery.error) showError(educationQuery.error);
+    if (employmentQuery.error) showError(employmentQuery.error);
+    if (addressesQuery.error) showError(addressesQuery.error);
+    if (transactionsQuery.error) showError(transactionsQuery.error);
+  }, [domainsQuery.data, domainsQuery.error, huesQuery.error, educationQuery.error, employmentQuery.error, addressesQuery.error, transactionsQuery.error]);
 
   async function refreshDomains() {
     try {
@@ -64,17 +70,17 @@ function ConsoleApp() {
   async function loadRoots() { try { setSelectedDomainID(null); navigate("/forgekeeper"); setPages(await api.listRootPages()); } catch (error) { showError(error); } }
   async function loadChildren(pageID: number) { try { setPages(await api.listChildren(pageID)); } catch (error) { showError(error); } }
   async function patchPage(pageID: number, patch: ForgeKeeperPatch) { try { await api.patchPage(pageID, patch); showSuccess("Page metadata updated."); if (selectedDomainID) await selectDomain(selectedDomainID); else await loadRoots(); } catch (error) { showError(error); throw error; } }
-  async function openHues() { try { setView("hues"); navigate("/gemhues"); setHues(await api.listGemHues()); } catch (error) { showError(error); } }
-  async function openEducation() { try { setView("education"); navigate("/education"); setEducation(await api.listEducation()); } catch (error) { showError(error); } }
-  async function openEmployment() { try { setView("employment"); navigate("/employment"); setEmployment(await api.listEmployment()); } catch (error) { showError(error); } }
-  async function openAddresses() { try { setView("addresses"); navigate("/addresses"); setAddresses(await api.listAddresses()); } catch (error) { showError(error); } }
-  async function openTransactions() { try { setView("transactions"); navigate("/transactions"); setTransactions(await api.listTransactions()); } catch (error) { showError(error); } }
+  function openHues() { setView("hues"); navigate("/gemhues"); }
+  function openEducation() { setView("education"); navigate("/education"); }
+  function openEmployment() { setView("employment"); navigate("/employment"); }
+  function openAddresses() { setView("addresses"); navigate("/addresses"); }
+  function openTransactions() { setView("transactions"); navigate("/transactions"); }
   function showError(error: unknown) { setNotice({ message: error instanceof Error ? error.message : "Request failed.", kind: "error" }); }
   function showSuccess(message: string) { setNotice({ message, kind: "success" }); window.setTimeout(() => setNotice(null), 3500); }
 
   const selectedDomain = domains.find((domain) => domain.id === selectedDomainID) ?? null;
 
-  return <GemLifeShell sidebar={<DomainSidebar domains={domains} selectedDomainID={selectedDomainID} onSelect={(id) => void selectDomain(id)} onRefresh={() => void refreshDomains()} huesSelected={view === "hues"} onSelectHues={() => void openHues()} educationSelected={view === "education"} onSelectEducation={() => void openEducation()} employmentSelected={view === "employment"} onSelectEmployment={() => void openEmployment()} addressesSelected={view === "addresses"} onSelectAddresses={() => void openAddresses()} transactionsSelected={view === "transactions"} onSelectTransactions={() => void openTransactions()} databasesSelected={view === "databases"} onSelectDatabases={() => { setView("databases"); navigate("/local-databases"); }} schemaSelected={view === "schema"} onSelectSchema={() => { setView("schema"); navigate("/schema-builder"); }} />}><Notice message={notice?.message ?? null} kind={notice?.kind} />{view === "hues" ? <GemHuesView hues={hues} /> : view === "education" ? <EducationView records={education} /> : view === "employment" ? <EmploymentView records={employment} /> : view === "addresses" ? <AddressesView records={addresses} /> : view === "transactions" ? <TransactionsView records={transactions} /> : view === "databases" ? <LocalDatabaseView onError={showError} onSuccess={showSuccess} /> : view === "schema" ? <SchemaBuilderView onError={showError} onSuccess={showSuccess} /> : <ForgeKeeperView domain={selectedDomain} pages={pages} onLoadRoots={() => void loadRoots()} onLoadChildren={(id) => void loadChildren(id)} onPatch={patchPage} />}</GemLifeShell>;
+  return <GemLifeShell sidebar={<DomainSidebar domains={domains} selectedDomainID={selectedDomainID} onSelect={(id) => void selectDomain(id)} onRefresh={() => void refreshDomains()} huesSelected={view === "hues"} onSelectHues={openHues} educationSelected={view === "education"} onSelectEducation={openEducation} employmentSelected={view === "employment"} onSelectEmployment={openEmployment} addressesSelected={view === "addresses"} onSelectAddresses={openAddresses} transactionsSelected={view === "transactions"} onSelectTransactions={openTransactions} databasesSelected={view === "databases"} onSelectDatabases={() => { setView("databases"); navigate("/local-databases"); }} schemaSelected={view === "schema"} onSelectSchema={() => { setView("schema"); navigate("/schema-builder"); }} />}><Notice message={notice?.message ?? null} kind={notice?.kind} />{view === "hues" ? <GemHuesView hues={huesQuery.data ?? []} /> : view === "education" ? <EducationView records={educationQuery.data ?? []} /> : view === "employment" ? <EmploymentView records={employmentQuery.data ?? []} /> : view === "addresses" ? <AddressesView records={addressesQuery.data ?? []} /> : view === "transactions" ? <TransactionsView records={transactionsQuery.data ?? []} /> : view === "databases" ? <LocalDatabaseView onError={showError} onSuccess={showSuccess} /> : view === "schema" ? <SchemaBuilderView onError={showError} onSuccess={showSuccess} /> : <ForgeKeeperView domain={selectedDomain} pages={pages} onLoadRoots={() => void loadRoots()} onLoadChildren={(id) => void loadChildren(id)} onPatch={patchPage} />}</GemLifeShell>;
 }
 
 export function App() {
