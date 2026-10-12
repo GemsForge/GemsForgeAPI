@@ -9,8 +9,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@tamagui/config": "^3.0.3",
     "react": "^19.1.1",
-    "react-dom": "^19.1.1"
+    "react-dom": "^19.1.1",
+    "tamagui": "^3.0.3"
   },
   "devDependencies": {
     "@types/node": "^24.5.2",
