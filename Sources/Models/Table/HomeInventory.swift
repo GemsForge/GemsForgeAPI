@@ -43,6 +43,10 @@ final class HomeInventory: Model, Content, @unchecked Sendable {
     @OptionalField(key: "Notes")
     var notes: String?
 
+    /// FileMetadataID for the item's image; image bytes remain on local storage.
+    @OptionalField(key: "ImageFileMetadataID")
+    var imageFileMetadataID: String?
+
     init() {}
 
     init(
@@ -56,7 +60,8 @@ final class HomeInventory: Model, Content, @unchecked Sendable {
         currentValue: Double? = nil,
         condition: String? = nil,
         location: String? = nil,
-        notes: String? = nil
+        notes: String? = nil,
+        imageFileMetadataID: String? = nil
     ) {
         self.id = id
         self.itemName = itemName
@@ -69,6 +74,7 @@ final class HomeInventory: Model, Content, @unchecked Sendable {
         self.condition = condition
         self.location = location
         self.notes = notes
+        self.imageFileMetadataID = imageFileMetadataID
     }
 }
 
