@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { BrowserRouter, Route, Routes, useNavigate } from "react-router-dom";
 import { api } from "./api";
+import { useDomainsQuery } from "./data/domainQueries";
 import { Notice } from "./components/Notice";
 import { DomainSidebar } from "./features/domains/DomainSidebar";
 import { ForgeKeeperView } from "./features/forgekeeper/ForgeKeeperView";
@@ -39,12 +40,17 @@ function ConsoleApp() {
   const [view, setView] = useState<View>(() => viewForPath(window.location.pathname));
   const [notice, setNotice] = useState<{ message: string; kind: "error" | "success" } | null>(null);
 
-  useEffect(() => { void refreshDomains(); }, []);
+  const domainsQuery = useDomainsQuery();
+
+  useEffect(() => {
+    if (domainsQuery.data) setDomains(domainsQuery.data);
+    if (domainsQuery.error) showError(domainsQuery.error);
+  }, [domainsQuery.data, domainsQuery.error]);
 
   async function refreshDomains() {
     try {
-      const result = await api.listDomains();
-      setDomains(result);
+      const result = await domainsQuery.refetch();
+      setDomains(result.data ?? []);
       if (selectedDomainID) await selectDomain(selectedDomainID);
     } catch (error) { showError(error); }
   }
