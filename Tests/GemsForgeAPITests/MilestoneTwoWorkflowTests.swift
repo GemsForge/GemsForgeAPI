@@ -18,7 +18,7 @@ final class MilestoneTwoWorkflowTests: XCTestCase {
             registerAttachmentReferenceRoutes(app)
         }) { app in
             let manualEntry = HomeInventoryRequest(
-                id: "INV-0001", itemName: "Desk lamp", category: "Lighting", itemDescription: nil,
+                id: "550E8400-E29B-41D4-A716-446655440000", itemName: "Desk lamp", category: "Lighting", itemDescription: nil,
                 quantity: 1, purchaseDate: "2026-10-11", purchasePrice: 29.99,
                 currentValue: 20, condition: "Good", location: "Office", notes: nil
             )
@@ -26,7 +26,7 @@ final class MilestoneTwoWorkflowTests: XCTestCase {
                 try request.content.encode(manualEntry)
             }) { response in XCTAssertEqual(response.status, .ok) }
 
-            let csv = "InventoryID,ItemName,Category,Description,Quantity\nINV-0002,Chair,Furniture,Desk chair,1"
+            let csv = "ItemName,Category,Description,Quantity\nChair,Furniture,Desk chair,1"
             try await app.test(.POST, "home-inventory/import/preview", beforeRequest: { request in
                 try request.content.encode(HomeInventoryCSVPreviewRequest(csv: csv))
             }) { response async throws in
@@ -47,7 +47,7 @@ final class MilestoneTwoWorkflowTests: XCTestCase {
                 checksum: "checksum", ownerType: nil, ownerID: nil
             )
             try await metadata.create(on: app.db)
-            try await app.test(.PATCH, "home-inventory/INV-0001/attachment", beforeRequest: { request in
+            try await app.test(.PATCH, "home-inventory/550E8400-E29B-41D4-A716-446655440000/attachment", beforeRequest: { request in
                 try request.content.encode(AttachmentReferenceRequest(fileMetadataID: "FILE-0001"))
             }) { response in XCTAssertEqual(response.status, .ok) }
 
@@ -55,7 +55,7 @@ final class MilestoneTwoWorkflowTests: XCTestCase {
                 XCTAssertEqual(response.status, .ok)
                 let records = try response.content.decode([HomeInventory].self)
                 XCTAssertEqual(records.count, 2)
-                XCTAssertEqual(records.first { $0.id == "INV-0001" }?.imageFileMetadataID, "FILE-0001")
+                XCTAssertEqual(records.first { $0.id == "550E8400-E29B-41D4-A716-446655440000" }?.imageFileMetadataID, "FILE-0001")
             }
         }
     }
