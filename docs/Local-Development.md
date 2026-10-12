@@ -169,6 +169,11 @@ The response never exposes the absolute asset directory. Uploading a file does
 not alter the personal database schema; it creates a `FileMetadata` record in
 the configured database.
 
+After upload, retrieve the file through `GET /file-metadata/:id/content` and
+attach its metadata ID to an owner record. See
+[`Attachment-Lifecycle.md`](Attachment-Lifecycle.md) for the owner fields,
+replacement order, cleanup boundary, and testing-console workflow.
+
 ## Development workflow
 
 Each meaningful change should have its own issue and feature branch based on
