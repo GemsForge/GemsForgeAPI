@@ -46,6 +46,7 @@ enum EntryPoint {
         registerServiceLogoRoutes(app)
         registerForgeKeeperRoutes(app)
         registerGemHueRoutes(app)
+        registerHomeInventoryRoutes(app)
 
         try await app.execute()
         try await app.asyncShutdown()
