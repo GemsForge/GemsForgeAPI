@@ -59,6 +59,21 @@ src/
 The console currently preserves the prototype's styling and behavior while
 separating API access and feature UI into maintainable modules.
 
+## Design system
+
+Tamagui is configured in `src/design-system/tamagui.config.ts`. The existing
+Gem Life palette is registered as shared color tokens so reusable components
+can consume the same visual language without copying literal color values.
+The provider is mounted at the application entry point; feature components
+will migrate to Tamagui primitives in focused follow-up issues.
+
+Shared primitives live in `src/components/ui`. Feature views should compose
+these primitives instead of repeating buttons, cards, and labelled fields.
+
+Server data uses TanStack Query through `src/data`. Query keys and caching
+policies belong there; feature components should consume query hooks instead
+of issuing raw requests during rendering.
+
 ## Schema builder
 
 The Developer → Build & Import view is a local testing workflow for creating a
