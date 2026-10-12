@@ -1,9 +1,55 @@
 import FluentSQLiteDriver
+import NIOCore
 import XCTest
 import VaporTesting
 @testable import GemsForgeAPI
 
 final class FileMetadataRouteTests: XCTestCase {
+    func testFileContentStreamsStoredBytesAndRejectsPathEscape() async throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("gemsforge-content-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let fileURL = directory.appendingPathComponent("uploads/example.txt")
+        try FileManager.default.createDirectory(at: fileURL.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try Data("hello attachment".utf8).write(to: fileURL)
+
+        try await withApp(configure: { app in
+            app.databases.use(.sqlite(.memory), as: .sqlite)
+            app.migrations.add(CreateFileMetadata())
+            try await app.autoMigrate()
+            registerFileContentRoutes(app, configuration: .init(directory: directory.path, maxBytes: 1024))
+            try await FileMetadata(
+                id: "FILE-CONTENT",
+                relativePath: "uploads/example.txt",
+                fileName: "example.txt",
+                fileKind: "document",
+                mimeType: "text/plain"
+            ).save(on: app.db)
+            try await FileMetadata(
+                id: "FILE-ESCAPE",
+                relativePath: "../outside.txt",
+                fileName: "outside.txt",
+                fileKind: "document",
+                mimeType: "text/plain"
+            ).save(on: app.db)
+        }) { app in
+            try await app.test(.GET, "file-metadata/FILE-CONTENT/content") { response async throws in
+                XCTAssertEqual(response.status, .ok)
+                XCTAssertEqual(response.headers.contentType?.description, "text/plain")
+                XCTAssertEqual(response.body.readableBytes, 16)
+                XCTAssertEqual(response.body.getString(at: 0, length: 16), "hello attachment")
+            }
+
+            try await app.test(.GET, "file-metadata/FILE-ESCAPE/content") { response in
+                XCTAssertEqual(response.status, .forbidden)
+            }
+
+            try await app.test(.GET, "file-metadata/MISSING/content") { response in
+                XCTAssertEqual(response.status, .notFound)
+            }
+        }
+    }
+
     func testFileMetadataCRUDDoesNotTouchFiles() async throws {
         try await withApp(configure: { app in
             app.databases.use(.sqlite(.memory), as: .sqlite)
