@@ -1,4 +1,4 @@
-import type { Address, Domain, Education, Employment, ExpenseTransaction, ForgeKeeperPage, ForgeKeeperPatch, GemHue, LiveSchema, LocalDatabaseCapabilities, LocalDatabaseCreationResult } from "./types";
+import type { Address, Domain, Education, Employment, ExpenseTransaction, FileMetadata, ForgeKeeperPage, ForgeKeeperPatch, GemHue, LiveSchema, LocalDatabaseCapabilities, LocalDatabaseCreationResult } from "./types";
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const response = await fetch(path, {
@@ -40,6 +40,28 @@ export const api = {
   listTransactions: () => request<ExpenseTransaction[]>("/transactions"),
   getTransaction: (transactionID: string) =>
     request<ExpenseTransaction>(`/transactions/${encodeURIComponent(transactionID)}`),
+  uploadImage: async (file: File, fileKind: string, ownerType: string, ownerID: string) => {
+    const form = new FormData();
+    form.append("file", file);
+    form.append("fileKind", fileKind);
+    form.append("ownerType", ownerType);
+    form.append("ownerID", ownerID);
+    const response = await fetch("/file-uploads", { method: "POST", body: form });
+    if (!response.ok) {
+      const problem = await response.json().catch(() => ({}));
+      throw new Error(problem.reason || `${response.status} ${response.statusText}`);
+    }
+    return await response.json() as FileMetadata;
+  },
+  patchAddressAttachment: (addressID: string, fileMetadataID: string | null) =>
+    request<Address>(`/addresses/${encodeURIComponent(addressID)}/attachment`, {
+      method: "PATCH", body: JSON.stringify({ fileMetadataID }),
+    }),
+  patchTransactionImage: (transactionID: string, fileMetadataID: string | null) =>
+    request<ExpenseTransaction>(`/transactions/${encodeURIComponent(transactionID)}/image`, {
+      method: "PATCH", body: JSON.stringify({ fileMetadataID }),
+    }),
+  fileContentURL: (fileMetadataID: string) => `/file-metadata/${encodeURIComponent(fileMetadataID)}/content`,
   getLocalDatabaseCapabilities: () => request<LocalDatabaseCapabilities>("/local-databases/capabilities"),
   createLocalDatabase: (payload: { databaseName: string; profile: string; confirmCreation: boolean }) =>
     request<LocalDatabaseCreationResult>("/local-databases", {

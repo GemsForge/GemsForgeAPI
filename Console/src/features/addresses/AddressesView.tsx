@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { api } from "../../api";
 import type { Address } from "../../types";
+import { AttachmentControl } from "../../components/AttachmentControl";
 
 interface AddressesViewProps {
   records: Address[];
@@ -37,14 +38,14 @@ export function AddressesView({ records }: AddressesViewProps) {
               </button>
             ))}
           </div>
-          {selectedAddress ? <AddressDetail record={selectedAddress} /> : <div className="detail-placeholder"><span>⌂</span><p>Select an address to view its details.</p></div>}
+          {selectedAddress ? <AddressDetail record={selectedAddress} onAttachment={async (metadata) => { const updated = await api.patchAddressAttachment(selectedAddress.id, metadata?.id ?? null); setSelectedAddress(updated); }} /> : <div className="detail-placeholder"><span>⌂</span><p>Select an address to view its details.</p></div>}
         </div>
       )}
     </>
   );
 }
 
-function AddressDetail({ record }: { record: Address }) {
+function AddressDetail({ record, onAttachment }: { record: Address; onAttachment: (metadata: import("../../types").FileMetadata | null) => Promise<void> }) {
   return (
     <article className="address-detail">
       <div className="detail-heading"><div><p className="eyebrow">Address record</p><h3>{record.addressType}</h3><p className="address-code">{record.id}</p></div><span className="status-pill">{record.addressStatus}</span></div>
@@ -59,6 +60,7 @@ function AddressDetail({ record }: { record: Address }) {
         <Field label="End date" value={record.endDate} />
         <div className="address-notes"><dt>Notes</dt><dd>{record.notes || "—"}</dd></div>
       </dl>
+      <AttachmentControl fileMetadataID={record.imageFileMetadataID} ownerType="Address" ownerID={record.id} label="Address image" onAttach={onAttachment} />
     </article>
   );
 }

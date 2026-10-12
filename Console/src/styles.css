@@ -30,6 +30,12 @@
 .transaction-fields dt { margin-bottom:.2rem; color:var(--gold); font-size:.68rem; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
 .transaction-fields dd { margin:0; color:var(--muted); font-size:.82rem; line-height:1.5; overflow-wrap:anywhere; }
 .transaction-notes { grid-column:1 / -1; }
+.attachment-control { display:grid; gap:.75rem; margin-top:1.4rem; padding-top:1.2rem; border-top:1px solid var(--line); }
+.attachment-heading { display:flex; justify-content:space-between; align-items:center; gap:1rem; }
+.attachment-heading strong { font-size:.9rem; }
+.attachment-preview { width:min(100%,20rem); max-height:15rem; border:1px solid var(--line); border-radius:.75rem; object-fit:cover; background:#0c1b20; }
+.attachment-empty { padding:1.2rem; border:1px dashed var(--line); border-radius:.75rem; color:var(--muted); font-size:.8rem; }
+.attachment-error { margin:0; color:var(--danger); font-size:.78rem; }
 .database-layout { display:grid; grid-template-columns:minmax(18rem,.9fr) minmax(0,1.1fr); gap:1rem; align-items:start; }
 .database-panel { padding:1.3rem; border:1px solid rgba(120,209,189,.24); border-radius:1rem; background:rgba(23,49,56,.42); }
 .database-panel-heading { display:flex; justify-content:space-between; align-items:start; gap:1rem; margin-bottom:1.4rem; }

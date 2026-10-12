@@ -17,6 +17,7 @@ export interface Address {
   endDate: string | null;
   addressStatus: string;
   notes?: string | null;
+  imageFileMetadataID?: string | null;
 }
 
 export interface ForgeKeeperPage {
@@ -89,6 +90,18 @@ export interface ExpenseTransaction {
   total: number | null;
   discount: number | null;
   notes: string | null;
+  image?: string | null;
+}
+
+export interface FileMetadata {
+  id: string;
+  relativePath: string;
+  fileName: string | null;
+  fileKind: string;
+  mimeType: string;
+  byteSize: number | null;
+  ownerType: string | null;
+  ownerID: string | null;
 }
 
 export interface ForgeKeeperPatch {
