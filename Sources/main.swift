@@ -38,6 +38,7 @@ enum EntryPoint {
         registerExpenseSubcategoryRoutes(app)
         registerEmojiLabelDefinitionRoutes(app)
         registerFileMetadataRoutes(app)
+        registerAttachmentReferenceRoutes(app)
         let imageConfiguration = LocalImageUploadConfiguration.fromEnvironment()
         registerLocalImageUploadRoutes(app, configuration: imageConfiguration)
         registerFileContentRoutes(app, configuration: imageConfiguration)
