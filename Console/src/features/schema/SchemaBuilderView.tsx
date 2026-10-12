@@ -11,10 +11,9 @@ interface SchemaBuilderViewProps {
 const types = ["TEXT", "INTEGER", "REAL", "NUMERIC", "BLOB", "ANY"] as const;
 
 const initialColumns: TableBuilderColumn[] = [
-  { name: "ID", dataType: "TEXT", nullable: false, defaultValue: null, primaryKey: true, unique: true },
-  { name: "ItemName", dataType: "TEXT", nullable: false, defaultValue: null, primaryKey: false, unique: false },
-  { name: "Quantity", dataType: "INTEGER", nullable: false, defaultValue: "1", primaryKey: false, unique: false },
+  { name: "Property", dataType: "TEXT", nullable: true, defaultValue: null, primaryKey: false, unique: false },
 ];
+const tableNamePattern = /^[A-Z][A-Za-z0-9]*$/;
 
 export function SchemaBuilderView({ onError, onSuccess }: SchemaBuilderViewProps) {
   const [tableName, setTableName] = useState("HomeInventoryDraft");
@@ -23,6 +22,7 @@ export function SchemaBuilderView({ onError, onSuccess }: SchemaBuilderViewProps
   const [csv, setCsv] = useState("");
   const [csvPreview, setCsvPreview] = useState<HomeInventoryCSVPreview | null>(null);
   const [busy, setBusy] = useState(false);
+  const [creationError, setCreationError] = useState<string | null>(null);
   const [guidance, setGuidance] = useState<SchemaBuilderGuidance | null>(null);
   const [guidanceError, setGuidanceError] = useState<string | null>(null);
 
@@ -33,6 +33,8 @@ export function SchemaBuilderView({ onError, onSuccess }: SchemaBuilderViewProps
   }, []);
 
   const definition: TableBuilderRequest = { tableName, columns };
+  const tableNameIsValid = tableNamePattern.test(tableName.trim());
+  const columnsAreValid = columns.length >= 1 && columns.every((column) => column.name.trim() && column.dataType);
 
   function updateColumn(index: number, patch: Partial<TableBuilderColumn>) {
     setColumns((current) => current.map((column, columnIndex) => columnIndex === index ? { ...column, ...patch } : column));
@@ -40,13 +42,23 @@ export function SchemaBuilderView({ onError, onSuccess }: SchemaBuilderViewProps
 
   async function previewTable() {
     setBusy(true);
+    setCreationError(null);
     try { setPreview(await api.previewUserTable(definition)); } catch (error) { onError(error); } finally { setBusy(false); }
   }
 
   async function createTable() {
     if (!preview) return;
     setBusy(true);
-    try { const result = await api.createUserTable(preview.confirmationToken); onSuccess(`${result.table} created and verified.`); setPreview(null); } catch (error) { onError(error); } finally { setBusy(false); }
+    setCreationError(null);
+    try {
+      const result = await api.createUserTable(preview.confirmationToken);
+      onSuccess(`${result.table} created and verified.`);
+      setPreview(null);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "The table could not be created.";
+      setCreationError(message);
+      onError(error);
+    } finally { setBusy(false); }
   }
 
   async function previewImport() {
@@ -76,10 +88,10 @@ export function SchemaBuilderView({ onError, onSuccess }: SchemaBuilderViewProps
     <div className="database-layout">
       <section className="database-panel">
         <div className="database-panel-heading"><div><p className="eyebrow">Schema builder</p><h3>New SQLite table</h3></div><span className="life-mark database-icon">＋</span></div>
-        <label className="database-field">Table name<input value={tableName} onChange={(event) => setTableName(event.target.value)} /></label>
-        <div className="builder-columns"><div className="builder-column-heading"><strong>Columns</strong><button className="secondary-button" onClick={() => setColumns([...columns, { name: "NewColumn", dataType: "TEXT", nullable: true, defaultValue: null, primaryKey: false, unique: false }])}>Add column</button></div>{columns.map((column, index) => <div className="builder-column" key={`${index}-${column.name}`}><div><input aria-label="Column name" value={column.name} onChange={(event) => updateColumn(index, { name: event.target.value })} /><small className="field-hint">Names must be unique and use letters, numbers, or underscores.</small></div><div><select aria-label="SQLite type" value={column.dataType} onChange={(event) => updateColumn(index, { dataType: event.target.value as TableBuilderColumn["dataType"] })}>{(guidance?.supportedTypes ?? types.map((value) => ({ value, label: value, description: "" }))).map((type) => <option key={type.value}>{type.value}</option>)}</select>{guidance ? <small className="field-hint">{guidance.supportedTypes.find((type) => type.value === column.dataType)?.description}</small> : null}</div><label className="inline-check"><input type="checkbox" checked={!column.nullable} disabled={column.primaryKey} onChange={(event) => updateColumn(index, { nullable: !event.target.checked })} /> required</label><label className="inline-check"><input type="checkbox" checked={column.primaryKey} onChange={(event) => updateColumn(index, { primaryKey: event.target.checked, unique: event.target.checked, nullable: false })} /> key</label><div><input aria-label="Default value" placeholder="Default" value={column.defaultValue ?? ""} onChange={(event) => updateColumn(index, { defaultValue: event.target.value || null })} /><small className="field-hint">Use a number, quoted text, NULL, or a CURRENT_* value.</small></div>{columns.length > 1 ? <button className="icon-button" onClick={() => setColumns(columns.filter((_, columnIndex) => columnIndex !== index))}>×</button> : null}</div>)}</div>
-        <button className="primary-button" disabled={busy || !tableName.trim()} onClick={() => void previewTable()}>{busy ? "Working…" : "Preview table"}</button>
-        {preview ? <div className="builder-preview"><h4>Ready for approval</h4><p className="muted">{preview.definition.tableName} · {preview.definition.columns.length} columns</p>{preview.warnings.map((warning) => <p key={warning}>• {warning}</p>)}<button className="primary-button" disabled={busy} onClick={() => void createTable()}>Create table with backup</button></div> : null}
+        <label className="database-field">Table name<input value={tableName} onChange={(event) => setTableName(event.target.value)} placeholder="NewTable" />{tableName && !tableNameIsValid ? <small className="field-hint error-text">Use UpperCamelCase, such as NewTable.</small> : <small className="field-hint">The API supplies the ID column automatically.</small>}</label>
+        <div className="builder-columns"><div className="builder-column-heading"><div><strong>Column properties</strong><small className="field-hint">Add at least one property, then use + for more.</small></div><button className="secondary-button" onClick={() => setColumns([...columns, { name: "Property", dataType: "TEXT", nullable: true, defaultValue: null, primaryKey: false, unique: false }])}>＋ Add property</button></div>{columns.map((column, index) => <div className="builder-column" key={`${index}-${column.name}`}><div><input aria-label="Column property" value={column.name} onChange={(event) => updateColumn(index, { name: event.target.value })} placeholder="Column property" /><small className="field-hint">Names must be unique and use letters, numbers, or underscores.</small></div><div><select aria-label="SQLite type" value={column.dataType} onChange={(event) => updateColumn(index, { dataType: event.target.value as TableBuilderColumn["dataType"] })}>{(guidance?.supportedTypes ?? types.map((value) => ({ value, label: value, description: "" }))).map((type) => <option key={type.value}>{type.value}</option>)}</select>{guidance ? <small className="field-hint">{guidance.supportedTypes.find((type) => type.value === column.dataType)?.description}</small> : null}</div><div><input aria-label="Default value" placeholder="Default" value={column.defaultValue ?? ""} onChange={(event) => updateColumn(index, { defaultValue: event.target.value || null })} /><small className="field-hint">Use a number, quoted text, NULL, or a CURRENT_* value.</small></div>{columns.length > 1 ? <button className="icon-button" aria-label="Remove property" onClick={() => setColumns(columns.filter((_, columnIndex) => columnIndex !== index))}>×</button> : <span className="field-hint">Required property</span>}</div>)}</div>
+        <button className="primary-button" disabled={busy || !tableNameIsValid || !columnsAreValid} onClick={() => void previewTable()}>{busy ? "Working…" : "Preview table"}</button>
+        {preview ? <div className="builder-preview"><h4>Ready for approval</h4><p className="muted">{preview.definition.tableName} · {preview.definition.columns.length} columns</p>{preview.warnings.map((warning) => <p key={warning}>• {warning}</p>)}<button className="primary-button" disabled={busy} onClick={() => void createTable()}>Create table with backup</button>{creationError ? <div className="builder-error"><h4>Table was not created</h4><p>{creationError}</p>{creationError.toLowerCase().includes("already exists") ? <p>Choose a different table name, then preview it again.</p> : null}</div> : null}</div> : null}
       </section>
 
       <section className="database-panel"><div className="database-panel-heading"><div><p className="eyebrow">HomeInventory</p><h3>CSV import</h3></div><span className="record-count">Preview only</span></div><label className="database-field">Choose CSV file<input type="file" accept=".csv,text/csv" onChange={(event) => { const file = event.target.files?.[0]; if (file) readCSV(file); }} /></label><label className="database-field">Or paste CSV<textarea rows={9} value={csv} onChange={(event) => setCsv(event.target.value)} placeholder="ItemName,Quantity\nDesk lamp,1" /></label><div className="button-row"><button className="secondary-button" disabled={busy || !csv.trim()} onClick={() => void previewImport()}>Preview CSV</button><button className="primary-button" disabled={busy || !csvPreview?.readyToImport} onClick={() => void importCSV()}>Import approved rows</button></div>{csvPreview ? <div className="builder-preview"><h4>{csvPreview.readyToImport ? "CSV is ready" : "CSV needs attention"}</h4><p>{csvPreview.validRows.length} valid · {csvPreview.invalidRows.length} invalid</p>{csvPreview.invalidRows.map((row) => <p className="error-text" key={row.rowNumber}>Row {row.rowNumber}: {row.errors.join(" ")}</p>)}{csvPreview.warnings.map((warning) => <p key={warning}>• {warning}</p>)}</div> : null}</section>
