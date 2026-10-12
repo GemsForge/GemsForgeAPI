@@ -48,6 +48,10 @@ final class Address: Model, Content, @unchecked Sendable {
     @OptionalField(key: "Notes")
     var notes: String?
 
+    /// FileMetadataID for the address image, if one is attached.
+    @OptionalField(key: "ImageFileMetadataID")
+    var imageFileMetadataID: String?
+
     init() {}
 
     /// Creates an Address model using the columns available in the existing table.
@@ -63,7 +67,8 @@ final class Address: Model, Content, @unchecked Sendable {
         startDate: String? = nil,
         endDate: String? = nil,
         addressStatus: String,
-        notes: String? = nil
+        notes: String? = nil,
+        imageFileMetadataID: String? = nil
     ) {
         self.id = id
         self.addressType = addressType
@@ -77,5 +82,6 @@ final class Address: Model, Content, @unchecked Sendable {
         self.endDate = endDate
         self.addressStatus = addressStatus
         self.notes = notes
+        self.imageFileMetadataID = imageFileMetadataID
     }
 }

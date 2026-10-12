@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { api } from "../../api";
 import type { ExpenseTransaction } from "../../types";
+import { AttachmentControl } from "../../components/AttachmentControl";
 
 interface TransactionsViewProps {
   records: ExpenseTransaction[];
@@ -37,14 +38,14 @@ export function TransactionsView({ records }: TransactionsViewProps) {
               </button>
             ))}
           </div>
-          {selectedRecord ? <TransactionDetail record={selectedRecord} /> : <div className="detail-placeholder"><span>$</span><p>Select an expense transaction to view its details.</p></div>}
+          {selectedRecord ? <TransactionDetail record={selectedRecord} onAttachment={async (metadata) => { const updated = await api.patchTransactionImage(selectedRecord.id, metadata?.id ?? null); setSelectedRecord(updated); }} /> : <div className="detail-placeholder"><span>$</span><p>Select an expense transaction to view its details.</p></div>}
         </div>
       )}
     </>
   );
 }
 
-function TransactionDetail({ record }: { record: ExpenseTransaction }) {
+function TransactionDetail({ record, onAttachment }: { record: ExpenseTransaction; onAttachment: (metadata: import("../../types").FileMetadata | null) => Promise<void> }) {
   return (
     <article className="transaction-detail">
       <div className="detail-heading"><div><p className="eyebrow">Expense transaction</p><h3>{record.item}</h3><p className="transaction-code">{record.id}</p></div><span className="status-pill">Category {record.categoryID}</span></div>
@@ -61,6 +62,7 @@ function TransactionDetail({ record }: { record: ExpenseTransaction }) {
         <MoneyField label="Discount" value={record.discount} />
         <div className="transaction-notes"><dt>Notes</dt><dd>{record.notes || "—"}</dd></div>
       </dl>
+      <AttachmentControl fileMetadataID={record.image} ownerType="ExpenseTransaction" ownerID={record.id} label="Receipt image" onAttach={onAttachment} />
     </article>
   );
 }

@@ -31,7 +31,8 @@ private func makeAddress(from input: AddressRequest, id: String?) -> Address {
         startDate: input.startDate,
         endDate: input.endDate,
         addressStatus: input.addressStatus,
-        notes: input.notes
+        notes: input.notes,
+        imageFileMetadataID: input.imageFileMetadataID
     )
 }
 
@@ -54,6 +55,7 @@ func registerAddressRoutes(_ app: Application) {
         }
 
         let address = makeAddress(from: input, id: id)
+        _ = try await AttachmentReferenceService(database: request.db).attach(metadataID: address.imageFileMetadataID, ownerType: "Address", ownerID: id)
         try await AddressService(database: request.db).save(address)
         return AddressDetailResponse(address)
     }
@@ -79,6 +81,7 @@ func registerAddressRoutes(_ app: Application) {
         let input = try request.content.decode(AddressRequest.self)
         try validate(input)
         let replacement = makeAddress(from: input, id: id)
+        try await AttachmentReferenceService(database: request.db).replace(oldMetadataID: address.imageFileMetadataID, newMetadataID: replacement.imageFileMetadataID, ownerType: "Address", ownerID: id)
         address.addressType = replacement.addressType
         address.addressLine1 = replacement.addressLine1
         address.addressLine2 = replacement.addressLine2
@@ -90,6 +93,7 @@ func registerAddressRoutes(_ app: Application) {
         address.endDate = replacement.endDate
         address.addressStatus = replacement.addressStatus
         address.notes = replacement.notes
+        address.imageFileMetadataID = replacement.imageFileMetadataID
         try await AddressService(database: request.db).save(address)
         return AddressDetailResponse(address)
     }

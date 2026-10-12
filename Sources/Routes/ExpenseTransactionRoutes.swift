@@ -87,12 +87,8 @@ func registerExpenseTransactionRoutes(_ app: Application) {
             throw Abort(.conflict, reason: "A transaction with this ID already exists.")
         }
 
-        if let imageID = input.image,
-           try await FileMetadataService(database: request.db).find(id: imageID) == nil {
-            throw Abort(.unprocessableEntity, reason: "The referenced image metadata does not exist.")
-        }
-
         let transaction = makeTransaction(from: input, id: id)
+        _ = try await AttachmentReferenceService(database: request.db).attach(metadataID: transaction.image, ownerType: "ExpenseTransaction", ownerID: id)
         try await service.save(transaction)
         return transaction
     }
@@ -117,11 +113,8 @@ func registerExpenseTransactionRoutes(_ app: Application) {
 
         let input = try request.content.decode(ExpenseTransactionRequest.self)
         try validate(input)
-        if let imageID = input.image,
-           try await FileMetadataService(database: request.db).find(id: imageID) == nil {
-            throw Abort(.unprocessableEntity, reason: "The referenced image metadata does not exist.")
-        }
         let replacement = makeTransaction(from: input, id: id)
+        try await AttachmentReferenceService(database: request.db).replace(oldMetadataID: transaction.image, newMetadataID: replacement.image, ownerType: "ExpenseTransaction", ownerID: id)
         transaction.receiptID = replacement.receiptID
         transaction.item = replacement.item
         transaction.firstReceiptItem = replacement.firstReceiptItem

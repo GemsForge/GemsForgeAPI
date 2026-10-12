@@ -56,12 +56,13 @@ Open `http://127.0.0.1:5173/`.
 - Select an Employment record to retrieve its details through `GET /employment/:id`.
 - Open Addresses as Life-area data and inspect address records directly.
 - Select an address to retrieve its complete details through `GET /addresses/:id`.
+- Use the reusable Address attachment control to choose, preview, replace, and
+  remove an image through the upload and attachment PATCH endpoints.
 - Education and Employment details render their embedded `address` response
   objects instead of displaying address IDs.
-- Expense Transactions are available to the API through `GET /transactions`
-  and `GET /transactions/:transactionID`. Testing-console support remains a
-  separate follow-up under issue #41 so the console can be updated as the
-  Expense Tracker feature set grows.
+- Expense Transactions are available through `GET /transactions` and
+  `GET /transactions/:transactionID`, with a reusable receipt-image control for
+  upload, preview, replacement, and removal.
 
 The React project keeps the API client and UI features separate:
 
@@ -73,6 +74,7 @@ Console/src/features/gem-hues/        → hue records and image previews
 Console/src/features/education/        → Life-area education reads
 Console/src/features/employment/       → Life-area employment reads
 Console/src/features/addresses/        → Life-area address reads
+Console/src/components/AttachmentControl.tsx → reusable local image workflow
 Console/src/features/databases/        → isolated local database creation
 ```
 
@@ -134,6 +136,10 @@ The console renders the transaction item, date, stable ID, amount, category and
 subcategory IDs, receipt and merchant references, quantity, price fields, and
 notes. It is intentionally read-only in this slice; write controls remain
 outside the testing-console issue until the API contracts are reviewed.
+
+Attachment controls use `POST /file-uploads`, `GET
+/file-metadata/:id/content`, and owner-specific PATCH routes. The browser never
+receives the absolute asset directory.
 
 ### Local Databases
 

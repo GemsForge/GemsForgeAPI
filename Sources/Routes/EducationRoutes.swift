@@ -17,6 +17,7 @@ struct EducationRequest: Content {
     let locationAddressID: String?
     let website: String?
     let notes: String?
+    var documentFileMetadataID: String? = nil
 }
 
 /// API response that expands the address relationship for client rendering.
@@ -35,6 +36,7 @@ struct EducationResponse: Content {
     let address: AddressReferenceResponse?
     let website: String?
     let notes: String?
+    let documentFileMetadataID: String?
 
     init(_ record: Education, address: AddressReferenceResponse?) {
         id = record.id
@@ -51,6 +53,7 @@ struct EducationResponse: Content {
         self.address = address
         website = record.website
         notes = record.notes
+        documentFileMetadataID = record.documentFileMetadataID
     }
 }
 
@@ -118,9 +121,11 @@ func registerEducationRoutes(_ app: Application) {
             status: input.status,
             locationAddressID: input.locationAddressID,
             website: input.website,
-            notes: input.notes
+            notes: input.notes,
+            documentFileMetadataID: input.documentFileMetadataID
         )
 
+        _ = try await AttachmentReferenceService(database: request.db).attach(metadataID: record.documentFileMetadataID, ownerType: "Education", ownerID: id)
         try await EducationService(database: request.db).save(record)
         return try await educationResponse(record, on: request.db)
     }
@@ -158,6 +163,8 @@ func registerEducationRoutes(_ app: Application) {
         record.locationAddressID = input.locationAddressID
         record.website = input.website
         record.notes = input.notes
+        try await AttachmentReferenceService(database: request.db).replace(oldMetadataID: record.documentFileMetadataID, newMetadataID: input.documentFileMetadataID, ownerType: "Education", ownerID: id)
+        record.documentFileMetadataID = input.documentFileMetadataID
         try await EducationService(database: request.db).save(record)
         return try await educationResponse(record, on: request.db)
     }

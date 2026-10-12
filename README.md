@@ -37,6 +37,8 @@ The project currently includes:
 - A local React + TypeScript testing console for domains, ForgeKeeper pages,
   Gem Hues, Education, Employment, and Addresses, with the original HTML prototype retained as a
   fallback.
+- A reusable local attachment lifecycle for uploading, safely retrieving,
+  previewing, replacing, and removing image references on owner records.
 - Automated route, service, model, and integration-focused tests using isolated
   in-memory databases.
 
@@ -136,6 +138,8 @@ current Notes-import boundary.
   label registry and its separation from taxonomy identity.
 - [`docs/File-Metadata.md`](docs/File-Metadata.md) documents the local-file
   bridge, metadata fields, API contract, and isolated migration boundary.
+- [`docs/Attachment-Lifecycle.md`](docs/Attachment-Lifecycle.md) documents the
+  upload, retrieval, owner-reference, replacement, cleanup, and console flow.
 - [`docs/Service-Logos.md`](docs/Service-Logos.md) documents the existing logo
   table, metadata-only responses, explicit image route, and FileMetadata
   migration boundary.

@@ -22,6 +22,7 @@ struct ServiceAccountRequest: Content {
     let emailUpdated: String?
     let associatedAddress: String?
     let serviceKey: String?
+    var logoFileMetadataID: String? = nil
 }
 
 private func validate(_ input: ServiceAccountRequest) throws {
@@ -56,7 +57,8 @@ private func makeServiceAccount(from input: ServiceAccountRequest, id: Int?) -> 
         accountNumber: input.accountNumber,
         emailUpdated: input.emailUpdated,
         associatedAddress: input.associatedAddress,
-        serviceKey: input.serviceKey
+        serviceKey: input.serviceKey,
+        logoFileMetadataID: input.logoFileMetadataID
     )
 }
 
@@ -81,6 +83,10 @@ func registerServiceAccountRoutes(_ app: Application) {
 
         let account = makeServiceAccount(from: input, id: input.id)
         try await ServiceAccountService(database: request.db).save(account)
+        if let id = account.id {
+            _ = try await AttachmentReferenceService(database: request.db).attach(metadataID: account.logoFileMetadataID, ownerType: "ServiceAccount", ownerID: String(id))
+            try await ServiceAccountService(database: request.db).save(account)
+        }
         return account
     }
 
@@ -105,6 +111,7 @@ func registerServiceAccountRoutes(_ app: Application) {
         let input = try request.content.decode(ServiceAccountRequest.self)
         try validate(input)
         let replacement = makeServiceAccount(from: input, id: id)
+        try await AttachmentReferenceService(database: request.db).replace(oldMetadataID: account.logoFileMetadataID, newMetadataID: replacement.logoFileMetadataID, ownerType: "ServiceAccount", ownerID: String(id))
         account.service = replacement.service
         account.logoKey = replacement.logoKey
         account.type = replacement.type
@@ -124,6 +131,7 @@ func registerServiceAccountRoutes(_ app: Application) {
         account.emailUpdated = replacement.emailUpdated
         account.associatedAddress = replacement.associatedAddress
         account.serviceKey = replacement.serviceKey
+        account.logoFileMetadataID = replacement.logoFileMetadataID
         try await ServiceAccountService(database: request.db).save(account)
         return account
     }
