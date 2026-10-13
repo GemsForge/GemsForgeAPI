@@ -7,6 +7,10 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [react()],
+    define: {
+      "process.env.NODE_ENV": JSON.stringify(mode),
+      "process.env.TAMAGUI_TARGET": JSON.stringify("web"),
+    },
     test: {
       environment: "jsdom",
       setupFiles: "./src/test/setup.ts",
