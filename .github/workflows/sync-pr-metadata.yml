@@ -183,7 +183,7 @@ jobs:
             }
             if (!project) {
               core.setFailed(
-                "The private user project GemsForgeAPI was not found or the PROJECTS_TOKEN lacks project access.",
+                "The user project GemsForgeAPI (#7) was not found or PROJECTS_TOKEN lacks project access.",
               );
               return;
             }
@@ -228,7 +228,7 @@ jobs:
             );
             if (!issueItem) {
               core.setFailed(
-                `Issue #${issueNumber} is not currently in the private GemsForgeAPI project.`,
+                `Issue #${issueNumber} is not currently in the GemsForgeAPI project.`,
               );
               return;
             }
