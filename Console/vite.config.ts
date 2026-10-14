@@ -18,21 +18,15 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       port: 5173,
-      proxy: {
-        "/domains": apiTarget,
-        "/education": apiTarget,
-        "/employment": apiTarget,
-        "/addresses": apiTarget,
-        "/transactions": apiTarget,
-        "/file-metadata": apiTarget,
-        "/file-uploads": apiTarget,
-        "/forgekeeper": apiTarget,
-        "/gemhues": apiTarget,
-        "/health": apiTarget,
-        "/local-databases": apiTarget
-        ,"/live-database": apiTarget,
-          "/schema-builder": apiTarget,
-      }
+      proxy: Object.fromEntries([
+        "/domains", "/education", "/employment", "/addresses", "/transactions",
+        "/file-metadata", "/file-uploads", "/forgekeeper", "/gemhues", "/health",
+        "/local-databases", "/live-database", "/schema-builder",
+      ].map((path) => [path, {
+        target: apiTarget,
+        bypass: (req: import("node:http").IncomingMessage) =>
+          req.method === "GET" && req.headers.accept?.includes("text/html") ? "/index.html" : undefined,
+      }]))
     }
   };
 });
