@@ -21,6 +21,12 @@ PR bodies include a closing reference such as `Closes #170`.
 An explicit issue supplied with a PR must agree with its working issue.
 PR creation and merging remain separate, authorized steps.
 
+Commits and proposed squash-merge PR titles must follow
+`type(scope): #issue short imperative description`. The **Commit policy**
+Action and installed local pre-push hook check the same rules. See
+[Commit policy enforcement](../docs/Commit-Policy.md). An Action cannot stop
+a transfer that has already reached GitHub.
+
 ## Native relationship inputs
 
 | Input | Meaning |

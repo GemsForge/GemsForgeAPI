@@ -6,6 +6,10 @@ The project is designed to run locally on a Mac and remain private behind a secu
 
 ## Current status
 
+For local commit-policy enforcement, run `node Scripts/install-git-hooks.mjs`
+once per clone. See [Commit policy setup](docs/Commit-Policy.md) for the required
+message format, pre-push validation, and GitHub check configuration.
+
 The project currently includes:
 
 - Swift Package Manager project configuration.

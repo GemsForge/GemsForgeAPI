@@ -207,6 +207,11 @@ Use these established types:
 - `docs` — documentation and project procedure.
 - `chore` — maintenance and tooling.
 
+Install local push blocking with `node Scripts/install-git-hooks.mjs`.
+The GitHub **Commit policy** Action uses the same validator and checks PR
+titles for squash merging. See [Commit-Policy.md](Commit-Policy.md) for setup,
+legacy history, merge/revert rules, and required-check configuration.
+
 Examples:
 
 ```text
