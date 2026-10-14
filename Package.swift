@@ -21,12 +21,17 @@ let package = Package(
                 .product(name: "Fluent", package: "fluent"),
                 .product(name: "FluentSQLiteDriver", package: "fluent-sqlite-driver")
             ],
-            path: "Sources"
+            path: "Sources",
+            exclude: ["GemLife"]
         ),
         .executableTarget(
             name: "GemLifeHost",
             path: "GemLifeHost",
             exclude: ["README.md"]
+        ),
+        .executableTarget(
+            name: "GemLife",
+            path: "Sources/GemLife"
         ),
         .testTarget(
             name: "GemsForgeAPITests",

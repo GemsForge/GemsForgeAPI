@@ -21,6 +21,9 @@ The repository-level `Scripts/run-gem-life.sh` launcher starts both the API and
 host together. The React Console still needs to be running from `Console/` with
 `npm run dev`.
 
+The same launcher is available as `swift run GemLife` when run from the
+repository root.
+
 ## Bridge boundary
 
 `GemLifeBridge.swift` registers one `gemLife` WebKit message handler and

@@ -226,6 +226,17 @@ The host loads the Console from `http://localhost:5173/`. Press `Ctrl-C` once
 to stop both executables. The explicit executable names are required because
 bare `swift run` is ambiguous when the package contains both products.
 
+For a memorable Swift command, the package also provides a `GemLife` launcher
+target:
+
+```bash
+DATABASE_PATH="/absolute/path/to/GemLife_DB_rebuild.sqlite" \
+swift run GemLife
+```
+
+`swift run GemLife` delegates to the same repository launcher, so the API and
+host lifecycle behavior stays in one place.
+
 The current verification checkpoint is the health test:
 
 ```text
