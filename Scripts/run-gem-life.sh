@@ -47,9 +47,9 @@ cleanup() {
 
 trap cleanup EXIT INT TERM
 
-echo "Starting GemsForgeAPI on http://$api_host:$api_port…"
+echo "Starting GemsForgeAPI on http://${api_host}:${api_port}…"
 cd "$repository_root"
-swift run GemsForgeAPI serve --hostname "$api_host" --port "$api_port" &
+swift run GemsForgeAPI serve --hostname "${api_host}" --port "${api_port}" &
 api_pid=$!
 
 echo "Starting GemLifeHost…"
