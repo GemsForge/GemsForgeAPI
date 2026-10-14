@@ -17,6 +17,14 @@ Then run the `GemLifeHost` target. It loads `http://localhost:5173/` by
 default. Set `GEM_LIFE_CONSOLE_URL` in the host scheme to use another local
 URL or a packaged web asset entry point.
 
-The SwiftUI/React message bridge is intentionally not included here. That is
-tracked separately in issue #134 so native capabilities can be introduced with
-typed messages rather than coupling the host to React implementation details.
+## Bridge boundary
+
+`GemLifeBridge.swift` registers one `gemLife` WebKit message handler and
+decodes the shared envelope. React uses `Console/src/bridge/index.ts` to send
+messages to the host and subscribe to native events. Supported message types
+are navigation, file/image requests, local-file results, sharing, session
+events, and native errors.
+
+The envelope carries a stable type, an optional request ID, and string payload
+fields. Native code must return safe metadata or approved content handles; it
+must not expose arbitrary filesystem paths to React.

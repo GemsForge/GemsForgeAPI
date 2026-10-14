@@ -18,6 +18,7 @@ struct GemLifeWebView: NSViewRepresentable {
     func makeNSView(context: Context) -> WKWebView {
         let configuration = WKWebViewConfiguration()
         configuration.websiteDataStore = .default()
+        configuration.userContentController.add(context.coordinator.bridgeHandler, name: "gemLife")
 
         let webView = WKWebView(frame: .zero, configuration: configuration)
         webView.navigationDelegate = context.coordinator
@@ -32,6 +33,15 @@ struct GemLifeWebView: NSViewRepresentable {
     }
 
     final class Coordinator: NSObject, WKNavigationDelegate {
+        let bridgeHandler = GemLifeBridgeHandler()
+
+        override init() {
+            super.init()
+            bridgeHandler.onMessage = { message in
+                NSLog("Gem Life bridge received %@", message.type.rawValue)
+            }
+        }
+
         func webView(_ webView: WKWebView, didFail navigation: WKNavigation?, withError error: Error) {
             NSLog("Gem Life Console navigation failed: %@", error.localizedDescription)
         }
@@ -39,5 +49,6 @@ struct GemLifeWebView: NSViewRepresentable {
         func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation?, withError error: Error) {
             NSLog("Gem Life Console could not load: %@", error.localizedDescription)
         }
+
     }
 }
