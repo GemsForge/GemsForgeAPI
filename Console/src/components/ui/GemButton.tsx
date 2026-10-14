@@ -9,6 +9,7 @@ export interface GemButtonProps extends ComponentProps<typeof Button> {
 export function GemButton({ tone = "primary", children, ...props }: GemButtonProps) {
   return (
     <Button
+      type="button"
       {...props}
       backgroundColor={tone === "primary" ? "$gemMint" : "transparent"}
       borderColor={tone === "primary" ? "$gemMint" : "$gemPanelLight"}

@@ -46,6 +46,7 @@ describe("Gem Life navigation", () => {
     await screen.findByRole("heading", { name: "Education" });
     fireEvent.click(screen.getByRole("link", { name: "Employment" }));
     await screen.findByRole("heading", { name: "Employment" });
+    expect(screen.getByRole("region", { name: "Current screen" })).toHaveFocus();
     fireEvent.click(screen.getByRole("button", { name: "Go back" }));
     await screen.findByRole("heading", { name: "Education" });
     fireEvent.click(screen.getByRole("button", { name: "Go forward" }));
