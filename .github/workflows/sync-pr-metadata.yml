@@ -8,9 +8,10 @@ name: Sync pull request metadata
 # 3. Pull requests should also include `Closes #165` (or equivalent) in the body.
 # 4. When a pull request opens or is reopened, copy the issue's assignee,
 #    labels, and milestone to the pull request.
-# 5. ProjectV2 membership is intentionally documented but not changed here yet.
-#    Project mutations require project-scoped authorization and should be added
-#    after the repository's project token or GitHub App is configured.
+# 5. Add the pull request to the private GemsForgeAPI project when the linked
+#    issue is already present there, then copy its Status option to the PR.
+# 6. Project mutations use the PROJECTS_TOKEN secret because GITHUB_TOKEN
+#    cannot access the private user-owned project.
 #
 # Implementation notes
 # - actions/github-script accepts only its declared action inputs. The manual
@@ -42,6 +43,7 @@ jobs:
         uses: actions/github-script@v8
         env:
           PR_NUMBER: ${{ inputs.pr_number }}
+          PROJECTS_TOKEN: ${{ secrets.PROJECTS_TOKEN }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
@@ -246,21 +248,21 @@ jobs:
 
             if (issueStatus?.field?.id && issueStatus.optionId) {
               const statusMutation = `mutation(
-                $projectId: ID!,
-                $itemId: ID!,
-                $fieldId: ID!,
-                $optionId: String!
-              ) {
-                updateProjectV2ItemFieldValue(input: {
-                  projectId: $projectId,
-                  itemId: $itemId,
-                  fieldId: $fieldId,
-                  value: {singleSelectOptionId: $optionId}
-                }) {
-                  projectV2Item { id }
-                }
-              `;
-              await projectApi(statusMutation, {
+              $projectId: ID!,
+              $itemId: ID!,
+              $fieldId: ID!,
+              $optionId: String!
+            ) {
+              updateProjectV2ItemFieldValue(input: {
+                projectId: $projectId,
+                itemId: $itemId,
+                fieldId: $fieldId,
+                value: {singleSelectOptionId: $optionId}
+              }) {
+                projectV2Item { id }
+              }
+            }`;
+            await projectApi(statusMutation, {
                 projectId: project.id,
                 itemId: pullRequestItem.id,
                 fieldId: issueStatus.field.id,
