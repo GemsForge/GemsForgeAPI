@@ -58,6 +58,15 @@ SwiftUI owns native destinations and deep-link entry points. React owns navigati
 
 React communicates with Vapor through the typed API client. Components should not construct raw request URLs or duplicate response parsing. Query hooks own server-state behavior; feature components consume typed results and render loading, empty, error, and success states.
 
+## Native bridge boundary
+
+The native host registers one `gemLife` WebKit message handler. React sends a
+typed envelope through `Console/src/bridge/index.ts`, and SwiftUI decodes the
+same message types in `GemLifeHost/GemLifeBridge.swift`. Messages use stable
+identifiers and optional string payloads for navigation, file/image requests,
+local-file results, sharing, session events, and native errors. The bridge
+does not expose arbitrary filesystem paths or native implementation objects.
+
 ## Implementation sequence
 
 1. Define architecture and boundaries.
