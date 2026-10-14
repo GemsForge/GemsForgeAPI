@@ -1,0 +1,135 @@
+name: Sync pull request metadata
+
+# Workflow convention
+#
+# 1. The working issue is the source of truth for ownership and planning.
+# 2. Branches include the issue number, for example:
+#      feat/165-safe-launcher-defaults
+# 3. Pull requests should also include `Closes #165` (or equivalent) in the body.
+# 4. When a pull request opens or is reopened, copy the issue's assignee,
+#    labels, and milestone to the pull request.
+# 5. ProjectV2 membership is intentionally documented but not changed here yet.
+#    Project mutations require project-scoped authorization and should be added
+#    after the repository's project token or GitHub App is configured.
+#
+# Implementation notes
+# - actions/github-script accepts only its declared action inputs. The manual
+#   PR number is passed through the environment rather than as a custom input.
+# - Octokit's REST client exposes addAssignees/removeAssignees, so replacement
+#   behavior is implemented by removing stale assignees and adding the issue's.
+
+on:
+  pull_request:
+    types: [opened, reopened, edited, ready_for_review]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: Pull request number to synchronize
+        required: true
+        type: number
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  sync:
+    name: Copy linked issue metadata
+    runs-on: ubuntu-latest
+    steps:
+      - name: Synchronize metadata from the working issue
+        uses: actions/github-script@v8
+        env:
+          PR_NUMBER: ${{ inputs.pr_number }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const manualNumber = process.env.PR_NUMBER;
+            const pullRequest = context.payload.pull_request ?? (
+              await github.rest.pulls.get({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: Number(manualNumber),
+              })
+            ).data;
+
+            const branchIssue = pullRequest.head.ref.match(
+              /(?:^|\/)(?:feat|fix|docs|refactor|test|chore)\/(\d+)(?:-|$)/i,
+            );
+            const bodyIssues = [
+              ...((pullRequest.body ?? "").matchAll(
+                /(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s+#(\d+)/gi,
+              )),
+            ].map((match) => match[1]);
+            const issueNumber = Number(branchIssue?.[1] ?? bodyIssues[0]);
+
+            if (!issueNumber) {
+              core.setFailed(
+                "No working issue was found. Include the issue number in the branch name or PR body.",
+              );
+              return;
+            }
+
+            const issue = (
+              await github.rest.issues.get({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+              })
+            ).data;
+
+            const labels = issue.labels.map((label) =>
+              typeof label === "string" ? label : label.name,
+            );
+            const assignees = issue.assignees.map((assignee) => assignee.login);
+
+            await github.rest.issues.setLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pullRequest.number,
+              labels,
+            });
+
+            const currentAssignees = pullRequest.assignees.map(
+              (assignee) => assignee.login,
+            );
+            const staleAssignees = currentAssignees.filter(
+              (assignee) => !assignees.includes(assignee),
+            );
+
+            if (staleAssignees.length > 0) {
+              await github.rest.issues.removeAssignees({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pullRequest.number,
+                assignees: staleAssignees,
+              });
+            }
+
+            const newAssignees = assignees.filter(
+              (assignee) => !currentAssignees.includes(assignee),
+            );
+
+            if (newAssignees.length > 0) {
+              await github.rest.issues.addAssignees({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pullRequest.number,
+                assignees: newAssignees,
+              });
+            }
+
+            await github.rest.issues.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pullRequest.number,
+              milestone: issue.milestone?.number ?? null,
+            });
+
+            core.notice(
+              `Synchronized PR #${pullRequest.number} from issue #${issueNumber}: ${labels.length} labels, ${assignees.length} assignees, and milestone ${issue.milestone?.title ?? "none"}.`,
+            );
+            core.notice(
+              "ProjectV2 membership remains a documented follow-up requiring project-scoped authorization.",
+            );
