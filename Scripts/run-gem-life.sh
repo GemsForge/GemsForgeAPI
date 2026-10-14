@@ -3,6 +3,24 @@
 # Start the Vapor API and native Gem Life host as one local development session.
 set -Eeuo pipefail
 
+repository_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+# Load values from the ignored local .env without replacing explicit exports.
+if [[ -f "$repository_root/.env" ]]; then
+  while IFS='=' read -r key value; do
+    key="${key#export }"
+    [[ "$key" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]] || continue
+    [[ -n "${!key+x}" ]] && continue
+    value="${value%$'\r'}"
+    if [[ "$value" == \"*\" && "$value" == *\" ]]; then
+      value="${value:1:${#value}-2}"
+    elif [[ "$value" == \'*\' && "$value" == *\' ]]; then
+      value="${value:1:${#value}-2}"
+    fi
+    export "$key=$value"
+  done < "$repository_root/.env"
+fi
+
 if [[ -z "${DATABASE_PATH:-}" ]]; then
   echo "DATABASE_PATH is required. Export it before starting Gem Life." >&2
   exit 1
@@ -28,6 +46,7 @@ cleanup() {
 trap cleanup EXIT INT TERM
 
 echo "Starting GemsForgeAPI on http://$API_HOST:$API_PORT…"
+cd "$repository_root"
 swift run GemsForgeAPI serve --hostname "$API_HOST" --port "$API_PORT" &
 api_pid=$!
 
