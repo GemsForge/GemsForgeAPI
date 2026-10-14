@@ -9,7 +9,7 @@ export class APIError extends Error {
 
 async function checkedFetch(path: string, options: RequestInit = {}): Promise<Response> {
   let response: Response;
-  try { response = await fetch(path, options); }
+  try { response = await fetch(path, { cache: "no-store", ...options }); }
   catch (error) {
     if (options.signal?.aborted || (error instanceof Error && error.name === "AbortError")) throw error;
     throw new APIError("Cannot reach Gem Life. Check that the local API is running.", 0);
@@ -29,6 +29,11 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 }
 
 export const api = {
+  getHealth: async (signal?: AbortSignal) => {
+    const response = await checkedFetch("/health", { signal });
+    if ((await response.text()).trim() !== "ok") throw new APIError("The local API returned an unexpected health response.", response.status);
+    return true;
+  },
   listDomains: (signal?: AbortSignal) => request<Domain[]>("/domains", { signal }),
   listPagesForDomain: (domainID: string, signal?: AbortSignal) =>
     request<ForgeKeeperPage[]>(`/domains/${encodeURIComponent(domainID)}/forgekeeper`, { signal }),

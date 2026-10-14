@@ -1,4 +1,4 @@
-import { useReducer, useRef } from "react";
+import { useEffect, useReducer, useRef } from "react";
 import { useUploadImageMutation } from "../data/workflowQueries";
 import type { FileMetadata } from "../types";
 
@@ -19,6 +19,8 @@ export function useAttachmentWorkflow({ label, ownerType, ownerID, onAttach }: O
   const [state, dispatch] = useReducer(reducer, { busy: false, error: null });
   const running = useRef(false);
   const upload = useUploadImageMutation();
+  const mounted = useRef(true);
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   async function perform(operation: () => Promise<void>) {
     if (running.current) return;
     running.current = true;
@@ -28,9 +30,10 @@ export function useAttachmentWorkflow({ label, ownerType, ownerID, onAttach }: O
     finally { running.current = false; dispatch({ type: "finish" }); }
   }
   async function attach(file: File) {
+    if (!mounted.current) return;
     if (!file.type.toLowerCase().startsWith("image/") || !file.size) throw new Error("Choose a non-empty image file.");
     const metadata = await upload.mutateAsync({ file, kind: label.toLowerCase().replaceAll(" ", "-"), ownerType, ownerID });
-    await onAttach(metadata);
+    if (mounted.current) await onAttach(metadata);
   }
   return { ...state,
     handleFile: (file: File) => perform(() => attach(file)),

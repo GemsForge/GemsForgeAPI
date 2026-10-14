@@ -13,6 +13,16 @@ function wrapper({ children }: { children: ReactNode }) {
   return <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>{children}</QueryClientProvider>;
 }
 describe("feature workflow transitions", () => {
+  it("does not upload a late native picker result after its view unmounts", async () => {
+    const upload = vi.spyOn(api, "uploadImage");
+    let choose!: (file: File) => void;
+    const hook = renderHook(() => useAttachmentWorkflow({ label: "Image", ownerType: "Address", ownerID: "A", onAttach: vi.fn() }), { wrapper });
+    let pending!: Promise<void>;
+    act(() => { pending = hook.result.current.choose(() => new Promise((resolve) => { choose = resolve; })); });
+    hook.unmount();
+    await act(async () => { choose(new File(["x"], "image.png", { type: "image/png" })); await pending; });
+    expect(upload).not.toHaveBeenCalled();
+  });
   it("requires fresh database confirmation when filename changes", async () => {
     vi.spyOn(api, "getLocalDatabaseCapabilities").mockResolvedValue({ profiles: [{ id: "test" }] } as Awaited<ReturnType<typeof api.getLocalDatabaseCapabilities>>);
     const create = vi.spyOn(api, "createLocalDatabase");
