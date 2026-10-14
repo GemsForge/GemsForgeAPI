@@ -23,7 +23,7 @@ class ScreenBoundary extends Component<{ children: ReactNode }, { failed: boolea
   state = { failed: false };
   static getDerivedStateFromError() { return { failed: true }; }
   render() {
-    return this.state.failed ? <section role="alert"><h2>This screen could not be displayed</h2><p>Your records have not been changed.</p><Link to="/">Return home</Link></section> : this.props.children;
+    return this.state.failed ? <section role="alert"><h2>This screen could not be displayed</h2><p>Return home to try another screen.</p><Link to="/">Return home</Link></section> : this.props.children;
   }
 }
 
@@ -35,7 +35,11 @@ function Layout() {
   const onError = useCallback((error: unknown) => { clearTimeout(timer.current); setNotice({ message: error instanceof Error ? error.message : "Request failed.", kind: "error" }); }, []);
   const onSuccess = useCallback((message: string) => { clearTimeout(timer.current); setNotice({ message, kind: "success" }); timer.current = setTimeout(() => setNotice(null), 3500); }, []);
   useEffect(() => () => clearTimeout(timer.current), []);
-  useEffect(() => { setNotice(null); document.title = "Gem Life · " + (location.pathname === "/" ? "Home" : location.pathname.split("/")[1]); }, [location.pathname]);
+  useEffect(() => {
+    setNotice(null);
+    document.title = "Gem Life · " + (location.pathname === "/" ? "Home" : location.pathname.split("/")[1]);
+    document.getElementById("main-content")?.focus();
+  }, [location.pathname]);
   return <GemLifeShell sidebar={<DomainSidebar domains={domains.data ?? []} onRefresh={() => void domains.refetch()} />}>
     <Notice message={notice?.message ?? null} kind={notice?.kind} />
     <ScreenBoundary key={location.pathname}><Outlet context={{ onError, onSuccess } satisfies Notifications} /></ScreenBoundary>

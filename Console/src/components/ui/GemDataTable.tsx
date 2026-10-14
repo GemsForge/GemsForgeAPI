@@ -16,7 +16,7 @@ export interface GemDataTableProps<Row> {
 /** Accessible table primitive for structured records and read-only views. */
 export function GemDataTable<Row>({ columns, rows, rowKey, caption }: GemDataTableProps<Row>) {
   return (
-    <div className="data-table-wrap">
+    <div className="data-table-wrap" role="region" aria-label={caption} tabIndex={0}>
       <table className="data-table">
         <caption>{caption}</caption>
         <thead><tr>{columns.map((column) => <th scope="col" key={column.key}>{column.label}</th>)}</tr></thead>
