@@ -1,4 +1,4 @@
-name: Sync pull request metadata
+name: Sync issue and pull request metadata
 
 # Workflow convention
 #
@@ -13,6 +13,22 @@ name: Sync pull request metadata
 # 6. Project mutations use the PROJECTS_TOKEN secret because GITHUB_TOKEN
 #    cannot access user-owned projects.
 #
+# Relationship policy
+# - Parent/sub-issue links and blocked-by/blocking dependencies are native
+#   GitHub relationships. Do not duplicate them in issue descriptions.
+# - Supply issue_number (or pr_number), parent_issue, blocked_by, and blocking
+#   through workflow_dispatch. Issue-creation scripts can call the same workflow
+#   with gh workflow run; no pull request is required.
+# - Inputs are repository-local issue numbers. Blank inputs preserve existing
+#   relationships. Repeated runs skip existing links; a different parent fails
+#   rather than silently reparenting. GitHub rejects dependency/hierarchy cycles.
+# - "Related" is not assumed to mean "blocks": choose the actual relationship.
+# - Issue opened/reopened events ensure project membership automatically.
+# - This workflow does not create issues, commits, branches, or pull requests.
+# API references:
+# https://docs.github.com/en/rest/issues/sub-issues
+# https://docs.github.com/en/rest/issues/issue-dependencies
+#
 # Implementation notes
 # - actions/github-script accepts only its declared action inputs. The manual
 #   PR number is passed through the environment rather than as a custom input.
@@ -20,14 +36,32 @@ name: Sync pull request metadata
 #   behavior is implemented by removing stale assignees and adding the issue's.
 
 on:
+  issues:
+    types: [opened, reopened]
   pull_request:
     types: [opened, reopened, edited, ready_for_review]
   workflow_dispatch:
     inputs:
       pr_number:
         description: Pull request number to synchronize
-        required: true
+        required: false
         type: number
+      issue_number:
+        description: Working issue number (required when no PR is supplied)
+        required: false
+        type: number
+      parent_issue:
+        description: Parent issue number (blank preserves current parent)
+        required: false
+        type: string
+      blocked_by:
+        description: Issues blocking this issue (comma-separated numbers)
+        required: false
+        type: string
+      blocking:
+        description: Issues this issue blocks (comma-separated numbers)
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -36,106 +70,185 @@ permissions:
 
 jobs:
   sync:
-    name: Copy linked issue metadata
+    name: Maintain issue relationships and metadata
     runs-on: ubuntu-latest
     steps:
       - name: Synchronize metadata from the working issue
         uses: actions/github-script@v8
         env:
-          PR_NUMBER: ${{ inputs.pr_number }}
+          PR_NUMBER: ${{ inputs.pr_number || '' }}
+          ISSUE_NUMBER: ${{ inputs.issue_number || '' }}
+          PARENT_ISSUE: ${{ inputs.parent_issue }}
+          BLOCKED_BY: ${{ inputs.blocked_by }}
+          BLOCKING: ${{ inputs.blocking }}
           PROJECTS_TOKEN: ${{ secrets.PROJECTS_TOKEN }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const manualNumber = process.env.PR_NUMBER;
-            const pullRequest = context.payload.pull_request ?? (
+            const parseNumbers = (raw, name) => {
+              const text = String(raw ?? "").trim();
+              if (!text) return [];
+              const parts = text.split(",").map((part) => part.trim());
+              if (parts.some((part) => !/^[1-9]\d*$/.test(part) ||
+                  !Number.isSafeInteger(Number(part)))) {
+                throw new Error(name + " must contain positive issue numbers separated by commas.");
+              }
+              return [...new Set(parts.map(Number))];
+            };
+            const oneNumber = (raw, name) => {
+              const numbers = parseNumbers(raw, name);
+              if (numbers.length > 1) throw new Error(name + " accepts one number.");
+              return numbers[0];
+            };
+            const manualNumber = oneNumber(process.env.PR_NUMBER, "pr_number");
+            const explicitIssue = oneNumber(process.env.ISSUE_NUMBER, "issue_number");
+            const parentNumber = oneNumber(process.env.PARENT_ISSUE, "parent_issue");
+            const blockedBy = parseNumbers(process.env.BLOCKED_BY, "blocked_by");
+            const blocking = parseNumbers(process.env.BLOCKING, "blocking");
+            const pullRequest = context.payload.pull_request ?? (manualNumber ? (
               await github.rest.pulls.get({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                pull_number: Number(manualNumber),
+                ...context.repo,
+                pull_number: manualNumber,
               })
-            ).data;
-
-            const branchIssue = pullRequest.head.ref.match(
+            ).data : null);
+            const branchIssue = pullRequest?.head.ref.match(
               /(?:^|\/)(?:feat|fix|docs|refactor|test|chore)\/(\d+)(?:-|$)/i,
             );
-            const bodyIssues = [
-              ...((pullRequest.body ?? "").matchAll(
-                /(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s+#(\d+)/gi,
-              )),
-            ].map((match) => match[1]);
-            const issueNumber = Number(branchIssue?.[1] ?? bodyIssues[0]);
-
+            const bodyIssues = [...((pullRequest?.body ?? "").matchAll(
+              /(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s+#(\d+)/gi,
+            ))].map((match) => Number(match[1]));
+            const linkedIssue = Number(branchIssue?.[1] ?? bodyIssues[0]) || undefined;
+            const issueNumber = context.payload.issue?.number ?? explicitIssue ?? linkedIssue;
             if (!issueNumber) {
-              core.setFailed(
-                "No working issue was found. Include the issue number in the branch name or PR body.",
-              );
-              return;
+              throw new Error("Supply issue_number or a PR linked to its working issue.");
             }
+            if (pullRequest && explicitIssue && explicitIssue !== linkedIssue) {
+              throw new Error("issue_number must match the PR's linked working issue.");
+            }
+            if ([parentNumber, ...blockedBy, ...blocking].includes(issueNumber)) {
+              throw new Error("An issue cannot be its own parent or dependency.");
+            }
+            if (blockedBy.some((number) => blocking.includes(number))) {
+              throw new Error("An issue cannot both block and be blocked by the same issue.");
+            }
+            const issue = (await github.rest.issues.get({
+              ...context.repo, issue_number: issueNumber,
+            })).data;
+            if (issue.pull_request) throw new Error("The working item must be an issue, not a PR.");
 
-            const issue = (
-              await github.rest.issues.get({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: issueNumber,
-              })
-            ).data;
+            // Validate all targets before writing any relationship.
+            const targets = new Map();
+            for (const number of new Set([parentNumber, ...blockedBy, ...blocking].filter(Boolean))) {
+              const target = (await github.rest.issues.get({
+                ...context.repo, issue_number: number,
+              })).data;
+              if (target.pull_request) throw new Error("Relationship target #" + number + " is a PR.");
+              targets.set(number, target);
+            }
+            const request = (route, params) => github.request(route, {
+              ...context.repo,
+              headers: { "X-GitHub-Api-Version": "2026-03-10" },
+              ...params,
+            });
+            let currentParent;
+            if (parentNumber) {
+              try {
+                currentParent = (await request(
+                  "GET /repos/{owner}/{repo}/issues/{issue_number}/parent",
+                  { issue_number: issueNumber },
+                )).data;
+              } catch (error) {
+                if (error.status !== 404) throw error;
+              }
+              if (currentParent && currentParent.id !== targets.get(parentNumber).id) {
+                throw new Error("Issue #" + issueNumber + " already has parent #" +
+                  currentParent.number + "; refusing to replace it automatically.");
+              }
+            }
+            const dependencyPlans = [];
+            const planDependency = async (blocked, blocker) => {
+              const existing = await github.paginate(
+                "GET /repos/{owner}/{repo}/issues/{issue_number}/dependencies/blocked_by",
+                { ...context.repo, issue_number: blocked.number, per_page: 100,
+                  headers: { "X-GitHub-Api-Version": "2026-03-10" } },
+              );
+              if (!existing.some((item) => item.id === blocker.id)) {
+                dependencyPlans.push({ blocked, blocker });
+              }
+            };
+            for (const number of blockedBy) await planDependency(issue, targets.get(number));
+            for (const number of blocking) await planDependency(targets.get(number), issue);
+            if (parentNumber && !currentParent) {
+              await request("POST /repos/{owner}/{repo}/issues/{issue_number}/sub_issues", {
+                issue_number: parentNumber, sub_issue_id: issue.id, replace_parent: false,
+              });
+            }
+            for (const { blocked, blocker } of dependencyPlans) {
+              await request("POST /repos/{owner}/{repo}/issues/{issue_number}/dependencies/blocked_by", {
+                issue_number: blocked.number, issue_id: blocker.id,
+              });
+            }
+            core.notice("Issue #" + issueNumber + ": relationships checked; " +
+              (parentNumber && !currentParent ? 1 : 0) + " parent link and " +
+              dependencyPlans.length + " dependency links added.");
 
             const labels = issue.labels.map((label) =>
               typeof label === "string" ? label : label.name,
             );
             const assignees = issue.assignees.map((assignee) => assignee.login);
 
-            await github.rest.issues.setLabels({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: pullRequest.number,
-              labels,
-            });
-
-            const currentAssignees = pullRequest.assignees.map(
-              (assignee) => assignee.login,
-            );
-            const staleAssignees = currentAssignees.filter(
-              (assignee) => !assignees.includes(assignee),
-            );
-
-            if (staleAssignees.length > 0) {
-              await github.rest.issues.removeAssignees({
+            if (pullRequest) {
+              await github.rest.issues.setLabels({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: pullRequest.number,
-                assignees: staleAssignees,
+                labels,
               });
-            }
 
-            const newAssignees = assignees.filter(
-              (assignee) => !currentAssignees.includes(assignee),
-            );
+              const currentAssignees = pullRequest.assignees.map(
+                (assignee) => assignee.login,
+              );
+              const staleAssignees = currentAssignees.filter(
+                (assignee) => !assignees.includes(assignee),
+              );
 
-            if (newAssignees.length > 0) {
-              await github.rest.issues.addAssignees({
+              if (staleAssignees.length > 0) {
+                await github.rest.issues.removeAssignees({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: pullRequest.number,
+                  assignees: staleAssignees,
+                });
+              }
+
+              const newAssignees = assignees.filter(
+                (assignee) => !currentAssignees.includes(assignee),
+              );
+
+              if (newAssignees.length > 0) {
+                await github.rest.issues.addAssignees({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: pullRequest.number,
+                  assignees: newAssignees,
+                });
+              }
+
+              await github.rest.issues.update({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: pullRequest.number,
-                assignees: newAssignees,
+                milestone: issue.milestone?.number ?? null,
               });
+
+              core.notice(
+                `Synchronized PR #${pullRequest.number} from issue #${issueNumber}: ${labels.length} labels, ${assignees.length} assignees, and milestone ${issue.milestone?.title ?? "none"}.`,
+              );
             }
-
-            await github.rest.issues.update({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: pullRequest.number,
-              milestone: issue.milestone?.number ?? null,
-            });
-
-            core.notice(
-              `Synchronized PR #${pullRequest.number} from issue #${issueNumber}: ${labels.length} labels, ${assignees.length} assignees, and milestone ${issue.milestone?.title ?? "none"}.`,
-            );
             const projectsToken = process.env.PROJECTS_TOKEN;
             if (!projectsToken) {
               core.setFailed(
-                "PROJECTS_TOKEN is required to synchronize the private GemsForgeAPI project.",
+                "PROJECTS_TOKEN is required to synchronize the GemsForgeAPI project.",
               );
               return;
             }
@@ -169,7 +282,7 @@ jobs:
               return payload.data;
             };
 
-                        // Enumerate the authenticated user's visible projects, then select the
+            // Enumerate the authenticated user's visible projects, then select the
             // documented user-owned project by number and title. This also lets
             // the failure message distinguish a token-access problem from a
             // project-number or project-title mismatch.
@@ -268,57 +381,61 @@ jobs:
               );
             }
 
-            let pullRequestItem = projectItems.find(
-              (item) =>
-                item.content?.__typename === "PullRequest" &&
-                item.content.number === pullRequest.number &&
-                item.content.repository?.nameWithOwner === context.repo.owner + "/" + context.repo.repo,
-            );
+            if (pullRequest) {
+              let pullRequestItem = projectItems.find(
+                (item) =>
+                  item.content?.__typename === "PullRequest" &&
+                  item.content.number === pullRequest.number &&
+                  item.content.repository?.nameWithOwner === context.repo.owner + "/" + context.repo.repo,
+              );
 
-            if (!pullRequestItem) {
-              const addItemMutation = `mutation($projectId: ID!, $contentId: ID!) {
-                addProjectV2ItemById(input: {projectId: $projectId, contentId: $contentId}) {
-                  item { id }
+              if (!pullRequestItem) {
+                const addItemMutation = `mutation($projectId: ID!, $contentId: ID!) {
+                  addProjectV2ItemById(input: {projectId: $projectId, contentId: $contentId}) {
+                    item { id }
+                  }
+                }`;
+                const added = await projectApi(addItemMutation, {
+                  projectId: project.id,
+                  contentId: pullRequest.node_id,
+                });
+                pullRequestItem = { id: added.addProjectV2ItemById.item.id };
+              }
+
+              const issueStatus = issueItem.fieldValues.nodes.find(
+                (value) =>
+                  value.__typename === "ProjectV2ItemFieldSingleSelectValue" &&
+                  value.field?.name === "Status" &&
+                  value.optionId,
+              );
+
+              if (issueStatus?.field?.id && issueStatus.optionId) {
+                const statusMutation = `mutation(
+                $projectId: ID!,
+                $itemId: ID!,
+                $fieldId: ID!,
+                $optionId: String!
+              ) {
+                updateProjectV2ItemFieldValue(input: {
+                  projectId: $projectId,
+                  itemId: $itemId,
+                  fieldId: $fieldId,
+                  value: {singleSelectOptionId: $optionId}
+                }) {
+                  projectV2Item { id }
                 }
               }`;
-              const added = await projectApi(addItemMutation, {
-                projectId: project.id,
-                contentId: pullRequest.node_id,
-              });
-              pullRequestItem = { id: added.addProjectV2ItemById.item.id };
-            }
-
-            const issueStatus = issueItem.fieldValues.nodes.find(
-              (value) =>
-                value.__typename === "ProjectV2ItemFieldSingleSelectValue" &&
-                value.field?.name === "Status" &&
-                value.optionId,
-            );
-
-            if (issueStatus?.field?.id && issueStatus.optionId) {
-              const statusMutation = `mutation(
-              $projectId: ID!,
-              $itemId: ID!,
-              $fieldId: ID!,
-              $optionId: String!
-            ) {
-              updateProjectV2ItemFieldValue(input: {
-                projectId: $projectId,
-                itemId: $itemId,
-                fieldId: $fieldId,
-                value: {singleSelectOptionId: $optionId}
-              }) {
-                projectV2Item { id }
+              await projectApi(statusMutation, {
+                  projectId: project.id,
+                  itemId: pullRequestItem.id,
+                  fieldId: issueStatus.field.id,
+                  optionId: issueStatus.optionId,
+                });
               }
-            }`;
-            await projectApi(statusMutation, {
-                projectId: project.id,
-                itemId: pullRequestItem.id,
-                fieldId: issueStatus.field.id,
-                optionId: issueStatus.optionId,
-              });
-            }
 
             core.notice(
               `Synchronized PR #${pullRequest.number} from issue #${issueNumber}: ${labels.length} labels, ${assignees.length} assignees, milestone ${issue.milestone?.title ?? "none"}, and project GemsForgeAPI.`,
             );
+            } else {
+              core.notice(`Issue #${issueNumber} is in project GemsForgeAPI.`);
+            }
