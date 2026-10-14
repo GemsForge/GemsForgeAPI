@@ -26,8 +26,10 @@ if [[ -z "${DATABASE_PATH:-}" ]]; then
   exit 1
 fi
 
-API_HOST="${API_HOST:-127.0.0.1}"
-API_PORT="${API_PORT:-8080}"
+api_host="127.0.0.1"
+api_port="8080"
+if [[ -n "${API_HOST+x}" ]]; then api_host="$API_HOST"; fi
+if [[ -n "${API_PORT+x}" ]]; then api_port="$API_PORT"; fi
 api_pid=""
 
 cleanup() {
@@ -45,9 +47,9 @@ cleanup() {
 
 trap cleanup EXIT INT TERM
 
-echo "Starting GemsForgeAPI on http://$API_HOST:$API_PORT…"
+echo "Starting GemsForgeAPI on http://$api_host:$api_port…"
 cd "$repository_root"
-swift run GemsForgeAPI serve --hostname "$API_HOST" --port "$API_PORT" &
+swift run GemsForgeAPI serve --hostname "$api_host" --port "$api_port" &
 api_pid=$!
 
 echo "Starting GemLifeHost…"
