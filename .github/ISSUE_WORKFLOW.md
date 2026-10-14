@@ -1,15 +1,17 @@
 # Issue and pull request workflow
 
 The working issue is the source of truth for assignee, labels, milestone,
-project membership, and native issue relationships. The shared automation is
+project membership, and native issue relationships. Project Status follows the
+issue's development lifecycle. The shared automation is
 `.github/workflows/sync-pr-metadata.yml`; its YAML comments document the policy.
 
 ## One workflow, two entry points
 
-- When an issue opens or reopens, ensure it belongs to GemsForgeAPI project #7.
+- When an issue opens, reopens, or closes, ensure it belongs to GemsForgeAPI
+  project #7 and reconcile its Status.
 - When a PR opens, reopens, is edited, or becomes ready for review, resolve its
-  working issue and copy the issue's assignees, labels, milestone, and project
-  Status to the PR. Ensure both items belong to project #7.
+  working issue and copy the issue's assignees, labels, and milestone to the PR. Derive Status for both items from the lifecycle
+  below. Ensure both items belong to project #7.
 - Manual dispatch also accepts an issue without any PR. Issue-creation scripts
   should dispatch this same workflow immediately after creating the issue with
   its chosen assignee, labels, milestone, and relationships.
@@ -71,9 +73,44 @@ Use the default branch as the ref after this change is merged.
   environment variables. They do not belong in the Actions project secret.
 - Never commit token values or store them in a shared Xcode scheme.
 
-Projects Status is copied when the working issue has a Status option. If the
-issue has no Status, no status is invented. Existing project workflows can
-supply their defaults. This is distinct from automating lifecycle transitions.
+## Automatic lifecycle
+
+| Repository event / current state | Issue Status | PR Status |
+| --- | --- | --- |
+| Numbered development branch created, no open related PR | In progress | — |
+| Related PR opened/reopened, including a draft | In review | In review |
+| Closing PR merged into the default branch | Done; issue closed | Done |
+| PR closed without merging, another related PR remains open | In review | Done for the closed PR |
+| PR closed without merging, no other related PR remains open | In progress | Done for the closed PR |
+| Issue closed directly | Done | Updated on that PR's next synchronization |
+| New/reopened issue with no branch or PR | Backlog | — |
+
+The code resolves existing Status option IDs by their names: `Backlog`,
+`In progress`, `In review`, and `Done`. It fails clearly if an expected option
+is missing, rather than creating a competing status. These are project item
+fields; Git branches themselves do not have a project Status property.
+
+A branch must identify its issue, for example `fix/170-example` or
+`chore/170-project-metadata-sync`. Recognized prefixes are feat, fix, docs,
+refactor, test, chore, ci, build, perf, and style. Branch events that do not
+identify an issue and tag events are ignored. Branch naming is used to identify
+the issue; this workflow does not create a native Development-sidebar branch link.
+
+Use `Closes #170` in the PR description. `Fixes #170` and `Resolves #170`
+also work; capitalization and an optional colon are accepted.
+A plain `#170` mention or `#close` is not a closing instruction.
+The issue closes **on merge into the repository's default branch**, not when
+the keyword is first written. Merges into other branches do not close it.
+GitHub handles native closing references; the workflow also reconciles the
+working issue's closure on a merged closing PR or a manual PR repair run.
+Multiple closing references can close multiple issues natively; each issue's
+closed event updates its own project Status.
+
+Current repository state takes precedence over arrival order: a late branch
+event cannot move an issue out of review while a related PR is open, and a
+closed issue stays Done. Manual dispatch can repair Status by looking up open
+PRs and development branches. Existing project workflows must not independently
+assign conflicting values for these same events.
 
 ## Verification and activation
 
@@ -86,15 +123,22 @@ node --test .github/tests/sync-issue-workflow.test.cjs
 They execute the actual inline workflow script against simulated REST and
 GraphQL APIs, with no credentials or network requests. They cover issue-only
 runs, native parent and dependency links, repeated runs, blank inputs, invalid
-targets, parent conflicts, and existing PR metadata/Status behavior.
+targets, parent conflicts, branch/PR/merge lifecycle transitions, closed PRs,
+late events, and existing PR metadata behavior.
 
 For live verification, dispatch on the development branch and inspect the job
 notices for relationship counts and project synchronization. A successful
 dispatch on this branch does not activate the new issue-event behavior on the
-default branch: merge the reviewed workflow first.
+default branch: merge the reviewed workflow first. Branch creation executes the
+workflow available on the created branch, so future development branches should
+start from the updated default branch. Actions-triggered changes made using
+GITHUB_TOKEN do not generate most subsequent workflow runs; scripts that create
+branches or PRs with that token should explicitly dispatch this workflow as well.
 
 ## GitHub references
 
+- [Closing keywords and linked issues](https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/linking-a-pull-request-to-an-issue)
+- [Workflow events](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows)
 - [Sub-issue API](https://docs.github.com/en/rest/issues/sub-issues)
 - [Issue dependency API](https://docs.github.com/en/rest/issues/issue-dependencies)
 - [Projects automation with Actions](https://docs.github.com/en/issues/planning-and-tracking-with-projects/automating-your-project/automating-projects-using-actions)
