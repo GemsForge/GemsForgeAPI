@@ -2,7 +2,11 @@
 
 ## Purpose
 
-The Console is the React and TypeScript client for developing and verifying the GemsForgeAPI. Milestone 3 will evolve its reusable UI foundations into the official Gem Life interface without creating a sibling copy of the project.
+For current naming, implementation conventions, verification commands and
+known boundaries, see [UI standards](UI_STANDARDS.md). The focused accessibility,
+responsive, local-access and performance guides are linked there.
+
+The Console is the React and TypeScript client for developing and verifying the GemsForgeAPI. Milestone 3 establishes reusable Gem Life interface foundations in this repository without creating a sibling copy. It remains device-local; account access and remote distribution are not implemented.
 
 ## Application boundary
 
