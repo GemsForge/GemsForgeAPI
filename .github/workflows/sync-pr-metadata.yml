@@ -177,7 +177,7 @@ jobs:
             const project = projectData.user?.projectV2;
             if (project?.title?.trim() !== "GemsForgeAPI") {
               core.setFailed(
-                "The PROJECTS_TOKEN could not access user project GemsForgeAPI (#7). Confirm it is a classic PAT generated for GemsForge with the project scope.",
+                "The PROJECTS_TOKEN could not access user project GemsForgeAPI (#7). Confirm it is a classic PAT generated for GemsForge with both project and repo scopes.",
               );
               return;
             }
