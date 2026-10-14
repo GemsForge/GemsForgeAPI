@@ -159,34 +159,21 @@ jobs:
               return payload.data;
             };
 
-            // Check both account shapes because a private board may belong to
-            // the authenticated user or to an organization with the same login.
-            // Listing first avoids relying on title-filter behavior for private boards.
-            const projectQuery = `query($login: String!) {
+            // This board is owned by the authenticated user, so query the
+            // viewer directly. An organization lookup is not valid for the
+            // personal account that owns the public GemsForgeAPI project.
+            const projectQuery = `query {
               viewer {
-                login
-                projectsV2(first: 100) {
-                  nodes { id number title }
-                }
-              }
-              organization(login: $login) {
                 projectsV2(first: 100) {
                   nodes { id number title }
                 }
               }
             }`;
 
-            const projectData = await projectApi(projectQuery, {
-              login: "GemsForge",
-            });
-            const projectCandidates = [
-              ...(projectData.viewer?.projectsV2?.nodes ?? []),
-              ...(projectData.organization?.projectsV2?.nodes ?? []),
-            ];
-            const project = projectCandidates.find(
+            const projectData = await projectApi(projectQuery, {});
+            const project = (projectData.viewer?.projectsV2?.nodes ?? []).find(
               (candidate) => candidate.title?.trim() === "GemsForgeAPI",
             );
-
             if (!project) {
               core.setFailed(
                 "The private user project GemsForgeAPI was not found or the PROJECTS_TOKEN lacks project access.",
