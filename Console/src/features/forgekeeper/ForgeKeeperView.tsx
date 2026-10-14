@@ -1,3 +1,5 @@
+import { usePagedRecords } from "../../hooks/usePagedRecords";
+import { PaginationControls } from "../../components/PaginationControls";
 import { useEffect, useRef, useState } from "react";
 import type { Domain, ForgeKeeperPage, ForgeKeeperPatch } from "../../types";
 
@@ -10,6 +12,7 @@ interface ForgeKeeperViewProps {
 }
 
 export function ForgeKeeperView({ domain, pages, onLoadRoots, onLoadChildren, onPatch }: ForgeKeeperViewProps) {
+  const paging = usePagedRecords(pages);
   const [editingPage, setEditingPage] = useState<ForgeKeeperPage | null>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
 
@@ -24,6 +27,7 @@ export function ForgeKeeperView({ domain, pages, onLoadRoots, onLoadChildren, on
 
   return (
     <>
+      <PaginationControls {...paging} label="ForgeKeeper" />
       <div className="content-heading">
         <div>
           <p className="eyebrow">ForgeKeeper pages</p>
@@ -35,7 +39,7 @@ export function ForgeKeeperView({ domain, pages, onLoadRoots, onLoadChildren, on
       <div className="page-list">
         {pages.length === 0 ? (
           <div className="empty-state"><div className="empty-icon">⌁</div><h3>No ForgeKeeper pages yet</h3><p>This domain is ready for pages from your Notes import workflow.</p></div>
-        ) : pages.map((page) => (
+        ) : paging.items.map((page) => (
           <article className="page-card" key={page.id}>
             <div className="page-card-main">
               <div className="page-meta"><span className="page-id">#{page.id}</span><span>{page.parentID ? "Child page" : "Root page"}</span></div>

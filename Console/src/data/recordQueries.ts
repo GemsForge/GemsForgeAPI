@@ -26,7 +26,7 @@ export function useGemHueQuery(id: string | null) {
   return useQuery({ queryKey: recordQueryKeys.hue(id), queryFn: ({ signal }) => api.getGemHue(id!, signal), enabled: id !== null });
 }
 export function useGemHueImageQuery(id: string | null) {
-  return useQuery({ queryKey: [...lifeQueryKeys.gemHues, "image", id], enabled: id !== null, retry: false,
+  return useQuery({ queryKey: [...lifeQueryKeys.gemHues, "image", id], enabled: id !== null, retry: false, gcTime: 60_000,
     queryFn: async ({ signal }) => {
       const response = await api.getGemHueImage(id!, signal);
       const blob = await response.blob();

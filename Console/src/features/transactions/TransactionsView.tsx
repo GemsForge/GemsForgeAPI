@@ -1,3 +1,5 @@
+import { usePagedRecords } from "../../hooks/usePagedRecords";
+import { PaginationControls } from "../../components/PaginationControls";
 import { useState } from "react";
 import { useTransactionQuery, useTransactionImageMutation } from "../../data/recordQueries";
 import { QueryFeedback } from "../../components/QueryFeedback";
@@ -9,6 +11,7 @@ interface TransactionsViewProps {
 }
 
 export function TransactionsView({ records }: TransactionsViewProps) {
+  const paging = usePagedRecords(records);
   const [selectedID, setSelectedID] = useState<string | null>(null);
   const detail = useTransactionQuery(selectedID);
   const attachment = useTransactionImageMutation();
@@ -16,6 +19,7 @@ export function TransactionsView({ records }: TransactionsViewProps) {
 
   return (
     <>
+      <PaginationControls {...paging} label="Transactions" />
       <div className="content-heading">
         <div>
           <p className="eyebrow">Life-area records</p>
@@ -30,7 +34,7 @@ export function TransactionsView({ records }: TransactionsViewProps) {
       ) : (
         <div className="transaction-layout">
           <div className="transaction-list" aria-label="Expense transactions">
-            {records.map((record) => (
+            {paging.items.map((record) => (
               <button className={`transaction-card ${selectedID === record.id ? "selected" : ""}`} key={record.id} onClick={() => setSelectedID(record.id)}>
                 <span className="transaction-icon">$</span>
                 <span className="transaction-card-copy"><strong>{record.item}</strong><small>{record.transactionDate || "Undated"} · {record.id}</small></span>

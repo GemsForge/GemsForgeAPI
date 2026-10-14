@@ -79,7 +79,7 @@ function ImagePreview({ file, label }: { file: FileMetadata; label: string }) {
   const failed = preview.type === "missing" || preview.type === "invalid" || preview.type === "error";
   return <div className="file-preview" aria-busy={loading}>
     {loading && <GemLoadingState label="Loading image preview…" />}
-    {preview.type === "image" && <img className="attachment-preview" src={preview.url} alt={`${label} preview`}
+    {preview.type === "image" && <img className="attachment-preview" decoding="async" src={preview.url} alt={`${label} preview`}
       hidden={!preview.loaded}
       onLoad={() => setPreview((current) => current.type === "image" ? { ...current, loaded: true } : current)}
       onError={() => setPreview({ type: "invalid" })} />}

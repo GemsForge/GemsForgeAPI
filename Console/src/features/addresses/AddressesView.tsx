@@ -1,3 +1,5 @@
+import { usePagedRecords } from "../../hooks/usePagedRecords";
+import { PaginationControls } from "../../components/PaginationControls";
 import { useState } from "react";
 import { useAddressQuery, useAddressAttachmentMutation } from "../../data/recordQueries";
 import { QueryFeedback } from "../../components/QueryFeedback";
@@ -9,6 +11,7 @@ interface AddressesViewProps {
 }
 
 export function AddressesView({ records }: AddressesViewProps) {
+  const paging = usePagedRecords(records);
   const [selectedID, setSelectedID] = useState<string | null>(null);
   const detail = useAddressQuery(selectedID);
   const attachment = useAddressAttachmentMutation();
@@ -16,6 +19,7 @@ export function AddressesView({ records }: AddressesViewProps) {
 
   return (
     <>
+      <PaginationControls {...paging} label="Addresses" />
       <div className="content-heading">
         <div>
           <p className="eyebrow">Life-area records</p>
@@ -30,7 +34,7 @@ export function AddressesView({ records }: AddressesViewProps) {
       ) : (
         <div className="address-layout">
           <div className="address-list" aria-label="Address records">
-            {records.map((record) => (
+            {paging.items.map((record) => (
               <button className={`address-card ${selectedID === record.id ? "selected" : ""}`} key={record.id} onClick={() => setSelectedID(record.id)}>
                 <span className="address-icon">⌂</span>
                 <span className="address-card-copy"><strong>{record.city || record.addressType}</strong><small>{record.addressType} · {record.id}</small></span>
