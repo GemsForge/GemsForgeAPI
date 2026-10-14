@@ -8,8 +8,8 @@ name: Sync pull request metadata
 # 3. Pull requests should also include `Closes #165` (or equivalent) in the body.
 # 4. When a pull request opens or is reopened, copy the issue's assignee,
 #    labels, and milestone to the pull request.
-# 5. Add the pull request to the user-owned GemsForgeAPI project when the linked
-#    issue is already present there, then copy its Status option to the PR.
+# 5. Add the linked issue and pull request to the user-owned GemsForgeAPI
+#    project when they are missing, then copy the issue's Status option to the PR.
 # 6. Project mutations use the PROJECTS_TOKEN secret because GITHUB_TOKEN
 #    cannot access user-owned projects.
 #
@@ -242,17 +242,30 @@ jobs:
             const projectItems = (
               await projectApi(itemQuery, { projectId: project.id })
             ).node?.items?.nodes ?? [];
-            const issueItem = projectItems.find(
+            let issueItem = projectItems.find(
               (item) =>
                 item.content?.__typename === "Issue" &&
                 item.content.number === issueNumber &&
                 item.content.repository?.nameWithOwner === context.repo.owner + "/" + context.repo.repo,
             );
+
             if (!issueItem) {
-              core.setFailed(
-                `Issue #${issueNumber} is not currently in the GemsForgeAPI project.`,
+              const addIssueMutation = \`mutation($projectId: ID!, $contentId: ID!) {
+                addProjectV2ItemById(input: {projectId: $projectId, contentId: $contentId}) {
+                  item { id }
+                }
+              }\`;
+              const addedIssue = await projectApi(addIssueMutation, {
+                projectId: project.id,
+                contentId: issue.node_id,
+              });
+              issueItem = {
+                id: addedIssue.addProjectV2ItemById.item.id,
+                fieldValues: { nodes: [] },
+              };
+              core.notice(
+                \`Added issue #${issueNumber} to the GemsForgeAPI project.\`,
               );
-              return;
             }
 
             let pullRequestItem = projectItems.find(
