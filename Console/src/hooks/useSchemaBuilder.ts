@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
-import { api } from "../api";
-import type { HomeInventoryCSVPreview, SchemaBuilderGuidance, TableBuilderColumn, TableBuilderRequest, UserTablePreview } from "../types";
+import { useState } from "react";
+import { useSchemaGuidanceQuery, usePreviewTableMutation, useCreateTableMutation, usePreviewCSVMutation, useImportCSVMutation } from "../data/workflowQueries";
+import type { HomeInventoryCSVPreview, TableBuilderColumn, TableBuilderRequest, UserTablePreview } from "../types";
 
 const types = ["TEXT", "INTEGER", "REAL", "NUMERIC", "BLOB", "ANY"] as const;
 const initialColumns: TableBuilderColumn[] = [
@@ -22,14 +22,13 @@ export function useSchemaBuilder({ onError, onSuccess }: UseSchemaBuilderOptions
   const [csvPreview, setCsvPreview] = useState<HomeInventoryCSVPreview | null>(null);
   const [busy, setBusy] = useState(false);
   const [creationError, setCreationError] = useState<string | null>(null);
-  const [guidance, setGuidance] = useState<SchemaBuilderGuidance | null>(null);
-  const [guidanceError, setGuidanceError] = useState<string | null>(null);
-
-  useEffect(() => {
-    void api.getSchemaBuilderGuidance()
-      .then(setGuidance)
-      .catch((error: unknown) => setGuidanceError(error instanceof Error ? error.message : "Schema guidance could not be loaded."));
-  }, []);
+  const guidanceQuery = useSchemaGuidanceQuery();
+  const guidance = guidanceQuery.data ?? null;
+  const guidanceError = guidanceQuery.error?.message ?? null;
+  const tablePreview = usePreviewTableMutation();
+  const tableCreation = useCreateTableMutation();
+  const csvPreviewMutation = usePreviewCSVMutation();
+  const csvImport = useImportCSVMutation();
 
   const definition: TableBuilderRequest = { tableName, columns };
   const tableNameIsValid = tableNamePattern.test(tableName.trim());
@@ -50,7 +49,7 @@ export function useSchemaBuilder({ onError, onSuccess }: UseSchemaBuilderOptions
   async function previewTable() {
     setBusy(true);
     setCreationError(null);
-    try { setPreview(await api.previewUserTable(definition)); } catch (error) { onError(error); } finally { setBusy(false); }
+    try { setPreview(await tablePreview.mutateAsync(definition)); } catch (error) { onError(error); } finally { setBusy(false); }
   }
 
   async function createTable() {
@@ -58,7 +57,7 @@ export function useSchemaBuilder({ onError, onSuccess }: UseSchemaBuilderOptions
     setBusy(true);
     setCreationError(null);
     try {
-      const result = await api.createUserTable(preview.confirmationToken);
+      const result = await tableCreation.mutateAsync(preview.confirmationToken);
       onSuccess(`${result.table} created and verified.`);
       setPreview(null);
     } catch (error) {
@@ -70,12 +69,12 @@ export function useSchemaBuilder({ onError, onSuccess }: UseSchemaBuilderOptions
 
   async function previewImport() {
     setBusy(true);
-    try { setCsvPreview(await api.previewHomeInventoryCSV(csv)); } catch (error) { onError(error); } finally { setBusy(false); }
+    try { setCsvPreview(await csvPreviewMutation.mutateAsync(csv)); } catch (error) { onError(error); } finally { setBusy(false); }
   }
 
   async function importCSV() {
     setBusy(true);
-    try { const result = await api.importHomeInventoryCSV(csv); onSuccess(`Imported ${result.importedCount} HomeInventory records.`); setCsvPreview(null); } catch (error) { onError(error); } finally { setBusy(false); }
+    try { const result = await csvImport.mutateAsync(csv); onSuccess(`Imported ${result.importedCount} HomeInventory records.`); setCsvPreview(null); } catch (error) { onError(error); } finally { setBusy(false); }
   }
 
   function readCSV(file: File) {

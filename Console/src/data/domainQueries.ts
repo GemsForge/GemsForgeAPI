@@ -9,6 +9,6 @@ export const domainQueryKeys = {
 export function useDomainsQuery() {
   return useQuery({
     queryKey: domainQueryKeys.all,
-    queryFn: api.listDomains,
+    queryFn: ({ signal }) => api.listDomains(signal),
   });
 }

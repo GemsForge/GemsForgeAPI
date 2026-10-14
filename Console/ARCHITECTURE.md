@@ -39,6 +39,26 @@ The SwiftUI host will be added to the same repository and must not be implemente
 
 ## State ownership
 
+### Server data conventions
+
+`src/api.ts` owns HTTP transport. JSON, upload, and binary requests preserve
+HTTP status in `APIError`; status 0 means the local API could not be reached.
+Cancellation is propagated without replacing it with a connection error.
+Never put credentials in this client or persist personal query data to storage.
+
+`src/data` owns list/detail query keys, cancellation signals, loading/error
+state, and mutations. Detail keys include the record ID so selecting another
+record cannot replace the current selection with a late response. Use
+`QueryFeedback` for initial loading and retryable failures. Query results, not
+copied component state, are the source of truth for server records.
+
+Successful attachment mutations update detail caches and invalidate their list;
+page edits invalidate all page scopes; table creation and CSV imports invalidate
+live-schema inspection. Mutations are never automatically retried. Reads are
+fresh for 30 seconds and retry once except HTTP 4xx failures. Binary file preview
+URLs remain viewer-owned and are revoked on change/unmount.
+These patterns follow [TanStack mutation invalidation guidance](https://tanstack.com/query/latest/docs/framework/react/guides/invalidations-from-mutations).
+
 - SwiftUI state: native navigation, permissions, file pickers, lifecycle, and native session concerns.
 - React local state: temporary form values, selected records, open dialogs, filters, and view-only state.
 - Custom hooks: related state and workflows such as schema building, database creation, and file upload.

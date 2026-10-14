@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { api } from "../api";
-import type { LocalDatabaseCapabilities, LocalDatabaseCreationResult } from "../types";
+import { useCreateDatabaseMutation, useDatabaseCapabilitiesQuery } from "../data/workflowQueries";
+import type { LocalDatabaseCreationResult } from "../types";
 
 interface UseLocalDatabaseFormOptions {
   onError: (error: unknown) => void;
@@ -9,7 +9,9 @@ interface UseLocalDatabaseFormOptions {
 
 /** Owns the local-database creation workflow without coupling it to a view. */
 export function useLocalDatabaseForm({ onError, onSuccess }: UseLocalDatabaseFormOptions) {
-  const [capabilities, setCapabilities] = useState<LocalDatabaseCapabilities | null>(null);
+  const capabilitiesQuery = useDatabaseCapabilitiesQuery();
+  const capabilities = capabilitiesQuery.data ?? null;
+  const creation = useCreateDatabaseMutation();
   const [databaseName, setDatabaseName] = useState("GemLife_Test.sqlite");
   const [profile, setProfile] = useState("gem-life-development");
   const [confirmed, setConfirmed] = useState(false);
@@ -17,8 +19,8 @@ export function useLocalDatabaseForm({ onError, onSuccess }: UseLocalDatabaseFor
   const [created, setCreated] = useState<LocalDatabaseCreationResult | null>(null);
 
   useEffect(() => {
-    void api.getLocalDatabaseCapabilities().then(setCapabilities).catch(onError);
-  }, []);
+    if (capabilitiesQuery.error) onError(capabilitiesQuery.error);
+  }, [capabilitiesQuery.error, onError]);
 
   const selectedProfile = capabilities?.profiles.find((item) => item.id === profile) ?? capabilities?.profiles[0];
 
@@ -27,7 +29,7 @@ export function useLocalDatabaseForm({ onError, onSuccess }: UseLocalDatabaseFor
     setCreating(true);
     setCreated(null);
     try {
-      const result = await api.createLocalDatabase({
+      const result = await creation.mutateAsync({
         databaseName,
         profile: selectedProfile.id,
         confirmCreation: confirmed,

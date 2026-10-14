@@ -1,0 +1,59 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { api } from "../api";
+import { lifeQueryKeys } from "./lifeQueries";
+
+export const recordQueryKeys = {
+  address: (id: string | null) => [...lifeQueryKeys.addresses, "detail", id] as const,
+  transaction: (id: string | null) => [...lifeQueryKeys.transactions, "detail", id] as const,
+  education: (id: string | null) => [...lifeQueryKeys.education, "detail", id] as const,
+  employment: (id: string | null) => [...lifeQueryKeys.employment, "detail", id] as const,
+  hue: (id: string | null) => [...lifeQueryKeys.gemHues, "detail", id] as const,
+};
+
+export function useAddressQuery(id: string | null) {
+  return useQuery({ queryKey: recordQueryKeys.address(id), queryFn: ({ signal }) => api.getAddress(id!, signal), enabled: id !== null });
+}
+export function useTransactionQuery(id: string | null) {
+  return useQuery({ queryKey: recordQueryKeys.transaction(id), queryFn: ({ signal }) => api.getTransaction(id!, signal), enabled: id !== null });
+}
+export function useEducationRecordQuery(id: string | null) {
+  return useQuery({ queryKey: recordQueryKeys.education(id), queryFn: ({ signal }) => api.getEducation(id!, signal), enabled: id !== null });
+}
+export function useEmploymentRecordQuery(id: string | null) {
+  return useQuery({ queryKey: recordQueryKeys.employment(id), queryFn: ({ signal }) => api.getEmployment(id!, signal), enabled: id !== null });
+}
+export function useGemHueQuery(id: string | null) {
+  return useQuery({ queryKey: recordQueryKeys.hue(id), queryFn: ({ signal }) => api.getGemHue(id!, signal), enabled: id !== null });
+}
+export function useGemHueImageQuery(id: string | null) {
+  return useQuery({ queryKey: [...lifeQueryKeys.gemHues, "image", id], enabled: id !== null, retry: false,
+    queryFn: async ({ signal }) => {
+      const response = await api.getGemHueImage(id!, signal);
+      const blob = await response.blob();
+      if (!blob.type.startsWith("image/") || !blob.size) throw new Error("The hue reference is not a valid image.");
+      return blob;
+    } });
+}
+
+export function useAddressAttachmentMutation() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, fileID }: { id: string; fileID: string | null }) => api.patchAddressAttachment(id, fileID),
+    onSuccess: async (record) => {
+      await client.cancelQueries({ queryKey: recordQueryKeys.address(record.id) });
+      client.setQueryData(recordQueryKeys.address(record.id), record);
+      await client.invalidateQueries({ queryKey: lifeQueryKeys.addresses, exact: true });
+    },
+  });
+}
+export function useTransactionImageMutation() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, fileID }: { id: string; fileID: string | null }) => api.patchTransactionImage(id, fileID),
+    onSuccess: async (record) => {
+      await client.cancelQueries({ queryKey: recordQueryKeys.transaction(record.id) });
+      client.setQueryData(recordQueryKeys.transaction(record.id), record);
+      await client.invalidateQueries({ queryKey: lifeQueryKeys.transactions, exact: true });
+    },
+  });
+}

@@ -7,57 +7,60 @@ export class APIError extends Error {
   }
 }
 
-async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const response = await fetch(path, {
-    headers: { "Content-Type": "application/json", ...options.headers },
-    ...options,
-  });
-
+async function checkedFetch(path: string, options: RequestInit = {}): Promise<Response> {
+  let response: Response;
+  try { response = await fetch(path, options); }
+  catch (error) {
+    if (options.signal?.aborted || (error instanceof Error && error.name === "AbortError")) throw error;
+    throw new APIError("Cannot reach Gem Life. Check that the local API is running.", 0);
+  }
   if (!response.ok) {
     const problem = await response.json().catch(() => ({}));
-    throw new APIError(problem.reason || `${response.status} ${response.statusText}`, response.status);
+    throw new APIError(typeof problem?.reason === "string" ? problem.reason : `${response.status} ${response.statusText}`, response.status);
   }
+  return response;
+}
 
+async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const headers = new Headers(options.headers);
+  if (options.body && !(options.body instanceof FormData)) headers.set("Content-Type", "application/json");
+  const response = await checkedFetch(path, { ...options, headers });
   return response.status === 204 ? (null as T) : (await response.json() as T);
 }
 
 export const api = {
-  listDomains: () => request<Domain[]>("/domains"),
-  listPagesForDomain: (domainID: string) =>
-    request<ForgeKeeperPage[]>(`/domains/${encodeURIComponent(domainID)}/forgekeeper`),
-  listRootPages: () => request<ForgeKeeperPage[]>("/forgekeeper/roots"),
-  listChildren: (pageID: number) => request<ForgeKeeperPage[]>(`/forgekeeper/${pageID}/children`),
+  listDomains: (signal?: AbortSignal) => request<Domain[]>("/domains", { signal }),
+  listPagesForDomain: (domainID: string, signal?: AbortSignal) =>
+    request<ForgeKeeperPage[]>(`/domains/${encodeURIComponent(domainID)}/forgekeeper`, { signal }),
+  listRootPages: (signal?: AbortSignal) => request<ForgeKeeperPage[]>("/forgekeeper/roots", { signal }),
+  listChildren: (pageID: number, signal?: AbortSignal) => request<ForgeKeeperPage[]>(`/forgekeeper/${pageID}/children`, { signal }),
   patchPage: (pageID: number, patch: ForgeKeeperPatch) =>
     request<ForgeKeeperPage>(`/forgekeeper/${pageID}`, {
       method: "PATCH",
       body: JSON.stringify(patch),
     }),
-  listGemHues: () => request<GemHue[]>("/gemhues"),
-  getGemHue: (hueID: string) => request<GemHue>(`/gemhues/${encodeURIComponent(hueID)}`),
-  getGemHueImage: (hueID: string) => fetch(`/gemhues/${encodeURIComponent(hueID)}/image`),
-  listEducation: () => request<Education[]>("/education"),
-  getEducation: (educationID: string) =>
-    request<Education>(`/education/${encodeURIComponent(educationID)}`),
-  listEmployment: () => request<Employment[]>("/employment"),
-  getEmployment: (employmentID: string) =>
-    request<Employment>(`/employment/${encodeURIComponent(employmentID)}`),
-  listAddresses: () => request<Address[]>("/addresses"),
-  getAddress: (addressID: string) =>
-    request<Address>(`/addresses/${encodeURIComponent(addressID)}`),
-  listTransactions: () => request<ExpenseTransaction[]>("/transactions"),
-  getTransaction: (transactionID: string) =>
-    request<ExpenseTransaction>(`/transactions/${encodeURIComponent(transactionID)}`),
+  listGemHues: (signal?: AbortSignal) => request<GemHue[]>("/gemhues", { signal }),
+  getGemHue: (hueID: string, signal?: AbortSignal) => request<GemHue>(`/gemhues/${encodeURIComponent(hueID)}`, { signal }),
+  getGemHueImage: (hueID: string, signal?: AbortSignal) => checkedFetch(`/gemhues/${encodeURIComponent(hueID)}/image`, { signal }),
+  listEducation: (signal?: AbortSignal) => request<Education[]>("/education", { signal }),
+  getEducation: (educationID: string, signal?: AbortSignal) =>
+    request<Education>(`/education/${encodeURIComponent(educationID)}`, { signal }),
+  listEmployment: (signal?: AbortSignal) => request<Employment[]>("/employment", { signal }),
+  getEmployment: (employmentID: string, signal?: AbortSignal) =>
+    request<Employment>(`/employment/${encodeURIComponent(employmentID)}`, { signal }),
+  listAddresses: (signal?: AbortSignal) => request<Address[]>("/addresses", { signal }),
+  getAddress: (addressID: string, signal?: AbortSignal) =>
+    request<Address>(`/addresses/${encodeURIComponent(addressID)}`, { signal }),
+  listTransactions: (signal?: AbortSignal) => request<ExpenseTransaction[]>("/transactions", { signal }),
+  getTransaction: (transactionID: string, signal?: AbortSignal) =>
+    request<ExpenseTransaction>(`/transactions/${encodeURIComponent(transactionID)}`, { signal }),
   uploadImage: async (file: File, fileKind: string, ownerType: string, ownerID: string) => {
     const form = new FormData();
     form.append("file", file);
     form.append("fileKind", fileKind);
     form.append("ownerType", ownerType);
     form.append("ownerID", ownerID);
-    const response = await fetch("/file-uploads", { method: "POST", body: form });
-    if (!response.ok) {
-      const problem = await response.json().catch(() => ({}));
-      throw new Error(problem.reason || `${response.status} ${response.statusText}`);
-    }
+    const response = await checkedFetch("/file-uploads", { method: "POST", body: form });
     return await response.json() as FileMetadata;
   },
   patchAddressAttachment: (addressID: string, fileMetadataID: string | null) =>
@@ -72,18 +75,17 @@ export const api = {
   getFileMetadata: (id: string, signal?: AbortSignal) =>
     request<FileMetadata>(`/file-metadata/${encodeURIComponent(id)}`, { signal }),
   getFileContent: async (id: string, signal: AbortSignal) => {
-    const response = await fetch(api.fileContentURL(id), { signal });
-    if (!response.ok) throw new APIError("Unable to read the attached file.", response.status);
+    const response = await checkedFetch(api.fileContentURL(id), { signal });
     return response.blob();
   },
-  getLocalDatabaseCapabilities: () => request<LocalDatabaseCapabilities>("/local-databases/capabilities"),
+  getLocalDatabaseCapabilities: (signal?: AbortSignal) => request<LocalDatabaseCapabilities>("/local-databases/capabilities", { signal }),
   createLocalDatabase: (payload: { databaseName: string; profile: string; confirmCreation: boolean }) =>
     request<LocalDatabaseCreationResult>("/local-databases", {
       method: "POST",
       body: JSON.stringify(payload),
     }),
-  getLiveSchema: () => request<LiveSchema>("/live-database/schema"),
-  getSchemaBuilderGuidance: () => request<SchemaBuilderGuidance>("/schema-builder/metadata"),
+  getLiveSchema: (signal?: AbortSignal) => request<LiveSchema>("/live-database/schema", { signal }),
+  getSchemaBuilderGuidance: (signal?: AbortSignal) => request<SchemaBuilderGuidance>("/schema-builder/metadata", { signal }),
   previewUserTable: (definition: TableBuilderRequest) => request<UserTablePreview>("/live-database/tables/preview", { method: "POST", body: JSON.stringify(definition) }),
   createUserTable: (confirmationToken: string) => request<UserTableCreationResult>("/live-database/tables/execute", { method: "POST", body: JSON.stringify({ confirmationToken }) }),
   previewHomeInventoryCSV: (csv: string) => request<HomeInventoryCSVPreview>("/home-inventory/import/preview", { method: "POST", body: JSON.stringify({ csv }) }),
