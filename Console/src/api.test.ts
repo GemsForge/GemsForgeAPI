@@ -43,7 +43,7 @@ describe("file presentation API", () => {
     const blob = await api.getFileContent("file/1", signal);
     expect(blob.type).toBe("image/png");
     expect(blob.size).toBe(5);
-    expect(fetch).toHaveBeenCalledWith("/file-metadata/file%2F1/content", { signal });
+    expect(fetch).toHaveBeenCalledWith("/file-metadata/file%2F1/content", { signal, cache: "no-store" });
   });
 
   it("distinguishes a missing stored file from decoding failures", async () => {

@@ -129,6 +129,9 @@ input, select, textarea { max-width:100%; }
 img { max-width:100%; }
 dialog { max-height:calc(100dvh - 2rem); overflow:auto; }
 .sidebar-toggle { display:none; }
+.local-session-bar { display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap; padding:.75rem 1.25rem; border-bottom:1px solid var(--line); }
+.local-session-bar p { margin:.25rem 0 0; color:var(--muted); font-size:.8rem; }
+.local-session-ended { max-width:42rem; padding:2rem 1rem; margin:0 auto; }
 @media (max-width:1200px) {
   .hue-detail, .education-layout, .employment-layout, .address-layout, .transaction-layout, .database-layout, .schema-layout { grid-template-columns:minmax(0,1fr); }
   .builder-column { grid-template-columns:repeat(2,minmax(0,1fr)); }

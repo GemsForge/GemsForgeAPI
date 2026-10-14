@@ -24,7 +24,7 @@ struct GemLifeWebView: NSViewRepresentable {
 
     func makeNSView(context: Context) -> WKWebView {
         let configuration = WKWebViewConfiguration()
-        configuration.websiteDataStore = .default()
+        configuration.websiteDataStore = .nonPersistent()
         configuration.userContentController.add(context.coordinator.bridgeHandler, name: "gemLife")
 
         let webView = WKWebView(frame: .zero, configuration: configuration)
@@ -65,6 +65,14 @@ struct GemLifeWebView: NSViewRepresentable {
 
         private func receive(_ message: GemLifeBridgeMessage) {
             guard HostPolicy.validRequestID(message.requestID), let requestID = message.requestID else { return }
+            if message.type == .session, message.payload == ["action": "end"] {
+                picker?.cancel(nil)
+                guard let store = webView?.configuration.websiteDataStore else { return }
+                store.removeData(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes(), modifiedSince: .distantPast) { [weak self] in
+                    self?.reply(.session, requestID: requestID, payload: ["state": "ended", "mode": "device-local"])
+                }
+                return
+            }
             guard message.type == .requestImage || message.type == .requestFile,
                   message.payload?.isEmpty != false else {
                 reply(.error, requestID: requestID, payload: ["message": "Unsupported native request. Paths are not accepted."])

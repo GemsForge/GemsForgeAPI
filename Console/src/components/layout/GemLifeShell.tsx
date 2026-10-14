@@ -15,7 +15,7 @@ export function GemLifeShell({ children, sidebar }: GemLifeShellProps) {
           <p className="eyebrow">GemsForgeAPI · React testing console</p>
           <h1>Gem Life Console</h1>
         </div>
-        <div className="connection-pill"><span /> Local API</div>
+        <div className="connection-pill">Local data</div>
       </header>
       <main className="workspace">
         {sidebar}
