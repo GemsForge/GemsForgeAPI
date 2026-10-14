@@ -8,9 +8,14 @@ struct GemLifeWebView: NSViewRepresentable {
 
     init(consoleURL: URL? = nil) {
         let configuredURL = ProcessInfo.processInfo.environment["GEM_LIFE_CONSOLE_URL"]
-        let candidate = consoleURL ?? URL(string: configuredURL ?? "http://localhost:5173/")
+        #if DEBUG
+        let defaultURL = "http://localhost:5173/"
+        #else
+        let defaultURL = "http://127.0.0.1:8080/app/"
+        #endif
+        let candidate = consoleURL ?? URL(string: configuredURL ?? defaultURL)
         self.consoleURL = candidate.flatMap { HostPolicy.isLocalConsole($0) ? $0 : nil }
-            ?? URL(string: "http://localhost:5173/")!
+            ?? URL(string: defaultURL)!
     }
 
     func makeCoordinator() -> Coordinator {
@@ -48,9 +53,9 @@ struct GemLifeWebView: NSViewRepresentable {
             bridgeHandler.onMessage = { [weak self] message in self?.receive(message) }
         }
 
-        func webView(_ webView: WKWebView, decidePolicyFor action: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+        func webView(_ webView: WKWebView, decidePolicyFor action: WKNavigationAction) async -> WKNavigationActionPolicy {
             // Keep the bridge unavailable to remote pages, subframes and local paths.
-            decisionHandler(action.targetFrame?.isMainFrame == true && policy.trusts(action.request.url) ? .allow : .cancel)
+            return action.targetFrame?.isMainFrame == true && policy.trusts(action.request.url) ? .allow : .cancel
         }
 
         private func reply(_ type: GemLifeBridgeMessageType, requestID: String, payload: [String: String]) {

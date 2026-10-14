@@ -49,6 +49,7 @@ enum EntryPoint {
         registerGemHueRoutes(app)
         registerHomeInventoryRoutes(app)
         registerHomeInventoryCSVRoutes(app)
+        registerGemLifeAssetRoutes(app)
 
         try await app.execute()
         try await app.asyncShutdown()

@@ -6,6 +6,7 @@ export default defineConfig(({ mode }) => {
   const apiTarget = env.VITE_API_TARGET || "http://127.0.0.1:8080";
 
   return {
+    base: mode === "production" ? "/app/" : "/",
     plugins: [react()],
     define: {
       "process.env.NODE_ENV": JSON.stringify(mode),

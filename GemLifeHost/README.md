@@ -5,6 +5,32 @@ SwiftUI responsible for the application window and native lifecycle while the
 existing React + TypeScript Console remains responsible for Gem Life screens,
 navigation, responsive layout, and API presentation.
 
+## Production packaging
+
+Run `node Scripts/build-gem-life.mjs` from the repository root. It builds React,
+stages its generated output under `GemLifeHost/Resources/Console`, stamps the
+Git revision/build time, and builds both Swift executables in release mode.
+Generated assets are ignored by Git; the resource folder is copied into the
+SwiftPM host bundle. `--assets-only` stages assets without compiling Swift.
+
+Launch with `GEM_LIFE_PRODUCTION=1 swift run GemLife` using your usual ignored
+local environment file. The launcher locates the release resource bundle,
+starts the API on loopback, waits for readiness, and loads `/app/` in the host.
+Vite is not required. This is a local release workflow, not signing/notarization
+or an App Store distribution pipeline. The API and its configured database
+remain required; no API account authentication is implied.
+
+The API serves the packaged UI at `/app`, keeping API URLs at their existing
+root paths. BrowserRouter uses the build's `/app/` base. Hashed `assets/` files
+are immutable for one year; HTML is revalidated. Missing assets return 404;
+missing bundles return an actionable 503. Traversal/symlink escapes outside the
+bundle are rejected. Never point the assets setting at a personal-data folder.
+Content policy allows only same-origin scripts/connections and scoped previews.
+Rebuild to change the bundle; do not overwrite shipped hashed files in place.
+
+For route tests: `swift test --filter GemLifeAssetRouteTests`. These use temporary
+fixture files only and do not connect to the configured personal database.
+
 ## Local development
 
 Start the React Console from `Console/`:
@@ -13,9 +39,9 @@ Start the React Console from `Console/`:
 npm run dev
 ```
 
-Then run the `GemLifeHost` target. It loads `http://localhost:5173/` by
-default. Set `GEM_LIFE_CONSOLE_URL` in the host scheme to use another local
-URL or a packaged web asset entry point.
+Then run the `GemLifeHost` debug target. Debug defaults to `http://localhost:5173/`;
+release defaults to `http://127.0.0.1:8080/app/`. Set `GEM_LIFE_CONSOLE_URL`
+in the host scheme to use another loopback URL. Remote/file URLs are rejected.
 
 The repository-level `Scripts/run-gem-life.sh` launcher starts both the API and
 host together. The React Console still needs to be running from `Console/` with
@@ -28,8 +54,8 @@ repository root. It loads the ignored local `.env` file automatically.
 
 `GemLifeBridge.swift` registers one `gemLife` WebKit message handler and
 decodes the shared envelope. React uses `Console/src/bridge/index.ts` to send
-messages to the host and subscribe to native events. Supported message types
-are navigation, file/image requests, local-file results, sharing, session
+messages to the host and subscribe to native events. Declared envelope types
+include navigation, file/image requests, local-file results, sharing, session
 events, and native errors.
 
 The envelope carries a stable type, an optional request ID, and string payload
