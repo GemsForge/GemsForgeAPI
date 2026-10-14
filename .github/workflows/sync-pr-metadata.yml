@@ -250,11 +250,11 @@ jobs:
             );
 
             if (!issueItem) {
-              const addIssueMutation = \`mutation($projectId: ID!, $contentId: ID!) {
+              const addIssueMutation = `mutation($projectId: ID!, $contentId: ID!) {
                 addProjectV2ItemById(input: {projectId: $projectId, contentId: $contentId}) {
                   item { id }
                 }
-              }\`;
+              }`;
               const addedIssue = await projectApi(addIssueMutation, {
                 projectId: project.id,
                 contentId: issue.node_id,
@@ -264,7 +264,7 @@ jobs:
                 fieldValues: { nodes: [] },
               };
               core.notice(
-                \`Added issue #${issueNumber} to the GemsForgeAPI project.\`,
+                `Added issue #${issueNumber} to the GemsForgeAPI project.`,
               );
             }
 
