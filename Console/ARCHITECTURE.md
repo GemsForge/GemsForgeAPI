@@ -6,6 +6,23 @@ The Console is the React and TypeScript client for developing and verifying the 
 
 ## Application boundary
 
+### React route ownership
+
+`src/routes/AppRoutes.tsx` declares exact routes rather than copying the current
+URL into component state. The shared shell and sidebar remain mounted; only the
+active feature requests its records. Home is `/`; `/domains` lists domains and
+`/domains/:domainID` loads their pages. `/forgekeeper` shows roots, with children
+at `/forgekeeper/:pageID/children`. Life routes are `/education`, `/employment`,
+`/addresses`, and `/transactions` (`/expenses` redirects). Reference and developer
+routes are `/gemhues`, `/local-databases`, and `/schema-builder`.
+
+Use router links for web navigation. Direct links and history navigation use the
+same query keys. Unknown paths/IDs show not-found; pending requests and failures
+have loading/retry states. Screen render failures are caught inside the shell.
+Native navigation remains a separate bridge concern. Vite serves HTML navigation
+requests locally while proxying API fetches on the same paths. Production hosting
+must likewise serve index.html for React route requests, not API JSON.
+
 ```text
 SwiftUI native shell
 └── WKWebView
