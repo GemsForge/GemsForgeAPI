@@ -1,5 +1,5 @@
-import { useRef, useState } from "react";
-import { useUploadImageMutation } from "../data/workflowQueries";
+import { useRef } from "react";
+import { useAttachmentWorkflow } from "../hooks/useAttachmentWorkflow";
 import type { FileMetadata } from "../types";
 import { FilePresentation } from "./FilePresentation";
 
@@ -16,44 +16,10 @@ interface AttachmentControlProps {
 /** Reusable browser control for upload, replacement, preview, and removal. */
 export function AttachmentControl({ fileMetadataID, ownerType, ownerID, label, onAttach, selectImage }: AttachmentControlProps) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const upload = useUploadImageMutation();
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  async function handleFile(file: File) {
-    if (!file.type.toLowerCase().startsWith("image/") || file.size === 0) {
-      setError("Choose a non-empty image file.");
-      return;
-    }
-    setBusy(true);
-    setError(null);
-    try {
-      const metadata = await upload.mutateAsync({ file, kind: label.toLowerCase().replaceAll(" ", "-"), ownerType, ownerID });
-      await onAttach(metadata);
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "Upload failed.");
-    } finally {
-      setBusy(false);
-    }
-  }
-
+  const { busy, error, handleFile, choose: select, remove } = useAttachmentWorkflow({ label, ownerType, ownerID, onAttach });
   async function choose() {
-    if (!selectImage) { inputRef.current?.click(); return; }
-    setBusy(true);
-    setError(null);
-    try {
-      const file = await selectImage();
-      if (file) await handleFile(file);
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : "File selection failed.");
-    } finally { setBusy(false); }
-  }
-
-  async function remove() {
-    setBusy(true);
-    setError(null);
-    try { await onAttach(null); } catch (caught) { setError(caught instanceof Error ? caught.message : "Removal failed."); }
-    finally { setBusy(false); }
+    if (selectImage) await select(selectImage);
+    else inputRef.current?.click();
   }
 
   return <div className="attachment-control">
