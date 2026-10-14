@@ -141,14 +141,24 @@ jobs:
             }
 
             const projectApi = async (query, variables) => {
-              const response = await github.request("POST /graphql", {
+              // Use fetch so Octokit's GITHUB_TOKEN auth hook cannot replace
+              // PROJECTS_TOKEN with the repository-scoped token.
+              const response = await fetch("https://api.github.com/graphql", {
+                method: "POST",
                 headers: {
-                  authorization: `bearer ${projectsToken}`,
+                  accept: "application/vnd.github+json",
+                  authorization: `Bearer ${projectsToken}`,
+                  "content-type": "application/json",
+                  "x-github-api-version": "2022-11-28",
                 },
-                query,
-                variables,
+                body: JSON.stringify({ query, variables }),
               });
-              const payload = response.data;
+              const payload = await response.json();
+              if (!response.ok) {
+                throw new Error(
+                  `GitHub GraphQL HTTP ${response.status}: ${JSON.stringify(payload)}`,
+                );
+              }
               if (payload.errors?.length) {
                 throw new Error(
                   `GitHub GraphQL request failed: ${payload.errors
