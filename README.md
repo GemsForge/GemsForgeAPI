@@ -230,12 +230,12 @@ For a memorable Swift command, the package also provides a `GemLife` launcher
 target:
 
 ```bash
-DATABASE_PATH="/absolute/path/to/GemLife_DB_rebuild.sqlite" \
 swift run GemLife
 ```
 
 `swift run GemLife` delegates to the same repository launcher, so the API and
-host lifecycle behavior stays in one place.
+host lifecycle behavior stays in one place. The launcher reads the ignored
+`.env` file automatically; explicitly exported variables take precedence.
 
 The current verification checkpoint is the health test:
 
