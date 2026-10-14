@@ -13,6 +13,14 @@ export interface GemLifeBridgeMessage {
   payload?: Record<string, string>;
 }
 
+export function isBridgeMessage(value: unknown): value is GemLifeBridgeMessage {
+  if (!value || typeof value !== "object") return false;
+  const message = value as Partial<GemLifeBridgeMessage>;
+  if (!["navigate", "requestFile", "requestImage", "localFile", "share", "session", "error"].includes(message.type ?? "")) return false;
+  if (message.requestID !== undefined && typeof message.requestID !== "string") return false;
+  return message.payload === undefined || (message.payload !== null && typeof message.payload === "object" && !Array.isArray(message.payload) && Object.values(message.payload).every((item) => typeof item === "string"));
+}
+
 interface WebKitMessageHandler {
   postMessage(message: GemLifeBridgeMessage): void;
 }
@@ -38,8 +46,8 @@ export function sendToNative(message: GemLifeBridgeMessage): boolean {
 /** Subscribes to typed events dispatched by the native host. */
 export function subscribeToNative(listener: (message: GemLifeBridgeMessage) => void) {
   const handleEvent = (event: Event) => {
-    const message = (event as CustomEvent<GemLifeBridgeMessage>).detail;
-    if (message?.type) listener(message);
+    const message: unknown = (event as CustomEvent<unknown>).detail;
+    if (isBridgeMessage(message)) listener(message);
   };
 
   window.addEventListener("gem-life-native-message", handleEvent);

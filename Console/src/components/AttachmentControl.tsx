@@ -2,6 +2,7 @@ import { useRef } from "react";
 import { useAttachmentWorkflow } from "../hooks/useAttachmentWorkflow";
 import type { FileMetadata } from "../types";
 import { FilePresentation } from "./FilePresentation";
+import { hasNativeFilePicker, pickNativeFile } from "../bridge/filePicker";
 
 interface AttachmentControlProps {
   fileMetadataID: string | null | undefined;
@@ -19,6 +20,7 @@ export function AttachmentControl({ fileMetadataID, ownerType, ownerID, label, o
   const { busy, error, handleFile, choose: select, remove } = useAttachmentWorkflow({ label, ownerType, ownerID, onAttach });
   async function choose() {
     if (selectImage) await select(selectImage);
+    else if (hasNativeFilePicker()) await select(() => pickNativeFile("image"));
     else inputRef.current?.click();
   }
 

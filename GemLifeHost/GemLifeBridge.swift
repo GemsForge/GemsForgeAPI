@@ -22,12 +22,14 @@ struct GemLifeBridgeMessage: Codable, Equatable {
 /// Decodes messages from React and keeps native handling behind one boundary.
 final class GemLifeBridgeHandler: NSObject, WKScriptMessageHandler {
     var onMessage: ((GemLifeBridgeMessage) -> Void)?
+    var policy: HostPolicy?
 
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
-        guard message.name == "gemLife",
+        guard message.name == "gemLife", message.frameInfo.isMainFrame,
+              let policy, policy.trusts(message.frameInfo.request.url), policy.trusts(message.webView?.url),
               let body = message.body as? [String: Any],
               JSONSerialization.isValidJSONObject(body),
-              let data = try? JSONSerialization.data(withJSONObject: body),
+              let data = try? JSONSerialization.data(withJSONObject: body), data.count <= 16 * 1024,
               let decoded = try? JSONDecoder().decode(GemLifeBridgeMessage.self, from: data)
         else {
             NSLog("Gem Life bridge rejected an invalid message.")
