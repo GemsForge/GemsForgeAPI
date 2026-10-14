@@ -159,19 +159,19 @@ jobs:
               return payload.data;
             };
 
-            // This board is owned by the authenticated user, so query the
-            // viewer directly. An organization lookup is not valid for the
-            // personal account that owns the public GemsForgeAPI project.
-            const projectQuery = `query {
-              viewer {
+            // This board is owned by the GemsForge user account.
+            const projectQuery = `query($login: String!) {
+              user(login: $login) {
                 projectsV2(first: 100) {
                   nodes { id number title }
                 }
               }
             }`;
 
-            const projectData = await projectApi(projectQuery, {});
-            const project = (projectData.viewer?.projectsV2?.nodes ?? []).find(
+            const projectData = await projectApi(projectQuery, {
+              login: "GemsForge",
+            });
+            const project = (projectData.user?.projectsV2?.nodes ?? []).find(
               (candidate) => candidate.title?.trim() === "GemsForgeAPI",
             );
             if (!project) {
