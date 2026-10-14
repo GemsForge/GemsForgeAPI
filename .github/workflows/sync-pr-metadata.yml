@@ -159,10 +159,10 @@ jobs:
               return payload.data;
             };
 
-            // Enumerate the authenticated user's visible projects, then select the
-// documented user-owned project by number and title. This also lets
-// the failure message distinguish a token-access problem from a
-// project-number or project-title mismatch.
+                        // Enumerate the authenticated user's visible projects, then select the
+            // documented user-owned project by number and title. This also lets
+            // the failure message distinguish a token-access problem from a
+            // project-number or project-title mismatch.
             const projectQuery = `query($login: String!) {
               viewer {
                 login
