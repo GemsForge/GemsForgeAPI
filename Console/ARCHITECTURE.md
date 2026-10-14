@@ -56,6 +56,14 @@ The SwiftUI host will be added to the same repository and must not be implemente
 
 ## State ownership
 
+`useSchemaBuilder` owns a reducer for drafts, preview approvals, revisions, busy
+state, and creation errors. Edits invalidate approval; preview responses for an
+older revision are discarded. Import and creation handlers also check approval
+instead of relying only on disabled buttons. `useLocalDatabaseForm` clears
+confirmation when the filename/profile changes. `useAttachmentWorkflow` owns
+picker, upload, removal, errors, and an operation lock; picker cancellation is a
+no-op. Views only render those hooks and forward user actions.
+
 ### Server data conventions
 
 `src/api.ts` owns HTTP transport. JSON, upload, and binary requests preserve
