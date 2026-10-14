@@ -1,4 +1,4 @@
-import { Component, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { lazy, Suspense, Component, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, Navigate, Outlet, Route, Routes, useLocation, useNavigate, useOutletContext, useParams } from "react-router-dom";
 import type { UseQueryResult } from "@tanstack/react-query";
 import { useDomainsQuery } from "../data/domainQueries";
@@ -8,14 +8,14 @@ import { QueryFeedback } from "../components/QueryFeedback";
 import { Notice } from "../components/Notice";
 import { GemLifeShell } from "../components/layout/GemLifeShell";
 import { DomainSidebar } from "../features/domains/DomainSidebar";
-import { ForgeKeeperView } from "../features/forgekeeper/ForgeKeeperView";
-import { GemHuesView } from "../features/gem-hues/GemHuesView";
-import { EducationView } from "../features/education/EducationView";
-import { EmploymentView } from "../features/employment/EmploymentView";
-import { AddressesView } from "../features/addresses/AddressesView";
-import { TransactionsView } from "../features/transactions/TransactionsView";
-import { LocalDatabaseView } from "../features/databases/LocalDatabaseView";
-import { SchemaBuilderView } from "../features/schema/SchemaBuilderView";
+const ForgeKeeperView = lazy(() => import("../features/forgekeeper/ForgeKeeperView").then((module) => ({ default: module.ForgeKeeperView })));
+const GemHuesView = lazy(() => import("../features/gem-hues/GemHuesView").then((module) => ({ default: module.GemHuesView })));
+const EducationView = lazy(() => import("../features/education/EducationView").then((module) => ({ default: module.EducationView })));
+const EmploymentView = lazy(() => import("../features/employment/EmploymentView").then((module) => ({ default: module.EmploymentView })));
+const AddressesView = lazy(() => import("../features/addresses/AddressesView").then((module) => ({ default: module.AddressesView })));
+const TransactionsView = lazy(() => import("../features/transactions/TransactionsView").then((module) => ({ default: module.TransactionsView })));
+const LocalDatabaseView = lazy(() => import("../features/databases/LocalDatabaseView").then((module) => ({ default: module.LocalDatabaseView })));
+const SchemaBuilderView = lazy(() => import("../features/schema/SchemaBuilderView").then((module) => ({ default: module.SchemaBuilderView })));
 
 type Notifications = { onError: (error: unknown) => void; onSuccess: (message: string) => void };
 
@@ -23,7 +23,7 @@ class ScreenBoundary extends Component<{ children: ReactNode }, { failed: boolea
   state = { failed: false };
   static getDerivedStateFromError() { return { failed: true }; }
   render() {
-    return this.state.failed ? <section role="alert"><h2>This screen could not be displayed</h2><p>Return home to try another screen.</p><Link to="/">Return home</Link></section> : this.props.children;
+    return this.state.failed ? <section role="alert"><h2>This screen could not be displayed</h2><p>Return home or reload the app if its version changed.</p><div className="button-row"><Link to="/">Return home</Link><button className="secondary-button" onClick={() => window.location.reload()}>Reload app</button></div></section> : this.props.children;
   }
 }
 
@@ -42,7 +42,7 @@ function Layout() {
   }, [location.pathname]);
   return <GemLifeShell sidebar={<DomainSidebar domains={domains.data ?? []} onRefresh={() => void domains.refetch()} />}>
     <Notice message={notice?.message ?? null} kind={notice?.kind} />
-    <ScreenBoundary key={location.pathname}><Outlet context={{ onError, onSuccess } satisfies Notifications} /></ScreenBoundary>
+    <ScreenBoundary key={location.pathname}><Suspense fallback={<p role="status">Loading screen…</p>}><Outlet context={{ onError, onSuccess } satisfies Notifications} /></Suspense></ScreenBoundary>
   </GemLifeShell>;
 }
 

@@ -1,3 +1,5 @@
+import { usePagedRecords } from "../../hooks/usePagedRecords";
+import { PaginationControls } from "../../components/PaginationControls";
 import { useState } from "react";
 import { useEducationRecordQuery } from "../../data/recordQueries";
 import { QueryFeedback } from "../../components/QueryFeedback";
@@ -8,12 +10,14 @@ interface EducationViewProps {
 }
 
 export function EducationView({ records }: EducationViewProps) {
+  const paging = usePagedRecords(records);
   const [selectedID, setSelectedID] = useState<string | null>(null);
   const detail = useEducationRecordQuery(selectedID);
   const selectedRecord = detail.data;
 
   return (
     <>
+      <PaginationControls {...paging} label="Education" />
       <div className="content-heading">
         <div>
           <p className="eyebrow">Life-area records</p>
@@ -28,7 +32,7 @@ export function EducationView({ records }: EducationViewProps) {
       ) : (
         <div className="education-layout">
           <div className="education-list" aria-label="Education records">
-            {records.map((record) => (
+            {paging.items.map((record) => (
               <button
                 className={`education-card ${selectedRecord?.id === record.id ? "selected" : ""}`}
                 key={record.id}

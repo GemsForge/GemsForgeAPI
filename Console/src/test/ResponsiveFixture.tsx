@@ -27,7 +27,7 @@ createRoot(document.getElementById("root")!).render(
   <QueryClientProvider client={new QueryClient()}><TamaguiProvider config={tamaguiConfig} defaultTheme="dark"><MemoryRouter>
     <GemLifeShell sidebar={<DomainSidebar domains={domains} onRefresh={() => {}} />}>
       <h2>Responsive fixture</h2><p>Local synthetic content. Writes are disabled.</p>
-      <GemDataTable caption="Wide table fixture" columns={[{ key: "value", label: "Long property", render: (row: { id: string }) => row.id }]} rows={[{ id: "Example long identifier for wrapping and horizontal table scrolling" }]} rowKey={(row) => row.id} />
+      <GemDataTable caption="Wide table fixture" columns={[{ key: "value", label: "Long property", render: (row: { id: string }) => row.id }]} rows={Array.from({ length: 1000 }, (_, index) => ({ id: `Record ${index}: example long identifier for wrapping and horizontal table scrolling` }))} rowKey={(row) => row.id} />
       <FilePresentation fileMetadataID="fixture" label="Fixture image" />
       <ForgeKeeperView domain={domains[0]} pages={[{ id: 1, domainID: "TEST", title: "Fixture page", description: "Test the dialog without saving", parentID: null }]} onLoadRoots={() => {}} onLoadChildren={() => {}} onPatch={async () => { throw new Error("Fixture writes are disabled."); }} />
       <SchemaBuilderView onError={() => {}} onSuccess={() => {}} />

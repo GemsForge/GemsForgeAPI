@@ -7,6 +7,11 @@ export default defineConfig(({ mode }) => {
 
   return {
     base: mode === "production" ? "/app/" : "/",
+    build: { rollupOptions: { output: { manualChunks: {
+      "design-system": ["tamagui", "@tamagui/config/v5"],
+      "data-cache": ["@tanstack/react-query"],
+      "routing": ["react-router-dom"],
+    } } } },
     plugins: [react()],
     define: {
       "process.env.NODE_ENV": JSON.stringify(mode),

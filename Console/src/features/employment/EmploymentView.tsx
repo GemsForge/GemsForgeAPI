@@ -1,3 +1,5 @@
+import { usePagedRecords } from "../../hooks/usePagedRecords";
+import { PaginationControls } from "../../components/PaginationControls";
 import { useState } from "react";
 import { useEmploymentRecordQuery } from "../../data/recordQueries";
 import { QueryFeedback } from "../../components/QueryFeedback";
@@ -8,12 +10,14 @@ interface EmploymentViewProps {
 }
 
 export function EmploymentView({ records }: EmploymentViewProps) {
+  const paging = usePagedRecords(records);
   const [selectedID, setSelectedID] = useState<string | null>(null);
   const detail = useEmploymentRecordQuery(selectedID);
   const selectedRecord = detail.data;
 
   return (
     <>
+      <PaginationControls {...paging} label="Employment" />
       <div className="content-heading">
         <div>
           <p className="eyebrow">Life-area records</p>
@@ -28,7 +32,7 @@ export function EmploymentView({ records }: EmploymentViewProps) {
       ) : (
         <div className="employment-layout">
           <div className="employment-list" aria-label="Employment records">
-            {records.map((record) => (
+            {paging.items.map((record) => (
               <button
                 className={`employment-card ${selectedRecord?.id === record.id ? "selected" : ""}`}
                 key={record.id}
