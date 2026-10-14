@@ -63,3 +63,51 @@ Service Accounts, Education, and future HomeInventory records.
 
 The user-facing concept is **Service Account Catalog**, even though the legacy
 SQLite table remains named `Services`.
+
+## File and image presentation
+
+`Console/src/components/FilePresentation.tsx` is the shared read-only viewer
+used by `AttachmentControl` in Addresses and Transactions. It reads metadata
+through the cached `useFileMetadataQuery` hook, then requests image bytes only
+through `GET /file-metadata/:id/content`. It never resolves a local path in the
+browser. Filenames, kind, MIME type, and byte size remain visible even when a
+preview cannot be displayed. Missing sizes display as Unknown; a missing
+filename falls back to the final segment of the portable relative path.
+
+The presentation states are:
+
+| State | Behavior |
+| --- | --- |
+| No attachment ID | Empty prompt; no file requests |
+| Metadata loading | Accessible loading message |
+| Metadata 404 | File-record missing message and retry |
+| Other metadata failure | Retryable file-details error |
+| Image downloading or decoding | Accessible preview loading message |
+| Image loaded | Full image fitted within the preview; no cropping |
+| Content 404 | Stored-file missing message; metadata retained |
+| Empty, non-image, or undecodable bytes | Invalid/unsupported-image message |
+| Network/content failure | Retryable preview error |
+| Non-image metadata | Metadata shown; no image bytes requested |
+
+Switching records cancels preview reads, ignores late results, and revokes
+object URLs on replacement or unmount. Preview blobs remain scoped to the
+viewer rather than accumulating in the query cache. Retry rereads the relevant
+metadata or file content without changing the owner's attachment reference.
+
+The browser picker remains the default. `AttachmentControl.selectImage` is an
+optional adapter that returns `Promise<File | null>`; a future native SwiftUI
+picker can supply file bytes through that boundary. Null means cancellation.
+This issue does not implement native permissions, send native bridge commands,
+or accept absolute filesystem paths from the web view. Upload and owner PATCH
+behavior is unchanged, with non-image and empty browser selections rejected
+before uploading. API validation remains authoritative.
+
+Vite proxies both `/file-metadata` and `/file-uploads` to the API. Configure
+`VITE_API_TARGET` for the running API as with other console requests.
+
+Run the frontend checks from `Console`:
+
+```sh
+npm test
+npm run build
+```

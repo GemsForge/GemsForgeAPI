@@ -1,5 +1,12 @@
 import type { Address, Domain, Education, Employment, ExpenseTransaction, FileMetadata, ForgeKeeperPage, ForgeKeeperPatch, GemHue, HomeInventoryCSVImportResult, HomeInventoryCSVPreview, LiveSchema, LocalDatabaseCapabilities, LocalDatabaseCreationResult, SchemaBuilderGuidance, TableBuilderRequest, UserTableCreationResult, UserTablePreview } from "./types";
 
+export class APIError extends Error {
+  constructor(message: string, public readonly status: number) {
+    super(message);
+    this.name = "APIError";
+  }
+}
+
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const response = await fetch(path, {
     headers: { "Content-Type": "application/json", ...options.headers },
@@ -8,7 +15,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 
   if (!response.ok) {
     const problem = await response.json().catch(() => ({}));
-    throw new Error(problem.reason || `${response.status} ${response.statusText}`);
+    throw new APIError(problem.reason || `${response.status} ${response.statusText}`, response.status);
   }
 
   return response.status === 204 ? (null as T) : (await response.json() as T);
@@ -62,6 +69,13 @@ export const api = {
       method: "PATCH", body: JSON.stringify({ fileMetadataID }),
     }),
   fileContentURL: (fileMetadataID: string) => `/file-metadata/${encodeURIComponent(fileMetadataID)}/content`,
+  getFileMetadata: (id: string, signal?: AbortSignal) =>
+    request<FileMetadata>(`/file-metadata/${encodeURIComponent(id)}`, { signal }),
+  getFileContent: async (id: string, signal: AbortSignal) => {
+    const response = await fetch(api.fileContentURL(id), { signal });
+    if (!response.ok) throw new APIError("Unable to read the attached file.", response.status);
+    return response.blob();
+  },
   getLocalDatabaseCapabilities: () => request<LocalDatabaseCapabilities>("/local-databases/capabilities"),
   createLocalDatabase: (payload: { databaseName: string; profile: string; confirmCreation: boolean }) =>
     request<LocalDatabaseCreationResult>("/local-databases", {

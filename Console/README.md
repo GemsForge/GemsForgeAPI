@@ -34,6 +34,8 @@ Vite proxies API paths to Vapor so the browser can use same-origin requests:
 /employment
 /addresses
 /transactions
+/file-metadata
+/file-uploads
 /health
 /schema-builder
 /live-database
@@ -73,6 +75,13 @@ these primitives instead of repeating buttons, cards, and labelled fields.
 Server data uses TanStack Query through `src/data`. Query keys and caching
 policies belong there; feature components should consume query hooks instead
 of issuing raw requests during rendering.
+
+Attachments use the shared `FilePresentation` component for metadata, full-image
+previews, loading, missing-file, invalid-image, and retry states. Image bytes are
+read through the API content endpoint, never through local filesystem paths.
+The browser picker remains available; `AttachmentControl.selectImage` provides
+a File-returning adapter for later native selection. See
+[`Attachment-Lifecycle.md`](../docs/Attachment-Lifecycle.md) for the contract.
 
 ## Schema builder
 
