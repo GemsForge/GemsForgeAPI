@@ -148,20 +148,30 @@ jobs:
                 query,
                 variables,
               });
-              return response.data.data;
+              const payload = response.data;
+              if (payload.errors?.length) {
+                throw new Error(
+                  `GitHub GraphQL request failed: ${payload.errors
+                    .map((error) => error.message)
+                    .join("; ")}`,
+                );
+              }
+              return payload.data;
             };
 
-            const projectQuery = `query($login: String!, $query: String!) {
+            // List the authenticated user's projects and match the exact private
+            // project title. The title filter is intentionally avoided because
+            // user-owned private projects are not consistently returned by it.
+            const projectQuery = `query($login: String!) {
               user(login: $login) {
-                projectsV2(first: 100, query: $query) {
+                projectsV2(first: 100) {
                   nodes { id number title }
                 }
               }
-            }`;
+            `;
 
             const projectData = await projectApi(projectQuery, {
               login: "GemsForge",
-              query: "GemsForgeAPI",
             });
             const project = projectData.user?.projectsV2?.nodes.find(
               (candidate) => candidate.title === "GemsForgeAPI",
