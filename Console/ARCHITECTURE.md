@@ -48,6 +48,14 @@ The SwiftUI host will be added to the same repository and must not be implemente
 
 ## Component rules
 
+The Tamagui source of truth is `src/design-system/tamagui.config.ts`. It defines
+the existing Gem Life palette, system-font typography, semantic spacing
+(`gemCompact`, `gemControl`, `gemSection`, `gemPage`), and control/card radii.
+The dark theme remains the application default; a light theme is available.
+Responsive thresholds are compact 640px, tablet 900px, desktop 1200px; the
+reduced-motion media key supports user motion preferences. Prefer semantic
+tokens in shared primitives instead of adding one-off visual constants.
+
 Feature screens compose shared components rather than rebuilding markup and styling. Shared components should expose behavior and semantic intent through typed props, preserve accessibility, and receive visual styling from the Gem Life design tokens.
 
 The shared component inventory lives in `Console/src/components/ui`:
