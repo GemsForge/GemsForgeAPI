@@ -1,0 +1,28 @@
+# M3 UI verification: unit/interaction tests and an actual production build.
+# Responsive browser smoke checks are documented in Console/RESPONSIVE_TESTING.md;
+# jsdom alone cannot verify CSS layout or replace a screen-reader audit.
+name: Console checks
+on:
+  pull_request:
+    paths: ['Console/**', '.github/workflows/console-checks.yml']
+  push:
+    branches: [master]
+    paths: ['Console/**', '.github/workflows/console-checks.yml']
+permissions:
+  contents: read
+jobs:
+  console:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: Console/package-lock.json
+      - run: npm ci
+        working-directory: Console
+      - run: npm test
+        working-directory: Console
+      - run: npm run build
+        working-directory: Console
