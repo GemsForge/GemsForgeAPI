@@ -130,6 +130,144 @@ jobs:
             core.notice(
               `Synchronized PR #${pullRequest.number} from issue #${issueNumber}: ${labels.length} labels, ${assignees.length} assignees, and milestone ${issue.milestone?.title ?? "none"}.`,
             );
+            const projectsToken = process.env.PROJECTS_TOKEN;
+            if (!projectsToken) {
+              core.setFailed(
+                "PROJECTS_TOKEN is required to synchronize the private GemsForgeAPI project.",
+              );
+              return;
+            }
+
+            const projectApi = async (query, variables) => {
+              const response = await github.request("POST /graphql", {
+                headers: {
+                  authorization: `bearer ${projectsToken}`,
+                },
+                query,
+                variables,
+              });
+              return response.data.data;
+            };
+
+            const projectQuery = `query($login: String!, $query: String!) {
+              user(login: $login) {
+                projectsV2(first: 100, query: $query) {
+                  nodes { id number title }
+                }
+              }
+            }`;
+
+            const projectData = await projectApi(projectQuery, {
+              login: "GemsForge",
+              query: "GemsForgeAPI",
+            });
+            const project = projectData.user?.projectsV2?.nodes.find(
+              (candidate) => candidate.title === "GemsForgeAPI",
+            );
+
+            if (!project) {
+              core.setFailed(
+                "The private user project GemsForgeAPI was not found or the PROJECTS_TOKEN lacks project access.",
+              );
+              return;
+            }
+
+            const itemQuery = `query($projectId: ID!) {
+              node(id: $projectId) {
+                ... on ProjectV2 {
+                  items(first: 100) {
+                    nodes {
+                      id
+                      content {
+                        __typename
+                        ... on Issue { number repository { nameWithOwner } }
+                        ... on PullRequest { number repository { nameWithOwner } }
+                      }
+                      fieldValues(first: 50) {
+                        nodes {
+                          __typename
+                          ... on ProjectV2ItemFieldSingleSelectValue {
+                            optionId
+                            name
+                            field {
+                              ... on ProjectV2SingleSelectField { id name }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }`;
+
+            const projectItems = (
+              await projectApi(itemQuery, { projectId: project.id })
+            ).node?.items?.nodes ?? [];
+            const issueItem = projectItems.find(
+              (item) =>
+                item.content?.__typename === "Issue" &&
+                item.content.number === issueNumber &&
+                item.content.repository?.nameWithOwner === context.repo.owner + "/" + context.repo.repo,
+            );
+            if (!issueItem) {
+              core.setFailed(
+                `Issue #${issueNumber} is not currently in the private GemsForgeAPI project.`,
+              );
+              return;
+            }
+
+            let pullRequestItem = projectItems.find(
+              (item) =>
+                item.content?.__typename === "PullRequest" &&
+                item.content.number === pullRequest.number &&
+                item.content.repository?.nameWithOwner === context.repo.owner + "/" + context.repo.repo,
+            );
+
+            if (!pullRequestItem) {
+              const addItemMutation = `mutation($projectId: ID!, $contentId: ID!) {
+                addProjectV2ItemById(input: {projectId: $projectId, contentId: $contentId}) {
+                  item { id }
+                }
+              }`;
+              const added = await projectApi(addItemMutation, {
+                projectId: project.id,
+                contentId: pullRequest.node_id,
+              });
+              pullRequestItem = { id: added.addProjectV2ItemById.item.id };
+            }
+
+            const issueStatus = issueItem.fieldValues.nodes.find(
+              (value) =>
+                value.__typename === "ProjectV2ItemFieldSingleSelectValue" &&
+                value.field?.name === "Status" &&
+                value.optionId,
+            );
+
+            if (issueStatus?.field?.id && issueStatus.optionId) {
+              const statusMutation = `mutation(
+                $projectId: ID!,
+                $itemId: ID!,
+                $fieldId: ID!,
+                $optionId: String!
+              ) {
+                updateProjectV2ItemFieldValue(input: {
+                  projectId: $projectId,
+                  itemId: $itemId,
+                  fieldId: $fieldId,
+                  value: {singleSelectOptionId: $optionId}
+                }) {
+                  projectV2Item { id }
+                }
+              `;
+              await projectApi(statusMutation, {
+                projectId: project.id,
+                itemId: pullRequestItem.id,
+                fieldId: issueStatus.field.id,
+                optionId: issueStatus.optionId,
+              });
+            }
+
             core.notice(
-              "ProjectV2 membership remains a documented follow-up requiring project-scoped authorization.",
+              `Synchronized PR #${pullRequest.number} from issue #${issueNumber}: ${labels.length} labels, ${assignees.length} assignees, milestone ${issue.milestone?.title ?? "none"}, and project GemsForgeAPI.`,
             );
