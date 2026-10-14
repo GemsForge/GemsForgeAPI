@@ -1,23 +1,22 @@
 import { useEffect, useState } from "react";
-import { api } from "../../api";
-import type { LiveSchema, LiveSchemaTable } from "../../types";
+import { useLiveSchemaQuery } from "../../data/workflowQueries";
+import { QueryFeedback } from "../../components/QueryFeedback";
+import type { LiveSchemaTable } from "../../types";
 
 interface LiveSchemaViewProps {
   onError: (error: unknown) => void;
 }
 
 export function LiveSchemaView({ onError }: LiveSchemaViewProps) {
-  const [schema, setSchema] = useState<LiveSchema | null>(null);
+  const query = useLiveSchemaQuery();
+  const schema = query.data;
   const [selectedTableName, setSelectedTableName] = useState<string | null>(null);
 
   useEffect(() => {
-    void api.getLiveSchema().then((result) => {
-      setSchema(result);
-      setSelectedTableName(result.tables[0]?.name ?? null);
-    }).catch(onError);
-  }, []);
+    if (query.error) onError(query.error);
+  }, [query.error, onError]);
 
-  const selectedTable = schema?.tables.find((table) => table.name === selectedTableName) ?? null;
+  const selectedTable = schema?.tables.find((table) => table.name === selectedTableName) ?? schema?.tables[0] ?? null;
 
   return (
     <>
@@ -31,7 +30,7 @@ export function LiveSchemaView({ onError }: LiveSchemaViewProps) {
       </div>
 
       {!schema ? (
-        <div className="empty-state"><div className="empty-icon">⌁</div><h3>Loading schema…</h3><p>Reading table metadata from the configured database.</p></div>
+        <QueryFeedback query={query} />
       ) : (
         <div className="schema-layout">
           <section className="schema-panel">

@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { api } from "../../api";
+import { useEducationRecordQuery } from "../../data/recordQueries";
+import { QueryFeedback } from "../../components/QueryFeedback";
 import type { Education } from "../../types";
 
 interface EducationViewProps {
@@ -7,11 +8,9 @@ interface EducationViewProps {
 }
 
 export function EducationView({ records }: EducationViewProps) {
-  const [selectedRecord, setSelectedRecord] = useState<Education | null>(null);
-
-  async function selectRecord(record: Education) {
-    setSelectedRecord(await api.getEducation(record.id));
-  }
+  const [selectedID, setSelectedID] = useState<string | null>(null);
+  const detail = useEducationRecordQuery(selectedID);
+  const selectedRecord = detail.data;
 
   return (
     <>
@@ -33,7 +32,7 @@ export function EducationView({ records }: EducationViewProps) {
               <button
                 className={`education-card ${selectedRecord?.id === record.id ? "selected" : ""}`}
                 key={record.id}
-                onClick={() => void selectRecord(record)}
+                onClick={() => setSelectedID(record.id)}
               >
                 <span className="education-icon">✦</span>
                 <span className="education-card-copy">
@@ -44,7 +43,7 @@ export function EducationView({ records }: EducationViewProps) {
               </button>
             ))}
           </div>
-          {selectedRecord ? <EducationDetail record={selectedRecord} /> : <div className="detail-placeholder"><span>✦</span><p>Select an education record to view its details.</p></div>}
+          <div><QueryFeedback query={detail} />{selectedRecord ? <EducationDetail record={selectedRecord} /> : !selectedID && <div className="detail-placeholder"><span>✦</span><p>Select an education record to view its details.</p></div>}</div>
         </div>
       )}
     </>

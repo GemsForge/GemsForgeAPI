@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { api } from "../../api";
+import { useTransactionQuery, useTransactionImageMutation } from "../../data/recordQueries";
+import { QueryFeedback } from "../../components/QueryFeedback";
 import type { ExpenseTransaction } from "../../types";
 import { AttachmentControl } from "../../components/AttachmentControl";
 
@@ -8,11 +9,10 @@ interface TransactionsViewProps {
 }
 
 export function TransactionsView({ records }: TransactionsViewProps) {
-  const [selectedRecord, setSelectedRecord] = useState<ExpenseTransaction | null>(null);
-
-  async function selectRecord(record: ExpenseTransaction) {
-    setSelectedRecord(await api.getTransaction(record.id));
-  }
+  const [selectedID, setSelectedID] = useState<string | null>(null);
+  const detail = useTransactionQuery(selectedID);
+  const attachment = useTransactionImageMutation();
+  const selectedRecord = detail.data;
 
   return (
     <>
@@ -31,14 +31,14 @@ export function TransactionsView({ records }: TransactionsViewProps) {
         <div className="transaction-layout">
           <div className="transaction-list" aria-label="Expense transactions">
             {records.map((record) => (
-              <button className={`transaction-card ${selectedRecord?.id === record.id ? "selected" : ""}`} key={record.id} onClick={() => void selectRecord(record)}>
+              <button className={`transaction-card ${selectedID === record.id ? "selected" : ""}`} key={record.id} onClick={() => setSelectedID(record.id)}>
                 <span className="transaction-icon">$</span>
                 <span className="transaction-card-copy"><strong>{record.item}</strong><small>{record.transactionDate || "Undated"} · {record.id}</small></span>
                 <span className="transaction-total">{formatAmount(record.total ?? record.paidPrice)}</span>
               </button>
             ))}
           </div>
-          {selectedRecord ? <TransactionDetail record={selectedRecord} onAttachment={async (metadata) => { const updated = await api.patchTransactionImage(selectedRecord.id, metadata?.id ?? null); setSelectedRecord(updated); }} /> : <div className="detail-placeholder"><span>$</span><p>Select an expense transaction to view its details.</p></div>}
+          <div><QueryFeedback query={detail} />{selectedRecord ? <TransactionDetail key={selectedRecord.id} record={selectedRecord} onAttachment={async (metadata) => { await attachment.mutateAsync({ id: selectedRecord.id, fileID: metadata?.id ?? null }); }} /> : !selectedID && <div className="detail-placeholder"><span>$</span><p>Select an expense transaction to view its details.</p></div>}</div>
         </div>
       )}
     </>

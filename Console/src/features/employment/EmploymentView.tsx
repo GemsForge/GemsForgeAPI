@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { api } from "../../api";
+import { useEmploymentRecordQuery } from "../../data/recordQueries";
+import { QueryFeedback } from "../../components/QueryFeedback";
 import type { Employment } from "../../types";
 
 interface EmploymentViewProps {
@@ -7,11 +8,9 @@ interface EmploymentViewProps {
 }
 
 export function EmploymentView({ records }: EmploymentViewProps) {
-  const [selectedRecord, setSelectedRecord] = useState<Employment | null>(null);
-
-  async function selectRecord(record: Employment) {
-    setSelectedRecord(await api.getEmployment(record.id));
-  }
+  const [selectedID, setSelectedID] = useState<string | null>(null);
+  const detail = useEmploymentRecordQuery(selectedID);
+  const selectedRecord = detail.data;
 
   return (
     <>
@@ -33,7 +32,7 @@ export function EmploymentView({ records }: EmploymentViewProps) {
               <button
                 className={`employment-card ${selectedRecord?.id === record.id ? "selected" : ""}`}
                 key={record.id}
-                onClick={() => void selectRecord(record)}
+                onClick={() => setSelectedID(record.id)}
               >
                 <span className="employment-icon">◆</span>
                 <span className="employment-card-copy">
@@ -44,7 +43,7 @@ export function EmploymentView({ records }: EmploymentViewProps) {
               </button>
             ))}
           </div>
-          {selectedRecord ? <EmploymentDetail record={selectedRecord} /> : <div className="detail-placeholder"><span>◆</span><p>Select an employment record to view its details.</p></div>}
+          <div><QueryFeedback query={detail} />{selectedRecord ? <EmploymentDetail record={selectedRecord} /> : !selectedID && <div className="detail-placeholder"><span>◆</span><p>Select an employment record to view its details.</p></div>}</div>
         </div>
       )}
     </>

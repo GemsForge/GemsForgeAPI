@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { api } from "../api";
+import { useUploadImageMutation } from "../data/workflowQueries";
 import type { FileMetadata } from "../types";
 import { FilePresentation } from "./FilePresentation";
 
@@ -16,6 +16,7 @@ interface AttachmentControlProps {
 /** Reusable browser control for upload, replacement, preview, and removal. */
 export function AttachmentControl({ fileMetadataID, ownerType, ownerID, label, onAttach, selectImage }: AttachmentControlProps) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const upload = useUploadImageMutation();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -27,7 +28,7 @@ export function AttachmentControl({ fileMetadataID, ownerType, ownerID, label, o
     setBusy(true);
     setError(null);
     try {
-      const metadata = await api.uploadImage(file, label.toLowerCase().replaceAll(" ", "-"), ownerType, ownerID);
+      const metadata = await upload.mutateAsync({ file, kind: label.toLowerCase().replaceAll(" ", "-"), ownerType, ownerID });
       await onAttach(metadata);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Upload failed.");

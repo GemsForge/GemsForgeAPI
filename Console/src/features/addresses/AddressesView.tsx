@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { api } from "../../api";
+import { useAddressQuery, useAddressAttachmentMutation } from "../../data/recordQueries";
+import { QueryFeedback } from "../../components/QueryFeedback";
 import type { Address } from "../../types";
 import { AttachmentControl } from "../../components/AttachmentControl";
 
@@ -8,11 +9,10 @@ interface AddressesViewProps {
 }
 
 export function AddressesView({ records }: AddressesViewProps) {
-  const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
-
-  async function selectAddress(address: Address) {
-    setSelectedAddress(await api.getAddress(address.id));
-  }
+  const [selectedID, setSelectedID] = useState<string | null>(null);
+  const detail = useAddressQuery(selectedID);
+  const attachment = useAddressAttachmentMutation();
+  const selectedAddress = detail.data;
 
   return (
     <>
@@ -31,14 +31,14 @@ export function AddressesView({ records }: AddressesViewProps) {
         <div className="address-layout">
           <div className="address-list" aria-label="Address records">
             {records.map((record) => (
-              <button className={`address-card ${selectedAddress?.id === record.id ? "selected" : ""}`} key={record.id} onClick={() => void selectAddress(record)}>
+              <button className={`address-card ${selectedID === record.id ? "selected" : ""}`} key={record.id} onClick={() => setSelectedID(record.id)}>
                 <span className="address-icon">⌂</span>
                 <span className="address-card-copy"><strong>{record.city || record.addressType}</strong><small>{record.addressType} · {record.id}</small></span>
                 <span className="address-status">{record.addressStatus}</span>
               </button>
             ))}
           </div>
-          {selectedAddress ? <AddressDetail record={selectedAddress} onAttachment={async (metadata) => { const updated = await api.patchAddressAttachment(selectedAddress.id, metadata?.id ?? null); setSelectedAddress(updated); }} /> : <div className="detail-placeholder"><span>⌂</span><p>Select an address to view its details.</p></div>}
+          <div><QueryFeedback query={detail} />{selectedAddress ? <AddressDetail key={selectedAddress.id} record={selectedAddress} onAttachment={async (metadata) => { await attachment.mutateAsync({ id: selectedAddress.id, fileID: metadata?.id ?? null }); }} /> : !selectedID && <div className="detail-placeholder"><span>⌂</span><p>Select an address to view its details.</p></div>}</div>
         </div>
       )}
     </>
