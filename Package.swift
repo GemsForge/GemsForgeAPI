@@ -27,7 +27,8 @@ let package = Package(
         .executableTarget(
             name: "GemLifeHost",
             path: "GemLifeHost",
-            exclude: ["README.md"]
+            exclude: ["README.md"],
+            resources: [.copy("Resources/Console")]
         ),
         .executableTarget(
             name: "GemLife",

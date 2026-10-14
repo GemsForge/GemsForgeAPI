@@ -21,6 +21,8 @@ DerivedData/
 Console/node_modules/
 Console/dist/
 Console/.vite/
+GemLifeHost/Resources/Console/*
+!GemLifeHost/Resources/Console/README.txt
 
 # Personal chronological setup notes; kept locally and not committed.
 PROJECT_SETUP_NOTES.md

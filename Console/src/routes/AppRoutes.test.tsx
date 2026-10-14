@@ -18,6 +18,14 @@ function setup(path = "/") {
 }
 
 describe("Gem Life navigation", () => {
+  it("supports the packaged /app base without changing API endpoints", async () => {
+    vi.spyOn(api, "listDomains").mockResolvedValue([]);
+    vi.spyOn(api, "listEducation").mockResolvedValue([]);
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(<QueryClientProvider client={client}><MemoryRouter basename="/app" initialEntries={["/app/education"]}><AppRoutes /></MemoryRouter></QueryClientProvider>);
+    expect(await screen.findByRole("heading", { name: "Education" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Home" })).toHaveAttribute("href", "/app");
+  });
   it("renders home without requesting feature data", async () => {
     const education = vi.spyOn(api, "listEducation");
     setup();
