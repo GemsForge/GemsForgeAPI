@@ -15,12 +15,14 @@ const source = workflow.split("          script: |\n")[1]
 const execute = new AsyncFunction("github", "context", "core", "process", "fetch", source);
 function fixture() {
   const issues = new Map([168, 169, 170, 171, 172].map((number) => [
-    number, { id: number * 10, node_id: "I" + number, number,
+    number, { id: number * 10, node_id: "I" + number, number, state: "open",
       labels: [{ name: "testing" }], assignees: [{ login: "GemsForge" }],
       milestone: { number: 3, title: "UI" } },
   ]));
   const writes = [], notices = [], parents = new Map(), dependencies = new Map();
   let projects = [], statusWrites = 0, failures = 0;
+  const openPulls = [], branches = [], statuses = [];
+  const options = ["Backlog", "In progress", "In review", "Done"].map((name) => ({id: name, name}));
   const request = async (route, args) => {
     if (route.startsWith("GET ") && route.endsWith("/parent")) {
       const parent = parents.get(args.issue_number);
@@ -42,19 +44,24 @@ function fixture() {
     throw new Error("Unexpected request: " + route);
   };
   const pr = { number: 169, node_id: "PR169", head: { ref: "chore/170-example" },
-    body: "Closes #170", assignees: [{ login: "OldDeveloper" }] };
+    body: "Closes #170", state: "open", base: { ref: "master" }, merged: false, assignees: [{ login: "OldDeveloper" }] };
   const github = {
     request,
-    paginate: async (_route, args) => dependencies.get(args.issue_number) || [],
+    paginate: async (route, args) => {
+      if (route === github.rest.pulls.list) return openPulls;
+      if (route === github.rest.repos.listBranches) return branches;
+      return dependencies.get(args.issue_number) || [];
+    },
     rest: {
-      pulls: { get: async () => ({ data: pr }) },
+      pulls: { list: () => {}, get: async () => ({ data: pr }) },
+      repos: { listBranches: () => {} },
       issues: {
         get: async ({ issue_number }) => {
           if (!issues.has(issue_number)) throw Object.assign(new Error("Missing target"), { status: 404 });
           return { data: issues.get(issue_number) };
         },
         ...Object.fromEntries(["setLabels", "removeAssignees", "addAssignees", "update"]
-          .map((method) => [method, async (args) => { writes.push({ method, args }); }])),
+          .map((method) => [method, async (args) => { writes.push({ method, args }); if (args.state) issues.get(args.issue_number).state = args.state; }])),
       },
     },
   };
@@ -66,6 +73,8 @@ function fixture() {
       data = { viewer: { login: "GemsForge" }, user: { projectsV2: { nodes: [
         { id: "P7", number: 7, title: "GemsForgeAPI" },
       ] } } };
+    } else if (query.includes("fields(first")) {
+      data = { node: { fields: { nodes: [{id: "F", name: "Status", options}] } } };
     } else if (query.includes("items(first")) {
       data = { node: { items: { nodes: projects } } };
     } else if (query.includes("addProjectV2ItemById")) {
@@ -79,18 +88,26 @@ function fixture() {
       data = { addProjectV2ItemById: { item } };
     } else if (query.includes("updateProjectV2ItemFieldValue")) {
       statusWrites++;
+      statuses.push({ itemId: variables.itemId, status: variables.optionId });
+      const item = projects.find((candidate) => candidate.id === variables.itemId);
+      if (item) item.fieldValues = {nodes: [{
+        field: {id: "F", name: "Status"}, optionId: variables.optionId,
+      }]};
       data = { updateProjectV2ItemFieldValue: { projectV2Item: { id: variables.itemId } } };
     } else throw new Error("Unexpected GraphQL request");
     return { ok: true, json: async () => ({ data }) };
   };
   const run = (env = {}, payload = {}) => execute(
-    github, { repo: { owner: "GemsForge", repo: "GemsForgeAPI" }, payload },
+    github, { repo: { owner: "GemsForge", repo: "GemsForgeAPI" }, payload: { repository: { default_branch: "master" }, ...payload },
+      eventName: payload.ref_type ? "create" : payload.pull_request ? "pull_request" :
+        payload.issue ? "issues" : "workflow_dispatch" },
     { notice: (message) => notices.push(message), setFailed: (message) => {
       failures++; throw new Error(message);
     } },
     { env: { PROJECTS_TOKEN: "fake-project-token", ...env } }, fetch,
   );
-  return { run, writes, notices, parents, dependencies, issues, projects,
+  return { run, writes, notices, parents, dependencies, issues, projects, pr,
+    openPulls, branches, statuses, options,
     statusWrites: () => statusWrites, failures: () => failures };
 }
 test("creates native parent and both dependency directions once, without a PR", async () => {
@@ -138,7 +155,7 @@ test("issue opened events maintain project membership with no PR", async () => {
   assert.equal(f.projects.length, 1);
   assert.equal(f.writes.length, 0);
 });
-test("PR metadata and status still synchronize from the working issue", async () => {
+test("PR metadata sync puts both issue and PR in review", async () => {
   const f = fixture();
   f.projects.push({ id: "I170", content: { __typename: "Issue", number: 170,
     repository: { nameWithOwner: "GemsForge/GemsForgeAPI" } }, fieldValues: { nodes: [
@@ -148,7 +165,8 @@ test("PR metadata and status still synchronize from the working issue", async ()
   await f.run({ PR_NUMBER: "169" });
   assert.deepEqual(f.writes.map((x) => x.method),
     ["setLabels", "removeAssignees", "addAssignees", "update"]);
-  assert.equal(f.statusWrites(), 1);
+  assert.equal(f.statusWrites(), 2);
+  assert.deepEqual(f.statuses.map((value) => value.status), ["In review", "In review"]);
   assert.equal(f.projects.length, 2);
   assert.equal(f.failures(), 0);
 });
@@ -156,4 +174,73 @@ test("explicit issue must match the PR working issue", async () => {
   const f = fixture();
   await assert.rejects(f.run({ PR_NUMBER: "169", ISSUE_NUMBER: "168" }), /must match/);
   assert.equal(f.writes.length, 0);
+});
+
+test("creating a numbered development branch moves the issue to In progress", async () => {
+  const f = fixture();
+  await f.run({}, { ref_type: "branch", ref: "fix/170-example" });
+  assert.equal(f.statuses[0].status, "In progress");
+});
+test("a delayed branch event preserves In review when an open PR exists", async () => {
+  const f = fixture(); f.openPulls.push(f.pr);
+  await f.run({}, { ref_type: "branch", ref: "fix/170-example" });
+  assert.equal(f.statuses[0].status, "In review");
+});
+test("draft PRs put issue and PR in review without closing the issue", async () => {
+  const f = fixture(); f.pr.draft = true;
+  await f.run({ PR_NUMBER: "169" });
+  assert.deepEqual(f.statuses.map((value) => value.status), ["In review", "In review"]);
+  assert.equal(f.issues.get(170).state, "open");
+});
+test("a merged closing PR closes the issue and sets both items to Done", async () => {
+  const f = fixture(); f.pr.merged = true; f.pr.state = "closed";
+  f.pr.body = "CLOSES: #170";
+  await f.run({ PR_NUMBER: "169" });
+  assert.equal(f.issues.get(170).state, "closed");
+  assert.deepEqual(f.statuses.map((value) => value.status), ["Done", "Done"]);
+});
+test("a closing reference on an unmerged PR does not close the issue", async () => {
+  const f = fixture(); f.pr.state = "closed";
+  await f.run({ PR_NUMBER: "169" });
+  assert.equal(f.issues.get(170).state, "open");
+  assert.equal(f.statuses[0].status, "In progress");
+});
+test("a merge to a nondefault branch or a plain mention cannot close the issue", async () => {
+  for (const changes of [{ base: {ref: "release"} }, { body: "Related to #170" }]) {
+    const f = fixture(); Object.assign(f.pr, { merged: true, state: "closed" }, changes);
+    await f.run({ PR_NUMBER: "169" });
+    assert.equal(f.issues.get(170).state, "open");
+    assert.equal(f.statuses[0].status, "In progress");
+    assert.equal(f.statuses[1].status, "Done");
+  }
+});
+test("closing one PR keeps review status when another related PR is open", async () => {
+  const f = fixture(); f.pr.state = "closed";
+  f.openPulls.push({ ...f.pr, number: 999, state: "open" });
+  await f.run({ PR_NUMBER: "169" });
+  assert.equal(f.statuses[0].status, "In review");
+});
+test("closed issues stay Done even when an old branch event arrives", async () => {
+  const f = fixture(); f.issues.get(170).state = "closed";
+  await f.run({}, { ref_type: "branch", ref: "fix/170-example" });
+  assert.equal(f.statuses[0].status, "Done");
+});
+test("tags and unrelated branches are ignored without mutations", async () => {
+  for (const payload of [
+    { ref_type: "tag", ref: "fix/170-example" },
+    { ref_type: "branch", ref: "master" },
+  ]) {
+    const f = fixture(); await f.run({}, payload);
+    assert.equal(f.writes.length, 0); assert.equal(f.projects.length, 0);
+  }
+});
+test("manual repair sees an existing development branch", async () => {
+  const f = fixture(); f.branches.push({ name: "chore/170-example" });
+  await f.run({ ISSUE_NUMBER: "170" });
+  assert.equal(f.statuses[0].status, "In progress");
+});
+test("missing Status option fails clearly rather than creating a new taxonomy", async () => {
+  const f = fixture(); f.options.splice(0);
+  await assert.rejects(f.run({ ISSUE_NUMBER: "170" }), /Status option 'Backlog' is missing/);
+  assert.equal(f.statusWrites(), 0);
 });
