@@ -33,7 +33,14 @@
 .attachment-control { display:grid; gap:.75rem; margin-top:1.4rem; padding-top:1.2rem; border-top:1px solid var(--line); }
 .attachment-heading { display:flex; justify-content:space-between; align-items:center; gap:1rem; }
 .attachment-heading strong { font-size:.9rem; }
-.attachment-preview { width:min(100%,20rem); max-height:15rem; border:1px solid var(--line); border-radius:.75rem; object-fit:cover; background:#0c1b20; }
+.attachment-preview { width:min(100%,20rem); max-height:20rem; border:1px solid var(--line); border-radius:.75rem; object-fit:contain; background:#0c1b20; }
+.file-presentation { display:grid; gap:.75rem; min-width:0; }
+.file-presentation .empty-state { padding:1.2rem; }
+.file-presentation p { margin-bottom:0; }
+.file-metadata { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,10rem),1fr)); gap:.7rem; margin:0; }
+.file-metadata dt { color:var(--muted); font-size:.72rem; }
+.file-metadata dd { margin:.25rem 0 0; overflow-wrap:anywhere; font-size:.82rem; }
+.file-preview { display:grid; gap:.75rem; }
 .attachment-empty { padding:1.2rem; border:1px dashed var(--line); border-radius:.75rem; color:var(--muted); font-size:.8rem; }
 .attachment-error { margin:0; color:var(--danger); font-size:.78rem; }
 .database-layout { display:grid; grid-template-columns:minmax(18rem,.9fr) minmax(0,1.1fr); gap:1rem; align-items:start; }
