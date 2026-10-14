@@ -1,0 +1,5 @@
+#!/bin/sh
+# GemsForge commit-policy pre-push hook. Install with Scripts/install-git-hooks.mjs.
+set -eu
+hook_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+exec node "$hook_dir/gemsforge-commit-policy/commit-policy.mjs" pre-push "$@"

@@ -1,0 +1,6 @@
+{
+  "types": ["feat", "fix", "refactor", "test", "docs", "chore"],
+  "format": "type(scope): #issue short imperative description",
+  "example": "chore(ci): #173 enforce commit message policy",
+  "legacyBase": "5234690ba4a6c97239ea85acef4dd7530d6432e8"
+}

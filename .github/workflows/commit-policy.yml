@@ -1,0 +1,38 @@
+name: Commit policy
+
+# Policy: type(scope): #issue short imperative description.
+# The shared validator/config in Scripts is also installed by the local
+# pre-push hook. Local hooks block transfer; this Action runs AFTER a push.
+# Make the "Commit policy" job required in master protection to block merges.
+# PR titles are checked because they supply the proposed squash-merge subject.
+# Historical commits through the documented baseline are grandfathered.
+# New merge/revert/fixup commits have no automatic exemption.
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    types: [opened, reopened, synchronize, edited, ready_for_review]
+
+permissions:
+  contents: read
+
+jobs:
+  commit-policy:
+    name: Commit policy
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - name: Test validator and push blocking
+        run: node --test Scripts/commit-policy.test.mjs
+      - name: Validate commits and proposed squash subject
+        # Commit messages/titles come from Git and the event JSON, never shell
+        # interpolation. No checkout of untrusted code in a privileged event.
+        run: node Scripts/commit-policy.mjs github
