@@ -159,21 +159,28 @@ jobs:
               return payload.data;
             };
 
-            // This board is owned by the GemsForge user account.
-            const projectQuery = `query($login: String!) {
+            // The board URL identifies this user-owned project as number 7.
+            const projectQuery = `query($login: String!, $number: Int!) {
               user(login: $login) {
-                projectsV2(first: 100) {
-                  nodes { id number title }
+                projectV2(number: $number) {
+                  id
+                  number
+                  title
                 }
               }
             }`;
 
             const projectData = await projectApi(projectQuery, {
               login: "GemsForge",
+              number: 7,
             });
-            const project = (projectData.user?.projectsV2?.nodes ?? []).find(
-              (candidate) => candidate.title?.trim() === "GemsForgeAPI",
-            );
+            const project = projectData.user?.projectV2;
+            if (project?.title?.trim() !== "GemsForgeAPI") {
+              core.setFailed(
+                "The PROJECTS_TOKEN could not access user project GemsForgeAPI (#7). Confirm the token has the classic project scope and is the current repository secret.",
+              );
+              return;
+            }
             if (!project) {
               core.setFailed(
                 "The private user project GemsForgeAPI was not found or the PROJECTS_TOKEN lacks project access.",
