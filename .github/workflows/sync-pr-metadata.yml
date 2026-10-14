@@ -8,10 +8,10 @@ name: Sync pull request metadata
 # 3. Pull requests should also include `Closes #165` (or equivalent) in the body.
 # 4. When a pull request opens or is reopened, copy the issue's assignee,
 #    labels, and milestone to the pull request.
-# 5. Add the pull request to the private GemsForgeAPI project when the linked
+# 5. Add the pull request to the user-owned GemsForgeAPI project when the linked
 #    issue is already present there, then copy its Status option to the PR.
 # 6. Project mutations use the PROJECTS_TOKEN secret because GITHUB_TOKEN
-#    cannot access the private user-owned project.
+#    cannot access user-owned projects.
 #
 # Implementation notes
 # - actions/github-script accepts only its declared action inputs. The manual
@@ -159,31 +159,43 @@ jobs:
               return payload.data;
             };
 
-            // Resolve this user-owned board using GitHub's documented lookup.
-            const projectQuery = `query($login: String!, $number: Int!) {
+            // Enumerate the authenticated user's visible projects, then select the
+// documented user-owned project by number and title. This also lets
+// the failure message distinguish a token-access problem from a
+// project-number or project-title mismatch.
+            const projectQuery = `query($login: String!) {
+              viewer {
+                login
+              }
               user(login: $login) {
-                projectV2(number: $number) {
-                  id
-                  number
-                  title
+                projectsV2(first: 100) {
+                  nodes {
+                    id
+                    number
+                    title
+                    public
+                  }
                 }
               }
             }`;
 
             const projectData = await projectApi(projectQuery, {
               login: "GemsForge",
-              number: 7,
             });
-            const project = projectData.user?.projectV2;
-            if (project?.title?.trim() !== "GemsForgeAPI") {
-              core.setFailed(
-                "The PROJECTS_TOKEN could not access user project GemsForgeAPI (#7). Confirm it is a classic PAT generated for GemsForge with both project and repo scopes.",
-              );
-              return;
-            }
+            const visibleProjects = projectData.user?.projectsV2?.nodes ?? [];
+            const project = visibleProjects.find(
+              (candidate) =>
+                candidate.number === 7 &&
+                candidate.title?.trim() === "GemsForgeAPI",
+            );
+
             if (!project) {
+              const visibleProjectSummary =
+                visibleProjects
+                  .map((candidate) => `#${candidate.number} ${candidate.title}`)
+                  .join(", ") || "none";
               core.setFailed(
-                "The user project GemsForgeAPI (#7) was not found or PROJECTS_TOKEN lacks project access.",
+                `PROJECTS_TOKEN authenticated as ${projectData.viewer?.login ?? "unknown"} but could not see user project GemsForgeAPI (#7). Visible user projects: ${visibleProjectSummary}. Confirm the repository secret contains a classic PAT generated for GemsForge with both project and repo scopes.`,
               );
               return;
             }
