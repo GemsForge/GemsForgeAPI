@@ -1,4 +1,5 @@
 import { NavLink } from "react-router-dom";
+import { useState } from "react";
 import type { Domain } from "../../types";
 
 const resources = [
@@ -15,8 +16,11 @@ const resources = [
 ] as const;
 
 export function DomainSidebar({ domains, onRefresh }: { domains: Domain[]; onRefresh: () => void }) {
+  const [expanded, setExpanded] = useState(false);
   const linkClass = ({ isActive }: { isActive: boolean }) => `resource-button ${isActive ? "selected" : ""}`;
   return <aside className="sidebar">
+    <button className="sidebar-toggle secondary-button" aria-expanded={expanded} aria-controls="sidebar-links" onClick={() => setExpanded(!expanded)}>Navigation</button>
+    <div id="sidebar-links" className={`navigation-links ${expanded ? "is-open" : ""}`} onClick={(event) => { if ((event.target as HTMLElement).closest("a")) setExpanded(false); }}>
     <nav aria-label="Gem Life navigation">
       {resources.map(([to, title, subtitle, mark]) => <NavLink className={linkClass} to={to} end key={to} aria-label={title}>
         <span className="resource-mark" aria-hidden="true">{mark}</span><span><strong>{title}</strong><small>{subtitle}</small></span>
@@ -29,5 +33,6 @@ export function DomainSidebar({ domains, onRefresh }: { domains: Domain[]; onRef
       </NavLink>)}
     </nav>
     <div className="sidebar-note"><strong>Stable core</strong><p>Domains organize the pages that live in ForgeKeeper.</p></div>
+    </div>
   </aside>;
 }

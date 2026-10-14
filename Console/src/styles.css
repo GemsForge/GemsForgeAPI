@@ -118,3 +118,37 @@ a { color:var(--mint); }
 .builder-preview p { margin: 7px 0; font-size: .82rem; }
 .error-text { color: #ff9a9a; }
 @media (max-width: 900px) { .builder-column { grid-template-columns: 1fr 1fr; } }
+
+/* Responsive containment: scrolling belongs to tables, not the whole page. */
+body { min-width:0; }
+.workspace { grid-template-columns:minmax(15rem,20rem) minmax(0,1fr); }
+.workspace > *, .content > *, .database-layout > *, .schema-layout > *, .builder-column > *, .navigation-links, .resource-button > *, .domain-button > * { min-width:0; }
+.content { overflow-wrap:anywhere; }
+input, select, textarea { max-width:100%; }
+.database-field textarea, .builder-column input, .builder-column select { width:100%; }
+img { max-width:100%; }
+dialog { max-height:calc(100dvh - 2rem); overflow:auto; }
+.sidebar-toggle { display:none; }
+@media (max-width:1200px) {
+  .hue-detail, .education-layout, .employment-layout, .address-layout, .transaction-layout, .database-layout, .schema-layout { grid-template-columns:minmax(0,1fr); }
+  .builder-column { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+@media (max-width:900px) {
+  .workspace { display:block; }
+  .sidebar { min-height:0; padding:1rem; border-right:0; border-bottom:1px solid var(--line); }
+  .sidebar-toggle { display:flex; width:100%; justify-content:space-between; }
+  .navigation-links:not(.is-open) { display:none; }
+  .navigation-links.is-open { padding-top:1rem; }
+  .sidebar-note { display:none; }
+  .topbar { flex-wrap:wrap; gap:1rem; }
+  .content { padding:1.5rem 1rem; }
+  .hue-list { grid-template-columns:repeat(auto-fit,minmax(min(100%,15rem),1fr)); }
+}
+@media (max-width:640px) {
+  .domain-list, .schema-guidance-grid, .builder-column { grid-template-columns:minmax(0,1fr); }
+  .education-card, .employment-card, .address-card, .transaction-card, .schema-table-button { grid-template-columns:2.4rem minmax(0,1fr); }
+  .education-status, .employment-status, .address-status, .transaction-total { grid-column:2; justify-self:start; }
+  .builder-column-heading, .schema-column, .detail-heading, .database-panel-heading, .dialog-actions { flex-wrap:wrap; gap:.75rem; }
+  .button-row > *, .dialog-actions > * { flex:1 1 100%; text-align:center; }
+  .database-panel, .schema-panel, .address-detail, .transaction-detail, .education-detail, .employment-detail, .edit-form { padding:1rem; }
+}
