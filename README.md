@@ -6,6 +6,14 @@ The project is designed to run locally on a Mac and remain private behind a secu
 
 ## Current status
 
+The M3 Gem Life UI foundations are documented in
+[UI standards](Console/UI_STANDARDS.md), including local session scope,
+accessibility, responsive verification, performance and release packaging.
+Account authentication and remote deployment remain deferred. Live database
+attachment-column compatibility is tracked in
+[#178](https://github.com/GemsForge/GemsForgeAPI/issues/178); isolated test success
+does not imply the personal database has been migrated.
+
 For local commit-policy enforcement, run `node Scripts/install-git-hooks.mjs`
 once per clone. See [Commit policy setup](docs/Commit-Policy.md) for the required
 message format, pre-push validation, and GitHub check configuration.

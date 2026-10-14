@@ -2,7 +2,14 @@
 
 This is the React + TypeScript replacement for the original local browser
 prototype. It is a developer testing interface for the private Vapor API, not
-the official Gem Life product UI.
+the finished Gem Life product UI. Its M3 foundations now include routing,
+server-state hooks, a design system, native capabilities, local sessions,
+production asset packaging, accessibility and responsive/performance checks.
+
+Start with [UI standards](UI_STANDARDS.md) for the implemented conventions and
+documentation index. Device-local access is intentional; account sign-in and
+remote hosting are deferred. Live database attachment-column mismatches are
+tracked separately in [#178](https://github.com/GemsForge/GemsForgeAPI/issues/178).
 
 ## Start the API
 
@@ -80,7 +87,8 @@ Attachments use the shared `FilePresentation` component for metadata, full-image
 previews, loading, missing-file, invalid-image, and retry states. Image bytes are
 read through the API content endpoint, never through local filesystem paths.
 The browser picker remains available; `AttachmentControl.selectImage` provides
-a File-returning adapter for later native selection. See
+a File-returning adapter for native selection. The trusted SwiftUI host now
+uses its system image picker through that boundary. See
 [`Attachment-Lifecycle.md`](../docs/Attachment-Lifecycle.md) for the contract.
 
 ## Schema builder
@@ -107,3 +115,7 @@ replacement for API tests.
 ```bash
 npm run build
 ```
+
+Run `npm test` for interaction, query, workflow, contrast and paging checks.
+For the local release bundle and launcher, see the
+[host packaging guide](../GemLifeHost/README.md#production-packaging).
