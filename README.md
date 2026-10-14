@@ -213,6 +213,19 @@ DATABASE_PATH="/absolute/path/to/GemLife_DB_rebuild.sqlite" \
 swift run GemsForgeAPI serve --hostname 127.0.0.1 --port 8080
 ```
 
+To run the native host as well, first start the React Console from `Console/`
+with `npm run dev`, then run the combined launcher:
+
+```bash
+DATABASE_PATH="/absolute/path/to/GemLife_DB_rebuild.sqlite" \
+./Scripts/run-gem-life.sh
+```
+
+The launcher starts both `swift run GemsForgeAPI` and `swift run GemLifeHost`.
+The host loads the Console from `http://localhost:5173/`. Press `Ctrl-C` once
+to stop both executables. The explicit executable names are required because
+bare `swift run` is ambiguous when the package contains both products.
+
 The current verification checkpoint is the health test:
 
 ```text

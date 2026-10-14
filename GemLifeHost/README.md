@@ -17,6 +17,10 @@ Then run the `GemLifeHost` target. It loads `http://localhost:5173/` by
 default. Set `GEM_LIFE_CONSOLE_URL` in the host scheme to use another local
 URL or a packaged web asset entry point.
 
+The repository-level `Scripts/run-gem-life.sh` launcher starts both the API and
+host together. The React Console still needs to be running from `Console/` with
+`npm run dev`.
+
 ## Bridge boundary
 
 `GemLifeBridge.swift` registers one `gemLife` WebKit message handler and
