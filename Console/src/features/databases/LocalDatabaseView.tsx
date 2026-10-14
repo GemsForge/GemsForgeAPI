@@ -1,4 +1,5 @@
 import { useLocalDatabaseForm } from "../../hooks/useLocalDatabaseForm";
+import { GemEmptyState, GemSectionHeader, GemStatusPill } from "../../components/ui";
 
 interface LocalDatabaseViewProps {
   onError: (error: unknown) => void;
@@ -10,17 +11,15 @@ export function LocalDatabaseView({ onError, onSuccess }: LocalDatabaseViewProps
 
   return (
     <>
-      <div className="content-heading">
-        <div>
-          <p className="eyebrow">Developer tools</p>
-          <h2>Local Databases</h2>
-          <p className="muted">Create an isolated SQLite database for development and testing. The personal Gem Life database is never a browser target.</p>
-        </div>
-        <span className={`record-count ${capabilities?.ready ? "ready" : ""}`}>{capabilities?.ready ? "Local creation ready" : "Creation disabled"}</span>
-      </div>
+      <GemSectionHeader
+        eyebrow="Developer tools"
+        title="Local Databases"
+        description="Create an isolated SQLite database for development and testing. The personal Gem Life database is never a browser target."
+        trailing={<GemStatusPill tone={capabilities?.ready ? "success" : "warning"}>{capabilities?.ready ? "Local creation ready" : "Creation disabled"}</GemStatusPill>}
+      />
 
       {!capabilities?.enabled || !capabilities.ready ? (
-        <div className="empty-state"><div className="empty-icon">⌘</div><h3>Local creation is not enabled</h3><p>Set LOCAL_DATABASE_CREATION_ENABLED=true and point LOCAL_DATABASE_DIRECTORY at an existing safe folder before using this tool.</p></div>
+        <GemEmptyState icon="⌘" title="Local creation is not enabled" description="Set LOCAL_DATABASE_CREATION_ENABLED=true and point LOCAL_DATABASE_DIRECTORY at an existing safe folder before using this tool." />
       ) : (
         <div className="database-layout">
           <section className="database-panel">

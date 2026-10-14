@@ -50,6 +50,20 @@ The SwiftUI host will be added to the same repository and must not be implemente
 
 Feature screens compose shared components rather than rebuilding markup and styling. Shared components should expose behavior and semantic intent through typed props, preserve accessibility, and receive visual styling from the Gem Life design tokens.
 
+The shared component inventory lives in `Console/src/components/ui`:
+
+- `GemButton` — semantic primary and secondary actions.
+- `GemField` — labelled text inputs with a stable accessible association.
+- `GemCard` — reusable Gem Life surface for grouped content.
+- `GemSectionHeader` — consistent page headings with optional trailing status or actions.
+- `GemStatusPill` — compact success, warning, danger, and default states.
+- `GemEmptyState` and `GemLoadingState` — consistent unavailable and in-flight states.
+- `GemDataTable` — captioned, keyboard-friendly tabular records.
+
+Feature-specific controls such as `AttachmentControl` remain outside the shared
+primitive folder because they own API behavior. They should compose the shared
+primitives as they are expanded.
+
 ## Navigation ownership
 
 SwiftUI owns native destinations and deep-link entry points. React owns navigation within the Gem Life web application. Route values and bridge messages should use stable identifiers rather than passing complete database models between layers.
