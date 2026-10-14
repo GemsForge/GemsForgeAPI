@@ -159,11 +159,17 @@ jobs:
               return payload.data;
             };
 
-            // List the authenticated user's projects and match the exact private
-            // project title. The title filter is intentionally avoided because
-            // user-owned private projects are not consistently returned by it.
+            // Check both account shapes because a private board may belong to
+            // the authenticated user or to an organization with the same login.
+            // Listing first avoids relying on title-filter behavior for private boards.
             const projectQuery = `query($login: String!) {
-              user(login: $login) {
+              viewer {
+                login
+                projectsV2(first: 100) {
+                  nodes { id number title }
+                }
+              }
+              organization(login: $login) {
                 projectsV2(first: 100) {
                   nodes { id number title }
                 }
@@ -173,8 +179,12 @@ jobs:
             const projectData = await projectApi(projectQuery, {
               login: "GemsForge",
             });
-            const project = projectData.user?.projectsV2?.nodes.find(
-              (candidate) => candidate.title === "GemsForgeAPI",
+            const projectCandidates = [
+              ...(projectData.viewer?.projectsV2?.nodes ?? []),
+              ...(projectData.organization?.projectsV2?.nodes ?? []),
+            ];
+            const project = projectCandidates.find(
+              (candidate) => candidate.title?.trim() === "GemsForgeAPI",
             );
 
             if (!project) {
