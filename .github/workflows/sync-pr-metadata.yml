@@ -11,6 +11,12 @@ name: Sync pull request metadata
 # 5. ProjectV2 membership is intentionally documented but not changed here yet.
 #    Project mutations require project-scoped authorization and should be added
 #    after the repository's project token or GitHub App is configured.
+#
+# Implementation notes
+# - actions/github-script accepts only its declared action inputs. The manual
+#   PR number is passed through the environment rather than as a custom input.
+# - Octokit's REST client exposes addAssignees/removeAssignees, so replacement
+#   behavior is implemented by removing stale assignees and adding the issue's.
 
 on:
   pull_request:
@@ -33,12 +39,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Synchronize metadata from the working issue
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
+        env:
+          PR_NUMBER: ${{ inputs.pr_number }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          pr_number: ${{ inputs.pr_number }}
           script: |
-            const manualNumber = core.getInput("pr_number");
+            const manualNumber = process.env.PR_NUMBER;
             const pullRequest = context.payload.pull_request ?? (
               await github.rest.pulls.get({
                 owner: context.repo.owner,
@@ -84,12 +91,34 @@ jobs:
               labels,
             });
 
-            await github.rest.issues.setAssignees({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: pullRequest.number,
-              assignees,
-            });
+            const currentAssignees = pullRequest.assignees.map(
+              (assignee) => assignee.login,
+            );
+            const staleAssignees = currentAssignees.filter(
+              (assignee) => !assignees.includes(assignee),
+            );
+
+            if (staleAssignees.length > 0) {
+              await github.rest.issues.removeAssignees({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pullRequest.number,
+                assignees: staleAssignees,
+              });
+            }
+
+            const newAssignees = assignees.filter(
+              (assignee) => !currentAssignees.includes(assignee),
+            );
+
+            if (newAssignees.length > 0) {
+              await github.rest.issues.addAssignees({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pullRequest.number,
+                assignees: newAssignees,
+              });
+            }
 
             await github.rest.issues.update({
               owner: context.repo.owner,
