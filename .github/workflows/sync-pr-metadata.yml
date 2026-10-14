@@ -159,10 +159,9 @@ jobs:
               return payload.data;
             };
 
-            // Resolve the board from the account that owns the token.
-            const projectQuery = `query($number: Int!) {
-              viewer {
-                login
+            // Resolve this user-owned board using GitHub's documented lookup.
+            const projectQuery = `query($login: String!, $number: Int!) {
+              user(login: $login) {
                 projectV2(number: $number) {
                   id
                   number
@@ -172,12 +171,13 @@ jobs:
             }`;
 
             const projectData = await projectApi(projectQuery, {
+              login: "GemsForge",
               number: 7,
             });
-            const project = projectData.viewer?.projectV2;
+            const project = projectData.user?.projectV2;
             if (project?.title?.trim() !== "GemsForgeAPI") {
               core.setFailed(
-                "The PROJECTS_TOKEN could not access ProjectV2 #7. Confirm it was generated for the GemsForge account with the classic project scope.",
+                "The PROJECTS_TOKEN could not access user project GemsForgeAPI (#7). Confirm it is a classic PAT generated for GemsForge with the project scope.",
               );
               return;
             }
