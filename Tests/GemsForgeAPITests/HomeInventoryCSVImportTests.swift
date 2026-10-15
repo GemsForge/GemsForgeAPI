@@ -10,6 +10,7 @@ final class HomeInventoryCSVImportTests: XCTestCase {
         try await withApp(configure: { app in
             app.databases.use(.sqlite(.memory), as: .sqlite)
             app.migrations.add(CreateHomeInventory())
+            app.migrations.add(CreateFileMetadata())
             app.migrations.add(AddHomeInventoryAttachmentReference())
             try await app.autoMigrate()
             registerHomeInventoryCSVRoutes(app)
@@ -33,6 +34,7 @@ final class HomeInventoryCSVImportTests: XCTestCase {
         try await withApp(configure: { app in
             app.databases.use(.sqlite(.memory), as: .sqlite)
             app.migrations.add(CreateHomeInventory())
+            app.migrations.add(CreateFileMetadata())
             app.migrations.add(AddHomeInventoryAttachmentReference())
             try await app.autoMigrate()
             registerHomeInventoryCSVRoutes(app)
@@ -53,6 +55,7 @@ final class HomeInventoryCSVImportTests: XCTestCase {
         try await withApp(configure: { app in
             app.databases.use(.sqlite(.memory), as: .sqlite)
             app.migrations.add(CreateHomeInventory())
+            app.migrations.add(CreateFileMetadata())
             app.migrations.add(AddHomeInventoryAttachmentReference())
             try await app.autoMigrate()
             registerHomeInventoryCSVRoutes(app)
