@@ -12,7 +12,8 @@ struct LocalDatabaseConfiguration: Sendable {
     /// `LOCAL_DATABASE_CREATION_ENABLED` must be exactly `true`, and
     /// `LOCAL_DATABASE_DIRECTORY` must point to an existing directory.
     static func fromEnvironment() -> Self {
-        let enabled = Environment.get("LOCAL_DATABASE_CREATION_ENABLED") == "true"
+        let environment = (try? DatabaseEnvironment.fromEnvironment()) ?? .dev
+        let enabled = environment != .prod && Environment.get("LOCAL_DATABASE_CREATION_ENABLED") == "true"
         let rootPath = Environment.get("LOCAL_DATABASE_DIRECTORY")?
             .trimmingCharacters(in: .whitespacesAndNewlines)
         let databasePath = Environment.get("DATABASE_PATH")?

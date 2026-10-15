@@ -58,6 +58,10 @@ struct LiveRepositoryMigrationService: Sendable {
         guard await approvals.consume(request.confirmationToken) else {
             throw Abort(.conflict, reason: "The migration confirmation token is unknown or expired.")
         }
+        let environment = try DatabaseEnvironment.fromEnvironment()
+        if environment == .prod && Environment.get("GEMLIFE_PROD_MIGRATION_ENABLED") != "true" {
+            throw Abort(.forbidden, reason: "PROD migrations require explicit GEMLIFE_PROD_MIGRATION_ENABLED=true opt-in.")
+        }
         guard let backupConfiguration else {
             throw Abort(.serviceUnavailable, reason: "Live migrations require DATABASE_PATH and LIVE_DATABASE_BACKUP_DIRECTORY.")
         }
