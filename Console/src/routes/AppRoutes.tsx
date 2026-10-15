@@ -6,6 +6,7 @@ import { useAddressesQuery, useEducationQuery, useEmploymentQuery, useGemHuesQue
 import { usePagesQuery, usePageMutation, type PageScope } from "../data/workflowQueries";
 import { QueryFeedback } from "../components/QueryFeedback";
 import { Notice } from "../components/Notice";
+import { presentError } from "../components/errorPresentation";
 import { GemLifeShell } from "../components/layout/GemLifeShell";
 import { DomainSidebar } from "../features/domains/DomainSidebar";
 const ForgeKeeperView = lazy(() => import("../features/forgekeeper/ForgeKeeperView").then((module) => ({ default: module.ForgeKeeperView })));
@@ -32,7 +33,7 @@ function Layout() {
   const location = useLocation();
   const [notice, setNotice] = useState<{ message: string; kind: "error" | "success" } | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  const onError = useCallback((error: unknown) => { clearTimeout(timer.current); setNotice({ message: error instanceof Error ? error.message : "Request failed.", kind: "error" }); }, []);
+  const onError = useCallback((error: unknown) => { clearTimeout(timer.current); setNotice({ message: presentError(error).message, kind: "error" }); }, []);
   const onSuccess = useCallback((message: string) => { clearTimeout(timer.current); setNotice({ message, kind: "success" }); timer.current = setTimeout(() => setNotice(null), 3500); }, []);
   useEffect(() => () => clearTimeout(timer.current), []);
   useEffect(() => {
