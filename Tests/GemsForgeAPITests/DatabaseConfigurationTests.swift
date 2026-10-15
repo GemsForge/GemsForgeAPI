@@ -71,4 +71,17 @@ final class DatabaseConfigurationTests: XCTestCase {
             XCTAssertEqual(error as? DatabaseConfigurationError, .productionBackupCollision)
         }
     }
+
+    func testNonProductionEnvironmentCannotUseProductionDatabasePath() {
+        XCTAssertThrowsError(try DatabaseEnvironment.resolve(
+            "dev",
+            variables: [
+                "DATABASE_PATH": "/data/GemLife_DB_prod.sqlite",
+                "DATABASE_PATH_PROD": "/data/GemLife_DB_prod.sqlite",
+                "LIVE_DATABASE_BACKUP_DIRECTORY": "/backups/dev"
+            ]
+        )) { error in
+            XCTAssertEqual(error as? DatabaseConfigurationError, .nonProductionPathCollision)
+        }
+    }
 }
