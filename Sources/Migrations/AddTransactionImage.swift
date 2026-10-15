@@ -8,7 +8,9 @@ import Fluent
 struct AddTransactionImage: AsyncMigration {
     func prepare(on database: any Database) async throws {
         try await database.schema(ExpenseTransaction.schema)
-            .field("Image", .string)
+            .field("Image", .string, .references(
+                FileMetadata.schema, "FileMetadataID", onDelete: .setNull, onUpdate: .cascade
+            ))
             .update()
     }
 

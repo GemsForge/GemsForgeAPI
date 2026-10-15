@@ -8,6 +8,7 @@ final class ServiceAccountRouteTests: XCTestCase {
         try await withApp(configure: { app in
             app.databases.use(.sqlite(.memory), as: .sqlite)
             app.migrations.add(CreateServiceAccounts())
+            app.migrations.add(CreateFileMetadata())
             app.migrations.add(AddServiceAccountAttachmentReference())
             try await app.autoMigrate()
             registerServiceAccountRoutes(app)
@@ -103,6 +104,7 @@ final class ServiceAccountRouteTests: XCTestCase {
         try await withApp(configure: { app in
             app.databases.use(.sqlite(.memory), as: .sqlite)
             app.migrations.add(CreateServiceAccounts())
+            app.migrations.add(CreateFileMetadata())
             app.migrations.add(AddServiceAccountAttachmentReference())
             try await app.autoMigrate()
             registerServiceAccountRoutes(app)

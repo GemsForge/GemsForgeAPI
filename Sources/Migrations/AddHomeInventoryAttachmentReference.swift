@@ -4,7 +4,9 @@ import Fluent
 struct AddHomeInventoryAttachmentReference: AsyncMigration {
     func prepare(on database: any Database) async throws {
         try await database.schema(HomeInventory.schema)
-            .field("ImageFileMetadataID", .string)
+            .field("ImageFileMetadataID", .string, .references(
+                FileMetadata.schema, "FileMetadataID", onDelete: .setNull, onUpdate: .cascade
+            ))
             .update()
     }
 

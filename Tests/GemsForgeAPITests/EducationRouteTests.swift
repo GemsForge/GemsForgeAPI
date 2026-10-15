@@ -10,6 +10,7 @@ final class EducationRouteTests: XCTestCase {
             app.migrations.add(CreateAddresses())
             app.migrations.add(AddAddressAttachmentReference())
             app.migrations.add(CreateEducation())
+            app.migrations.add(CreateFileMetadata())
             app.migrations.add(AddEducationAttachmentReference())
             try await app.autoMigrate()
             try await Address(
@@ -104,6 +105,7 @@ final class EducationRouteTests: XCTestCase {
             app.migrations.add(CreateAddresses())
             app.migrations.add(AddAddressAttachmentReference())
             app.migrations.add(CreateEducation())
+            app.migrations.add(CreateFileMetadata())
             app.migrations.add(AddEducationAttachmentReference())
             try await app.autoMigrate()
             registerEducationRoutes(app)

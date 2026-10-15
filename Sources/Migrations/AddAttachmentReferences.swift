@@ -4,7 +4,9 @@ import Fluent
 struct AddAddressAttachmentReference: AsyncMigration {
     func prepare(on database: any Database) async throws {
         try await database.schema(Address.schema)
-            .field("ImageFileMetadataID", .string)
+            .field("ImageFileMetadataID", .string, .references(
+                FileMetadata.schema, "FileMetadataID", onDelete: .setNull, onUpdate: .cascade
+            ))
             .update()
     }
 
@@ -16,7 +18,9 @@ struct AddAddressAttachmentReference: AsyncMigration {
 /// Adds the optional logo reference used by Service Accounts.
 struct AddServiceAccountAttachmentReference: AsyncMigration {
     func prepare(on database: any Database) async throws {
-        try await database.schema(ServiceAccount.schema).field("LogoFileMetadataID", .string).update()
+        try await database.schema(ServiceAccount.schema).field("LogoFileMetadataID", .string, .references(
+            FileMetadata.schema, "FileMetadataID", onDelete: .setNull, onUpdate: .cascade
+        )).update()
     }
 
     func revert(on database: any Database) async throws {
@@ -27,7 +31,9 @@ struct AddServiceAccountAttachmentReference: AsyncMigration {
 /// Adds the optional document reference used by Education records.
 struct AddEducationAttachmentReference: AsyncMigration {
     func prepare(on database: any Database) async throws {
-        try await database.schema(Education.schema).field("DocumentFileMetadataID", .string).update()
+        try await database.schema(Education.schema).field("DocumentFileMetadataID", .string, .references(
+            FileMetadata.schema, "FileMetadataID", onDelete: .setNull, onUpdate: .cascade
+        )).update()
     }
 
     func revert(on database: any Database) async throws {
