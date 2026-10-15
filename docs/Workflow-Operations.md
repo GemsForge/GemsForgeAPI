@@ -147,7 +147,9 @@ procedure is documented in `docs/Database-Promotion-Workflow.md`.
 ## Story creation
 
 Use Scripts/create-github-story.mjs as the repository story-creation entry
-point. Preview classification before creation, use existing labels only, and
+point. The helper infers the type and scope labels from the required
+`type(scope): short imperative description` title, preserves any explicit
+additional labels, and rejects unknown mappings. Use existing labels only and
 provide relationship inputs explicitly. A story should receive its standard
 assignee, milestone, project membership, and initial Backlog status unless a
 branch or pull request establishes a later lifecycle state.
