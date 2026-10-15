@@ -76,6 +76,21 @@ final class AddressRouteTests: XCTestCase {
                 XCTAssertEqual(address.city, "Decatur")
             }
 
+            try await app.test(.PATCH, "addresses/ADDR-0001", beforeRequest: { request in
+                try request.content.encode(["city": "Atlanta"])
+            }) { response async throws in
+                XCTAssertEqual(response.status, .ok)
+                let address = try response.content.decode(AddressDetailResponse.self)
+                XCTAssertEqual(address.city, "Atlanta")
+                XCTAssertEqual(address.addressLine1, "456 Updated Street")
+            }
+
+            try await app.test(.PATCH, "addresses/ADDR-0001", beforeRequest: { request in
+                try request.content.encode(["id": "OTHER"])
+            }) { response async throws in
+                XCTAssertEqual(response.status, .unprocessableEntity)
+            }
+
             try await app.test(.DELETE, "addresses/ADDR-0001") { response async throws in
                 XCTAssertEqual(response.status, .noContent)
             }
