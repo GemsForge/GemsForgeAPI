@@ -71,6 +71,60 @@ func registerAddressRoutes(_ app: Application) {
         return AddressDetailResponse(address)
     }
 
+    addresses.patch(":id") { request async throws -> AddressDetailResponse in
+        guard let id = request.parameters.get("id"),
+              let address = try await AddressService(database: request.db).find(id: id)
+        else {
+            throw Abort(.notFound)
+        }
+
+        let payload = try request.content.decode([String: String?].self)
+        guard !payload.isEmpty else {
+            throw Abort(.unprocessableEntity, reason: "At least one property is required.")
+        }
+
+        let editable = Set([
+            "addressType", "addressLine1", "addressLine2", "city", "state", "postalCode",
+            "country", "startDate", "endDate", "addressStatus", "notes", "imageFileMetadataID",
+        ])
+        let unknown = Set(payload.keys).subtracting(editable)
+        guard unknown.isEmpty else {
+            throw Abort(.unprocessableEntity, reason: "Unknown properties: \(unknown.sorted().joined(separator: ", ")).")
+        }
+
+        func value(_ key: String, current: String?) -> String? {
+            payload.keys.contains(key) ? payload[key]! : current
+        }
+
+        let status = value("addressStatus", current: address.addressStatus)
+        guard let status, !status.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            throw Abort(.unprocessableEntity, reason: "addressStatus cannot be cleared.")
+        }
+
+        let metadataID = value("imageFileMetadataID", current: address.imageFileMetadataID)
+        try await AttachmentReferenceService(database: request.db).replace(
+            oldMetadataID: address.imageFileMetadataID,
+            newMetadataID: metadataID,
+            ownerType: "Address",
+            ownerID: id
+        )
+
+        address.addressType = value("addressType", current: address.addressType) ?? "Residence"
+        address.addressLine1 = value("addressLine1", current: address.addressLine1)
+        address.addressLine2 = value("addressLine2", current: address.addressLine2)
+        address.city = value("city", current: address.city)
+        address.state = value("state", current: address.state)
+        address.postalCode = value("postalCode", current: address.postalCode)
+        address.country = value("country", current: address.country) ?? "US"
+        address.startDate = value("startDate", current: address.startDate)
+        address.endDate = value("endDate", current: address.endDate)
+        address.addressStatus = status
+        address.notes = value("notes", current: address.notes)
+        address.imageFileMetadataID = metadataID
+        try await AddressService(database: request.db).save(address)
+        return AddressDetailResponse(address)
+    }
+
     addresses.put(":id") { request async throws -> AddressDetailResponse in
         guard let id = request.parameters.get("id"),
               let address = try await AddressService(database: request.db).find(id: id)
