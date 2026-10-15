@@ -1,5 +1,3 @@
-import { presentError } from "./errorPresentation";
-
 /** Only show loading before initial data; background refreshes retain the screen. */
 export function QueryFeedback({
   query,

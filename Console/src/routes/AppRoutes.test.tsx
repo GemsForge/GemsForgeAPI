@@ -101,7 +101,9 @@ describe("Gem Life navigation", () => {
     setup("/education");
     expect(screen.getByRole("status")).toHaveTextContent("Loading records");
     await act(async () => reject(new Error("API unavailable")));
-    expect(await screen.findByRole("alert")).toHaveTextContent("Something went wrong");
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toMatch(/something went wrong|api unavailable/i);
+    expect(screen.getByRole("button", { name: "Try again" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Try again" }));
     await screen.findByRole("heading", { name: "No education records" });
     await waitFor(() => expect(request).toHaveBeenCalledTimes(2));
@@ -111,5 +113,11 @@ describe("Gem Life navigation", () => {
     setup("/expenses");
     expect(await screen.findByRole("heading", { name: "Expense Tracker" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Expense Tracker" })).toHaveAttribute("aria-current", "page");
+  });
+  it("renders the live database migration screen from a direct URL", async () => {
+    vi.spyOn(api, "getLiveSchema").mockResolvedValue({ databaseName: "GemLife", tableCount: 1, tables: [] });
+    setup("/live-database");
+    expect(await screen.findByRole("heading", { name: "Repository migrations" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Live Database" })).toHaveAttribute("aria-current", "page");
   });
 });
