@@ -9,6 +9,7 @@ route contracts, visual palette, and native/web boundary when extending it.
 | Concern | Source |
 | --- | --- |
 | Architecture and state ownership | [ARCHITECTURE.md](ARCHITECTURE.md) |
+| Component API conventions | [COMPONENT_API.md](COMPONENT_API.md) |
 | Labels, keyboard, focus, contrast | [ACCESSIBILITY.md](ACCESSIBILITY.md) |
 | Breakpoints and browser fixture | [RESPONSIVE_TESTING.md](RESPONSIVE_TESTING.md) |
 | Caching, pagination, bundle measurements | [PERFORMANCE.md](PERFORMANCE.md) |
