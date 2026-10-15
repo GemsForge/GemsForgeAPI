@@ -54,6 +54,21 @@ final class DomainRouteTests: XCTestCase {
                 XCTAssertEqual(domain.title, "Life & Wellness")
             }
 
+            try await app.test(.PATCH, "domains/LIFE", beforeRequest: { request in
+                try request.content.encode(["title": "Patched Life"])
+            }) { response async throws in
+                XCTAssertEqual(response.status, .ok)
+                let domain = try response.content.decode(Domain.self)
+                XCTAssertEqual(domain.title, "Patched Life")
+                XCTAssertEqual(domain.description, "Updated domain description.")
+            }
+
+            try await app.test(.PATCH, "domains/LIFE", beforeRequest: { request in
+                try request.content.encode(["id": "OTHER"])
+            }) { response async throws in
+                XCTAssertEqual(response.status, .unprocessableEntity)
+            }
+
             try await app.test(.DELETE, "domains/LIFE") { response async throws in
                 XCTAssertEqual(response.status, .noContent)
             }
