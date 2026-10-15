@@ -21,6 +21,7 @@ import {
 } from "../data/lifeQueries";
 import { usePagesQuery, usePageMutation, type PageScope } from "../data/workflowQueries";
 import { QueryFeedback } from "../components/QueryFeedback";
+import { presentError } from "../components/errorPresentation";
 import { Notice } from "../components/Notice";
 import { GemLifeShell } from "../components/layout/GemLifeShell";
 import { DomainSidebar } from "../features/domains/DomainSidebar";
