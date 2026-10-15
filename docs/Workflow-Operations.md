@@ -144,6 +144,11 @@ merge, revert, or fixup messages are still rejected.
 The complete DEV → FIT → PROD promotion, backup, verification, and restore
 procedure is documented in `docs/Database-Promotion-Workflow.md`.
 
+Property-level API updates follow the contract in
+`docs/Property-Patch-Contract.md`. Resource handlers and UI controls must use
+that document as the source of truth for omission, nullability, immutable
+fields, relationship updates, and field-level errors.
+
 ## Story creation
 
 Use Scripts/create-github-story.mjs as the repository story-creation entry
