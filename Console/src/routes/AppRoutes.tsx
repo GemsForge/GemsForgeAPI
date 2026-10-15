@@ -16,6 +16,7 @@ const AddressesView = lazy(() => import("../features/addresses/AddressesView").t
 const TransactionsView = lazy(() => import("../features/transactions/TransactionsView").then((module) => ({ default: module.TransactionsView })));
 const LocalDatabaseView = lazy(() => import("../features/databases/LocalDatabaseView").then((module) => ({ default: module.LocalDatabaseView })));
 const SchemaBuilderView = lazy(() => import("../features/schema/SchemaBuilderView").then((module) => ({ default: module.SchemaBuilderView })));
+const LiveDatabaseMigrationView = lazy(() => import("../features/schema/LiveDatabaseMigrationView").then((module) => ({ default: module.LiveDatabaseMigrationView })));
 
 type Notifications = { onError: (error: unknown) => void; onSuccess: (message: string) => void };
 
@@ -80,6 +81,7 @@ function Addresses() { const query = useAddressesQuery(true); return <QueryScree
 function Transactions() { const query = useTransactionsQuery(true); return <QueryScreen query={query}>{(records) => <TransactionsView records={records} />}</QueryScreen>; }
 function Databases() { return <LocalDatabaseView {...useOutletContext<Notifications>()} />; }
 function Schema() { return <SchemaBuilderView {...useOutletContext<Notifications>()} />; }
+function LiveDatabase() { return <LiveDatabaseMigrationView {...useOutletContext<Notifications>()} />; }
 function NotFound() { return <section><h2>Page not found</h2><p>This Gem Life route or record does not exist.</p><Link to="/">Return home</Link></section>; }
 
 /** Explicit routes ensure direct links, Back/Forward, and unknown paths agree. */
@@ -98,6 +100,7 @@ export function AppRoutes() {
     <Route path="expenses" element={<Navigate to="/transactions" replace />} />
     <Route path="local-databases" element={<Databases />} />
     <Route path="schema-builder" element={<Schema />} />
+    <Route path="live-database" element={<LiveDatabase />} />
     <Route path="*" element={<NotFound />} />
   </Route></Routes>;
 }

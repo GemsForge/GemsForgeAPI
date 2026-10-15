@@ -1,4 +1,4 @@
-import type { Address, Domain, Education, Employment, ExpenseTransaction, FileMetadata, ForgeKeeperPage, ForgeKeeperPatch, GemHue, HomeInventoryCSVImportResult, HomeInventoryCSVPreview, LiveSchema, LocalDatabaseCapabilities, LocalDatabaseCreationResult, SchemaBuilderGuidance, TableBuilderRequest, UserTableCreationResult, UserTablePreview } from "./types";
+import type { Address, Domain, Education, Employment, ExpenseTransaction, FileMetadata, ForgeKeeperPage, ForgeKeeperPatch, GemHue, HomeInventoryCSVImportResult, HomeInventoryCSVPreview, LiveRepositoryMigrationExecution, LiveRepositoryMigrationPreview, LiveSchema, LocalDatabaseCapabilities, LocalDatabaseCreationResult, SchemaBuilderGuidance, TableBuilderRequest, UserTableCreationResult, UserTablePreview } from "./types";
 
 export class APIError extends Error {
   constructor(message: string, public readonly status: number) {
@@ -90,6 +90,8 @@ export const api = {
       body: JSON.stringify(payload),
     }),
   getLiveSchema: (signal?: AbortSignal) => request<LiveSchema>("/live-database/schema", { signal }),
+  previewRepositoryMigrations: () => request<LiveRepositoryMigrationPreview>("/live-database/repository-migrations/preview", { method: "POST" }),
+  executeRepositoryMigrations: (confirmationToken: string) => request<LiveRepositoryMigrationExecution>("/live-database/repository-migrations/execute", { method: "POST", body: JSON.stringify({ confirmationToken }) }),
   getSchemaBuilderGuidance: (signal?: AbortSignal) => request<SchemaBuilderGuidance>("/schema-builder/metadata", { signal }),
   previewUserTable: (definition: TableBuilderRequest) => request<UserTablePreview>("/live-database/tables/preview", { method: "POST", body: JSON.stringify(definition) }),
   createUserTable: (confirmationToken: string) => request<UserTableCreationResult>("/live-database/tables/execute", { method: "POST", body: JSON.stringify({ confirmationToken }) }),
