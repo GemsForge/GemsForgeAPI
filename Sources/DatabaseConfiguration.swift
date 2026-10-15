@@ -46,6 +46,12 @@ enum DatabaseEnvironment: String, CaseIterable, Sendable {
         if environment == .prod && databaseURL == backupURL {
             throw DatabaseConfigurationError.productionBackupCollision
         }
+        if environment != .prod,
+           let productionPath = lookup("DATABASE_PATH_PROD")?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !productionPath.isEmpty,
+           databaseURL == URL(fileURLWithPath: productionPath).standardizedFileURL {
+            throw DatabaseConfigurationError.nonProductionPathCollision
+        }
 
         return DatabaseEnvironmentConfiguration(
             environment: environment,
@@ -80,6 +86,7 @@ enum DatabaseConfigurationError: Error, CustomStringConvertible, Equatable {
     case missingConfiguration(String)
     case invalidEnvironment(String)
     case productionBackupCollision
+    case nonProductionPathCollision
 
     var description: String {
         switch self {
@@ -89,6 +96,8 @@ enum DatabaseConfigurationError: Error, CustomStringConvertible, Equatable {
             "GEMLIFE_ENVIRONMENT must be one of dev, fit, or prod; received '\(value)'."
         case .productionBackupCollision:
             "The production database path and backup directory must be different locations."
+        case .nonProductionPathCollision:
+            "DEV and FIT cannot use the configured production database path."
         }
     }
 }
