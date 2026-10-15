@@ -23,6 +23,12 @@ The terminal launcher does not read Xcode schemes, so terminal sessions must
 load .env or export the variables separately. Never commit the real .env or
 a token.
 
+Pull requests validate against the FIT GitHub Actions environment through
+`.github/workflows/database-validation.yml`. The workflow uses temporary
+runner-local paths and receives no production database or production secrets.
+The GitHub `prod` environment should remain protected by required reviewers
+and must not be referenced by pull-request workflows.
+
 ## API and console startup
 
 From the repository root:

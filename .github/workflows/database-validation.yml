@@ -1,0 +1,42 @@
+name: Database validation
+
+on:
+  pull_request:
+    paths:
+      - 'Sources/**'
+      - 'Tests/**'
+      - 'Package.swift'
+      - 'Package.resolved'
+      - '.github/workflows/database-validation.yml'
+  push:
+    branches: [master]
+    paths:
+      - 'Sources/**'
+      - 'Tests/**'
+      - 'Package.swift'
+      - 'Package.resolved'
+      - '.github/workflows/database-validation.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  fit-validation:
+    name: FIT database validation
+    runs-on: macos-15
+    environment: fit
+    env:
+      GEMLIFE_ENVIRONMENT: fit
+      DATABASE_PATH_FIT: ${{ runner.temp }}/GemLife_DB_fit.sqlite
+      LIVE_DATABASE_BACKUP_DIRECTORY_FIT: ${{ runner.temp }}/database-backups/fit
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Prepare isolated FIT database paths
+        run: mkdir -p "$LIVE_DATABASE_BACKUP_DIRECTORY_FIT"
+      - name: Report selected environment
+        run: echo "Validating Gem Life environment: $GEMLIFE_ENVIRONMENT"
+      - name: Run API and migration tests
+        run: swift test --parallel
+
