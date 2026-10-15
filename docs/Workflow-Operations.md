@@ -136,6 +136,9 @@ standard merge commits, including Merge pull request #N from ..., are
 recognized as merge commits and are exempt from the subject format. Arbitrary
 merge, revert, or fixup messages are still rejected.
 
+The complete DEV → FIT → PROD promotion, backup, verification, and restore
+procedure is documented in `docs/Database-Promotion-Workflow.md`.
+
 ## Story creation
 
 Use Scripts/create-github-story.mjs as the repository story-creation entry
