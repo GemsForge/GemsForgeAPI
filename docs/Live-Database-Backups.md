@@ -1,5 +1,8 @@
 # Live database backups
 
+The backup service is now used by the confirmed live migration workflow. See
+docs/Workflow-Operations.md for the current end-to-end procedure.
+
 Issue #73 establishes the backup service that will protect the existing Gem
 Life SQLite database before a later schema-changing workflow runs.
 
