@@ -6,8 +6,7 @@ builder with synthetic data. All HTTP requests are intercepted locally; writes
 are rejected. It is not included in the production Vite build.
 
 Test compact (up to 640 CSS px), tablet (up to 900), intermediate (up to 1200),
-and desktop layouts. The sidebar collapses below 900; feature grids stack below
-1200. Wide tables scroll inside their named region, not the whole document.
+and desktop layouts. The sidebar collapses below 900; feature grids stack below 1200. Wide tables scroll inside their named region, not the whole document.
 Inputs, long IDs/names, images and dialogs must remain inside the viewport.
 
 ## Recorded M3 browser smoke test
@@ -15,13 +14,13 @@ Inputs, long IDs/names, images and dialogs must remain inside the viewport.
 Requested viewport sizes and measured CSS widths differed in the current browser
 configuration, so both are recorded rather than assuming an unzoomed viewport.
 
-| Requested width | Effective CSS width | Document width | Outcome |
-| --- | --- | --- | --- |
-| 375 | 288 | 277 | No page overflow; table scrolls within 243px region |
-| 768 | 591 | 579 | No page overflow; compact form layout |
-| 1024 | 788 | 776 | No page overflow; collapsed navigation |
-| 1440 | 1108 | 1096 | No page overflow; stacked feature panels |
-| 1920 | 1477 | 1465 | No page overflow; two-column database panels |
+| Requested width | Effective CSS width | Document width | Outcome                                             |
+| --------------- | ------------------- | -------------- | --------------------------------------------------- |
+| 375             | 288                 | 277            | No page overflow; table scrolls within 243px region |
+| 768             | 591                 | 579            | No page overflow; compact form layout               |
+| 1024            | 788                 | 776            | No page overflow; collapsed navigation              |
+| 1440            | 1108                | 1096           | No page overflow; stacked feature panels            |
+| 1920            | 1477                | 1465           | No page overflow; two-column database panels        |
 
 At the narrowest size, the page editor measured about 239×498px inside a
 288×625px CSS viewport. Escape closed it and focus returned to Edit. The large

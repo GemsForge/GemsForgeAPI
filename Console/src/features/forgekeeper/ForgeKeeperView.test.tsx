@@ -7,18 +7,34 @@ const page = { id: 1, title: "Example page", description: "Notes", parentID: nul
 const originalShow = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, "showModal");
 const originalClose = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, "close");
 beforeEach(() => {
-  Object.defineProperty(HTMLDialogElement.prototype, "showModal", { configurable: true, value: function (this: HTMLDialogElement) { this.setAttribute("open", ""); } });
-  Object.defineProperty(HTMLDialogElement.prototype, "close", { configurable: true, value: function (this: HTMLDialogElement) { this.removeAttribute("open"); } });
+  Object.defineProperty(HTMLDialogElement.prototype, "showModal", {
+    configurable: true,
+    value: function (this: HTMLDialogElement) {
+      this.setAttribute("open", "");
+    },
+  });
+  Object.defineProperty(HTMLDialogElement.prototype, "close", {
+    configurable: true,
+    value: function (this: HTMLDialogElement) {
+      this.removeAttribute("open");
+    },
+  });
 });
 afterEach(() => {
-  cleanup(); vi.restoreAllMocks();
-  for (const [name, original] of [["showModal", originalShow], ["close", originalClose]] as const) {
+  cleanup();
+  vi.restoreAllMocks();
+  for (const [name, original] of [
+    ["showModal", originalShow],
+    ["close", originalClose],
+  ] as const) {
     if (original) Object.defineProperty(HTMLDialogElement.prototype, name, original);
     else Reflect.deleteProperty(HTMLDialogElement.prototype, name);
   }
 });
 function setup(onPatch = vi.fn().mockResolvedValue(undefined)) {
-  render(<ForgeKeeperView domain={null} pages={[page]} onLoadRoots={vi.fn()} onLoadChildren={vi.fn()} onPatch={onPatch} />);
+  render(
+    <ForgeKeeperView domain={null} pages={[page]} onLoadRoots={vi.fn()} onLoadChildren={vi.fn()} onPatch={onPatch} />,
+  );
   fireEvent.click(screen.getByRole("button", { name: "Edit Example page" }));
   return onPatch;
 }

@@ -9,7 +9,9 @@ interface GemLifeShellProps {
 export function GemLifeShell({ children, sidebar }: GemLifeShellProps) {
   return (
     <div className="app-shell">
-      <a className="skip-link" href="#main-content">Skip to content</a>
+      <a className="skip-link" href="#main-content">
+        Skip to content
+      </a>
       <header className="topbar">
         <div>
           <p className="eyebrow">GemsForgeAPI · React testing console</p>
@@ -19,7 +21,9 @@ export function GemLifeShell({ children, sidebar }: GemLifeShellProps) {
       </header>
       <main className="workspace">
         {sidebar}
-        <section className="content" id="main-content" tabIndex={-1} aria-label="Current screen">{children}</section>
+        <section className="content" id="main-content" tabIndex={-1} aria-label="Current screen">
+          {children}
+        </section>
       </main>
     </div>
   );

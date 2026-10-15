@@ -2,7 +2,10 @@ import { useEffect, useReducer, useRef } from "react";
 import { useUploadImageMutation } from "../data/workflowQueries";
 import type { FileMetadata } from "../types";
 
-interface State { busy: boolean; error: string | null }
+interface State {
+  busy: boolean;
+  error: string | null;
+}
 type Action = { type: "start" } | { type: "finish" } | { type: "error"; message: string };
 function reducer(state: State, action: Action): State {
   if (action.type === "start") return { busy: true, error: null };
@@ -10,7 +13,9 @@ function reducer(state: State, action: Action): State {
   return { ...state, error: action.message };
 }
 interface Options {
-  label: string; ownerType: string; ownerID: string;
+  label: string;
+  ownerType: string;
+  ownerID: string;
   onAttach: (metadata: FileMetadata | null) => Promise<void>;
 }
 
@@ -20,24 +25,44 @@ export function useAttachmentWorkflow({ label, ownerType, ownerID, onAttach }: O
   const running = useRef(false);
   const upload = useUploadImageMutation();
   const mounted = useRef(true);
-  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
   async function perform(operation: () => Promise<void>) {
     if (running.current) return;
     running.current = true;
     dispatch({ type: "start" });
-    try { await operation(); }
-    catch (error) { dispatch({ type: "error", message: error instanceof Error ? error.message : "Attachment operation failed." }); }
-    finally { running.current = false; dispatch({ type: "finish" }); }
+    try {
+      await operation();
+    } catch (error) {
+      dispatch({ type: "error", message: error instanceof Error ? error.message : "Attachment operation failed." });
+    } finally {
+      running.current = false;
+      dispatch({ type: "finish" });
+    }
   }
   async function attach(file: File) {
     if (!mounted.current) return;
     if (!file.type.toLowerCase().startsWith("image/") || !file.size) throw new Error("Choose a non-empty image file.");
-    const metadata = await upload.mutateAsync({ file, kind: label.toLowerCase().replaceAll(" ", "-"), ownerType, ownerID });
+    const metadata = await upload.mutateAsync({
+      file,
+      kind: label.toLowerCase().replaceAll(" ", "-"),
+      ownerType,
+      ownerID,
+    });
     if (mounted.current) await onAttach(metadata);
   }
-  return { ...state,
+  return {
+    ...state,
     handleFile: (file: File) => perform(() => attach(file)),
-    choose: (select: () => Promise<File | null>) => perform(async () => { const file = await select(); if (file) await attach(file); }),
+    choose: (select: () => Promise<File | null>) =>
+      perform(async () => {
+        const file = await select();
+        if (file) await attach(file);
+      }),
     remove: () => perform(() => onAttach(null)),
   };
 }

@@ -17,7 +17,14 @@ describe("bounded large-list rendering", () => {
   });
   it("renders only 50 of 1000 table rows and exposes keyboard-friendly paging", () => {
     const rows = Array.from({ length: 1000 }, (_, index) => ({ id: `Record ${index}` }));
-    render(<GemDataTable caption="Large fixture" rows={rows} columns={[{ key: "id", label: "Record", render: (row) => row.id }]} rowKey={(row) => row.id} />);
+    render(
+      <GemDataTable
+        caption="Large fixture"
+        rows={rows}
+        columns={[{ key: "id", label: "Record", render: (row) => row.id }]}
+        rowKey={(row) => row.id}
+      />,
+    );
     expect(screen.getAllByRole("row")).toHaveLength(51);
     expect(screen.getByRole("cell", { name: "Record 0" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Previous page of Large fixture" })).toBeDisabled();

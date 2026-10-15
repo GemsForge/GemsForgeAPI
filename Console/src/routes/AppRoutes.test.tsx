@@ -7,15 +7,34 @@ import { AppRoutes } from "./AppRoutes";
 import { api } from "../api";
 import { tamaguiConfig } from "../design-system";
 
-afterEach(() => { cleanup(); vi.restoreAllMocks(); });
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+});
 function HistoryControls() {
   const navigate = useNavigate();
-  return <><button onClick={() => navigate(-1)}>Go back</button><button onClick={() => navigate(1)}>Go forward</button></>;
+  return (
+    <>
+      <button onClick={() => navigate(-1)}>Go back</button>
+      <button onClick={() => navigate(1)}>Go forward</button>
+    </>
+  );
 }
 function setup(path = "/") {
-  vi.spyOn(api, "listDomains").mockResolvedValue([{ id: "Life", title: "Life domain", description: "Personal records" }]);
+  vi.spyOn(api, "listDomains").mockResolvedValue([
+    { id: "Life", title: "Life domain", description: "Personal records" },
+  ]);
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: 30_000 } } });
-  render(<QueryClientProvider client={client}><TamaguiProvider config={tamaguiConfig} defaultTheme="dark"><MemoryRouter initialEntries={[path]}><HistoryControls /><AppRoutes /></MemoryRouter></TamaguiProvider></QueryClientProvider>);
+  render(
+    <QueryClientProvider client={client}>
+      <TamaguiProvider config={tamaguiConfig} defaultTheme="dark">
+        <MemoryRouter initialEntries={[path]}>
+          <HistoryControls />
+          <AppRoutes />
+        </MemoryRouter>
+      </TamaguiProvider>
+    </QueryClientProvider>,
+  );
   return client;
 }
 
@@ -24,7 +43,15 @@ describe("Gem Life navigation", () => {
     vi.spyOn(api, "listDomains").mockResolvedValue([]);
     vi.spyOn(api, "listEducation").mockResolvedValue([]);
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-    render(<QueryClientProvider client={client}><TamaguiProvider config={tamaguiConfig} defaultTheme="dark"><MemoryRouter basename="/app" initialEntries={["/app/education"]}><AppRoutes /></MemoryRouter></TamaguiProvider></QueryClientProvider>);
+    render(
+      <QueryClientProvider client={client}>
+        <TamaguiProvider config={tamaguiConfig} defaultTheme="dark">
+          <MemoryRouter basename="/app" initialEntries={["/app/education"]}>
+            <AppRoutes />
+          </MemoryRouter>
+        </TamaguiProvider>
+      </QueryClientProvider>,
+    );
     expect(await screen.findByRole("heading", { name: "Education" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Home" })).toHaveAttribute("href", "/app");
   });
@@ -54,13 +81,23 @@ describe("Gem Life navigation", () => {
     fireEvent.click(screen.getByRole("button", { name: "Go forward" }));
     await screen.findByRole("heading", { name: "Employment" });
   });
-  it.each(["/education-typo", "/addresses/unknown", "/domains/missing", "/forgekeeper/not-a-number/children"])("shows not found for %s", async (path) => {
-    setup(path);
-    expect(await screen.findByRole("heading", { name: "Page not found" })).toBeInTheDocument();
-  });
+  it.each(["/education-typo", "/addresses/unknown", "/domains/missing", "/forgekeeper/not-a-number/children"])(
+    "shows not found for %s",
+    async (path) => {
+      setup(path);
+      expect(await screen.findByRole("heading", { name: "Page not found" })).toBeInTheDocument();
+    },
+  );
   it("shows pending, failure, and successful retry states", async () => {
     let reject!: (error: Error) => void;
-    const request = vi.spyOn(api, "listEducation").mockReturnValueOnce(new Promise((_, failure) => { reject = failure; })).mockResolvedValue([]);
+    const request = vi
+      .spyOn(api, "listEducation")
+      .mockReturnValueOnce(
+        new Promise((_, failure) => {
+          reject = failure;
+        }),
+      )
+      .mockResolvedValue([]);
     setup("/education");
     expect(screen.getByRole("status")).toHaveTextContent("Loading records");
     await act(async () => reject(new Error("API unavailable")));

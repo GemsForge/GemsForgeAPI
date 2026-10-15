@@ -9,10 +9,18 @@ export interface GemRecordListProps<Record> {
 }
 
 /** Shared accessible list boundary for selectable feature records. */
-export function GemRecordList<Record>({ records, label, className = "gem-record-list", getKey, renderRecord }: GemRecordListProps<Record>) {
+export function GemRecordList<Record>({
+  records,
+  label,
+  className = "gem-record-list",
+  getKey,
+  renderRecord,
+}: GemRecordListProps<Record>) {
   return (
     <div className={className} aria-label={label}>
-      {records.map((record) => <div key={getKey(record)}>{renderRecord(record)}</div>)}
+      {records.map((record) => (
+        <div key={getKey(record)}>{renderRecord(record)}</div>
+      ))}
     </div>
   );
 }

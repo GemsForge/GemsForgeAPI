@@ -25,31 +25,81 @@ export function TransactionsView({ records }: TransactionsViewProps) {
         <div>
           <p className="eyebrow">Life-area records</p>
           <h2>Expense Tracker</h2>
-          <p className="muted">Read documented expenses from the existing Transactions table. Service Accounts, categories, and images remain separate follow-up features.</p>
+          <p className="muted">
+            Read documented expenses from the existing Transactions table. Service Accounts, categories, and images
+            remain separate follow-up features.
+          </p>
         </div>
         <span className="record-count">{records.length} records</span>
       </div>
 
       {records.length === 0 ? (
-        <GemEmptyState icon="$" title="No expense transactions" description="The Transactions table did not return any records." />
+        <GemEmptyState
+          icon="$"
+          title="No expense transactions"
+          description="The Transactions table did not return any records."
+        />
       ) : (
         <div className="transaction-layout">
-          <GemRecordList className="transaction-list" records={paging.items} label="Expense transactions" getKey={(record) => record.id} renderRecord={(record) => (
-            <GemRecordCard className="transaction-card" icon="$" title={record.item}
-              subtitle={`${record.transactionDate || "Undated"} · ${record.id}`} status={formatAmount(record.total ?? record.paidPrice)}
-              selected={selectedID === record.id} onSelect={() => setSelectedID(record.id)} />
-          )} />
-          <div><QueryFeedback query={detail} />{selectedRecord ? <TransactionDetail key={selectedRecord.id} record={selectedRecord} onAttachment={async (metadata) => { await attachment.mutateAsync({ id: selectedRecord.id, fileID: metadata?.id ?? null }); }} /> : !selectedID && <div className="detail-placeholder"><span>$</span><p>Select an expense transaction to view its details.</p></div>}</div>
+          <GemRecordList
+            className="transaction-list"
+            records={paging.items}
+            label="Expense transactions"
+            getKey={(record) => record.id}
+            renderRecord={(record) => (
+              <GemRecordCard
+                className="transaction-card"
+                icon="$"
+                title={record.item}
+                subtitle={`${record.transactionDate || "Undated"} · ${record.id}`}
+                status={formatAmount(record.total ?? record.paidPrice)}
+                selected={selectedID === record.id}
+                onSelect={() => setSelectedID(record.id)}
+              />
+            )}
+          />
+          <div>
+            <QueryFeedback query={detail} />
+            {selectedRecord ? (
+              <TransactionDetail
+                key={selectedRecord.id}
+                record={selectedRecord}
+                onAttachment={async (metadata) => {
+                  await attachment.mutateAsync({ id: selectedRecord.id, fileID: metadata?.id ?? null });
+                }}
+              />
+            ) : (
+              !selectedID && (
+                <div className="detail-placeholder">
+                  <span>$</span>
+                  <p>Select an expense transaction to view its details.</p>
+                </div>
+              )
+            )}
+          </div>
         </div>
       )}
     </>
   );
 }
 
-function TransactionDetail({ record, onAttachment }: { record: ExpenseTransaction; onAttachment: (metadata: import("../../types").FileMetadata | null) => Promise<void> }) {
+function TransactionDetail({
+  record,
+  onAttachment,
+}: {
+  record: ExpenseTransaction;
+  onAttachment: (metadata: import("../../types").FileMetadata | null) => Promise<void>;
+}) {
   return (
     <article className="transaction-detail">
-      <div className="detail-heading"><div><p className="eyebrow">Expense transaction</p><h3>{record.item}</h3><p className="transaction-code">{record.id}</p></div><span className="status-pill">Category {record.categoryID}</span></div>
+      <div className="detail-heading">
+        <div>
+          <p className="eyebrow">Expense transaction</p>
+          <h3>{record.item}</h3>
+          <p className="transaction-code">{record.id}</p>
+        </div>
+        <span className="status-pill">Category {record.categoryID}</span>
+      </div>
       <dl className="transaction-fields">
         <Field label="Transaction date" value={record.transactionDate} />
         <Field label="Receipt" value={record.receiptID} />
@@ -61,19 +111,38 @@ function TransactionDetail({ record, onAttachment }: { record: ExpenseTransactio
         <MoneyField label="Paid price" value={record.paidPrice} />
         <MoneyField label="Total" value={record.total} />
         <MoneyField label="Discount" value={record.discount} />
-        <div className="transaction-notes"><dt>Notes</dt><dd>{record.notes || "—"}</dd></div>
+        <div className="transaction-notes">
+          <dt>Notes</dt>
+          <dd>{record.notes || "—"}</dd>
+        </div>
       </dl>
-      <AttachmentControl fileMetadataID={record.image} ownerType="ExpenseTransaction" ownerID={record.id} label="Receipt image" onAttach={onAttachment} />
+      <AttachmentControl
+        fileMetadataID={record.image}
+        ownerType="ExpenseTransaction"
+        ownerID={record.id}
+        label="Receipt image"
+        onAttach={onAttachment}
+      />
     </article>
   );
 }
 
 function Field({ label, value }: { label: string; value: string | null }) {
-  return <div><dt>{label}</dt><dd>{value || "—"}</dd></div>;
+  return (
+    <div>
+      <dt>{label}</dt>
+      <dd>{value || "—"}</dd>
+    </div>
+  );
 }
 
 function MoneyField({ label, value }: { label: string; value: number | null }) {
-  return <div><dt>{label}</dt><dd>{formatAmount(value)}</dd></div>;
+  return (
+    <div>
+      <dt>{label}</dt>
+      <dd>{formatAmount(value)}</dd>
+    </div>
+  );
 }
 
 function formatAmount(value: number | null) {
