@@ -1,7 +1,10 @@
 import Vapor
 
 /// Registers metadata and explicit image routes for service logos.
-func registerServiceLogoRoutes(_ app: Application) {
+func registerServiceLogoRoutes(
+    _ app: Application,
+    imageConfiguration: LocalImageUploadConfiguration = .fromEnvironment()
+) {
     let logos = app.grouped("service-logos")
 
     logos.get { request async throws -> [ServiceLogoAssetSummary] in
@@ -24,6 +27,15 @@ func registerServiceLogoRoutes(_ app: Application) {
               let asset = try await ServiceLogoService(database: request.db).find(id: id)
         else {
             throw Abort(.notFound)
+        }
+
+        if let fileMetadataID = asset.fileMetadataID,
+           let metadata = try await FileMetadataService(database: request.db).find(id: fileMetadataID) {
+            return try await streamFileMetadataContent(
+                metadata,
+                request: request,
+                configuration: imageConfiguration
+            )
         }
 
         let mediaTypeParts = asset.mimeType.split(separator: "/", maxSplits: 1)
