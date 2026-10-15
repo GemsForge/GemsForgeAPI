@@ -27,8 +27,8 @@ jobs:
     environment: fit
     env:
       GEMLIFE_ENVIRONMENT: fit
-      DATABASE_PATH_FIT: ${{ runner.temp }}/GemLife_DB_fit.sqlite
-      LIVE_DATABASE_BACKUP_DIRECTORY_FIT: ${{ runner.temp }}/database-backups/fit
+      DATABASE_PATH_FIT: "${{ runner.temp }}/GemLife_DB_fit.sqlite"
+      LIVE_DATABASE_BACKUP_DIRECTORY_FIT: "${{ runner.temp }}/database-backups/fit"
     steps:
       - uses: actions/checkout@v7
         with:
@@ -36,7 +36,7 @@ jobs:
       - name: Prepare isolated FIT database paths
         run: mkdir -p "$LIVE_DATABASE_BACKUP_DIRECTORY_FIT"
       - name: Report selected environment
-        run: echo "Validating Gem Life environment: $GEMLIFE_ENVIRONMENT"
+        run: |
+          echo "Validating Gem Life environment: $GEMLIFE_ENVIRONMENT"
       - name: Run API and migration tests
         run: swift test --parallel
-
