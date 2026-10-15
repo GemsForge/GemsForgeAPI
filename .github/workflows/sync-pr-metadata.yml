@@ -12,6 +12,8 @@ name: Sync issue and pull request metadata
 #    project when missing, then derive issue/PR Status from the development lifecycle.
 # 6. Project mutations use the PROJECTS_TOKEN secret because GITHUB_TOKEN
 #    cannot access user-owned projects.
+# 7. A merged same-repository pull request deletes its source branch after
+#    metadata and project reconciliation; closed-but-unmerged and fork branches remain.
 #
 # Lifecycle policy (uses the existing Status options in project #7)
 # - Development branch created: In progress; branch name identifies the issue.
@@ -36,6 +38,8 @@ name: Sync issue and pull request metadata
 # - "Related" is not assumed to mean "blocks": choose the actual relationship.
 # - Issue opened/reopened events ensure project membership automatically.
 # - This workflow does not create issues, commits, branches, or pull requests.
+# - Merged same-repository PR source branches are deleted after synchronization;
+#   the default branch, fork branches, and closed-but-unmerged branches are preserved.
 # API references:
 # https://docs.github.com/en/rest/issues/sub-issues
 # https://docs.github.com/en/rest/issues/issue-dependencies
@@ -525,4 +529,31 @@ jobs:
             );
             } else {
               core.notice(`Issue #${issueNumber} is in project GemsForgeAPI.`);
+            }
+
+            // Remove only the repository branch that produced a merged PR.
+            // Closed-but-unmerged PRs retain their source branch for recovery.
+            if (pullRequest?.merged) {
+              const sourceBranch = pullRequest.head?.ref;
+              const sourceRepository = pullRequest.head?.repo?.full_name;
+              const defaultBranch = context.payload.repository?.default_branch;
+              if (!sourceBranch || sourceBranch === defaultBranch) {
+                core.notice("Skipped source-branch deletion for the default or missing branch.");
+              } else if (sourceRepository !== context.repo.owner + "/" + context.repo.repo) {
+                core.notice("Skipped source-branch deletion for a fork branch.");
+              } else {
+                try {
+                  await github.rest.git.deleteRef({
+                    ...context.repo,
+                    ref: "heads/" + sourceBranch,
+                  });
+                  core.notice("Deleted merged PR source branch " + sourceBranch + ".");
+                } catch (error) {
+                  if (error.status === 404 || error.status === 422) {
+                    core.notice("Source branch " + sourceBranch + " was already deleted or unavailable.");
+                  } else {
+                    throw error;
+                  }
+                }
+              }
             }
