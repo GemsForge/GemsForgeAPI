@@ -9,6 +9,7 @@ final class GemHueRouteTests: XCTestCase {
             app.databases.use(.sqlite(.memory), as: .sqlite)
             app.migrations.add(CreateGemHues())
             app.migrations.add(CreateGemHueImages())
+            app.migrations.add(AddGemHueImageFileMetadataReference())
             try await app.autoMigrate()
             registerGemHueRoutes(app)
 
@@ -52,6 +53,7 @@ final class GemHueRouteTests: XCTestCase {
             app.databases.use(.sqlite(.memory), as: .sqlite)
             app.migrations.add(CreateGemHues())
             app.migrations.add(CreateGemHueImages())
+            app.migrations.add(AddGemHueImageFileMetadataReference())
             try await app.autoMigrate()
             registerGemHueRoutes(app)
         }) { app in

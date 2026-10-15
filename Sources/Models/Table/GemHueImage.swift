@@ -28,6 +28,10 @@ final class GemHueImage: Model, @unchecked Sendable {
     @OptionalField(key: "FileSizeBytes")
     var fileSizeBytes: Int?
 
+    /// New local-file reference populated by the legacy image migration.
+    @OptionalField(key: "FileMetadataID")
+    var fileMetadataID: String?
+
     @Timestamp(key: "DateCreated", on: .create)
     var createdAt: Date?
 

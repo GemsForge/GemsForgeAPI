@@ -9,6 +9,7 @@ final class GemHueModelTests: XCTestCase {
             app.databases.use(.sqlite(.memory), as: .sqlite)
             app.migrations.add(CreateGemHues())
             app.migrations.add(CreateGemHueImages())
+            app.migrations.add(AddGemHueImageFileMetadataReference())
             try await app.autoMigrate()
         }) { app in
             let hue = GemHue(

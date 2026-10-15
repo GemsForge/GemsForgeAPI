@@ -8,6 +8,7 @@ final class ServiceLogoRouteTests: XCTestCase {
         try await withApp(configure: { app in
             app.databases.use(.sqlite(.memory), as: .sqlite)
             app.migrations.add(CreateServiceLogoAssets())
+            app.migrations.add(AddServiceLogoFileMetadataReference())
             try await app.autoMigrate()
 
             let asset = ServiceLogoAsset()
@@ -47,6 +48,7 @@ final class ServiceLogoRouteTests: XCTestCase {
         try await withApp(configure: { app in
             app.databases.use(.sqlite(.memory), as: .sqlite)
             app.migrations.add(CreateServiceLogoAssets())
+            app.migrations.add(AddServiceLogoFileMetadataReference())
             try await app.autoMigrate()
             registerServiceLogoRoutes(app)
         }) { app in
