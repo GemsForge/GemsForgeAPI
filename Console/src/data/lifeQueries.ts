@@ -31,5 +31,9 @@ export function useAddressesQuery(enabled: boolean) {
 
 /** Reads documented expense transactions for the active screen. */
 export function useTransactionsQuery(enabled: boolean) {
-  return useQuery({ queryKey: lifeQueryKeys.transactions, queryFn: ({ signal }) => api.listTransactions(signal), enabled });
+  return useQuery({
+    queryKey: lifeQueryKeys.transactions,
+    queryFn: ({ signal }) => api.listTransactions(signal),
+    enabled,
+  });
 }

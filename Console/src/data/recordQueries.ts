@@ -11,28 +11,53 @@ export const recordQueryKeys = {
 };
 
 export function useAddressQuery(id: string | null) {
-  return useQuery({ queryKey: recordQueryKeys.address(id), queryFn: ({ signal }) => api.getAddress(id!, signal), enabled: id !== null });
+  return useQuery({
+    queryKey: recordQueryKeys.address(id),
+    queryFn: ({ signal }) => api.getAddress(id!, signal),
+    enabled: id !== null,
+  });
 }
 export function useTransactionQuery(id: string | null) {
-  return useQuery({ queryKey: recordQueryKeys.transaction(id), queryFn: ({ signal }) => api.getTransaction(id!, signal), enabled: id !== null });
+  return useQuery({
+    queryKey: recordQueryKeys.transaction(id),
+    queryFn: ({ signal }) => api.getTransaction(id!, signal),
+    enabled: id !== null,
+  });
 }
 export function useEducationRecordQuery(id: string | null) {
-  return useQuery({ queryKey: recordQueryKeys.education(id), queryFn: ({ signal }) => api.getEducation(id!, signal), enabled: id !== null });
+  return useQuery({
+    queryKey: recordQueryKeys.education(id),
+    queryFn: ({ signal }) => api.getEducation(id!, signal),
+    enabled: id !== null,
+  });
 }
 export function useEmploymentRecordQuery(id: string | null) {
-  return useQuery({ queryKey: recordQueryKeys.employment(id), queryFn: ({ signal }) => api.getEmployment(id!, signal), enabled: id !== null });
+  return useQuery({
+    queryKey: recordQueryKeys.employment(id),
+    queryFn: ({ signal }) => api.getEmployment(id!, signal),
+    enabled: id !== null,
+  });
 }
 export function useGemHueQuery(id: string | null) {
-  return useQuery({ queryKey: recordQueryKeys.hue(id), queryFn: ({ signal }) => api.getGemHue(id!, signal), enabled: id !== null });
+  return useQuery({
+    queryKey: recordQueryKeys.hue(id),
+    queryFn: ({ signal }) => api.getGemHue(id!, signal),
+    enabled: id !== null,
+  });
 }
 export function useGemHueImageQuery(id: string | null) {
-  return useQuery({ queryKey: [...lifeQueryKeys.gemHues, "image", id], enabled: id !== null, retry: false, gcTime: 60_000,
+  return useQuery({
+    queryKey: [...lifeQueryKeys.gemHues, "image", id],
+    enabled: id !== null,
+    retry: false,
+    gcTime: 60_000,
     queryFn: async ({ signal }) => {
       const response = await api.getGemHueImage(id!, signal);
       const blob = await response.blob();
       if (!blob.type.startsWith("image/") || !blob.size) throw new Error("The hue reference is not a valid image.");
       return blob;
-    } });
+    },
+  });
 }
 
 export function useAddressAttachmentMutation() {

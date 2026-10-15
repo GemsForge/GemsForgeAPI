@@ -10,27 +10,44 @@ import { AttachmentControl } from "./AttachmentControl";
 import { FilePresentation } from "./FilePresentation";
 
 const metadata: FileMetadata = {
-  id: "file-1", relativePath: "uploads/receipt.png", fileName: "receipt.png",
-  fileKind: "receipt", mimeType: "image/png", byteSize: 1024,
-  ownerType: "ExpenseTransaction", ownerID: "transaction-1",
+  id: "file-1",
+  relativePath: "uploads/receipt.png",
+  fileName: "receipt.png",
+  fileKind: "receipt",
+  mimeType: "image/png",
+  byteSize: 1024,
+  ownerType: "ExpenseTransaction",
+  ownerID: "transaction-1",
 };
 
 function renderUI(element: ReactElement) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
-  const wrapper = ({ children }: { children: React.ReactNode }) =>
-    <QueryClientProvider client={client}><TamaguiProvider config={tamaguiConfig} defaultTheme="dark">{children}</TamaguiProvider></QueryClientProvider>;
+  const wrapper = ({ children }: { children: React.ReactNode }) => (
+    <QueryClientProvider client={client}>
+      <TamaguiProvider config={tamaguiConfig} defaultTheme="dark">
+        {children}
+      </TamaguiProvider>
+    </QueryClientProvider>
+  );
   return render(element, { wrapper });
 }
 
 beforeEach(() => {
   vi.spyOn(api, "getFileMetadata").mockResolvedValue({ ...metadata });
   vi.spyOn(api, "getFileContent").mockResolvedValue(new Blob(["image"], { type: "image/png" }));
-  vi.stubGlobal("URL", class extends URL {
-    static createObjectURL = vi.fn(() => "blob:preview");
-    static revokeObjectURL = vi.fn();
-  });
+  vi.stubGlobal(
+    "URL",
+    class extends URL {
+      static createObjectURL = vi.fn(() => "blob:preview");
+      static revokeObjectURL = vi.fn();
+    },
+  );
 });
-afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
+});
 
 describe("FilePresentation", () => {
   it("shows an empty state without requesting a file", () => {
@@ -86,7 +103,8 @@ describe("FilePresentation", () => {
   });
 
   it.each([new Blob([], { type: "image/png" }), new Blob(["<html>"], { type: "text/html" })])(
-    "rejects empty or non-image content despite image metadata", async (blob) => {
+    "rejects empty or non-image content despite image metadata",
+    async (blob) => {
       vi.mocked(api.getFileContent).mockResolvedValue(blob);
       renderUI(<FilePresentation fileMetadataID="file-1" label="Receipt image" />);
       expect(await screen.findByRole("alert")).toHaveTextContent("cannot be displayed as an image");
@@ -95,8 +113,13 @@ describe("FilePresentation", () => {
   );
 
   it("shows non-image metadata without fetching preview bytes", async () => {
-    vi.mocked(api.getFileMetadata).mockResolvedValue({ ...metadata, fileName: null,
-      mimeType: "application/pdf", byteSize: null, relativePath: "documents/receipt.pdf" });
+    vi.mocked(api.getFileMetadata).mockResolvedValue({
+      ...metadata,
+      fileName: null,
+      mimeType: "application/pdf",
+      byteSize: null,
+      relativePath: "documents/receipt.pdf",
+    });
     renderUI(<FilePresentation fileMetadataID="file-1" label="Receipt document" />);
     expect(await screen.findByText("receipt.pdf")).toBeInTheDocument();
     expect(screen.getByText("Unknown")).toBeInTheDocument();
@@ -106,7 +129,12 @@ describe("FilePresentation", () => {
 
   it("aborts an old request and ignores its result after selecting another record", async () => {
     let resolveOld!: (value: Blob) => void;
-    vi.mocked(api.getFileContent).mockImplementationOnce(() => new Promise((resolve) => { resolveOld = resolve; }));
+    vi.mocked(api.getFileContent).mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveOld = resolve;
+        }),
+    );
     const view = renderUI(<FilePresentation fileMetadataID="file-1" label="Receipt image" />);
     await waitFor(() => expect(api.getFileContent).toHaveBeenCalledOnce());
     const signal = vi.mocked(api.getFileContent).mock.calls[0][1];
@@ -125,7 +153,12 @@ describe("FilePresentation", () => {
 });
 
 describe("AttachmentControl selection boundary", () => {
-  const props = { fileMetadataID: null, ownerType: "ExpenseTransaction", ownerID: "transaction-1", label: "Receipt image" };
+  const props = {
+    fileMetadataID: null,
+    ownerType: "ExpenseTransaction",
+    ownerID: "transaction-1",
+    label: "Receipt image",
+  };
 
   it("accepts a File from a future native picker adapter and preserves upload ownership", async () => {
     const file = new File(["image"], "receipt.png", { type: "image/png" });
@@ -143,7 +176,8 @@ describe("AttachmentControl selection boundary", () => {
     renderUI(<AttachmentControl {...props} onAttach={attach} selectImage={async () => null} />);
     fireEvent.click(screen.getByRole("button", { name: "Choose image" }));
     await waitFor(() => expect(screen.getByRole("button", { name: "Choose image" })).toBeEnabled());
-    expect(upload).not.toHaveBeenCalled(); expect(attach).not.toHaveBeenCalled();
+    expect(upload).not.toHaveBeenCalled();
+    expect(attach).not.toHaveBeenCalled();
   });
 
   it("validates browser-selected files before uploading", async () => {

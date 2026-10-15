@@ -13,14 +13,23 @@ export const workflowQueryKeys = {
 };
 
 export function usePagesQuery(scope: PageScope, enabled = true) {
-  return useQuery({ queryKey: workflowQueryKeys.pageList(scope), enabled, queryFn: ({ signal }) =>
-    scope.kind === "domain" ? api.listPagesForDomain(scope.id, signal) :
-      scope.kind === "children" ? api.listChildren(scope.id, signal) : api.listRootPages(signal) });
+  return useQuery({
+    queryKey: workflowQueryKeys.pageList(scope),
+    enabled,
+    queryFn: ({ signal }) =>
+      scope.kind === "domain"
+        ? api.listPagesForDomain(scope.id, signal)
+        : scope.kind === "children"
+          ? api.listChildren(scope.id, signal)
+          : api.listRootPages(signal),
+  });
 }
 export function usePageMutation() {
   const client = useQueryClient();
-  return useMutation({ mutationFn: ({ id, patch }: { id: number; patch: ForgeKeeperPatch }) => api.patchPage(id, patch),
-    onSuccess: () => client.invalidateQueries({ queryKey: workflowQueryKeys.pages }) });
+  return useMutation({
+    mutationFn: ({ id, patch }: { id: number; patch: ForgeKeeperPatch }) => api.patchPage(id, patch),
+    onSuccess: () => client.invalidateQueries({ queryKey: workflowQueryKeys.pages }),
+  });
 }
 export function useLiveSchemaQuery() {
   return useQuery({ queryKey: workflowQueryKeys.schema, queryFn: ({ signal }) => api.getLiveSchema(signal) });
@@ -34,10 +43,16 @@ export function useExecuteRepositoryMigrationsMutation() {
     onSuccess: () => client.invalidateQueries({ queryKey: workflowQueryKeys.schema }) });
 }
 export function useSchemaGuidanceQuery() {
-  return useQuery({ queryKey: workflowQueryKeys.guidance, queryFn: ({ signal }) => api.getSchemaBuilderGuidance(signal) });
+  return useQuery({
+    queryKey: workflowQueryKeys.guidance,
+    queryFn: ({ signal }) => api.getSchemaBuilderGuidance(signal),
+  });
 }
 export function useDatabaseCapabilitiesQuery() {
-  return useQuery({ queryKey: workflowQueryKeys.capabilities, queryFn: ({ signal }) => api.getLocalDatabaseCapabilities(signal) });
+  return useQuery({
+    queryKey: workflowQueryKeys.capabilities,
+    queryFn: ({ signal }) => api.getLocalDatabaseCapabilities(signal),
+  });
 }
 export function useCreateDatabaseMutation() {
   return useMutation({ mutationFn: api.createLocalDatabase });
@@ -47,19 +62,37 @@ export function usePreviewTableMutation() {
 }
 export function useCreateTableMutation() {
   const client = useQueryClient();
-  return useMutation({ mutationFn: api.createUserTable,
-    onSuccess: () => client.invalidateQueries({ queryKey: workflowQueryKeys.schema }) });
+  return useMutation({
+    mutationFn: api.createUserTable,
+    onSuccess: () => client.invalidateQueries({ queryKey: workflowQueryKeys.schema }),
+  });
 }
 export function usePreviewCSVMutation() {
   return useMutation({ mutationFn: api.previewHomeInventoryCSV });
 }
 export function useImportCSVMutation() {
   const client = useQueryClient();
-  return useMutation({ mutationFn: api.importHomeInventoryCSV,
-    onSuccess: () => client.invalidateQueries({ queryKey: workflowQueryKeys.schema }) });
+  return useMutation({
+    mutationFn: api.importHomeInventoryCSV,
+    onSuccess: () => client.invalidateQueries({ queryKey: workflowQueryKeys.schema }),
+  });
 }
 export function useUploadImageMutation() {
   const client = useQueryClient();
-  return useMutation({ mutationFn: ({ file, kind, ownerType, ownerID }: { file: File; kind: string; ownerType: string; ownerID: string }) => api.uploadImage(file, kind, ownerType, ownerID),
-    onSuccess: (metadata) => { client.setQueryData(fileQueryKeys.metadata(metadata.id), metadata); } });
+  return useMutation({
+    mutationFn: ({
+      file,
+      kind,
+      ownerType,
+      ownerID,
+    }: {
+      file: File;
+      kind: string;
+      ownerType: string;
+      ownerID: string;
+    }) => api.uploadImage(file, kind, ownerType, ownerID),
+    onSuccess: (metadata) => {
+      client.setQueryData(fileQueryKeys.metadata(metadata.id), metadata);
+    },
+  });
 }

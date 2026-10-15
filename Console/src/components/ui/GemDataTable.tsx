@@ -20,14 +20,30 @@ export function GemDataTable<Row>({ columns, rows, rowKey, caption }: GemDataTab
   const paging = usePagedRecords(rows);
   return (
     <>
-    <div className="data-table-wrap" role="region" aria-label={caption} tabIndex={0}>
-      <table className="data-table">
-        <caption>{caption}</caption>
-        <thead><tr>{columns.map((column) => <th scope="col" key={column.key}>{column.label}</th>)}</tr></thead>
-        <tbody>{paging.items.map((row) => <tr key={rowKey(row)}>{columns.map((column) => <td key={column.key}>{column.render(row)}</td>)}</tr>)}</tbody>
-      </table>
-    </div>
-    <PaginationControls {...paging} label={caption} />
+      <div className="data-table-wrap" role="region" aria-label={caption} tabIndex={0}>
+        <table className="data-table">
+          <caption>{caption}</caption>
+          <thead>
+            <tr>
+              {columns.map((column) => (
+                <th scope="col" key={column.key}>
+                  {column.label}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {paging.items.map((row) => (
+              <tr key={rowKey(row)}>
+                {columns.map((column) => (
+                  <td key={column.key}>{column.render(row)}</td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <PaginationControls {...paging} label={caption} />
     </>
   );
 }

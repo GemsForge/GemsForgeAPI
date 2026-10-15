@@ -15,22 +15,75 @@ import "../styles.css";
 
 window.fetch = async (input, init) => {
   const url = String(input);
-  if (init?.method && init.method !== "GET") return new Response(JSON.stringify({ reason: "Fixture writes are disabled." }), { status: 405 });
-  if (url.endsWith("/content")) return new Response('<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800"><rect width="1200" height="800" fill="#78d1bd"/></svg>', { headers: { "Content-Type": "image/svg+xml" } });
-  const data = url.includes("file-metadata") ? { id: "fixture", fileName: "a-long-example-image-name-for-responsive-preview.svg", relativePath: "fixture.svg", mimeType: "image/svg+xml", byteSize: 160, fileKind: "image" }
-    : url.includes("schema-builder") ? { version: 1, supportedTypes: [{ value: "TEXT", label: "Text", description: "Text values" }], rules: [] }
-      : { databaseName: "Fixture.sqlite", tableCount: 1, tables: [{ name: "LongExampleTableNameForNarrowScreens", columns: [{ name: "ExampleProperty", dataType: "TEXT", primaryKey: false, nullable: true }], foreignKeys: [], indexes: [] }] };
+  if (init?.method && init.method !== "GET")
+    return new Response(JSON.stringify({ reason: "Fixture writes are disabled." }), { status: 405 });
+  if (url.endsWith("/content"))
+    return new Response(
+      '<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800"><rect width="1200" height="800" fill="#78d1bd"/></svg>',
+      { headers: { "Content-Type": "image/svg+xml" } },
+    );
+  const data = url.includes("file-metadata")
+    ? {
+        id: "fixture",
+        fileName: "a-long-example-image-name-for-responsive-preview.svg",
+        relativePath: "fixture.svg",
+        mimeType: "image/svg+xml",
+        byteSize: 160,
+        fileKind: "image",
+      }
+    : url.includes("schema-builder")
+      ? { version: 1, supportedTypes: [{ value: "TEXT", label: "Text", description: "Text values" }], rules: [] }
+      : {
+          databaseName: "Fixture.sqlite",
+          tableCount: 1,
+          tables: [
+            {
+              name: "LongExampleTableNameForNarrowScreens",
+              columns: [{ name: "ExampleProperty", dataType: "TEXT", primaryKey: false, nullable: true }],
+              foreignKeys: [],
+              indexes: [],
+            },
+          ],
+        };
   return new Response(JSON.stringify(data), { headers: { "Content-Type": "application/json" } });
 };
 const domains = [{ id: "TEST", title: "Long example domain title", description: "Synthetic records only" }];
 createRoot(document.getElementById("root")!).render(
-  <QueryClientProvider client={new QueryClient()}><TamaguiProvider config={tamaguiConfig} defaultTheme="dark"><MemoryRouter>
-    <GemLifeShell sidebar={<DomainSidebar domains={domains} onRefresh={() => {}} />}>
-      <h2>Responsive fixture</h2><p>Local synthetic content. Writes are disabled.</p>
-      <GemDataTable caption="Wide table fixture" columns={[{ key: "value", label: "Long property", render: (row: { id: string }) => row.id }]} rows={Array.from({ length: 1000 }, (_, index) => ({ id: `Record ${index}: example long identifier for wrapping and horizontal table scrolling` }))} rowKey={(row) => row.id} />
-      <FilePresentation fileMetadataID="fixture" label="Fixture image" />
-      <ForgeKeeperView domain={domains[0]} pages={[{ id: 1, domainID: "TEST", title: "Fixture page", description: "Test the dialog without saving", parentID: null }]} onLoadRoots={() => {}} onLoadChildren={() => {}} onPatch={async () => { throw new Error("Fixture writes are disabled."); }} />
-      <SchemaBuilderView onError={() => {}} onSuccess={() => {}} />
-    </GemLifeShell>
-  </MemoryRouter></TamaguiProvider></QueryClientProvider>,
+  <QueryClientProvider client={new QueryClient()}>
+    <TamaguiProvider config={tamaguiConfig} defaultTheme="dark">
+      <MemoryRouter>
+        <GemLifeShell sidebar={<DomainSidebar domains={domains} onRefresh={() => {}} />}>
+          <h2>Responsive fixture</h2>
+          <p>Local synthetic content. Writes are disabled.</p>
+          <GemDataTable
+            caption="Wide table fixture"
+            columns={[{ key: "value", label: "Long property", render: (row: { id: string }) => row.id }]}
+            rows={Array.from({ length: 1000 }, (_, index) => ({
+              id: `Record ${index}: example long identifier for wrapping and horizontal table scrolling`,
+            }))}
+            rowKey={(row) => row.id}
+          />
+          <FilePresentation fileMetadataID="fixture" label="Fixture image" />
+          <ForgeKeeperView
+            domain={domains[0]}
+            pages={[
+              {
+                id: 1,
+                domainID: "TEST",
+                title: "Fixture page",
+                description: "Test the dialog without saving",
+                parentID: null,
+              },
+            ]}
+            onLoadRoots={() => {}}
+            onLoadChildren={() => {}}
+            onPatch={async () => {
+              throw new Error("Fixture writes are disabled.");
+            }}
+          />
+          <SchemaBuilderView onError={() => {}} onSuccess={() => {}} />
+        </GemLifeShell>
+      </MemoryRouter>
+    </TamaguiProvider>
+  </QueryClientProvider>,
 );
