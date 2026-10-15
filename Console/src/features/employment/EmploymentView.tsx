@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useEmploymentRecordQuery } from "../../data/recordQueries";
 import { QueryFeedback } from "../../components/QueryFeedback";
 import type { Employment } from "../../types";
+import { GemEmptyState, GemRecordCard, GemRecordList } from "../../components/ui";
 
 interface EmploymentViewProps {
   records: Employment[];
@@ -28,25 +29,13 @@ export function EmploymentView({ records }: EmploymentViewProps) {
       </div>
 
       {records.length === 0 ? (
-        <div className="empty-state"><div className="empty-icon">✦</div><h3>No employment records</h3><p>The Employment table did not return any records.</p></div>
+        <GemEmptyState icon="✦" title="No employment records" description="The Employment table did not return any records." />
       ) : (
         <div className="employment-layout">
-          <div className="employment-list" aria-label="Employment records">
-            {paging.items.map((record) => (
-              <button
-                className={`employment-card ${selectedRecord?.id === record.id ? "selected" : ""}`}
-                key={record.id}
-                onClick={() => setSelectedID(record.id)}
-              >
-                <span className="employment-icon">◆</span>
-                <span className="employment-card-copy">
-                  <strong>{record.employerName}</strong>
-                  <small>{record.positionTitle}</small>
-                </span>
-                <span className="employment-status">{record.employmentStatus}</span>
-              </button>
-            ))}
-          </div>
+          <GemRecordList className="employment-list" records={paging.items} label="Employment records" getKey={(record) => record.id} renderRecord={(record) => (
+            <GemRecordCard className="employment-card" icon="◆" title={record.employerName} subtitle={record.positionTitle}
+              status={record.employmentStatus} selected={selectedRecord?.id === record.id} onSelect={() => setSelectedID(record.id)} />
+          )} />
           <div><QueryFeedback query={detail} />{selectedRecord ? <EmploymentDetail record={selectedRecord} /> : !selectedID && <div className="detail-placeholder"><span>◆</span><p>Select an employment record to view its details.</p></div>}</div>
         </div>
       )}

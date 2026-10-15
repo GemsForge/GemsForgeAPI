@@ -5,6 +5,7 @@ import { useAddressQuery, useAddressAttachmentMutation } from "../../data/record
 import { QueryFeedback } from "../../components/QueryFeedback";
 import type { Address } from "../../types";
 import { AttachmentControl } from "../../components/AttachmentControl";
+import { GemEmptyState, GemRecordCard, GemRecordList } from "../../components/ui";
 
 interface AddressesViewProps {
   records: Address[];
@@ -30,18 +31,14 @@ export function AddressesView({ records }: AddressesViewProps) {
       </div>
 
       {records.length === 0 ? (
-        <div className="empty-state"><div className="empty-icon">⌂</div><h3>No address records</h3><p>The Addresses table did not return any records.</p></div>
+        <GemEmptyState icon="⌂" title="No address records" description="The Addresses table did not return any records." />
       ) : (
         <div className="address-layout">
-          <div className="address-list" aria-label="Address records">
-            {paging.items.map((record) => (
-              <button className={`address-card ${selectedID === record.id ? "selected" : ""}`} key={record.id} onClick={() => setSelectedID(record.id)}>
-                <span className="address-icon">⌂</span>
-                <span className="address-card-copy"><strong>{record.city || record.addressType}</strong><small>{record.addressType} · {record.id}</small></span>
-                <span className="address-status">{record.addressStatus}</span>
-              </button>
-            ))}
-          </div>
+          <GemRecordList className="address-list" records={paging.items} label="Address records" getKey={(record) => record.id} renderRecord={(record) => (
+            <GemRecordCard className="address-card" icon="⌂" title={record.city || record.addressType}
+              subtitle={`${record.addressType} · ${record.id}`} status={record.addressStatus}
+              selected={selectedID === record.id} onSelect={() => setSelectedID(record.id)} />
+          )} />
           <div><QueryFeedback query={detail} />{selectedAddress ? <AddressDetail key={selectedAddress.id} record={selectedAddress} onAttachment={async (metadata) => { await attachment.mutateAsync({ id: selectedAddress.id, fileID: metadata?.id ?? null }); }} /> : !selectedID && <div className="detail-placeholder"><span>⌂</span><p>Select an address to view its details.</p></div>}</div>
         </div>
       )}

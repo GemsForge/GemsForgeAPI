@@ -1,9 +1,11 @@
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter, useNavigate } from "react-router-dom";
+import { TamaguiProvider } from "tamagui";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { AppRoutes } from "./AppRoutes";
 import { api } from "../api";
+import { tamaguiConfig } from "../design-system";
 
 afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 function HistoryControls() {
@@ -13,7 +15,7 @@ function HistoryControls() {
 function setup(path = "/") {
   vi.spyOn(api, "listDomains").mockResolvedValue([{ id: "Life", title: "Life domain", description: "Personal records" }]);
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: 30_000 } } });
-  render(<QueryClientProvider client={client}><MemoryRouter initialEntries={[path]}><HistoryControls /><AppRoutes /></MemoryRouter></QueryClientProvider>);
+  render(<QueryClientProvider client={client}><TamaguiProvider config={tamaguiConfig} defaultTheme="dark"><MemoryRouter initialEntries={[path]}><HistoryControls /><AppRoutes /></MemoryRouter></TamaguiProvider></QueryClientProvider>);
   return client;
 }
 
@@ -22,7 +24,7 @@ describe("Gem Life navigation", () => {
     vi.spyOn(api, "listDomains").mockResolvedValue([]);
     vi.spyOn(api, "listEducation").mockResolvedValue([]);
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-    render(<QueryClientProvider client={client}><MemoryRouter basename="/app" initialEntries={["/app/education"]}><AppRoutes /></MemoryRouter></QueryClientProvider>);
+    render(<QueryClientProvider client={client}><TamaguiProvider config={tamaguiConfig} defaultTheme="dark"><MemoryRouter basename="/app" initialEntries={["/app/education"]}><AppRoutes /></MemoryRouter></TamaguiProvider></QueryClientProvider>);
     expect(await screen.findByRole("heading", { name: "Education" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Home" })).toHaveAttribute("href", "/app");
   });
