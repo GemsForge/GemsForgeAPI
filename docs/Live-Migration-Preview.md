@@ -1,5 +1,8 @@
 # Live migration preview and confirmation
 
+The current repository migration endpoints and console procedure are
+documented in docs/Workflow-Operations.md.
+
 Issue #75 adds a safe API contract for reviewing a schema change before a
 future execution workflow applies it to the existing Gem Life database.
 

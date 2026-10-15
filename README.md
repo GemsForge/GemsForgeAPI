@@ -165,6 +165,10 @@ current Notes-import boundary.
 - [`docs/Live-Schema-Inspection.md`](docs/Live-Schema-Inspection.md) documents
   the read-only live schema endpoint and its safety boundary.
 
+The current operational workflow is documented in docs/Workflow-Operations.md.
+It covers local configuration, live migrations, attachment relationships,
+GitHub Actions, commit policy, story creation, and verification commands.
+
 ## Dependencies
 
 - [Vapor](https://github.com/vapor/vapor) — Swift web framework.

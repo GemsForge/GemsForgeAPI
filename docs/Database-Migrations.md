@@ -1,5 +1,8 @@
 # Database migrations
 
+For the current live-database workflow, including backup, confirmation,
+schema reconciliation, and recovery, see docs/Workflow-Operations.md.
+
 This project uses Fluent migrations to create and change the SQLite database
 schema in a controlled, repeatable way.
 
