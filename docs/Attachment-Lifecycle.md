@@ -64,6 +64,20 @@ Service Accounts, Education, and future HomeInventory records.
 The user-facing concept is **Service Account Catalog**, even though the legacy
 SQLite table remains named `Services`.
 
+## HomeInventory migration
+
+HomeInventory is created by the registered `CreateHomeInventory` migration.
+`AddHomeInventoryAttachmentReference` then adds the nullable
+`ImageFileMetadataID` foreign key to `FileMetadata.FileMetadataID`. This keeps
+the table creation and attachment relationship repeatable for both fresh
+databases and existing databases that do not yet contain HomeInventory.
+
+For a live GemLife database, do not create the table manually. Start the API
+with the live-database configuration, open `/live-database`, preview the
+pending repository migrations, and use the explicit backup-and-migrate action.
+Keep the generated backup until the HomeInventory routes and attachment
+retrieval have been verified.
+
 ## File and image presentation
 
 `Console/src/components/FilePresentation.tsx` is the shared read-only viewer
