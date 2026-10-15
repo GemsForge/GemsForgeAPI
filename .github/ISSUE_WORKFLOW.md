@@ -67,6 +67,28 @@ To supply dependencies too, append `-f blocked_by=171,172` or
 are examples, not relationships to create automatically.
 Use the default branch as the ref after this change is merged.
 
+For repeatable story creation, use the repository helper. It creates the issue
+with its planning metadata first, then dispatches this workflow so native
+parent/dependency relationships and project membership/status are applied and
+reported by the same automation:
+
+```sh
+node Scripts/create-github-story.mjs \
+  --repo GemsForge/GemsForgeAPI \
+  --title "feat(ui): add attachment picker" \
+  --body "Describe the goal and acceptance criteria." \
+  --labels feature,api \
+  --assignees GemsForge \
+  --milestone 3 \
+  --parent-issue 192 \
+  --blocked-by 200
+```
+
+The helper does not infer relationships from prose. It passes only the
+explicit structured relationship inputs to the workflow. Its success output
+means the issue was created and the workflow was dispatched; inspect the
+workflow run notices before treating the story as fully configured.
+
 ## Credentials and local configuration
 
 - `PROJECTS_TOKEN`: GitHub repository Settings → Secrets and variables →
