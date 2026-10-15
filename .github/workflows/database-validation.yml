@@ -27,8 +27,8 @@ jobs:
     environment: fit
     env:
       GEMLIFE_ENVIRONMENT: fit
-      DATABASE_PATH_FIT: "${{ runner.temp }}/GemLife_DB_fit.sqlite"
-      LIVE_DATABASE_BACKUP_DIRECTORY_FIT: "${{ runner.temp }}/database-backups/fit"
+      DATABASE_PATH_FIT: "${{ github.workspace }}/.ci/GemLife_DB_fit.sqlite"
+      LIVE_DATABASE_BACKUP_DIRECTORY_FIT: "${{ github.workspace }}/.ci/database-backups/fit"
     steps:
       - uses: actions/checkout@v7
         with:
