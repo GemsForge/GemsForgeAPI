@@ -7,7 +7,8 @@ test("infers the type and scope labels while preserving explicit labels", () => 
     inferLabels("feat(api): add property updates", ["enhancement", "api"]),
     ["feature", "api", "enhancement"],
   );
-  assert.deepEqual(inferLabels("fix(database): repair migration", []), ["bug", "database"]);
+  assert.deepEqual(inferLabels("fix(database): repair migration", []), ["fix", "database"]);
+  assert.deepEqual(inferLabels("test(database): verify migration", []), ["testing", "database"]);
   assert.deepEqual(inferLabels("docs(ui): document edit states", ["feature"]),
     ["documentation", "ui", "feature"]);
 });
@@ -15,4 +16,5 @@ test("infers the type and scope labels while preserving explicit labels", () => 
 test("rejects malformed titles and unknown scopes", () => {
   assert.throws(() => inferLabels("feature(api): missing supported type"), /type\(scope\)/);
   assert.throws(() => inferLabels("feat(unknown): add support"), /Unknown story scope/);
+  assert.throws(() => inferLabels("refactor(ui): simplify controls"), /No active label/);
 });

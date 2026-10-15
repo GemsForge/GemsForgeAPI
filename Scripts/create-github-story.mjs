@@ -32,9 +32,8 @@ const parseList = (value, option) => {
 
 const typeLabels = new Map([
   ["feat", "feature"],
-  ["fix", "bug"],
-  ["refactor", "refactor"],
-  ["test", "test"],
+  ["fix", "fix"],
+  ["test", "testing"],
   ["docs", "documentation"],
   ["chore", "chore"],
   ["ci", "ci"],
@@ -49,6 +48,9 @@ export function inferLabels(title, explicitLabels = []) {
   const match = /^(feat|fix|refactor|test|docs|chore|ci)\(([a-z0-9-]+)\):\s+/.exec(title);
   if (!match) throw new Error("Title must use type(scope): short imperative description.");
   const [, type, scope] = match;
+  if (!typeLabels.has(type)) {
+    throw new Error(`No active label is configured for story type '${type}'.`);
+  }
   if (!scopeLabels.has(scope)) {
     throw new Error(`Unknown story scope '${scope}'. Use an existing scope label.`);
   }
