@@ -11,11 +11,7 @@ Feature code provides values and user intent. Components provide structure, styl
 Prefer:
 
 ```tsx
-<GemEmptyState
-  icon="✦"
-  title="No education records"
-  description="The Education table did not return any records."
-/>
+<GemEmptyState icon="✦" title="No education records" description="The Education table did not return any records." />
 ```
 
 over rebuilding the same empty-state markup in every feature.
@@ -67,9 +63,7 @@ Props should describe what a component represents, not how it is implemented.
 Prefer:
 
 ```tsx
-<GemButton tone="primary">
-  Save changes
-</GemButton>
+<GemButton tone="primary">Save changes</GemButton>
 ```
 
 over exposing implementation-specific class names or layout values.

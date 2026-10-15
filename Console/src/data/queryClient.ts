@@ -7,7 +7,8 @@ export const queryClient = new QueryClient({
     queries: {
       staleTime: 30_000,
       gcTime: 5 * 60_000,
-      retry: (failureCount, error) => failureCount < 1 && !(error instanceof APIError && error.status >= 400 && error.status < 500),
+      retry: (failureCount, error) =>
+        failureCount < 1 && !(error instanceof APIError && error.status >= 400 && error.status < 500),
       refetchOnWindowFocus: false,
     },
     mutations: { retry: false },

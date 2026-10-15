@@ -7,11 +7,17 @@ export default defineConfig(({ mode }) => {
 
   return {
     base: mode === "production" ? "/app/" : "/",
-    build: { rollupOptions: { output: { manualChunks: {
-      "design-system": ["tamagui", "@tamagui/config/v5"],
-      "data-cache": ["@tanstack/react-query"],
-      "routing": ["react-router-dom"],
-    } } } },
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            "design-system": ["tamagui", "@tamagui/config/v5"],
+            "data-cache": ["@tanstack/react-query"],
+            routing: ["react-router-dom"],
+          },
+        },
+      },
+    },
     plugins: [react()],
     define: {
       "process.env.NODE_ENV": JSON.stringify(mode),
@@ -24,15 +30,30 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       port: 5173,
-      proxy: Object.fromEntries([
-        "/domains", "/education", "/employment", "/addresses", "/transactions",
-        "/file-metadata", "/file-uploads", "/forgekeeper", "/gemhues", "/health",
-        "/local-databases", "/live-database", "/schema-builder",
-      ].map((path) => [path, {
-        target: apiTarget,
-        bypass: (req: import("node:http").IncomingMessage) =>
-          req.method === "GET" && req.headers.accept?.includes("text/html") ? "/index.html" : undefined,
-      }]))
-    }
+      proxy: Object.fromEntries(
+        [
+          "/domains",
+          "/education",
+          "/employment",
+          "/addresses",
+          "/transactions",
+          "/file-metadata",
+          "/file-uploads",
+          "/forgekeeper",
+          "/gemhues",
+          "/health",
+          "/local-databases",
+          "/live-database",
+          "/schema-builder",
+        ].map((path) => [
+          path,
+          {
+            target: apiTarget,
+            bypass: (req: import("node:http").IncomingMessage) =>
+              req.method === "GET" && req.headers.accept?.includes("text/html") ? "/index.html" : undefined,
+          },
+        ]),
+      ),
+    },
   };
 });

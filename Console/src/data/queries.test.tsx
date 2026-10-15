@@ -3,22 +3,39 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { api } from "../api";
-import { recordQueryKeys, useAddressQuery, useAddressAttachmentMutation, useTransactionImageMutation } from "./recordQueries";
+import {
+  recordQueryKeys,
+  useAddressQuery,
+  useAddressAttachmentMutation,
+  useTransactionImageMutation,
+} from "./recordQueries";
 import { lifeQueryKeys } from "./lifeQueries";
 import { usePageMutation, useCreateTableMutation, workflowQueryKeys } from "./workflowQueries";
 
-afterEach(() => { cleanup(); vi.restoreAllMocks(); });
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+});
 function setup() {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: 30_000 }, mutations: { retry: false } } });
-  const wrapper = ({ children }: { children: ReactNode }) => <QueryClientProvider client={client}>{children}</QueryClientProvider>;
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false, staleTime: 30_000 }, mutations: { retry: false } },
+  });
+  const wrapper = ({ children }: { children: ReactNode }) => (
+    <QueryClientProvider client={client}>{children}</QueryClientProvider>
+  );
   return { client, wrapper };
 }
 
 describe("shared query and mutation layer", () => {
   it("does not request unselected records and isolates detail caches by ID", async () => {
-    const get = vi.spyOn(api, "getAddress").mockImplementation(async (id) => ({ id } as Awaited<ReturnType<typeof api.getAddress>>));
+    const get = vi
+      .spyOn(api, "getAddress")
+      .mockImplementation(async (id) => ({ id }) as Awaited<ReturnType<typeof api.getAddress>>);
     const { wrapper } = setup();
-    const hook = renderHook(({ id }: { id: string | null }) => useAddressQuery(id), { wrapper, initialProps: { id: null } as { id: string | null } });
+    const hook = renderHook(({ id }: { id: string | null }) => useAddressQuery(id), {
+      wrapper,
+      initialProps: { id: null } as { id: string | null },
+    });
     expect(get).not.toHaveBeenCalled();
     hook.rerender({ id: "A" });
     await waitFor(() => expect(hook.result.current.data?.id).toBe("A"));
@@ -46,32 +63,46 @@ describe("shared query and mutation layer", () => {
     const { client, wrapper } = setup();
     client.setQueryData(lifeQueryKeys.addresses, []);
     const hook = renderHook(() => useAddressAttachmentMutation(), { wrapper });
-    await act(async () => { await hook.result.current.mutateAsync({ id: "A", fileID: "file-2" }); });
+    await act(async () => {
+      await hook.result.current.mutateAsync({ id: "A", fileID: "file-2" });
+    });
     expect(client.getQueryData(recordQueryKeys.address("A"))).toEqual(record);
     expect(client.getQueryState(lifeQueryKeys.addresses)?.isInvalidated).toBe(true);
   });
 
   it("removes receipt references and does not corrupt cache on failure", async () => {
     const record = { id: "T", image: null } as Awaited<ReturnType<typeof api.getTransaction>>;
-    const patch = vi.spyOn(api, "patchTransactionImage").mockResolvedValueOnce(record).mockRejectedValueOnce(new Error("Rejected"));
+    const patch = vi
+      .spyOn(api, "patchTransactionImage")
+      .mockResolvedValueOnce(record)
+      .mockRejectedValueOnce(new Error("Rejected"));
     const { client, wrapper } = setup();
     const hook = renderHook(() => useTransactionImageMutation(), { wrapper });
-    await act(async () => { await hook.result.current.mutateAsync({ id: "T", fileID: null }); });
+    await act(async () => {
+      await hook.result.current.mutateAsync({ id: "T", fileID: null });
+    });
     expect(patch).toHaveBeenCalledWith("T", null);
-    await act(async () => { await expect(hook.result.current.mutateAsync({ id: "T", fileID: "bad" })).rejects.toThrow("Rejected"); });
+    await act(async () => {
+      await expect(hook.result.current.mutateAsync({ id: "T", fileID: "bad" })).rejects.toThrow("Rejected");
+    });
     expect(client.getQueryData(recordQueryKeys.transaction("T"))).toEqual(record);
   });
 
   it("invalidates all page scopes and schema after successful writes", async () => {
     vi.spyOn(api, "patchPage").mockResolvedValue({ id: 1 } as Awaited<ReturnType<typeof api.patchPage>>);
-    vi.spyOn(api, "createUserTable").mockResolvedValue({ table: "Inventory" } as Awaited<ReturnType<typeof api.createUserTable>>);
+    vi.spyOn(api, "createUserTable").mockResolvedValue({ table: "Inventory" } as Awaited<
+      ReturnType<typeof api.createUserTable>
+    >);
     const { client, wrapper } = setup();
     const key = workflowQueryKeys.pageList({ kind: "roots" });
     client.setQueryData(key, []);
     client.setQueryData(workflowQueryKeys.schema, {});
     const hook = renderHook(() => ({ page: usePageMutation(), table: useCreateTableMutation() }), { wrapper });
     await act(async () => {
-      await hook.result.current.page.mutateAsync({ id: 1, patch: { title: "Updated", description: "Description", parentID: null } });
+      await hook.result.current.page.mutateAsync({
+        id: 1,
+        patch: { title: "Updated", description: "Description", parentID: null },
+      });
       await hook.result.current.table.mutateAsync("confirmed-token");
     });
     expect(client.getQueryState(key)?.isInvalidated).toBe(true);

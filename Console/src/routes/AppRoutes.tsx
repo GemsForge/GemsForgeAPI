@@ -82,7 +82,7 @@ function Layout() {
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const onError = useCallback((error: unknown) => {
     clearTimeout(timer.current);
-    setNotice({ message: presentError(error).message, kind: "error" });
+    setNotice({ message: error instanceof Error ? error.message : "Request failed.", kind: "error" });
   }, []);
   const onSuccess = useCallback((message: string) => {
     clearTimeout(timer.current);
