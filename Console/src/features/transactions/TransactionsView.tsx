@@ -5,6 +5,7 @@ import { useTransactionQuery, useTransactionImageMutation } from "../../data/rec
 import { QueryFeedback } from "../../components/QueryFeedback";
 import type { ExpenseTransaction } from "../../types";
 import { AttachmentControl } from "../../components/AttachmentControl";
+import { GemEmptyState, GemRecordCard, GemRecordList } from "../../components/ui";
 
 interface TransactionsViewProps {
   records: ExpenseTransaction[];
@@ -30,18 +31,14 @@ export function TransactionsView({ records }: TransactionsViewProps) {
       </div>
 
       {records.length === 0 ? (
-        <div className="empty-state"><div className="empty-icon">$</div><h3>No expense transactions</h3><p>The Transactions table did not return any records.</p></div>
+        <GemEmptyState icon="$" title="No expense transactions" description="The Transactions table did not return any records." />
       ) : (
         <div className="transaction-layout">
-          <div className="transaction-list" aria-label="Expense transactions">
-            {paging.items.map((record) => (
-              <button className={`transaction-card ${selectedID === record.id ? "selected" : ""}`} key={record.id} onClick={() => setSelectedID(record.id)}>
-                <span className="transaction-icon">$</span>
-                <span className="transaction-card-copy"><strong>{record.item}</strong><small>{record.transactionDate || "Undated"} · {record.id}</small></span>
-                <span className="transaction-total">{formatAmount(record.total ?? record.paidPrice)}</span>
-              </button>
-            ))}
-          </div>
+          <GemRecordList className="transaction-list" records={paging.items} label="Expense transactions" getKey={(record) => record.id} renderRecord={(record) => (
+            <GemRecordCard className="transaction-card" icon="$" title={record.item}
+              subtitle={`${record.transactionDate || "Undated"} · ${record.id}`} status={formatAmount(record.total ?? record.paidPrice)}
+              selected={selectedID === record.id} onSelect={() => setSelectedID(record.id)} />
+          )} />
           <div><QueryFeedback query={detail} />{selectedRecord ? <TransactionDetail key={selectedRecord.id} record={selectedRecord} onAttachment={async (metadata) => { await attachment.mutateAsync({ id: selectedRecord.id, fileID: metadata?.id ?? null }); }} /> : !selectedID && <div className="detail-placeholder"><span>$</span><p>Select an expense transaction to view its details.</p></div>}</div>
         </div>
       )}

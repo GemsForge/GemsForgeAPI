@@ -6,3 +6,5 @@ export { GemEmptyState } from "./GemEmptyState";
 export { GemLoadingState } from "./GemLoadingState";
 export { GemSectionHeader } from "./GemSectionHeader";
 export { GemStatusPill } from "./GemStatusPill";
+export { GemRecordCard } from "./GemRecordCard";
+export { GemRecordList } from "./GemRecordList";

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useEducationRecordQuery } from "../../data/recordQueries";
 import { QueryFeedback } from "../../components/QueryFeedback";
 import type { Education } from "../../types";
+import { GemEmptyState, GemRecordCard, GemRecordList } from "../../components/ui";
 
 interface EducationViewProps {
   records: Education[];
@@ -28,25 +29,13 @@ export function EducationView({ records }: EducationViewProps) {
       </div>
 
       {records.length === 0 ? (
-        <div className="empty-state"><div className="empty-icon">✦</div><h3>No education records</h3><p>The Education table did not return any records.</p></div>
+        <GemEmptyState icon="✦" title="No education records" description="The Education table did not return any records." />
       ) : (
         <div className="education-layout">
-          <div className="education-list" aria-label="Education records">
-            {paging.items.map((record) => (
-              <button
-                className={`education-card ${selectedRecord?.id === record.id ? "selected" : ""}`}
-                key={record.id}
-                onClick={() => setSelectedID(record.id)}
-              >
-                <span className="education-icon">✦</span>
-                <span className="education-card-copy">
-                  <strong>{record.institutionName}</strong>
-                  <small>{record.educationType}</small>
-                </span>
-                <span className="education-status">{record.status}</span>
-              </button>
-            ))}
-          </div>
+          <GemRecordList className="education-list" records={paging.items} label="Education records" getKey={(record) => record.id} renderRecord={(record) => (
+            <GemRecordCard className="education-card" icon="✦" title={record.institutionName} subtitle={record.educationType}
+              status={record.status} selected={selectedRecord?.id === record.id} onSelect={() => setSelectedID(record.id)} />
+          )} />
           <div><QueryFeedback query={detail} />{selectedRecord ? <EducationDetail record={selectedRecord} /> : !selectedID && <div className="detail-placeholder"><span>✦</span><p>Select an education record to view its details.</p></div>}</div>
         </div>
       )}
