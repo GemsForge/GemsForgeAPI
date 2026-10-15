@@ -165,6 +165,20 @@ export interface LiveSchema {
   tables: LiveSchemaTable[];
 }
 
+export interface LiveRepositoryMigrationPreview {
+  migrationNames: string[];
+  confirmationToken: string;
+  expiresAt: string;
+  status: string;
+}
+
+export interface LiveRepositoryMigrationExecution {
+  migrationNames: string[];
+  backupFileName: string;
+  backupSizeBytes: number;
+  status: string;
+}
+
 export interface TableBuilderColumn {
   name: string;
   dataType: "ANY" | "BLOB" | "INTEGER" | "NUMERIC" | "REAL" | "TEXT";

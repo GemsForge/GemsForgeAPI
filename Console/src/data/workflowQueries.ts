@@ -34,6 +34,14 @@ export function usePageMutation() {
 export function useLiveSchemaQuery() {
   return useQuery({ queryKey: workflowQueryKeys.schema, queryFn: ({ signal }) => api.getLiveSchema(signal) });
 }
+export function usePreviewRepositoryMigrationsMutation() {
+  return useMutation({ mutationFn: api.previewRepositoryMigrations });
+}
+export function useExecuteRepositoryMigrationsMutation() {
+  const client = useQueryClient();
+  return useMutation({ mutationFn: api.executeRepositoryMigrations,
+    onSuccess: () => client.invalidateQueries({ queryKey: workflowQueryKeys.schema }) });
+}
 export function useSchemaGuidanceQuery() {
   return useQuery({
     queryKey: workflowQueryKeys.guidance,
