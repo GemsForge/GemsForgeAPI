@@ -112,4 +112,10 @@ describe("Gem Life navigation", () => {
     expect(await screen.findByRole("heading", { name: "Expense Tracker" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Expense Tracker" })).toHaveAttribute("aria-current", "page");
   });
+  it("renders the live database migration screen from a direct URL", async () => {
+    vi.spyOn(api, "getLiveSchema").mockResolvedValue({ databaseName: "GemLife", tableCount: 1, tables: [] });
+    setup("/live-database");
+    expect(await screen.findByRole("heading", { name: "Repository migrations" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Live Database" })).toHaveAttribute("aria-current", "page");
+  });
 });

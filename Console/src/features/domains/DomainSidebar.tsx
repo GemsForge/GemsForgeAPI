@@ -13,6 +13,7 @@ const resources = [
   ["/transactions", "Expense Tracker", "Life-area records", "$"],
   ["/local-databases", "Local Databases", "Safe test database creation", "⌘"],
   ["/schema-builder", "Schema Builder", "Build, import, and inspect", "▦"],
+  ["/live-database", "Live Database", "Preview and apply migrations", "⇄"],
 ] as const;
 
 export function DomainSidebar({ domains, onRefresh }: { domains: Domain[]; onRefresh: () => void }) {

@@ -49,6 +49,9 @@ const LocalDatabaseView = lazy(() =>
 const SchemaBuilderView = lazy(() =>
   import("../features/schema/SchemaBuilderView").then((module) => ({ default: module.SchemaBuilderView })),
 );
+const LiveDatabaseMigrationView = lazy(() =>
+  import("../features/schema/LiveDatabaseMigrationView").then((module) => ({ default: module.LiveDatabaseMigrationView })),
+);
 
 type Notifications = { onError: (error: unknown) => void; onSuccess: (message: string) => void };
 
@@ -211,6 +214,9 @@ function Databases() {
 function Schema() {
   return <SchemaBuilderView {...useOutletContext<Notifications>()} />;
 }
+function LiveDatabase() {
+  return <LiveDatabaseMigrationView {...useOutletContext<Notifications>()} />;
+}
 function NotFound() {
   return (
     <section>
@@ -239,6 +245,7 @@ export function AppRoutes() {
         <Route path="expenses" element={<Navigate to="/transactions" replace />} />
         <Route path="local-databases" element={<Databases />} />
         <Route path="schema-builder" element={<Schema />} />
+        <Route path="live-database" element={<LiveDatabase />} />
         <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>

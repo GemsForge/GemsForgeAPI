@@ -123,6 +123,15 @@ export const api = {
       body: JSON.stringify(payload),
     }),
   getLiveSchema: (signal?: AbortSignal) => request<LiveSchema>("/live-database/schema", { signal }),
+  previewRepositoryMigrations: () =>
+    request<import("./types").LiveRepositoryMigrationPreview>("/live-database/repository-migrations/preview", {
+      method: "POST",
+    }),
+  executeRepositoryMigrations: (confirmationToken: string) =>
+    request<import("./types").LiveRepositoryMigrationExecution>("/live-database/repository-migrations/execute", {
+      method: "POST",
+      body: JSON.stringify({ confirmationToken }),
+    }),
   getSchemaBuilderGuidance: (signal?: AbortSignal) =>
     request<SchemaBuilderGuidance>("/schema-builder/metadata", { signal }),
   previewUserTable: (definition: TableBuilderRequest) =>
