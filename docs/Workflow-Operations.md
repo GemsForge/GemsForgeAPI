@@ -29,6 +29,11 @@ runner-local paths and receives no production database or production secrets.
 The GitHub `prod` environment should remain protected by required reviewers
 and must not be referenced by pull-request workflows.
 
+To refresh the local FIT copy, stop processes that can write to either file and
+run `Scripts/refresh-fit-database.sh` with an approved source database, the FIT
+target, and the FIT backup directory. The script refuses to use the same source
+and target and refuses target names other than `GemLife_DB_fit.sqlite`.
+
 ## API and console startup
 
 From the repository root:
