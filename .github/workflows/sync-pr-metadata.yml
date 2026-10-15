@@ -559,8 +559,11 @@ jobs:
                   });
                   core.notice("Deleted merged PR source branch " + sourceBranch + ".");
                 } catch (error) {
-                  if (error.status === 404 || error.status === 422) {
-                    core.notice("Source branch " + sourceBranch + " was already deleted or unavailable.");
+                  if (error.status === 403 || error.status === 404 || error.status === 422) {
+                    core.notice(
+                      "Source branch " + sourceBranch +
+                      " was not deleted because branch cleanup is unavailable to this workflow token.",
+                    );
                   } else {
                     throw error;
                   }

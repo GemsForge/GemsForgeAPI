@@ -24,7 +24,7 @@ export function validateSubject(subject, rules = policy) {
 
 function isStandardMergeCommit(oid, subject) {
   const parents = git(["show", "-s", "--format=%P", requireCommit(oid)]).split(/\s+/).filter(Boolean);
-  return parents.length > 1 && /^Merge (?:branch|remote-tracking branch) '.+'(?: into .+)?$/.test(subject);
+  return parents.length > 1 && /^(?:Merge (?:branch|remote-tracking branch) '.+'(?: into .+)?|Merge pull request #[1-9]\d* from .+)$/.test(subject);
 }
 
 function requireCommit(oid) {
