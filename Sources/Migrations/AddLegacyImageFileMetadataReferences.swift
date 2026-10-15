@@ -4,7 +4,9 @@ import Fluent
 struct AddGemHueImageFileMetadataReference: AsyncMigration {
     func prepare(on database: any Database) async throws {
         try await database.schema(GemHueImage.schema)
-            .field("FileMetadataID", .string)
+            .field("FileMetadataID", .string, .references(
+                FileMetadata.schema, "FileMetadataID", onDelete: .setNull, onUpdate: .cascade
+            ))
             .update()
     }
 
@@ -19,7 +21,9 @@ struct AddGemHueImageFileMetadataReference: AsyncMigration {
 struct AddServiceLogoFileMetadataReference: AsyncMigration {
     func prepare(on database: any Database) async throws {
         try await database.schema(ServiceLogoAsset.schema)
-            .field("FileMetadataID", .string)
+            .field("FileMetadataID", .string, .references(
+                FileMetadata.schema, "FileMetadataID", onDelete: .setNull, onUpdate: .cascade
+            ))
             .update()
     }
 

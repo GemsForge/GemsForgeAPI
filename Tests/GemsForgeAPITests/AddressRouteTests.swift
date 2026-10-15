@@ -8,6 +8,7 @@ final class AddressRouteTests: XCTestCase {
         try await withApp(configure: { app in
             app.databases.use(.sqlite(.memory), as: .sqlite)
             app.migrations.add(CreateAddresses())
+            app.migrations.add(CreateFileMetadata())
             app.migrations.add(AddAddressAttachmentReference())
             try await app.autoMigrate()
             registerAddressRoutes(app)
@@ -89,6 +90,7 @@ final class AddressRouteTests: XCTestCase {
         try await withApp(configure: { app in
             app.databases.use(.sqlite(.memory), as: .sqlite)
             app.migrations.add(CreateAddresses())
+            app.migrations.add(CreateFileMetadata())
             app.migrations.add(AddAddressAttachmentReference())
             try await app.autoMigrate()
             registerAddressRoutes(app)
