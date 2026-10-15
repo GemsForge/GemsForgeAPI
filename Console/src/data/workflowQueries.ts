@@ -39,8 +39,10 @@ export function usePreviewRepositoryMigrationsMutation() {
 }
 export function useExecuteRepositoryMigrationsMutation() {
   const client = useQueryClient();
-  return useMutation({ mutationFn: api.executeRepositoryMigrations,
-    onSuccess: () => client.invalidateQueries({ queryKey: workflowQueryKeys.schema }) });
+  return useMutation({
+    mutationFn: api.executeRepositoryMigrations,
+    onSuccess: () => client.invalidateQueries({ queryKey: workflowQueryKeys.schema }),
+  });
 }
 export function useSchemaGuidanceQuery() {
   return useQuery({

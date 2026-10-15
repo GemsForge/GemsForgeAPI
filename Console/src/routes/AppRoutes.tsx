@@ -50,7 +50,9 @@ const SchemaBuilderView = lazy(() =>
   import("../features/schema/SchemaBuilderView").then((module) => ({ default: module.SchemaBuilderView })),
 );
 const LiveDatabaseMigrationView = lazy(() =>
-  import("../features/schema/LiveDatabaseMigrationView").then((module) => ({ default: module.LiveDatabaseMigrationView })),
+  import("../features/schema/LiveDatabaseMigrationView").then((module) => ({
+    default: module.LiveDatabaseMigrationView,
+  })),
 );
 
 type Notifications = { onError: (error: unknown) => void; onSuccess: (message: string) => void };
