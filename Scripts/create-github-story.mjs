@@ -4,7 +4,7 @@ const usage = `Usage: node Scripts/create-github-story.mjs --title "..." [option
 
 Options:
   --body TEXT              Markdown issue body
-  --labels a,b             Labels to apply
+  --labels a,b             Additional labels to apply (type and scope are inferred)
   --assignees a,b          GitHub usernames to assign
   --milestone NUMBER       Milestone number
   --parent-issue NUMBER    Native parent/sub-issue relationship
@@ -29,6 +29,34 @@ const parseList = (value, option) => {
   }
   return [...new Set(values)];
 };
+
+const typeLabels = new Map([
+  ["feat", "feature"],
+  ["fix", "fix"],
+  ["refactor", "refactor"],
+  ["test", "testing"],
+  ["docs", "documentation"],
+  ["chore", "chore"],
+  ["ci", "ci"],
+]);
+
+const scopeLabels = new Set([
+  "api", "ci", "database", "infrastructure", "model", "schema", "security",
+  "service", "swift", "testing", "ui", "vapor",
+]);
+
+export function inferLabels(title, explicitLabels = []) {
+  const match = /^(feat|fix|refactor|test|docs|chore|ci)\(([a-z0-9-]+)\):\s+/.exec(title);
+  if (!match) throw new Error("Title must use type(scope): short imperative description.");
+  const [, type, scope] = match;
+  if (!typeLabels.has(type)) {
+    throw new Error(`No active label is configured for story type '${type}'.`);
+  }
+  if (!scopeLabels.has(scope)) {
+    throw new Error(`Unknown story scope '${scope}'. Use an existing scope label.`);
+  }
+  return [...new Set([typeLabels.get(type), scope, ...explicitLabels])];
+}
 
 const parseArgs = (args) => {
   const options = { labels: [], assignees: [], blockedBy: [], blocking: [] };
@@ -62,9 +90,10 @@ const parseArgs = (args) => {
 const runGh = (args) => JSON.parse(execFileSync("gh", args, { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }));
 
 export function createStory(options, run = runGh) {
+  const labels = inferLabels(options.title, options.labels);
   const issueArgs = ["api", `repos/${options.repo}/issues`, "--method", "POST", "-f", `title=${options.title}`];
   if (options.body) issueArgs.push("-f", `body=${options.body}`);
-  for (const label of options.labels) issueArgs.push("-f", `labels[]=${label}`);
+  for (const label of labels) issueArgs.push("-f", `labels[]=${label}`);
   for (const assignee of options.assignees) issueArgs.push("-f", `assignees[]=${assignee}`);
   if (options.milestone) issueArgs.push("-f", `milestone=${options.milestone}`);
   const issue = run(issueArgs);
