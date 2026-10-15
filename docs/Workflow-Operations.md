@@ -5,7 +5,10 @@ console, live SQLite migrations, and GitHub workflow automation.
 
 ## Local configuration
 
-The API reads the selected SQLite database from DATABASE_PATH. Live
+The API reads the selected SQLite database from DATABASE_PATH. Set
+`GEMLIFE_ENVIRONMENT` to `dev`, `fit`, or `prod` so the active environment is
+explicit in startup logs. If omitted, the API uses the safe `dev` default;
+it never defaults to `prod`. Live
 migrations also require LIVE_DATABASE_BACKUP_DIRECTORY.
 
 For terminal launches, define both values in the ignored repository .env:
