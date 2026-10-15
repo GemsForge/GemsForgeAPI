@@ -22,6 +22,11 @@ export function validateSubject(subject, rules = policy) {
   return errors;
 }
 
+function isStandardMergeCommit(oid, subject) {
+  const parents = git(["show", "-s", "--format=%P", requireCommit(oid)]).split(/\s+/).filter(Boolean);
+  return parents.length > 1 && /^Merge (?:branch|remote-tracking branch) '.+'(?: into .+)?$/.test(subject);
+}
+
 function requireCommit(oid) {
   if (!oidPattern.test(oid)) throw new Error("Invalid or missing commit SHA.");
   try { git(["cat-file", "-e", `${oid}^{commit}`]); }
@@ -46,6 +51,7 @@ export function validateCommits(commits) {
   let failures = 0;
   for (const oid of new Set(commits)) {
     const subject = execFileSync("git", ["show", "-s", "--format=%B", requireCommit(oid)], { encoding: "utf8" }).split(/\r?\n/, 1)[0];
+    if (isStandardMergeCommit(oid, subject)) continue;
     const errors = validateSubject(subject);
     if (errors.length) {
       failures++;

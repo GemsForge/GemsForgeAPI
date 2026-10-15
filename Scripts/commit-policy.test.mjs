@@ -127,9 +127,12 @@ test("CI handles push ranges, newly created branches, deletion, and unavailable 
   const missing = f.event("push", { ...payload, before: "f".repeat(40) });
   assert.notEqual(missing.status, 0); assert.match(missing.stderr, /Fetch the remote history/);
 });
-test("merge and revert messages have no blanket exemption", (t) => {
+test("standard Git merge commits are allowed, but arbitrary merge messages are not", (t) => {
   const f = fixture(t); f.git("switch", "-c", "feature"); f.commit("feat(ci): #173 add example");
-  f.git("switch", "master"); f.git("merge", "--no-ff", "feature", "-m", "Merge feature");
+  f.git("switch", "master"); f.git("merge", "--no-ff", "feature");
+  assert.equal(f.push("master").status, 0);
+  f.git("switch", "-c", "invalid-merge", f.baseline); f.commit("feat(ci): #173 add another example");
+  f.git("switch", "master"); f.git("merge", "--no-ff", "invalid-merge", "-m", "Merge feature");
   assert.notEqual(f.push("master").status, 0);
 });
 test("subject CLI never executes shell-looking descriptions", (t) => {
