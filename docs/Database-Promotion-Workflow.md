@@ -42,6 +42,8 @@ No PROD approval is valid without a successful FIT rehearsal.
 - Confirm the PROD environment is selected explicitly; never rely on a default.
 - Confirm the backup directory is outside the repository and is writable.
 - Obtain the required PROD approval before execution.
+- Set `GEMLIFE_PROD_MIGRATION_ENABLED=true` only for the approved migration
+  session, then remove or disable it afterward.
 
 ### 4. Back up before changing PROD
 
@@ -88,4 +90,3 @@ The procedure is considered rehearsed when a non-PROD run demonstrates that:
 - A migration preview can be reviewed before execution.
 - Schema and API verification can detect a failed change.
 - A separate copy can be restored without modifying PROD.
-
