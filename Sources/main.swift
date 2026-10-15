@@ -43,6 +43,7 @@ enum EntryPoint {
         let imageConfiguration = LocalImageUploadConfiguration.fromEnvironment()
         registerLocalImageUploadRoutes(app, configuration: imageConfiguration)
         registerFileContentRoutes(app, configuration: imageConfiguration)
+        registerLegacyAttachmentMigrationRoutes(app, configuration: imageConfiguration)
         registerServiceAccountRoutes(app)
         registerServiceLogoRoutes(app)
         registerForgeKeeperRoutes(app)

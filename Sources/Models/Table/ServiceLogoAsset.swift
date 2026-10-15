@@ -36,6 +36,10 @@ final class ServiceLogoAsset: Model, @unchecked Sendable {
     @OptionalField(key: "LogoKey")
     var logoKey: String?
 
+    /// New local-file reference populated by the legacy logo migration.
+    @OptionalField(key: "FileMetadataID")
+    var fileMetadataID: String?
+
     init() {}
 }
 

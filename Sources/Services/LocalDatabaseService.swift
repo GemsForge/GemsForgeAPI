@@ -29,6 +29,8 @@ enum LocalDatabaseProfile: String, Codable, CaseIterable, Sendable {
             "CreateForgeKeeper",
             "CreateGemHues",
             "CreateGemHueImages",
+            "AddGemHueImageFileMetadataReference",
+            "AddServiceLogoFileMetadataReference",
             "CreateHomeInventory",
             "AddAddressAttachmentReference",
             "AddServiceAccountAttachmentReference",
@@ -52,9 +54,11 @@ enum LocalDatabaseProfile: String, Codable, CaseIterable, Sendable {
             app.migrations.add(CreateFileMetadata())
             app.migrations.add(CreateServiceAccounts())
             app.migrations.add(CreateServiceLogoAssets())
+            app.migrations.add(AddServiceLogoFileMetadataReference())
             app.migrations.add(CreateForgeKeeper())
             app.migrations.add(CreateGemHues())
             app.migrations.add(CreateGemHueImages())
+            app.migrations.add(AddGemHueImageFileMetadataReference())
             app.migrations.add(CreateHomeInventory())
             app.migrations.add(AddAddressAttachmentReference())
             app.migrations.add(AddServiceAccountAttachmentReference())
