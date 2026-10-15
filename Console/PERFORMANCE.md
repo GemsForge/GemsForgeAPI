@@ -2,14 +2,14 @@
 
 M3 measurements from production Vite builds (decimal KB, minified, before gzip):
 
-| Measure | Before #148 | After #148 |
-| --- | --- | --- |
-| Largest JavaScript file | 576.87 KB | 231.13 KB |
-| Design-system chunk | Part of the single bundle | 221.86 KB |
-| Query/cache chunk | Part of the single bundle | 44.75 KB |
-| Router chunk | Part of the single bundle | 38.32 KB |
-| Largest feature chunk (Schema Builder) | Eagerly included | 12.18 KB, loaded on demand |
-| Rendered data rows for a 1,000-row table | 1,000 | 50 per page |
+| Measure                                  | Before #148               | After #148                 |
+| ---------------------------------------- | ------------------------- | -------------------------- |
+| Largest JavaScript file                  | 576.87 KB                 | 231.13 KB                  |
+| Design-system chunk                      | Part of the single bundle | 221.86 KB                  |
+| Query/cache chunk                        | Part of the single bundle | 44.75 KB                   |
+| Router chunk                             | Part of the single bundle | 38.32 KB                   |
+| Largest feature chunk (Schema Builder)   | Eagerly included          | 12.18 KB, loaded on demand |
+| Rendered data rows for a 1,000-row table | 1,000                     | 50 per page                |
 
 The largest file is about 60% smaller, but that is **not** a 60% startup-time or
 total-download claim: shared chunks still load initially and chunk boundaries

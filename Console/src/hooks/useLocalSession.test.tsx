@@ -6,11 +6,19 @@ import { api } from "../api";
 import { useLocalSession } from "./useLocalSession";
 import { LocalSession } from "../components/LocalSession";
 
-beforeEach(() => { vi.spyOn(api, "getHealth").mockResolvedValue(true); });
-afterEach(() => { cleanup(); vi.restoreAllMocks(); delete window.webkit; });
+beforeEach(() => {
+  vi.spyOn(api, "getHealth").mockResolvedValue(true);
+});
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+  delete window.webkit;
+});
 function setup() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  const wrapper = ({ children }: { children: ReactNode }) => <QueryClientProvider client={client}>{children}</QueryClientProvider>;
+  const wrapper = ({ children }: { children: ReactNode }) => (
+    <QueryClientProvider client={client}>{children}</QueryClientProvider>
+  );
   return { client, wrapper };
 }
 describe("device-local session lifecycle", () => {
@@ -20,8 +28,18 @@ describe("device-local session lifecycle", () => {
     const hook = renderHook(useLocalSession, { wrapper });
     await waitFor(() => expect(hook.result.current.health.data).toBe(true));
     let signal!: AbortSignal;
-    void client.fetchQuery({ queryKey: ["pending-record"], queryFn: (context) => { signal = context.signal; return new Promise(() => {}); } }).catch(() => {});
-    await act(async () => { expect(await hook.result.current.end()).toBe(true); });
+    void client
+      .fetchQuery({
+        queryKey: ["pending-record"],
+        queryFn: (context) => {
+          signal = context.signal;
+          return new Promise(() => {});
+        },
+      })
+      .catch(() => {});
+    await act(async () => {
+      expect(await hook.result.current.end()).toBe(true);
+    });
     expect(signal.aborted).toBe(true);
     expect(hook.result.current.active).toBe(false);
     expect(client.getQueryData(["addresses"])).toBeUndefined();
@@ -32,28 +50,50 @@ describe("device-local session lifecycle", () => {
   it("refuses to end during a pending write", async () => {
     const { client, wrapper } = setup();
     let finish!: () => void;
-    const mutation = client.getMutationCache().build(client, { mutationFn: () => new Promise<void>((resolve) => { finish = resolve; }) });
+    const mutation = client.getMutationCache().build(client, {
+      mutationFn: () =>
+        new Promise<void>((resolve) => {
+          finish = resolve;
+        }),
+    });
     const hook = renderHook(useLocalSession, { wrapper });
     let pending!: Promise<unknown>;
-    act(() => { pending = mutation.execute(undefined); });
+    act(() => {
+      pending = mutation.execute(undefined);
+    });
     await waitFor(() => expect(client.isMutating()).toBe(1));
-    await act(async () => { expect(await hook.result.current.end()).toBe(false); });
+    await act(async () => {
+      expect(await hook.result.current.end()).toBe(false);
+    });
     expect(hook.result.current.active).toBe(true);
     expect(hook.result.current.error).toContain("save to finish");
-    await act(async () => { finish(); await pending; });
+    await act(async () => {
+      finish();
+      await pending;
+    });
   });
   it("notifies the native boundary without credentials or paths", async () => {
     const postMessage = vi.fn();
     window.webkit = { messageHandlers: { gemLife: { postMessage } } };
     const { wrapper } = setup();
     const hook = renderHook(useLocalSession, { wrapper });
-    await act(async () => { await hook.result.current.end(); });
+    await act(async () => {
+      await hook.result.current.end();
+    });
     expect(postMessage).toHaveBeenCalledWith(expect.objectContaining({ type: "session", payload: { action: "end" } }));
   });
   it("unmounts drafts on end and shows honest offline feedback", async () => {
     vi.mocked(api.getHealth).mockRejectedValue(new Error("Offline"));
     const { wrapper } = setup();
-    render(<LocalSession><label>Draft<input defaultValue="" /></label></LocalSession>, { wrapper });
+    render(
+      <LocalSession>
+        <label>
+          Draft
+          <input defaultValue="" />
+        </label>
+      </LocalSession>,
+      { wrapper },
+    );
     expect(await screen.findByText("Local API unavailable")).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText("Draft"), { target: { value: "Unsaved" } });
     fireEvent.click(screen.getByRole("button", { name: "End local session" }));

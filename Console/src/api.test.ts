@@ -16,7 +16,10 @@ describe("standardized API failures", () => {
   it("retains upload HTTP status and lets fetch set multipart boundaries", async () => {
     const fetch = vi.fn().mockResolvedValue(new Response("not JSON", { status: 413, statusText: "Too large" }));
     vi.stubGlobal("fetch", fetch);
-    await expect(api.uploadImage(new File(["x"], "image.png"), "image", "Address", "A")).rejects.toMatchObject({ status: 413, message: "413 Too large" });
+    await expect(api.uploadImage(new File(["x"], "image.png"), "image", "Address", "A")).rejects.toMatchObject({
+      status: 413,
+      message: "413 Too large",
+    });
     expect(fetch.mock.calls[0][1].headers).toBeUndefined();
     expect(fetch.mock.calls[0][1].body).toBeInstanceOf(FormData);
   });
@@ -28,11 +31,17 @@ describe("file presentation API", () => {
     vi.stubGlobal("fetch", fetch);
     const controller = new AbortController();
     expect(await api.getFileMetadata("file/1", controller.signal)).toEqual({ id: "file/1" });
-    expect(fetch).toHaveBeenCalledWith("/file-metadata/file%2F1", expect.objectContaining({ signal: controller.signal }));
+    expect(fetch).toHaveBeenCalledWith(
+      "/file-metadata/file%2F1",
+      expect.objectContaining({ signal: controller.signal }),
+    );
   });
 
   it("retains the HTTP status when metadata is missing", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({ reason: "Missing" }), { status: 404 })));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(new Response(JSON.stringify({ reason: "Missing" }), { status: 404 })),
+    );
     await expect(api.getFileMetadata("missing")).rejects.toMatchObject({ status: 404, message: "Missing" });
   });
 

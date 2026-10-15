@@ -37,7 +37,13 @@ export const tamaguiConfig = createTamagui({
   tokens: {
     ...defaultConfig.tokens,
     color: gemColors,
-    space: { ...defaultConfig.tokens.space, gemCompact: gemSpacing.compact, gemControl: gemSpacing.control, gemSection: gemSpacing.section, gemPage: gemSpacing.page },
+    space: {
+      ...defaultConfig.tokens.space,
+      gemCompact: gemSpacing.compact,
+      gemControl: gemSpacing.control,
+      gemSection: gemSpacing.section,
+      gemPage: gemSpacing.page,
+    },
     radius: { ...defaultConfig.tokens.radius, gemControl: gemRadii.control, gemCard: gemRadii.card },
   },
   themes: {

@@ -6,18 +6,18 @@ route contracts, visual palette, and native/web boundary when extending it.
 
 ## Documentation map
 
-| Concern | Source |
-| --- | --- |
-| Architecture and state ownership | [ARCHITECTURE.md](ARCHITECTURE.md) |
-| Component API conventions | [COMPONENT_API.md](COMPONENT_API.md) |
-| Labels, keyboard, focus, contrast | [ACCESSIBILITY.md](ACCESSIBILITY.md) |
-| Breakpoints and browser fixture | [RESPONSIVE_TESTING.md](RESPONSIVE_TESTING.md) |
-| Caching, pagination, bundle measurements | [PERFORMANCE.md](PERFORMANCE.md) |
-| Device-local session scope | [LOCAL_ACCESS.md](LOCAL_ACCESS.md) |
-| Native security and production packaging | [Host README](../GemLifeHost/README.md) |
-| Attachment lifecycle | [Attachment contract](../docs/Attachment-Lifecycle.md) |
-| Commit types and push checks | [Commit policy](../docs/Commit-Policy.md) |
-| Issues, relationships, PRs, project Status | [Issue workflow](../.github/ISSUE_WORKFLOW.md) |
+| Concern                                    | Source                                                 |
+| ------------------------------------------ | ------------------------------------------------------ |
+| Architecture and state ownership           | [ARCHITECTURE.md](ARCHITECTURE.md)                     |
+| Component API conventions                  | [COMPONENT_API.md](COMPONENT_API.md)                   |
+| Labels, keyboard, focus, contrast          | [ACCESSIBILITY.md](ACCESSIBILITY.md)                   |
+| Breakpoints and browser fixture            | [RESPONSIVE_TESTING.md](RESPONSIVE_TESTING.md)         |
+| Caching, pagination, bundle measurements   | [PERFORMANCE.md](PERFORMANCE.md)                       |
+| Device-local session scope                 | [LOCAL_ACCESS.md](LOCAL_ACCESS.md)                     |
+| Native security and production packaging   | [Host README](../GemLifeHost/README.md)                |
+| Attachment lifecycle                       | [Attachment contract](../docs/Attachment-Lifecycle.md) |
+| Commit types and push checks               | [Commit policy](../docs/Commit-Policy.md)              |
+| Issues, relationships, PRs, project Status | [Issue workflow](../.github/ISSUE_WORKFLOW.md)         |
 
 ## Names and folders
 
@@ -52,14 +52,14 @@ window, WebKit and native capability code belongs in GemLifeHost.
 `src/design-system/tamagui.config.ts` is the token definition. It extends the
 installed Tamagui configuration export `@tamagui/config/v5`.
 
-| Token | Role |
-| --- | --- |
-| gemCanvas | Application background |
-| gemPanel / gemPanelLight | Grouped surfaces and borders |
-| gemInk / gemMuted | Primary and secondary text |
-| gemMint / gemMintDark | Primary action and supporting surface |
-| gemGold | Reference/status accent |
-| gemDanger | Error emphasis; use readable contrasting text |
+| Token                    | Role                                          |
+| ------------------------ | --------------------------------------------- |
+| gemCanvas                | Application background                        |
+| gemPanel / gemPanelLight | Grouped surfaces and borders                  |
+| gemInk / gemMuted        | Primary and secondary text                    |
+| gemMint / gemMintDark    | Primary action and supporting surface         |
+| gemGold                  | Reference/status accent                       |
+| gemDanger                | Error emphasis; use readable contrasting text |
 
 Semantic spacing is gemCompact 8, gemControl 12, gemSection 24, gemPage 32;
 radii are gemControl 8 and gemCard 16. Typography uses the system-font stack
@@ -138,12 +138,12 @@ a server contract. Keep the API on loopback; remote deployment remains separate.
 
 ## Configuration and release workflow
 
-| Setting | Where it belongs |
-| --- | --- |
-| DATABASE_PATH | Local Xcode Run scheme; ignored .env/export for terminal launcher |
+| Setting                        | Where it belongs                                                  |
+| ------------------------------ | ----------------------------------------------------------------- |
+| DATABASE_PATH                  | Local Xcode Run scheme; ignored .env/export for terminal launcher |
 | LIVE_DATABASE_BACKUP_DIRECTORY | Local Xcode Run scheme; ignored .env/export for terminal launcher |
-| PROJECTS_TOKEN | GitHub repository Actions secret only |
-| GEM_LIFE_CONSOLE_URL | Optional local host scheme/environment; loopback URL only |
+| PROJECTS_TOKEN                 | GitHub repository Actions secret only                             |
+| GEM_LIFE_CONSOLE_URL           | Optional local host scheme/environment; loopback URL only         |
 
 Never commit secrets to a shared scheme, source file or VITE-prefixed variable.
 Foundation and Darwin imports in the Swift launcher are platform modules, not

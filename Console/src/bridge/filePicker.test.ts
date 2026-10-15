@@ -2,7 +2,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { hasNativeFilePicker, pickNativeFile } from "./filePicker";
 import type { GemLifeBridgeMessage } from "./index";
 
-afterEach(() => { delete window.webkit; vi.useRealTimers(); });
+afterEach(() => {
+  delete window.webkit;
+  vi.useRealTimers();
+});
 function native() {
   const postMessage = vi.fn();
   window.webkit = { messageHandlers: { gemLife: { postMessage } } };

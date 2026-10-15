@@ -7,6 +7,13 @@ export function usePagedRecords<T>(records: readonly T[], requestedSize = 50) {
   const pageCount = Math.max(1, Math.ceil(records.length / pageSize));
   const page = Math.min(Math.max(0, requestedPage), pageCount - 1);
   const items = useMemo(() => records.slice(page * pageSize, (page + 1) * pageSize), [records, page, pageSize]);
-  return { items, page, pageSize, pageCount, total: records.length,
-    previous: () => setPage(Math.max(0, page - 1)), next: () => setPage(Math.min(pageCount - 1, page + 1)) };
+  return {
+    items,
+    page,
+    pageSize,
+    pageCount,
+    total: records.length,
+    previous: () => setPage(Math.max(0, page - 1)),
+    next: () => setPage(Math.min(pageCount - 1, page + 1)),
+  };
 }

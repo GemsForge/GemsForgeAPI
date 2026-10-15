@@ -29,7 +29,9 @@ export function GemRecordCard({
       aria-pressed={selected}
       onClick={onSelect}
     >
-      <span className={`${className}-icon`} aria-hidden="true">{icon}</span>
+      <span className={`${className}-icon`} aria-hidden="true">
+        {icon}
+      </span>
       <span className={`${className}-copy`}>
         <strong>{title}</strong>
         <small>{subtitle}</small>

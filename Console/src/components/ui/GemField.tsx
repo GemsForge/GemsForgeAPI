@@ -14,13 +14,7 @@ export function GemField({ label, id, ...props }: GemFieldProps) {
       <Label htmlFor={inputID} color="$gemMuted" fontSize="$3" fontWeight="700">
         {label}
       </Label>
-      <Input
-        {...props}
-        id={inputID}
-        borderColor="$gemPanelLight"
-        color="$gemInk"
-        backgroundColor="$gemCanvas"
-      />
+      <Input {...props} id={inputID} borderColor="$gemPanelLight" color="$gemInk" backgroundColor="$gemCanvas" />
     </YStack>
   );
 }

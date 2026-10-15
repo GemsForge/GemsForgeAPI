@@ -11,7 +11,9 @@ export interface GemEmptyStateProps {
 export function GemEmptyState({ icon = "⌁", title, description }: GemEmptyStateProps) {
   return (
     <YStack className="empty-state" alignItems="center" gap="$2">
-      <span className="empty-icon" aria-hidden="true">{icon}</span>
+      <span className="empty-icon" aria-hidden="true">
+        {icon}
+      </span>
       <h3>{title}</h3>
       <p>{description}</p>
     </YStack>
