@@ -33,6 +33,7 @@ const parseList = (value, option) => {
 const typeLabels = new Map([
   ["feat", "feature"],
   ["fix", "fix"],
+  ["refactor", "refactor"],
   ["test", "testing"],
   ["docs", "documentation"],
   ["chore", "chore"],
