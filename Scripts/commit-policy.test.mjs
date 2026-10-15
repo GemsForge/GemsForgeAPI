@@ -135,6 +135,11 @@ test("standard Git merge commits are allowed, but arbitrary merge messages are n
   f.git("switch", "master"); f.git("merge", "--no-ff", "invalid-merge", "-m", "Merge feature");
   assert.notEqual(f.push("master").status, 0);
 });
+test("GitHub pull-request merge commits are allowed", (t) => {
+  const f = fixture(t); f.git("switch", "-c", "feature"); f.commit("feat(ci): #173 add example");
+  f.git("switch", "master"); f.git("merge", "--no-ff", "feature", "-m", "Merge pull request #212 from GemsForge/feature");
+  assert.equal(f.push("master").status, 0);
+});
 test("subject CLI never executes shell-looking descriptions", (t) => {
   const f = fixture(t);
   const result = f.node("commit-policy.mjs", ["subject"], { input: "test(ci): #173 add $(touch should-not-exist) coverage\n" });
