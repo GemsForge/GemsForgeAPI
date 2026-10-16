@@ -89,6 +89,21 @@ final class EducationRouteTests: XCTestCase {
                 XCTAssertEqual(record.program, "Information Systems")
             }
 
+            try await app.test(.PATCH, "education/EDU-0001", beforeRequest: { request in
+                try request.content.encode(["status": "Completed"])
+            }) { response async throws in
+                XCTAssertEqual(response.status, .ok)
+                let record = try response.content.decode(EducationResponse.self)
+                XCTAssertEqual(record.status, "Completed")
+                XCTAssertEqual(record.institutionName, "Georgia State University")
+            }
+
+            try await app.test(.PATCH, "education/EDU-0001", beforeRequest: { request in
+                try request.content.encode(["id": "OTHER"])
+            }) { response async throws in
+                XCTAssertEqual(response.status, .unprocessableEntity)
+            }
+
             try await app.test(.DELETE, "education/EDU-0001") { response async throws in
                 XCTAssertEqual(response.status, .noContent)
             }
