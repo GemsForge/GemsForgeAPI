@@ -99,30 +99,32 @@ struct UserTableCreationService: Sendable {
         guard let backupConfiguration else { throw UserTableCreationError.backupNotConfigured }
         guard let sqlDatabase = database as? SQLDatabase else { throw UserTableCreationError.sqliteDatabaseRequired }
 
-        let audit = LiveMigrationAuditService(database: database, databaseIdentity: backupConfiguration.databaseIdentity)
-        try await audit.ensureTable()
         let backup: LiveDatabaseBackupResult
         do {
-            backup = try await LiveDatabaseBackupService(configuration: backupConfiguration).createBackup(using: database)
-        } catch let error as LiveDatabaseBackupError {
-            try? await audit.record(migrationName: "create-user-table-\(definition.tableName)", result: "failed", failureDetails: error.description)
-            throw UserTableCreationError.migrationFailed(error.description)
+            backup = try await VerifiedSchemaChangeExecutor.execute(
+                migrationName: "create-user-table-\(definition.tableName)",
+                using: database,
+                backupConfiguration: backupConfiguration,
+                verificationFailureDetails: "The expected table was not found after creation.",
+                apply: {
+                    try await sqlDatabase.raw(SQLQueryString(buildCreateTableSQL(for: definition))).run()
+                },
+                verify: {
+                    let schema = try await LiveSchemaService(database: database).inspect()
+                    return schema.tables.contains { $0.name == definition.tableName }
+                }
+            )
+        } catch let error as VerifiedSchemaChangeExecutionError {
+            switch error {
+            case .backupNotConfigured:
+                throw UserTableCreationError.backupNotConfigured
+            case .backupFailed(let reason), .changeFailed(let reason):
+                throw UserTableCreationError.migrationFailed(reason)
+            case .verificationFailed:
+                throw UserTableCreationError.verificationFailed
+            }
         }
 
-        do {
-            try await sqlDatabase.raw(SQLQueryString(buildCreateTableSQL(for: definition))).run()
-        } catch {
-            try? await audit.record(migrationName: "create-user-table-\(definition.tableName)", result: "failed", backupFileName: backup.backupFileName, failureDetails: error.localizedDescription)
-            throw UserTableCreationError.migrationFailed(error.localizedDescription)
-        }
-
-        let schema = try await LiveSchemaService(database: database).inspect()
-        guard schema.tables.contains(where: { $0.name == definition.tableName }) else {
-            try? await audit.record(migrationName: "create-user-table-\(definition.tableName)", result: "verification-failed", backupFileName: backup.backupFileName)
-            throw UserTableCreationError.verificationFailed
-        }
-
-        try await audit.record(migrationName: "create-user-table-\(definition.tableName)", result: "succeeded", backupFileName: backup.backupFileName)
         return UserTableCreationResponse(table: definition.tableName, backupFileName: backup.backupFileName, backupSizeBytes: backup.backupSizeBytes, status: "created-and-verified")
     }
 
