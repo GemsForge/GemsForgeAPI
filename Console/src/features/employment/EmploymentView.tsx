@@ -5,6 +5,9 @@ import { useEmploymentPatchMutation, useEmploymentRecordQuery } from "../../data
 import { QueryFeedback } from "../../components/QueryFeedback";
 import type { Employment } from "../../types";
 import { GemEmptyState, GemRecordCard, GemRecordList } from "../../components/ui";
+import { useCreateEmploymentMutation } from "../../data/recordQueries";
+import { useAddressesQuery } from "../../data/lifeQueries";
+import { EmploymentCreateForm } from "../create/RecordCreateForms";
 
 interface EmploymentViewProps {
   records: Employment[];
@@ -16,6 +19,9 @@ export function EmploymentView({ records }: EmploymentViewProps) {
   const detail = useEmploymentRecordQuery(selectedID);
   const patch = useEmploymentPatchMutation();
   const selectedRecord = detail.data;
+  const [creating, setCreating] = useState(false);
+  const create = useCreateEmploymentMutation();
+  const addresses = useAddressesQuery(creating);
 
   return (
     <>
@@ -28,8 +34,25 @@ export function EmploymentView({ records }: EmploymentViewProps) {
             Read employment history from the existing Gem Life database. These records are not assigned to a Domain.
           </p>
         </div>
-        <span className="record-count">{records.length} records</span>
+        <div className="button-row">
+          <span className="record-count">{records.length} records</span>
+          <button type="button" onClick={() => setCreating(true)}>
+            Add employment
+          </button>
+        </div>
       </div>
+
+      {creating && (
+        <EmploymentCreateForm
+          addresses={addresses.data ?? []}
+          onCancel={() => setCreating(false)}
+          onCreate={async (payload) => {
+            const created = await create.mutateAsync(payload);
+            setSelectedID(created.id);
+            setCreating(false);
+          }}
+        />
+      )}
 
       {records.length === 0 ? (
         <GemEmptyState

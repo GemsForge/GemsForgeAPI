@@ -10,6 +10,8 @@ import { QueryFeedback } from "../../components/QueryFeedback";
 import type { ExpenseTransaction } from "../../types";
 import { AttachmentControl } from "../../components/AttachmentControl";
 import { GemEmptyState, GemRecordCard, GemRecordList } from "../../components/ui";
+import { useCreateTransactionMutation } from "../../data/recordQueries";
+import { TransactionCreateForm } from "../create/RecordCreateForms";
 
 interface TransactionsViewProps {
   records: ExpenseTransaction[];
@@ -22,6 +24,8 @@ export function TransactionsView({ records }: TransactionsViewProps) {
   const attachment = useTransactionImageMutation();
   const patch = useTransactionPatchMutation();
   const selectedRecord = detail.data;
+  const [creating, setCreating] = useState(false);
+  const create = useCreateTransactionMutation();
 
   return (
     <>
@@ -31,12 +35,27 @@ export function TransactionsView({ records }: TransactionsViewProps) {
           <p className="eyebrow">Life-area records</p>
           <h2>Expense Tracker</h2>
           <p className="muted">
-            Read documented expenses from the existing Transactions table. Service Accounts, categories, and images
-            remain separate follow-up features.
+            Read documented expenses from the existing Transactions table. Images are attached after record creation.
           </p>
         </div>
-        <span className="record-count">{records.length} records</span>
+        <div className="button-row">
+          <span className="record-count">{records.length} records</span>
+          <button type="button" onClick={() => setCreating(true)}>
+            Add transaction
+          </button>
+        </div>
       </div>
+
+      {creating && (
+        <TransactionCreateForm
+          onCancel={() => setCreating(false)}
+          onCreate={async (payload) => {
+            const created = await create.mutateAsync(payload);
+            setSelectedID(created.id);
+            setCreating(false);
+          }}
+        />
+      )}
 
       {records.length === 0 ? (
         <GemEmptyState

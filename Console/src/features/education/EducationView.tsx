@@ -5,6 +5,9 @@ import { useEducationPatchMutation, useEducationRecordQuery } from "../../data/r
 import { QueryFeedback } from "../../components/QueryFeedback";
 import type { Education } from "../../types";
 import { GemEmptyState, GemRecordCard, GemRecordList } from "../../components/ui";
+import { useCreateEducationMutation } from "../../data/recordQueries";
+import { useAddressesQuery } from "../../data/lifeQueries";
+import { EducationCreateForm } from "../create/RecordCreateForms";
 
 interface EducationViewProps {
   records: Education[];
@@ -16,6 +19,9 @@ export function EducationView({ records }: EducationViewProps) {
   const detail = useEducationRecordQuery(selectedID);
   const patch = useEducationPatchMutation();
   const selectedRecord = detail.data;
+  const [creating, setCreating] = useState(false);
+  const create = useCreateEducationMutation();
+  const addresses = useAddressesQuery(creating);
 
   return (
     <>
@@ -28,8 +34,25 @@ export function EducationView({ records }: EducationViewProps) {
             Read education history from the existing Gem Life database. These records are not assigned to a Domain.
           </p>
         </div>
-        <span className="record-count">{records.length} records</span>
+        <div className="button-row">
+          <span className="record-count">{records.length} records</span>
+          <button type="button" onClick={() => setCreating(true)}>
+            Add education
+          </button>
+        </div>
       </div>
+
+      {creating && (
+        <EducationCreateForm
+          addresses={addresses.data ?? []}
+          onCancel={() => setCreating(false)}
+          onCreate={async (payload) => {
+            const created = await create.mutateAsync(payload);
+            setSelectedID(created.id);
+            setCreating(false);
+          }}
+        />
+      )}
 
       {records.length === 0 ? (
         <GemEmptyState
