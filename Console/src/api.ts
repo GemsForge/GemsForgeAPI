@@ -1,9 +1,15 @@
 import type {
   Address,
+  AddressCreate,
   Domain,
+  DomainCreate,
   Education,
+  EducationCreate,
   Employment,
+  EmploymentCreate,
   ExpenseTransaction,
+  ExpenseCategory,
+  ExpenseSubcategory,
   FileMetadata,
   ForgeKeeperPage,
   ForgeKeeperPatch,
@@ -15,6 +21,8 @@ import type {
   LocalDatabaseCreationResult,
   SchemaBuilderGuidance,
   ServiceAccount,
+  ServiceAccountCreate,
+  TransactionCreate,
   TableBuilderRequest,
   UserTableCreationResult,
   UserTablePreview,
@@ -63,6 +71,8 @@ export const api = {
     return true;
   },
   listDomains: (signal?: AbortSignal) => request<Domain[]>("/domains", { signal }),
+  createDomain: (payload: DomainCreate) =>
+    request<Domain>("/domains", { method: "POST", body: JSON.stringify(payload) }),
   listPagesForDomain: (domainID: string, signal?: AbortSignal) =>
     request<ForgeKeeperPage[]>(`/domains/${encodeURIComponent(domainID)}/forgekeeper`, { signal }),
   listRootPages: (signal?: AbortSignal) => request<ForgeKeeperPage[]>("/forgekeeper/roots", { signal }),
@@ -79,6 +89,8 @@ export const api = {
   getGemHueImage: (hueID: string, signal?: AbortSignal) =>
     checkedFetch(`/gemhues/${encodeURIComponent(hueID)}/image`, { signal }),
   listEducation: (signal?: AbortSignal) => request<Education[]>("/education", { signal }),
+  createEducation: (payload: EducationCreate) =>
+    request<Education>("/education", { method: "POST", body: JSON.stringify(payload) }),
   getEducation: (educationID: string, signal?: AbortSignal) =>
     request<Education>(`/education/${encodeURIComponent(educationID)}`, { signal }),
   patchEducation: (educationID: string, patch: Partial<Education>) =>
@@ -87,6 +99,8 @@ export const api = {
       body: JSON.stringify(patch),
     }),
   listEmployment: (signal?: AbortSignal) => request<Employment[]>("/employment", { signal }),
+  createEmployment: (payload: EmploymentCreate) =>
+    request<Employment>("/employment", { method: "POST", body: JSON.stringify(payload) }),
   getEmployment: (employmentID: string, signal?: AbortSignal) =>
     request<Employment>(`/employment/${encodeURIComponent(employmentID)}`, { signal }),
   patchEmployment: (employmentID: string, patch: Partial<Employment>) =>
@@ -95,6 +109,8 @@ export const api = {
       body: JSON.stringify(patch),
     }),
   listAddresses: (signal?: AbortSignal) => request<Address[]>("/addresses", { signal }),
+  createAddress: (payload: AddressCreate) =>
+    request<Address>("/addresses", { method: "POST", body: JSON.stringify(payload) }),
   getAddress: (addressID: string, signal?: AbortSignal) =>
     request<Address>(`/addresses/${encodeURIComponent(addressID)}`, { signal }),
   patchAddress: (addressID: string, patch: Partial<Address>) =>
@@ -103,6 +119,13 @@ export const api = {
       body: JSON.stringify(patch),
     }),
   listTransactions: (signal?: AbortSignal) => request<ExpenseTransaction[]>("/transactions", { signal }),
+  listExpenseCategories: (signal?: AbortSignal) => request<ExpenseCategory[]>("/expense-categories", { signal }),
+  listExpenseSubcategories: (categoryID: number | null, signal?: AbortSignal) =>
+    request<ExpenseSubcategory[]>(`/expense-subcategories${categoryID === null ? "" : `?categoryID=${categoryID}`}`, {
+      signal,
+    }),
+  createTransaction: (payload: TransactionCreate) =>
+    request<ExpenseTransaction>("/transactions", { method: "POST", body: JSON.stringify(payload) }),
   getTransaction: (transactionID: string, signal?: AbortSignal) =>
     request<ExpenseTransaction>(`/transactions/${encodeURIComponent(transactionID)}`, { signal }),
   patchTransaction: (transactionID: string, patch: Partial<ExpenseTransaction>) =>
@@ -111,6 +134,8 @@ export const api = {
       body: JSON.stringify(patch),
     }),
   listServiceAccounts: (signal?: AbortSignal) => request<ServiceAccount[]>("/service-accounts", { signal }),
+  createServiceAccount: (payload: ServiceAccountCreate) =>
+    request<ServiceAccount>("/service-accounts", { method: "POST", body: JSON.stringify(payload) }),
   getServiceAccount: (serviceID: number, signal?: AbortSignal) =>
     request<ServiceAccount>(`/service-accounts/${serviceID}`, { signal }),
   patchServiceAccount: (serviceID: number, patch: Partial<ServiceAccount>) =>

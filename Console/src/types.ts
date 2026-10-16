@@ -4,6 +4,92 @@ export interface Domain {
   description: string;
 }
 
+export type DomainCreate = Pick<Domain, "title" | "description"> & { id?: string };
+export type AddressCreate = Pick<
+  Address,
+  | "id"
+  | "addressType"
+  | "addressLine1"
+  | "addressLine2"
+  | "city"
+  | "state"
+  | "postalCode"
+  | "country"
+  | "startDate"
+  | "endDate"
+  | "addressStatus"
+  | "notes"
+>;
+export type EducationCreate = Pick<
+  Education,
+  | "id"
+  | "educationType"
+  | "institutionName"
+  | "program"
+  | "fieldOfStudy"
+  | "credential"
+  | "credentialID"
+  | "startDate"
+  | "endDate"
+  | "awardedDate"
+  | "status"
+  | "website"
+  | "notes"
+> & { locationAddressID?: string | null };
+export type EmploymentCreate = Pick<
+  Employment,
+  | "id"
+  | "employerName"
+  | "employerType"
+  | "industry"
+  | "website"
+  | "positionTitle"
+  | "employmentType"
+  | "startDate"
+  | "endDate"
+  | "employmentStatus"
+  | "employerContact"
+  | "employerContactNumber"
+  | "employerContactEmail"
+  | "notes"
+> & { workAddressID?: string | null };
+export interface ServiceAccountCreate {
+  service: string;
+  type?: string | null;
+  expenseGroup?: string | null;
+  monthlyAmount?: number | null;
+  interestRate?: number | null;
+  apr?: number | null;
+  due?: string | null;
+  occurrence?: string | null;
+  status?: string | null;
+  since?: string | null;
+  website?: string | null;
+  notes?: string | null;
+  paymentMethod?: string | null;
+  accountNumber?: string | null;
+  associatedAddress?: string | null;
+  serviceKey?: string | null;
+  id?: number;
+}
+export type TransactionCreate = Pick<
+  ExpenseTransaction,
+  | "id"
+  | "receiptID"
+  | "item"
+  | "firstReceiptItem"
+  | "categoryID"
+  | "subcategoryID"
+  | "merchantCode"
+  | "transactionDate"
+  | "quantity"
+  | "regularPrice"
+  | "paidPrice"
+  | "total"
+  | "discount"
+  | "notes"
+>;
+
 export interface Address {
   id: string;
   addressType: string;
@@ -91,6 +177,16 @@ export interface ExpenseTransaction {
   discount: number | null;
   notes: string | null;
   image?: string | null;
+}
+
+export interface ExpenseCategory {
+  id: number;
+  name: string;
+}
+export interface ExpenseSubcategory {
+  id: number;
+  categoryID: number;
+  name: string;
 }
 
 export interface ServiceAccount {
