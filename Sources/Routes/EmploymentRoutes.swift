@@ -139,6 +139,59 @@ func registerEmploymentRoutes(_ app: Application) {
         return try await employmentResponse(record, on: request.db)
     }
 
+    employment.patch(":id") { request async throws -> EmploymentResponse in
+        guard let id = request.parameters.get("id"),
+              let record = try await EmploymentService(database: request.db).find(id: id)
+        else {
+            throw Abort(.notFound)
+        }
+
+        let payload = try request.content.decode([String: String?].self)
+        try PropertyPatchValidation.requireNonEmpty(payload)
+        try PropertyPatchValidation.requireKnownProperties(payload, allowed: [
+            "employerName", "employerType", "industry", "website", "positionTitle",
+            "employmentType", "startDate", "endDate", "employmentStatus", "workAddressID",
+            "employerContact", "employerContactNumber", "employerContactEmail", "notes",
+        ])
+
+        let value: (String, String?) -> String? = { key, current in
+            PropertyPatchValidation.value(key, in: payload, current: current)
+        }
+        let employerName = value("employerName", record.employerName)
+        let positionTitle = value("positionTitle", record.positionTitle)
+        let employmentStatus = value("employmentStatus", record.employmentStatus)
+        guard let employerName, !employerName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+              let positionTitle, !positionTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+              let employmentStatus, !employmentStatus.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        else {
+            throw Abort(.unprocessableEntity, reason: "Employer name, position title, and employment status cannot be empty.")
+        }
+
+        let workAddressID = value("workAddressID", record.workAddressID)
+        if let workAddressID,
+           try await AddressService(database: request.db).find(id: workAddressID) == nil
+        {
+            throw Abort(.unprocessableEntity, reason: "workAddressID must reference an existing address.")
+        }
+
+        record.employerName = employerName
+        record.employerType = value("employerType", record.employerType) ?? ""
+        record.industry = value("industry", record.industry)
+        record.website = value("website", record.website)
+        record.positionTitle = positionTitle
+        record.employmentType = value("employmentType", record.employmentType) ?? ""
+        record.startDate = value("startDate", record.startDate)
+        record.endDate = value("endDate", record.endDate)
+        record.employmentStatus = employmentStatus
+        record.workAddressID = workAddressID
+        record.employerContact = value("employerContact", record.employerContact)
+        record.employerContactNumber = value("employerContactNumber", record.employerContactNumber)
+        record.employerContactEmail = value("employerContactEmail", record.employerContactEmail)
+        record.notes = value("notes", record.notes)
+        try await EmploymentService(database: request.db).save(record)
+        return try await employmentResponse(record, on: request.db)
+    }
+
     employment.put(":id") { request async throws -> EmploymentResponse in
         guard let id = request.parameters.get("id"),
               let record = try await EmploymentService(database: request.db).find(id: id)
