@@ -108,6 +108,13 @@ final class EmploymentRouteTests: XCTestCase {
             try await app.autoMigrate()
             registerEmploymentRoutes(app)
         }) { app in
+            try await app.test(.POST, "employment", beforeRequest: { request in
+                request.headers.contentType = .json
+                request.body = ByteBuffer(string: #"{"id":"EMP-INJECTED","employerName":"Example","employerType":"Company","positionTitle":"Owner","employmentType":"Full-time","employmentStatus":"Current","dateCreated":"2099-01-01"}"#)
+            }) { response in
+                XCTAssertEqual(response.status, .badRequest)
+            }
+
             let invalidPayload = EmploymentRequest(
                 id: "EMP-0001",
                 employerName: "",

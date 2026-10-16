@@ -22,7 +22,18 @@ struct EmploymentRequest: Content {
 
 /// Create-only payload. The expanded address relationship and audit fields
 /// are response/server concerns, not client-controlled input.
-typealias EmploymentCreateRequest = EmploymentRequest
+struct EmploymentCreateRequest: Content {
+    let value: EmploymentRequest
+
+    init(from decoder: Decoder) throws {
+        try CreateContractValidation.rejectUnknownFields(in: decoder, allowed: [
+            "id", "employerName", "employerType", "industry", "website", "positionTitle",
+            "employmentType", "startDate", "endDate", "employmentStatus", "workAddressID",
+            "employerContact", "employerContactNumber", "employerContactEmail", "notes"
+        ])
+        value = try EmploymentRequest(from: decoder)
+    }
+}
 
 /// API response that expands the work-address relationship for client rendering.
 struct EmploymentResponse: Content {
@@ -102,7 +113,7 @@ func registerEmploymentRoutes(_ app: Application) {
     }
 
     employment.post { request async throws -> EmploymentResponse in
-        let input = try request.content.decode(EmploymentCreateRequest.self)
+        let input = try request.content.decode(EmploymentCreateRequest.self).value
         try validate(input, requiresID: true)
 
         let id = input.id!.trimmingCharacters(in: .whitespacesAndNewlines)
