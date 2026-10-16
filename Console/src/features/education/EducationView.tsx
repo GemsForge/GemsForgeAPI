@@ -61,6 +61,8 @@ export function EducationView({ records }: EducationViewProps) {
             {selectedRecord ? (
               <EducationDetail
                 record={selectedRecord}
+                saving={patch.isPending}
+                error={patch.error}
                 onPatch={async (values) => {
                   await patch.mutateAsync({ id: selectedRecord.id, patch: values });
                 }}
@@ -82,9 +84,13 @@ export function EducationView({ records }: EducationViewProps) {
 
 function EducationDetail({
   record,
+  saving,
+  error,
   onPatch,
 }: {
   record: Education;
+  saving: boolean;
+  error: Error | null;
   onPatch: (values: Partial<Education>) => Promise<void>;
 }) {
   const [editing, setEditing] = useState(false);
@@ -112,7 +118,10 @@ function EducationDetail({
             Status
             <input value={status} onChange={(event) => setStatus(event.target.value)} />
           </label>
-          <button type="submit">Save status</button>
+          {error && <p role="alert">{error.message} Try again.</p>}
+          <button type="submit" disabled={saving}>
+            {saving ? "Saving…" : "Save status"}
+          </button>
           <button
             type="button"
             onClick={() => {
