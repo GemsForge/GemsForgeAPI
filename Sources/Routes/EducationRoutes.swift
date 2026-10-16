@@ -141,6 +141,61 @@ func registerEducationRoutes(_ app: Application) {
         return try await educationResponse(record, on: request.db)
     }
 
+    education.patch(":id") { request async throws -> EducationResponse in
+        guard let id = request.parameters.get("id"),
+              let record = try await EducationService(database: request.db).find(id: id)
+        else { throw Abort(.notFound) }
+
+        let payload = try request.content.decode([String: String?].self)
+        try PropertyPatchValidation.requireNonEmpty(payload)
+        try PropertyPatchValidation.requireKnownProperties(payload, allowed: [
+            "educationType", "institutionName", "program", "fieldOfStudy", "credential",
+            "credentialID", "startDate", "endDate", "awardedDate", "status", "locationAddressID",
+            "website", "notes", "documentFileMetadataID",
+        ])
+        let value: (String, String?) -> String? = { key, current in
+            PropertyPatchValidation.value(key, in: payload, current: current)
+        }
+        let educationType = value("educationType", record.educationType)
+        let institutionName = value("institutionName", record.institutionName)
+        let status = value("status", record.status)
+        guard let educationType, !educationType.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+              let institutionName, !institutionName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+              let status, !status.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        else {
+            throw Abort(.unprocessableEntity, reason: "Education type, institution name, and status cannot be empty.")
+        }
+        let locationAddressID = value("locationAddressID", record.locationAddressID)
+        if let locationAddressID,
+           try await AddressService(database: request.db).find(id: locationAddressID) == nil
+        {
+            throw Abort(.unprocessableEntity, reason: "locationAddressID must reference an existing address.")
+        }
+        let documentFileMetadataID = value("documentFileMetadataID", record.documentFileMetadataID)
+        try await AttachmentReferenceService(database: request.db).replace(
+            oldMetadataID: record.documentFileMetadataID,
+            newMetadataID: documentFileMetadataID,
+            ownerType: "Education",
+            ownerID: id
+        )
+        record.educationType = educationType
+        record.institutionName = institutionName
+        record.program = value("program", record.program)
+        record.fieldOfStudy = value("fieldOfStudy", record.fieldOfStudy)
+        record.credential = value("credential", record.credential)
+        record.credentialID = value("credentialID", record.credentialID)
+        record.startDate = value("startDate", record.startDate)
+        record.endDate = value("endDate", record.endDate)
+        record.awardedDate = value("awardedDate", record.awardedDate)
+        record.status = status
+        record.locationAddressID = locationAddressID
+        record.website = value("website", record.website)
+        record.notes = value("notes", record.notes)
+        record.documentFileMetadataID = documentFileMetadataID
+        try await EducationService(database: request.db).save(record)
+        return try await educationResponse(record, on: request.db)
+    }
+
     education.put(":id") { request async throws -> EducationResponse in
         guard let id = request.parameters.get("id"),
               let record = try await EducationService(database: request.db).find(id: id)
