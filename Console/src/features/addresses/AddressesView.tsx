@@ -62,6 +62,8 @@ export function AddressesView({ records }: AddressesViewProps) {
               <AddressDetail
                 key={selectedAddress.id}
                 record={selectedAddress}
+                saving={patch.isPending}
+                error={patch.error}
                 onAttachment={async (metadata) => {
                   await attachment.mutateAsync({ id: selectedAddress.id, fileID: metadata?.id ?? null });
                 }}
@@ -86,10 +88,14 @@ export function AddressesView({ records }: AddressesViewProps) {
 
 function AddressDetail({
   record,
+  saving,
+  error,
   onAttachment,
   onPatch,
 }: {
   record: Address;
+  saving: boolean;
+  error: Error | null;
   onAttachment: (metadata: import("../../types").FileMetadata | null) => Promise<void>;
   onPatch: (values: Partial<Address>) => Promise<void>;
 }) {
@@ -118,7 +124,10 @@ function AddressDetail({
             City
             <input value={city} onChange={(event) => setCity(event.target.value)} />
           </label>
-          <button type="submit">Save city</button>
+          {error && <p role="alert">{error.message} Try again.</p>}
+          <button type="submit" disabled={saving}>
+            {saving ? "Saving…" : "Save city"}
+          </button>
           <button
             type="button"
             onClick={() => {
