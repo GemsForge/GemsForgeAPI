@@ -88,6 +88,11 @@ export const api = {
   listEmployment: (signal?: AbortSignal) => request<Employment[]>("/employment", { signal }),
   getEmployment: (employmentID: string, signal?: AbortSignal) =>
     request<Employment>(`/employment/${encodeURIComponent(employmentID)}`, { signal }),
+  patchEmployment: (employmentID: string, patch: Partial<Employment>) =>
+    request<Employment>(`/employment/${encodeURIComponent(employmentID)}`, {
+      method: "PATCH",
+      body: JSON.stringify(patch),
+    }),
   listAddresses: (signal?: AbortSignal) => request<Address[]>("/addresses", { signal }),
   getAddress: (addressID: string, signal?: AbortSignal) =>
     request<Address>(`/addresses/${encodeURIComponent(addressID)}`, { signal }),
