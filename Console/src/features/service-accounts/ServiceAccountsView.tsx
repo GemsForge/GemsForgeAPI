@@ -87,6 +87,8 @@ function ServiceAccountDetail({
 }) {
   const [editing, setEditing] = useState(false);
   const [service, setService] = useState(record.service);
+  const [editingStatus, setEditingStatus] = useState(false);
+  const [status, setStatus] = useState(record.status ?? "");
   return (
     <article className="address-detail">
       <div className="detail-heading">
@@ -127,6 +129,38 @@ function ServiceAccountDetail({
       ) : (
         <button type="button" onClick={() => setEditing(true)}>
           Edit service
+        </button>
+      )}
+      {editingStatus ? (
+        <form
+          className="edit-form"
+          onSubmit={async (event) => {
+            event.preventDefault();
+            await onPatch({ status: status || null });
+            setEditingStatus(false);
+          }}
+        >
+          <label>
+            Status
+            <input value={status} onChange={(event) => setStatus(event.target.value)} />
+          </label>
+          {error && <p role="alert">{error.message} Try again.</p>}
+          <button type="submit" disabled={saving}>
+            {saving ? "Saving…" : "Save status"}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setStatus(record.status ?? "");
+              setEditingStatus(false);
+            }}
+          >
+            Cancel
+          </button>
+        </form>
+      ) : (
+        <button type="button" onClick={() => setEditingStatus(true)}>
+          Edit status
         </button>
       )}
       <dl className="address-fields">
