@@ -18,6 +18,61 @@ export function useAddressQuery(id: string | null) {
     enabled: id !== null,
   });
 }
+function useCreateMutation<TPayload, TResult>(
+  mutationFn: (payload: TPayload) => Promise<TResult>,
+  listKey: readonly unknown[],
+  getID: (record: TResult) => string | number,
+  detailKey: (id: string | number) => readonly unknown[],
+) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn,
+    onSuccess: async (record) => {
+      client.setQueryData(detailKey(getID(record)), record);
+      await client.invalidateQueries({ queryKey: listKey, exact: true });
+    },
+  });
+}
+export function useCreateAddressMutation() {
+  return useCreateMutation(
+    api.createAddress,
+    lifeQueryKeys.addresses,
+    (record) => record.id,
+    (id) => recordQueryKeys.address(String(id)),
+  );
+}
+export function useCreateEducationMutation() {
+  return useCreateMutation(
+    api.createEducation,
+    lifeQueryKeys.education,
+    (record) => record.id,
+    (id) => recordQueryKeys.education(String(id)),
+  );
+}
+export function useCreateEmploymentMutation() {
+  return useCreateMutation(
+    api.createEmployment,
+    lifeQueryKeys.employment,
+    (record) => record.id,
+    (id) => recordQueryKeys.employment(String(id)),
+  );
+}
+export function useCreateTransactionMutation() {
+  return useCreateMutation(
+    api.createTransaction,
+    lifeQueryKeys.transactions,
+    (record) => record.id,
+    (id) => recordQueryKeys.transaction(String(id)),
+  );
+}
+export function useCreateServiceAccountMutation() {
+  return useCreateMutation(
+    api.createServiceAccount,
+    lifeQueryKeys.serviceAccounts,
+    (record) => record.id,
+    (id) => recordQueryKeys.serviceAccount(Number(id)),
+  );
+}
 export function useTransactionQuery(id: string | null) {
   return useQuery({
     queryKey: recordQueryKeys.transaction(id),
