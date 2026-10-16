@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useGemHueQuery, useGemHueImageQuery } from "../../data/recordQueries";
 import { QueryFeedback } from "../../components/QueryFeedback";
 import type { GemHue } from "../../types";
+import { RecordFields } from "../../components/RecordFields";
 
 interface GemHuesViewProps {
   hues: GemHue[];
@@ -76,25 +77,19 @@ export function GemHuesView({ hues }: GemHuesViewProps) {
             <p className="hue-code">
               {selectedHue.id} · {selectedHue.hexCode}
             </p>
-            <dl className="hue-fields">
-              <Field label="Color family" value={selectedHue.colorFamily} />
-              <Field label="Mood" value={selectedHue.mood} />
-              <Field label="Palette" value={selectedHue.palette} />
-              <Field label="Description" value={selectedHue.description} />
-              <Field label="Notes" value={selectedHue.notes} />
-            </dl>
+            <RecordFields
+              className="hue-fields"
+              fields={[
+                { label: "Color family", value: selectedHue.colorFamily || "Not specified" },
+                { label: "Mood", value: selectedHue.mood || "Not specified" },
+                { label: "Palette", value: selectedHue.palette || "Not specified" },
+                { label: "Description", value: selectedHue.description || "Not specified" },
+                { label: "Notes", value: selectedHue.notes || "Not specified", className: "record-notes" },
+              ]}
+            />
           </div>
         </section>
       )}
     </>
-  );
-}
-
-function Field({ label, value }: { label: string; value: string | null }) {
-  return (
-    <div>
-      <dt>{label}</dt>
-      <dd>{value || "Not specified"}</dd>
-    </div>
   );
 }

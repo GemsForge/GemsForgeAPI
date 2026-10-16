@@ -6,6 +6,8 @@ import { AttachmentControl } from "../../components/AttachmentControl";
 import { GemEmptyState, GemRecordCard, GemRecordList } from "../../components/ui";
 import { useServiceAccountPatchMutation, useServiceAccountQuery } from "../../data/recordQueries";
 import type { ServiceAccount } from "../../types";
+import { RecordFields } from "../../components/RecordFields";
+import { PropertyEditor } from "../../components/PropertyEditor";
 
 export function ServiceAccountsView({ records }: { records: ServiceAccount[] }) {
   const paging = usePagedRecords(records);
@@ -54,8 +56,6 @@ export function ServiceAccountsView({ records }: { records: ServiceAccount[] }) 
               <ServiceAccountDetail
                 key={detail.data.id}
                 record={detail.data}
-                saving={patch.isPending}
-                error={patch.error}
                 onAttachment={async (metadata) => {
                   await patch.mutateAsync({
                     id: detail.data!.id,
@@ -83,21 +83,13 @@ export function ServiceAccountsView({ records }: { records: ServiceAccount[] }) 
 
 function ServiceAccountDetail({
   record,
-  saving,
-  error,
   onAttachment,
   onPatch,
 }: {
   record: ServiceAccount;
-  saving: boolean;
-  error: Error | null;
   onAttachment: (metadata: import("../../types").FileMetadata | null) => Promise<void>;
   onPatch: (values: Partial<ServiceAccount>) => Promise<void>;
 }) {
-  const [editing, setEditing] = useState(false);
-  const [service, setService] = useState(record.service);
-  const [editingStatus, setEditingStatus] = useState(false);
-  const [status, setStatus] = useState(record.status ?? "");
   return (
     <article className="address-detail">
       <div className="detail-heading">
@@ -108,86 +100,32 @@ function ServiceAccountDetail({
         </div>
         <span className="status-pill">{record.status || "—"}</span>
       </div>
-      {editing ? (
-        <form
-          className="edit-form"
-          onSubmit={async (event) => {
-            event.preventDefault();
-            if (service === record.service) {
-              setEditing(false);
-              return;
-            }
-            await onPatch({ service });
-            setEditing(false);
-          }}
-        >
-          <label>
-            Service
-            <input value={service} onChange={(event) => setService(event.target.value)} required />
-          </label>
-          {error && <p role="alert">{error.message} Try again.</p>}
-          <button type="submit" disabled={saving}>
-            {saving ? "Saving…" : "Save service"}
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setService(record.service);
-              setEditing(false);
-            }}
-          >
-            Cancel
-          </button>
-        </form>
-      ) : (
-        <button type="button" onClick={() => setEditing(true)}>
-          Edit service
-        </button>
-      )}
-      {editingStatus ? (
-        <form
-          className="edit-form"
-          onSubmit={async (event) => {
-            event.preventDefault();
-            if (status === (record.status ?? "")) {
-              setEditingStatus(false);
-              return;
-            }
-            await onPatch({ status: status || null });
-            setEditingStatus(false);
-          }}
-        >
-          <label>
-            Status
-            <input value={status} onChange={(event) => setStatus(event.target.value)} />
-          </label>
-          {error && <p role="alert">{error.message} Try again.</p>}
-          <button type="submit" disabled={saving}>
-            {saving ? "Saving…" : "Save status"}
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setStatus(record.status ?? "");
-              setEditingStatus(false);
-            }}
-          >
-            Cancel
-          </button>
-        </form>
-      ) : (
-        <button type="button" onClick={() => setEditingStatus(true)}>
-          Edit status
-        </button>
-      )}
-      <dl className="address-fields">
-        <Field label="Type" value={record.type} />
-        <Field label="Expense group" value={record.expenseGroup} />
-        <Field label="Monthly amount" value={record.monthlyAmount === null ? null : String(record.monthlyAmount)} />
-        <Field label="Payment method" value={record.paymentMethod} />
-        <Field label="Website" value={record.website} />
-        <Field label="Notes" value={record.notes} />
-      </dl>
+      <PropertyEditor
+        label="Service"
+        initialValue={record.service}
+        editLabel="Edit service"
+        saveLabel="Save service"
+        required
+        onSave={async (service) => onPatch({ service })}
+      />
+      <PropertyEditor
+        label="Status"
+        initialValue={record.status ?? ""}
+        editLabel="Edit status"
+        saveLabel="Save status"
+        onSave={async (status) => onPatch({ status: status || null })}
+      />
+      <RecordFields
+        className="address-fields"
+        fields={[
+          { label: "Type", value: record.type || "—" },
+          { label: "Expense group", value: record.expenseGroup || "—" },
+          { label: "Monthly amount", value: record.monthlyAmount === null ? "—" : String(record.monthlyAmount) },
+          { label: "Payment method", value: record.paymentMethod || "—" },
+          { label: "Website", value: record.website || "—" },
+          { label: "Notes", value: record.notes || "—", className: "record-notes" },
+        ]}
+      />
       <AttachmentControl
         fileMetadataID={record.logoFileMetadataID}
         ownerType="ServiceAccount"
@@ -196,14 +134,5 @@ function ServiceAccountDetail({
         onAttach={onAttachment}
       />
     </article>
-  );
-}
-
-function Field({ label, value }: { label: string; value: string | null }) {
-  return (
-    <div>
-      <dt>{label}</dt>
-      <dd>{value || "—"}</dd>
-    </div>
   );
 }

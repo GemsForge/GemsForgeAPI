@@ -6,6 +6,8 @@ import { QueryFeedback } from "../../components/QueryFeedback";
 import type { Address } from "../../types";
 import { AttachmentControl } from "../../components/AttachmentControl";
 import { GemEmptyState, GemRecordCard, GemRecordList } from "../../components/ui";
+import { RecordFields } from "../../components/RecordFields";
+import { PropertyEditor } from "../../components/PropertyEditor";
 
 interface AddressesViewProps {
   records: Address[];
@@ -62,8 +64,6 @@ export function AddressesView({ records }: AddressesViewProps) {
               <AddressDetail
                 key={selectedAddress.id}
                 record={selectedAddress}
-                saving={patch.isPending}
-                error={patch.error}
                 onAttachment={async (metadata) => {
                   await attachment.mutateAsync({ id: selectedAddress.id, fileID: metadata?.id ?? null });
                 }}
@@ -88,19 +88,13 @@ export function AddressesView({ records }: AddressesViewProps) {
 
 function AddressDetail({
   record,
-  saving,
-  error,
   onAttachment,
   onPatch,
 }: {
   record: Address;
-  saving: boolean;
-  error: Error | null;
   onAttachment: (metadata: import("../../types").FileMetadata | null) => Promise<void>;
   onPatch: (values: Partial<Address>) => Promise<void>;
 }) {
-  const [editing, setEditing] = useState(false);
-  const [city, setCity] = useState(record.city ?? "");
   return (
     <article className="address-detail">
       <div className="detail-heading">
@@ -111,56 +105,27 @@ function AddressDetail({
         </div>
         <span className="status-pill">{record.addressStatus}</span>
       </div>
-      {editing ? (
-        <form
-          className="edit-form"
-          onSubmit={async (event) => {
-            event.preventDefault();
-            if (city === (record.city ?? "")) {
-              setEditing(false);
-              return;
-            }
-            await onPatch({ city });
-            setEditing(false);
-          }}
-        >
-          <label>
-            City
-            <input value={city} onChange={(event) => setCity(event.target.value)} />
-          </label>
-          {error && <p role="alert">{error.message} Try again.</p>}
-          <button type="submit" disabled={saving}>
-            {saving ? "Saving…" : "Save city"}
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setCity(record.city ?? "");
-              setEditing(false);
-            }}
-          >
-            Cancel
-          </button>
-        </form>
-      ) : (
-        <button type="button" onClick={() => setEditing(true)}>
-          Edit city
-        </button>
-      )}
-      <dl className="address-fields">
-        <Field label="Address line 1" value={record.addressLine1} />
-        <Field label="Address line 2" value={record.addressLine2} />
-        <Field label="City" value={record.city} />
-        <Field label="State" value={record.state} />
-        <Field label="Postal code" value={record.postalCode} />
-        <Field label="Country" value={record.country} />
-        <Field label="Start date" value={record.startDate} />
-        <Field label="End date" value={record.endDate} />
-        <div className="address-notes">
-          <dt>Notes</dt>
-          <dd>{record.notes || "—"}</dd>
-        </div>
-      </dl>
+      <PropertyEditor
+        label="City"
+        initialValue={record.city ?? ""}
+        editLabel="Edit city"
+        saveLabel="Save city"
+        onSave={async (city) => onPatch({ city })}
+      />
+      <RecordFields
+        className="address-fields"
+        fields={[
+          { label: "Address line 1", value: record.addressLine1 || "—" },
+          { label: "Address line 2", value: record.addressLine2 || "—" },
+          { label: "City", value: record.city || "—" },
+          { label: "State", value: record.state || "—" },
+          { label: "Postal code", value: record.postalCode || "—" },
+          { label: "Country", value: record.country || "—" },
+          { label: "Start date", value: record.startDate || "—" },
+          { label: "End date", value: record.endDate || "—" },
+          { label: "Notes", value: record.notes || "—", className: "record-notes" },
+        ]}
+      />
       <AttachmentControl
         fileMetadataID={record.imageFileMetadataID}
         ownerType="Address"
@@ -169,14 +134,5 @@ function AddressDetail({
         onAttach={onAttachment}
       />
     </article>
-  );
-}
-
-function Field({ label, value }: { label: string; value: string | null }) {
-  return (
-    <div>
-      <dt>{label}</dt>
-      <dd>{value || "—"}</dd>
-    </div>
   );
 }

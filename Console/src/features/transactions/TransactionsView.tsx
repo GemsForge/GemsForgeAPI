@@ -10,6 +10,8 @@ import { QueryFeedback } from "../../components/QueryFeedback";
 import type { ExpenseTransaction } from "../../types";
 import { AttachmentControl } from "../../components/AttachmentControl";
 import { GemEmptyState, GemRecordCard, GemRecordList } from "../../components/ui";
+import { RecordFields } from "../../components/RecordFields";
+import { PropertyEditor } from "../../components/PropertyEditor";
 
 interface TransactionsViewProps {
   records: ExpenseTransaction[];
@@ -69,8 +71,6 @@ export function TransactionsView({ records }: TransactionsViewProps) {
               <TransactionDetail
                 key={selectedRecord.id}
                 record={selectedRecord}
-                saving={patch.isPending}
-                error={patch.error}
                 onAttachment={async (metadata) => {
                   await attachment.mutateAsync({ id: selectedRecord.id, fileID: metadata?.id ?? null });
                 }}
@@ -95,19 +95,13 @@ export function TransactionsView({ records }: TransactionsViewProps) {
 
 function TransactionDetail({
   record,
-  saving,
-  error,
   onAttachment,
   onPatch,
 }: {
   record: ExpenseTransaction;
-  saving: boolean;
-  error: Error | null;
   onAttachment: (metadata: import("../../types").FileMetadata | null) => Promise<void>;
   onPatch: (values: Partial<ExpenseTransaction>) => Promise<void>;
 }) {
-  const [editing, setEditing] = useState(false);
-  const [item, setItem] = useState(record.item);
   return (
     <article className="transaction-detail">
       <div className="detail-heading">
@@ -118,58 +112,29 @@ function TransactionDetail({
         </div>
         <span className="status-pill">Category {record.categoryID}</span>
       </div>
-      {editing ? (
-        <form
-          className="edit-form"
-          onSubmit={async (event) => {
-            event.preventDefault();
-            if (item === record.item) {
-              setEditing(false);
-              return;
-            }
-            await onPatch({ item });
-            setEditing(false);
-          }}
-        >
-          <label>
-            Item
-            <input value={item} onChange={(event) => setItem(event.target.value)} />
-          </label>
-          {error && <p role="alert">{error.message} Try again.</p>}
-          <button type="submit" disabled={saving}>
-            {saving ? "Saving…" : "Save item"}
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setItem(record.item);
-              setEditing(false);
-            }}
-          >
-            Cancel
-          </button>
-        </form>
-      ) : (
-        <button type="button" onClick={() => setEditing(true)}>
-          Edit item
-        </button>
-      )}
-      <dl className="transaction-fields">
-        <Field label="Transaction date" value={record.transactionDate} />
-        <Field label="Receipt" value={record.receiptID} />
-        <Field label="Merchant code" value={record.merchantCode} />
-        <Field label="Category ID" value={String(record.categoryID)} />
-        <Field label="Subcategory ID" value={record.subcategoryID === null ? null : String(record.subcategoryID)} />
-        <Field label="Quantity" value={String(record.quantity)} />
-        <MoneyField label="Regular price" value={record.regularPrice} />
-        <MoneyField label="Paid price" value={record.paidPrice} />
-        <MoneyField label="Total" value={record.total} />
-        <MoneyField label="Discount" value={record.discount} />
-        <div className="transaction-notes">
-          <dt>Notes</dt>
-          <dd>{record.notes || "—"}</dd>
-        </div>
-      </dl>
+      <PropertyEditor
+        label="Item"
+        initialValue={record.item}
+        editLabel="Edit item"
+        saveLabel="Save item"
+        onSave={async (item) => onPatch({ item })}
+      />
+      <RecordFields
+        className="transaction-fields"
+        fields={[
+          { label: "Transaction date", value: record.transactionDate || "—" },
+          { label: "Receipt", value: record.receiptID || "—" },
+          { label: "Merchant code", value: record.merchantCode || "—" },
+          { label: "Category ID", value: String(record.categoryID) },
+          { label: "Subcategory ID", value: record.subcategoryID === null ? "—" : String(record.subcategoryID) },
+          { label: "Quantity", value: String(record.quantity) },
+          { label: "Regular price", value: formatAmount(record.regularPrice) },
+          { label: "Paid price", value: formatAmount(record.paidPrice) },
+          { label: "Total", value: formatAmount(record.total) },
+          { label: "Discount", value: formatAmount(record.discount) },
+          { label: "Notes", value: record.notes || "—", className: "record-notes" },
+        ]}
+      />
       <AttachmentControl
         fileMetadataID={record.image}
         ownerType="ExpenseTransaction"
@@ -178,24 +143,6 @@ function TransactionDetail({
         onAttach={onAttachment}
       />
     </article>
-  );
-}
-
-function Field({ label, value }: { label: string; value: string | null }) {
-  return (
-    <div>
-      <dt>{label}</dt>
-      <dd>{value || "—"}</dd>
-    </div>
-  );
-}
-
-function MoneyField({ label, value }: { label: string; value: number | null }) {
-  return (
-    <div>
-      <dt>{label}</dt>
-      <dd>{formatAmount(value)}</dd>
-    </div>
   );
 }
 

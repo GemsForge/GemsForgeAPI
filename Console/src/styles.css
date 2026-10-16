@@ -548,28 +548,38 @@ dialog::backdrop {
 .hue-code {
   margin-bottom: 1.2rem;
 }
-.hue-fields {
+.record-fields {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.85rem 1.2rem;
+  gap: 1rem;
   margin: 0;
 }
-.hue-fields div {
+.record-fields > div {
   min-width: 0;
 }
-.hue-fields dt {
+.record-fields dt {
   margin-bottom: 0.2rem;
   color: var(--gold);
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
-.hue-fields dd {
+.record-fields dd {
   margin: 0;
   color: var(--muted);
-  font-size: 0.84rem;
-  line-height: 1.45;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.record-fields a {
+  color: var(--mint);
+}
+.record-fields .record-notes {
+  grid-column: 1 / -1;
+}
+.hue-fields {
+  gap: 0.85rem 1.2rem;
 }
 .life-mark {
   background: rgba(120, 209, 189, 0.18);
@@ -662,36 +672,6 @@ dialog::backdrop {
   font-size: 0.7rem;
   white-space: nowrap;
 }
-.education-fields {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1rem;
-  margin: 0;
-}
-.education-fields div {
-  min-width: 0;
-}
-.education-fields dt {
-  margin-bottom: 0.2rem;
-  color: var(--gold);
-  font-size: 0.68rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-.education-fields dd {
-  margin: 0;
-  color: var(--muted);
-  font-size: 0.82rem;
-  line-height: 1.5;
-  overflow-wrap: anywhere;
-}
-.education-fields a {
-  color: var(--mint);
-}
-.education-notes {
-  grid-column: 1 / -1;
-}
 .detail-placeholder {
   display: grid;
   place-items: center;
@@ -778,36 +758,6 @@ dialog::backdrop {
   color: var(--gold);
   font-size: 0.72rem;
 }
-.employment-fields {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1rem;
-  margin: 0;
-}
-.employment-fields div {
-  min-width: 0;
-}
-.employment-fields dt {
-  margin-bottom: 0.2rem;
-  color: var(--gold);
-  font-size: 0.68rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-.employment-fields dd {
-  margin: 0;
-  color: var(--muted);
-  font-size: 0.82rem;
-  line-height: 1.5;
-  overflow-wrap: anywhere;
-}
-.employment-fields a {
-  color: var(--mint);
-}
-.employment-notes {
-  grid-column: 1 / -1;
-}
 .address-layout {
   display: grid;
   grid-template-columns: minmax(18rem, 0.8fr) minmax(0, 1.4fr);
@@ -876,33 +826,6 @@ dialog::backdrop {
   color: var(--gold);
   font-size: 0.72rem;
 }
-.address-fields {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1rem;
-  margin: 0;
-}
-.address-fields div {
-  min-width: 0;
-}
-.address-fields dt {
-  margin-bottom: 0.2rem;
-  color: var(--gold);
-  font-size: 0.68rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-.address-fields dd {
-  margin: 0;
-  color: var(--muted);
-  font-size: 0.82rem;
-  line-height: 1.5;
-  overflow-wrap: anywhere;
-}
-.address-notes {
-  grid-column: 1 / -1;
-}
 @media (max-width: 760px) {
   .topbar {
     align-items: start;
@@ -940,17 +863,10 @@ dialog::backdrop {
   .transaction-layout {
     grid-template-columns: 1fr;
   }
-  .hue-fields,
-  .education-fields,
-  .employment-fields,
-  .address-fields,
-  .transaction-fields {
+  .record-fields {
     grid-template-columns: 1fr;
   }
-  .education-notes,
-  .employment-notes,
-  .address-notes,
-  .transaction-notes {
+  .record-fields .record-notes {
     grid-column: auto;
   }
 }
@@ -1021,33 +937,6 @@ dialog::backdrop {
 .transaction-code {
   margin-bottom: 0;
   color: var(--gold);
-}
-.transaction-fields {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1rem;
-  margin: 0;
-}
-.transaction-fields div {
-  min-width: 0;
-}
-.transaction-fields dt {
-  margin-bottom: 0.2rem;
-  color: var(--gold);
-  font-size: 0.68rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-.transaction-fields dd {
-  margin: 0;
-  color: var(--muted);
-  font-size: 0.82rem;
-  line-height: 1.5;
-  overflow-wrap: anywhere;
-}
-.transaction-notes {
-  grid-column: 1 / -1;
 }
 .attachment-control {
   display: grid;

@@ -5,6 +5,8 @@ import { useEducationPatchMutation, useEducationRecordQuery } from "../../data/r
 import { QueryFeedback } from "../../components/QueryFeedback";
 import type { Education } from "../../types";
 import { GemEmptyState, GemRecordCard, GemRecordList } from "../../components/ui";
+import { RecordFields } from "../../components/RecordFields";
+import { PropertyEditor } from "../../components/PropertyEditor";
 
 interface EducationViewProps {
   records: Education[];
@@ -60,9 +62,8 @@ export function EducationView({ records }: EducationViewProps) {
             <QueryFeedback query={detail} />
             {selectedRecord ? (
               <EducationDetail
+                key={selectedRecord.id}
                 record={selectedRecord}
-                saving={patch.isPending}
-                error={patch.error}
                 onPatch={async (values) => {
                   await patch.mutateAsync({ id: selectedRecord.id, patch: values });
                 }}
@@ -84,17 +85,11 @@ export function EducationView({ records }: EducationViewProps) {
 
 function EducationDetail({
   record,
-  saving,
-  error,
   onPatch,
 }: {
   record: Education;
-  saving: boolean;
-  error: Error | null;
   onPatch: (values: Partial<Education>) => Promise<void>;
 }) {
-  const [editing, setEditing] = useState(false);
-  const [status, setStatus] = useState(record.status);
   return (
     <article className="education-detail">
       <div className="detail-heading">
@@ -105,74 +100,38 @@ function EducationDetail({
         </div>
         <span className="status-pill">{record.status}</span>
       </div>
-      {editing ? (
-        <form
-          className="edit-form"
-          onSubmit={async (event) => {
-            event.preventDefault();
-            if (status === record.status) {
-              setEditing(false);
-              return;
-            }
-            await onPatch({ status });
-            setEditing(false);
-          }}
-        >
-          <label>
-            Status
-            <input value={status} onChange={(event) => setStatus(event.target.value)} />
-          </label>
-          {error && <p role="alert">{error.message} Try again.</p>}
-          <button type="submit" disabled={saving}>
-            {saving ? "Saving…" : "Save status"}
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setStatus(record.status);
-              setEditing(false);
-            }}
-          >
-            Cancel
-          </button>
-        </form>
-      ) : (
-        <button type="button" onClick={() => setEditing(true)}>
-          Edit status
-        </button>
-      )}
-      <dl className="education-fields">
-        <Field label="Type" value={record.educationType} />
-        <Field label="Program" value={record.program} />
-        <Field label="Field of study" value={record.fieldOfStudy} />
-        <Field label="Credential" value={record.credential} />
-        <Field label="Start date" value={record.startDate} />
-        <Field label="End date" value={record.endDate} />
-        <Field label="Awarded date" value={record.awardedDate} />
-        <div className="education-address">
-          <dt>Location</dt>
-          <dd>
-            <AddressSummary address={record.address} />
-          </dd>
-        </div>
-        <Field label="Credential ID" value={record.credentialID} />
-        <div>
-          <dt>Website</dt>
-          <dd>
-            {record.website ? (
+      <PropertyEditor
+        label="Status"
+        initialValue={record.status}
+        editLabel="Edit status"
+        saveLabel="Save status"
+        onSave={async (status) => onPatch({ status })}
+      />
+      <RecordFields
+        className="education-fields"
+        fields={[
+          { label: "Type", value: record.educationType || "—" },
+          { label: "Program", value: record.program || "—" },
+          { label: "Field of study", value: record.fieldOfStudy || "—" },
+          { label: "Credential", value: record.credential || "—" },
+          { label: "Start date", value: record.startDate || "—" },
+          { label: "End date", value: record.endDate || "—" },
+          { label: "Awarded date", value: record.awardedDate || "—" },
+          { label: "Location", value: <AddressSummary address={record.address} /> },
+          { label: "Credential ID", value: record.credentialID || "—" },
+          {
+            label: "Website",
+            value: record.website ? (
               <a href={record.website} target="_blank" rel="noreferrer">
                 {record.website}
               </a>
             ) : (
               "—"
-            )}
-          </dd>
-        </div>
-        <div className="education-notes">
-          <dt>Notes</dt>
-          <dd>{record.notes || "—"}</dd>
-        </div>
-      </dl>
+            ),
+          },
+          { label: "Notes", value: record.notes || "—", className: "record-notes" },
+        ]}
+      />
     </article>
   );
 }
@@ -180,13 +139,4 @@ function EducationDetail({
 function AddressSummary({ address }: { address: Education["address"] }) {
   if (!address) return <>—</>;
   return <>{[address.addressLine1, address.city, address.state, address.postalCode].filter(Boolean).join(", ")}</>;
-}
-
-function Field({ label, value }: { label: string; value: string | null }) {
-  return (
-    <div>
-      <dt>{label}</dt>
-      <dd>{value || "—"}</dd>
-    </div>
-  );
 }
