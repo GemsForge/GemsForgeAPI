@@ -19,6 +19,9 @@ struct ExpenseTransactionRequest: Content {
     let image: String?
 }
 
+/// Create-only transaction contract name; database-managed audit fields are absent.
+typealias ExpenseTransactionCreateRequest = ExpenseTransactionRequest
+
 struct ExpenseTransactionPatchRequest: Content {
     let item: String?
     let categoryID: Int?
@@ -87,7 +90,7 @@ func registerExpenseTransactionRoutes(_ app: Application) {
     }
 
     transactions.post { request async throws -> ExpenseTransaction in
-        let input = try request.content.decode(ExpenseTransactionRequest.self)
+        let input = try request.content.decode(ExpenseTransactionCreateRequest.self)
         try validate(input, requiresID: true)
 
         let id = input.id!.trimmingCharacters(in: .whitespacesAndNewlines)

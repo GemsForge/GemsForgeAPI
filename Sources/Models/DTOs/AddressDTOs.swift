@@ -17,6 +17,9 @@ struct AddressRequest: Content {
     var imageFileMetadataID: String? = nil
 }
 
+/// Create-only address contract name; response representations remain separate.
+typealias AddressCreateRequest = AddressRequest
+
 /// Safe list representation that omits street lines, postal code, and notes.
 struct AddressSummaryResponse: Content {
     let id: String?

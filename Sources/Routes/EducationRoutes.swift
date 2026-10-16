@@ -20,6 +20,10 @@ struct EducationRequest: Content {
     var documentFileMetadataID: String? = nil
 }
 
+/// Create-only payload. Relationship responses and audit fields remain
+/// server-owned and are intentionally absent from this contract.
+typealias EducationCreateRequest = EducationRequest
+
 /// API response that expands the address relationship for client rendering.
 struct EducationResponse: Content {
     let id: String?
@@ -99,7 +103,7 @@ func registerEducationRoutes(_ app: Application) {
     }
 
     education.post { request async throws -> EducationResponse in
-        let input = try request.content.decode(EducationRequest.self)
+        let input = try request.content.decode(EducationCreateRequest.self)
         try validate(input, requiresID: true)
 
         let id = input.id!.trimmingCharacters(in: .whitespacesAndNewlines)
