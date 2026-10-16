@@ -76,6 +76,21 @@ final class EmploymentRouteTests: XCTestCase {
                 XCTAssertEqual(record.positionTitle, "Founder and Analyst")
             }
 
+            try await app.test(.PATCH, "employment/EMP-0001", beforeRequest: { request in
+                try request.content.encode(["positionTitle": "Principal Engineer"])
+            }) { response async throws in
+                XCTAssertEqual(response.status, .ok)
+                let record = try response.content.decode(EmploymentResponse.self)
+                XCTAssertEqual(record.positionTitle, "Principal Engineer")
+                XCTAssertEqual(record.employerName, "GemsForge")
+            }
+
+            try await app.test(.PATCH, "employment/EMP-0001", beforeRequest: { request in
+                try request.content.encode(["id": "OTHER"])
+            }) { response async throws in
+                XCTAssertEqual(response.status, .unprocessableEntity)
+            }
+
             try await app.test(.DELETE, "employment/EMP-0001") { response async throws in
                 XCTAssertEqual(response.status, .noContent)
             }
