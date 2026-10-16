@@ -24,6 +24,13 @@ final class EducationRouteTests: XCTestCase {
             ).create(on: app.db)
             registerEducationRoutes(app)
         }) { app in
+            try await app.test(.POST, "education", beforeRequest: { request in
+                request.headers.contentType = .json
+                request.body = ByteBuffer(string: #"{"id":"EDU-BAD-ADDRESS","educationType":"College","institutionName":"Example","status":"Current","locationAddressID":"ADDR-MISSING"}"#)
+            }) { response in
+                XCTAssertEqual(response.status, .unprocessableEntity)
+            }
+
             let payload = EducationRequest(
                 id: "EDU-0001",
                 educationType: "College",
