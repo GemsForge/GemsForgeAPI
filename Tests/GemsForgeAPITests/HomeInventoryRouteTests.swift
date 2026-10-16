@@ -13,6 +13,13 @@ final class HomeInventoryRouteTests: XCTestCase {
             try await app.autoMigrate()
             registerHomeInventoryRoutes(app)
         }) { app in
+            try await app.test(.POST, "home-inventory", beforeRequest: { request in
+                request.headers.contentType = .json
+                request.body = ByteBuffer(string: #"{"itemName":"Desk","quantity":1,"dateCreated":"2099-01-01"}"#)
+            }) { response in
+                XCTAssertEqual(response.status, .badRequest)
+            }
+
             let input = HomeInventoryRequest(
                 id: "550E8400-E29B-41D4-A716-446655440000",
                 itemName: "Desk lamp",

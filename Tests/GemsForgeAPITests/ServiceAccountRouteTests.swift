@@ -79,6 +79,14 @@ final class ServiceAccountRouteTests: XCTestCase {
             }) { response in
                 XCTAssertEqual(response.status, .conflict)
             }
+            try await app.test(.POST, "service-accounts", beforeRequest: { request in
+                request.headers.contentType = .json
+                request.body = ByteBuffer(string: #"{"id":1,"service":"Duplicate ID","serviceKey":"UNIQUE"}"#)
+            }) { response async throws in
+                XCTAssertEqual(response.status, .conflict)
+                let accounts = try await ServiceAccountService(database: app.db).list()
+                XCTAssertEqual(accounts.count, 1)
+            }
 
             try await app.test(.GET, "service-accounts/1") { response async throws in
                 XCTAssertEqual(response.status, .ok)
@@ -158,6 +166,13 @@ final class ServiceAccountRouteTests: XCTestCase {
             try await app.autoMigrate()
             registerServiceAccountRoutes(app)
         }) { app in
+            try await app.test(.POST, "service-accounts", beforeRequest: { request in
+                request.headers.contentType = .json
+                request.body = ByteBuffer(string: #"{"service":"Example","dateCreated":"2099-01-01"}"#)
+            }) { response in
+                XCTAssertEqual(response.status, .badRequest)
+            }
+
             let invalidPayload = ServiceAccountRequest(
                 id: nil,
                 service: " ",
