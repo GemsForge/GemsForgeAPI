@@ -82,6 +82,17 @@ export function useAddressPatchMutation() {
     },
   });
 }
+export function useEducationPatchMutation() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, patch }: { id: string; patch: Partial<import("../types").Education> }) =>
+      api.patchEducation(id, patch),
+    onSuccess: async (record) => {
+      client.setQueryData(recordQueryKeys.education(record.id), record);
+      await client.invalidateQueries({ queryKey: lifeQueryKeys.education, exact: true });
+    },
+  });
+}
 export function useTransactionImageMutation() {
   const client = useQueryClient();
   return useMutation({

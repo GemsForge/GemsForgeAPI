@@ -80,6 +80,11 @@ export const api = {
   listEducation: (signal?: AbortSignal) => request<Education[]>("/education", { signal }),
   getEducation: (educationID: string, signal?: AbortSignal) =>
     request<Education>(`/education/${encodeURIComponent(educationID)}`, { signal }),
+  patchEducation: (educationID: string, patch: Partial<Education>) =>
+    request<Education>(`/education/${encodeURIComponent(educationID)}`, {
+      method: "PATCH",
+      body: JSON.stringify(patch),
+    }),
   listEmployment: (signal?: AbortSignal) => request<Employment[]>("/employment", { signal }),
   getEmployment: (employmentID: string, signal?: AbortSignal) =>
     request<Employment>(`/employment/${encodeURIComponent(employmentID)}`, { signal }),
