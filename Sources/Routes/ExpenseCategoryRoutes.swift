@@ -5,6 +5,34 @@ struct ExpenseCategoryRequest: Content {
     let name: String
 }
 
+struct ExpenseCategoryCreateRequest: Content {
+    let id: Int?
+    let name: String
+
+    init(id: Int?, name: String) {
+        self.id = id
+        self.name = name
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DynamicCodingKey.self)
+        let allowed = Set(["id", "name"])
+        guard let unknown = container.allKeys.first(where: { !allowed.contains($0.stringValue) }) else {
+            id = try container.decodeIfPresent(Int.self, forKey: DynamicCodingKey(stringValue: "id"))
+            name = try container.decode(String.self, forKey: DynamicCodingKey(stringValue: "name"))
+            return
+        }
+        throw DecodingError.dataCorruptedError(forKey: unknown, in: container, debugDescription: "Unknown create field: \(unknown.stringValue).")
+    }
+}
+
+private struct DynamicCodingKey: CodingKey, Hashable {
+    let stringValue: String
+    let intValue: Int? = nil
+    init(stringValue: String) { self.stringValue = stringValue }
+    init?(intValue: Int) { return nil }
+}
+
 private func validate(_ input: ExpenseCategoryRequest) throws {
     guard !input.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
         throw Abort(.badRequest, reason: "Category name is required.")
@@ -20,7 +48,8 @@ func registerExpenseCategoryRoutes(_ app: Application) {
     }
 
     categories.post { request async throws -> ExpenseCategory in
-        let input = try request.content.decode(ExpenseCategoryRequest.self)
+        let createInput = try request.content.decode(ExpenseCategoryCreateRequest.self)
+        let input = ExpenseCategoryRequest(id: createInput.id, name: createInput.name)
         try validate(input)
 
         if let id = input.id,

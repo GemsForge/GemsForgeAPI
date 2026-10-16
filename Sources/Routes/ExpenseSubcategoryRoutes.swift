@@ -7,6 +7,8 @@ struct ExpenseSubcategoryRequest: Content {
     let name: String
 }
 
+typealias ExpenseSubcategoryCreateRequest = ExpenseSubcategoryRequest
+
 private func validate(_ input: ExpenseSubcategoryRequest) throws {
     guard input.categoryID > 0 else {
         throw Abort(.badRequest, reason: "CategoryID must be greater than zero.")
@@ -57,7 +59,7 @@ func registerExpenseSubcategoryRoutes(_ app: Application) {
     }
 
     subcategories.post { request async throws -> ExpenseSubcategory in
-        let input = try request.content.decode(ExpenseSubcategoryRequest.self)
+        let input = try request.content.decode(ExpenseSubcategoryCreateRequest.self)
         try validate(input)
         try await ensureCategoryExists(input.categoryID, database: request.db)
         try await ensureNameIsAvailable(input.name, categoryID: input.categoryID, database: request.db)
