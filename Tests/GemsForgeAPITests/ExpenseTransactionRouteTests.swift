@@ -82,6 +82,28 @@ final class ExpenseTransactionRouteTests: XCTestCase {
                 XCTAssertEqual(record.total, 14.00)
             }
 
+            try await app.test(.PATCH, "transactions/TRX-0001", beforeRequest: { request in
+                try request.content.encode(ExpenseTransactionPatchRequest(
+                    item: "Patched Item",
+                    categoryID: nil,
+                    quantity: 3.0,
+                    total: nil,
+                    notes: nil,
+                    image: nil
+                ))
+            }) { response async throws in
+                XCTAssertEqual(response.status, .ok)
+                let record = try response.content.decode(ExpenseTransaction.self)
+                XCTAssertEqual(record.quantity, 3.0)
+                XCTAssertEqual(record.item, "Patched Item")
+            }
+
+            try await app.test(.PATCH, "transactions/TRX-0001", beforeRequest: { request in
+                try request.content.encode(["id": "OTHER"])
+            }) { response async throws in
+                XCTAssertEqual(response.status, .unprocessableEntity)
+            }
+
             try await app.test(.DELETE, "transactions/TRX-0001") { response async throws in
                 XCTAssertEqual(response.status, .noContent)
             }
