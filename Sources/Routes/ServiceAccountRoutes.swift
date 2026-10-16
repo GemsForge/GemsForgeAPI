@@ -113,6 +113,7 @@ func registerServiceAccountRoutes(_ app: Application) {
         guard let id = request.parameters.get("id", as: Int.self),
               let account = try await ServiceAccountService(database: request.db).find(id: id)
         else { throw Abort(.notFound) }
+        try PropertyPatchValidation.requireKnownJSONProperties(request, allowed: ["service", "monthlyAmount", "status", "notes", "logoFileMetadataID"])
         let input = try request.content.decode(ServiceAccountPatchRequest.self)
         guard input.service != nil || input.monthlyAmount != nil || input.status != nil || input.notes != nil || input.logoFileMetadataID != nil else {
             throw Abort(.unprocessableEntity, reason: "At least one editable field is required.")
