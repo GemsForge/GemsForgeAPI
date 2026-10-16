@@ -53,6 +53,8 @@ export function ServiceAccountsView({ records }: { records: ServiceAccount[] }) 
               <ServiceAccountDetail
                 key={detail.data.id}
                 record={detail.data}
+                saving={patch.isPending}
+                error={patch.error}
                 onPatch={async (values) => {
                   await patch.mutateAsync({ id: detail.data!.id, patch: values });
                 }}
@@ -74,9 +76,13 @@ export function ServiceAccountsView({ records }: { records: ServiceAccount[] }) 
 
 function ServiceAccountDetail({
   record,
+  saving,
+  error,
   onPatch,
 }: {
   record: ServiceAccount;
+  saving: boolean;
+  error: Error | null;
   onPatch: (values: Partial<ServiceAccount>) => Promise<void>;
 }) {
   const [editing, setEditing] = useState(false);
@@ -104,7 +110,10 @@ function ServiceAccountDetail({
             Service
             <input value={service} onChange={(event) => setService(event.target.value)} required />
           </label>
-          <button type="submit">Save service</button>
+          {error && <p role="alert">{error.message} Try again.</p>}
+          <button type="submit" disabled={saving}>
+            {saving ? "Saving…" : "Save service"}
+          </button>
           <button
             type="button"
             onClick={() => {
