@@ -122,6 +122,12 @@ func registerEducationRoutes(_ app: Application) {
             throw Abort(.conflict, reason: "An education record with this ID already exists.")
         }
 
+        if let addressID = input.locationAddressID,
+           try await AddressService(database: request.db).find(id: addressID) == nil
+        {
+            throw Abort(.unprocessableEntity, reason: "locationAddressID must reference an existing address.")
+        }
+
         let record = Education(
             id: id,
             educationType: input.educationType,
