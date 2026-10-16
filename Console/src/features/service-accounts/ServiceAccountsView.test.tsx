@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ServiceAccountsView } from "./ServiceAccountsView";
 import type { ServiceAccount } from "../../types";
 
@@ -34,12 +35,24 @@ vi.mock("../../data/recordQueries", () => ({
   useServiceAccountQuery: () => ({ data: mocks.account, isPending: false, isLoading: false, error: null }),
   useServiceAccountPatchMutation: () => ({ mutateAsync: mocks.patch, isPending: false, error: null }),
 }));
+vi.mock("../../components/AttachmentControl", () => ({
+  AttachmentControl: () => <div>Service logo attachment</div>,
+}));
 
 describe("ServiceAccountsView", () => {
   beforeEach(() => mocks.patch.mockReset().mockResolvedValue(mocks.account));
 
+  function renderView() {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={client}>
+        <ServiceAccountsView records={[mocks.account]} />
+      </QueryClientProvider>,
+    );
+  }
+
   it("sends only the edited service property", async () => {
-    render(<ServiceAccountsView records={[mocks.account]} />);
+    renderView();
     fireEvent.click(screen.getByRole("button", { name: /Internet/ }));
     fireEvent.click(screen.getByRole("button", { name: "Edit service" }));
     fireEvent.change(screen.getByLabelText("Service"), { target: { value: "Fiber Internet" } });
@@ -48,7 +61,7 @@ describe("ServiceAccountsView", () => {
   });
 
   it("cancels a status edit without sending a PATCH", () => {
-    render(<ServiceAccountsView records={[mocks.account]} />);
+    renderView();
     fireEvent.click(screen.getByRole("button", { name: /Internet/ }));
     fireEvent.click(screen.getByRole("button", { name: "Edit status" }));
     fireEvent.change(screen.getByLabelText("Status"), { target: { value: "Paused" } });
