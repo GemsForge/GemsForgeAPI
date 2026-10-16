@@ -105,6 +105,17 @@ The working issue is the source of truth. A branch includes its issue number,
 for example fix/205-live-metadata-migration, and a pull request includes a
 closing reference such as Closes #205.
 
+Before implementation, check out the dedicated issue branch, push it to the
+remote, and link that branch to the GitHub story. Keep the branch and commits
+focused on that story; every commit subject must include its issue number.
+Create multiple small, coherent commits for independently reviewable parts of
+the implementation (for example contracts/types, shared implementation,
+resource integrations, and tests/docs). Never collapse an entire story's
+implementation into one commit or squash its focused commits into a single
+commit. Push the focused commits so progress is visible on the story branch.
+Keep stacked PRs based on their parent story branch, make the dependency clear,
+and do not merge any PR unless explicitly instructed.
+
 The issue workflow synchronizes:
 
 - labels, assignees, and milestone from the issue to its pull request;
