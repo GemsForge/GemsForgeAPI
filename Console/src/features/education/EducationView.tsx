@@ -1,7 +1,7 @@
 import { usePagedRecords } from "../../hooks/usePagedRecords";
 import { PaginationControls } from "../../components/PaginationControls";
 import { useState } from "react";
-import { useEducationRecordQuery } from "../../data/recordQueries";
+import { useEducationPatchMutation, useEducationRecordQuery } from "../../data/recordQueries";
 import { QueryFeedback } from "../../components/QueryFeedback";
 import type { Education } from "../../types";
 import { GemEmptyState, GemRecordCard, GemRecordList } from "../../components/ui";
@@ -14,6 +14,7 @@ export function EducationView({ records }: EducationViewProps) {
   const paging = usePagedRecords(records);
   const [selectedID, setSelectedID] = useState<string | null>(null);
   const detail = useEducationRecordQuery(selectedID);
+  const patch = useEducationPatchMutation();
   const selectedRecord = detail.data;
 
   return (
@@ -58,7 +59,12 @@ export function EducationView({ records }: EducationViewProps) {
           <div>
             <QueryFeedback query={detail} />
             {selectedRecord ? (
-              <EducationDetail record={selectedRecord} />
+              <EducationDetail
+                record={selectedRecord}
+                onPatch={async (values) => {
+                  await patch.mutateAsync({ id: selectedRecord.id, patch: values });
+                }}
+              />
             ) : (
               !selectedID && (
                 <div className="detail-placeholder">
@@ -74,7 +80,15 @@ export function EducationView({ records }: EducationViewProps) {
   );
 }
 
-function EducationDetail({ record }: { record: Education }) {
+function EducationDetail({
+  record,
+  onPatch,
+}: {
+  record: Education;
+  onPatch: (values: Partial<Education>) => Promise<void>;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [status, setStatus] = useState(record.status);
   return (
     <article className="education-detail">
       <div className="detail-heading">
@@ -85,6 +99,35 @@ function EducationDetail({ record }: { record: Education }) {
         </div>
         <span className="status-pill">{record.status}</span>
       </div>
+      {editing ? (
+        <form
+          className="edit-form"
+          onSubmit={async (event) => {
+            event.preventDefault();
+            await onPatch({ status });
+            setEditing(false);
+          }}
+        >
+          <label>
+            Status
+            <input value={status} onChange={(event) => setStatus(event.target.value)} />
+          </label>
+          <button type="submit">Save status</button>
+          <button
+            type="button"
+            onClick={() => {
+              setStatus(record.status);
+              setEditing(false);
+            }}
+          >
+            Cancel
+          </button>
+        </form>
+      ) : (
+        <button type="button" onClick={() => setEditing(true)}>
+          Edit status
+        </button>
+      )}
       <dl className="education-fields">
         <Field label="Type" value={record.educationType} />
         <Field label="Program" value={record.program} />
