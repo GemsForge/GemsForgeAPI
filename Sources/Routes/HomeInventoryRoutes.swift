@@ -15,6 +15,46 @@ struct HomeInventoryRequest: Content {
     let notes: String?
 }
 
+struct HomeInventoryCreateRequest: Content {
+    let id: String?
+    let itemName: String
+    let category: String?
+    let itemDescription: String?
+    let quantity: Int
+    let purchaseDate: String?
+    let purchasePrice: Double?
+    let currentValue: Double?
+    let condition: String?
+    let location: String?
+    let notes: String?
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DynamicCodingKey.self)
+        let allowed = Set(["id", "itemName", "category", "itemDescription", "quantity", "purchaseDate", "purchasePrice", "currentValue", "condition", "location", "notes"])
+        if let unknown = container.allKeys.first(where: { !allowed.contains($0.stringValue) }) {
+            throw DecodingError.dataCorruptedError(forKey: unknown, in: container, debugDescription: "Unknown create field: \(unknown.stringValue).")
+        }
+        id = try container.decodeIfPresent(String.self, forKey: DynamicCodingKey(stringValue: "id"))
+        itemName = try container.decode(String.self, forKey: DynamicCodingKey(stringValue: "itemName"))
+        category = try container.decodeIfPresent(String.self, forKey: DynamicCodingKey(stringValue: "category"))
+        itemDescription = try container.decodeIfPresent(String.self, forKey: DynamicCodingKey(stringValue: "itemDescription"))
+        quantity = try container.decode(Int.self, forKey: DynamicCodingKey(stringValue: "quantity"))
+        purchaseDate = try container.decodeIfPresent(String.self, forKey: DynamicCodingKey(stringValue: "purchaseDate"))
+        purchasePrice = try container.decodeIfPresent(Double.self, forKey: DynamicCodingKey(stringValue: "purchasePrice"))
+        currentValue = try container.decodeIfPresent(Double.self, forKey: DynamicCodingKey(stringValue: "currentValue"))
+        condition = try container.decodeIfPresent(String.self, forKey: DynamicCodingKey(stringValue: "condition"))
+        location = try container.decodeIfPresent(String.self, forKey: DynamicCodingKey(stringValue: "location"))
+        notes = try container.decodeIfPresent(String.self, forKey: DynamicCodingKey(stringValue: "notes"))
+    }
+}
+
+private struct DynamicCodingKey: CodingKey, Hashable {
+    let stringValue: String
+    let intValue: Int? = nil
+    init(stringValue: String) { self.stringValue = stringValue }
+    init?(intValue: Int) { return nil }
+}
+
 private func validate(_ input: HomeInventoryRequest) throws {
     if let id = input.id?.trimmingCharacters(in: .whitespacesAndNewlines), !id.isEmpty,
        !HomeInventoryIdentifier.isValid(id) {
@@ -45,7 +85,20 @@ func registerHomeInventoryRoutes(_ app: Application) {
     }
 
     inventory.post { request async throws -> HomeInventory in
-        let input = try request.content.decode(HomeInventoryRequest.self)
+        let createInput = try request.content.decode(HomeInventoryCreateRequest.self)
+        let input = HomeInventoryRequest(
+            id: createInput.id,
+            itemName: createInput.itemName,
+            category: createInput.category,
+            itemDescription: createInput.itemDescription,
+            quantity: createInput.quantity,
+            purchaseDate: createInput.purchaseDate,
+            purchasePrice: createInput.purchasePrice,
+            currentValue: createInput.currentValue,
+            condition: createInput.condition,
+            location: createInput.location,
+            notes: createInput.notes
+        )
         try validate(input)
 
         let suppliedID = input.id?.trimmingCharacters(in: .whitespacesAndNewlines)
