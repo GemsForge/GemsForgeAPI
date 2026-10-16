@@ -8,6 +8,8 @@ import { AttachmentControl } from "../../components/AttachmentControl";
 import { GemEmptyState, GemRecordCard, GemRecordList } from "../../components/ui";
 import { RecordFields } from "../../components/RecordFields";
 import { PropertyEditor } from "../../components/PropertyEditor";
+import { useCreateAddressMutation } from "../../data/recordQueries";
+import { AddressCreateForm } from "../create/RecordCreateForms";
 
 interface AddressesViewProps {
   records: Address[];
@@ -20,6 +22,8 @@ export function AddressesView({ records }: AddressesViewProps) {
   const attachment = useAddressAttachmentMutation();
   const patch = useAddressPatchMutation();
   const selectedAddress = detail.data;
+  const [creating, setCreating] = useState(false);
+  const create = useCreateAddressMutation();
 
   return (
     <>
@@ -30,8 +34,24 @@ export function AddressesView({ records }: AddressesViewProps) {
           <h2>Addresses</h2>
           <p className="muted">Read address records and inspect the locations referenced by other Life-area tables.</p>
         </div>
-        <span className="record-count">{records.length} records</span>
+        <div className="button-row">
+          <span className="record-count">{records.length} records</span>
+          <button type="button" onClick={() => setCreating(true)}>
+            Add address
+          </button>
+        </div>
       </div>
+
+      {creating && (
+        <AddressCreateForm
+          onCancel={() => setCreating(false)}
+          onCreate={async (payload) => {
+            const created = await create.mutateAsync(payload);
+            setSelectedID(created.id);
+            setCreating(false);
+          }}
+        />
+      )}
 
       {records.length === 0 ? (
         <GemEmptyState
