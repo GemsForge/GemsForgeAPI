@@ -86,6 +86,11 @@ export const api = {
   listAddresses: (signal?: AbortSignal) => request<Address[]>("/addresses", { signal }),
   getAddress: (addressID: string, signal?: AbortSignal) =>
     request<Address>(`/addresses/${encodeURIComponent(addressID)}`, { signal }),
+  patchAddress: (addressID: string, patch: Partial<Address>) =>
+    request<Address>(`/addresses/${encodeURIComponent(addressID)}`, {
+      method: "PATCH",
+      body: JSON.stringify(patch),
+    }),
   listTransactions: (signal?: AbortSignal) => request<ExpenseTransaction[]>("/transactions", { signal }),
   getTransaction: (transactionID: string, signal?: AbortSignal) =>
     request<ExpenseTransaction>(`/transactions/${encodeURIComponent(transactionID)}`, { signal }),

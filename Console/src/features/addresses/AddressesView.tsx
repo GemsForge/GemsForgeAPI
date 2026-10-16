@@ -1,7 +1,7 @@
 import { usePagedRecords } from "../../hooks/usePagedRecords";
 import { PaginationControls } from "../../components/PaginationControls";
 import { useState } from "react";
-import { useAddressQuery, useAddressAttachmentMutation } from "../../data/recordQueries";
+import { useAddressQuery, useAddressAttachmentMutation, useAddressPatchMutation } from "../../data/recordQueries";
 import { QueryFeedback } from "../../components/QueryFeedback";
 import type { Address } from "../../types";
 import { AttachmentControl } from "../../components/AttachmentControl";
@@ -16,6 +16,7 @@ export function AddressesView({ records }: AddressesViewProps) {
   const [selectedID, setSelectedID] = useState<string | null>(null);
   const detail = useAddressQuery(selectedID);
   const attachment = useAddressAttachmentMutation();
+  const patch = useAddressPatchMutation();
   const selectedAddress = detail.data;
 
   return (
@@ -64,6 +65,9 @@ export function AddressesView({ records }: AddressesViewProps) {
                 onAttachment={async (metadata) => {
                   await attachment.mutateAsync({ id: selectedAddress.id, fileID: metadata?.id ?? null });
                 }}
+                onPatch={async (values) => {
+                  await patch.mutateAsync({ id: selectedAddress.id, patch: values });
+                }}
               />
             ) : (
               !selectedID && (
@@ -83,10 +87,14 @@ export function AddressesView({ records }: AddressesViewProps) {
 function AddressDetail({
   record,
   onAttachment,
+  onPatch,
 }: {
   record: Address;
   onAttachment: (metadata: import("../../types").FileMetadata | null) => Promise<void>;
+  onPatch: (values: Partial<Address>) => Promise<void>;
 }) {
+  const [editing, setEditing] = useState(false);
+  const [city, setCity] = useState(record.city ?? "");
   return (
     <article className="address-detail">
       <div className="detail-heading">
@@ -97,6 +105,35 @@ function AddressDetail({
         </div>
         <span className="status-pill">{record.addressStatus}</span>
       </div>
+      {editing ? (
+        <form
+          className="edit-form"
+          onSubmit={async (event) => {
+            event.preventDefault();
+            await onPatch({ city });
+            setEditing(false);
+          }}
+        >
+          <label>
+            City
+            <input value={city} onChange={(event) => setCity(event.target.value)} />
+          </label>
+          <button type="submit">Save city</button>
+          <button
+            type="button"
+            onClick={() => {
+              setCity(record.city ?? "");
+              setEditing(false);
+            }}
+          >
+            Cancel
+          </button>
+        </form>
+      ) : (
+        <button type="button" onClick={() => setEditing(true)}>
+          Edit city
+        </button>
+      )}
       <dl className="address-fields">
         <Field label="Address line 1" value={record.addressLine1} />
         <Field label="Address line 2" value={record.addressLine2} />

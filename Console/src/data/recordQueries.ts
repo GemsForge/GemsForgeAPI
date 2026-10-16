@@ -71,6 +71,17 @@ export function useAddressAttachmentMutation() {
     },
   });
 }
+export function useAddressPatchMutation() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, patch }: { id: string; patch: Partial<import("../types").Address> }) =>
+      api.patchAddress(id, patch),
+    onSuccess: async (record) => {
+      client.setQueryData(recordQueryKeys.address(record.id), record);
+      await client.invalidateQueries({ queryKey: lifeQueryKeys.addresses, exact: true });
+    },
+  });
+}
 export function useTransactionImageMutation() {
   const client = useQueryClient();
   return useMutation({
