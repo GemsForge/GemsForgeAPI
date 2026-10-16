@@ -111,16 +111,33 @@ func registerServiceAccountRoutes(_ app: Application) {
         let input = try request.content.decode(ServiceAccountCreateRequest.self).value
         try validate(input)
 
-        if let id = input.id,
-           try await ServiceAccountService(database: request.db).find(id: id) != nil {
+        let service = ServiceAccountService(database: request.db)
+        if let id = input.id, try await service.find(id: id) != nil {
             throw Abort(.conflict, reason: "A Service Account with this ID already exists.")
         }
 
+        if let serviceKey = input.serviceKey?.trimmingCharacters(in: .whitespacesAndNewlines), !serviceKey.isEmpty {
+            let normalizedKey = serviceKey.lowercased()
+            if try await service.list().contains(where: {
+                $0.serviceKey?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == normalizedKey
+            }) {
+                throw Abort(.conflict, reason: "A Service Account with this serviceKey already exists.")
+            }
+        }
+
+        if let metadataID = input.logoFileMetadataID?.trimmingCharacters(in: .whitespacesAndNewlines), !metadataID.isEmpty,
+           try await FileMetadata.find(metadataID, on: request.db) == nil {
+            throw Abort(.unprocessableEntity, reason: "The referenced file metadata does not exist.")
+        }
+
         let account = makeServiceAccount(from: input, id: input.id)
-        try await ServiceAccountService(database: request.db).save(account)
-        if let id = account.id {
-            _ = try await AttachmentReferenceService(database: request.db).attach(metadataID: account.logoFileMetadataID, ownerType: "ServiceAccount", ownerID: String(id))
-            try await ServiceAccountService(database: request.db).save(account)
+        try await request.db.transaction { database in
+            let transactionalService = ServiceAccountService(database: database)
+            try await transactionalService.save(account)
+            if let id = account.id {
+                _ = try await AttachmentReferenceService(database: database).attach(metadataID: account.logoFileMetadataID, ownerType: "ServiceAccount", ownerID: String(id))
+                try await transactionalService.save(account)
+            }
         }
         return account
     }
