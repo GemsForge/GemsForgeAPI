@@ -66,6 +66,13 @@ func registerDomainRoutes(_ app: Application) {
         let input = DomainRequest(id: createInput.id, title: createInput.title, description: createInput.description)
         try validate(input)
 
+        let normalizedTitle = input.title.trimmingCharacters(in: .whitespacesAndNewlines)
+        if try await DomainService(database: request.db).list().contains(where: {
+            $0.title.caseInsensitiveCompare(normalizedTitle) == .orderedSame
+        }) {
+            throw Abort(.conflict, reason: "A domain with this title already exists.")
+        }
+
         if let id = input.id,
            try await DomainService(database: request.db).find(id: id) != nil
         {
