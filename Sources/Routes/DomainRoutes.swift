@@ -53,6 +53,31 @@ func registerDomainRoutes(_ app: Application) {
         return domain
     }
 
+    domains.patch(":id") { request async throws -> Domain in
+        guard let id = request.parameters.get("id"),
+              let domain = try await DomainService(database: request.db).find(id: id)
+        else {
+            throw Abort(.notFound)
+        }
+
+        let payload = try request.content.decode([String: String?].self)
+        try PropertyPatchValidation.requireNonEmpty(payload)
+        try PropertyPatchValidation.requireKnownProperties(payload, allowed: ["title", "description"])
+
+        let title = PropertyPatchValidation.value("title", in: payload, current: domain.title)
+        let description = PropertyPatchValidation.value("description", in: payload, current: domain.description)
+        guard let title, !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+              let description, !description.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        else {
+            throw Abort(.unprocessableEntity, reason: "Domain title and description cannot be empty.")
+        }
+
+        domain.title = title
+        domain.description = description
+        try await DomainService(database: request.db).save(domain)
+        return domain
+    }
+
     domains.put(":id") { request async throws -> Domain in
         guard let id = request.parameters.get("id"),
               let domain = try await DomainService(database: request.db).find(id: id)
