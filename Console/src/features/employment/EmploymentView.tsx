@@ -61,6 +61,8 @@ export function EmploymentView({ records }: EmploymentViewProps) {
             {selectedRecord ? (
               <EmploymentDetail
                 record={selectedRecord}
+                saving={patch.isPending}
+                error={patch.error}
                 onPatch={async (values) => {
                   await patch.mutateAsync({ id: selectedRecord.id, patch: values });
                 }}
@@ -82,9 +84,13 @@ export function EmploymentView({ records }: EmploymentViewProps) {
 
 function EmploymentDetail({
   record,
+  saving,
+  error,
   onPatch,
 }: {
   record: Employment;
+  saving: boolean;
+  error: Error | null;
   onPatch: (values: Partial<Employment>) => Promise<void>;
 }) {
   const [editing, setEditing] = useState(false);
@@ -112,7 +118,10 @@ function EmploymentDetail({
             Position
             <input value={positionTitle} onChange={(event) => setPositionTitle(event.target.value)} />
           </label>
-          <button type="submit">Save position</button>
+          {error && <p role="alert">{error.message} Try again.</p>}
+          <button type="submit" disabled={saving}>
+            {saving ? "Saving…" : "Save position"}
+          </button>
           <button
             type="button"
             onClick={() => {
