@@ -123,6 +123,10 @@ function TransactionDetail({
           className="edit-form"
           onSubmit={async (event) => {
             event.preventDefault();
+            if (item === record.item) {
+              setEditing(false);
+              return;
+            }
             await onPatch({ item });
             setEditing(false);
           }}

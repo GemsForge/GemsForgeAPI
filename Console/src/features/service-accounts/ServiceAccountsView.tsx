@@ -113,6 +113,10 @@ function ServiceAccountDetail({
           className="edit-form"
           onSubmit={async (event) => {
             event.preventDefault();
+            if (service === record.service) {
+              setEditing(false);
+              return;
+            }
             await onPatch({ service });
             setEditing(false);
           }}
@@ -145,6 +149,10 @@ function ServiceAccountDetail({
           className="edit-form"
           onSubmit={async (event) => {
             event.preventDefault();
+            if (status === (record.status ?? "")) {
+              setEditingStatus(false);
+              return;
+            }
             await onPatch({ status: status || null });
             setEditingStatus(false);
           }}

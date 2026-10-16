@@ -110,6 +110,10 @@ function EmploymentDetail({
           className="edit-form"
           onSubmit={async (event) => {
             event.preventDefault();
+            if (positionTitle === record.positionTitle) {
+              setEditing(false);
+              return;
+            }
             await onPatch({ positionTitle });
             setEditing(false);
           }}
