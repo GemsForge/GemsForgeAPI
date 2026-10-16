@@ -7,6 +7,7 @@ import {
   recordQueryKeys,
   useAddressQuery,
   useAddressAttachmentMutation,
+  useCreateAddressMutation,
   useTransactionImageMutation,
 } from "./recordQueries";
 import { lifeQueryKeys } from "./lifeQueries";
@@ -67,6 +68,32 @@ describe("shared query and mutation layer", () => {
       await hook.result.current.mutateAsync({ id: "A", fileID: "file-2" });
     });
     expect(client.getQueryData(recordQueryKeys.address("A"))).toEqual(record);
+    expect(client.getQueryState(lifeQueryKeys.addresses)?.isInvalidated).toBe(true);
+  });
+
+  it("caches a created record and invalidates the list for refresh", async () => {
+    const record = { id: "new-address", city: "Boston" } as Awaited<ReturnType<typeof api.createAddress>>;
+    vi.spyOn(api, "createAddress").mockResolvedValue(record);
+    const { client, wrapper } = setup();
+    client.setQueryData(lifeQueryKeys.addresses, []);
+    const hook = renderHook(() => useCreateAddressMutation(), { wrapper });
+    await act(async () => {
+      await hook.result.current.mutateAsync({
+        id: "new-address",
+        addressType: "Residence",
+        addressLine1: null,
+        addressLine2: null,
+        city: "Boston",
+        state: null,
+        postalCode: null,
+        country: "US",
+        startDate: null,
+        endDate: null,
+        addressStatus: "Current",
+        notes: null,
+      });
+    });
+    expect(client.getQueryData(recordQueryKeys.address("new-address"))).toEqual(record);
     expect(client.getQueryState(lifeQueryKeys.addresses)?.isInvalidated).toBe(true);
   });
 
