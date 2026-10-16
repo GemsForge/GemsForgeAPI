@@ -7,6 +7,7 @@ export const recordQueryKeys = {
   transaction: (id: string | null) => [...lifeQueryKeys.transactions, "detail", id] as const,
   education: (id: string | null) => [...lifeQueryKeys.education, "detail", id] as const,
   employment: (id: string | null) => [...lifeQueryKeys.employment, "detail", id] as const,
+  serviceAccount: (id: number | null) => [...lifeQueryKeys.serviceAccounts, "detail", id] as const,
   hue: (id: string | null) => [...lifeQueryKeys.gemHues, "detail", id] as const,
 };
 
@@ -35,6 +36,13 @@ export function useEmploymentRecordQuery(id: string | null) {
   return useQuery({
     queryKey: recordQueryKeys.employment(id),
     queryFn: ({ signal }) => api.getEmployment(id!, signal),
+    enabled: id !== null,
+  });
+}
+export function useServiceAccountQuery(id: number | null) {
+  return useQuery({
+    queryKey: recordQueryKeys.serviceAccount(id),
+    queryFn: ({ signal }) => api.getServiceAccount(id!, signal),
     enabled: id !== null,
   });
 }
@@ -112,6 +120,17 @@ export function useTransactionPatchMutation() {
     onSuccess: async (record) => {
       client.setQueryData(recordQueryKeys.transaction(record.id), record);
       await client.invalidateQueries({ queryKey: lifeQueryKeys.transactions, exact: true });
+    },
+  });
+}
+export function useServiceAccountPatchMutation() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, patch }: { id: number; patch: Partial<import("../types").ServiceAccount> }) =>
+      api.patchServiceAccount(id, patch),
+    onSuccess: async (record) => {
+      client.setQueryData(recordQueryKeys.serviceAccount(record.id), record);
+      await client.invalidateQueries({ queryKey: lifeQueryKeys.serviceAccounts, exact: true });
     },
   });
 }

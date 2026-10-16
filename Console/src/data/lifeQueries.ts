@@ -7,6 +7,7 @@ export const lifeQueryKeys = {
   employment: ["employment"] as const,
   addresses: ["addresses"] as const,
   transactions: ["transactions"] as const,
+  serviceAccounts: ["service-accounts"] as const,
 };
 
 /** Reads the Foundation Gem Hues catalog for the active screen. */
@@ -34,6 +35,15 @@ export function useTransactionsQuery(enabled: boolean) {
   return useQuery({
     queryKey: lifeQueryKeys.transactions,
     queryFn: ({ signal }) => api.listTransactions(signal),
+    enabled,
+  });
+}
+
+/** Reads recurring service accounts backed by the Services table. */
+export function useServiceAccountsQuery(enabled: boolean) {
+  return useQuery({
+    queryKey: lifeQueryKeys.serviceAccounts,
+    queryFn: ({ signal }) => api.listServiceAccounts(signal),
     enabled,
   });
 }
