@@ -104,6 +104,11 @@ export const api = {
   listTransactions: (signal?: AbortSignal) => request<ExpenseTransaction[]>("/transactions", { signal }),
   getTransaction: (transactionID: string, signal?: AbortSignal) =>
     request<ExpenseTransaction>(`/transactions/${encodeURIComponent(transactionID)}`, { signal }),
+  patchTransaction: (transactionID: string, patch: Partial<ExpenseTransaction>) =>
+    request<ExpenseTransaction>(`/transactions/${encodeURIComponent(transactionID)}`, {
+      method: "PATCH",
+      body: JSON.stringify(patch),
+    }),
   uploadImage: async (file: File, fileKind: string, ownerType: string, ownerID: string) => {
     const form = new FormData();
     form.append("file", file);
