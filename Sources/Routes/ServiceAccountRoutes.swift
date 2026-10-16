@@ -25,6 +25,14 @@ struct ServiceAccountRequest: Content {
     var logoFileMetadataID: String? = nil
 }
 
+struct ServiceAccountPatchRequest: Content {
+    let service: String?
+    let monthlyAmount: Double?
+    let status: String?
+    let notes: String?
+    let logoFileMetadataID: String?
+}
+
 private func validate(_ input: ServiceAccountRequest) throws {
     guard !input.service.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
         throw Abort(.badRequest, reason: "Service name is required.")
@@ -98,6 +106,29 @@ func registerServiceAccountRoutes(_ app: Application) {
         }
 
         // Returns one recurring service account by its stable ServiceID.
+        return account
+    }
+
+    accounts.patch(":id") { request async throws -> ServiceAccount in
+        guard let id = request.parameters.get("id", as: Int.self),
+              let account = try await ServiceAccountService(database: request.db).find(id: id)
+        else { throw Abort(.notFound) }
+        let input = try request.content.decode(ServiceAccountPatchRequest.self)
+        guard input.service != nil || input.monthlyAmount != nil || input.status != nil || input.notes != nil || input.logoFileMetadataID != nil else {
+            throw Abort(.unprocessableEntity, reason: "At least one editable field is required.")
+        }
+        let service = input.service ?? account.service
+        guard !service.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { throw Abort(.unprocessableEntity, reason: "Service name cannot be empty.") }
+        let monthlyAmount = input.monthlyAmount ?? account.monthlyAmount
+        if let monthlyAmount, monthlyAmount < 0 { throw Abort(.unprocessableEntity, reason: "Monthly amount cannot be negative.") }
+        let logoFileMetadataID = input.logoFileMetadataID ?? account.logoFileMetadataID
+        try await AttachmentReferenceService(database: request.db).replace(oldMetadataID: account.logoFileMetadataID, newMetadataID: logoFileMetadataID, ownerType: "ServiceAccount", ownerID: String(id))
+        account.service = service
+        account.monthlyAmount = monthlyAmount
+        account.status = input.status ?? account.status
+        account.notes = input.notes ?? account.notes
+        account.logoFileMetadataID = logoFileMetadataID
+        try await ServiceAccountService(database: request.db).save(account)
         return account
     }
 
