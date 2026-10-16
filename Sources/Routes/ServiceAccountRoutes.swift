@@ -25,6 +25,33 @@ struct ServiceAccountRequest: Content {
     var logoFileMetadataID: String? = nil
 }
 
+/// Strict POST boundary for service accounts. The wrapped legacy request is
+/// retained for PUT compatibility while POST rejects unknown fields.
+struct ServiceAccountCreateRequest: Content {
+    let value: ServiceAccountRequest
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DynamicCodingKey.self)
+        let allowed = Set([
+            "id", "service", "logoKey", "type", "expenseGroup", "monthlyAmount",
+            "interestRate", "apr", "due", "occurrence", "status", "since",
+            "website", "notes", "notionPage", "paymentMethod", "accountNumber",
+            "emailUpdated", "associatedAddress", "serviceKey", "logoFileMetadataID"
+        ])
+        if let unknown = container.allKeys.first(where: { !allowed.contains($0.stringValue) }) {
+            throw DecodingError.dataCorruptedError(forKey: unknown, in: container, debugDescription: "Unknown create field: \(unknown.stringValue).")
+        }
+        value = try ServiceAccountRequest(from: decoder)
+    }
+}
+
+private struct DynamicCodingKey: CodingKey, Hashable {
+    let stringValue: String
+    let intValue: Int? = nil
+    init(stringValue: String) { self.stringValue = stringValue }
+    init?(intValue: Int) { return nil }
+}
+
 struct ServiceAccountPatchRequest: Content {
     let service: String?
     let monthlyAmount: Double?
@@ -81,7 +108,7 @@ func registerServiceAccountRoutes(_ app: Application) {
     }
 
     accounts.post { request async throws -> ServiceAccount in
-        let input = try request.content.decode(ServiceAccountRequest.self)
+        let input = try request.content.decode(ServiceAccountCreateRequest.self).value
         try validate(input)
 
         if let id = input.id,
