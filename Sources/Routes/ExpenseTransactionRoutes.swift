@@ -1,3 +1,4 @@
+import Fluent
 import Vapor
 
 /// The fields accepted when creating or replacing an expense transaction.
@@ -71,6 +72,21 @@ private func validate(_ input: ExpenseTransactionRequest, requiresID: Bool = fal
     }
 }
 
+private func validateCategoryReferences(_ input: ExpenseTransactionRequest, database: any Database) async throws {
+    guard try await ExpenseCategoryService(database: database).find(id: input.categoryID) != nil else {
+        throw Abort(.unprocessableEntity, reason: "categoryID must reference an existing expense category.")
+    }
+
+    if let subcategoryID = input.subcategoryID {
+        guard let subcategory = try await ExpenseSubcategoryService(database: database).find(id: subcategoryID) else {
+            throw Abort(.unprocessableEntity, reason: "subcategoryID must reference an existing expense subcategory.")
+        }
+        guard subcategory.categoryID == input.categoryID else {
+            throw Abort(.unprocessableEntity, reason: "subcategoryID must belong to categoryID.")
+        }
+    }
+}
+
 private func makeTransaction(from input: ExpenseTransactionRequest, id: String?) -> ExpenseTransaction {
     ExpenseTransaction(
         id: id,
@@ -109,6 +125,8 @@ func registerExpenseTransactionRoutes(_ app: Application) {
         if try await service.find(id: id) != nil {
             throw Abort(.conflict, reason: "A transaction with this ID already exists.")
         }
+
+        try await validateCategoryReferences(input, database: request.db)
 
         let transaction = makeTransaction(from: input, id: id)
         _ = try await AttachmentReferenceService(database: request.db).attach(metadataID: transaction.image, ownerType: "ExpenseTransaction", ownerID: id)
