@@ -125,6 +125,13 @@ final class EducationRouteTests: XCTestCase {
             try await app.autoMigrate()
             registerEducationRoutes(app)
         }) { app in
+            try await app.test(.POST, "education", beforeRequest: { request in
+                request.headers.contentType = .json
+                request.body = ByteBuffer(string: #"{"id":"EDU-INJECTED","educationType":"College","institutionName":"Example","status":"Current","dateCreated":"2099-01-01"}"#)
+            }) { response in
+                XCTAssertEqual(response.status, .badRequest)
+            }
+
             let invalidPayload = EducationRequest(
                 id: "EDU-0001",
                 educationType: "",

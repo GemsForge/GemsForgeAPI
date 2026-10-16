@@ -110,6 +110,13 @@ final class AddressRouteTests: XCTestCase {
             try await app.autoMigrate()
             registerAddressRoutes(app)
         }) { app in
+            try await app.test(.POST, "addresses", beforeRequest: { request in
+                request.headers.contentType = .json
+                request.body = ByteBuffer(string: #"{"id":"ADDR-INJECTED","addressStatus":"Current","dateCreated":"2099-01-01"}"#)
+            }) { response in
+                XCTAssertEqual(response.status, .badRequest)
+            }
+
             let invalidPayload = AddressRequest(
                 id: "ADDR-0001",
                 addressType: nil,

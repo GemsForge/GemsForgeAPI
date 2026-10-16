@@ -22,7 +22,18 @@ struct EducationRequest: Content {
 
 /// Create-only payload. Relationship responses and audit fields remain
 /// server-owned and are intentionally absent from this contract.
-typealias EducationCreateRequest = EducationRequest
+struct EducationCreateRequest: Content {
+    let value: EducationRequest
+
+    init(from decoder: Decoder) throws {
+        try CreateContractValidation.rejectUnknownFields(in: decoder, allowed: [
+            "id", "educationType", "institutionName", "program", "fieldOfStudy", "credential",
+            "credentialID", "startDate", "endDate", "awardedDate", "status", "locationAddressID",
+            "website", "notes", "documentFileMetadataID"
+        ])
+        value = try EducationRequest(from: decoder)
+    }
+}
 
 /// API response that expands the address relationship for client rendering.
 struct EducationResponse: Content {
@@ -103,7 +114,7 @@ func registerEducationRoutes(_ app: Application) {
     }
 
     education.post { request async throws -> EducationResponse in
-        let input = try request.content.decode(EducationCreateRequest.self)
+        let input = try request.content.decode(EducationCreateRequest.self).value
         try validate(input, requiresID: true)
 
         let id = input.id!.trimmingCharacters(in: .whitespacesAndNewlines)
