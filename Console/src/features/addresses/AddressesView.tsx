@@ -116,6 +116,10 @@ function AddressDetail({
           className="edit-form"
           onSubmit={async (event) => {
             event.preventDefault();
+            if (city === (record.city ?? "")) {
+              setEditing(false);
+              return;
+            }
             await onPatch({ city });
             setEditing(false);
           }}

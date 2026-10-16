@@ -110,6 +110,10 @@ function EducationDetail({
           className="edit-form"
           onSubmit={async (event) => {
             event.preventDefault();
+            if (status === record.status) {
+              setEditing(false);
+              return;
+            }
             await onPatch({ status });
             setEditing(false);
           }}
