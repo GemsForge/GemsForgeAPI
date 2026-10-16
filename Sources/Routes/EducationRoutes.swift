@@ -131,10 +131,8 @@ func registerEducationRoutes(_ app: Application) {
     }
 
     education.get(":id") { request async throws -> EducationResponse in
-        guard let id = request.parameters.get("id"),
-              let record = try await EducationService(database: request.db).find(id: id)
-        else {
-            throw Abort(.notFound)
+        let (_, record) = try await requireRouteRecord(request.parameters.get("id")) {
+            try await EducationService(database: request.db).find(id: $0)
         }
 
         // Returns one education record by its stable EducationID.
@@ -142,9 +140,9 @@ func registerEducationRoutes(_ app: Application) {
     }
 
     education.patch(":id") { request async throws -> EducationResponse in
-        guard let id = request.parameters.get("id"),
-              let record = try await EducationService(database: request.db).find(id: id)
-        else { throw Abort(.notFound) }
+        let (id, record) = try await requireRouteRecord(request.parameters.get("id")) {
+            try await EducationService(database: request.db).find(id: $0)
+        }
 
         let payload = try request.content.decode([String: String?].self)
         try PropertyPatchValidation.requireNonEmpty(payload)
@@ -197,10 +195,8 @@ func registerEducationRoutes(_ app: Application) {
     }
 
     education.put(":id") { request async throws -> EducationResponse in
-        guard let id = request.parameters.get("id"),
-              let record = try await EducationService(database: request.db).find(id: id)
-        else {
-            throw Abort(.notFound)
+        let (id, record) = try await requireRouteRecord(request.parameters.get("id")) {
+            try await EducationService(database: request.db).find(id: $0)
         }
 
         let input = try request.content.decode(EducationRequest.self)
@@ -225,10 +221,8 @@ func registerEducationRoutes(_ app: Application) {
     }
 
     education.delete(":id") { request async throws -> HTTPStatus in
-        guard let id = request.parameters.get("id"),
-              try await EducationService(database: request.db).find(id: id) != nil
-        else {
-            throw Abort(.notFound)
+        let (id, _) = try await requireRouteRecord(request.parameters.get("id")) {
+            try await EducationService(database: request.db).find(id: $0)
         }
 
         try await EducationService(database: request.db).delete(id: id)
