@@ -1,7 +1,7 @@
 import { usePagedRecords } from "../../hooks/usePagedRecords";
 import { PaginationControls } from "../../components/PaginationControls";
 import { useState } from "react";
-import { useEmploymentRecordQuery } from "../../data/recordQueries";
+import { useEmploymentPatchMutation, useEmploymentRecordQuery } from "../../data/recordQueries";
 import { QueryFeedback } from "../../components/QueryFeedback";
 import type { Employment } from "../../types";
 import { GemEmptyState, GemRecordCard, GemRecordList } from "../../components/ui";
@@ -14,6 +14,7 @@ export function EmploymentView({ records }: EmploymentViewProps) {
   const paging = usePagedRecords(records);
   const [selectedID, setSelectedID] = useState<string | null>(null);
   const detail = useEmploymentRecordQuery(selectedID);
+  const patch = useEmploymentPatchMutation();
   const selectedRecord = detail.data;
 
   return (
@@ -58,7 +59,12 @@ export function EmploymentView({ records }: EmploymentViewProps) {
           <div>
             <QueryFeedback query={detail} />
             {selectedRecord ? (
-              <EmploymentDetail record={selectedRecord} />
+              <EmploymentDetail
+                record={selectedRecord}
+                onPatch={async (values) => {
+                  await patch.mutateAsync({ id: selectedRecord.id, patch: values });
+                }}
+              />
             ) : (
               !selectedID && (
                 <div className="detail-placeholder">
@@ -74,7 +80,15 @@ export function EmploymentView({ records }: EmploymentViewProps) {
   );
 }
 
-function EmploymentDetail({ record }: { record: Employment }) {
+function EmploymentDetail({
+  record,
+  onPatch,
+}: {
+  record: Employment;
+  onPatch: (values: Partial<Employment>) => Promise<void>;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [positionTitle, setPositionTitle] = useState(record.positionTitle);
   return (
     <article className="employment-detail">
       <div className="detail-heading">
@@ -85,6 +99,35 @@ function EmploymentDetail({ record }: { record: Employment }) {
         </div>
         <span className="status-pill">{record.employmentStatus}</span>
       </div>
+      {editing ? (
+        <form
+          className="edit-form"
+          onSubmit={async (event) => {
+            event.preventDefault();
+            await onPatch({ positionTitle });
+            setEditing(false);
+          }}
+        >
+          <label>
+            Position
+            <input value={positionTitle} onChange={(event) => setPositionTitle(event.target.value)} />
+          </label>
+          <button type="submit">Save position</button>
+          <button
+            type="button"
+            onClick={() => {
+              setPositionTitle(record.positionTitle);
+              setEditing(false);
+            }}
+          >
+            Cancel
+          </button>
+        </form>
+      ) : (
+        <button type="button" onClick={() => setEditing(true)}>
+          Edit position
+        </button>
+      )}
       <dl className="employment-fields">
         <Field label="Position" value={record.positionTitle} />
         <Field label="Employer type" value={record.employerType} />
