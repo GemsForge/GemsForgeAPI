@@ -84,3 +84,13 @@ fields are excluded unless explicitly marked editable by a later contract:
 Every resource implementation must add focused tests for single-property,
 multi-property, omitted-property, nullability, unknown-property, immutable
 field, relationship, and stale-update behavior.
+
+## Implementation status
+
+The shared validation rules are implemented in
+`Sources/Services/PropertyPatchValidation.swift`. The current API rollout
+covers Addresses, Domains, Employment, Education, Transactions, and Service
+Accounts. Typed PATCH request models must perform strict JSON-key validation so
+unknown properties are rejected before decoding; dictionary-based handlers must
+use the same allowed-property check. New resources should follow this contract
+and add their route tests before being exposed to the UI.
