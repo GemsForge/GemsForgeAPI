@@ -34,6 +34,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock("../../data/recordQueries", () => ({
   useServiceAccountQuery: () => ({ data: mocks.account, isPending: false, isLoading: false, error: null }),
   useServiceAccountPatchMutation: () => ({ mutateAsync: mocks.patch, isPending: false, error: null }),
+  useCreateServiceAccountMutation: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
 vi.mock("../../components/AttachmentControl", () => ({
   AttachmentControl: () => <div>Service logo attachment</div>,

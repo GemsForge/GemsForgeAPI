@@ -25,6 +25,58 @@ describe("standardized API failures", () => {
   });
 });
 
+describe("resource create contracts", () => {
+  it("posts only the explicit resource payload to each create route", async () => {
+    const fetch = vi
+      .fn()
+      .mockImplementation(
+        async (_path: string, options: RequestInit) =>
+          new Response(options.body, { headers: { "Content-Type": "application/json" } }),
+      );
+    vi.stubGlobal("fetch", fetch);
+    const payloads = [
+      [api.createDomain, "/domains", { title: "Home", description: "Personal domain" }],
+      [
+        api.createAddress,
+        "/addresses",
+        { id: "A1", addressType: "Residence", country: "US", addressStatus: "Current" },
+      ],
+      [
+        api.createEducation,
+        "/education",
+        { id: "E1", educationType: "Degree", institutionName: "School", status: "Completed", locationAddressID: "A1" },
+      ],
+      [
+        api.createEmployment,
+        "/employment",
+        {
+          id: "W1",
+          employerName: "Org",
+          employerType: "Company",
+          positionTitle: "Engineer",
+          employmentType: "Full-time",
+          employmentStatus: "Current",
+          workAddressID: "A1",
+        },
+      ],
+      [
+        api.createTransaction,
+        "/transactions",
+        { id: "T1", item: "Book", firstReceiptItem: true, categoryID: 3, subcategoryID: null, quantity: 1 },
+      ],
+      [api.createServiceAccount, "/service-accounts", { service: "Internet", monthlyAmount: 50 }],
+    ] as const;
+    for (const [create, path, payload] of payloads) {
+      await create(payload as never);
+      const [, options] = fetch.mock.calls.at(-1)!;
+      expect(fetch.mock.calls.at(-1)?.[0]).toBe(path);
+      expect(options.method).toBe("POST");
+      expect(JSON.parse(String(options.body))).toEqual(payload);
+      expect(JSON.parse(String(options.body))).not.toHaveProperty("createdAt");
+    }
+  });
+});
+
 describe("file presentation API", () => {
   it("encodes metadata IDs and forwards cancellation", async () => {
     const fetch = vi.fn().mockResolvedValue(new Response(JSON.stringify({ id: "file/1" })));
