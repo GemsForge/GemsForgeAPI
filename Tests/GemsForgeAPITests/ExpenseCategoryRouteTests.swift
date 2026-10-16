@@ -70,6 +70,15 @@ final class ExpenseCategoryRouteTests: XCTestCase {
                 XCTAssertEqual(response.status, .ok)
             }
 
+            let duplicateID = ExpenseCategoryRequest(id: 7, name: "Different name")
+            try await app.test(.POST, "expense-categories", beforeRequest: { request in
+                try request.content.encode(duplicateID)
+            }) { response async throws in
+                XCTAssertEqual(response.status, .conflict)
+                let records = try await ExpenseCategoryService(database: app.db).list()
+                XCTAssertEqual(records.count, 1)
+            }
+
             let duplicateName = ExpenseCategoryRequest(id: nil, name: "health")
             try await app.test(.POST, "expense-categories", beforeRequest: { request in
                 try request.content.encode(duplicateName)

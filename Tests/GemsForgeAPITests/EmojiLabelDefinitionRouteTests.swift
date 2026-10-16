@@ -27,6 +27,17 @@ final class EmojiLabelDefinitionRouteTests: XCTestCase {
                 XCTAssertEqual(definition.emoji, "🏠")
             }
 
+            let duplicateID = EmojiLabelDefinitionRequest(
+                id: 1, label: "Another label", emoji: "🏡", description: nil, isActive: true
+            )
+            try await app.test(.POST, "emoji-labels", beforeRequest: { request in
+                try request.content.encode(duplicateID)
+            }) { response async throws in
+                XCTAssertEqual(response.status, .conflict)
+                let definitions = try await EmojiLabelDefinitionService(database: app.db).list(includeInactive: true)
+                XCTAssertEqual(definitions.count, 1)
+            }
+
             let inactivePayload = EmojiLabelDefinitionRequest(
                 id: 2,
                 label: "Archive",

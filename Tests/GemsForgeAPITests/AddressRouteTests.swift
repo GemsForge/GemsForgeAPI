@@ -138,6 +138,40 @@ final class AddressRouteTests: XCTestCase {
                 XCTAssertEqual(response.status, .badRequest)
             }
 
+            let valid = AddressRequest(
+                id: "ADDR-0001", addressType: "Residence", addressLine1: "1 Test Street",
+                addressLine2: nil, city: "Atlanta", state: "GA", postalCode: "30301",
+                country: "US", startDate: nil, endDate: nil, addressStatus: "Current", notes: nil
+            )
+            try await app.test(.POST, "addresses", beforeRequest: { request in
+                try request.content.encode(valid)
+            }) { response in
+                XCTAssertEqual(response.status, .ok)
+            }
+            try await app.test(.POST, "addresses", beforeRequest: { request in
+                try request.content.encode(valid)
+            }) { response async throws in
+                XCTAssertEqual(response.status, .conflict)
+                XCTAssertTrue(String(buffer: response.body).contains("address with this ID already exists"))
+                let addresses = try await AddressService(database: app.db).list()
+                XCTAssertEqual(addresses.count, 1)
+            }
+
+            let missingImage = AddressRequest(
+                id: "ADDR-BAD-IMAGE", addressType: "Residence", addressLine1: "1 Test Street",
+                addressLine2: nil, city: "Atlanta", state: "GA", postalCode: "30301",
+                country: "US", startDate: nil, endDate: nil, addressStatus: "Current", notes: nil,
+                imageFileMetadataID: "FILE-MISSING"
+            )
+            try await app.test(.POST, "addresses", beforeRequest: { request in
+                try request.content.encode(missingImage)
+            }) { response async throws in
+                XCTAssertEqual(response.status, .unprocessableEntity)
+                XCTAssertTrue(String(buffer: response.body).contains("file metadata does not exist"))
+                let addresses = try await AddressService(database: app.db).list()
+                XCTAssertEqual(addresses.count, 1)
+            }
+
             try await app.test(.GET, "addresses/MISSING") { response async throws in
                 XCTAssertEqual(response.status, .notFound)
             }
