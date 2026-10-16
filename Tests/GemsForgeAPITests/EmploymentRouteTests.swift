@@ -50,6 +50,13 @@ final class EmploymentRouteTests: XCTestCase {
                 XCTAssertEqual(record.positionTitle, "Founder")
                 XCTAssertEqual(record.address?.city, "Atlanta")
             }
+            try await app.test(.POST, "employment", beforeRequest: { request in
+                try request.content.encode(payload)
+            }) { response async throws in
+                XCTAssertEqual(response.status, .conflict)
+                let records = try await EmploymentService(database: app.db).list()
+                XCTAssertEqual(records.count, 1)
+            }
 
             try await app.test(.GET, "employment") { response async throws in
                 XCTAssertEqual(response.status, .ok)

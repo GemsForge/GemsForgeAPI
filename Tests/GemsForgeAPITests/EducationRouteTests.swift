@@ -57,6 +57,13 @@ final class EducationRouteTests: XCTestCase {
                 XCTAssertEqual(record.institutionName, "Georgia State University")
                 XCTAssertEqual(record.address?.city, "Atlanta")
             }
+            try await app.test(.POST, "education", beforeRequest: { request in
+                try request.content.encode(payload)
+            }) { response async throws in
+                XCTAssertEqual(response.status, .conflict)
+                let records = try await EducationService(database: app.db).list()
+                XCTAssertEqual(records.count, 1)
+            }
 
             try await app.test(.GET, "education") { response async throws in
                 XCTAssertEqual(response.status, .ok)
