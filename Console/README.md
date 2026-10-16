@@ -83,6 +83,20 @@ Server data uses TanStack Query through `src/data`. Query keys and caching
 policies belong there; feature components should consume query hooks instead
 of issuing raw requests during rendering.
 
+### Create-form standard
+
+Use React Hook Form for form state and submission, Zod for runtime validation
+and inferred values, and `@hookform/resolvers` (`zodResolver`) to connect them.
+Use TanStack Query mutations for API writes, loading state, error handling, and
+cache invalidation. Compose the shared create form field, error, submit, and
+attachment controls; keep each resource's schema, editable properties,
+relationship selectors, and create/PATCH payload mappings explicit in its
+feature. Create payload types must be separate from response types and must
+follow [`Record-Creation-Contracts.md`](../docs/Record-Creation-Contracts.md).
+Upload/attach files after creation when the server needs the new record ID to
+establish attachment ownership. Client validation is for feedback only; the
+Swift API remains authoritative.
+
 Attachments use the shared `FilePresentation` component for metadata, full-image
 previews, loading, missing-file, invalid-image, and retry states. Image bytes are
 read through the API content endpoint, never through local filesystem paths.
