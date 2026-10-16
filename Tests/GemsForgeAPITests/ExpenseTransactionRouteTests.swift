@@ -7,10 +7,15 @@ final class ExpenseTransactionRouteTests: XCTestCase {
     func testExpenseTransactionCRUD() async throws {
         try await withApp(configure: { app in
             app.databases.use(.sqlite(.memory), as: .sqlite)
+            app.migrations.add(CreateBudgetCategories())
+            app.migrations.add(CreateBudgetSubcategories())
             app.migrations.add(CreateExpenseTransactions())
             app.migrations.add(AddTransactionImage())
             app.migrations.add(CreateFileMetadata())
             try await app.autoMigrate()
+            try await ExpenseCategory(id: 10, name: "Food").create(on: app.db)
+            try await ExpenseCategory(id: 11, name: "Travel").create(on: app.db)
+            try await ExpenseSubcategory(id: 4, categoryID: 10, name: "Groceries").create(on: app.db)
             registerExpenseTransactionRoutes(app)
         }) { app in
             let payload = ExpenseTransactionRequest(
@@ -39,6 +44,37 @@ final class ExpenseTransactionRouteTests: XCTestCase {
                 XCTAssertEqual(record.id, "TRX-0001")
                 XCTAssertEqual(record.item, "Test groceries")
                 XCTAssertEqual(record.total, 15.00)
+            }
+
+            try await app.test(.POST, "transactions", beforeRequest: { request in
+                try request.content.encode(payload)
+            }) { response async throws in
+                XCTAssertEqual(response.status, .conflict)
+            }
+
+            let mismatchedSubcategory = ExpenseTransactionRequest(
+                id: "TRX-BAD-SUBCATEGORY",
+                receiptID: nil,
+                item: "Mismatched category reference",
+                firstReceiptItem: true,
+                categoryID: 11,
+                subcategoryID: 4,
+                merchantCode: nil,
+                transactionDate: nil,
+                quantity: 1,
+                regularPrice: nil,
+                paidPrice: nil,
+                total: nil,
+                discount: nil,
+                notes: nil,
+                image: nil
+            )
+            try await app.test(.POST, "transactions", beforeRequest: { request in
+                try request.content.encode(mismatchedSubcategory)
+            }) { response async throws in
+                XCTAssertEqual(response.status, .unprocessableEntity)
+                let records = try await ExpenseTransactionService(database: app.db).list()
+                XCTAssertEqual(records.count, 1)
             }
 
             try await app.test(.GET, "transactions") { response async throws in
@@ -117,6 +153,8 @@ final class ExpenseTransactionRouteTests: XCTestCase {
     func testExpenseTransactionRejectsInvalidPayloadAndMissingRecords() async throws {
         try await withApp(configure: { app in
             app.databases.use(.sqlite(.memory), as: .sqlite)
+            app.migrations.add(CreateBudgetCategories())
+            app.migrations.add(CreateBudgetSubcategories())
             app.migrations.add(CreateExpenseTransactions())
             app.migrations.add(AddTransactionImage())
             app.migrations.add(CreateFileMetadata())
@@ -147,6 +185,31 @@ final class ExpenseTransactionRouteTests: XCTestCase {
                 XCTAssertEqual(response.status, .badRequest)
             }
 
+            let missingCategoryPayload = ExpenseTransactionRequest(
+                id: "TRX-MISSING-CATEGORY",
+                receiptID: nil,
+                item: "Valid item",
+                firstReceiptItem: true,
+                categoryID: 404,
+                subcategoryID: nil,
+                merchantCode: nil,
+                transactionDate: nil,
+                quantity: 1,
+                regularPrice: nil,
+                paidPrice: nil,
+                total: nil,
+                discount: nil,
+                notes: nil,
+                image: nil
+            )
+            try await app.test(.POST, "transactions", beforeRequest: { request in
+                try request.content.encode(missingCategoryPayload)
+            }) { response async throws in
+                XCTAssertEqual(response.status, .unprocessableEntity)
+                let records = try await ExpenseTransactionService(database: app.db).list()
+                XCTAssertTrue(records.isEmpty)
+            }
+
             try await app.test(.GET, "transactions/MISSING") { response async throws in
                 XCTAssertEqual(response.status, .notFound)
             }
@@ -166,10 +229,12 @@ final class ExpenseTransactionRouteTests: XCTestCase {
     func testExpenseTransactionCanExposeFileMetadataReference() async throws {
         try await withApp(configure: { app in
             app.databases.use(.sqlite(.memory), as: .sqlite)
+            app.migrations.add(CreateBudgetCategories())
             app.migrations.add(CreateExpenseTransactions())
             app.migrations.add(AddTransactionImage())
             app.migrations.add(CreateFileMetadata())
             try await app.autoMigrate()
+            try await ExpenseCategory(id: 10, name: "Food").create(on: app.db)
             registerExpenseTransactionRoutes(app)
         }) { app in
             let metadata = FileMetadata(
