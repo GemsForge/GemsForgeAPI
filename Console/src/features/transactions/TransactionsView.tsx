@@ -1,7 +1,11 @@
 import { usePagedRecords } from "../../hooks/usePagedRecords";
 import { PaginationControls } from "../../components/PaginationControls";
 import { useState } from "react";
-import { useTransactionQuery, useTransactionImageMutation } from "../../data/recordQueries";
+import {
+  useTransactionPatchMutation,
+  useTransactionQuery,
+  useTransactionImageMutation,
+} from "../../data/recordQueries";
 import { QueryFeedback } from "../../components/QueryFeedback";
 import type { ExpenseTransaction } from "../../types";
 import { AttachmentControl } from "../../components/AttachmentControl";
@@ -16,6 +20,7 @@ export function TransactionsView({ records }: TransactionsViewProps) {
   const [selectedID, setSelectedID] = useState<string | null>(null);
   const detail = useTransactionQuery(selectedID);
   const attachment = useTransactionImageMutation();
+  const patch = useTransactionPatchMutation();
   const selectedRecord = detail.data;
 
   return (
@@ -67,6 +72,9 @@ export function TransactionsView({ records }: TransactionsViewProps) {
                 onAttachment={async (metadata) => {
                   await attachment.mutateAsync({ id: selectedRecord.id, fileID: metadata?.id ?? null });
                 }}
+                onPatch={async (values) => {
+                  await patch.mutateAsync({ id: selectedRecord.id, patch: values });
+                }}
               />
             ) : (
               !selectedID && (
@@ -86,10 +94,14 @@ export function TransactionsView({ records }: TransactionsViewProps) {
 function TransactionDetail({
   record,
   onAttachment,
+  onPatch,
 }: {
   record: ExpenseTransaction;
   onAttachment: (metadata: import("../../types").FileMetadata | null) => Promise<void>;
+  onPatch: (values: Partial<ExpenseTransaction>) => Promise<void>;
 }) {
+  const [editing, setEditing] = useState(false);
+  const [item, setItem] = useState(record.item);
   return (
     <article className="transaction-detail">
       <div className="detail-heading">
@@ -100,6 +112,35 @@ function TransactionDetail({
         </div>
         <span className="status-pill">Category {record.categoryID}</span>
       </div>
+      {editing ? (
+        <form
+          className="edit-form"
+          onSubmit={async (event) => {
+            event.preventDefault();
+            await onPatch({ item });
+            setEditing(false);
+          }}
+        >
+          <label>
+            Item
+            <input value={item} onChange={(event) => setItem(event.target.value)} />
+          </label>
+          <button type="submit">Save item</button>
+          <button
+            type="button"
+            onClick={() => {
+              setItem(record.item);
+              setEditing(false);
+            }}
+          >
+            Cancel
+          </button>
+        </form>
+      ) : (
+        <button type="button" onClick={() => setEditing(true)}>
+          Edit item
+        </button>
+      )}
       <dl className="transaction-fields">
         <Field label="Transaction date" value={record.transactionDate} />
         <Field label="Receipt" value={record.receiptID} />

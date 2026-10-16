@@ -104,6 +104,17 @@ export function useEmploymentPatchMutation() {
     },
   });
 }
+export function useTransactionPatchMutation() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, patch }: { id: string; patch: Partial<import("../types").ExpenseTransaction> }) =>
+      api.patchTransaction(id, patch),
+    onSuccess: async (record) => {
+      client.setQueryData(recordQueryKeys.transaction(record.id), record);
+      await client.invalidateQueries({ queryKey: lifeQueryKeys.transactions, exact: true });
+    },
+  });
+}
 export function useTransactionImageMutation() {
   const client = useQueryClient();
   return useMutation({
