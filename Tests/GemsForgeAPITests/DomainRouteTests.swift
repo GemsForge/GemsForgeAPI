@@ -111,6 +111,19 @@ final class DomainRouteTests: XCTestCase {
                 XCTAssertEqual(response.status, .ok)
             }
 
+            let duplicateTitle = DomainCreateRequest(
+                id: "LIFE-2",
+                title: "life",
+                description: "Duplicate natural key."
+            )
+            try await app.test(.POST, "domains", beforeRequest: { request in
+                try request.content.encode(duplicateTitle)
+            }) { response async throws in
+                XCTAssertEqual(response.status, .conflict)
+                let domains = try await DomainService(database: app.db).list()
+                XCTAssertEqual(domains.count, 1)
+            }
+
             try await app.test(.POST, "domains", beforeRequest: { request in
                 try request.content.encode(validPayload)
             }) { response async throws in
