@@ -99,10 +99,8 @@ func registerServiceAccountRoutes(_ app: Application) {
     }
 
     accounts.get(":id") { request async throws -> ServiceAccount in
-        guard let id = request.parameters.get("id", as: Int.self),
-              let account = try await ServiceAccountService(database: request.db).find(id: id)
-        else {
-            throw Abort(.notFound)
+        let (_, account) = try await requireRouteRecord(request.parameters.get("id", as: Int.self)) {
+            try await ServiceAccountService(database: request.db).find(id: $0)
         }
 
         // Returns one recurring service account by its stable ServiceID.
@@ -110,9 +108,9 @@ func registerServiceAccountRoutes(_ app: Application) {
     }
 
     accounts.patch(":id") { request async throws -> ServiceAccount in
-        guard let id = request.parameters.get("id", as: Int.self),
-              let account = try await ServiceAccountService(database: request.db).find(id: id)
-        else { throw Abort(.notFound) }
+        let (id, account) = try await requireRouteRecord(request.parameters.get("id", as: Int.self)) {
+            try await ServiceAccountService(database: request.db).find(id: $0)
+        }
         try PropertyPatchValidation.requireKnownJSONProperties(request, allowed: ["service", "monthlyAmount", "status", "notes", "logoFileMetadataID"])
         let input = try request.content.decode(ServiceAccountPatchRequest.self)
         guard input.service != nil || input.monthlyAmount != nil || input.status != nil || input.notes != nil || input.logoFileMetadataID != nil else {
@@ -134,10 +132,8 @@ func registerServiceAccountRoutes(_ app: Application) {
     }
 
     accounts.put(":id") { request async throws -> ServiceAccount in
-        guard let id = request.parameters.get("id", as: Int.self),
-              let account = try await ServiceAccountService(database: request.db).find(id: id)
-        else {
-            throw Abort(.notFound)
+        let (id, account) = try await requireRouteRecord(request.parameters.get("id", as: Int.self)) {
+            try await ServiceAccountService(database: request.db).find(id: $0)
         }
 
         let input = try request.content.decode(ServiceAccountRequest.self)
@@ -169,10 +165,8 @@ func registerServiceAccountRoutes(_ app: Application) {
     }
 
     accounts.delete(":id") { request async throws -> HTTPStatus in
-        guard let id = request.parameters.get("id", as: Int.self),
-              try await ServiceAccountService(database: request.db).find(id: id) != nil
-        else {
-            throw Abort(.notFound)
+        let (id, _) = try await requireRouteRecord(request.parameters.get("id", as: Int.self)) {
+            try await ServiceAccountService(database: request.db).find(id: $0)
         }
 
         try await ServiceAccountService(database: request.db).delete(id: id)
