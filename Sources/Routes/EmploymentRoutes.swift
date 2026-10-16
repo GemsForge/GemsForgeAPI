@@ -121,6 +121,12 @@ func registerEmploymentRoutes(_ app: Application) {
             throw Abort(.conflict, reason: "An employment record with this ID already exists.")
         }
 
+        if let addressID = input.workAddressID,
+           try await AddressService(database: request.db).find(id: addressID) == nil
+        {
+            throw Abort(.unprocessableEntity, reason: "workAddressID must reference an existing address.")
+        }
+
         let record = Employment(
             id: id,
             employerName: input.employerName,

@@ -7,8 +7,20 @@ final class EmploymentRouteTests: XCTestCase {
     func testEmploymentCRUD() async throws {
         try await withApp(configure: { app in
             app.databases.use(.sqlite(.memory), as: .sqlite)
+            app.migrations.add(CreateAddresses())
+            app.migrations.add(CreateFileMetadata())
+            app.migrations.add(AddAddressAttachmentReference())
             app.migrations.add(CreateEmployment())
             try await app.autoMigrate()
+            try await Address(
+                id: "ADDR-0001",
+                addressType: "Work",
+                addressLine1: "1 Test Plaza",
+                city: "Atlanta",
+                state: "GA",
+                postalCode: "30301",
+                addressStatus: "Current"
+            ).create(on: app.db)
             registerEmploymentRoutes(app)
         }) { app in
             let payload = EmploymentRequest(
@@ -22,7 +34,7 @@ final class EmploymentRouteTests: XCTestCase {
                 startDate: "2024-10-01",
                 endDate: nil,
                 employmentStatus: "Current",
-                workAddressID: nil,
+                workAddressID: "ADDR-0001",
                 employerContact: nil,
                 employerContactNumber: nil,
                 employerContactEmail: nil,
@@ -36,6 +48,7 @@ final class EmploymentRouteTests: XCTestCase {
                 let record = try response.content.decode(EmploymentResponse.self)
                 XCTAssertEqual(record.id, "EMP-0001")
                 XCTAssertEqual(record.positionTitle, "Founder")
+                XCTAssertEqual(record.address?.city, "Atlanta")
             }
 
             try await app.test(.GET, "employment") { response async throws in
@@ -61,7 +74,7 @@ final class EmploymentRouteTests: XCTestCase {
                 startDate: "2024-10-01",
                 endDate: nil,
                 employmentStatus: "Current",
-                workAddressID: nil,
+                workAddressID: "ADDR-0001",
                 employerContact: nil,
                 employerContactNumber: nil,
                 employerContactEmail: nil,
@@ -104,6 +117,9 @@ final class EmploymentRouteTests: XCTestCase {
     func testEmploymentRejectsInvalidPayloadAndMissingRecords() async throws {
         try await withApp(configure: { app in
             app.databases.use(.sqlite(.memory), as: .sqlite)
+            app.migrations.add(CreateAddresses())
+            app.migrations.add(CreateFileMetadata())
+            app.migrations.add(AddAddressAttachmentReference())
             app.migrations.add(CreateEmployment())
             try await app.autoMigrate()
             registerEmploymentRoutes(app)
@@ -137,6 +153,31 @@ final class EmploymentRouteTests: XCTestCase {
                 try request.content.encode(invalidPayload)
             }) { response async throws in
                 XCTAssertEqual(response.status, .badRequest)
+            }
+
+            let invalidAddressPayload = EmploymentRequest(
+                id: "EMP-BAD-ADDRESS",
+                employerName: "Example",
+                employerType: "Company",
+                industry: nil,
+                website: nil,
+                positionTitle: "Owner",
+                employmentType: "Full-time",
+                startDate: nil,
+                endDate: nil,
+                employmentStatus: "Current",
+                workAddressID: "ADDR-MISSING",
+                employerContact: nil,
+                employerContactNumber: nil,
+                employerContactEmail: nil,
+                notes: nil
+            )
+            try await app.test(.POST, "employment", beforeRequest: { request in
+                try request.content.encode(invalidAddressPayload)
+            }) { response async throws in
+                XCTAssertEqual(response.status, .unprocessableEntity)
+                let records = try await EmploymentService(database: app.db).list()
+                XCTAssertTrue(records.isEmpty)
             }
 
             try await app.test(.GET, "employment/MISSING") { response async throws in
