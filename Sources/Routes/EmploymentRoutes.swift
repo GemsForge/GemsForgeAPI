@@ -129,10 +129,8 @@ func registerEmploymentRoutes(_ app: Application) {
     }
 
     employment.get(":id") { request async throws -> EmploymentResponse in
-        guard let id = request.parameters.get("id"),
-              let record = try await EmploymentService(database: request.db).find(id: id)
-        else {
-            throw Abort(.notFound)
+        let (_, record) = try await requireRouteRecord(request.parameters.get("id")) {
+            try await EmploymentService(database: request.db).find(id: $0)
         }
 
         // Returns one employment record by its stable EmploymentID.
@@ -140,10 +138,8 @@ func registerEmploymentRoutes(_ app: Application) {
     }
 
     employment.patch(":id") { request async throws -> EmploymentResponse in
-        guard let id = request.parameters.get("id"),
-              let record = try await EmploymentService(database: request.db).find(id: id)
-        else {
-            throw Abort(.notFound)
+        let (_, record) = try await requireRouteRecord(request.parameters.get("id")) {
+            try await EmploymentService(database: request.db).find(id: $0)
         }
 
         let payload = try request.content.decode([String: String?].self)
@@ -193,10 +189,8 @@ func registerEmploymentRoutes(_ app: Application) {
     }
 
     employment.put(":id") { request async throws -> EmploymentResponse in
-        guard let id = request.parameters.get("id"),
-              let record = try await EmploymentService(database: request.db).find(id: id)
-        else {
-            throw Abort(.notFound)
+        let (_, record) = try await requireRouteRecord(request.parameters.get("id")) {
+            try await EmploymentService(database: request.db).find(id: $0)
         }
 
         let input = try request.content.decode(EmploymentRequest.self)
@@ -220,10 +214,8 @@ func registerEmploymentRoutes(_ app: Application) {
     }
 
     employment.delete(":id") { request async throws -> HTTPStatus in
-        guard let id = request.parameters.get("id"),
-              try await EmploymentService(database: request.db).find(id: id) != nil
-        else {
-            throw Abort(.notFound)
+        let (id, _) = try await requireRouteRecord(request.parameters.get("id")) {
+            try await EmploymentService(database: request.db).find(id: $0)
         }
 
         try await EmploymentService(database: request.db).delete(id: id)

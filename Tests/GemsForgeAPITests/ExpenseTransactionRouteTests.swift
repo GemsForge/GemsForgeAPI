@@ -104,6 +104,12 @@ final class ExpenseTransactionRouteTests: XCTestCase {
                 XCTAssertEqual(response.status, .unprocessableEntity)
             }
 
+            try await app.test(.PATCH, "transactions/TRX-0001", beforeRequest: { request in
+                try request.content.encode([String: String]())
+            }) { response async throws in
+                XCTAssertEqual(response.status, .unprocessableEntity)
+            }
+
             try await app.test(.DELETE, "transactions/TRX-0001") { response async throws in
                 XCTAssertEqual(response.status, .noContent)
             }

@@ -103,10 +103,8 @@ func registerExpenseTransactionRoutes(_ app: Application) {
     }
 
     transactions.get(":id") { request async throws -> ExpenseTransaction in
-        guard let id = request.parameters.get("id"),
-              let transaction = try await ExpenseTransactionService(database: request.db).find(id: id)
-        else {
-            throw Abort(.notFound)
+        let (_, transaction) = try await requireRouteRecord(request.parameters.get("id")) {
+            try await ExpenseTransactionService(database: request.db).find(id: $0)
         }
 
         // Return one documented expense by its stable TransactionID.
@@ -114,14 +112,16 @@ func registerExpenseTransactionRoutes(_ app: Application) {
     }
 
     transactions.patch(":id") { request async throws -> ExpenseTransaction in
-        guard let id = request.parameters.get("id"),
-              let transaction = try await ExpenseTransactionService(database: request.db).find(id: id)
-        else { throw Abort(.notFound) }
-        try PropertyPatchValidation.requireKnownJSONProperties(request, allowed: ["item", "categoryID", "quantity", "total", "notes", "image"])
-        let input = try request.content.decode(ExpenseTransactionPatchRequest.self)
-        guard input.item != nil || input.categoryID != nil || input.quantity != nil || input.total != nil || input.notes != nil || input.image != nil else {
-            throw Abort(.unprocessableEntity, reason: "At least one editable field is required.")
+        let (id, transaction) = try await requireRouteRecord(request.parameters.get("id")) {
+            try await ExpenseTransactionService(database: request.db).find(id: $0)
         }
+        try PropertyPatchValidation.requireKnownJSONProperties(
+            request,
+            allowed: ["item", "categoryID", "quantity", "total", "notes", "image"],
+            requireNonEmpty: true,
+            emptyReason: "At least one editable field is required."
+        )
+        let input = try request.content.decode(ExpenseTransactionPatchRequest.self)
         let item = input.item ?? transaction.item
         guard !item.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { throw Abort(.unprocessableEntity, reason: "Transaction item cannot be empty.") }
         let categoryID = input.categoryID ?? transaction.categoryID
@@ -143,10 +143,8 @@ func registerExpenseTransactionRoutes(_ app: Application) {
     }
 
     transactions.put(":id") { request async throws -> ExpenseTransaction in
-        guard let id = request.parameters.get("id"),
-              let transaction = try await ExpenseTransactionService(database: request.db).find(id: id)
-        else {
-            throw Abort(.notFound)
+        let (id, transaction) = try await requireRouteRecord(request.parameters.get("id")) {
+            try await ExpenseTransactionService(database: request.db).find(id: $0)
         }
 
         let input = try request.content.decode(ExpenseTransactionRequest.self)
@@ -172,10 +170,8 @@ func registerExpenseTransactionRoutes(_ app: Application) {
     }
 
     transactions.get(":id", "image") { request async throws -> FileMetadata in
-        guard let id = request.parameters.get("id"),
-              let transaction = try await ExpenseTransactionService(database: request.db).find(id: id)
-        else {
-            throw Abort(.notFound)
+        let (_, transaction) = try await requireRouteRecord(request.parameters.get("id")) {
+            try await ExpenseTransactionService(database: request.db).find(id: $0)
         }
 
         guard let imageID = transaction.image,
@@ -189,10 +185,8 @@ func registerExpenseTransactionRoutes(_ app: Application) {
     }
 
     transactions.delete(":id") { request async throws -> HTTPStatus in
-        guard let id = request.parameters.get("id"),
-              try await ExpenseTransactionService(database: request.db).find(id: id) != nil
-        else {
-            throw Abort(.notFound)
+        let (id, _) = try await requireRouteRecord(request.parameters.get("id")) {
+            try await ExpenseTransactionService(database: request.db).find(id: $0)
         }
 
         try await ExpenseTransactionService(database: request.db).delete(id: id)

@@ -61,10 +61,8 @@ func registerAddressRoutes(_ app: Application) {
     }
 
     addresses.get(":id") { request async throws -> AddressDetailResponse in
-        guard let id = request.parameters.get("id"),
-              let address = try await AddressService(database: request.db).find(id: id)
-        else {
-            throw Abort(.notFound)
+        let (_, address) = try await requireRouteRecord(request.parameters.get("id")) {
+            try await AddressService(database: request.db).find(id: $0)
         }
 
         // Full address details are returned only for an explicitly requested ID.
@@ -72,10 +70,8 @@ func registerAddressRoutes(_ app: Application) {
     }
 
     addresses.patch(":id") { request async throws -> AddressDetailResponse in
-        guard let id = request.parameters.get("id"),
-              let address = try await AddressService(database: request.db).find(id: id)
-        else {
-            throw Abort(.notFound)
+        let (id, address) = try await requireRouteRecord(request.parameters.get("id")) {
+            try await AddressService(database: request.db).find(id: $0)
         }
 
         let payload = try request.content.decode([String: String?].self)
@@ -118,10 +114,8 @@ func registerAddressRoutes(_ app: Application) {
     }
 
     addresses.put(":id") { request async throws -> AddressDetailResponse in
-        guard let id = request.parameters.get("id"),
-              let address = try await AddressService(database: request.db).find(id: id)
-        else {
-            throw Abort(.notFound)
+        let (id, address) = try await requireRouteRecord(request.parameters.get("id")) {
+            try await AddressService(database: request.db).find(id: $0)
         }
 
         let input = try request.content.decode(AddressRequest.self)
@@ -145,10 +139,8 @@ func registerAddressRoutes(_ app: Application) {
     }
 
     addresses.delete(":id") { request async throws -> HTTPStatus in
-        guard let id = request.parameters.get("id"),
-              try await AddressService(database: request.db).find(id: id) != nil
-        else {
-            throw Abort(.notFound)
+        let (id, _) = try await requireRouteRecord(request.parameters.get("id")) {
+            try await AddressService(database: request.db).find(id: $0)
         }
 
         try await AddressService(database: request.db).delete(id: id)

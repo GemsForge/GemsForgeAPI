@@ -79,57 +79,31 @@ struct LiveTableCreationService: Sendable {
             throw LiveTableCreationError.tableAlreadyExists
         }
 
-        guard let backupConfiguration else {
-            throw LiveTableCreationError.backupNotConfigured
-        }
-
-        let audit = LiveMigrationAuditService(
-            database: database,
-            databaseIdentity: backupConfiguration.databaseIdentity
-        )
-        try await audit.ensureTable()
-
         let backup: LiveDatabaseBackupResult
         do {
-            backup = try await LiveDatabaseBackupService(configuration: backupConfiguration)
-                .createBackup(using: database)
-        } catch let error as LiveDatabaseBackupError {
-            try? await audit.record(
+            backup = try await VerifiedSchemaChangeExecutor.execute(
                 migrationName: "create-\(approvedTable.rawValue)",
-                result: "failed",
-                failureDetails: error.description
+                using: database,
+                backupConfiguration: backupConfiguration,
+                verificationFailureDetails: "The expected table was not found after migration.",
+                apply: {
+                    try await approvedTable.apply(on: database)
+                },
+                verify: {
+                    let schema = try await LiveSchemaService(database: database).inspect()
+                    return schema.tables.contains { $0.name == approvedTable.tableName }
+                }
             )
-            throw LiveTableCreationError.migrationFailed(error.description)
+        } catch let error as VerifiedSchemaChangeExecutionError {
+            switch error {
+            case .backupNotConfigured:
+                throw LiveTableCreationError.backupNotConfigured
+            case .backupFailed(let reason), .changeFailed(let reason):
+                throw LiveTableCreationError.migrationFailed(reason)
+            case .verificationFailed:
+                throw LiveTableCreationError.verificationFailed
+            }
         }
-
-        do {
-            try await approvedTable.apply(on: database)
-        } catch {
-            try? await audit.record(
-                migrationName: "create-\(approvedTable.rawValue)",
-                result: "failed",
-                backupFileName: backup.backupFileName,
-                failureDetails: error.localizedDescription
-            )
-            throw LiveTableCreationError.migrationFailed(error.localizedDescription)
-        }
-
-        let updatedSchema = try await LiveSchemaService(database: database).inspect()
-        guard updatedSchema.tables.contains(where: { $0.name == approvedTable.tableName }) else {
-            try? await audit.record(
-                migrationName: "create-\(approvedTable.rawValue)",
-                result: "verification-failed",
-                backupFileName: backup.backupFileName,
-                failureDetails: "The expected table was not found after migration."
-            )
-            throw LiveTableCreationError.verificationFailed
-        }
-
-        try await audit.record(
-            migrationName: "create-\(approvedTable.rawValue)",
-            result: "succeeded",
-            backupFileName: backup.backupFileName
-        )
 
         return LiveTableCreationResponse(
             table: approvedTable.tableName,

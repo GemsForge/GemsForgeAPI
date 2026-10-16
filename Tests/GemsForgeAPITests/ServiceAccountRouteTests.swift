@@ -105,6 +105,12 @@ final class ServiceAccountRouteTests: XCTestCase {
                 XCTAssertEqual(response.status, .unprocessableEntity)
             }
 
+            try await app.test(.PATCH, "service-accounts/1", beforeRequest: { request in
+                try request.content.encode([String: String]())
+            }) { response in
+                XCTAssertEqual(response.status, .unprocessableEntity)
+            }
+
             try await app.test(.DELETE, "service-accounts/1") { response in
                 XCTAssertEqual(response.status, .noContent)
             }
