@@ -17,6 +17,20 @@ struct AddressRequest: Content {
     var imageFileMetadataID: String? = nil
 }
 
+/// Create-only address contract; response representations remain separate.
+struct AddressCreateRequest: Content {
+    let value: AddressRequest
+
+    init(from decoder: Decoder) throws {
+        try CreateContractValidation.rejectUnknownFields(in: decoder, allowed: [
+            "id", "addressType", "addressLine1", "addressLine2", "city", "state",
+            "postalCode", "country", "startDate", "endDate", "addressStatus", "notes",
+            "imageFileMetadataID"
+        ])
+        value = try AddressRequest(from: decoder)
+    }
+}
+
 /// Safe list representation that omits street lines, postal code, and notes.
 struct AddressSummaryResponse: Content {
     let id: String?

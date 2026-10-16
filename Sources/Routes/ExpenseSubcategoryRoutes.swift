@@ -7,6 +7,40 @@ struct ExpenseSubcategoryRequest: Content {
     let name: String
 }
 
+struct ExpenseSubcategoryCreateRequest: Content {
+    let id: Int?
+    let categoryID: Int
+    let name: String
+
+    init(id: Int?, categoryID: Int, name: String) {
+        self.id = id
+        self.categoryID = categoryID
+        self.name = name
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DynamicCodingKey.self)
+        let allowed = Set(["id", "categoryID", "name"])
+        if let unknown = container.allKeys.first(where: { !allowed.contains($0.stringValue) }) {
+            throw DecodingError.dataCorruptedError(
+                forKey: unknown,
+                in: container,
+                debugDescription: "Unknown create field: \(unknown.stringValue)."
+            )
+        }
+        id = try container.decodeIfPresent(Int.self, forKey: DynamicCodingKey(stringValue: "id"))
+        categoryID = try container.decode(Int.self, forKey: DynamicCodingKey(stringValue: "categoryID"))
+        name = try container.decode(String.self, forKey: DynamicCodingKey(stringValue: "name"))
+    }
+}
+
+private struct DynamicCodingKey: CodingKey, Hashable {
+    let stringValue: String
+    let intValue: Int? = nil
+    init(stringValue: String) { self.stringValue = stringValue }
+    init?(intValue: Int) { return nil }
+}
+
 private func validate(_ input: ExpenseSubcategoryRequest) throws {
     guard input.categoryID > 0 else {
         throw Abort(.badRequest, reason: "CategoryID must be greater than zero.")
@@ -57,7 +91,8 @@ func registerExpenseSubcategoryRoutes(_ app: Application) {
     }
 
     subcategories.post { request async throws -> ExpenseSubcategory in
-        let input = try request.content.decode(ExpenseSubcategoryRequest.self)
+        let createInput = try request.content.decode(ExpenseSubcategoryCreateRequest.self)
+        let input = ExpenseSubcategoryRequest(id: createInput.id, categoryID: createInput.categoryID, name: createInput.name)
         try validate(input)
         try await ensureCategoryExists(input.categoryID, database: request.db)
         try await ensureNameIsAvailable(input.name, categoryID: input.categoryID, database: request.db)

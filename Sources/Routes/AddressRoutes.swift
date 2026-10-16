@@ -46,7 +46,7 @@ func registerAddressRoutes(_ app: Application) {
     }
 
     addresses.post { request async throws -> AddressDetailResponse in
-        let input = try request.content.decode(AddressRequest.self)
+        let input = try request.content.decode(AddressCreateRequest.self).value
         try validate(input, requiresID: true)
 
         let id = input.id!.trimmingCharacters(in: .whitespacesAndNewlines)

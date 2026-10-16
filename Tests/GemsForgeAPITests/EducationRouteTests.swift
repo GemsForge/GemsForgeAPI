@@ -24,6 +24,13 @@ final class EducationRouteTests: XCTestCase {
             ).create(on: app.db)
             registerEducationRoutes(app)
         }) { app in
+            try await app.test(.POST, "education", beforeRequest: { request in
+                request.headers.contentType = .json
+                request.body = ByteBuffer(string: #"{"id":"EDU-BAD-ADDRESS","educationType":"College","institutionName":"Example","status":"Current","locationAddressID":"ADDR-MISSING"}"#)
+            }) { response in
+                XCTAssertEqual(response.status, .unprocessableEntity)
+            }
+
             let payload = EducationRequest(
                 id: "EDU-0001",
                 educationType: "College",
@@ -49,6 +56,13 @@ final class EducationRouteTests: XCTestCase {
                 XCTAssertEqual(record.id, "EDU-0001")
                 XCTAssertEqual(record.institutionName, "Georgia State University")
                 XCTAssertEqual(record.address?.city, "Atlanta")
+            }
+            try await app.test(.POST, "education", beforeRequest: { request in
+                try request.content.encode(payload)
+            }) { response async throws in
+                XCTAssertEqual(response.status, .conflict)
+                let records = try await EducationService(database: app.db).list()
+                XCTAssertEqual(records.count, 1)
             }
 
             try await app.test(.GET, "education") { response async throws in
@@ -125,6 +139,13 @@ final class EducationRouteTests: XCTestCase {
             try await app.autoMigrate()
             registerEducationRoutes(app)
         }) { app in
+            try await app.test(.POST, "education", beforeRequest: { request in
+                request.headers.contentType = .json
+                request.body = ByteBuffer(string: #"{"id":"EDU-INJECTED","educationType":"College","institutionName":"Example","status":"Current","dateCreated":"2099-01-01"}"#)
+            }) { response in
+                XCTAssertEqual(response.status, .badRequest)
+            }
+
             let invalidPayload = EducationRequest(
                 id: "EDU-0001",
                 educationType: "",

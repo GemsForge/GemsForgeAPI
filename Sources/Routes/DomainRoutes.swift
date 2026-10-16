@@ -7,6 +7,44 @@ struct DomainRequest: Content {
     let description: String
 }
 
+/// Create-only contract. Response/audit fields are deliberately not part of
+/// the payload accepted by POST /domains, and unknown keys are rejected.
+struct DomainCreateRequest: Content {
+    let id: String?
+    let title: String
+    let description: String
+
+    init(id: String?, title: String, description: String) {
+        self.id = id
+        self.title = title
+        self.description = description
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DynamicCodingKey.self)
+        let allowed = Set(["id", "title", "description"])
+        let unknown = container.allKeys.filter { !allowed.contains($0.stringValue) }
+        guard unknown.isEmpty else {
+            throw DecodingError.dataCorruptedError(
+                forKey: unknown[0],
+                in: container,
+                debugDescription: "Unknown create field: \(unknown[0].stringValue)."
+            )
+        }
+        id = try container.decodeIfPresent(String.self, forKey: DynamicCodingKey(stringValue: "id"))
+        title = try container.decode(String.self, forKey: DynamicCodingKey(stringValue: "title"))
+        description = try container.decode(String.self, forKey: DynamicCodingKey(stringValue: "description"))
+    }
+}
+
+private struct DynamicCodingKey: CodingKey, Hashable {
+    let stringValue: String
+    let intValue: Int? = nil
+
+    init(stringValue: String) { self.stringValue = stringValue }
+    init?(intValue: Int) { return nil }
+}
+
 private func validate(_ input: DomainRequest) throws {
     guard !input.title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
           !input.description.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -24,8 +62,16 @@ func registerDomainRoutes(_ app: Application) {
     }
 
     domains.post { request async throws -> Domain in
-        let input = try request.content.decode(DomainRequest.self)
+        let createInput = try request.content.decode(DomainCreateRequest.self)
+        let input = DomainRequest(id: createInput.id, title: createInput.title, description: createInput.description)
         try validate(input)
+
+        let normalizedTitle = input.title.trimmingCharacters(in: .whitespacesAndNewlines)
+        if try await DomainService(database: request.db).list().contains(where: {
+            $0.title.caseInsensitiveCompare(normalizedTitle) == .orderedSame
+        }) {
+            throw Abort(.conflict, reason: "A domain with this title already exists.")
+        }
 
         if let id = input.id,
            try await DomainService(database: request.db).find(id: id) != nil

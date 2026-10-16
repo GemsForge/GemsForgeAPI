@@ -421,6 +421,23 @@ dialog::backdrop {
 .edit-form {
   padding: 1.5rem;
 }
+.create-record-form {
+  max-width: 46rem;
+  margin: 0 0 1.5rem;
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  background: var(--panel);
+}
+.create-record-form h3 {
+  margin: 0 0 1.25rem;
+}
+.field-error {
+  color: var(--danger);
+  font-size: 0.75rem;
+}
+.create-record-form [aria-invalid="true"] {
+  border-color: var(--danger);
+}
 .dialog-heading {
   display: flex;
   justify-content: space-between;

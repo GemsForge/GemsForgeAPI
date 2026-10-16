@@ -52,6 +52,42 @@ final class ServiceAccountRouteTests: XCTestCase {
                 XCTAssertEqual(accounts.first?.monthlyAmount, 15.99)
             }
 
+            let duplicateServiceKey = ServiceAccountRequest(
+                id: nil,
+                service: "Example Streaming Plus",
+                logoKey: nil,
+                type: nil,
+                expenseGroup: nil,
+                monthlyAmount: nil,
+                interestRate: nil,
+                apr: nil,
+                due: nil,
+                occurrence: nil,
+                status: nil,
+                since: nil,
+                website: nil,
+                notes: nil,
+                notionPage: nil,
+                paymentMethod: nil,
+                accountNumber: nil,
+                emailUpdated: nil,
+                associatedAddress: nil,
+                serviceKey: " example_streaming "
+            )
+            try await app.test(.POST, "service-accounts", beforeRequest: { request in
+                try request.content.encode(duplicateServiceKey)
+            }) { response in
+                XCTAssertEqual(response.status, .conflict)
+            }
+            try await app.test(.POST, "service-accounts", beforeRequest: { request in
+                request.headers.contentType = .json
+                request.body = ByteBuffer(string: #"{"id":1,"service":"Duplicate ID","serviceKey":"UNIQUE"}"#)
+            }) { response async throws in
+                XCTAssertEqual(response.status, .conflict)
+                let accounts = try await ServiceAccountService(database: app.db).list()
+                XCTAssertEqual(accounts.count, 1)
+            }
+
             try await app.test(.GET, "service-accounts/1") { response async throws in
                 XCTAssertEqual(response.status, .ok)
                 let account = try response.content.decode(ServiceAccount.self)
@@ -130,6 +166,13 @@ final class ServiceAccountRouteTests: XCTestCase {
             try await app.autoMigrate()
             registerServiceAccountRoutes(app)
         }) { app in
+            try await app.test(.POST, "service-accounts", beforeRequest: { request in
+                request.headers.contentType = .json
+                request.body = ByteBuffer(string: #"{"service":"Example","dateCreated":"2099-01-01"}"#)
+            }) { response in
+                XCTAssertEqual(response.status, .badRequest)
+            }
+
             let invalidPayload = ServiceAccountRequest(
                 id: nil,
                 service: " ",
@@ -171,6 +214,39 @@ final class ServiceAccountRouteTests: XCTestCase {
 
             try await app.test(.DELETE, "service-accounts/999") { response in
                 XCTAssertEqual(response.status, .notFound)
+            }
+
+            let missingLogo = ServiceAccountRequest(
+                id: nil,
+                service: "Should Roll Back",
+                logoKey: nil,
+                type: nil,
+                expenseGroup: nil,
+                monthlyAmount: nil,
+                interestRate: nil,
+                apr: nil,
+                due: nil,
+                occurrence: nil,
+                status: nil,
+                since: nil,
+                website: nil,
+                notes: nil,
+                notionPage: nil,
+                paymentMethod: nil,
+                accountNumber: nil,
+                emailUpdated: nil,
+                associatedAddress: nil,
+                serviceKey: nil,
+                logoFileMetadataID: "missing-metadata"
+            )
+            try await app.test(.POST, "service-accounts", beforeRequest: { request in
+                try request.content.encode(missingLogo)
+            }) { response in
+                XCTAssertEqual(response.status, .unprocessableEntity)
+            }
+            try await app.test(.GET, "service-accounts") { response async throws in
+                let accounts = try response.content.decode([ServiceAccount].self)
+                XCTAssertTrue(accounts.isEmpty)
             }
         }
     }

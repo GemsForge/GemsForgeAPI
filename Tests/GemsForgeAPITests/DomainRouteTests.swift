@@ -13,7 +13,7 @@ final class DomainRouteTests: XCTestCase {
             try await app.autoMigrate()
             registerDomainRoutes(app)
         }) { app in
-            let payload = DomainRequest(
+            let payload = DomainCreateRequest(
                 id: "LIFE",
                 title: "Life",
                 description: "Everyday responsibilities and resources.",
@@ -87,7 +87,7 @@ final class DomainRouteTests: XCTestCase {
             try await app.autoMigrate()
             registerDomainRoutes(app)
         }) { app in
-            let invalidPayload = DomainRequest(
+            let invalidPayload = DomainCreateRequest(
                 id: "LIFE",
                 title: "",
                 description: "",
@@ -99,7 +99,7 @@ final class DomainRouteTests: XCTestCase {
                 XCTAssertEqual(response.status, .badRequest)
             }
 
-            let validPayload = DomainRequest(
+            let validPayload = DomainCreateRequest(
                 id: "LIFE",
                 title: "Life",
                 description: "Everyday responsibilities."
@@ -109,6 +109,19 @@ final class DomainRouteTests: XCTestCase {
                 try request.content.encode(validPayload)
             }) { response async throws in
                 XCTAssertEqual(response.status, .ok)
+            }
+
+            let duplicateTitle = DomainCreateRequest(
+                id: "LIFE-2",
+                title: "life",
+                description: "Duplicate natural key."
+            )
+            try await app.test(.POST, "domains", beforeRequest: { request in
+                try request.content.encode(duplicateTitle)
+            }) { response async throws in
+                XCTAssertEqual(response.status, .conflict)
+                let domains = try await DomainService(database: app.db).list()
+                XCTAssertEqual(domains.count, 1)
             }
 
             try await app.test(.POST, "domains", beforeRequest: { request in

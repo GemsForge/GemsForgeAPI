@@ -20,6 +20,21 @@ struct EmploymentRequest: Content {
     let notes: String?
 }
 
+/// Create-only payload. The expanded address relationship and audit fields
+/// are response/server concerns, not client-controlled input.
+struct EmploymentCreateRequest: Content {
+    let value: EmploymentRequest
+
+    init(from decoder: Decoder) throws {
+        try CreateContractValidation.rejectUnknownFields(in: decoder, allowed: [
+            "id", "employerName", "employerType", "industry", "website", "positionTitle",
+            "employmentType", "startDate", "endDate", "employmentStatus", "workAddressID",
+            "employerContact", "employerContactNumber", "employerContactEmail", "notes"
+        ])
+        value = try EmploymentRequest(from: decoder)
+    }
+}
+
 /// API response that expands the work-address relationship for client rendering.
 struct EmploymentResponse: Content {
     let id: String?
@@ -98,12 +113,18 @@ func registerEmploymentRoutes(_ app: Application) {
     }
 
     employment.post { request async throws -> EmploymentResponse in
-        let input = try request.content.decode(EmploymentRequest.self)
+        let input = try request.content.decode(EmploymentCreateRequest.self).value
         try validate(input, requiresID: true)
 
         let id = input.id!.trimmingCharacters(in: .whitespacesAndNewlines)
         if try await EmploymentService(database: request.db).find(id: id) != nil {
             throw Abort(.conflict, reason: "An employment record with this ID already exists.")
+        }
+
+        if let addressID = input.workAddressID,
+           try await AddressService(database: request.db).find(id: addressID) == nil
+        {
+            throw Abort(.unprocessableEntity, reason: "workAddressID must reference an existing address.")
         }
 
         let record = Employment(

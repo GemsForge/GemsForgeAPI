@@ -8,12 +8,16 @@ import { useServiceAccountPatchMutation, useServiceAccountQuery } from "../../da
 import type { ServiceAccount } from "../../types";
 import { RecordFields } from "../../components/RecordFields";
 import { PropertyEditor } from "../../components/PropertyEditor";
+import { useCreateServiceAccountMutation } from "../../data/recordQueries";
+import { ServiceAccountCreateForm } from "../create/RecordCreateForms";
 
 export function ServiceAccountsView({ records }: { records: ServiceAccount[] }) {
   const paging = usePagedRecords(records);
   const [selectedID, setSelectedID] = useState<number | null>(null);
   const detail = useServiceAccountQuery(selectedID);
   const patch = useServiceAccountPatchMutation();
+  const [creating, setCreating] = useState(false);
+  const create = useCreateServiceAccountMutation();
   return (
     <>
       <PaginationControls {...paging} label="Services" />
@@ -23,8 +27,23 @@ export function ServiceAccountsView({ records }: { records: ServiceAccount[] }) 
           <h2>Services</h2>
           <p className="muted">Recurring service accounts and their payment metadata.</p>
         </div>
-        <span className="record-count">{records.length} records</span>
+        <div className="button-row">
+          <span className="record-count">{records.length} records</span>
+          <button type="button" onClick={() => setCreating(true)}>
+            Add service
+          </button>
+        </div>
       </div>
+      {creating && (
+        <ServiceAccountCreateForm
+          onCancel={() => setCreating(false)}
+          onCreate={async (payload) => {
+            const created = await create.mutateAsync(payload);
+            setSelectedID(created.id);
+            setCreating(false);
+          }}
+        />
+      )}
       {records.length === 0 ? (
         <GemEmptyState
           icon="◎"

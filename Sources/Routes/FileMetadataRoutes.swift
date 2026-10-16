@@ -14,6 +14,18 @@ struct FileMetadataRequest: Content {
     let ownerID: String?
 }
 
+struct FileMetadataCreateRequest: Content {
+    let value: FileMetadataRequest
+
+    init(from decoder: Decoder) throws {
+        try CreateContractValidation.rejectUnknownFields(in: decoder, allowed: [
+            "id", "relativePath", "fileName", "fileKind", "mimeType", "byteSize",
+            "checksum", "ownerType", "ownerID"
+        ])
+        value = try FileMetadataRequest(from: decoder)
+    }
+}
+
 private func validate(_ input: FileMetadataRequest) throws {
     let path = input.relativePath.trimmingCharacters(in: .whitespacesAndNewlines)
     let fileKind = input.fileKind.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -60,7 +72,7 @@ func registerFileMetadataRoutes(_ app: Application) {
     }
 
     files.post { request async throws -> FileMetadata in
-        let input = try request.content.decode(FileMetadataRequest.self)
+        let input = try request.content.decode(FileMetadataCreateRequest.self).value
         try validate(input)
         let providedID = input.id?.trimmingCharacters(in: .whitespacesAndNewlines)
         let id = providedID?.isEmpty == false ? providedID! : UUID().uuidString

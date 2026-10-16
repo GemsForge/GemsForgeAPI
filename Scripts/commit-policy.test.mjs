@@ -126,6 +126,8 @@ test("CI handles push ranges, newly created branches, deletion, and unavailable 
   assert.equal(f.event("push", { ...payload, deleted: true, after: "0".repeat(40) }).status, 0);
   const missing = f.event("push", { ...payload, before: "f".repeat(40) });
   assert.notEqual(missing.status, 0); assert.match(missing.stderr, /Fetch the remote history/);
+  const forced = f.event("push", { ...payload, before: "f".repeat(40), forced: true });
+  assert.equal(forced.status, 0, forced.stderr);
 });
 test("standard Git merge commits are allowed, but arbitrary merge messages are not", (t) => {
   const f = fixture(t); f.git("switch", "-c", "feature"); f.commit("feat(ci): #173 add example");

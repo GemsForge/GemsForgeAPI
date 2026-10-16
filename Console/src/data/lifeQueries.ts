@@ -8,11 +8,29 @@ export const lifeQueryKeys = {
   addresses: ["addresses"] as const,
   transactions: ["transactions"] as const,
   serviceAccounts: ["service-accounts"] as const,
+  expenseCategories: ["expense-categories"] as const,
+  expenseSubcategories: (categoryID: number | null) => ["expense-subcategories", categoryID] as const,
 };
 
 /** Reads the Foundation Gem Hues catalog for the active screen. */
 export function useGemHuesQuery(enabled: boolean) {
   return useQuery({ queryKey: lifeQueryKeys.gemHues, queryFn: ({ signal }) => api.listGemHues(signal), enabled });
+}
+
+export function useExpenseCategoriesQuery(enabled: boolean) {
+  return useQuery({
+    queryKey: lifeQueryKeys.expenseCategories,
+    queryFn: ({ signal }) => api.listExpenseCategories(signal),
+    enabled,
+  });
+}
+
+export function useExpenseSubcategoriesQuery(categoryID: number | null, enabled: boolean) {
+  return useQuery({
+    queryKey: lifeQueryKeys.expenseSubcategories(categoryID),
+    queryFn: ({ signal }) => api.listExpenseSubcategories(categoryID, signal),
+    enabled: enabled && categoryID !== null,
+  });
 }
 
 /** Reads Life education records for the active screen. */

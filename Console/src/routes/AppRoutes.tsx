@@ -25,6 +25,8 @@ import { QueryFeedback } from "../components/QueryFeedback";
 import { Notice } from "../components/Notice";
 import { GemLifeShell } from "../components/layout/GemLifeShell";
 import { DomainSidebar } from "../features/domains/DomainSidebar";
+import { useCreateDomainMutation } from "../data/domainQueries";
+import { DomainCreateForm } from "../features/create/RecordCreateForms";
 const ForgeKeeperView = lazy(() =>
   import("../features/forgekeeper/ForgeKeeperView").then((module) => ({ default: module.ForgeKeeperView })),
 );
@@ -145,9 +147,25 @@ function Home() {
 }
 function Domains() {
   const query = useDomainsQuery();
+  const create = useCreateDomainMutation();
+  const [creating, setCreating] = useState(false);
   return (
     <>
-      <h2>Domains</h2>
+      <div className="content-heading">
+        <h2>Domains</h2>
+        <button type="button" onClick={() => setCreating(true)}>
+          Add domain
+        </button>
+      </div>
+      {creating && (
+        <DomainCreateForm
+          onCancel={() => setCreating(false)}
+          onCreate={async (payload) => {
+            await create.mutateAsync(payload);
+            setCreating(false);
+          }}
+        />
+      )}
       <QueryScreen query={query}>
         {(domains) => (
           <div className="page-list">

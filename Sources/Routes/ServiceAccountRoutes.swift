@@ -25,6 +25,33 @@ struct ServiceAccountRequest: Content {
     var logoFileMetadataID: String? = nil
 }
 
+/// Strict POST boundary for service accounts. The wrapped legacy request is
+/// retained for PUT compatibility while POST rejects unknown fields.
+struct ServiceAccountCreateRequest: Content {
+    let value: ServiceAccountRequest
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DynamicCodingKey.self)
+        let allowed = Set([
+            "id", "service", "logoKey", "type", "expenseGroup", "monthlyAmount",
+            "interestRate", "apr", "due", "occurrence", "status", "since",
+            "website", "notes", "notionPage", "paymentMethod", "accountNumber",
+            "emailUpdated", "associatedAddress", "serviceKey", "logoFileMetadataID"
+        ])
+        if let unknown = container.allKeys.first(where: { !allowed.contains($0.stringValue) }) {
+            throw DecodingError.dataCorruptedError(forKey: unknown, in: container, debugDescription: "Unknown create field: \(unknown.stringValue).")
+        }
+        value = try ServiceAccountRequest(from: decoder)
+    }
+}
+
+private struct DynamicCodingKey: CodingKey, Hashable {
+    let stringValue: String
+    let intValue: Int? = nil
+    init(stringValue: String) { self.stringValue = stringValue }
+    init?(intValue: Int) { return nil }
+}
+
 struct ServiceAccountPatchRequest: Content {
     let service: String?
     let monthlyAmount: Double?
@@ -81,19 +108,36 @@ func registerServiceAccountRoutes(_ app: Application) {
     }
 
     accounts.post { request async throws -> ServiceAccount in
-        let input = try request.content.decode(ServiceAccountRequest.self)
+        let input = try request.content.decode(ServiceAccountCreateRequest.self).value
         try validate(input)
 
-        if let id = input.id,
-           try await ServiceAccountService(database: request.db).find(id: id) != nil {
+        let service = ServiceAccountService(database: request.db)
+        if let id = input.id, try await service.find(id: id) != nil {
             throw Abort(.conflict, reason: "A Service Account with this ID already exists.")
         }
 
+        if let serviceKey = input.serviceKey?.trimmingCharacters(in: .whitespacesAndNewlines), !serviceKey.isEmpty {
+            let normalizedKey = serviceKey.lowercased()
+            if try await service.list().contains(where: {
+                $0.serviceKey?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == normalizedKey
+            }) {
+                throw Abort(.conflict, reason: "A Service Account with this serviceKey already exists.")
+            }
+        }
+
+        if let metadataID = input.logoFileMetadataID?.trimmingCharacters(in: .whitespacesAndNewlines), !metadataID.isEmpty,
+           try await FileMetadata.find(metadataID, on: request.db) == nil {
+            throw Abort(.unprocessableEntity, reason: "The referenced file metadata does not exist.")
+        }
+
         let account = makeServiceAccount(from: input, id: input.id)
-        try await ServiceAccountService(database: request.db).save(account)
-        if let id = account.id {
-            _ = try await AttachmentReferenceService(database: request.db).attach(metadataID: account.logoFileMetadataID, ownerType: "ServiceAccount", ownerID: String(id))
-            try await ServiceAccountService(database: request.db).save(account)
+        try await request.db.transaction { database in
+            let transactionalService = ServiceAccountService(database: database)
+            try await transactionalService.save(account)
+            if let id = account.id {
+                _ = try await AttachmentReferenceService(database: database).attach(metadataID: account.logoFileMetadataID, ownerType: "ServiceAccount", ownerID: String(id))
+                try await transactionalService.save(account)
+            }
         }
         return account
     }

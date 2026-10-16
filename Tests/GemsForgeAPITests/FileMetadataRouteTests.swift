@@ -79,6 +79,14 @@ final class FileMetadataRouteTests: XCTestCase {
                 XCTAssertEqual(metadata.ownerID, "TRX-0001")
             }
 
+            try await app.test(.POST, "file-metadata", beforeRequest: { request in
+                try request.content.encode(payload)
+            }) { response async throws in
+                XCTAssertEqual(response.status, .conflict)
+                let records = try await FileMetadataService(database: app.db).list()
+                XCTAssertEqual(records.count, 1)
+            }
+
             try await app.test(.GET, "file-metadata") { response async throws in
                 XCTAssertEqual(response.status, .ok)
                 let records = try response.content.decode([FileMetadata].self)
@@ -125,6 +133,13 @@ final class FileMetadataRouteTests: XCTestCase {
             try await app.autoMigrate()
             registerFileMetadataRoutes(app)
         }) { app in
+            try await app.test(.POST, "file-metadata", beforeRequest: { request in
+                request.headers.contentType = .json
+                request.body = ByteBuffer(string: #"{"relativePath":"images/test.png","fileKind":"image","mimeType":"image/png","dateCreated":"2099-01-01"}"#)
+            }) { response in
+                XCTAssertEqual(response.status, .badRequest)
+            }
+
             let invalidPayload = FileMetadataRequest(
                 id: nil,
                 relativePath: "../private/secret.png",
