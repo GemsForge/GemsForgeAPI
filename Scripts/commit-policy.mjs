@@ -112,7 +112,18 @@ export function validateGitHubEvent(event, name) {
       const base = git(["rev-parse", "--verify", `${baseRef}^{commit}`]);
       commits = listCommits(event.after, [base]);
     } else {
-      commits = listCommits(event.after, [event.before]);
+      try {
+        commits = listCommits(event.after, [event.before]);
+      } catch (error) {
+        // A force-push can make its `before` commit unreachable before the
+        // Actions runner fetches it. Validate against the current default
+        // branch instead of failing solely because that old object expired.
+        if (!event.forced || !String(error).includes(event.before)) throw error;
+        const baseRef = `refs/remotes/origin/${event.repository.default_branch}`;
+        git(["check-ref-format", baseRef]);
+        const base = git(["rev-parse", "--verify", `${baseRef}^{commit}`]);
+        commits = listCommits(event.after, [base]);
+      }
     }
   } else throw new Error(`Unsupported workflow event: ${name}`);
   return validateCommits(commits);

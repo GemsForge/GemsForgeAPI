@@ -44,7 +44,9 @@ Ordinary `git push` checks all outgoing new commits. An invalid subject prints
 its SHA, failed rule, and an example, then blocks the entire push. New branches,
 existing branches, multiple refs, and annotated tags are covered. Deletions and
 non-commit tags have no commit subjects to check. Missing history fails with
-a fetch instruction rather than silently skipping validation.
+a fetch instruction rather than silently skipping validation. If a forced
+push's old `before` commit is no longer available, CI validates the resulting
+branch against the fetched default branch instead.
 
 New branches exclude commits already reachable from that remote's tracking
 refs. CI independently checks the PR range against its base. Fetch before
