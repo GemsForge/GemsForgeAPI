@@ -19,8 +19,19 @@ struct ExpenseTransactionRequest: Content {
     let image: String?
 }
 
-/// Create-only transaction contract name; database-managed audit fields are absent.
-typealias ExpenseTransactionCreateRequest = ExpenseTransactionRequest
+/// Strict create payload; database managed fields are absent.
+struct ExpenseTransactionCreateRequest: Content {
+    let value: ExpenseTransactionRequest
+
+    init(from decoder: Decoder) throws {
+        try CreateContractValidation.rejectUnknownFields(in: decoder, allowed: [
+            "id", "receiptID", "item", "firstReceiptItem", "categoryID", "subcategoryID",
+            "merchantCode", "transactionDate", "quantity", "regularPrice", "paidPrice",
+            "total", "discount", "notes", "image"
+        ])
+        value = try ExpenseTransactionRequest(from: decoder)
+    }
+}
 
 struct ExpenseTransactionPatchRequest: Content {
     let item: String?
@@ -90,7 +101,7 @@ func registerExpenseTransactionRoutes(_ app: Application) {
     }
 
     transactions.post { request async throws -> ExpenseTransaction in
-        let input = try request.content.decode(ExpenseTransactionCreateRequest.self)
+        let input = try request.content.decode(ExpenseTransactionCreateRequest.self).value
         try validate(input, requiresID: true)
 
         let id = input.id!.trimmingCharacters(in: .whitespacesAndNewlines)

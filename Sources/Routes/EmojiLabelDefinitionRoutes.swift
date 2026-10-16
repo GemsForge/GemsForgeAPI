@@ -9,6 +9,15 @@ struct EmojiLabelDefinitionRequest: Content {
     let isActive: Bool
 }
 
+struct EmojiLabelDefinitionCreateRequest: Content {
+    let value: EmojiLabelDefinitionRequest
+
+    init(from decoder: Decoder) throws {
+        try CreateContractValidation.rejectUnknownFields(in: decoder, allowed: ["id", "label", "emoji", "description", "isActive"])
+        value = try EmojiLabelDefinitionRequest(from: decoder)
+    }
+}
+
 private func validate(_ input: EmojiLabelDefinitionRequest) throws {
     guard !input.label.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
         throw Abort(.badRequest, reason: "Emoji label name is required.")
@@ -55,7 +64,7 @@ func registerEmojiLabelDefinitionRoutes(_ app: Application) {
     }
 
     labels.post { request async throws -> EmojiLabelDefinition in
-        let input = try request.content.decode(EmojiLabelDefinitionRequest.self)
+        let input = try request.content.decode(EmojiLabelDefinitionCreateRequest.self).value
         try validate(input)
         try await ensureLabelIsAvailable(input.label, database: request.db)
 
