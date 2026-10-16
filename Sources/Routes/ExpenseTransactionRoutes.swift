@@ -115,11 +115,13 @@ func registerExpenseTransactionRoutes(_ app: Application) {
         let (id, transaction) = try await requireRouteRecord(request.parameters.get("id")) {
             try await ExpenseTransactionService(database: request.db).find(id: $0)
         }
-        try PropertyPatchValidation.requireKnownJSONProperties(request, allowed: ["item", "categoryID", "quantity", "total", "notes", "image"])
+        try PropertyPatchValidation.requireKnownJSONProperties(
+            request,
+            allowed: ["item", "categoryID", "quantity", "total", "notes", "image"],
+            requireNonEmpty: true,
+            emptyReason: "At least one editable field is required."
+        )
         let input = try request.content.decode(ExpenseTransactionPatchRequest.self)
-        guard input.item != nil || input.categoryID != nil || input.quantity != nil || input.total != nil || input.notes != nil || input.image != nil else {
-            throw Abort(.unprocessableEntity, reason: "At least one editable field is required.")
-        }
         let item = input.item ?? transaction.item
         guard !item.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { throw Abort(.unprocessableEntity, reason: "Transaction item cannot be empty.") }
         let categoryID = input.categoryID ?? transaction.categoryID

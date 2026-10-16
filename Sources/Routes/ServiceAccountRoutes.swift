@@ -111,11 +111,13 @@ func registerServiceAccountRoutes(_ app: Application) {
         let (id, account) = try await requireRouteRecord(request.parameters.get("id", as: Int.self)) {
             try await ServiceAccountService(database: request.db).find(id: $0)
         }
-        try PropertyPatchValidation.requireKnownJSONProperties(request, allowed: ["service", "monthlyAmount", "status", "notes", "logoFileMetadataID"])
+        try PropertyPatchValidation.requireKnownJSONProperties(
+            request,
+            allowed: ["service", "monthlyAmount", "status", "notes", "logoFileMetadataID"],
+            requireNonEmpty: true,
+            emptyReason: "At least one editable field is required."
+        )
         let input = try request.content.decode(ServiceAccountPatchRequest.self)
-        guard input.service != nil || input.monthlyAmount != nil || input.status != nil || input.notes != nil || input.logoFileMetadataID != nil else {
-            throw Abort(.unprocessableEntity, reason: "At least one editable field is required.")
-        }
         let service = input.service ?? account.service
         guard !service.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { throw Abort(.unprocessableEntity, reason: "Service name cannot be empty.") }
         let monthlyAmount = input.monthlyAmount ?? account.monthlyAmount
