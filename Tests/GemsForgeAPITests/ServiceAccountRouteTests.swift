@@ -90,6 +90,21 @@ final class ServiceAccountRouteTests: XCTestCase {
                 XCTAssertEqual(account.status, "Paused")
             }
 
+            try await app.test(.PATCH, "service-accounts/1", beforeRequest: { request in
+                try request.content.encode(ServiceAccountPatchRequest(service: "Updated Service", monthlyAmount: nil, status: nil, notes: nil, logoFileMetadataID: nil))
+            }) { response in
+                XCTAssertEqual(response.status, .ok)
+                let account = try response.content.decode(ServiceAccount.self)
+                XCTAssertEqual(account.service, "Updated Service")
+                XCTAssertEqual(account.status, "Paused")
+            }
+
+            try await app.test(.PATCH, "service-accounts/1", beforeRequest: { request in
+                try request.content.encode(["id": "2"])
+            }) { response in
+                XCTAssertEqual(response.status, .unprocessableEntity)
+            }
+
             try await app.test(.DELETE, "service-accounts/1") { response in
                 XCTAssertEqual(response.status, .noContent)
             }
