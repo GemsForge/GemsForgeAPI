@@ -69,6 +69,8 @@ export function TransactionsView({ records }: TransactionsViewProps) {
               <TransactionDetail
                 key={selectedRecord.id}
                 record={selectedRecord}
+                saving={patch.isPending}
+                error={patch.error}
                 onAttachment={async (metadata) => {
                   await attachment.mutateAsync({ id: selectedRecord.id, fileID: metadata?.id ?? null });
                 }}
@@ -93,10 +95,14 @@ export function TransactionsView({ records }: TransactionsViewProps) {
 
 function TransactionDetail({
   record,
+  saving,
+  error,
   onAttachment,
   onPatch,
 }: {
   record: ExpenseTransaction;
+  saving: boolean;
+  error: Error | null;
   onAttachment: (metadata: import("../../types").FileMetadata | null) => Promise<void>;
   onPatch: (values: Partial<ExpenseTransaction>) => Promise<void>;
 }) {
@@ -125,7 +131,10 @@ function TransactionDetail({
             Item
             <input value={item} onChange={(event) => setItem(event.target.value)} />
           </label>
-          <button type="submit">Save item</button>
+          {error && <p role="alert">{error.message} Try again.</p>}
+          <button type="submit" disabled={saving}>
+            {saving ? "Saving…" : "Save item"}
+          </button>
           <button
             type="button"
             onClick={() => {
