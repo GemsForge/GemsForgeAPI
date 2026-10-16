@@ -2,6 +2,7 @@ import { useState } from "react";
 import { usePagedRecords } from "../../hooks/usePagedRecords";
 import { PaginationControls } from "../../components/PaginationControls";
 import { QueryFeedback } from "../../components/QueryFeedback";
+import { AttachmentControl } from "../../components/AttachmentControl";
 import { GemEmptyState, GemRecordCard, GemRecordList } from "../../components/ui";
 import { useServiceAccountPatchMutation, useServiceAccountQuery } from "../../data/recordQueries";
 import type { ServiceAccount } from "../../types";
@@ -55,6 +56,12 @@ export function ServiceAccountsView({ records }: { records: ServiceAccount[] }) 
                 record={detail.data}
                 saving={patch.isPending}
                 error={patch.error}
+                onAttachment={async (metadata) => {
+                  await patch.mutateAsync({
+                    id: detail.data!.id,
+                    patch: { logoFileMetadataID: metadata?.id ?? null },
+                  });
+                }}
                 onPatch={async (values) => {
                   await patch.mutateAsync({ id: detail.data!.id, patch: values });
                 }}
@@ -78,11 +85,13 @@ function ServiceAccountDetail({
   record,
   saving,
   error,
+  onAttachment,
   onPatch,
 }: {
   record: ServiceAccount;
   saving: boolean;
   error: Error | null;
+  onAttachment: (metadata: import("../../types").FileMetadata | null) => Promise<void>;
   onPatch: (values: Partial<ServiceAccount>) => Promise<void>;
 }) {
   const [editing, setEditing] = useState(false);
@@ -171,6 +180,13 @@ function ServiceAccountDetail({
         <Field label="Website" value={record.website} />
         <Field label="Notes" value={record.notes} />
       </dl>
+      <AttachmentControl
+        fileMetadataID={record.logoFileMetadataID}
+        ownerType="ServiceAccount"
+        ownerID={String(record.id)}
+        label="Service logo"
+        onAttach={onAttachment}
+      />
     </article>
   );
 }
