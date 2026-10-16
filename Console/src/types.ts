@@ -93,6 +93,30 @@ export interface ExpenseTransaction {
   image?: string | null;
 }
 
+export interface ServiceAccount {
+  id: number;
+  service: string;
+  logoKey: string | null;
+  type: string | null;
+  expenseGroup: string | null;
+  monthlyAmount: number | null;
+  interestRate: number | null;
+  apr: number | null;
+  due: string | null;
+  occurrence: string | null;
+  status: string | null;
+  since: string | null;
+  website: string | null;
+  notes: string | null;
+  notionPage: string | null;
+  paymentMethod: string | null;
+  accountNumber: string | null;
+  emailUpdated: string | null;
+  associatedAddress: string | null;
+  serviceKey: string | null;
+  logoFileMetadataID: string | null;
+}
+
 export interface FileMetadata {
   id: string;
   relativePath: string;

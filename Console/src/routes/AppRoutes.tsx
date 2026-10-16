@@ -18,6 +18,7 @@ import {
   useEmploymentQuery,
   useGemHuesQuery,
   useTransactionsQuery,
+  useServiceAccountsQuery,
 } from "../data/lifeQueries";
 import { usePagesQuery, usePageMutation, type PageScope } from "../data/workflowQueries";
 import { QueryFeedback } from "../components/QueryFeedback";
@@ -41,6 +42,11 @@ const AddressesView = lazy(() =>
 );
 const TransactionsView = lazy(() =>
   import("../features/transactions/TransactionsView").then((module) => ({ default: module.TransactionsView })),
+);
+const ServiceAccountsView = lazy(() =>
+  import("../features/service-accounts/ServiceAccountsView").then((module) => ({
+    default: module.ServiceAccountsView,
+  })),
 );
 const LocalDatabaseView = lazy(() =>
   import("../features/databases/LocalDatabaseView").then((module) => ({ default: module.LocalDatabaseView })),
@@ -209,6 +215,10 @@ function Transactions() {
   const query = useTransactionsQuery(true);
   return <QueryScreen query={query}>{(records) => <TransactionsView records={records} />}</QueryScreen>;
 }
+function ServiceAccounts() {
+  const query = useServiceAccountsQuery(true);
+  return <QueryScreen query={query}>{(records) => <ServiceAccountsView records={records} />}</QueryScreen>;
+}
 function Databases() {
   return <LocalDatabaseView {...useOutletContext<Notifications>()} />;
 }
@@ -243,6 +253,7 @@ export function AppRoutes() {
         <Route path="employment" element={<Employment />} />
         <Route path="addresses" element={<Addresses />} />
         <Route path="transactions" element={<Transactions />} />
+        <Route path="service-accounts" element={<ServiceAccounts />} />
         <Route path="expenses" element={<Navigate to="/transactions" replace />} />
         <Route path="local-databases" element={<Databases />} />
         <Route path="schema-builder" element={<Schema />} />

@@ -14,6 +14,7 @@ import type {
   LocalDatabaseCapabilities,
   LocalDatabaseCreationResult,
   SchemaBuilderGuidance,
+  ServiceAccount,
   TableBuilderRequest,
   UserTableCreationResult,
   UserTablePreview,
@@ -106,6 +107,14 @@ export const api = {
     request<ExpenseTransaction>(`/transactions/${encodeURIComponent(transactionID)}`, { signal }),
   patchTransaction: (transactionID: string, patch: Partial<ExpenseTransaction>) =>
     request<ExpenseTransaction>(`/transactions/${encodeURIComponent(transactionID)}`, {
+      method: "PATCH",
+      body: JSON.stringify(patch),
+    }),
+  listServiceAccounts: (signal?: AbortSignal) => request<ServiceAccount[]>("/service-accounts", { signal }),
+  getServiceAccount: (serviceID: number, signal?: AbortSignal) =>
+    request<ServiceAccount>(`/service-accounts/${serviceID}`, { signal }),
+  patchServiceAccount: (serviceID: number, patch: Partial<ServiceAccount>) =>
+    request<ServiceAccount>(`/service-accounts/${serviceID}`, {
       method: "PATCH",
       body: JSON.stringify(patch),
     }),

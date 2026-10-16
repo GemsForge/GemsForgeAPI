@@ -11,6 +11,7 @@ const resources = [
   ["/employment", "Employment", "Life-area records", "◆"],
   ["/addresses", "Addresses", "Life-area records", "⌂"],
   ["/transactions", "Expense Tracker", "Life-area records", "$"],
+  ["/service-accounts", "Services", "Recurring accounts", "◎"],
   ["/local-databases", "Local Databases", "Safe test database creation", "⌘"],
   ["/schema-builder", "Schema Builder", "Build, import, and inspect", "▦"],
   ["/live-database", "Live Database", "Preview and apply migrations", "⇄"],
