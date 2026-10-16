@@ -19,6 +19,15 @@ struct ExpenseTransactionRequest: Content {
     let image: String?
 }
 
+struct ExpenseTransactionPatchRequest: Content {
+    let item: String?
+    let categoryID: Int?
+    let quantity: Double?
+    let total: Double?
+    let notes: String?
+    let image: String?
+}
+
 private func validate(_ input: ExpenseTransactionRequest, requiresID: Bool = false) throws {
     guard !input.item.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
         throw Abort(.badRequest, reason: "Transaction item is required.")
@@ -101,6 +110,34 @@ func registerExpenseTransactionRoutes(_ app: Application) {
         }
 
         // Return one documented expense by its stable TransactionID.
+        return transaction
+    }
+
+    transactions.patch(":id") { request async throws -> ExpenseTransaction in
+        guard let id = request.parameters.get("id"),
+              let transaction = try await ExpenseTransactionService(database: request.db).find(id: id)
+        else { throw Abort(.notFound) }
+        let input = try request.content.decode(ExpenseTransactionPatchRequest.self)
+        guard input.item != nil || input.categoryID != nil || input.quantity != nil || input.total != nil || input.notes != nil || input.image != nil else {
+            throw Abort(.unprocessableEntity, reason: "At least one editable field is required.")
+        }
+        let item = input.item ?? transaction.item
+        guard !item.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { throw Abort(.unprocessableEntity, reason: "Transaction item cannot be empty.") }
+        let categoryID = input.categoryID ?? transaction.categoryID
+        guard categoryID > 0 else { throw Abort(.unprocessableEntity, reason: "CategoryID must be greater than zero.") }
+        let quantity = input.quantity ?? transaction.quantity
+        guard quantity > 0 else { throw Abort(.unprocessableEntity, reason: "Quantity must be greater than zero.") }
+        let total = input.total ?? transaction.total
+        if let total, total < 0 { throw Abort(.unprocessableEntity, reason: "Transaction total cannot be negative.") }
+        let image = input.image ?? transaction.image
+        try await AttachmentReferenceService(database: request.db).replace(oldMetadataID: transaction.image, newMetadataID: image, ownerType: "ExpenseTransaction", ownerID: id)
+        transaction.item = item
+        transaction.categoryID = categoryID
+        transaction.quantity = quantity
+        transaction.total = total
+        transaction.notes = input.notes ?? transaction.notes
+        transaction.image = image
+        try await ExpenseTransactionService(database: request.db).save(transaction)
         return transaction
     }
 
