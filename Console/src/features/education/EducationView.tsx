@@ -5,6 +5,7 @@ import { useEducationPatchMutation, useEducationRecordQuery } from "../../data/r
 import { QueryFeedback } from "../../components/QueryFeedback";
 import type { Education } from "../../types";
 import { GemEmptyState, GemRecordCard, GemRecordList } from "../../components/ui";
+import { AttachmentControl } from "../../components/AttachmentControl";
 import { EditableRecordFields, formatRecordTimestamp } from "../../components/EditableRecordFields";
 import { useCreateEducationMutation } from "../../data/recordQueries";
 import { useAddressesQuery } from "../../data/lifeQueries";
@@ -89,6 +90,12 @@ export function EducationView({ records }: EducationViewProps) {
                 onPatch={async (values) => {
                   await patch.mutateAsync({ id: selectedRecord.id, patch: values });
                 }}
+                onAttachment={async (metadata) => {
+                  await patch.mutateAsync({
+                    id: selectedRecord.id,
+                    patch: { documentFileMetadataID: metadata?.id ?? null },
+                  });
+                }}
               />
             ) : (
               !selectedID && (
@@ -108,9 +115,11 @@ export function EducationView({ records }: EducationViewProps) {
 function EducationDetail({
   record,
   onPatch,
+  onAttachment,
 }: {
   record: Education;
   onPatch: (values: Partial<Education>) => Promise<void>;
+  onAttachment: (metadata: import("../../types").FileMetadata | null) => Promise<void>;
 }) {
   return (
     <article className="education-detail">
@@ -216,6 +225,13 @@ function EducationDetail({
             displayValue: formatRecordTimestamp(record.updatedAt),
           },
         ]}
+      />
+      <AttachmentControl
+        fileMetadataID={record.documentFileMetadataID}
+        ownerType="Education"
+        ownerID={record.id}
+        label="Education document"
+        onAttach={onAttachment}
       />
     </article>
   );

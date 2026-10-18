@@ -128,7 +128,7 @@ describe("shared query and mutation layer", () => {
     await act(async () => {
       await hook.result.current.page.mutateAsync({
         id: 1,
-        patch: { title: "Updated", description: "Description", parentID: null },
+        patch: { title: "Updated" },
       });
       await hook.result.current.table.mutateAsync("confirmed-token");
     });

@@ -49,6 +49,7 @@ describe("accessible page editor", () => {
   });
   it("announces a save failure and keeps the edited form available", async () => {
     setup(vi.fn().mockRejectedValue(new Error("Save failed")));
+    fireEvent.change(screen.getByLabelText("Title"), { target: { value: "Updated title" } });
     fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("Save failed");
     expect(screen.getByRole("dialog", { name: "Edit metadata" })).toBeInTheDocument();

@@ -2,6 +2,7 @@ export interface Domain {
   id: string;
   title: string;
   description: string;
+  updatedAt?: string | null;
 }
 
 export type DomainCreate = Pick<Domain, "title" | "description"> & { id?: string };
@@ -113,6 +114,7 @@ export interface ForgeKeeperPage {
   domainID: string;
   title: string;
   description: string;
+  updatedAt?: string | null;
 }
 
 export interface GemHue {
@@ -140,6 +142,7 @@ export interface Education {
   awardedDate: string | null;
   status: string;
   address: Address | null;
+  documentFileMetadataID?: string | null;
   website: string | null;
   notes: string | null;
   updatedAt?: string | null;
@@ -230,9 +233,8 @@ export interface FileMetadata {
 }
 
 export interface ForgeKeeperPatch {
-  title: string;
-  description: string;
-  parentID: number | null;
+  title?: string;
+  description?: string;
 }
 
 export interface LocalDatabaseProfile {

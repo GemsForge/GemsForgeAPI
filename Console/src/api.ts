@@ -73,6 +73,8 @@ export const api = {
   listDomains: (signal?: AbortSignal) => request<Domain[]>("/domains", { signal }),
   createDomain: (payload: DomainCreate) =>
     request<Domain>("/domains", { method: "POST", body: JSON.stringify(payload) }),
+  patchDomain: (domainID: string, patch: Partial<Pick<Domain, "title" | "description">>) =>
+    request<Domain>(`/domains/${encodeURIComponent(domainID)}`, { method: "PATCH", body: JSON.stringify(patch) }),
   listPagesForDomain: (domainID: string, signal?: AbortSignal) =>
     request<ForgeKeeperPage[]>(`/domains/${encodeURIComponent(domainID)}/forgekeeper`, { signal }),
   listRootPages: (signal?: AbortSignal) => request<ForgeKeeperPage[]>("/forgekeeper/roots", { signal }),

@@ -11,7 +11,7 @@ import {
   useParams,
 } from "react-router-dom";
 import type { UseQueryResult } from "@tanstack/react-query";
-import { useDomainsQuery } from "../data/domainQueries";
+import { useDomainsQuery, useDomainPatchMutation } from "../data/domainQueries";
 import {
   useAddressesQuery,
   useEducationQuery,
@@ -27,6 +27,7 @@ import { GemLifeShell } from "../components/layout/GemLifeShell";
 import { DomainSidebar } from "../features/domains/DomainSidebar";
 import { useCreateDomainMutation } from "../data/domainQueries";
 import { DomainCreateForm } from "../features/create/RecordCreateForms";
+import { EditableRecordFields, formatRecordTimestamp } from "../components/EditableRecordFields";
 const ForgeKeeperView = lazy(() =>
   import("../features/forgekeeper/ForgeKeeperView").then((module) => ({ default: module.ForgeKeeperView })),
 );
@@ -148,6 +149,7 @@ function Home() {
 function Domains() {
   const query = useDomainsQuery();
   const create = useCreateDomainMutation();
+  const patch = useDomainPatchMutation();
   const [creating, setCreating] = useState(false);
   return (
     <>
@@ -171,10 +173,38 @@ function Domains() {
           <div className="page-list">
             {!domains.length && <p>No domains yet.</p>}
             {domains.map((domain) => (
-              <Link className="page-card" to={`/domains/${encodeURIComponent(domain.id)}`} key={domain.id}>
-                <h3>{domain.title}</h3>
-                <p>{domain.description}</p>
-              </Link>
+              <article className="page-card domain-card" key={domain.id}>
+                <Link className="domain-card-link" to={`/domains/${encodeURIComponent(domain.id)}`}>
+                  <small>{domain.id}</small>
+                </Link>
+                <EditableRecordFields
+                  className="domain-fields"
+                  fields={[
+                    {
+                      label: "Title",
+                      value: domain.title,
+                      required: true,
+                      onSave: async (value) => {
+                        await patch.mutateAsync({ id: domain.id, patch: { title: value as string } });
+                      },
+                    },
+                    {
+                      label: "Description",
+                      value: domain.description,
+                      required: true,
+                      onSave: async (value) => {
+                        await patch.mutateAsync({ id: domain.id, patch: { description: value as string } });
+                      },
+                    },
+                    {
+                      label: "Last updated",
+                      value: domain.updatedAt ?? null,
+                      readOnlyReason: "Server managed",
+                      displayValue: formatRecordTimestamp(domain.updatedAt),
+                    },
+                  ]}
+                />
+              </article>
             ))}
           </div>
         )}
