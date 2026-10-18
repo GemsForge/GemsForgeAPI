@@ -7,7 +7,7 @@ server-state hooks, a design system, native capabilities, local sessions,
 production asset packaging, accessibility and responsive/performance checks.
 
 Start with [UI standards](UI_STANDARDS.md) for the implemented conventions and
-documentation index. Protected Console routes require the Sign in with Apple
+documentation index. Protected Console routes require the Supabase Auth
 session described in [Console authentication](../docs/Console-Authentication-299.md).
 This does not make the API public; see the deployment security gate before
 changing its private deployment posture. Live database attachment-column
@@ -29,15 +29,14 @@ In a second terminal:
 ```bash
 cd Console
 VITE_API_TARGET="http://127.0.0.1:8081" \
-VITE_APPLE_CLIENT_ID="com.example.gemlife.web" \
-VITE_APPLE_REDIRECT_URI="https://console.example.com/app/" \
+VITE_SUPABASE_URL="https://your-project-ref.supabase.co" \
+VITE_SUPABASE_PUBLISHABLE_KEY="your-supabase-publishable-key" \
 npm run dev
 ```
 
-Use real Apple Developer identifiers and a registered HTTPS development host
-for live Apple sign-in. Apple's web flow does not accept `localhost` or an IP
-address as the registered redirect domain. The API must use the same
-`APPLE_CLIENT_ID`; see the authentication guide for setup and limitations.
+Configure the API's `SUPABASE_URL`, `SUPABASE_OWNER_SUBJECT`, and
+`GEM_LIFE_OPERATOR_ACCOUNT_ID` as described in the authentication guide. Keep
+public Supabase signups disabled; this Console is owner-only.
 
 Open `http://127.0.0.1:5173/`.
 

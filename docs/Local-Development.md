@@ -59,8 +59,8 @@ Start the API on port `8081`, then run the console in a second terminal:
 ```bash
 cd Console
 VITE_API_TARGET="http://127.0.0.1:8081" \
-VITE_APPLE_CLIENT_ID="com.example.gemlife.web" \
-VITE_APPLE_REDIRECT_URI="https://console.example.com/app/" \
+VITE_SUPABASE_URL="https://your-project-ref.supabase.co" \
+VITE_SUPABASE_PUBLISHABLE_KEY="your-supabase-publishable-key" \
 npm run dev
 ```
 
@@ -77,10 +77,8 @@ authenticated Console at `/app/`:
 http://127.0.0.1:8081/
 ```
 
-For live Apple authentication, configure the same Services ID as API
-`APPLE_CLIENT_ID` and use a registered HTTPS domain. Apple's Sign in with Apple
-web flow does not accept `localhost` or an IP address as the registered
-redirect domain. See
+For authentication, configure Supabase email/password and the owner-only API
+identity mapping. See
 [`Console-Authentication-299.md`](Console-Authentication-299.md) for setup,
 storage behavior, and the deployment security gate. See
 [`Testing-Console.md`](Testing-Console.md) for the remaining UI workflows.

@@ -28,10 +28,10 @@ swift run GemsForgeAPI serve --hostname 127.0.0.1 --port 8082
 Then open `http://127.0.0.1:8082/` for the guidance page and set
 `VITE_API_TARGET=http://127.0.0.1:8082` for the Console.
 
-Sign in with Apple requires Console `VITE_APPLE_CLIENT_ID` and a registered
-HTTPS `VITE_APPLE_REDIRECT_URI`, plus the matching API `APPLE_CLIENT_ID`.
-Apple's web sign-in does not accept localhost or IP addresses as registered
-redirect domains. See [`Console-Authentication-299.md`](Console-Authentication-299.md).
+Sign-in requires Supabase `VITE_SUPABASE_URL` and
+`VITE_SUPABASE_PUBLISHABLE_KEY`, plus API `SUPABASE_URL`,
+`SUPABASE_OWNER_SUBJECT`, and `GEM_LIFE_OPERATOR_ACCOUNT_ID`. Keep public
+signups disabled. See [`Console-Authentication-299.md`](Console-Authentication-299.md).
 
 ## Current capabilities
 

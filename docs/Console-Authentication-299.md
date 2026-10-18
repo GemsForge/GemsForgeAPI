@@ -1,58 +1,63 @@
 # React Console authentication — #299
 
-The React Console is the supported browser entry point for private Gem Life
-records. The API requires an API-issued bearer session for protected routes;
-the Console does not accept or send account, hub, or operator identifiers.
-Sign in with Apple creates an API challenge, sends its nonce through Apple's
-web authorization popup, and exchanges the returned identity token and
-challenge ID at `POST /auth/apple`. The API response's opaque session token is
-kept in the current tab's `sessionStorage`, attached as a bearer token to
-protected API requests, and never placed in a URL, application log, or
-`localStorage`. Sign out calls `POST /auth/logout` and clears cached records.
-An expired or revoked session clears the browser session and returns the user
-to the sign-in screen.
+The React Console signs in through Supabase Auth with email and password, then
+exchanges the short-lived Supabase access token for a revocable, opaque Gem Life
+API session. Only the API session is kept in the current tab's `sessionStorage`
+and sent to protected API routes. Supabase passwords and access tokens are not
+persisted by the Console. Sign out revokes the API session and clears cached
+records. Expired/revoked sessions return the user to sign-in.
 
-## Configuration
+This first release is deliberately owner-only. Configure Supabase to disable
+new user signups and configure the API with the single permitted Supabase
+subject and its existing Gem Life account ID. The API rejects every other
+identity. Apple sign-in is not part of this implementation; it remains a
+possible future identity provider and must not be required to use Gem Life.
 
-1. In the Apple Developer account, configure Sign in with Apple for the web
-   Services ID. Register the Console's domain and an HTTPS return URL as
-   required by Apple's web setup. Apple's Sign in with Apple JS rejects
-   `localhost` and IP addresses as registered redirect domains, so a local
-   browser smoke test needs a registered HTTPS development host or tunnel.
-2. Configure the React build/dev server with these public client settings
-   (for local development, keep them in an ignored `Console/.env.local` file):
+## Supabase setup
+
+1. Create a Supabase project and an email/password user for the owner. Disable
+   public signups in the Supabase Auth settings. Create the owner account
+   manually in the Supabase dashboard; password recovery/public signup flows
+   are outside this private-console release.
+2. In ignored `Console/.env.local`, configure the project URL and publishable
+   key (these are public browser configuration, not secrets):
 
    ```dotenv
-   VITE_APPLE_CLIENT_ID=com.example.gemlife.web
-   VITE_APPLE_REDIRECT_URI=https://console.example.com/app/
+   VITE_SUPABASE_URL=https://your-project-ref.supabase.co
+   VITE_SUPABASE_PUBLISHABLE_KEY=your-supabase-publishable-key
    VITE_API_TARGET=http://127.0.0.1:8081
    ```
 
-   `VITE_APPLE_CLIENT_ID` is a public Apple Services ID, not a secret. The
-   redirect URI must exactly match the Apple Developer configuration and use
-   HTTPS with a registered domain.
+3. Configure the API process with the same project URL, the owner's stable
+   Supabase Auth user ID (JWT `sub`), and the existing Gem Life account ID:
 
-3. Set the same identifier on the API process:
-
-   ```bash
-   APPLE_CLIENT_ID=com.example.gemlife.web swift run GemLife
+   ```dotenv
+   SUPABASE_URL=https://your-project-ref.supabase.co
+   SUPABASE_OWNER_SUBJECT=your-supabase-auth-user-uuid
+   GEM_LIFE_OPERATOR_ACCOUNT_ID=your-existing-gem-life-account-id
    ```
 
-   The API returns an actionable unavailable response when `APPLE_CLIENT_ID`
-   is absent. Do not put Apple private keys, client secrets, or Apple account
-   passwords in the browser build or repository.
+   The API obtains the project's asymmetric signing keys from its Supabase JWKS
+   endpoint and verifies signature, issuer, audience, issue time, and expiry.
+   Never put a Supabase secret/service-role key in the Console or a `VITE_`
+   variable. `SUPABASE_OWNER_SUBJECT` and `GEM_LIFE_OPERATOR_ACCOUNT_ID` are
+   server-only configuration.
+4. Start the API and Console as described in [Local Development](Local-Development.md).
+   In a packaged run, `/` is a guidance page and `/app/` is the authenticated
+   Console. In development, use the Vite URL shown in the terminal.
 
-4. Start the Console with `cd Console && npm run dev`. The Console's Vite
-   proxy forwards `/auth` and resource API paths to `VITE_API_TARGET`.
-   In a packaged local run, `/` is a guidance page and `/app/` is the
-   authenticated Console; in development use the Vite URL shown in the
-   terminal.
+The authentication migration moves existing account IDs into provider-neutral
+`Accounts` records, maps existing Apple subjects into `AccountIdentities`,
+repoints hubs to the new account table, and removes the obsolete Apple
+challenge/account tables. Existing resource rows are not reassigned by this
+migration. The configured account ID must match the existing account/hub so
+the owner continues to access only explicitly owned data.
 
 ## Security boundary and verification
 
-This login UI does not make deployment public. The API must remain private
-until route authorization and per-account hub ownership are implemented and
-verified. The existing deployment/security guidance remains authoritative.
+The API remains private. This owner-only login is not authorization for a
+public or multi-tenant launch: account creation, user lifecycle, route-level
+permissions, and tenant isolation require their own reviewed work.
 
 Run the Console checks from `Console/`:
 
@@ -63,12 +68,7 @@ npm run test
 npm run build
 ```
 
-Authentication tests cover the nonce/state exchange, token storage boundary,
-bearer header attachment, expiry/revocation clearing, and provider/setup
-failures. A live Apple sign-in smoke test additionally requires the configured
-Apple Services ID, registered HTTPS domain/return URL, and API `APPLE_CLIENT_ID`.
-
-Apple references:
-
-- [Configuring your webpage for Sign in with Apple](https://developer.apple.com/documentation/signinwithapple/configuring-your-webpage-for-sign-in-with-apple)
-- [Configuring your environment for Sign in with Apple](https://developer.apple.com/documentation/signinwithapple/configuring-your-environment-for-sign-in-with-apple)
+Automated tests cover Supabase token exchange, API bearer-session use,
+owner-only identity mapping, missing configuration, invalid/expired tokens,
+session revocation, and migration preservation. A live sign-in smoke test
+requires the configured Supabase project and owner user.

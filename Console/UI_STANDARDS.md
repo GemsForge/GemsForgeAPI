@@ -130,7 +130,7 @@ Declared message names are not proof that a capability is implemented. Currently
 file/image picking and device-local session end have native handlers. Images use
 the native adapter when hosted; ordinary browser file controls remain available.
 Navigation/share capabilities need their own implementation and policy. The
-React Console's Sign in with Apple UI uses the API session contract; see
+React Console's Supabase sign-in UI uses the API session contract; see
 [`Console-Authentication-299.md`](../docs/Console-Authentication-299.md).
 That account session is separate from the native device-local end/resume
 capability, which only clears local UI state and is not server logout or an
@@ -144,14 +144,16 @@ gate is satisfied; remote/public deployment remains separate.
 | DATABASE_PATH                  | Local Xcode Run scheme; ignored .env/export for terminal launcher |
 | LIVE_DATABASE_BACKUP_DIRECTORY | Local Xcode Run scheme; ignored .env/export for terminal launcher |
 | PROJECTS_TOKEN                 | GitHub repository Actions secret only                             |
-| APPLE_CLIENT_ID                | API environment; public Services ID, not a secret                 |
-| VITE_APPLE_CLIENT_ID           | Console build/dev environment; public Services ID, not a secret   |
-| VITE_APPLE_REDIRECT_URI        | Console build/dev environment; registered HTTPS return URL        |
+| SUPABASE_URL                   | API environment; project URL                                      |
+| SUPABASE_OWNER_SUBJECT         | API environment; permitted owner identity subject                 |
+| VITE_SUPABASE_URL              | Console build/dev environment; public project URL                 |
+| VITE_SUPABASE_PUBLISHABLE_KEY  | Console build/dev environment; public publishable key             |
+| GEM_LIFE_OPERATOR_ACCOUNT_ID   | API environment; existing owner account ID                        |
 | GEM_LIFE_CONSOLE_URL           | Optional local host scheme/environment; loopback URL only         |
 
 Never commit secrets to a shared scheme, source file or VITE-prefixed variable.
-Only non-secret public identifiers and URLs belong in VITE-prefixed settings;
-never put Apple private keys, client secrets, or account credentials there.
+Only non-secret public configuration belongs in VITE-prefixed settings; never
+put Supabase secret/service-role keys or account credentials there.
 Foundation and Darwin imports in the Swift launcher are platform modules, not
 extra installed packages. Foundation supplies Process/URL/FileManager; Darwin
 provides macOS/POSIX functions used by the launcher.
