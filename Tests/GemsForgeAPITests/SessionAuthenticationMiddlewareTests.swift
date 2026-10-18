@@ -132,19 +132,15 @@ final class SessionAuthenticationMiddlewareTests: XCTestCase {
         }
     }
 
-    func testOnlyHealthAndAppleChallengeAndSignInArePublic() async throws {
+    func testOnlyHealthAndSupabaseSignInArePublic() async throws {
         try await withApp(configure: { app in
             try await self.configureTestApp(app)
             app.get("health") { _ async in "ok" }
-            app.post("auth", "apple", "challenges") { _ async in "challenge" }
-            app.post("auth", "apple") { _ async in "signin" }
+            app.post("auth", "supabase") { _ async in "signin" }
             app.get("protected") { _ async in "private" }
         }) { app in
             try await app.test(.GET, "health") { XCTAssertEqual($0.status, .ok) }
-            try await app.test(.POST, "auth/apple/challenges") {
-                XCTAssertEqual($0.status, .ok)
-            }
-            try await app.test(.POST, "auth/apple") { XCTAssertEqual($0.status, .ok) }
+            try await app.test(.POST, "auth/supabase") { XCTAssertEqual($0.status, .ok) }
             try await app.test(.GET, "protected") {
                 XCTAssertEqual($0.status, .unauthorized)
             }
@@ -158,6 +154,7 @@ final class SessionAuthenticationMiddlewareTests: XCTestCase {
         app.migrations.add(CreateAddresses())
         app.migrations.add(CreateFileMetadata())
         app.migrations.add(AddAddressAttachmentReference())
+        app.migrations.add(MakeAuthenticationProviderAgnostic())
         try await app.autoMigrate()
         app.middleware.use(SessionAuthenticationMiddleware(operatorAccountID: operatorAccountID))
         app.get("private") { request async throws -> String in
@@ -174,8 +171,8 @@ final class SessionAuthenticationMiddlewareTests: XCTestCase {
         expiresAt: Date = Date().addingTimeInterval(3_600),
         revokedAt: Date? = nil
     ) async throws -> String {
-        if try await AppleAccount.find(accountID, on: database) == nil {
-            try await AppleAccount(id: accountID, appleSubject: "subject-\(accountID)").save(on: database)
+        if try await AuthenticationAccount.find(accountID, on: database) == nil {
+            try await AuthenticationAccount(id: accountID).save(on: database)
             try await Hub(id: hubID, accountID: accountID).save(on: database)
         }
         let token = "session-\(id)"
