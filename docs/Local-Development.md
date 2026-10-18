@@ -50,15 +50,18 @@ so an existing Xcode server on the previous default port `8080` is not disturbed
 
 ## Browser testing console
 
-The repository retains the original local browser console in `Public/` as a
-fallback. The active testing console is the React + TypeScript project in
-`Console/`.
+The active testing console is the React + TypeScript project in `Console/`.
+The legacy `Public/` root now provides sign-in guidance only and makes no
+anonymous API requests.
 
 Start the API on port `8081`, then run the console in a second terminal:
 
 ```bash
 cd Console
-VITE_API_TARGET="http://127.0.0.1:8081" npm run dev
+VITE_API_TARGET="http://127.0.0.1:8081" \
+VITE_SUPABASE_URL="https://your-project-ref.supabase.co" \
+VITE_SUPABASE_PUBLISHABLE_KEY="your-supabase-publishable-key" \
+npm run dev
 ```
 
 Open the React console:
@@ -67,21 +70,20 @@ Open the React console:
 http://127.0.0.1:5173/
 ```
 
-The API-served prototype remains available at the root of the Vapor server on
-the default local API port:
+The API-served root on the default local API port guides users to the packaged
+authenticated Console at `/app/`:
 
 ```text
 http://127.0.0.1:8081/
 ```
 
-Both consoles display stable domains, retrieve ForgeKeeper pages, navigate to
-immediate children, exercise page PATCH requests, render Gem Hue records and
-image previews, and read Education records. The Notes upload area is currently a design placeholder
-because page creation/import has not yet been defined as an API workflow. See
-[`Testing-Console.md`](Testing-Console.md).
+For authentication, configure Supabase email/password and the owner-only API
+identity mapping. See
+[`Console-Authentication-299.md`](Console-Authentication-299.md) for setup,
+storage behavior, and the deployment security gate. See
+[`Testing-Console.md`](Testing-Console.md) for the remaining UI workflows.
 
-The root URL `/` is not an application route, so a `404 Not Found` response at
-that URL is expected. It does not indicate that the server failed to start.
+The root URL `/` is a guidance page; it is not the authenticated application.
 
 ## Database location
 

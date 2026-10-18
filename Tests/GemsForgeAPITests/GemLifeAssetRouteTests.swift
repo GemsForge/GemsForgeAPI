@@ -24,11 +24,14 @@ final class GemLifeAssetRouteTests: XCTestCase {
         try Data("not a packaged asset".utf8).write(to: outside)
         defer { try? FileManager.default.removeItem(at: outside) }
         try FileManager.default.createSymbolicLink(at: directory.appendingPathComponent("assets/escape.js"), withDestinationURL: outside)
-        try await withApp(configure: { app in registerGemLifeAssetRoutes(app, directory: directory.path) }) { app in
+        try await withApp(configure: { app in registerGemLifeAssetRoutes(app, directory: directory.path, supabaseURL: "https://gemlife.supabase.co") }) { app in
             try await app.test(.GET, "app/education", beforeRequest: { request in request.headers.replaceOrAdd(name: "Accept", value: "text/html") }) { response in
                 XCTAssertEqual(response.status, .ok)
                 XCTAssertTrue(response.body.string.contains("Gem Life"))
                 XCTAssertEqual(response.headers.first(name: "Cache-Control"), "no-cache")
+                let policy = try XCTUnwrap(response.headers.first(name: "Content-Security-Policy"))
+                XCTAssertTrue(policy.contains("connect-src 'self' https://gemlife.supabase.co"))
+                XCTAssertFalse(policy.contains("*"))
             }
             try await app.test(.GET, "app/assets/index-test.js") { response in
                 XCTAssertEqual(response.status, .ok)

@@ -43,8 +43,7 @@ struct SessionAuthenticationMiddleware: AsyncMiddleware {
 
     private static let publicRoutes: Set<String> = [
         "GET /health",
-        "POST /auth/apple/challenges",
-        "POST /auth/apple",
+        "POST /auth/supabase",
     ]
 
     func respond(to request: Request, chainingTo next: AsyncResponder) async throws -> Response {
@@ -59,7 +58,7 @@ struct SessionAuthenticationMiddleware: AsyncMiddleware {
             throw Abort(.unauthorized, reason: "A bearer session token is required.")
         }
 
-        guard let accountID = try await AppleAuthenticationService.validAccountID(
+        guard let accountID = try await AuthenticationSessionService.validAccountID(
             forSessionToken: authorization.token, on: request.db
         ) else {
             throw Abort(.unauthorized, reason: "The bearer session is invalid or expired.")

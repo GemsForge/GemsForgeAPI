@@ -15,24 +15,31 @@ final class LegacyDatabaseBootstrapServiceTests: XCTestCase {
         XCTAssertTrue(FileManager.default.createFile(atPath: databaseURL.path, contents: Data()))
         defer { try? FileManager.default.removeItem(at: root) }
 
-        let fixtureApp = try await Application.make(.testing)
-        fixtureApp.databases.use(.sqlite(.file(databaseURL.path)), as: .sqlite)
-        LocalDatabaseProfile.gemLifeDevelopment.registerMigrations(on: fixtureApp)
-        try await fixtureApp.autoMigrate()
-        try await Address(id: "ADDR-UNASSIGNED", city: "Legacy record", addressStatus: "Former")
-            .save(on: fixtureApp.db)
-        let fixtureSQL = try XCTUnwrap(fixtureApp.db as? any SQLDatabase)
-        for table in [Hub.schema, AuthenticationSession.schema, AppleAuthChallenge.schema, AppleAccount.schema] {
-            try await fixtureSQL.raw(SQLQueryString(stringLiteral: "DROP TABLE \"\(table)\"")).run()
+        try await withApp(configure: { app in
+            app.databases.use(.sqlite(.file(databaseURL.path)), as: .sqlite)
+        }) { fixtureApp in
+            LocalDatabaseProfile.gemLifeDevelopment.registerMigrations(on: fixtureApp)
+            try await fixtureApp.autoMigrate()
+            try await Address(id: "ADDR-UNASSIGNED", city: "Legacy record", addressStatus: "Former")
+                .save(on: fixtureApp.db)
+            let fixtureSQL = try XCTUnwrap(fixtureApp.db as? any SQLDatabase)
+            for table in [
+                Hub.schema,
+                AuthenticationSession.schema,
+                AuthenticationIdentity.schema,
+                AuthenticationAccount.schema,
+            ] {
+                try await fixtureSQL.raw(SQLQueryString(stringLiteral: "DROP TABLE \"\(table)\"")).run()
+            }
+            for migrationName in [
+                String(reflecting: CreateAuthenticationSchema.self),
+                String(reflecting: CreateHubs.self),
+                String(reflecting: AddHubOwnershipFields.self),
+                String(reflecting: MakeAuthenticationProviderAgnostic.self),
+            ] {
+                try await MigrationLog.query(on: fixtureApp.db).filter(\.$name == migrationName).delete()
+            }
         }
-        for migrationName in [
-            String(reflecting: CreateAuthenticationSchema.self),
-            String(reflecting: CreateHubs.self),
-            String(reflecting: AddHubOwnershipFields.self),
-        ] {
-            try await MigrationLog.query(on: fixtureApp.db).filter(\.$name == migrationName).delete()
-        }
-        try await fixtureApp.asyncShutdown()
 
         try await withApp(configure: { app in
             app.databases.use(.sqlite(.file(databaseURL.path)), as: .sqlite)
@@ -60,7 +67,13 @@ final class LegacyDatabaseBootstrapServiceTests: XCTestCase {
             XCTAssertTrue(appliedTables.contains(AuthenticationSession.schema))
             XCTAssertTrue(appliedTables.contains("SchemaMigrationAudits"))
 
-            try await AppleAccount(id: "owner-account", appleSubject: "owner-subject").save(on: app.db)
+            try await AuthenticationAccount(id: "owner-account").save(on: app.db)
+            try await AuthenticationIdentity(
+                id: "owner-identity",
+                accountID: "owner-account",
+                issuer: "https://supabase.example.test",
+                subject: "owner-subject"
+            ).save(on: app.db)
             try await Hub(id: "owner-hub", accountID: "owner-account").save(on: app.db)
             let ownershipPreview = try await HubOwnershipMigrationService(database: app.db)
                 .preview(hubID: "owner-hub")

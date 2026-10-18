@@ -9,7 +9,7 @@ The project is designed to run locally on a Mac and remain private behind a secu
 The M3 Gem Life UI foundations are documented in
 [UI standards](Console/UI_STANDARDS.md), including local session scope,
 accessibility, responsive verification, performance and release packaging.
-The API includes Sign in with Apple session authentication, with route
+The API includes owner-only Supabase Auth session authentication, with route
 authorization and per-account hub isolation in progress. Keep it private until
 that work and an operator-reviewed ownership migration are complete; see
 [Deployment-Security.md](docs/Deployment-Security.md). Live database

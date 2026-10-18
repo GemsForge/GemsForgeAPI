@@ -12,8 +12,9 @@ final class HubOwnershipMigrationServiceTests: XCTestCase {
             app.migrations.add(CreateAddresses())
             app.migrations.add(CreateFileMetadata())
             app.migrations.add(AddAddressAttachmentReference())
+            app.migrations.add(MakeAuthenticationProviderAgnostic())
             try await app.autoMigrate()
-            try await AppleAccount(id: "account-1", appleSubject: "subject-1").save(on: app.db)
+            try await AuthenticationAccount(id: "account-1").save(on: app.db)
             try await Hub(id: "hub-1", accountID: "account-1").save(on: app.db)
             try await AddressService(database: app.db, hubID: "hub-1").save(
                 Address(id: "ADDR-OWNED", city: "Already assigned", addressStatus: "Current")
@@ -62,6 +63,7 @@ final class HubOwnershipMigrationServiceTests: XCTestCase {
             app.migrations.add(CreateAddresses())
             app.migrations.add(CreateFileMetadata())
             app.migrations.add(AddAddressAttachmentReference())
+            app.migrations.add(MakeAuthenticationProviderAgnostic())
             try await app.autoMigrate()
         }) { app in
             let service = HubOwnershipMigrationService(database: app.db, tables: [Address.schema])

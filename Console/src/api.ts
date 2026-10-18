@@ -27,6 +27,12 @@ import type {
   UserTableCreationResult,
   UserTablePreview,
 } from "./types";
+import { getBearerToken, notifySessionExpired } from "./auth/session";
+
+export interface APIAuthenticationSession {
+  sessionToken: string;
+  expiresAt: string;
+}
 
 export class APIError extends Error {
   constructor(
@@ -40,13 +46,18 @@ export class APIError extends Error {
 
 async function checkedFetch(path: string, options: RequestInit = {}): Promise<Response> {
   let response: Response;
+  const headers = new Headers(options.headers);
+  const isPublicAuthRequest = path === "/auth/supabase";
+  const bearerToken = path === "/health" || isPublicAuthRequest ? null : getBearerToken();
+  if (bearerToken) headers.set("Authorization", `Bearer ${bearerToken}`);
   try {
-    response = await fetch(path, { cache: "no-store", ...options });
+    response = await fetch(path, { cache: "no-store", ...options, headers });
   } catch (error) {
     if (options.signal?.aborted || (error instanceof Error && error.name === "AbortError")) throw error;
     throw new APIError("Cannot reach Gem Life. Check that the local API is running.", 0);
   }
   if (!response.ok) {
+    if (response.status === 401 && bearerToken) notifySessionExpired();
     const problem = await response.json().catch(() => ({}));
     throw new APIError(
       typeof problem?.reason === "string" ? problem.reason : `${response.status} ${response.statusText}`,
@@ -70,6 +81,12 @@ export const api = {
       throw new APIError("The local API returned an unexpected health response.", response.status);
     return true;
   },
+  exchangeSupabaseIdentityToken: (accessToken: string) =>
+    request<APIAuthenticationSession>("/auth/supabase", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${accessToken}` },
+    }),
+  logout: () => request<void>("/auth/logout", { method: "POST" }),
   listDomains: (signal?: AbortSignal) => request<Domain[]>("/domains", { signal }),
   createDomain: (payload: DomainCreate) =>
     request<Domain>("/domains", { method: "POST", body: JSON.stringify(payload) }),

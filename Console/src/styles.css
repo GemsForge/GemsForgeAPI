@@ -89,6 +89,92 @@ button {
 .app-shell {
   min-height: 100vh;
 }
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.sign-in-page {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  padding: 1.5rem;
+}
+.sign-in-card {
+  width: min(100%, 34rem);
+  padding: clamp(1.5rem, 5vw, 3rem);
+  border: 1px solid var(--line);
+  border-radius: 1.25rem;
+  background: linear-gradient(145deg, rgba(23, 49, 56, 0.96), rgba(18, 37, 43, 0.96));
+  box-shadow: 0 1.5rem 5rem rgba(0, 0, 0, 0.25);
+}
+.sign-in-card h1 {
+  margin-bottom: 1rem;
+}
+.sign-in-description,
+.sign-in-footnote,
+.sign-in-setup p {
+  color: var(--muted);
+  line-height: 1.6;
+}
+.sign-in-form {
+  display: grid;
+  gap: 0.65rem;
+  margin: 1.25rem 0;
+}
+.sign-in-form label {
+  font-weight: 650;
+}
+.sign-in-form input {
+  min-height: 46px;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  background: var(--canvas);
+  color: var(--ink);
+}
+.credential-sign-in-button {
+  width: 100%;
+  margin-top: 0.6rem;
+  padding: 0.85rem 1.25rem;
+  border: 1px solid var(--mint);
+  border-radius: 0.55rem;
+  background: var(--mint);
+  color: var(--canvas);
+  font-size: 1rem;
+  font-weight: 700;
+}
+.credential-sign-in-button:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+.credential-sign-in-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+.sign-in-error,
+.sign-in-setup {
+  margin: 1.25rem 0;
+  padding: 1rem;
+  border: 1px solid rgba(240, 138, 131, 0.45);
+  border-radius: 0.7rem;
+  color: var(--danger);
+  line-height: 1.5;
+}
+.sign-in-setup {
+  border-color: var(--line);
+  color: var(--ink);
+}
+.sign-in-setup p {
+  margin: 0.5rem 0 0;
+}
+.sign-in-setup code {
+  color: var(--gold);
+  overflow-wrap: anywhere;
+}
+.sign-in-footnote {
+  margin: 0;
+  font-size: 0.82rem;
+}
 .topbar {
   display: flex;
   justify-content: space-between;
