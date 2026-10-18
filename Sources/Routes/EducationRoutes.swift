@@ -76,7 +76,7 @@ private func educationResponse(_ record: Education, on database: any Database) a
     let address: Address?
     if let id = record.locationAddressID {
         // The optional relationship is expanded only when the referenced address exists.
-        address = try await Address.find(id, on: database)
+        address = try await AddressService(database: database, hubID: record.hubID).find(id: id)
     } else {
         address = nil
     }
@@ -105,7 +105,7 @@ func registerEducationRoutes(_ app: Application) {
 
     education.get { request async throws -> [EducationResponse] in
         // Returns Life-area education records without assigning them to a domain.
-        let records = try await EducationService(database: request.db).list()
+        let records = try await EducationService(database: request.db, hubID: request.authenticatedHubID).list()
         var responses: [EducationResponse] = []
         for record in records {
             responses.append(try await educationResponse(record, on: request.db))
@@ -118,12 +118,12 @@ func registerEducationRoutes(_ app: Application) {
         try validate(input, requiresID: true)
 
         let id = input.id!.trimmingCharacters(in: .whitespacesAndNewlines)
-        if try await EducationService(database: request.db).find(id: id) != nil {
+        if try await EducationService(database: request.db, hubID: request.authenticatedHubID).find(id: id) != nil {
             throw Abort(.conflict, reason: "An education record with this ID already exists.")
         }
 
         if let addressID = input.locationAddressID,
-           try await AddressService(database: request.db).find(id: addressID) == nil
+           try await AddressService(database: request.db, hubID: request.authenticatedHubID).find(id: addressID) == nil
         {
             throw Abort(.unprocessableEntity, reason: "locationAddressID must reference an existing address.")
         }
@@ -146,14 +146,14 @@ func registerEducationRoutes(_ app: Application) {
             documentFileMetadataID: input.documentFileMetadataID
         )
 
-        _ = try await AttachmentReferenceService(database: request.db).attach(metadataID: record.documentFileMetadataID, ownerType: "Education", ownerID: id)
-        try await EducationService(database: request.db).save(record)
+        _ = try await AttachmentReferenceService(database: request.db, hubID: request.authenticatedHubID).attach(metadataID: record.documentFileMetadataID, ownerType: "Education", ownerID: id)
+        try await EducationService(database: request.db, hubID: request.authenticatedHubID).save(record)
         return try await educationResponse(record, on: request.db)
     }
 
     education.get(":id") { request async throws -> EducationResponse in
         let (_, record) = try await requireRouteRecord(request.parameters.get("id")) {
-            try await EducationService(database: request.db).find(id: $0)
+            try await EducationService(database: request.db, hubID: request.authenticatedHubID).find(id: $0)
         }
 
         // Returns one education record by its stable EducationID.
@@ -162,7 +162,7 @@ func registerEducationRoutes(_ app: Application) {
 
     education.patch(":id") { request async throws -> EducationResponse in
         let (id, record) = try await requireRouteRecord(request.parameters.get("id")) {
-            try await EducationService(database: request.db).find(id: $0)
+            try await EducationService(database: request.db, hubID: request.authenticatedHubID).find(id: $0)
         }
 
         let payload = try request.content.decode([String: String?].self)
@@ -186,12 +186,12 @@ func registerEducationRoutes(_ app: Application) {
         }
         let locationAddressID = value("locationAddressID", record.locationAddressID)
         if let locationAddressID,
-           try await AddressService(database: request.db).find(id: locationAddressID) == nil
+           try await AddressService(database: request.db, hubID: request.authenticatedHubID).find(id: locationAddressID) == nil
         {
             throw Abort(.unprocessableEntity, reason: "locationAddressID must reference an existing address.")
         }
         let documentFileMetadataID = value("documentFileMetadataID", record.documentFileMetadataID)
-        try await AttachmentReferenceService(database: request.db).replace(
+        try await AttachmentReferenceService(database: request.db, hubID: request.authenticatedHubID).replace(
             oldMetadataID: record.documentFileMetadataID,
             newMetadataID: documentFileMetadataID,
             ownerType: "Education",
@@ -211,13 +211,13 @@ func registerEducationRoutes(_ app: Application) {
         record.website = value("website", record.website)
         record.notes = value("notes", record.notes)
         record.documentFileMetadataID = documentFileMetadataID
-        try await EducationService(database: request.db).save(record)
+        try await EducationService(database: request.db, hubID: request.authenticatedHubID).save(record)
         return try await educationResponse(record, on: request.db)
     }
 
     education.put(":id") { request async throws -> EducationResponse in
         let (id, record) = try await requireRouteRecord(request.parameters.get("id")) {
-            try await EducationService(database: request.db).find(id: $0)
+            try await EducationService(database: request.db, hubID: request.authenticatedHubID).find(id: $0)
         }
 
         let input = try request.content.decode(EducationRequest.self)
@@ -235,18 +235,18 @@ func registerEducationRoutes(_ app: Application) {
         record.locationAddressID = input.locationAddressID
         record.website = input.website
         record.notes = input.notes
-        try await AttachmentReferenceService(database: request.db).replace(oldMetadataID: record.documentFileMetadataID, newMetadataID: input.documentFileMetadataID, ownerType: "Education", ownerID: id)
+        try await AttachmentReferenceService(database: request.db, hubID: request.authenticatedHubID).replace(oldMetadataID: record.documentFileMetadataID, newMetadataID: input.documentFileMetadataID, ownerType: "Education", ownerID: id)
         record.documentFileMetadataID = input.documentFileMetadataID
-        try await EducationService(database: request.db).save(record)
+        try await EducationService(database: request.db, hubID: request.authenticatedHubID).save(record)
         return try await educationResponse(record, on: request.db)
     }
 
     education.delete(":id") { request async throws -> HTTPStatus in
         let (id, _) = try await requireRouteRecord(request.parameters.get("id")) {
-            try await EducationService(database: request.db).find(id: $0)
+            try await EducationService(database: request.db, hubID: request.authenticatedHubID).find(id: $0)
         }
 
-        try await EducationService(database: request.db).delete(id: id)
+        try await EducationService(database: request.db, hubID: request.authenticatedHubID).delete(id: id)
         return .noContent
     }
 }

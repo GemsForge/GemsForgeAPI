@@ -6,14 +6,18 @@ import Fluent
 /// for HTTP decoding, validation, and status codes.
 struct EmploymentService: Sendable {
     private let database: any Database
+    private let hubID: String?
 
-    init(database: any Database) {
+    init(database: any Database, hubID: String? = nil) {
         self.database = database
+        self.hubID = hubID
     }
 
     /// Returns employment records ordered by start date and employer name.
     func list() async throws -> [Employment] {
-        try await Employment.query(on: database)
+        var query = Employment.query(on: database)
+        if let hubID { query = query.filter(\.$hubID == hubID) }
+        return try await query
             .sort(\.$startDate)
             .sort(\.$employerName)
             .all()
@@ -21,11 +25,14 @@ struct EmploymentService: Sendable {
 
     /// Returns one employment record by its stable EmploymentID.
     func find(id: String) async throws -> Employment? {
-        try await Employment.find(id, on: database)
+        var query = Employment.query(on: database).filter(\.$id == id)
+        if let hubID { query = query.filter(\.$hubID == hubID) }
+        return try await query.first()
     }
 
     /// Creates or updates one employment record.
     func save(_ employment: Employment) async throws {
+        if let hubID { employment.hubID = hubID }
         try await employment.save(on: database)
     }
 

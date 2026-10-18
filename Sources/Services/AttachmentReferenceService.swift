@@ -4,9 +4,11 @@ import Vapor
 /// Validates and assigns FileMetadata references without exposing filesystem paths.
 struct AttachmentReferenceService: Sendable {
     private let database: any Database
+    private let hubID: String?
 
-    init(database: any Database) {
+    init(database: any Database, hubID: String? = nil) {
         self.database = database
+        self.hubID = hubID
     }
 
     /// Attaches a metadata record to one owner, or clears the reference when nil.
@@ -19,7 +21,9 @@ struct AttachmentReferenceService: Sendable {
             return nil
         }
 
-        guard let metadata = try await FileMetadata.find(metadataID, on: database) else {
+        var query = FileMetadata.query(on: database).filter(\.$id == metadataID)
+        if let hubID { query = query.filter(\.$hubID == hubID) }
+        guard let metadata = try await query.first() else {
             throw Abort(.unprocessableEntity, reason: "The referenced file metadata does not exist.")
         }
 
@@ -31,6 +35,7 @@ struct AttachmentReferenceService: Sendable {
 
         metadata.ownerType = ownerType
         metadata.ownerID = ownerID
+        if let hubID { metadata.hubID = hubID }
         try await metadata.save(on: database)
         return metadata
     }
@@ -46,12 +51,18 @@ struct AttachmentReferenceService: Sendable {
         _ = try await attach(metadataID: newMetadataID, ownerType: ownerType, ownerID: ownerID)
 
         if let oldID = oldMetadataID,
-           let oldMetadata = try await FileMetadata.find(oldID, on: database),
+           let oldMetadata = try await find(id: oldID),
            oldMetadata.ownerType == ownerType,
            oldMetadata.ownerID == ownerID {
             oldMetadata.ownerType = nil
             oldMetadata.ownerID = nil
             try await oldMetadata.save(on: database)
         }
+    }
+
+    private func find(id: String) async throws -> FileMetadata? {
+        var query = FileMetadata.query(on: database).filter(\.$id == id)
+        if let hubID { query = query.filter(\.$hubID == hubID) }
+        return try await query.first()
     }
 }

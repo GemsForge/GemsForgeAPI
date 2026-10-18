@@ -9,6 +9,7 @@ struct CreateHomeInventory: AsyncMigration {
     func prepare(on database: any Database) async throws {
         try await database.schema(HomeInventory.schema)
             .field("InventoryID", .string, .identifier(auto: false))
+            .field("HubID", .string)
             .field("ItemName", .string, .required)
             .field("Category", .string)
             .field("Description", .string)

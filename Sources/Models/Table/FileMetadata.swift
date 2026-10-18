@@ -12,6 +12,9 @@ final class FileMetadata: Model, Content, @unchecked Sendable {
     @ID(custom: "FileMetadataID")
     var id: String?
 
+    @OptionalField(key: "HubID")
+    var hubID: String?
+
     @Field(key: "RelativePath")
     var relativePath: String
 

@@ -15,6 +15,9 @@ final class Employment: Model, Content, @unchecked Sendable {
     @ID(custom: "EmploymentID")
     var id: String?
 
+    @OptionalField(key: "HubID")
+    var hubID: String?
+
     @Field(key: "EmployerName")
     var employerName: String
 

@@ -5,6 +5,7 @@ struct CreateForgeKeeper: AsyncMigration {
     func prepare(on database: any Database) async throws {
         try await database.schema("ForgeKeeper")
             .field("ForgeKeeperID", .int, .identifier(auto: true))
+            .field("HubID", .string)
             .field("ParentID", .int, .references("ForgeKeeper", "ForgeKeeperID", onDelete: .restrict, onUpdate: .cascade))
             .field("DomainID", .string, .required, .references("Domains", "DomainID", onDelete: .restrict, onUpdate: .cascade))
             .field("Title", .string, .required)

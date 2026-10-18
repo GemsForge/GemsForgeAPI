@@ -14,6 +14,9 @@ final class Address: Model, Content, @unchecked Sendable {
     @ID(custom: "AddressID")
     var id: String?
 
+    @OptionalField(key: "HubID")
+    var hubID: String?
+
     @Field(key: "AddressType")
     var addressType: String
 

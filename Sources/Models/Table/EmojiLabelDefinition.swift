@@ -11,6 +11,9 @@ final class EmojiLabelDefinition: Model, Content, @unchecked Sendable {
     @ID(custom: "EmojiLabelID")
     var id: Int?
 
+    @OptionalField(key: "HubID")
+    var hubID: String?
+
     @Field(key: "Label")
     var label: String
 

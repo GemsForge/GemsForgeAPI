@@ -9,7 +9,10 @@ The project is designed to run locally on a Mac and remain private behind a secu
 The M3 Gem Life UI foundations are documented in
 [UI standards](Console/UI_STANDARDS.md), including local session scope,
 accessibility, responsive verification, performance and release packaging.
-Account authentication and remote deployment remain deferred. Live database
+The API includes Sign in with Apple session authentication, with route
+authorization and per-account hub isolation in progress. Keep it private until
+that work and an operator-reviewed ownership migration are complete; see
+[Deployment-Security.md](docs/Deployment-Security.md). Live database
 attachment-column compatibility is tracked in
 [#178](https://github.com/GemsForge/GemsForgeAPI/issues/178); isolated test success
 does not imply the personal database has been migrated.

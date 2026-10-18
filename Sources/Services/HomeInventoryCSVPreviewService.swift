@@ -47,9 +47,11 @@ struct HomeInventoryCSVPreviewService: Sendable {
     ]
 
     private let database: any Database
+    private let hubID: String?
 
-    init(database: any Database) {
+    init(database: any Database, hubID: String? = nil) {
         self.database = database
+        self.hubID = hubID
     }
 
     func preview(csv: String) async throws -> HomeInventoryCSVPreviewResponse {
@@ -103,7 +105,8 @@ struct HomeInventoryCSVPreviewService: Sendable {
 
             if !id.isEmpty && !seenIDs.insert(id).inserted {
                 errors.append("InventoryID is duplicated in this CSV.")
-            } else if !id.isEmpty, try await HomeInventory.find(id, on: database) != nil {
+            } else if !id.isEmpty,
+                      try await HomeInventoryService(database: database, hubID: hubID).find(id: id) != nil {
                 errors.append("InventoryID already exists in the database.")
             }
 

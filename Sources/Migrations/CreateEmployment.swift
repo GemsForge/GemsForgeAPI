@@ -8,6 +8,7 @@ struct CreateEmployment: AsyncMigration {
     func prepare(on database: any Database) async throws {
         try await database.schema(Employment.schema)
             .field("EmploymentID", .string, .identifier(auto: false))
+            .field("HubID", .string)
             .field("EmployerName", .string, .required)
             .field("EmployerType", .string, .required)
             .field("Industry", .string)

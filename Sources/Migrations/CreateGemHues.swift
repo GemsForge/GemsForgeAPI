@@ -8,6 +8,7 @@ struct CreateGemHues: AsyncMigration {
     func prepare(on database: any Database) async throws {
         try await database.schema(GemHue.schema)
             .field("HueID", .string, .identifier(auto: false))
+            .field("HubID", .string)
             .field("ColorName", .string, .required)
             .field("ColorFamily", .string)
             .field("HexCode", .string, .required)

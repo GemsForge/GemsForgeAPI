@@ -13,6 +13,9 @@ final class ServiceAccount: Model, Content, @unchecked Sendable {
     @ID(custom: "ServiceID")
     var id: Int?
 
+    @OptionalField(key: "HubID")
+    var hubID: String?
+
     @Field(key: "Service")
     var service: String
 

@@ -12,7 +12,7 @@ func registerFileContentRoutes(
 ) {
     app.get("file-metadata", ":id", "content") { request async throws -> Response in
         guard let id = request.parameters.get("id"),
-              let metadata = try await FileMetadataService(database: request.db).find(id: id)
+              let metadata = try await FileMetadataService(database: request.db, hubID: request.authenticatedHubID).find(id: id)
         else {
             throw Abort(.notFound)
         }

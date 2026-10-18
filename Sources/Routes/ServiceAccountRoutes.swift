@@ -104,14 +104,14 @@ func registerServiceAccountRoutes(_ app: Application) {
 
     accounts.get { request async throws -> [ServiceAccount] in
         // Returns recurring service accounts, not individual expense transactions.
-        try await ServiceAccountService(database: request.db).list()
+        try await ServiceAccountService(database: request.db, hubID: request.authenticatedHubID).list()
     }
 
     accounts.post { request async throws -> ServiceAccount in
         let input = try request.content.decode(ServiceAccountCreateRequest.self).value
         try validate(input)
 
-        let service = ServiceAccountService(database: request.db)
+        let service = ServiceAccountService(database: request.db, hubID: request.authenticatedHubID)
         if let id = input.id, try await service.find(id: id) != nil {
             throw Abort(.conflict, reason: "A Service Account with this ID already exists.")
         }
@@ -126,16 +126,20 @@ func registerServiceAccountRoutes(_ app: Application) {
         }
 
         if let metadataID = input.logoFileMetadataID?.trimmingCharacters(in: .whitespacesAndNewlines), !metadataID.isEmpty,
-           try await FileMetadata.find(metadataID, on: request.db) == nil {
+           try await FileMetadataService(database: request.db, hubID: request.authenticatedHubID).find(id: metadataID) == nil {
             throw Abort(.unprocessableEntity, reason: "The referenced file metadata does not exist.")
         }
 
         let account = makeServiceAccount(from: input, id: input.id)
+        // Production requests have a hub because SessionAuthenticationMiddleware
+        // resolves it from the validated account. Nil is retained for the route's
+        // isolated legacy unit tests, which do not install authentication middleware.
+        let hubID = request.authenticatedHubID
         try await request.db.transaction { database in
-            let transactionalService = ServiceAccountService(database: database)
+            let transactionalService = ServiceAccountService(database: database, hubID: hubID)
             try await transactionalService.save(account)
             if let id = account.id {
-                _ = try await AttachmentReferenceService(database: database).attach(metadataID: account.logoFileMetadataID, ownerType: "ServiceAccount", ownerID: String(id))
+                _ = try await AttachmentReferenceService(database: database, hubID: hubID).attach(metadataID: account.logoFileMetadataID, ownerType: "ServiceAccount", ownerID: String(id))
                 try await transactionalService.save(account)
             }
         }
@@ -144,7 +148,7 @@ func registerServiceAccountRoutes(_ app: Application) {
 
     accounts.get(":id") { request async throws -> ServiceAccount in
         let (_, account) = try await requireRouteRecord(request.parameters.get("id", as: Int.self)) {
-            try await ServiceAccountService(database: request.db).find(id: $0)
+            try await ServiceAccountService(database: request.db, hubID: request.authenticatedHubID).find(id: $0)
         }
 
         // Returns one recurring service account by its stable ServiceID.
@@ -153,7 +157,7 @@ func registerServiceAccountRoutes(_ app: Application) {
 
     accounts.patch(":id") { request async throws -> ServiceAccount in
         let (id, account) = try await requireRouteRecord(request.parameters.get("id", as: Int.self)) {
-            try await ServiceAccountService(database: request.db).find(id: $0)
+            try await ServiceAccountService(database: request.db, hubID: request.authenticatedHubID).find(id: $0)
         }
         try PropertyPatchValidation.requireKnownJSONProperties(
             request,
@@ -167,25 +171,25 @@ func registerServiceAccountRoutes(_ app: Application) {
         let monthlyAmount = input.monthlyAmount ?? account.monthlyAmount
         if let monthlyAmount, monthlyAmount < 0 { throw Abort(.unprocessableEntity, reason: "Monthly amount cannot be negative.") }
         let logoFileMetadataID = input.logoFileMetadataID ?? account.logoFileMetadataID
-        try await AttachmentReferenceService(database: request.db).replace(oldMetadataID: account.logoFileMetadataID, newMetadataID: logoFileMetadataID, ownerType: "ServiceAccount", ownerID: String(id))
+        try await AttachmentReferenceService(database: request.db, hubID: request.authenticatedHubID).replace(oldMetadataID: account.logoFileMetadataID, newMetadataID: logoFileMetadataID, ownerType: "ServiceAccount", ownerID: String(id))
         account.service = service
         account.monthlyAmount = monthlyAmount
         account.status = input.status ?? account.status
         account.notes = input.notes ?? account.notes
         account.logoFileMetadataID = logoFileMetadataID
-        try await ServiceAccountService(database: request.db).save(account)
+        try await ServiceAccountService(database: request.db, hubID: request.authenticatedHubID).save(account)
         return account
     }
 
     accounts.put(":id") { request async throws -> ServiceAccount in
         let (id, account) = try await requireRouteRecord(request.parameters.get("id", as: Int.self)) {
-            try await ServiceAccountService(database: request.db).find(id: $0)
+            try await ServiceAccountService(database: request.db, hubID: request.authenticatedHubID).find(id: $0)
         }
 
         let input = try request.content.decode(ServiceAccountRequest.self)
         try validate(input)
         let replacement = makeServiceAccount(from: input, id: id)
-        try await AttachmentReferenceService(database: request.db).replace(oldMetadataID: account.logoFileMetadataID, newMetadataID: replacement.logoFileMetadataID, ownerType: "ServiceAccount", ownerID: String(id))
+        try await AttachmentReferenceService(database: request.db, hubID: request.authenticatedHubID).replace(oldMetadataID: account.logoFileMetadataID, newMetadataID: replacement.logoFileMetadataID, ownerType: "ServiceAccount", ownerID: String(id))
         account.service = replacement.service
         account.logoKey = replacement.logoKey
         account.type = replacement.type
@@ -206,16 +210,16 @@ func registerServiceAccountRoutes(_ app: Application) {
         account.associatedAddress = replacement.associatedAddress
         account.serviceKey = replacement.serviceKey
         account.logoFileMetadataID = replacement.logoFileMetadataID
-        try await ServiceAccountService(database: request.db).save(account)
+        try await ServiceAccountService(database: request.db, hubID: request.authenticatedHubID).save(account)
         return account
     }
 
     accounts.delete(":id") { request async throws -> HTTPStatus in
         let (id, _) = try await requireRouteRecord(request.parameters.get("id", as: Int.self)) {
-            try await ServiceAccountService(database: request.db).find(id: $0)
+            try await ServiceAccountService(database: request.db, hubID: request.authenticatedHubID).find(id: $0)
         }
 
-        try await ServiceAccountService(database: request.db).delete(id: id)
+        try await ServiceAccountService(database: request.db, hubID: request.authenticatedHubID).delete(id: id)
         return .noContent
     }
 }

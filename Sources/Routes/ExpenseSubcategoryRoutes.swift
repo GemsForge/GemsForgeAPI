@@ -87,7 +87,7 @@ func registerExpenseSubcategoryRoutes(_ app: Application) {
 
     subcategories.get { request async throws -> [ExpenseSubcategory] in
         let categoryID = request.query[Int.self, at: "categoryID"]
-        return try await ExpenseSubcategoryService(database: request.db).list(categoryID: categoryID)
+        return try await ExpenseSubcategoryService(database: request.db, hubID: request.authenticatedHubID).list(categoryID: categoryID)
     }
 
     subcategories.post { request async throws -> ExpenseSubcategory in
@@ -98,19 +98,19 @@ func registerExpenseSubcategoryRoutes(_ app: Application) {
         try await ensureNameIsAvailable(input.name, categoryID: input.categoryID, database: request.db)
 
         if let id = input.id,
-           try await ExpenseSubcategoryService(database: request.db).find(id: id) != nil
+           try await ExpenseSubcategoryService(database: request.db, hubID: request.authenticatedHubID).find(id: id) != nil
         {
             throw Abort(.conflict, reason: "An expense subcategory with this ID already exists.")
         }
 
         let subcategory = makeSubcategory(from: input, id: input.id)
-        try await ExpenseSubcategoryService(database: request.db).save(subcategory)
+        try await ExpenseSubcategoryService(database: request.db, hubID: request.authenticatedHubID).save(subcategory)
         return subcategory
     }
 
     subcategories.get(":id") { request async throws -> ExpenseSubcategory in
         guard let id = request.parameters.get("id", as: Int.self),
-              let subcategory = try await ExpenseSubcategoryService(database: request.db).find(id: id)
+              let subcategory = try await ExpenseSubcategoryService(database: request.db, hubID: request.authenticatedHubID).find(id: id)
         else {
             throw Abort(.notFound)
         }
@@ -120,7 +120,7 @@ func registerExpenseSubcategoryRoutes(_ app: Application) {
 
     subcategories.put(":id") { request async throws -> ExpenseSubcategory in
         guard let id = request.parameters.get("id", as: Int.self),
-              let subcategory = try await ExpenseSubcategoryService(database: request.db).find(id: id)
+              let subcategory = try await ExpenseSubcategoryService(database: request.db, hubID: request.authenticatedHubID).find(id: id)
         else {
             throw Abort(.notFound)
         }
@@ -133,19 +133,19 @@ func registerExpenseSubcategoryRoutes(_ app: Application) {
         let replacement = makeSubcategory(from: input, id: id)
         subcategory.categoryID = replacement.categoryID
         subcategory.name = replacement.name
-        try await ExpenseSubcategoryService(database: request.db).save(subcategory)
+        try await ExpenseSubcategoryService(database: request.db, hubID: request.authenticatedHubID).save(subcategory)
         return subcategory
     }
 
     subcategories.delete(":id") { request async throws -> HTTPStatus in
         guard let id = request.parameters.get("id", as: Int.self),
-              try await ExpenseSubcategoryService(database: request.db).find(id: id) != nil
+              try await ExpenseSubcategoryService(database: request.db, hubID: request.authenticatedHubID).find(id: id) != nil
         else {
             throw Abort(.notFound)
         }
 
         do {
-            try await ExpenseSubcategoryService(database: request.db).delete(id: id)
+            try await ExpenseSubcategoryService(database: request.db, hubID: request.authenticatedHubID).delete(id: id)
         } catch {
             throw Abort(.conflict, reason: "Referenced expense subcategories cannot be deleted.")
         }

@@ -64,6 +64,7 @@ final class AppleAuthenticationTests: XCTestCase {
         try await withApp(configure: { app in
             app.databases.use(.sqlite(.memory), as: .sqlite)
             app.migrations.add(CreateAuthenticationSchema())
+            app.migrations.add(CreateHubs())
             try await app.autoMigrate()
         }) { app in
             let now = Date()
@@ -125,6 +126,7 @@ final class AppleAuthenticationTests: XCTestCase {
         try await withApp(configure: { app in
             app.databases.use(.sqlite(.memory), as: .sqlite)
             app.migrations.add(CreateAuthenticationSchema())
+            app.migrations.add(CreateHubs())
             try await app.autoMigrate()
         }) { app in
             let service = AppleAuthenticationService(
@@ -153,6 +155,7 @@ final class AppleAuthenticationTests: XCTestCase {
         try await withApp(configure: { app in
             app.databases.use(.sqlite(.memory), as: .sqlite)
             app.migrations.add(CreateAuthenticationSchema())
+            app.migrations.add(CreateHubs())
             try await app.autoMigrate()
             registerAppleAuthenticationRoutes(
                 app,

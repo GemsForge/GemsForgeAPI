@@ -6,26 +6,34 @@ import Fluent
 /// decide how Gem Hues relate to the Foundation domain.
 struct GemHueService: Sendable {
     private let database: any Database
+    private let hubID: String?
 
-    init(database: any Database) {
+    init(database: any Database, hubID: String? = nil) {
         self.database = database
+        self.hubID = hubID
     }
 
     /// Returns the Gem Hues ordered by color name.
     func list() async throws -> [GemHue] {
-        try await GemHue.query(on: database)
+        var query = GemHue.query(on: database)
+        if let hubID { query = query.filter(\.$hubID == hubID) }
+        return try await query
             .sort(\.$colorName)
             .all()
     }
 
     /// Returns one Gem Hue by its stable HueID.
     func find(id: String) async throws -> GemHue? {
-        try await GemHue.find(id, on: database)
+        var query = GemHue.query(on: database).filter(\.$id == id)
+        if let hubID { query = query.filter(\.$hubID == hubID) }
+        return try await query.first()
     }
 
     /// Returns the image record associated with one Gem Hue, if present.
     func findImage(hueID: String) async throws -> GemHueImage? {
-        try await GemHueImage.query(on: database)
+        var query = GemHueImage.query(on: database)
+        if let hubID { query = query.filter(\.$hubID == hubID) }
+        return try await query
             .filter(\.$hue.$id == hueID)
             .first()
     }

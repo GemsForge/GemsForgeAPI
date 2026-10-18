@@ -68,7 +68,7 @@ func registerFileMetadataRoutes(_ app: Application) {
 
     files.get { request async throws -> [FileMetadata] in
         // Returns file descriptions; it never loads binary file contents.
-        try await FileMetadataService(database: request.db).list()
+        try await FileMetadataService(database: request.db, hubID: request.authenticatedHubID).list()
     }
 
     files.post { request async throws -> FileMetadata in
@@ -77,18 +77,18 @@ func registerFileMetadataRoutes(_ app: Application) {
         let providedID = input.id?.trimmingCharacters(in: .whitespacesAndNewlines)
         let id = providedID?.isEmpty == false ? providedID! : UUID().uuidString
 
-        if try await FileMetadataService(database: request.db).find(id: id) != nil {
+        if try await FileMetadataService(database: request.db, hubID: request.authenticatedHubID).find(id: id) != nil {
             throw Abort(.conflict, reason: "File metadata with this ID already exists.")
         }
 
         let metadata = makeMetadata(from: input, id: id)
-        try await FileMetadataService(database: request.db).save(metadata)
+        try await FileMetadataService(database: request.db, hubID: request.authenticatedHubID).save(metadata)
         return metadata
     }
 
     files.get(":id") { request async throws -> FileMetadata in
         guard let id = request.parameters.get("id"),
-              let metadata = try await FileMetadataService(database: request.db).find(id: id)
+              let metadata = try await FileMetadataService(database: request.db, hubID: request.authenticatedHubID).find(id: id)
         else {
             throw Abort(.notFound)
         }
@@ -98,7 +98,7 @@ func registerFileMetadataRoutes(_ app: Application) {
 
     files.put(":id") { request async throws -> FileMetadata in
         guard let id = request.parameters.get("id"),
-              let metadata = try await FileMetadataService(database: request.db).find(id: id)
+              let metadata = try await FileMetadataService(database: request.db, hubID: request.authenticatedHubID).find(id: id)
         else {
             throw Abort(.notFound)
         }
@@ -114,19 +114,19 @@ func registerFileMetadataRoutes(_ app: Application) {
         metadata.checksum = replacement.checksum
         metadata.ownerType = replacement.ownerType
         metadata.ownerID = replacement.ownerID
-        try await FileMetadataService(database: request.db).save(metadata)
+        try await FileMetadataService(database: request.db, hubID: request.authenticatedHubID).save(metadata)
         return metadata
     }
 
     files.delete(":id") { request async throws -> HTTPStatus in
         guard let id = request.parameters.get("id"),
-              try await FileMetadataService(database: request.db).find(id: id) != nil
+              try await FileMetadataService(database: request.db, hubID: request.authenticatedHubID).find(id: id) != nil
         else {
             throw Abort(.notFound)
         }
 
         // Deleting metadata deliberately does not delete the referenced file.
-        try await FileMetadataService(database: request.db).delete(id: id)
+        try await FileMetadataService(database: request.db, hubID: request.authenticatedHubID).delete(id: id)
         return .noContent
     }
 }
