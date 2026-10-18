@@ -595,6 +595,36 @@ dialog::backdrop {
 .record-fields .record-notes {
   grid-column: 1 / -1;
 }
+.editable-field-value {
+  display: grid;
+  justify-items: start;
+  gap: 0.3rem;
+}
+.field-edit-button {
+  padding: 0;
+  font-size: 0.72rem;
+}
+.editable-field-form {
+  display: grid;
+  gap: 0.55rem;
+  padding: 0.65rem 0;
+}
+.editable-field-form label {
+  margin: 0;
+}
+.editable-field-form .button-row {
+  margin-top: 0.15rem;
+}
+.editable-field-form [type="checkbox"] {
+  width: 1.15rem;
+  height: 1.15rem;
+  margin: 0;
+  accent-color: var(--mint);
+}
+.field-readonly-reason {
+  display: block;
+  color: var(--muted);
+}
 .hue-fields {
   gap: 0.85rem 1.2rem;
 }
