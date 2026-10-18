@@ -4,6 +4,11 @@ Addresses stores Life-area address records in the existing `Addresses` table.
 The API preserves the table's stable identifiers and does not assign addresses
 to a Gem Life domain because the table has no `DomainID` column.
 
+The address-create form uses Geoapify Address Autocomplete to prefill available
+address fields. See [Address search providers](Address-Search-Providers.md) for
+API key setup, free-tier limits, attribution, and the optional Apple MapKit JS
+alternative.
+
 ## Table mapping
 
 The `Address` model maps `AddressID`, `AddressType`, `AddressLine1`,
