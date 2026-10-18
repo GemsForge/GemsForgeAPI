@@ -33,12 +33,20 @@ and the [Autocomplete API reference](https://apidocs.geoapify.com/docs/geocoding
 
 Apple MapKit JS is a documented alternative, not the active address-search
 provider. It requires a Maps token created through an Apple Developer account
-and restricted to approved domains. Account eligibility and applicable terms
-must be confirmed before enabling it. See [Apple's Maps token instructions](https://developer.apple.com/documentation/mapkitjs/creating-a-maps-token)
-and [MapKit JS documentation](https://developer.apple.com/documentation/mapkitjs).
+and restricted to approved domains. Token creation requires an Account Holder
+or Admin role. Apple currently publishes a daily allowance of 250,000 map views
+and 25,000 service calls per Apple Developer Program membership; MapKit JS and
+Apple Maps Server API share the service-call quota. Apple may impose additional
+usage restrictions, and higher capacity requires contacting Apple. Confirm the
+current eligibility, quota, and applicable agreement in Apple's account and
+documentation before enabling it. See [Maps tokens](https://developer.apple.com/help/account/service-configurations/maps-tokens),
+[MapKit JS usage](https://developer.apple.com/maps/web/), and [MapKit JS documentation](https://developer.apple.com/documentation/mapkitjs).
 
 Apple's current developer agreement includes specific rules for displaying
-Apple Maps data. In particular, MapKit JS search results cannot be surfaced
-without the corresponding Apple map. Any future implementation must include
-that map presentation and follow Apple's current program terms and MapKit JS
-documentation; a search-only text dropdown is not sufficient. See [Apple's current developer agreements](https://developer.apple.com/support/terms/).
+Apple Maps data and attribution. Map data, including search results, must be
+displayed with the corresponding Apple map; preserve Apple's map branding,
+logo, and embedded links, and do not present MapKit results as a standalone
+text-only search list. Any future implementation must follow the current
+MapKit JS display and attribution requirements rather than substituting a
+third-party attribution label. See [Apple's current developer agreements](https://developer.apple.com/support/terms/),
+including Attachment 6, and the [MapKit JS documentation](https://developer.apple.com/documentation/mapkitjs).
