@@ -134,6 +134,11 @@ function ServiceAccountDetail({
             onSave: async (value) => onPatch({ type: value as string | null }),
           },
           {
+            label: "Logo key",
+            value: record.logoKey,
+            readOnlyReason: "Legacy logo lookup relationship; no validated selector is available.",
+          },
+          {
             label: "Expense group",
             value: record.expenseGroup,
             nullable: true,
@@ -201,6 +206,12 @@ function ServiceAccountDetail({
             onSave: async (value) => onPatch({ accountNumber: value as string | null }),
           },
           {
+            label: "Service key",
+            value: record.serviceKey,
+            nullable: true,
+            onSave: async (value) => onPatch({ serviceKey: value as string | null }),
+          },
+          {
             label: "Email updated",
             value: record.emailUpdated,
             inputType: "date",
@@ -229,7 +240,11 @@ function ServiceAccountDetail({
             className: "record-notes",
             onSave: async (value) => onPatch({ notes: value as string | null }),
           },
-          { label: "Associated address", value: record.associatedAddress, readOnlyReason: "Relationship field" },
+          {
+            label: "Associated address",
+            value: record.associatedAddress,
+            readOnlyReason: "Legacy address value; no normalized, validated address selector is available.",
+          },
           {
             label: "Last updated",
             value: record.updatedAt ?? null,

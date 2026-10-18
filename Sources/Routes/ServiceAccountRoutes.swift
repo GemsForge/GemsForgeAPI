@@ -149,7 +149,7 @@ func registerServiceAccountRoutes(_ app: Application) {
         }
         try PropertyPatchValidation.requireKnownJSONProperties(
             request,
-            allowed: ["service", "type", "expenseGroup", "monthlyAmount", "interestRate", "apr", "due", "occurrence", "status", "since", "website", "notes", "notionPage", "paymentMethod", "accountNumber", "emailUpdated", "logoFileMetadataID"],
+            allowed: ["service", "type", "expenseGroup", "monthlyAmount", "interestRate", "apr", "due", "occurrence", "status", "since", "website", "notes", "notionPage", "paymentMethod", "accountNumber", "emailUpdated", "serviceKey", "logoFileMetadataID"],
             requireNonEmpty: true,
             emptyReason: "At least one editable field is required."
         )
@@ -171,6 +171,15 @@ func registerServiceAccountRoutes(_ app: Application) {
         guard [monthlyAmount, interestRate, apr].compactMap({ $0 }).allSatisfy({ $0 >= 0 }) else {
             throw Abort(.unprocessableEntity, reason: "Amounts and rates cannot be negative.")
         }
+        let serviceKey = try string("serviceKey", account.serviceKey)
+        if let serviceKey = serviceKey?.trimmingCharacters(in: .whitespacesAndNewlines), !serviceKey.isEmpty {
+            let normalizedKey = serviceKey.lowercased()
+            if try await ServiceAccountService(database: request.db).list().contains(where: {
+                $0.id != id && $0.serviceKey?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == normalizedKey
+            }) {
+                throw Abort(.conflict, reason: "A Service Account with this serviceKey already exists.")
+            }
+        }
         account.service = service
         account.monthlyAmount = monthlyAmount
         account.type = try string("type", account.type)
@@ -187,6 +196,7 @@ func registerServiceAccountRoutes(_ app: Application) {
         account.paymentMethod = try string("paymentMethod", account.paymentMethod)
         account.accountNumber = try string("accountNumber", account.accountNumber)
         account.emailUpdated = try string("emailUpdated", account.emailUpdated)
+        account.serviceKey = serviceKey
         let logoFileMetadataID = try string("logoFileMetadataID", account.logoFileMetadataID)
         try await AttachmentReferenceService(database: request.db).replace(
             oldMetadataID: account.logoFileMetadataID,
