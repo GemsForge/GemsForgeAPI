@@ -80,6 +80,12 @@ If execution fails, keep the generated backup, do not delete or recreate live
 tables, correct the reported configuration or migration issue, restart the
 API if necessary, and generate a fresh preview.
 
+For the pre-first-login case, when the missing authentication schema prevents
+access to protected migration routes, use the offline dev-only procedure in
+[`Legacy-Database-Bootstrap-301.md`](Legacy-Database-Bootstrap-301.md). It
+backs up the existing database before applying the repository profile and
+keeps legacy ownership assignment as a separate operator decision.
+
 ## FileMetadata and attachments
 
 FileMetadata stores the relationship between a local file and structured
