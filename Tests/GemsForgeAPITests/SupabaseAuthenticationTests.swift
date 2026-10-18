@@ -60,6 +60,14 @@ final class SupabaseAuthenticationTests: XCTestCase {
                 XCTAssertEqual(accountCount, 1)
                 XCTAssertEqual(hubCount, 1)
                 XCTAssertEqual(sessionAccount, "owner-account")
+
+                try await app.test(.POST, "auth/logout", beforeRequest: { request in
+                    request.headers.bearerAuthorization = .init(token: session.sessionToken)
+                }) { response in
+                    XCTAssertEqual(response.status, .noContent)
+                }
+                let revokedAccount = try await AuthenticationSessionService.validAccountID(forSessionToken: session.sessionToken, on: app.db)
+                XCTAssertNil(revokedAccount)
             }
         }
 
@@ -132,6 +140,58 @@ final class SupabaseAuthenticationTests: XCTestCase {
         } catch SupabaseAuthenticationError.invalidToken {
             // Expected.
         }
+
+        let wrongAudience = try await fixture.token(audience: "anon")
+        do {
+            _ = try await verifier.verify(accessToken: wrongAudience)
+            XCTFail("A token for a different audience must be rejected.")
+        } catch SupabaseAuthenticationError.invalidToken {
+            // Expected.
+        }
+
+        let attacker = try SupabaseTokenFixture(keyID: "attacker-key")
+        let forged = try await attacker.token()
+        do {
+            _ = try await verifier.verify(accessToken: forged)
+            XCTFail("A token with a signature outside the trusted JWKS must be rejected.")
+        } catch SupabaseAuthenticationError.invalidToken {
+            // Expected.
+        }
+    }
+
+    func testVerifierFailsClosedWhenJWKSIsUnavailableAndRouteWhenConfigurationIsMissing() async throws {
+        let fixture = try SupabaseTokenFixture()
+        let configuration = SupabaseAuthenticationConfiguration(
+            issuer: "https://project.supabase.co/auth/v1",
+            jwksURL: URL(string: "https://project.supabase.co/auth/v1/.well-known/jwks.json")!,
+            ownerSubject: "owner-subject",
+            ownerAccountID: "owner-account",
+            sessionLifetime: 3_600
+        )
+        let cache = SupabaseJWKSCache(url: configuration.jwksURL, fetcher: { throw TestJWKSFetchError.offline })
+        let verifier = SupabaseAccessTokenVerifier(configuration: configuration, jwksCache: cache)
+        let token = try await fixture.token()
+        do {
+            _ = try await verifier.verify(accessToken: token)
+            XCTFail("JWKS fetch failure must not permit sign-in.")
+        } catch SupabaseAuthenticationError.verificationUnavailable {
+            // Expected.
+        }
+
+        try await withApp(configure: { app in
+            app.databases.use(.sqlite(.memory), as: .sqlite)
+            app.migrations.add(CreateAuthenticationSchema())
+            app.migrations.add(CreateHubs())
+            app.migrations.add(MakeAuthenticationProviderAgnostic())
+            try await app.autoMigrate()
+            registerSupabaseAuthenticationRoutes(app, configuration: nil)
+        }) { app in
+            try await app.test(.POST, "auth/supabase", beforeRequest: { request in
+                request.headers.bearerAuthorization = .init(token: "unused")
+            }) { response in
+                XCTAssertEqual(response.status, .serviceUnavailable)
+            }
+        }
     }
 }
 
@@ -144,11 +204,12 @@ private struct StubSupabaseValidator: SupabaseAccessTokenValidating {
 }
 
 private struct SupabaseTokenFixture {
-    let keyID = "test-supabase-key"
+    let keyID: String
     let privateKey: JWTKit.Insecure.RSA.PrivateKey
     let jwks: String
 
-    init() throws {
+    init(keyID: String = "test-supabase-key") throws {
+        self.keyID = keyID
         privateKey = try JWTKit.Insecure.RSA.PrivateKey(backing: .init(keySize: .bits2048))
         let primitives = try privateKey.publicKey.getKeyPrimitives()
         jwks = #"{"keys":[{"kty":"RSA","kid":"\#(keyID)","use":"sig","alg":"RS256","n":"\#(primitives.modulus.base64URLEncoded)","e":"\#(primitives.publicExponent.base64URLEncoded)"}]}"#
@@ -175,6 +236,10 @@ private struct SupabaseTokenFixture {
             kid: JWKIdentifier(string: keyID)
         )
     }
+}
+
+private enum TestJWKSFetchError: Error {
+    case offline
 }
 
 private struct SupabaseTestToken: JWTPayload {
