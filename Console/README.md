@@ -7,9 +7,11 @@ server-state hooks, a design system, native capabilities, local sessions,
 production asset packaging, accessibility and responsive/performance checks.
 
 Start with [UI standards](UI_STANDARDS.md) for the implemented conventions and
-documentation index. Device-local access is intentional; account sign-in and
-remote hosting are deferred. Live database attachment-column mismatches are
-tracked separately in [#178](https://github.com/GemsForge/GemsForgeAPI/issues/178).
+documentation index. Protected Console routes require the Sign in with Apple
+session described in [Console authentication](../docs/Console-Authentication-299.md).
+This does not make the API public; see the deployment security gate before
+changing its private deployment posture. Live database attachment-column
+mismatches are tracked separately in [#178](https://github.com/GemsForge/GemsForgeAPI/issues/178).
 
 ## Start the API
 
@@ -26,8 +28,16 @@ In a second terminal:
 
 ```bash
 cd Console
-VITE_API_TARGET="http://127.0.0.1:8081" npm run dev
+VITE_API_TARGET="http://127.0.0.1:8081" \
+VITE_APPLE_CLIENT_ID="com.example.gemlife.web" \
+VITE_APPLE_REDIRECT_URI="https://console.example.com/app/" \
+npm run dev
 ```
+
+Use real Apple Developer identifiers and a registered HTTPS development host
+for live Apple sign-in. Apple's web flow does not accept `localhost` or an IP
+address as the registered redirect domain. The API must use the same
+`APPLE_CLIENT_ID`; see the authentication guide for setup and limitations.
 
 Open `http://127.0.0.1:5173/`.
 
@@ -44,6 +54,10 @@ Vite proxies API paths to Vapor so the browser can use same-origin requests:
 /file-metadata
 /file-uploads
 /health
+/auth
+/service-accounts
+/expense-categories
+/expense-subcategories
 /schema-builder
 /live-database
 ```

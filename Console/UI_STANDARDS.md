@@ -129,12 +129,13 @@ server too; a safe client picker does not replace upload validation.
 Declared message names are not proof that a capability is implemented. Currently
 file/image picking and device-local session end have native handlers. Images use
 the native adapter when hosted; ordinary browser file controls remain available.
-Navigation/share/account capabilities need their own implementation and policy.
-
-Device-local access is the chosen M3 scope. End/resume clears local UI state;
-it is not server login/logout or protection against other API clients. Do not
-invent passwords, credentials, session expiry, or authenticated routes without
-a server contract. Keep the API on loopback; remote deployment remains separate.
+Navigation/share capabilities need their own implementation and policy. The
+React Console's Sign in with Apple UI uses the API session contract; see
+[`Console-Authentication-299.md`](../docs/Console-Authentication-299.md).
+That account session is separate from the native device-local end/resume
+capability, which only clears local UI state and is not server logout or an
+access-control boundary. Keep the API private until the deployment security
+gate is satisfied; remote/public deployment remains separate.
 
 ## Configuration and release workflow
 
@@ -143,9 +144,14 @@ a server contract. Keep the API on loopback; remote deployment remains separate.
 | DATABASE_PATH                  | Local Xcode Run scheme; ignored .env/export for terminal launcher |
 | LIVE_DATABASE_BACKUP_DIRECTORY | Local Xcode Run scheme; ignored .env/export for terminal launcher |
 | PROJECTS_TOKEN                 | GitHub repository Actions secret only                             |
+| APPLE_CLIENT_ID                | API environment; public Services ID, not a secret                 |
+| VITE_APPLE_CLIENT_ID           | Console build/dev environment; public Services ID, not a secret   |
+| VITE_APPLE_REDIRECT_URI        | Console build/dev environment; registered HTTPS return URL        |
 | GEM_LIFE_CONSOLE_URL           | Optional local host scheme/environment; loopback URL only         |
 
 Never commit secrets to a shared scheme, source file or VITE-prefixed variable.
+Only non-secret public identifiers and URLs belong in VITE-prefixed settings;
+never put Apple private keys, client secrets, or account credentials there.
 Foundation and Darwin imports in the Swift launcher are platform modules, not
 extra installed packages. Foundation supplies Process/URL/FileManager; Darwin
 provides macOS/POSIX functions used by the launcher.

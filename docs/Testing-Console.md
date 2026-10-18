@@ -1,10 +1,8 @@
 # Local testing console
 
-The local testing console is a browser interface for exercising the API without
-using the terminal or a database client. The original prototype is served by
-Vapor from `Public/`. The current implementation is a separate React +
-TypeScript application under `Console/` and is intended for local development
-only.
+The React + TypeScript console under `Console/` is the authenticated browser
+interface for exercising the private API. The Vapor-served `Public/` root is
+now a guidance page; it does not load protected data anonymously.
 
 ## Start it
 
@@ -15,7 +13,8 @@ export DATABASE_PATH="/absolute/path/to/GemLife_DB_rebuild.sqlite"
 swift run GemsForgeAPI serve --hostname 127.0.0.1 --port 8081
 ```
 
-Open `http://127.0.0.1:8081/` in a browser.
+Open `http://127.0.0.1:8081/` for the guidance page, then use the React
+Console at `http://127.0.0.1:5173/` for sign-in and protected records.
 
 Port `8081` is the default local API port. If it is already occupied, choose
 another free port and set `VITE_API_TARGET` to the same port when running the
@@ -26,7 +25,13 @@ DATABASE_PATH="/absolute/path/to/GemLife_DB_rebuild.sqlite" \
 swift run GemsForgeAPI serve --hostname 127.0.0.1 --port 8082
 ```
 
-Then open `http://127.0.0.1:8082/`.
+Then open `http://127.0.0.1:8082/` for the guidance page and set
+`VITE_API_TARGET=http://127.0.0.1:8082` for the Console.
+
+Sign in with Apple requires Console `VITE_APPLE_CLIENT_ID` and a registered
+HTTPS `VITE_APPLE_REDIRECT_URI`, plus the matching API `APPLE_CLIENT_ID`.
+Apple's web sign-in does not accept localhost or IP addresses as registered
+redirect domains. See [`Console-Authentication-299.md`](Console-Authentication-299.md).
 
 ## Current capabilities
 
@@ -229,11 +234,12 @@ issue before the upload control is connected.
 
 ```text
 Console/src/                             → React testing interface
-Public/                                  → original local prototype
+Public/                                  → sign-in guidance page, no API calls
 Routes                                   → HTTP behavior
 Services                                 → database queries and updates
 Models                                   → existing table mappings
 ```
 
-The console uses same-origin `fetch` requests, so it does not require CORS or a
-second frontend server during local development.
+The Console uses same-origin `fetch` requests through Vite's API proxy, so it
+does not require CORS. The API's `/app/` package is the production-base Console;
+the development UI runs on the Vite server.
