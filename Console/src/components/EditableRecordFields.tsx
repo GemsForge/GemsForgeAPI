@@ -19,6 +19,12 @@ export interface EditableRecordField {
   className?: string;
 }
 
+export function formatRecordTimestamp(value?: string | null): string {
+  if (!value) return "Not recorded";
+  const timestamp = new Date(value);
+  return Number.isNaN(timestamp.valueOf()) ? value : timestamp.toLocaleString();
+}
+
 /** Shared field behavior with a resource-controlled semantic layout. */
 export function EditableRecordFields({ fields, className }: { fields: EditableRecordField[]; className?: string }) {
   return (

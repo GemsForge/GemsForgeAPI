@@ -104,6 +104,7 @@ export interface Address {
   addressStatus: string;
   notes?: string | null;
   imageFileMetadataID?: string | null;
+  updatedAt?: string | null;
 }
 
 export interface ForgeKeeperPage {
@@ -141,6 +142,7 @@ export interface Education {
   address: Address | null;
   website: string | null;
   notes: string | null;
+  updatedAt?: string | null;
 }
 
 export interface Employment {
@@ -159,6 +161,7 @@ export interface Employment {
   employerContactNumber: string | null;
   employerContactEmail: string | null;
   notes: string | null;
+  updatedAt?: string | null;
 }
 
 export interface ExpenseTransaction {
@@ -177,6 +180,7 @@ export interface ExpenseTransaction {
   discount: number | null;
   notes: string | null;
   image?: string | null;
+  updatedAt?: string | null;
 }
 
 export interface ExpenseCategory {
@@ -211,6 +215,7 @@ export interface ServiceAccount {
   associatedAddress: string | null;
   serviceKey: string | null;
   logoFileMetadataID: string | null;
+  updatedAt?: string | null;
 }
 
 export interface FileMetadata {

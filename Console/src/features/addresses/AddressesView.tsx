@@ -6,8 +6,7 @@ import { QueryFeedback } from "../../components/QueryFeedback";
 import type { Address } from "../../types";
 import { AttachmentControl } from "../../components/AttachmentControl";
 import { GemEmptyState, GemRecordCard, GemRecordList } from "../../components/ui";
-import { RecordFields } from "../../components/RecordFields";
-import { PropertyEditor } from "../../components/PropertyEditor";
+import { EditableRecordFields, formatRecordTimestamp } from "../../components/EditableRecordFields";
 import { useCreateAddressMutation } from "../../data/recordQueries";
 import { AddressCreateForm } from "../create/RecordCreateForms";
 
@@ -125,25 +124,85 @@ function AddressDetail({
         </div>
         <span className="status-pill">{record.addressStatus}</span>
       </div>
-      <PropertyEditor
-        label="City"
-        initialValue={record.city ?? ""}
-        editLabel="Edit city"
-        saveLabel="Save city"
-        onSave={async (city) => onPatch({ city })}
-      />
-      <RecordFields
+      <EditableRecordFields
         className="address-fields"
         fields={[
-          { label: "Address line 1", value: record.addressLine1 || "—" },
-          { label: "Address line 2", value: record.addressLine2 || "—" },
-          { label: "City", value: record.city || "—" },
-          { label: "State", value: record.state || "—" },
-          { label: "Postal code", value: record.postalCode || "—" },
-          { label: "Country", value: record.country || "—" },
-          { label: "Start date", value: record.startDate || "—" },
-          { label: "End date", value: record.endDate || "—" },
-          { label: "Notes", value: record.notes || "—", className: "record-notes" },
+          {
+            label: "Address type",
+            value: record.addressType,
+            required: true,
+            onSave: async (value) => onPatch({ addressType: value as string }),
+          },
+          {
+            label: "Address line 1",
+            value: record.addressLine1,
+            nullable: true,
+            onSave: async (value) => onPatch({ addressLine1: value as string | null }),
+          },
+          {
+            label: "Address line 2",
+            value: record.addressLine2,
+            nullable: true,
+            onSave: async (value) => onPatch({ addressLine2: value as string | null }),
+          },
+          {
+            label: "City",
+            value: record.city,
+            nullable: true,
+            onSave: async (value) => onPatch({ city: value as string | null }),
+          },
+          {
+            label: "State",
+            value: record.state,
+            nullable: true,
+            onSave: async (value) => onPatch({ state: value as string | null }),
+          },
+          {
+            label: "Postal code",
+            value: record.postalCode,
+            nullable: true,
+            onSave: async (value) => onPatch({ postalCode: value as string | null }),
+          },
+          {
+            label: "Country",
+            value: record.country,
+            required: true,
+            onSave: async (value) => onPatch({ country: value as string }),
+          },
+          {
+            label: "Start date",
+            value: record.startDate,
+            inputType: "date",
+            nullable: true,
+            onSave: async (value) => onPatch({ startDate: value as string | null }),
+          },
+          {
+            label: "End date",
+            value: record.endDate,
+            inputType: "date",
+            nullable: true,
+            onSave: async (value) => onPatch({ endDate: value as string | null }),
+          },
+          {
+            label: "Address status",
+            value: record.addressStatus,
+            required: true,
+            onSave: async (value) => onPatch({ addressStatus: value as string }),
+          },
+          {
+            label: "Notes",
+            value: record.notes ?? null,
+            inputType: "textarea",
+            nullable: true,
+            className: "record-notes",
+            onSave: async (value) => onPatch({ notes: value as string | null }),
+          },
+          {
+            label: "Last updated",
+            value: record.updatedAt ?? null,
+            readOnlyReason: "Server managed",
+            displayValue: formatRecordTimestamp(record.updatedAt),
+          },
         ]}
       />
       <AttachmentControl
