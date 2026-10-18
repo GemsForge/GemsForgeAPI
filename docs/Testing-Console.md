@@ -12,19 +12,21 @@ Configure `DATABASE_PATH`, then run the API from the repository directory:
 
 ```bash
 export DATABASE_PATH="/absolute/path/to/GemLife_DB_rebuild.sqlite"
-swift run GemsForgeAPI serve --hostname 127.0.0.1 --port 8080
-```
-
-Open `http://127.0.0.1:8080/` in a browser.
-
-If Xcode already has an API instance on port `8080`, use a temporary port:
-
-```bash
-DATABASE_PATH="/absolute/path/to/GemLife_DB_rebuild.sqlite" \
 swift run GemsForgeAPI serve --hostname 127.0.0.1 --port 8081
 ```
 
-Then open `http://127.0.0.1:8081/`.
+Open `http://127.0.0.1:8081/` in a browser.
+
+Port `8081` is the default local API port. If it is already occupied, choose
+another free port and set `VITE_API_TARGET` to the same port when running the
+React Console:
+
+```bash
+DATABASE_PATH="/absolute/path/to/GemLife_DB_rebuild.sqlite" \
+swift run GemsForgeAPI serve --hostname 127.0.0.1 --port 8082
+```
+
+Then open `http://127.0.0.1:8082/`.
 
 ## Current capabilities
 

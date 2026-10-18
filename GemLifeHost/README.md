@@ -40,7 +40,7 @@ npm run dev
 ```
 
 Then run the `GemLifeHost` debug target. Debug defaults to `http://localhost:5173/`;
-release defaults to `http://127.0.0.1:8080/app/`. Set `GEM_LIFE_CONSOLE_URL`
+release defaults to `http://127.0.0.1:8081/app/`. Set `GEM_LIFE_CONSOLE_URL`
 in the host scheme to use another loopback URL. Remote/file URLs are rejected.
 
 The repository-level `Scripts/run-gem-life.sh` launcher starts both the API and

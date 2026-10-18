@@ -27,7 +27,7 @@ if [[ -z "${DATABASE_PATH:-}" ]]; then
 fi
 
 api_host="127.0.0.1"
-api_port="8080"
+api_port="8081"
 if [[ -n "${API_HOST+x}" ]]; then api_host="$API_HOST"; fi
 if [[ -n "${API_PORT+x}" ]]; then api_port="$API_PORT"; fi
 api_pid=""
