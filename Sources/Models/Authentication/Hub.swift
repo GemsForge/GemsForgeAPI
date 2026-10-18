@@ -1,7 +1,7 @@
 import Fluent
 import Foundation
 
-/// A private data container owned by exactly one authenticated account.
+/// A private data container owned by exactly one provider-independent account.
 final class Hub: Model, @unchecked Sendable {
     static let schema = "Hubs"
 
