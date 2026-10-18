@@ -21,6 +21,7 @@ enum EntryPoint {
         )
 
         try app.configureDatabase()
+        app.middleware.use(SessionAuthenticationMiddleware())
         registerAppleAuthenticationRoutes(app)
         registerLocalDatabaseRoutes(app, configuration: .fromEnvironment())
         registerLiveSchemaRoutes(app)

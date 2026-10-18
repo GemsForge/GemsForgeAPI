@@ -37,7 +37,8 @@ enum LocalDatabaseProfile: String, Codable, CaseIterable, Sendable {
             "AddEducationAttachmentReference",
             "AddHomeInventoryAttachmentReference",
             "AddFileMetadataForeignKeys",
-            "CreateAuthenticationSchema"
+            "CreateAuthenticationSchema",
+            "CreateHubs"
         ]
     }
 
@@ -68,6 +69,7 @@ enum LocalDatabaseProfile: String, Codable, CaseIterable, Sendable {
             app.migrations.add(AddHomeInventoryAttachmentReference())
             app.migrations.add(AddFileMetadataForeignKeys())
             app.migrations.add(CreateAuthenticationSchema())
+            app.migrations.add(CreateHubs())
         }
     }
 }

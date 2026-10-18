@@ -115,16 +115,23 @@ struct AppleAuthenticationService: Sendable {
                 try await account.save(on: transaction)
             }
 
+            let accountID = try account.requireID()
+            if try await Hub.query(on: transaction)
+                .filter(\.$accountID == accountID).first() == nil
+            {
+                try await Hub(accountID: accountID).save(on: transaction)
+            }
+
             let sessionToken = Self.randomToken(byteCount: 32)
             let expiresAt = now.addingTimeInterval(configuration.sessionLifetime)
             let session = AuthenticationSession(
-                accountID: try account.requireID(),
+                accountID: accountID,
                 tokenHash: Self.sha256Hex(sessionToken),
                 expiresAt: expiresAt
             )
             try await session.save(on: transaction)
             return AppleSessionResponse(
-                accountID: try account.requireID(),
+                accountID: accountID,
                 sessionToken: sessionToken,
                 expiresAt: expiresAt
             )
@@ -143,6 +150,12 @@ struct AppleAuthenticationService: Sendable {
     }
 
     func validAccountID(
+        forSessionToken token: String, on database: any Database, now: Date = Date()
+    ) async throws -> String? {
+        try await Self.validAccountID(forSessionToken: token, on: database, now: now)
+    }
+
+    static func validAccountID(
         forSessionToken token: String, on database: any Database, now: Date = Date()
     ) async throws -> String? {
         let tokenHash = Self.sha256Hex(token)
