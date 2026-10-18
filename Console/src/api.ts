@@ -27,6 +27,19 @@ import type {
   UserTableCreationResult,
   UserTablePreview,
 } from "./types";
+import { getBearerToken, notifySessionExpired } from "./auth/session";
+
+export interface AppleChallenge {
+  challengeID: string;
+  nonce: string;
+  expiresAt: string;
+}
+
+export interface AppleSessionResponse {
+  accountID: string;
+  sessionToken: string;
+  expiresAt: string;
+}
 
 export class APIError extends Error {
   constructor(
@@ -40,13 +53,18 @@ export class APIError extends Error {
 
 async function checkedFetch(path: string, options: RequestInit = {}): Promise<Response> {
   let response: Response;
+  const headers = new Headers(options.headers);
+  const isPublicAuthRequest = path === "/auth/apple/challenges" || path === "/auth/apple";
+  const bearerToken = path === "/health" || isPublicAuthRequest ? null : getBearerToken();
+  if (bearerToken) headers.set("Authorization", `Bearer ${bearerToken}`);
   try {
-    response = await fetch(path, { cache: "no-store", ...options });
+    response = await fetch(path, { cache: "no-store", ...options, headers });
   } catch (error) {
     if (options.signal?.aborted || (error instanceof Error && error.name === "AbortError")) throw error;
     throw new APIError("Cannot reach Gem Life. Check that the local API is running.", 0);
   }
   if (!response.ok) {
+    if (response.status === 401 && bearerToken) notifySessionExpired();
     const problem = await response.json().catch(() => ({}));
     throw new APIError(
       typeof problem?.reason === "string" ? problem.reason : `${response.status} ${response.statusText}`,
@@ -70,6 +88,13 @@ export const api = {
       throw new APIError("The local API returned an unexpected health response.", response.status);
     return true;
   },
+  createAppleChallenge: () => request<AppleChallenge>("/auth/apple/challenges", { method: "POST" }),
+  exchangeAppleIdentityToken: (challengeID: string, identityToken: string) =>
+    request<AppleSessionResponse>("/auth/apple", {
+      method: "POST",
+      body: JSON.stringify({ challengeID, identityToken }),
+    }),
+  logout: () => request<void>("/auth/logout", { method: "POST" }),
   listDomains: (signal?: AbortSignal) => request<Domain[]>("/domains", { signal }),
   createDomain: (payload: DomainCreate) =>
     request<Domain>("/domains", { method: "POST", body: JSON.stringify(payload) }),

@@ -27,6 +27,9 @@ import { GemLifeShell } from "../components/layout/GemLifeShell";
 import { DomainSidebar } from "../features/domains/DomainSidebar";
 import { useCreateDomainMutation } from "../data/domainQueries";
 import { DomainCreateForm } from "../features/create/RecordCreateForms";
+import { LocalSession } from "../components/LocalSession";
+import { RequireAuth } from "../auth/RequireAuth";
+import { SignInPage } from "../auth/SignInPage";
 const ForgeKeeperView = lazy(() =>
   import("../features/forgekeeper/ForgeKeeperView").then((module) => ({ default: module.ForgeKeeperView })),
 );
@@ -260,23 +263,32 @@ function NotFound() {
 export function AppRoutes() {
   return (
     <Routes>
-      <Route element={<Layout />}>
-        <Route index element={<Home />} />
-        <Route path="domains" element={<Domains />} />
-        <Route path="domains/:domainID" element={<Pages kind="domain" />} />
-        <Route path="forgekeeper" element={<Pages kind="roots" />} />
-        <Route path="forgekeeper/:pageID/children" element={<Pages kind="children" />} />
-        <Route path="gemhues" element={<Hues />} />
-        <Route path="education" element={<Education />} />
-        <Route path="employment" element={<Employment />} />
-        <Route path="addresses" element={<Addresses />} />
-        <Route path="transactions" element={<Transactions />} />
-        <Route path="service-accounts" element={<ServiceAccounts />} />
-        <Route path="expenses" element={<Navigate to="/transactions" replace />} />
-        <Route path="local-databases" element={<Databases />} />
-        <Route path="schema-builder" element={<Schema />} />
-        <Route path="live-database" element={<LiveDatabase />} />
-        <Route path="*" element={<NotFound />} />
+      <Route path="login" element={<SignInPage />} />
+      <Route element={<RequireAuth />}>
+        <Route
+          element={
+            <LocalSession>
+              <Layout />
+            </LocalSession>
+          }
+        >
+          <Route index element={<Home />} />
+          <Route path="domains" element={<Domains />} />
+          <Route path="domains/:domainID" element={<Pages kind="domain" />} />
+          <Route path="forgekeeper" element={<Pages kind="roots" />} />
+          <Route path="forgekeeper/:pageID/children" element={<Pages kind="children" />} />
+          <Route path="gemhues" element={<Hues />} />
+          <Route path="education" element={<Education />} />
+          <Route path="employment" element={<Employment />} />
+          <Route path="addresses" element={<Addresses />} />
+          <Route path="transactions" element={<Transactions />} />
+          <Route path="service-accounts" element={<ServiceAccounts />} />
+          <Route path="expenses" element={<Navigate to="/transactions" replace />} />
+          <Route path="local-databases" element={<Databases />} />
+          <Route path="schema-builder" element={<Schema />} />
+          <Route path="live-database" element={<LiveDatabase />} />
+          <Route path="*" element={<NotFound />} />
+        </Route>
       </Route>
     </Routes>
   );

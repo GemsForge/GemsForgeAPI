@@ -29,6 +29,10 @@ final class GemLifeAssetRouteTests: XCTestCase {
                 XCTAssertEqual(response.status, .ok)
                 XCTAssertTrue(response.body.string.contains("Gem Life"))
                 XCTAssertEqual(response.headers.first(name: "Cache-Control"), "no-cache")
+                let policy = try XCTUnwrap(response.headers.first(name: "Content-Security-Policy"))
+                XCTAssertTrue(policy.contains("script-src 'self' https://appleid.cdn-apple.com"))
+                XCTAssertTrue(policy.contains("https://appleid.apple.com"))
+                XCTAssertFalse(policy.contains("*"))
             }
             try await app.test(.GET, "app/assets/index-test.js") { response in
                 XCTAssertEqual(response.status, .ok)

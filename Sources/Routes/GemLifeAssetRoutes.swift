@@ -25,7 +25,7 @@ func registerGemLifeAssetRoutes(_ app: Application, directory: String? = Environ
         let response = try await request.fileio.asyncStreamFile(at: file.path)
         response.headers.replaceOrAdd(name: .cacheControl, value: isAsset ? "public, max-age=31536000, immutable" : "no-cache")
         response.headers.replaceOrAdd(name: "X-Content-Type-Options", value: "nosniff")
-        response.headers.replaceOrAdd(name: "Content-Security-Policy", value: "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; connect-src 'self'; font-src 'self'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'")
+        response.headers.replaceOrAdd(name: "Content-Security-Policy", value: "default-src 'none'; script-src 'self' https://appleid.cdn-apple.com; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; connect-src 'self' https://appleid.apple.com https://appleid.cdn-apple.com; font-src 'self'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'")
         return response
     }
     app.get("app", use: handler)
