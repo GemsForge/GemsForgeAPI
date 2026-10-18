@@ -52,4 +52,15 @@ describe("API session lifecycle", () => {
     expect(window.sessionStorage.length).toBe(0);
     expect(screen.getByRole("alert")).toHaveTextContent("expired or was revoked");
   });
+
+  it("explains an expired session restored from the current tab after reload", () => {
+    window.sessionStorage.setItem(
+      "gem-life.session.v1",
+      JSON.stringify({ token: "old-session", expiresAt: new Date(Date.now() - 60_000).toISOString() }),
+    );
+    renderProvider();
+    expect(screen.getByText("Signed out")).toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent("expired or was revoked");
+    expect(window.sessionStorage.length).toBe(0);
+  });
 });

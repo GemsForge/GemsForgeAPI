@@ -2,7 +2,14 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { api } from "../api";
 import { queryClient } from "../data/queryClient";
 import { appleSignInError, getAppleSignInConfiguration, requestAppleIdentityToken } from "./appleSignIn";
-import { clearSession, readSession, saveSession, SESSION_EXPIRED_EVENT, type BrowserSession } from "./session";
+import {
+  clearSession,
+  consumeExpiredSessionNotice,
+  readSession,
+  saveSession,
+  SESSION_EXPIRED_EVENT,
+  type BrowserSession,
+} from "./session";
 
 interface AuthContextValue {
   session: BrowserSession | null;
@@ -19,7 +26,9 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<BrowserSession | null>(() => readSession());
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(() =>
+    consumeExpiredSessionNotice() ? "Your sign-in expired or was revoked. Sign in again to continue." : null,
+  );
   const configuration = useMemo(() => getAppleSignInConfiguration(), []);
 
   useEffect(() => {
