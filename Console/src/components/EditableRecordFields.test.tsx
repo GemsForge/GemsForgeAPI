@@ -10,6 +10,7 @@ describe("EditableRecordFields", () => {
         fields={[
           { label: "Address line 1", value: "3283 Boring Rd", onSave: vi.fn() },
           { label: "Address ID", value: "ADDR-1", readOnlyReason: "Primary key" },
+          { label: "Address line 2", value: undefined },
           { label: "Last updated", value: "2026-10-18T12:00:00Z", readOnlyReason: "Server managed" },
         ]}
       />,
@@ -18,6 +19,7 @@ describe("EditableRecordFields", () => {
     expect(screen.getByText("3283 Boring Rd")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Edit address line 1" })).toBeInTheDocument();
     expect(screen.getByText("ADDR-1").parentElement).toHaveTextContent("Primary key");
+    expect(screen.getByText("Address line 2").parentElement).toHaveTextContent("—");
     expect(screen.getByText("2026-10-18T12:00:00Z").parentElement).toHaveTextContent("Server managed");
     expect(screen.queryByRole("button", { name: "Edit address id" })).not.toBeInTheDocument();
   });
