@@ -131,6 +131,13 @@ function AddressDetail({
             label: "Address type",
             value: record.addressType,
             required: true,
+            inputType: "select",
+            options: [
+              { label: "Residence", value: "Residence" },
+              { label: "Storage", value: "Storage" },
+              { label: "Work", value: "Work" },
+              { label: "Other", value: "Other" },
+            ],
             onSave: async (value) => onPatch({ addressType: value as string }),
           },
           {
