@@ -35,7 +35,7 @@ swift run
 Verify the health endpoint:
 
 ```bash
-curl http://127.0.0.1:8080/health
+curl http://127.0.0.1:8081/health
 ```
 
 The expected response is:
@@ -45,8 +45,8 @@ ok
 ```
 
 For the full existing-database verification checkpoint, see
-[`ForgeKeeper.md`](ForgeKeeper.md). It uses a temporary port and read-only
-endpoints so an existing Xcode server on port `8080` is not disturbed.
+[`ForgeKeeper.md`](ForgeKeeper.md). It uses port `8081` and read-only endpoints
+so an existing Xcode server on the previous default port `8080` is not disturbed.
 
 ## Browser testing console
 
@@ -67,10 +67,11 @@ Open the React console:
 http://127.0.0.1:5173/
 ```
 
-The API-served prototype remains available at the root of the Vapor server:
+The API-served prototype remains available at the root of the Vapor server on
+the default local API port:
 
 ```text
-http://127.0.0.1:8080/
+http://127.0.0.1:8081/
 ```
 
 Both consoles display stable domains, retrieve ForgeKeeper pages, navigate to

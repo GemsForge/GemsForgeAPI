@@ -69,9 +69,8 @@ Run the automated suite with an isolated database:
 swift test
 ```
 
-For a read-only verification of the real local database, start the API on a
-temporary port so it does not conflict with an Xcode instance already using
-`8080`:
+For a read-only verification of the real local database, start the API on the
+default local port `8081`, avoiding an Xcode instance already using `8080`:
 
 ```bash
 DATABASE_PATH=/absolute/path/to/GemLife_DB_rebuild.sqlite \
