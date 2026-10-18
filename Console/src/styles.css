@@ -431,6 +431,38 @@ dialog::backdrop {
 .create-record-form h3 {
   margin: 0 0 1.25rem;
 }
+.address-search-section {
+  margin-bottom: 1.25rem;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 0.75rem;
+  background: rgba(120, 209, 189, 0.045);
+}
+.address-search-section h4 {
+  margin: 0 0 0.75rem;
+  color: var(--ink);
+}
+.address-search-section p {
+  margin: 0.5rem 0 0;
+}
+.address-search-results {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+.address-search-results button {
+  width: 100%;
+  text-align: left;
+}
+.address-search-attribution {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+.address-search-attribution a {
+  color: inherit;
+}
 .field-error {
   color: var(--danger);
   font-size: 0.75rem;
