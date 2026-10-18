@@ -34,15 +34,6 @@ struct ExpenseTransactionCreateRequest: Content {
     }
 }
 
-struct ExpenseTransactionPatchRequest: Content {
-    let item: String?
-    let categoryID: Int?
-    let quantity: Double?
-    let total: Double?
-    let notes: String?
-    let image: String?
-}
-
 private func validate(_ input: ExpenseTransactionRequest, requiresID: Bool = false) throws {
     guard !input.item.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
         throw Abort(.badRequest, reason: "Transaction item is required.")
@@ -144,32 +135,52 @@ func registerExpenseTransactionRoutes(_ app: Application) {
     }
 
     transactions.patch(":id") { request async throws -> ExpenseTransaction in
-        let (id, transaction) = try await requireRouteRecord(request.parameters.get("id")) {
+        let (_, transaction) = try await requireRouteRecord(request.parameters.get("id")) {
             try await ExpenseTransactionService(database: request.db).find(id: $0)
         }
         try PropertyPatchValidation.requireKnownJSONProperties(
             request,
-            allowed: ["item", "categoryID", "quantity", "total", "notes", "image"],
+            allowed: ["receiptID", "item", "firstReceiptItem", "merchantCode", "transactionDate", "quantity", "regularPrice", "paidPrice", "total", "discount", "notes"],
             requireNonEmpty: true,
             emptyReason: "At least one editable field is required."
         )
-        let input = try request.content.decode(ExpenseTransactionPatchRequest.self)
-        let item = input.item ?? transaction.item
+        let payload = try request.content.decode([String: PatchJSONValue].self)
+        func string(_ key: String, _ current: String?) throws -> String? {
+            guard let value = payload[key] else { return current }
+            return try value.string()
+        }
+        func number(_ key: String, _ current: Double?) throws -> Double? {
+            guard let value = payload[key] else { return current }
+            return try value.number()
+        }
+        let item = try string("item", transaction.item)
+        guard let item else { throw Abort(.unprocessableEntity, reason: "Transaction item cannot be cleared.") }
         guard !item.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { throw Abort(.unprocessableEntity, reason: "Transaction item cannot be empty.") }
-        let categoryID = input.categoryID ?? transaction.categoryID
-        guard categoryID > 0 else { throw Abort(.unprocessableEntity, reason: "CategoryID must be greater than zero.") }
-        let quantity = input.quantity ?? transaction.quantity
+        let quantity = try number("quantity", transaction.quantity) ?? 0
         guard quantity > 0 else { throw Abort(.unprocessableEntity, reason: "Quantity must be greater than zero.") }
-        let total = input.total ?? transaction.total
-        if let total, total < 0 { throw Abort(.unprocessableEntity, reason: "Transaction total cannot be negative.") }
-        let image = input.image ?? transaction.image
-        try await AttachmentReferenceService(database: request.db).replace(oldMetadataID: transaction.image, newMetadataID: image, ownerType: "ExpenseTransaction", ownerID: id)
+        let regularPrice = try number("regularPrice", transaction.regularPrice)
+        let paidPrice = try number("paidPrice", transaction.paidPrice)
+        let total = try number("total", transaction.total)
+        let discount = try number("discount", transaction.discount)
+        guard [regularPrice, paidPrice, total, discount].compactMap({ $0 }).allSatisfy({ $0 >= 0 }) else {
+            throw Abort(.unprocessableEntity, reason: "Transaction prices and discounts cannot be negative.")
+        }
+        let firstReceiptItem: Bool
+        if let value = payload["firstReceiptItem"] {
+            guard case let .bool(parsed) = value else { throw Abort(.unprocessableEntity, reason: "Expected a boolean value.") }
+            firstReceiptItem = parsed
+        } else { firstReceiptItem = transaction.firstReceiptItem }
         transaction.item = item
-        transaction.categoryID = categoryID
         transaction.quantity = quantity
+        transaction.receiptID = try string("receiptID", transaction.receiptID)
+        transaction.firstReceiptItem = firstReceiptItem
+        transaction.merchantCode = try string("merchantCode", transaction.merchantCode)
+        transaction.transactionDate = try string("transactionDate", transaction.transactionDate)
+        transaction.regularPrice = regularPrice
+        transaction.paidPrice = paidPrice
         transaction.total = total
-        transaction.notes = input.notes ?? transaction.notes
-        transaction.image = image
+        transaction.discount = discount
+        transaction.notes = try string("notes", transaction.notes)
         try await ExpenseTransactionService(database: request.db).save(transaction)
         return transaction
     }

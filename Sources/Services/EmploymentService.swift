@@ -26,6 +26,7 @@ struct EmploymentService: Sendable {
 
     /// Creates or updates one employment record.
     func save(_ employment: Employment) async throws {
+        employment.updatedAt = RecordTimestamp.now()
         try await employment.save(on: database)
     }
 

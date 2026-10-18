@@ -52,6 +52,7 @@ struct EmploymentResponse: Content {
     let employerContactNumber: String?
     let employerContactEmail: String?
     let notes: String?
+    let updatedAt: String?
 
     init(_ record: Employment, address: AddressReferenceResponse?) {
         id = record.id
@@ -69,6 +70,7 @@ struct EmploymentResponse: Content {
         employerContactNumber = record.employerContactNumber
         employerContactEmail = record.employerContactEmail
         notes = record.notes
+        updatedAt = record.updatedAt
     }
 }
 

@@ -27,6 +27,7 @@ struct AddressService: Sendable {
 
     /// Creates or updates one address record.
     func save(_ address: Address) async throws {
+        address.updatedAt = RecordTimestamp.now()
         try await address.save(on: database)
     }
 

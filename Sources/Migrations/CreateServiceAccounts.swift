@@ -28,6 +28,7 @@ struct CreateServiceAccounts: AsyncMigration {
             .field("EmailUpdated", .string)
             .field("AssociatedAddress", .string)
             .field("ServiceKey", .string)
+            .field("DateUpdated", .string)
             .create()
     }
 

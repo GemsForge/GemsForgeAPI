@@ -26,6 +26,7 @@ struct ExpenseTransactionService: Sendable {
 
     /// Creates or updates one transaction.
     func save(_ transaction: ExpenseTransaction) async throws {
+        transaction.updatedAt = RecordTimestamp.now()
         try await transaction.save(on: database)
     }
 

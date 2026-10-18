@@ -52,14 +52,6 @@ private struct DynamicCodingKey: CodingKey, Hashable {
     init?(intValue: Int) { return nil }
 }
 
-struct ServiceAccountPatchRequest: Content {
-    let service: String?
-    let monthlyAmount: Double?
-    let status: String?
-    let notes: String?
-    let logoFileMetadataID: String?
-}
-
 private func validate(_ input: ServiceAccountRequest) throws {
     guard !input.service.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
         throw Abort(.badRequest, reason: "Service name is required.")
@@ -157,21 +149,51 @@ func registerServiceAccountRoutes(_ app: Application) {
         }
         try PropertyPatchValidation.requireKnownJSONProperties(
             request,
-            allowed: ["service", "monthlyAmount", "status", "notes", "logoFileMetadataID"],
+            allowed: ["service", "type", "expenseGroup", "monthlyAmount", "interestRate", "apr", "due", "occurrence", "status", "since", "website", "notes", "notionPage", "paymentMethod", "accountNumber", "emailUpdated", "logoFileMetadataID"],
             requireNonEmpty: true,
             emptyReason: "At least one editable field is required."
         )
-        let input = try request.content.decode(ServiceAccountPatchRequest.self)
-        let service = input.service ?? account.service
+        let payload = try request.content.decode([String: PatchJSONValue].self)
+        func string(_ key: String, _ current: String?) throws -> String? {
+            guard let value = payload[key] else { return current }
+            return try value.string()
+        }
+        func number(_ key: String, _ current: Double?) throws -> Double? {
+            guard let value = payload[key] else { return current }
+            return try value.number()
+        }
+        let service = try string("service", account.service)
+        guard let service else { throw Abort(.unprocessableEntity, reason: "Service name cannot be cleared.") }
         guard !service.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { throw Abort(.unprocessableEntity, reason: "Service name cannot be empty.") }
-        let monthlyAmount = input.monthlyAmount ?? account.monthlyAmount
-        if let monthlyAmount, monthlyAmount < 0 { throw Abort(.unprocessableEntity, reason: "Monthly amount cannot be negative.") }
-        let logoFileMetadataID = input.logoFileMetadataID ?? account.logoFileMetadataID
-        try await AttachmentReferenceService(database: request.db).replace(oldMetadataID: account.logoFileMetadataID, newMetadataID: logoFileMetadataID, ownerType: "ServiceAccount", ownerID: String(id))
+        let monthlyAmount = try number("monthlyAmount", account.monthlyAmount)
+        let interestRate = try number("interestRate", account.interestRate)
+        let apr = try number("apr", account.apr)
+        guard [monthlyAmount, interestRate, apr].compactMap({ $0 }).allSatisfy({ $0 >= 0 }) else {
+            throw Abort(.unprocessableEntity, reason: "Amounts and rates cannot be negative.")
+        }
         account.service = service
         account.monthlyAmount = monthlyAmount
-        account.status = input.status ?? account.status
-        account.notes = input.notes ?? account.notes
+        account.type = try string("type", account.type)
+        account.expenseGroup = try string("expenseGroup", account.expenseGroup)
+        account.interestRate = interestRate
+        account.apr = apr
+        account.due = try string("due", account.due)
+        account.occurrence = try string("occurrence", account.occurrence)
+        account.status = try string("status", account.status)
+        account.since = try string("since", account.since)
+        account.website = try string("website", account.website)
+        account.notes = try string("notes", account.notes)
+        account.notionPage = try string("notionPage", account.notionPage)
+        account.paymentMethod = try string("paymentMethod", account.paymentMethod)
+        account.accountNumber = try string("accountNumber", account.accountNumber)
+        account.emailUpdated = try string("emailUpdated", account.emailUpdated)
+        let logoFileMetadataID = try string("logoFileMetadataID", account.logoFileMetadataID)
+        try await AttachmentReferenceService(database: request.db).replace(
+            oldMetadataID: account.logoFileMetadataID,
+            newMetadataID: logoFileMetadataID,
+            ownerType: "ServiceAccount",
+            ownerID: String(id)
+        )
         account.logoFileMetadataID = logoFileMetadataID
         try await ServiceAccountService(database: request.db).save(account)
         return account

@@ -25,6 +25,7 @@ struct ServiceAccountService: Sendable {
 
     /// Creates or updates one Service Account.
     func save(_ account: ServiceAccount) async throws {
+        account.updatedAt = RecordTimestamp.now()
         try await account.save(on: database)
     }
 

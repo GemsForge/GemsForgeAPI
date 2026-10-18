@@ -8,9 +8,11 @@ final class EmploymentRouteTests: XCTestCase {
         try await withApp(configure: { app in
             app.databases.use(.sqlite(.memory), as: .sqlite)
             app.migrations.add(CreateAddresses())
+            app.migrations.add(AddAddressUpdatedAt())
             app.migrations.add(CreateFileMetadata())
             app.migrations.add(AddAddressAttachmentReference())
             app.migrations.add(CreateEmployment())
+            app.migrations.add(AddEmploymentUpdatedAt())
             try await app.autoMigrate()
             try await Address(
                 id: "ADDR-0001",
@@ -103,6 +105,7 @@ final class EmploymentRouteTests: XCTestCase {
                 let record = try response.content.decode(EmploymentResponse.self)
                 XCTAssertEqual(record.positionTitle, "Principal Engineer")
                 XCTAssertEqual(record.employerName, "GemsForge")
+                XCTAssertNotNil(record.updatedAt)
             }
 
             try await app.test(.PATCH, "employment/EMP-0001", beforeRequest: { request in
@@ -125,9 +128,11 @@ final class EmploymentRouteTests: XCTestCase {
         try await withApp(configure: { app in
             app.databases.use(.sqlite(.memory), as: .sqlite)
             app.migrations.add(CreateAddresses())
+            app.migrations.add(AddAddressUpdatedAt())
             app.migrations.add(CreateFileMetadata())
             app.migrations.add(AddAddressAttachmentReference())
             app.migrations.add(CreateEmployment())
+            app.migrations.add(AddEmploymentUpdatedAt())
             try await app.autoMigrate()
             registerEmploymentRoutes(app)
         }) { app in

@@ -8,8 +8,10 @@ final class EducationRouteTests: XCTestCase {
         try await withApp(configure: { app in
             app.databases.use(.sqlite(.memory), as: .sqlite)
             app.migrations.add(CreateAddresses())
+            app.migrations.add(AddAddressUpdatedAt())
             app.migrations.add(AddAddressAttachmentReference())
             app.migrations.add(CreateEducation())
+            app.migrations.add(AddEducationUpdatedAt())
             app.migrations.add(CreateFileMetadata())
             app.migrations.add(AddEducationAttachmentReference())
             try await app.autoMigrate()
@@ -110,6 +112,7 @@ final class EducationRouteTests: XCTestCase {
                 let record = try response.content.decode(EducationResponse.self)
                 XCTAssertEqual(record.status, "Completed")
                 XCTAssertEqual(record.institutionName, "Georgia State University")
+                XCTAssertNotNil(record.updatedAt)
             }
 
             try await app.test(.PATCH, "education/EDU-0001", beforeRequest: { request in
@@ -132,8 +135,10 @@ final class EducationRouteTests: XCTestCase {
         try await withApp(configure: { app in
             app.databases.use(.sqlite(.memory), as: .sqlite)
             app.migrations.add(CreateAddresses())
+            app.migrations.add(AddAddressUpdatedAt())
             app.migrations.add(AddAddressAttachmentReference())
             app.migrations.add(CreateEducation())
+            app.migrations.add(AddEducationUpdatedAt())
             app.migrations.add(CreateFileMetadata())
             app.migrations.add(AddEducationAttachmentReference())
             try await app.autoMigrate()

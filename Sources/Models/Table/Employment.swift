@@ -57,6 +57,9 @@ final class Employment: Model, Content, @unchecked Sendable {
     @OptionalField(key: "Notes")
     var notes: String?
 
+    @OptionalField(key: "DateUpdated")
+    var updatedAt: String?
+
     init() {}
 
     /// Creates an Employment model using the columns available in the existing table.

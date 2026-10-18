@@ -73,11 +73,13 @@ fields are excluded unless explicitly marked editable by a later contract:
 
 | Resource | Initial editable areas |
 | --- | --- |
-| Addresses | address type/lines, city/state/postal code/country, dates, status, notes, image metadata reference |
-| Education | education details, dates, status, location address, document metadata reference |
-| Employment | employer details, position, dates, status, work address, contact fields, notes |
-| Services | service details, financial settings, status, contact/account fields, logo metadata reference |
-| Transactions | receipt/item/category/subcategory, prices, quantity, date, notes, image metadata reference |
+| Addresses | address type/lines, city/state/postal code/country, dates, status, notes; image metadata through the explicit attachment control |
+| Education | education details, dates, status, website, notes; location FK read-only; document through the attachment control |
+| Employment | employer details, position, dates, status, contact fields, notes; work-address FK read-only |
+| Services | non-key service details, financial settings, status, contact/account fields; logo through the attachment control |
+| Transactions | receipt label/item/receipt-item flag/merchant/date, prices, quantity, notes; category FKs read-only and image through the attachment control |
+| Domains | title and description |
+| ForgeKeeper | title and description; page/domain relationship fields are read-only in the Console |
 | Home inventory | item identity, location, condition, value, notes, image metadata reference |
 | File metadata | descriptive metadata only; stored path, identifier, and ownership references are protected |
 
@@ -94,3 +96,6 @@ Accounts. Typed PATCH request models must perform strict JSON-key validation so
 unknown properties are rejected before decoding; dictionary-based handlers must
 use the same allowed-property check. New resources should follow this contract
 and add their route tests before being exposed to the UI.
+
+The Console's resource-by-resource editability audit and protected-field
+decisions are tracked in `docs/Editable-Record-Fields-290.md`.

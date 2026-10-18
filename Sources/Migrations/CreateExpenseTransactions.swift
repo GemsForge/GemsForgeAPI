@@ -21,6 +21,7 @@ struct CreateExpenseTransactions: AsyncMigration {
             .field("Total", .double)
             .field("Discount", .double)
             .field("Notes", .string)
+            .field("DateUpdated", .string)
             .create()
     }
 

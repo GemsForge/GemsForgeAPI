@@ -52,6 +52,7 @@ struct EducationResponse: Content {
     let website: String?
     let notes: String?
     let documentFileMetadataID: String?
+    let updatedAt: String?
 
     init(_ record: Education, address: AddressReferenceResponse?) {
         id = record.id
@@ -69,6 +70,7 @@ struct EducationResponse: Content {
         website = record.website
         notes = record.notes
         documentFileMetadataID = record.documentFileMetadataID
+        updatedAt = record.updatedAt
     }
 }
 

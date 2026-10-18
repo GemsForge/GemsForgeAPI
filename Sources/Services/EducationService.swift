@@ -26,6 +26,7 @@ struct EducationService: Sendable {
 
     /// Creates or updates one education record.
     func save(_ education: Education) async throws {
+        education.updatedAt = RecordTimestamp.now()
         try await education.save(on: database)
     }
 

@@ -127,12 +127,17 @@ final class ServiceAccountRouteTests: XCTestCase {
             }
 
             try await app.test(.PATCH, "service-accounts/1", beforeRequest: { request in
-                try request.content.encode(ServiceAccountPatchRequest(service: "Updated Service", monthlyAmount: nil, status: nil, notes: nil, logoFileMetadataID: nil))
+                request.headers.contentType = .json
+                request.body = ByteBuffer(string: #"{"service":"Updated Service","monthlyAmount":22.5,"interestRate":null,"notes":"Patched note"}"#)
             }) { response in
                 XCTAssertEqual(response.status, .ok)
                 let account = try response.content.decode(ServiceAccount.self)
                 XCTAssertEqual(account.service, "Updated Service")
                 XCTAssertEqual(account.status, "Paused")
+                XCTAssertEqual(account.monthlyAmount, 22.5)
+                XCTAssertNil(account.interestRate)
+                XCTAssertEqual(account.notes, "Patched note")
+                XCTAssertNotNil(account.updatedAt)
             }
 
             try await app.test(.PATCH, "service-accounts/1", beforeRequest: { request in
