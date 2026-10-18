@@ -456,6 +456,13 @@ dialog::backdrop {
   width: 100%;
   text-align: left;
 }
+.address-search-attribution {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+.address-search-attribution a {
+  color: inherit;
+}
 .field-error {
   color: var(--danger);
   font-size: 0.75rem;

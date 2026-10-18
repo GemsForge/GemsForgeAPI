@@ -1,6 +1,6 @@
-import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import type { AppleMapsSearchClient } from "../addresses/AppleMapsAddressSearch";
+import type { GeoapifySearchClient } from "../addresses/GeoapifyAddressSearch";
 import { AddressCreateForm } from "./RecordCreateForms";
 
 afterEach(() => {
@@ -31,68 +31,51 @@ describe("shared create form workflow", () => {
     expect(onCancel).not.toHaveBeenCalled();
   });
 
-  it("fills editable address fields from the selected Apple Maps result", async () => {
+  it("prefills an address from a selected Geoapify result and preserves form-owned values", async () => {
     vi.useFakeTimers();
     const suggestion = {
-      displayLines: ["1 Apple Park Way", "Cupertino, CA 95014"],
+      properties: {
+        formatted: "1600 Pennsylvania Avenue NW, Washington, DC 20500, United States",
+        address_line1: "1600 Pennsylvania Avenue NW",
+        city: "Washington",
+        state_code: "DC",
+        postcode: "20500",
+        country_code: "us",
+      },
     };
-    const addressSearchClient: AppleMapsSearchClient = {
-      autocomplete: vi.fn().mockResolvedValue({ results: [suggestion] }),
-      search: vi.fn().mockResolvedValue({
-        places: [
-          {
-            fullThoroughfare: "1 Apple Park Way",
-            locality: "Cupertino",
-            administrativeArea: "California",
-            administrativeAreaCode: "CA",
-            postCode: "95014",
-            country: "United States",
-            countryCode: "US",
-          },
-        ],
-      }),
+    const addressSearchClient: GeoapifySearchClient = {
+      autocomplete: vi.fn().mockResolvedValue([suggestion]),
     };
     const onCreate = vi.fn().mockResolvedValue(undefined);
     render(<AddressCreateForm onCreate={onCreate} onCancel={vi.fn()} addressSearchClient={addressSearchClient} />);
 
-    const addressType = screen.getByRole("combobox", { name: "Address type *" });
-    expect(
-      within(addressType)
-        .getAllByRole("option")
-        .map((option) => option.textContent),
-    ).toEqual(["Select…", "Residence", "Storage", "Work", "Other"]);
-
-    fireEvent.change(screen.getByLabelText("Search places or addresses"), {
-      target: { value: "Apple Park" },
-    });
+    fireEvent.change(screen.getByLabelText("Stable address ID *"), { target: { value: "ADDR-USER" } });
+    fireEvent.change(screen.getByLabelText("Search places or addresses"), { target: { value: "1600 Pennsylvania" } });
     await act(async () => {
       await vi.advanceTimersByTimeAsync(350);
     });
-    fireEvent.click(screen.getByRole("button", { name: "1 Apple Park Way, Cupertino, CA 95014" }));
-    await act(async () => {
-      await Promise.resolve();
-    });
+    fireEvent.click(screen.getByRole("button", { name: suggestion.properties.formatted }));
 
-    expect(screen.getByLabelText("Address line 1")).toHaveValue("1 Apple Park Way");
-    expect(screen.getByLabelText("City")).toHaveValue("Cupertino");
-    expect(screen.getByLabelText("State / region")).toHaveValue("CA");
-    expect(screen.getByLabelText("Postal code")).toHaveValue("95014");
+    expect(screen.getByLabelText("Stable address ID *")).toHaveValue("ADDR-USER");
+    expect(screen.getByLabelText("Address line 1")).toHaveValue("1600 Pennsylvania Avenue NW");
+    expect(screen.getByLabelText("City")).toHaveValue("Washington");
+    expect(screen.getByLabelText("State / region")).toHaveValue("DC");
+    expect(screen.getByLabelText("Postal code")).toHaveValue("20500");
     expect(screen.getByLabelText("Country *")).toHaveValue("US");
-    expect(screen.getByLabelText("Stable address ID *")).toHaveValue("");
-    expect(addressType).toHaveValue("Residence");
+    expect(screen.getByLabelText("Address type *")).toHaveValue("Residence");
 
     vi.useRealTimers();
-    fireEvent.change(screen.getByLabelText("Stable address ID *"), { target: { value: "ADDR-APPLE" } });
     fireEvent.click(screen.getByRole("button", { name: "Create record" }));
     await waitFor(() =>
       expect(onCreate).toHaveBeenCalledWith(
         expect.objectContaining({
-          id: "ADDR-APPLE",
-          addressLine1: "1 Apple Park Way",
-          city: "Cupertino",
-          state: "CA",
-          postalCode: "95014",
+          id: "ADDR-USER",
+          addressLine1: "1600 Pennsylvania Avenue NW",
+          city: "Washington",
+          state: "DC",
+          postalCode: "20500",
           country: "US",
+          addressType: "Residence",
         }),
       ),
     );
