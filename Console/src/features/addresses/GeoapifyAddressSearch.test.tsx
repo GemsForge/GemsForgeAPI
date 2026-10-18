@@ -9,6 +9,7 @@ import {
 
 afterEach(() => {
   vi.useRealTimers();
+  vi.unstubAllEnvs();
 });
 
 describe("Geoapify address search", () => {
@@ -70,6 +71,86 @@ describe("Geoapify address search", () => {
       postalCode: "20500",
       country: "US",
     });
+  });
+
+  it("debounces eligible queries and does not request blank or short input", async () => {
+    vi.useFakeTimers();
+    const client = { autocomplete: vi.fn().mockResolvedValue([]) };
+    render(<GeoapifyAddressSearch client={client} onSelect={vi.fn()} />);
+    const input = screen.getByLabelText("Search places or addresses");
+
+    fireEvent.change(input, { target: { value: "  " } });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(500);
+    });
+    fireEvent.change(input, { target: { value: "NY" } });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(500);
+    });
+    expect(client.autocomplete).not.toHaveBeenCalled();
+
+    fireEvent.change(input, { target: { value: "NYC" } });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(349);
+    });
+    expect(client.autocomplete).not.toHaveBeenCalled();
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1);
+    });
+    expect(client.autocomplete).toHaveBeenCalledTimes(1);
+    expect(client.autocomplete).toHaveBeenCalledWith("NYC", expect.any(AbortSignal));
+  });
+
+  it("explains missing provider configuration and keeps the search unavailable", () => {
+    vi.stubEnv("VITE_GEOAPIFY_API_KEY", "");
+    render(<GeoapifyAddressSearch onSelect={vi.fn()} />);
+
+    expect(screen.getByLabelText("Search places or addresses")).toBeDisabled();
+    expect(screen.getByLabelText("Address search")).toHaveTextContent("Configure VITE_GEOAPIFY_API_KEY");
+    expect(screen.getByLabelText("Address search")).toHaveTextContent("You can still enter the address manually.");
+  });
+
+  it("shows loading and no-results feedback", async () => {
+    vi.useFakeTimers();
+    let resolveSearch!: (suggestions: GeoapifySuggestion[]) => void;
+    const client = {
+      autocomplete: vi.fn(
+        () =>
+          new Promise<GeoapifySuggestion[]>((resolve) => {
+            resolveSearch = resolve;
+          }),
+      ),
+    };
+    render(<GeoapifyAddressSearch client={client} onSelect={vi.fn()} />);
+    fireEvent.change(screen.getByLabelText("Search places or addresses"), { target: { value: "Seattle" } });
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(350);
+    });
+    expect(screen.getByRole("status")).toHaveTextContent("Searching addresses");
+
+    await act(async () => {
+      resolveSearch([]);
+    });
+    expect(screen.getByRole("status")).toHaveTextContent("No address matches found");
+    expect(screen.getByText(/You can enter the address manually/)).toBeInTheDocument();
+  });
+
+  it.each([
+    ["request limits", "Address search has reached its request limit."],
+    ["provider failures", "Address search is temporarily unavailable."],
+  ])("shows understandable feedback for %s", async (_case, message) => {
+    vi.useFakeTimers();
+    const client = { autocomplete: vi.fn().mockRejectedValue(new Error(message)) };
+    render(<GeoapifyAddressSearch client={client} onSelect={vi.fn()} />);
+    fireEvent.change(screen.getByLabelText("Search places or addresses"), { target: { value: "Boston" } });
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(350);
+    });
+
+    expect(screen.getByRole("alert")).toHaveTextContent(message);
+    expect(screen.getByRole("link", { name: "Powered by Geoapify" })).toBeInTheDocument();
   });
 
   it("uses the autocomplete endpoint with a safely encoded key and query", async () => {
