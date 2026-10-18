@@ -4,11 +4,6 @@ Addresses stores Life-area address records in the existing `Addresses` table.
 The API preserves the table's stable identifiers and does not assign addresses
 to a Gem Life domain because the table has no `DomainID` column.
 
-The Console address-creation form can optionally search Apple Maps and autofill
-the matching address fields. Configure a domain-restricted MapKit JS token as
-described in [Apple Maps address search](Apple-Maps-Address-Search.md); manual
-entry remains available without a token.
-
 ## Table mapping
 
 The `Address` model maps `AddressID`, `AddressType`, `AddressLine1`,

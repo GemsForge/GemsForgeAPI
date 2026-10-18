@@ -9,7 +9,6 @@ import { GemEmptyState, GemRecordCard, GemRecordList } from "../../components/ui
 import { EditableRecordFields, formatRecordTimestamp } from "../../components/EditableRecordFields";
 import { useCreateAddressMutation } from "../../data/recordQueries";
 import { AddressCreateForm } from "../create/RecordCreateForms";
-import { ADDRESS_TYPE_OPTIONS } from "./addressTypes";
 
 interface AddressesViewProps {
   records: Address[];
@@ -133,7 +132,12 @@ function AddressDetail({
             value: record.addressType,
             required: true,
             inputType: "select",
-            options: ADDRESS_TYPE_OPTIONS,
+            options: [
+              { label: "Residence", value: "Residence" },
+              { label: "Storage", value: "Storage" },
+              { label: "Work", value: "Work" },
+              { label: "Other", value: "Other" },
+            ],
             onSave: async (value) => onPatch({ addressType: value as string }),
           },
           {

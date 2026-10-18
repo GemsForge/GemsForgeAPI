@@ -10,12 +10,6 @@ import {
 } from "react-hook-form";
 import { z } from "zod";
 import { CreateFormFrame, CreateSelectField, CreateTextField } from "../../components/forms/CreateForm";
-import {
-  AppleMapsAddressSearch,
-  type AddressSearchValues,
-  type AppleMapsSearchClient,
-} from "../addresses/AppleMapsAddressSearch";
-import { ADDRESS_TYPE_OPTIONS } from "../addresses/addressTypes";
 import { useExpenseCategoriesQuery, useExpenseSubcategoriesQuery } from "../../data/lifeQueries";
 import type {
   Address,
@@ -196,13 +190,11 @@ function Select<T extends FieldValues>({
   name,
   label,
   options,
-  required: isRequired = false,
 }: {
   form: UseFormReturn<T>;
   name: Path<T>;
   label: string;
   options: Array<{ value: string; label: string }>;
-  required?: boolean;
 }) {
   const message = form.formState.errors[name]?.message;
   return (
@@ -210,7 +202,6 @@ function Select<T extends FieldValues>({
       label={label}
       registration={form.register(name)}
       options={options}
-      required={isRequired}
       error={typeof message === "string" ? message : undefined}
     />
   );
@@ -254,11 +245,9 @@ export function DomainCreateForm({
 export function AddressCreateForm({
   onCreate,
   onCancel,
-  addressSearchClient,
 }: {
   onCreate: (payload: AddressCreate) => Promise<void>;
   onCancel: () => void;
-  addressSearchClient?: AppleMapsSearchClient;
 }) {
   return (
     <FormShell
@@ -296,35 +285,24 @@ export function AddressCreateForm({
       }
       onCancel={onCancel}
     >
-      {(form) => {
-        function applyMapAddress(values: AddressSearchValues) {
-          if (values.addressLine1) form.setValue("addressLine1", values.addressLine1, { shouldDirty: true });
-          if (values.city) form.setValue("city", values.city, { shouldDirty: true });
-          if (values.state) form.setValue("state", values.state, { shouldDirty: true });
-          if (values.postalCode) form.setValue("postalCode", values.postalCode, { shouldDirty: true });
-          if (values.country) form.setValue("country", values.country, { shouldDirty: true });
-        }
-
-        return (
-          <>
-            <AppleMapsAddressSearch onSelect={applyMapAddress} client={addressSearchClient} />
-            {fields(form, [["id", "Stable address ID", true]])}
-            <Select form={form} name="addressType" label="Address type" required options={ADDRESS_TYPE_OPTIONS} />
-            {fields(form, [
-              ["addressLine1", "Address line 1"],
-              ["addressLine2", "Address line 2"],
-              ["city", "City"],
-              ["state", "State / region"],
-              ["postalCode", "Postal code"],
-              ["country", "Country", true],
-              ["startDate", "Start date"],
-              ["endDate", "End date"],
-              ["addressStatus", "Status", true],
-              ["notes", "Notes"],
-            ])}
-          </>
-        );
-      }}
+      {(form) => (
+        <>
+          {fields(form, [
+            ["id", "Stable address ID", true],
+            ["addressType", "Address type", true],
+            ["addressLine1", "Address line 1"],
+            ["addressLine2", "Address line 2"],
+            ["city", "City"],
+            ["state", "State / region"],
+            ["postalCode", "Postal code"],
+            ["country", "Country", true],
+            ["startDate", "Start date"],
+            ["endDate", "End date"],
+            ["addressStatus", "Status", true],
+            ["notes", "Notes"],
+          ])}
+        </>
+      )}
     </FormShell>
   );
 }
