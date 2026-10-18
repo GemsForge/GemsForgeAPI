@@ -35,6 +35,12 @@ extension Request {
 
 /// Protects every API route except the minimal authentication and health allowlist.
 struct SessionAuthenticationMiddleware: AsyncMiddleware {
+    private let operatorAccountID: String?
+
+    init(operatorAccountID: String? = Environment.get("GEM_LIFE_OPERATOR_ACCOUNT_ID")) {
+        self.operatorAccountID = operatorAccountID?.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
     private static let publicRoutes: Set<String> = [
         "GET /health",
         "POST /auth/apple/challenges",
@@ -59,6 +65,14 @@ struct SessionAuthenticationMiddleware: AsyncMiddleware {
             throw Abort(.unauthorized, reason: "The bearer session is invalid or expired.")
         }
 
+        if Self.requiresOperatorAuthorization(method: request.method, path: request.url.path) {
+            guard let operatorAccountID, !operatorAccountID.isEmpty,
+                  accountID == operatorAccountID
+            else {
+                throw Abort(.forbidden, reason: "Operator authorization is required for this endpoint.")
+            }
+        }
+
         let hubQuery = Hub.query(on: request.db)
         let hub = try await hubQuery.filter(\.$accountID == accountID).first()
         guard let hubID = hub?.id else {
@@ -68,5 +82,22 @@ struct SessionAuthenticationMiddleware: AsyncMiddleware {
         request.storage[AuthenticatedAccountIDKey.self] = accountID
         request.storage[AuthenticatedHubIDKey.self] = hubID
         return try await next.respond(to: request)
+    }
+
+    static func requiresOperatorAuthorization(method: HTTPMethod, path: String) -> Bool {
+        let normalizedPath = path.hasSuffix("/") && path != "/" ? String(path.dropLast()) : path
+        let operatorPrefixes = [
+            "/live-database",
+            "/local-databases",
+            "/schema-builder",
+            "/operator",
+            "/file-metadata/migrate-legacy",
+        ]
+        if operatorPrefixes.contains(where: { normalizedPath == $0 || normalizedPath.hasPrefix($0 + "/") }) {
+            return true
+        }
+        return normalizedPath == "/domains" || normalizedPath.hasPrefix("/domains/")
+            ? method != .GET && method != .HEAD && method != .OPTIONS
+            : false
     }
 }

@@ -5,6 +5,7 @@ struct CreateEmojiLabelDefinitions: AsyncMigration {
     func prepare(on database: any Database) async throws {
         try await database.schema(EmojiLabelDefinition.schema)
             .field("EmojiLabelID", .int, .identifier(auto: true))
+            .field("HubID", .string)
             .field("Label", .string, .required)
             .field("Emoji", .string, .required)
             .field("Description", .string)

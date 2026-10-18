@@ -15,6 +15,9 @@ final class ServiceLogoAsset: Model, @unchecked Sendable {
     @ID(custom: "LogoAssetID")
     var id: Int?
 
+    @OptionalField(key: "HubID")
+    var hubID: String?
+
     @Field(key: "Logo")
     var logo: Data
 

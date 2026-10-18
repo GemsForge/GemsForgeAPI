@@ -75,7 +75,7 @@ struct EmploymentResponse: Content {
 private func employmentResponse(_ record: Employment, on database: any Database) async throws -> EmploymentResponse {
     let address: Address?
     if let id = record.workAddressID {
-        address = try await Address.find(id, on: database)
+        address = try await AddressService(database: database, hubID: record.hubID).find(id: id)
     } else {
         address = nil
     }
@@ -104,7 +104,7 @@ func registerEmploymentRoutes(_ app: Application) {
 
     employment.get { request async throws -> [EmploymentResponse] in
         // Returns Life-area employment records without assigning them to a domain.
-        let records = try await EmploymentService(database: request.db).list()
+        let records = try await EmploymentService(database: request.db, hubID: request.authenticatedHubID).list()
         var responses: [EmploymentResponse] = []
         for record in records {
             responses.append(try await employmentResponse(record, on: request.db))
@@ -117,12 +117,12 @@ func registerEmploymentRoutes(_ app: Application) {
         try validate(input, requiresID: true)
 
         let id = input.id!.trimmingCharacters(in: .whitespacesAndNewlines)
-        if try await EmploymentService(database: request.db).find(id: id) != nil {
+        if try await EmploymentService(database: request.db, hubID: request.authenticatedHubID).find(id: id) != nil {
             throw Abort(.conflict, reason: "An employment record with this ID already exists.")
         }
 
         if let addressID = input.workAddressID,
-           try await AddressService(database: request.db).find(id: addressID) == nil
+           try await AddressService(database: request.db, hubID: request.authenticatedHubID).find(id: addressID) == nil
         {
             throw Abort(.unprocessableEntity, reason: "workAddressID must reference an existing address.")
         }
@@ -145,13 +145,13 @@ func registerEmploymentRoutes(_ app: Application) {
             notes: input.notes
         )
 
-        try await EmploymentService(database: request.db).save(record)
+        try await EmploymentService(database: request.db, hubID: request.authenticatedHubID).save(record)
         return try await employmentResponse(record, on: request.db)
     }
 
     employment.get(":id") { request async throws -> EmploymentResponse in
         let (_, record) = try await requireRouteRecord(request.parameters.get("id")) {
-            try await EmploymentService(database: request.db).find(id: $0)
+            try await EmploymentService(database: request.db, hubID: request.authenticatedHubID).find(id: $0)
         }
 
         // Returns one employment record by its stable EmploymentID.
@@ -160,7 +160,7 @@ func registerEmploymentRoutes(_ app: Application) {
 
     employment.patch(":id") { request async throws -> EmploymentResponse in
         let (_, record) = try await requireRouteRecord(request.parameters.get("id")) {
-            try await EmploymentService(database: request.db).find(id: $0)
+            try await EmploymentService(database: request.db, hubID: request.authenticatedHubID).find(id: $0)
         }
 
         let payload = try request.content.decode([String: String?].self)
@@ -186,7 +186,7 @@ func registerEmploymentRoutes(_ app: Application) {
 
         let workAddressID = value("workAddressID", record.workAddressID)
         if let workAddressID,
-           try await AddressService(database: request.db).find(id: workAddressID) == nil
+           try await AddressService(database: request.db, hubID: request.authenticatedHubID).find(id: workAddressID) == nil
         {
             throw Abort(.unprocessableEntity, reason: "workAddressID must reference an existing address.")
         }
@@ -205,13 +205,13 @@ func registerEmploymentRoutes(_ app: Application) {
         record.employerContactNumber = value("employerContactNumber", record.employerContactNumber)
         record.employerContactEmail = value("employerContactEmail", record.employerContactEmail)
         record.notes = value("notes", record.notes)
-        try await EmploymentService(database: request.db).save(record)
+        try await EmploymentService(database: request.db, hubID: request.authenticatedHubID).save(record)
         return try await employmentResponse(record, on: request.db)
     }
 
     employment.put(":id") { request async throws -> EmploymentResponse in
         let (_, record) = try await requireRouteRecord(request.parameters.get("id")) {
-            try await EmploymentService(database: request.db).find(id: $0)
+            try await EmploymentService(database: request.db, hubID: request.authenticatedHubID).find(id: $0)
         }
 
         let input = try request.content.decode(EmploymentRequest.self)
@@ -230,16 +230,16 @@ func registerEmploymentRoutes(_ app: Application) {
         record.employerContactNumber = input.employerContactNumber
         record.employerContactEmail = input.employerContactEmail
         record.notes = input.notes
-        try await EmploymentService(database: request.db).save(record)
+        try await EmploymentService(database: request.db, hubID: request.authenticatedHubID).save(record)
         return try await employmentResponse(record, on: request.db)
     }
 
     employment.delete(":id") { request async throws -> HTTPStatus in
         let (id, _) = try await requireRouteRecord(request.parameters.get("id")) {
-            try await EmploymentService(database: request.db).find(id: $0)
+            try await EmploymentService(database: request.db, hubID: request.authenticatedHubID).find(id: $0)
         }
 
-        try await EmploymentService(database: request.db).delete(id: id)
+        try await EmploymentService(database: request.db, hubID: request.authenticatedHubID).delete(id: id)
         return .noContent
     }
 }

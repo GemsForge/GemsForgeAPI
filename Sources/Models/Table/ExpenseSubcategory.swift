@@ -12,6 +12,9 @@ final class ExpenseSubcategory: Model, Content, @unchecked Sendable {
     @ID(custom: "SubcategoryID")
     var id: Int?
 
+    @OptionalField(key: "HubID")
+    var hubID: String?
+
     @Field(key: "CategoryID")
     var categoryID: Int
 

@@ -8,6 +8,7 @@ struct CreateEducation: AsyncMigration {
     func prepare(on database: any Database) async throws {
         try await database.schema(Education.schema)
             .field("EducationID", .string, .identifier(auto: false))
+            .field("HubID", .string)
             .field("EducationType", .string, .required)
             .field("InstitutionName", .string, .required)
             .field("Program", .string)

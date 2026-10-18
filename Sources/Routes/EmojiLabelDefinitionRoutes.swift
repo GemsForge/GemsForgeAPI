@@ -41,10 +41,11 @@ private func makeDefinition(from input: EmojiLabelDefinitionRequest, id: Int?) -
 private func ensureLabelIsAvailable(
     _ label: String,
     excludingID: Int? = nil,
+    hubID: String?,
     database: any Database
 ) async throws {
     let normalizedLabel = label.trimmingCharacters(in: .whitespacesAndNewlines)
-    let definitions = try await EmojiLabelDefinitionService(database: database).list(includeInactive: true)
+    let definitions = try await EmojiLabelDefinitionService(database: database, hubID: hubID).list(includeInactive: true)
 
     if definitions.contains(where: {
         $0.id != excludingID && $0.label.caseInsensitiveCompare(normalizedLabel) == .orderedSame
@@ -59,29 +60,29 @@ func registerEmojiLabelDefinitionRoutes(_ app: Application) {
 
     labels.get { request async throws -> [EmojiLabelDefinition] in
         let includeInactive = request.query[Bool.self, at: "includeInactive"] ?? false
-        return try await EmojiLabelDefinitionService(database: request.db)
+        return try await EmojiLabelDefinitionService(database: request.db, hubID: request.authenticatedHubID)
             .list(includeInactive: includeInactive)
     }
 
     labels.post { request async throws -> EmojiLabelDefinition in
         let input = try request.content.decode(EmojiLabelDefinitionCreateRequest.self).value
         try validate(input)
-        try await ensureLabelIsAvailable(input.label, database: request.db)
+        try await ensureLabelIsAvailable(input.label, hubID: request.authenticatedHubID, database: request.db)
 
         if let id = input.id,
-           try await EmojiLabelDefinitionService(database: request.db).find(id: id) != nil
+           try await EmojiLabelDefinitionService(database: request.db, hubID: request.authenticatedHubID).find(id: id) != nil
         {
             throw Abort(.conflict, reason: "An emoji label with this ID already exists.")
         }
 
         let definition = makeDefinition(from: input, id: input.id)
-        try await EmojiLabelDefinitionService(database: request.db).save(definition)
+        try await EmojiLabelDefinitionService(database: request.db, hubID: request.authenticatedHubID).save(definition)
         return definition
     }
 
     labels.get(":id") { request async throws -> EmojiLabelDefinition in
         guard let id = request.parameters.get("id", as: Int.self),
-              let definition = try await EmojiLabelDefinitionService(database: request.db).find(id: id)
+              let definition = try await EmojiLabelDefinitionService(database: request.db, hubID: request.authenticatedHubID).find(id: id)
         else {
             throw Abort(.notFound)
         }
@@ -91,32 +92,32 @@ func registerEmojiLabelDefinitionRoutes(_ app: Application) {
 
     labels.put(":id") { request async throws -> EmojiLabelDefinition in
         guard let id = request.parameters.get("id", as: Int.self),
-              let definition = try await EmojiLabelDefinitionService(database: request.db).find(id: id)
+              let definition = try await EmojiLabelDefinitionService(database: request.db, hubID: request.authenticatedHubID).find(id: id)
         else {
             throw Abort(.notFound)
         }
 
         let input = try request.content.decode(EmojiLabelDefinitionRequest.self)
         try validate(input)
-        try await ensureLabelIsAvailable(input.label, excludingID: id, database: request.db)
+        try await ensureLabelIsAvailable(input.label, excludingID: id, hubID: request.authenticatedHubID, database: request.db)
 
         let replacement = makeDefinition(from: input, id: id)
         definition.label = replacement.label
         definition.emoji = replacement.emoji
         definition.description = replacement.description
         definition.isActive = replacement.isActive
-        try await EmojiLabelDefinitionService(database: request.db).save(definition)
+        try await EmojiLabelDefinitionService(database: request.db, hubID: request.authenticatedHubID).save(definition)
         return definition
     }
 
     labels.delete(":id") { request async throws -> HTTPStatus in
         guard let id = request.parameters.get("id", as: Int.self),
-              try await EmojiLabelDefinitionService(database: request.db).find(id: id) != nil
+              try await EmojiLabelDefinitionService(database: request.db, hubID: request.authenticatedHubID).find(id: id) != nil
         else {
             throw Abort(.notFound)
         }
 
-        try await EmojiLabelDefinitionService(database: request.db).delete(id: id)
+        try await EmojiLabelDefinitionService(database: request.db, hubID: request.authenticatedHubID).delete(id: id)
         return .noContent
     }
 }

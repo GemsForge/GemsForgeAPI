@@ -3,25 +3,32 @@ import Fluent
 /// Provides persistence operations for the existing `BudgetCategories` table.
 struct ExpenseCategoryService: Sendable {
     private let database: any Database
+    private let hubID: String?
 
-    init(database: any Database) {
+    init(database: any Database, hubID: String? = nil) {
         self.database = database
+        self.hubID = hubID
     }
 
     /// Returns categories in stable alphabetical order.
     func list() async throws -> [ExpenseCategory] {
-        try await ExpenseCategory.query(on: database)
+        var query = ExpenseCategory.query(on: database)
+        if let hubID { query = query.filter(\.$hubID == hubID) }
+        return try await query
             .sort(\.$name)
             .all()
     }
 
     /// Returns one category by its stable numeric identifier.
     func find(id: Int) async throws -> ExpenseCategory? {
-        try await ExpenseCategory.find(id, on: database)
+        var query = ExpenseCategory.query(on: database).filter(\.$id == id)
+        if let hubID { query = query.filter(\.$hubID == hubID) }
+        return try await query.first()
     }
 
     /// Creates or updates one category.
     func save(_ category: ExpenseCategory) async throws {
+        if let hubID { category.hubID = hubID }
         try await category.save(on: database)
     }
 

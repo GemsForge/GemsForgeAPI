@@ -42,7 +42,7 @@ func registerAddressRoutes(_ app: Application) {
 
     addresses.get { request async throws -> [AddressSummaryResponse] in
         // List responses intentionally omit street lines, postal codes, and notes.
-        try await AddressService(database: request.db).list().map(AddressSummaryResponse.init)
+        try await AddressService(database: request.db, hubID: request.authenticatedHubID).list().map(AddressSummaryResponse.init)
     }
 
     addresses.post { request async throws -> AddressDetailResponse in
@@ -50,19 +50,19 @@ func registerAddressRoutes(_ app: Application) {
         try validate(input, requiresID: true)
 
         let id = input.id!.trimmingCharacters(in: .whitespacesAndNewlines)
-        if try await AddressService(database: request.db).find(id: id) != nil {
+        if try await AddressService(database: request.db, hubID: request.authenticatedHubID).find(id: id) != nil {
             throw Abort(.conflict, reason: "An address with this ID already exists.")
         }
 
         let address = makeAddress(from: input, id: id)
-        _ = try await AttachmentReferenceService(database: request.db).attach(metadataID: address.imageFileMetadataID, ownerType: "Address", ownerID: id)
-        try await AddressService(database: request.db).save(address)
+        _ = try await AttachmentReferenceService(database: request.db, hubID: request.authenticatedHubID).attach(metadataID: address.imageFileMetadataID, ownerType: "Address", ownerID: id)
+        try await AddressService(database: request.db, hubID: request.authenticatedHubID).save(address)
         return AddressDetailResponse(address)
     }
 
     addresses.get(":id") { request async throws -> AddressDetailResponse in
         let (_, address) = try await requireRouteRecord(request.parameters.get("id")) {
-            try await AddressService(database: request.db).find(id: $0)
+            try await AddressService(database: request.db, hubID: request.authenticatedHubID).find(id: $0)
         }
 
         // Full address details are returned only for an explicitly requested ID.
@@ -71,7 +71,7 @@ func registerAddressRoutes(_ app: Application) {
 
     addresses.patch(":id") { request async throws -> AddressDetailResponse in
         let (id, address) = try await requireRouteRecord(request.parameters.get("id")) {
-            try await AddressService(database: request.db).find(id: $0)
+            try await AddressService(database: request.db, hubID: request.authenticatedHubID).find(id: $0)
         }
 
         let payload = try request.content.decode([String: String?].self)
@@ -91,7 +91,7 @@ func registerAddressRoutes(_ app: Application) {
         }
 
         let metadataID = value("imageFileMetadataID", address.imageFileMetadataID)
-        try await AttachmentReferenceService(database: request.db).replace(
+        try await AttachmentReferenceService(database: request.db, hubID: request.authenticatedHubID).replace(
             oldMetadataID: address.imageFileMetadataID,
             newMetadataID: metadataID,
             ownerType: "Address",
@@ -109,19 +109,19 @@ func registerAddressRoutes(_ app: Application) {
         address.addressStatus = status
         address.notes = value("notes", address.notes)
         address.imageFileMetadataID = metadataID
-        try await AddressService(database: request.db).save(address)
+        try await AddressService(database: request.db, hubID: request.authenticatedHubID).save(address)
         return AddressDetailResponse(address)
     }
 
     addresses.put(":id") { request async throws -> AddressDetailResponse in
         let (id, address) = try await requireRouteRecord(request.parameters.get("id")) {
-            try await AddressService(database: request.db).find(id: $0)
+            try await AddressService(database: request.db, hubID: request.authenticatedHubID).find(id: $0)
         }
 
         let input = try request.content.decode(AddressRequest.self)
         try validate(input)
         let replacement = makeAddress(from: input, id: id)
-        try await AttachmentReferenceService(database: request.db).replace(oldMetadataID: address.imageFileMetadataID, newMetadataID: replacement.imageFileMetadataID, ownerType: "Address", ownerID: id)
+        try await AttachmentReferenceService(database: request.db, hubID: request.authenticatedHubID).replace(oldMetadataID: address.imageFileMetadataID, newMetadataID: replacement.imageFileMetadataID, ownerType: "Address", ownerID: id)
         address.addressType = replacement.addressType
         address.addressLine1 = replacement.addressLine1
         address.addressLine2 = replacement.addressLine2
@@ -134,16 +134,16 @@ func registerAddressRoutes(_ app: Application) {
         address.addressStatus = replacement.addressStatus
         address.notes = replacement.notes
         address.imageFileMetadataID = replacement.imageFileMetadataID
-        try await AddressService(database: request.db).save(address)
+        try await AddressService(database: request.db, hubID: request.authenticatedHubID).save(address)
         return AddressDetailResponse(address)
     }
 
     addresses.delete(":id") { request async throws -> HTTPStatus in
         let (id, _) = try await requireRouteRecord(request.parameters.get("id")) {
-            try await AddressService(database: request.db).find(id: $0)
+            try await AddressService(database: request.db, hubID: request.authenticatedHubID).find(id: $0)
         }
 
-        try await AddressService(database: request.db).delete(id: id)
+        try await AddressService(database: request.db, hubID: request.authenticatedHubID).delete(id: id)
         return .noContent
     }
 }

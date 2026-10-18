@@ -9,12 +9,12 @@ func registerGemHueRoutes(
 
     hues.get { request async throws -> [GemHue] in
         // Returns the list of Foundation Gem Hues without loading image blobs.
-        try await GemHueService(database: request.db).list()
+        try await GemHueService(database: request.db, hubID: request.authenticatedHubID).list()
     }
 
     hues.get(":hueID") { request async throws -> GemHue in
         guard let hueID = request.parameters.get("hueID"),
-              let hue = try await GemHueService(database: request.db).find(id: hueID)
+              let hue = try await GemHueService(database: request.db, hubID: request.authenticatedHubID).find(id: hueID)
         else {
             throw Abort(.notFound)
         }
@@ -25,13 +25,13 @@ func registerGemHueRoutes(
 
     hues.get(":hueID", "image") { request async throws -> Response in
         guard let hueID = request.parameters.get("hueID"),
-              let image = try await GemHueService(database: request.db).findImage(hueID: hueID)
+              let image = try await GemHueService(database: request.db, hubID: request.authenticatedHubID).findImage(hueID: hueID)
         else {
             throw Abort(.notFound)
         }
 
         if let fileMetadataID = image.fileMetadataID,
-           let metadata = try await FileMetadataService(database: request.db).find(id: fileMetadataID) {
+           let metadata = try await FileMetadataService(database: request.db, hubID: request.authenticatedHubID).find(id: fileMetadataID) {
             return try await streamFileMetadataContent(
                 metadata,
                 request: request,

@@ -13,6 +13,9 @@ final class GemHueImage: Model, @unchecked Sendable {
     @ID(custom: "ImageID")
     var id: Int?
 
+    @OptionalField(key: "HubID")
+    var hubID: String?
+
     @Parent(key: "HueID")
     var hue: GemHue
 

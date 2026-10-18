@@ -8,6 +8,7 @@ struct CreateFileMetadata: AsyncMigration {
     func prepare(on database: any Database) async throws {
         try await database.schema(FileMetadata.schema)
             .field("FileMetadataID", .string, .identifier(auto: false))
+            .field("HubID", .string)
             .field("RelativePath", .string, .required)
             .field("FileName", .string)
             .field("FileKind", .string, .required)

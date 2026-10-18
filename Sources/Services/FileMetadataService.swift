@@ -7,14 +7,18 @@ import Fluent
 /// workflow after its security boundary is defined.
 struct FileMetadataService: Sendable {
     private let database: any Database
+    private let hubID: String?
 
-    init(database: any Database) {
+    init(database: any Database, hubID: String? = nil) {
         self.database = database
+        self.hubID = hubID
     }
 
     /// Returns metadata records ordered by file kind and name.
     func list() async throws -> [FileMetadata] {
-        try await FileMetadata.query(on: database)
+        var query = FileMetadata.query(on: database)
+        if let hubID { query = query.filter(\.$hubID == hubID) }
+        return try await query
             .sort(\.$fileKind)
             .sort(\.$fileName)
             .all()
@@ -22,11 +26,14 @@ struct FileMetadataService: Sendable {
 
     /// Returns one metadata record by its stable identifier.
     func find(id: String) async throws -> FileMetadata? {
-        try await FileMetadata.find(id, on: database)
+        var query = FileMetadata.query(on: database).filter(\.$id == id)
+        if let hubID { query = query.filter(\.$hubID == hubID) }
+        return try await query.first()
     }
 
     /// Creates or updates one metadata record.
     func save(_ metadata: FileMetadata) async throws {
+        if let hubID { metadata.hubID = hubID }
         try await metadata.save(on: database)
     }
 

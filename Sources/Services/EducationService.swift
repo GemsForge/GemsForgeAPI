@@ -6,14 +6,18 @@ import Fluent
 /// remain responsible for HTTP decoding, validation, and status codes.
 struct EducationService: Sendable {
     private let database: any Database
+    private let hubID: String?
 
-    init(database: any Database) {
+    init(database: any Database, hubID: String? = nil) {
         self.database = database
+        self.hubID = hubID
     }
 
     /// Returns education records ordered by start date and institution name.
     func list() async throws -> [Education] {
-        try await Education.query(on: database)
+        var query = Education.query(on: database)
+        if let hubID { query = query.filter(\.$hubID == hubID) }
+        return try await query
             .sort(\.$startDate)
             .sort(\.$institutionName)
             .all()
@@ -21,11 +25,14 @@ struct EducationService: Sendable {
 
     /// Returns one education record by its stable EducationID.
     func find(id: String) async throws -> Education? {
-        try await Education.find(id, on: database)
+        var query = Education.query(on: database).filter(\.$id == id)
+        if let hubID { query = query.filter(\.$hubID == hubID) }
+        return try await query.first()
     }
 
     /// Creates or updates one education record.
     func save(_ education: Education) async throws {
+        if let hubID { education.hubID = hubID }
         try await education.save(on: database)
     }
 

@@ -27,15 +27,17 @@ enum HomeInventoryCSVImportError: Error, CustomStringConvertible {
 /// Commits a previously previewed HomeInventory CSV as one atomic batch.
 struct HomeInventoryCSVImportService: Sendable {
     private let database: any Database
+    private let hubID: String?
 
-    init(database: any Database) {
+    init(database: any Database, hubID: String? = nil) {
         self.database = database
+        self.hubID = hubID
     }
 
     func importCSV(_ request: HomeInventoryCSVImportRequest) async throws -> HomeInventoryCSVImportResponse {
         guard request.confirmImport else { throw HomeInventoryCSVImportError.confirmationRequired }
 
-        let preview = try await HomeInventoryCSVPreviewService(database: database).preview(csv: request.csv)
+        let preview = try await HomeInventoryCSVPreviewService(database: database, hubID: hubID).preview(csv: request.csv)
         guard preview.readyToImport else { throw HomeInventoryCSVImportError.previewNotReady }
 
         let identifiers = preview.validRows.compactMap { $0.values["InventoryID"] }
@@ -48,7 +50,7 @@ struct HomeInventoryCSVImportService: Sendable {
                     throw HomeInventoryCSVImportError.previewNotReady
                 }
 
-                guard try await HomeInventory.find(id, on: database) == nil else {
+                guard try await HomeInventoryService(database: database, hubID: hubID).find(id: id) == nil else {
                     throw Abort(.conflict, reason: "InventoryID already exists in the database.")
                 }
 
@@ -65,6 +67,7 @@ struct HomeInventoryCSVImportService: Sendable {
                     location: values["Location"].nonEmpty,
                     notes: values["Notes"].nonEmpty
                 )
+                record.hubID = hubID
                 try await record.create(on: database)
             }
         }

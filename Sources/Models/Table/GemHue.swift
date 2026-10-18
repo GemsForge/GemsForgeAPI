@@ -14,6 +14,9 @@ final class GemHue: Model, Content, @unchecked Sendable {
     @ID(custom: "HueID")
     var id: String?
 
+    @OptionalField(key: "HubID")
+    var hubID: String?
+
     @Field(key: "ColorName")
     var colorName: String
 

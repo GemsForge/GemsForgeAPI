@@ -13,6 +13,9 @@ final class ForgeKeeper: Model, Content, @unchecked Sendable {
     @ID(custom: "ForgeKeeperID")
     var id: Int?
 
+    @OptionalField(key: "HubID")
+    var hubID: String?
+
     // ParentID is nullable for a root page and points back to ForgeKeeper.
     @OptionalParent(key: "ParentID")
     var parent: ForgeKeeper?

@@ -22,10 +22,12 @@ struct LocalImageUploadConfiguration: Sendable {
 struct LocalImageUploadService: Sendable {
     private let configuration: LocalImageUploadConfiguration
     private let database: any Database
+    private let hubID: String?
 
-    init(configuration: LocalImageUploadConfiguration, database: any Database) {
+    init(configuration: LocalImageUploadConfiguration, database: any Database, hubID: String? = nil) {
         self.configuration = configuration
         self.database = database
+        self.hubID = hubID
     }
 
     func upload(
@@ -86,6 +88,7 @@ struct LocalImageUploadService: Sendable {
             ownerType: ownerType,
             ownerID: ownerID
         )
+        metadata.hubID = hubID
 
         do {
             try await metadata.save(on: database)

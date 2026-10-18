@@ -8,6 +8,7 @@ struct CreateExpenseTransactions: AsyncMigration {
     func prepare(on database: any Database) async throws {
         try await database.schema(ExpenseTransaction.schema)
             .field("TransactionID", .string, .identifier(auto: false))
+            .field("HubID", .string)
             .field("ReceiptID", .string)
             .field("Item", .string, .required)
             .field("FirstReceiptItem", .int, .required)

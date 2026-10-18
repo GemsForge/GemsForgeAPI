@@ -9,6 +9,7 @@ struct CreateServiceAccounts: AsyncMigration {
     func prepare(on database: any Database) async throws {
         try await database.schema(ServiceAccount.schema)
             .field("ServiceID", .int, .identifier(auto: true))
+            .field("HubID", .string)
             .field("Service", .string, .required)
             .field("LogoKey", .string)
             .field("Type", .string)
