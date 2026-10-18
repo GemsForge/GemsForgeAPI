@@ -6,8 +6,7 @@ import { AttachmentControl } from "../../components/AttachmentControl";
 import { GemEmptyState, GemRecordCard, GemRecordList } from "../../components/ui";
 import { useServiceAccountPatchMutation, useServiceAccountQuery } from "../../data/recordQueries";
 import type { ServiceAccount } from "../../types";
-import { RecordFields } from "../../components/RecordFields";
-import { PropertyEditor } from "../../components/PropertyEditor";
+import { EditableRecordFields, formatRecordTimestamp } from "../../components/EditableRecordFields";
 import { useCreateServiceAccountMutation } from "../../data/recordQueries";
 import { ServiceAccountCreateForm } from "../create/RecordCreateForms";
 
@@ -119,30 +118,124 @@ function ServiceAccountDetail({
         </div>
         <span className="status-pill">{record.status || "—"}</span>
       </div>
-      <PropertyEditor
-        label="Service"
-        initialValue={record.service}
-        editLabel="Edit service"
-        saveLabel="Save service"
-        required
-        onSave={async (service) => onPatch({ service })}
-      />
-      <PropertyEditor
-        label="Status"
-        initialValue={record.status ?? ""}
-        editLabel="Edit status"
-        saveLabel="Save status"
-        onSave={async (status) => onPatch({ status: status || null })}
-      />
-      <RecordFields
+      <EditableRecordFields
         className="address-fields"
         fields={[
-          { label: "Type", value: record.type || "—" },
-          { label: "Expense group", value: record.expenseGroup || "—" },
-          { label: "Monthly amount", value: record.monthlyAmount === null ? "—" : String(record.monthlyAmount) },
-          { label: "Payment method", value: record.paymentMethod || "—" },
-          { label: "Website", value: record.website || "—" },
-          { label: "Notes", value: record.notes || "—", className: "record-notes" },
+          {
+            label: "Service",
+            value: record.service,
+            required: true,
+            onSave: async (value) => onPatch({ service: value as string }),
+          },
+          {
+            label: "Type",
+            value: record.type,
+            nullable: true,
+            onSave: async (value) => onPatch({ type: value as string | null }),
+          },
+          {
+            label: "Expense group",
+            value: record.expenseGroup,
+            nullable: true,
+            onSave: async (value) => onPatch({ expenseGroup: value as string | null }),
+          },
+          {
+            label: "Monthly amount",
+            value: record.monthlyAmount,
+            inputType: "number",
+            step: "0.01",
+            nullable: true,
+            onSave: async (value) => onPatch({ monthlyAmount: value as number | null }),
+          },
+          {
+            label: "Interest rate",
+            value: record.interestRate,
+            inputType: "number",
+            step: "0.0001",
+            nullable: true,
+            onSave: async (value) => onPatch({ interestRate: value as number | null }),
+          },
+          {
+            label: "APR",
+            value: record.apr,
+            inputType: "number",
+            step: "0.0001",
+            nullable: true,
+            onSave: async (value) => onPatch({ apr: value as number | null }),
+          },
+          {
+            label: "Due",
+            value: record.due,
+            nullable: true,
+            onSave: async (value) => onPatch({ due: value as string | null }),
+          },
+          {
+            label: "Occurrence",
+            value: record.occurrence,
+            nullable: true,
+            onSave: async (value) => onPatch({ occurrence: value as string | null }),
+          },
+          {
+            label: "Status",
+            value: record.status,
+            nullable: true,
+            onSave: async (value) => onPatch({ status: value as string | null }),
+          },
+          {
+            label: "Since",
+            value: record.since,
+            inputType: "date",
+            nullable: true,
+            onSave: async (value) => onPatch({ since: value as string | null }),
+          },
+          {
+            label: "Payment method",
+            value: record.paymentMethod,
+            nullable: true,
+            onSave: async (value) => onPatch({ paymentMethod: value as string | null }),
+          },
+          {
+            label: "Account number",
+            value: record.accountNumber,
+            nullable: true,
+            onSave: async (value) => onPatch({ accountNumber: value as string | null }),
+          },
+          {
+            label: "Email updated",
+            value: record.emailUpdated,
+            inputType: "date",
+            nullable: true,
+            onSave: async (value) => onPatch({ emailUpdated: value as string | null }),
+          },
+          {
+            label: "Website",
+            value: record.website,
+            inputType: "url",
+            nullable: true,
+            onSave: async (value) => onPatch({ website: value as string | null }),
+          },
+          {
+            label: "Notion page",
+            value: record.notionPage,
+            inputType: "url",
+            nullable: true,
+            onSave: async (value) => onPatch({ notionPage: value as string | null }),
+          },
+          {
+            label: "Notes",
+            value: record.notes,
+            inputType: "textarea",
+            nullable: true,
+            className: "record-notes",
+            onSave: async (value) => onPatch({ notes: value as string | null }),
+          },
+          { label: "Associated address", value: record.associatedAddress, readOnlyReason: "Relationship field" },
+          {
+            label: "Last updated",
+            value: record.updatedAt ?? null,
+            readOnlyReason: "Server managed",
+            displayValue: formatRecordTimestamp(record.updatedAt),
+          },
         ]}
       />
       <AttachmentControl

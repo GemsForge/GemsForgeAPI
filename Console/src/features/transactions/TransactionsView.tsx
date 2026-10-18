@@ -10,8 +10,7 @@ import { QueryFeedback } from "../../components/QueryFeedback";
 import type { ExpenseTransaction } from "../../types";
 import { AttachmentControl } from "../../components/AttachmentControl";
 import { GemEmptyState, GemRecordCard, GemRecordList } from "../../components/ui";
-import { RecordFields } from "../../components/RecordFields";
-import { PropertyEditor } from "../../components/PropertyEditor";
+import { EditableRecordFields, formatRecordTimestamp } from "../../components/EditableRecordFields";
 import { useCreateTransactionMutation } from "../../data/recordQueries";
 import { TransactionCreateForm } from "../create/RecordCreateForms";
 
@@ -131,27 +130,95 @@ function TransactionDetail({
         </div>
         <span className="status-pill">Category {record.categoryID}</span>
       </div>
-      <PropertyEditor
-        label="Item"
-        initialValue={record.item}
-        editLabel="Edit item"
-        saveLabel="Save item"
-        onSave={async (item) => onPatch({ item })}
-      />
-      <RecordFields
+      <EditableRecordFields
         className="transaction-fields"
         fields={[
-          { label: "Transaction date", value: record.transactionDate || "—" },
-          { label: "Receipt", value: record.receiptID || "—" },
-          { label: "Merchant code", value: record.merchantCode || "—" },
-          { label: "Category ID", value: String(record.categoryID) },
-          { label: "Subcategory ID", value: record.subcategoryID === null ? "—" : String(record.subcategoryID) },
-          { label: "Quantity", value: String(record.quantity) },
-          { label: "Regular price", value: formatAmount(record.regularPrice) },
-          { label: "Paid price", value: formatAmount(record.paidPrice) },
-          { label: "Total", value: formatAmount(record.total) },
-          { label: "Discount", value: formatAmount(record.discount) },
-          { label: "Notes", value: record.notes || "—", className: "record-notes" },
+          {
+            label: "Item",
+            value: record.item,
+            required: true,
+            onSave: async (value) => onPatch({ item: value as string }),
+          },
+          {
+            label: "Receipt",
+            value: record.receiptID,
+            nullable: true,
+            onSave: async (value) => onPatch({ receiptID: value as string | null }),
+          },
+          {
+            label: "First receipt item",
+            value: record.firstReceiptItem,
+            inputType: "boolean",
+            onSave: async (value) => onPatch({ firstReceiptItem: value as boolean }),
+          },
+          {
+            label: "Merchant code",
+            value: record.merchantCode,
+            nullable: true,
+            onSave: async (value) => onPatch({ merchantCode: value as string | null }),
+          },
+          {
+            label: "Transaction date",
+            value: record.transactionDate,
+            inputType: "date",
+            nullable: true,
+            onSave: async (value) => onPatch({ transactionDate: value as string | null }),
+          },
+          { label: "Category ID", value: record.categoryID, readOnlyReason: "Foreign key" },
+          { label: "Subcategory ID", value: record.subcategoryID, readOnlyReason: "Foreign key" },
+          {
+            label: "Quantity",
+            value: record.quantity,
+            inputType: "number",
+            step: "0.01",
+            onSave: async (value) => onPatch({ quantity: value as number }),
+          },
+          {
+            label: "Regular price",
+            value: record.regularPrice,
+            inputType: "number",
+            step: "0.01",
+            nullable: true,
+            onSave: async (value) => onPatch({ regularPrice: value as number | null }),
+          },
+          {
+            label: "Paid price",
+            value: record.paidPrice,
+            inputType: "number",
+            step: "0.01",
+            nullable: true,
+            onSave: async (value) => onPatch({ paidPrice: value as number | null }),
+          },
+          {
+            label: "Total",
+            value: record.total,
+            inputType: "number",
+            step: "0.01",
+            nullable: true,
+            onSave: async (value) => onPatch({ total: value as number | null }),
+          },
+          {
+            label: "Discount",
+            value: record.discount,
+            inputType: "number",
+            step: "0.01",
+            nullable: true,
+            onSave: async (value) => onPatch({ discount: value as number | null }),
+          },
+          {
+            label: "Notes",
+            value: record.notes,
+            inputType: "textarea",
+            nullable: true,
+            className: "record-notes",
+            onSave: async (value) => onPatch({ notes: value as string | null }),
+          },
+          {
+            label: "Last updated",
+            value: record.updatedAt ?? null,
+            readOnlyReason: "Server managed",
+            displayValue: formatRecordTimestamp(record.updatedAt),
+          },
         ]}
       />
       <AttachmentControl
