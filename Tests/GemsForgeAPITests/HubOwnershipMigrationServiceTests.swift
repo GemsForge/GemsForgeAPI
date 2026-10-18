@@ -15,6 +15,9 @@ final class HubOwnershipMigrationServiceTests: XCTestCase {
             try await app.autoMigrate()
             try await AppleAccount(id: "account-1", appleSubject: "subject-1").save(on: app.db)
             try await Hub(id: "hub-1", accountID: "account-1").save(on: app.db)
+            try await AddressService(database: app.db, hubID: "hub-1").save(
+                Address(id: "ADDR-OWNED", city: "Already assigned", addressStatus: "Current")
+            )
             try await Address(id: "ADDR-LEGACY-1", city: "Legacy One", addressStatus: "Former").save(on: app.db)
             try await Address(id: "ADDR-LEGACY-2", city: "Legacy Two", addressStatus: "Former").save(on: app.db)
         }) { app in
@@ -22,7 +25,7 @@ final class HubOwnershipMigrationServiceTests: XCTestCase {
             let preview = try await service.preview(hubID: "hub-1")
             XCTAssertEqual(preview.unownedCounts, [Address.schema: 2])
             let initiallyVisible = try await AddressService(database: app.db, hubID: "hub-1").list()
-            XCTAssertTrue(initiallyVisible.isEmpty)
+            XCTAssertEqual(initiallyVisible.compactMap(\.id), ["ADDR-OWNED"])
 
             let result = try await service.assignUnowned(
                 hubID: "hub-1",
@@ -33,7 +36,8 @@ final class HubOwnershipMigrationServiceTests: XCTestCase {
             )
             XCTAssertEqual(result.assignedCounts, [Address.schema: 2])
             let visibleAfterAssignment = try await AddressService(database: app.db, hubID: "hub-1").list()
-            XCTAssertEqual(visibleAfterAssignment.count, 2)
+            XCTAssertEqual(visibleAfterAssignment.count, 3)
+            XCTAssertEqual(visibleAfterAssignment.first(where: { $0.id == "ADDR-OWNED" })?.city, "Already assigned")
 
             do {
                 _ = try await service.assignUnowned(
