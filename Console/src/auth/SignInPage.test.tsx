@@ -7,12 +7,19 @@ import { queryClient } from "../data/queryClient";
 import { AuthProvider } from "./AuthProvider";
 import { SignInPage } from "./SignInPage";
 
+const requestSupabaseAccessToken = vi.hoisted(() => vi.fn());
+const getSupabaseSignInConfiguration = vi.hoisted(() => vi.fn());
+vi.mock("./supabaseSignIn", () => ({
+  getSupabaseSignInConfiguration,
+  requestSupabaseAccessToken,
+}));
+
 afterEach(() => {
   vi.restoreAllMocks();
   vi.unstubAllEnvs();
+  requestSupabaseAccessToken.mockReset();
+  getSupabaseSignInConfiguration.mockReset();
   window.sessionStorage.clear();
-  delete (window as Window & { AppleID?: unknown }).AppleID;
-  document.querySelectorAll('script[src*="appleid.auth.js"]').forEach((script) => script.remove());
 });
 
 function renderSignIn() {
@@ -30,107 +37,54 @@ function renderSignIn() {
   );
 }
 
-describe("Sign in with Apple page", () => {
-  it("requests a nonce, validates Apple's state, exchanges the identity token, and opens protected content", async () => {
-    vi.stubEnv("VITE_APPLE_CLIENT_ID", "com.example.gemlife");
-    vi.stubEnv("VITE_APPLE_REDIRECT_URI", "https://gem-life.example.com/auth/callback");
-    vi.spyOn(api, "createAppleChallenge").mockResolvedValue({
-      challengeID: "one-time-challenge",
-      nonce: "server-nonce",
+describe("Supabase sign-in page", () => {
+  it("exchanges Supabase credentials for an API session and opens protected content", async () => {
+    getSupabaseSignInConfiguration.mockReturnValue({
+      url: "https://gemlife.supabase.co",
+      publishableKey: "public-test-key",
+    });
+    requestSupabaseAccessToken.mockResolvedValue("short-lived-supabase-access-token");
+    vi.spyOn(api, "exchangeSupabaseIdentityToken").mockResolvedValue({
+      sessionToken: "opaque-api-session-token",
       expiresAt: "2099-01-01T00:00:00Z",
-    });
-    vi.spyOn(api, "exchangeAppleIdentityToken").mockResolvedValue({
-      accountID: "server-owned-account",
-      sessionToken: "opaque-session-token",
-      expiresAt: "2099-01-01T00:00:00Z",
-    });
-    let appleState = "";
-    const init = vi.fn((options: { state: string }) => {
-      appleState = options.state;
-    });
-    Object.defineProperty(window, "AppleID", {
-      configurable: true,
-      value: {
-        auth: {
-          init,
-          signIn: vi.fn(async () => ({ authorization: { id_token: "signed-apple-token", state: appleState } })),
-        },
-      },
     });
 
     renderSignIn();
-    fireEvent.click(screen.getByRole("button", { name: "Continue with Apple" }));
+    fireEvent.change(screen.getByLabelText("Email"), { target: { value: "owner@example.com" } });
+    fireEvent.change(screen.getByLabelText("Password"), { target: { value: "owner-password" } });
+    fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
 
     expect(await screen.findByText("Protected workspace")).toBeInTheDocument();
-    expect(init).toHaveBeenCalledWith({
-      clientId: "com.example.gemlife",
-      scope: "",
-      redirectURI: "https://gem-life.example.com/auth/callback",
-      state: expect.any(String),
-      nonce: "server-nonce",
-      usePopup: true,
-    });
-    expect(api.exchangeAppleIdentityToken).toHaveBeenCalledWith("one-time-challenge", "signed-apple-token");
+    expect(requestSupabaseAccessToken).toHaveBeenCalledWith("owner@example.com", "owner-password");
+    expect(api.exchangeSupabaseIdentityToken).toHaveBeenCalledWith("short-lived-supabase-access-token");
     await waitFor(() =>
       expect(JSON.parse(window.sessionStorage.getItem("gem-life.session.v1") ?? "{}")).toEqual({
-        token: "opaque-session-token",
+        token: "opaque-api-session-token",
         expiresAt: "2099-01-01T00:00:00Z",
       }),
     );
-    expect(window.sessionStorage.getItem("gem-life.session.v1")).not.toContain("server-owned-account");
+    expect(window.sessionStorage.getItem("gem-life.session.v1")).not.toContain("short-lived-supabase");
   });
 
-  it("explains missing client configuration and rejects local or insecure Apple redirect URIs", () => {
-    vi.stubEnv("VITE_APPLE_CLIENT_ID", "com.example.gemlife");
-    vi.stubEnv("VITE_APPLE_REDIRECT_URI", "http://127.0.0.1:5173/callback");
+  it("keeps signup disabled and explains missing project configuration", () => {
+    getSupabaseSignInConfiguration.mockReturnValue(null);
     renderSignIn();
-    expect(screen.getByRole("button", { name: "Continue with Apple" })).toBeDisabled();
-    expect(screen.getByLabelText("Sign-in setup required")).toHaveTextContent(
-      /registered HTTPS VITE_APPLE_REDIRECT_URI/,
-    );
+    expect(screen.getByRole("button", { name: "Sign in" })).toBeDisabled();
+    expect(screen.getByLabelText("Sign-in setup required")).toHaveTextContent(/VITE_SUPABASE_URL/);
+    expect(screen.getByText(/Account creation is disabled/)).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /create account/i })).not.toBeInTheDocument();
   });
 
-  it("presents API/provider failures as actionable sign-in errors", async () => {
-    vi.stubEnv("VITE_APPLE_CLIENT_ID", "com.example.gemlife");
-    vi.stubEnv("VITE_APPLE_REDIRECT_URI", "https://gem-life.example.com/auth/callback");
-    vi.spyOn(api, "createAppleChallenge").mockRejectedValue(new Error("Apple authentication is not configured."));
-    renderSignIn();
-    fireEvent.click(screen.getByRole("button", { name: "Continue with Apple" }));
-    expect(await screen.findByRole("alert")).toHaveTextContent("Apple authentication is not configured.");
-  });
-
-  it("explains a cancelled Apple popup without attempting the token exchange", async () => {
-    vi.stubEnv("VITE_APPLE_CLIENT_ID", "com.example.gemlife");
-    vi.stubEnv("VITE_APPLE_REDIRECT_URI", "https://gem-life.example.com/auth/callback");
-    vi.spyOn(api, "createAppleChallenge").mockResolvedValue({
-      challengeID: "challenge",
-      nonce: "nonce",
-      expiresAt: "2099-01-01T00:00:00Z",
+  it("presents provider and API failures as actionable sign-in errors", async () => {
+    getSupabaseSignInConfiguration.mockReturnValue({
+      url: "https://gemlife.supabase.co",
+      publishableKey: "public-test-key",
     });
-    const signIn = vi.fn().mockRejectedValue({ error: "popup_closed_by_user" });
-    Object.defineProperty(window, "AppleID", {
-      configurable: true,
-      value: { auth: { init: vi.fn(), signIn } },
-    });
-    const exchange = vi.spyOn(api, "exchangeAppleIdentityToken");
+    requestSupabaseAccessToken.mockRejectedValue(new Error("Email or password is incorrect."));
     renderSignIn();
-    fireEvent.click(screen.getByRole("button", { name: "Continue with Apple" }));
-    expect(await screen.findByRole("alert")).toHaveTextContent("Sign-in was cancelled");
-    expect(exchange).not.toHaveBeenCalled();
-  });
-
-  it("shows a recoverable message when Apple's hosted sign-in script cannot load", async () => {
-    vi.stubEnv("VITE_APPLE_CLIENT_ID", "com.example.gemlife");
-    vi.stubEnv("VITE_APPLE_REDIRECT_URI", "https://gem-life.example.com/auth/callback");
-    vi.spyOn(api, "createAppleChallenge").mockResolvedValue({
-      challengeID: "challenge",
-      nonce: "nonce",
-      expiresAt: "2099-01-01T00:00:00Z",
-    });
-    renderSignIn();
-    fireEvent.click(screen.getByRole("button", { name: "Continue with Apple" }));
-    await waitFor(() => expect(document.querySelector('script[src*="appleid.auth.js"]')).not.toBeNull());
-    fireEvent.error(document.querySelector('script[src*="appleid.auth.js"]')!);
-    expect(await screen.findByRole("alert")).toHaveTextContent("Apple’s sign-in service could not be loaded");
+    fireEvent.change(screen.getByLabelText("Email"), { target: { value: "owner@example.com" } });
+    fireEvent.change(screen.getByLabelText("Password"), { target: { value: "wrong" } });
+    fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Email or password is incorrect.");
   });
 });

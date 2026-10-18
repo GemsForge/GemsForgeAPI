@@ -117,21 +117,37 @@ button {
   color: var(--muted);
   line-height: 1.6;
 }
-.apple-sign-in-button {
+.sign-in-form {
+  display: grid;
+  gap: 0.65rem;
+  margin: 1.25rem 0;
+}
+.sign-in-form label {
+  font-weight: 650;
+}
+.sign-in-form input {
+  min-height: 46px;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  background: var(--canvas);
+  color: var(--ink);
+}
+.credential-sign-in-button {
   width: 100%;
-  margin: 1rem 0;
+  margin-top: 0.6rem;
   padding: 0.85rem 1.25rem;
-  border: 1px solid #fff;
+  border: 1px solid var(--mint);
   border-radius: 0.55rem;
-  background: #fff;
-  color: #111;
+  background: var(--mint);
+  color: var(--canvas);
   font-size: 1rem;
   font-weight: 700;
 }
-.apple-sign-in-button:hover:not(:disabled) {
-  background: #e8e8e8;
+.credential-sign-in-button:hover:not(:disabled) {
+  filter: brightness(1.08);
 }
-.apple-sign-in-button:disabled {
+.credential-sign-in-button:disabled {
   cursor: not-allowed;
   opacity: 0.65;
 }

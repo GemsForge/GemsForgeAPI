@@ -29,14 +29,7 @@ import type {
 } from "./types";
 import { getBearerToken, notifySessionExpired } from "./auth/session";
 
-export interface AppleChallenge {
-  challengeID: string;
-  nonce: string;
-  expiresAt: string;
-}
-
-export interface AppleSessionResponse {
-  accountID: string;
+export interface APIAuthenticationSession {
   sessionToken: string;
   expiresAt: string;
 }
@@ -54,7 +47,7 @@ export class APIError extends Error {
 async function checkedFetch(path: string, options: RequestInit = {}): Promise<Response> {
   let response: Response;
   const headers = new Headers(options.headers);
-  const isPublicAuthRequest = path === "/auth/apple/challenges" || path === "/auth/apple";
+  const isPublicAuthRequest = path === "/auth/supabase";
   const bearerToken = path === "/health" || isPublicAuthRequest ? null : getBearerToken();
   if (bearerToken) headers.set("Authorization", `Bearer ${bearerToken}`);
   try {
@@ -88,11 +81,10 @@ export const api = {
       throw new APIError("The local API returned an unexpected health response.", response.status);
     return true;
   },
-  createAppleChallenge: () => request<AppleChallenge>("/auth/apple/challenges", { method: "POST" }),
-  exchangeAppleIdentityToken: (challengeID: string, identityToken: string) =>
-    request<AppleSessionResponse>("/auth/apple", {
+  exchangeSupabaseIdentityToken: (accessToken: string) =>
+    request<APIAuthenticationSession>("/auth/supabase", {
       method: "POST",
-      body: JSON.stringify({ challengeID, identityToken }),
+      headers: { Authorization: `Bearer ${accessToken}` },
     }),
   logout: () => request<void>("/auth/logout", { method: "POST" }),
   listDomains: (signal?: AbortSignal) => request<Domain[]>("/domains", { signal }),

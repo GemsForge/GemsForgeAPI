@@ -8,16 +8,12 @@ afterEach(() => {
 });
 
 describe("API bearer authentication", () => {
-  it("exchanges Apple challenges without a client-chosen account and attaches the issued token to protected requests", async () => {
+  it("exchanges a Supabase access token for an opaque API session and attaches only the API token to protected requests", async () => {
     const fetch = vi
       .fn()
       .mockResolvedValueOnce(
-        new Response(JSON.stringify({ challengeID: "challenge", nonce: "nonce", expiresAt: "2099-01-01T00:00:00Z" })),
-      )
-      .mockResolvedValueOnce(
         new Response(
           JSON.stringify({
-            accountID: "server-account",
             sessionToken: "opaque-session",
             expiresAt: "2099-01-01T00:00:00Z",
           }),
@@ -26,19 +22,17 @@ describe("API bearer authentication", () => {
       .mockResolvedValueOnce(new Response("[]"));
     vi.stubGlobal("fetch", fetch);
 
-    const challenge = await api.createAppleChallenge();
-    expect(fetch.mock.calls[0][0]).toBe("/auth/apple/challenges");
-    expect(new Headers(fetch.mock.calls[0][1]?.headers).get("Authorization")).toBeNull();
-    await api.exchangeAppleIdentityToken(challenge.challengeID, "apple-identity-token");
-    const signInBody = JSON.parse(String(fetch.mock.calls[1][1]?.body));
-    expect(signInBody).toEqual({ challengeID: "challenge", identityToken: "apple-identity-token" });
-    expect(signInBody).not.toHaveProperty("accountID");
+    await api.exchangeSupabaseIdentityToken("supabase-access-token");
+    expect(fetch.mock.calls[0][0]).toBe("/auth/supabase");
+    expect(fetch.mock.calls[0][1]?.method).toBe("POST");
+    expect(new Headers(fetch.mock.calls[0][1]?.headers).get("Authorization")).toBe("Bearer supabase-access-token");
+    expect(fetch.mock.calls[0][1]?.body).toBeUndefined();
 
     saveSession({ token: "opaque-session", expiresAt: "2099-01-01T00:00:00Z" });
     await api.listDomains();
-    expect(fetch.mock.calls[2][0]).toBe("/domains");
-    expect(new Headers(fetch.mock.calls[2][1]?.headers).get("Authorization")).toBe("Bearer opaque-session");
-    expect(String(fetch.mock.calls[2][0])).not.toContain("opaque-session");
+    expect(fetch.mock.calls[1][0]).toBe("/domains");
+    expect(new Headers(fetch.mock.calls[1][1]?.headers).get("Authorization")).toBe("Bearer opaque-session");
+    expect(String(fetch.mock.calls[1][0])).not.toContain("opaque-session");
   });
 
   it("clears a browser session when an authenticated endpoint reports expiry or revocation", async () => {

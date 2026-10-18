@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { api } from "../api";
 import { queryClient } from "../data/queryClient";
-import { appleSignInError, getAppleSignInConfiguration, requestAppleIdentityToken } from "./appleSignIn";
+import { getSupabaseSignInConfiguration, requestSupabaseAccessToken } from "./supabaseSignIn";
 import {
   clearSession,
   consumeExpiredSessionNotice,
@@ -16,7 +16,7 @@ interface AuthContextValue {
   busy: boolean;
   error: string | null;
   configurationReady: boolean;
-  signIn: () => Promise<boolean>;
+  signIn: (email: string, password: string) => Promise<boolean>;
   signOut: () => Promise<void>;
   clearError: () => void;
 }
@@ -29,7 +29,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(() =>
     consumeExpiredSessionNotice() ? "Your sign-in expired or was revoked. Sign in again to continue." : null,
   );
-  const configuration = useMemo(() => getAppleSignInConfiguration(), []);
+  const configuration = useMemo(() => getSupabaseSignInConfiguration(), []);
 
   useEffect(() => {
     const handleExpired = () => {
@@ -42,31 +42,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener(SESSION_EXPIRED_EVENT, handleExpired);
   }, []);
 
-  const signIn = useCallback(async () => {
-    if (!configuration) {
-      setError(
-        "Sign in with Apple is not configured for this Console. Set VITE_APPLE_CLIENT_ID and a registered HTTPS VITE_APPLE_REDIRECT_URI; configure the same client ID as APPLE_CLIENT_ID on the API.",
-      );
-      return false;
-    }
-    setBusy(true);
-    setError(null);
-    try {
-      const challenge = await api.createAppleChallenge();
-      const identityToken = await requestAppleIdentityToken(challenge, configuration);
-      const response = await api.exchangeAppleIdentityToken(challenge.challengeID, identityToken);
-      const nextSession = { token: response.sessionToken, expiresAt: response.expiresAt };
-      saveSession(nextSession);
-      setSession(nextSession);
-      queryClient.clear();
-      return true;
-    } catch (cause) {
-      setError(appleSignInError(cause));
-      return false;
-    } finally {
-      setBusy(false);
-    }
-  }, [configuration]);
+  const signIn = useCallback(
+    async (email: string, password: string) => {
+      if (!configuration) {
+        setError(
+          "Supabase sign-in is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY, and configure SUPABASE_URL on the API.",
+        );
+        return false;
+      }
+      setBusy(true);
+      setError(null);
+      try {
+        const accessToken = await requestSupabaseAccessToken(email, password);
+        const response = await api.exchangeSupabaseIdentityToken(accessToken);
+        const nextSession = { token: response.sessionToken, expiresAt: response.expiresAt };
+        saveSession(nextSession);
+        setSession(nextSession);
+        queryClient.clear();
+        return true;
+      } catch (cause) {
+        setError(cause instanceof Error ? cause.message : "Sign-in could not be completed. Please try again.");
+        return false;
+      } finally {
+        setBusy(false);
+      }
+    },
+    [configuration],
+  );
 
   const signOut = useCallback(async () => {
     setError(null);
