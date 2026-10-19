@@ -131,11 +131,13 @@ function ServiceAccountDetail({
   return (
     <article className="address-detail">
       <div className="detail-heading">
-        <LegacyLogoPreview logo={legacyLogo} className="service-logo-heading" />
-        <div>
-          <p className="eyebrow">Service account</p>
-          <h3>{record.service}</h3>
-          <p className="address-code">{record.id}</p>
+        <div className="service-heading-identity">
+          <LegacyLogoPreview logo={legacyLogo} className="service-logo-heading" />
+          <div>
+            <p className="eyebrow">Service account</p>
+            <h3>{record.service}</h3>
+            <p className="address-code">{record.id}</p>
+          </div>
         </div>
         <span className="status-pill">{record.status || "—"}</span>
       </div>

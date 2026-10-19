@@ -1215,7 +1215,13 @@ dialog::backdrop {
   height: 64px;
   object-fit: contain;
   flex: 0 0 64px;
-  margin-right: 1rem;
+  margin-right: 0.45rem;
+}
+
+.service-heading-identity {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
 }
 .file-presentation .empty-state {
   padding: 1.2rem;
