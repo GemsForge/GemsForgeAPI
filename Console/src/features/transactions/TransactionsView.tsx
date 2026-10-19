@@ -10,7 +10,7 @@ import { QueryFeedback } from "../../components/QueryFeedback";
 import type { ExpenseTransaction } from "../../types";
 import { AttachmentControl } from "../../components/AttachmentControl";
 import { GemEmptyState, GemRecordCard, GemRecordList } from "../../components/ui";
-import { EditableRecordFields, formatRecordTimestamp } from "../../components/EditableRecordFields";
+import { EditableRecordFields, formatRecordDate, formatRecordTimestamp } from "../../components/EditableRecordFields";
 import { useCreateTransactionMutation } from "../../data/recordQueries";
 import { TransactionCreateForm } from "../create/RecordCreateForms";
 
@@ -162,6 +162,7 @@ function TransactionDetail({
             value: record.transactionDate,
             inputType: "date",
             nullable: true,
+            displayValue: formatRecordDate(record.transactionDate),
             onSave: async (value) => onPatch({ transactionDate: value as string | null }),
           },
           { label: "Category ID", value: record.categoryID, readOnlyReason: "Foreign key" },
