@@ -192,6 +192,10 @@ export interface ExpenseCategory {
   id: number;
   name: string;
 }
+export interface Merchant {
+  id: string;
+  name: string;
+}
 export interface ExpenseSubcategory {
   id: number;
   categoryID: number;

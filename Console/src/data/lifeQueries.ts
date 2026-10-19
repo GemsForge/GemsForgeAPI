@@ -9,6 +9,7 @@ export const lifeQueryKeys = {
   transactions: ["transactions"] as const,
   serviceAccounts: ["service-accounts"] as const,
   expenseCategories: ["expense-categories"] as const,
+  merchants: ["merchants"] as const,
   expenseSubcategories: (categoryID: number | null) => ["expense-subcategories", categoryID] as const,
 };
 
@@ -23,6 +24,10 @@ export function useExpenseCategoriesQuery(enabled: boolean) {
     queryFn: ({ signal }) => api.listExpenseCategories(signal),
     enabled,
   });
+}
+
+export function useMerchantsQuery(enabled: boolean) {
+  return useQuery({ queryKey: lifeQueryKeys.merchants, queryFn: ({ signal }) => api.listMerchants(signal), enabled });
 }
 
 export function useExpenseSubcategoriesQuery(categoryID: number | null, enabled: boolean) {

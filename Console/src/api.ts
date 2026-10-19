@@ -9,6 +9,7 @@ import type {
   EmploymentCreate,
   ExpenseTransaction,
   ExpenseCategory,
+  Merchant,
   ExpenseSubcategory,
   FileMetadata,
   ForgeKeeperPage,
@@ -75,6 +76,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 }
 
 export const api = {
+  listMerchants: (signal?: AbortSignal) => request<Merchant[]>("/merchants", { signal }),
   getHealth: async (signal?: AbortSignal) => {
     const response = await checkedFetch("/health", { signal });
     if ((await response.text()).trim() !== "ok")

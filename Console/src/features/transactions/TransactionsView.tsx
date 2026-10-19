@@ -18,7 +18,7 @@ import {
 } from "../../components/EditableRecordFields";
 import { useCreateTransactionMutation } from "../../data/recordQueries";
 import { TransactionCreateForm } from "../create/RecordCreateForms";
-import { useExpenseCategoriesQuery, useExpenseSubcategoriesQuery } from "../../data/lifeQueries";
+import { useExpenseCategoriesQuery, useExpenseSubcategoriesQuery, useMerchantsQuery } from "../../data/lifeQueries";
 
 interface TransactionsViewProps {
   records: ExpenseTransaction[];
@@ -31,6 +31,7 @@ export function TransactionsView({ records }: TransactionsViewProps) {
   const attachment = useTransactionImageMutation();
   const patch = useTransactionPatchMutation();
   const selectedRecord = detail.data;
+  const merchants = useMerchantsQuery(true);
   const [creating, setCreating] = useState(false);
   const create = useCreateTransactionMutation();
 
@@ -95,6 +96,7 @@ export function TransactionsView({ records }: TransactionsViewProps) {
               <TransactionDetail
                 key={selectedRecord.id}
                 record={selectedRecord}
+                merchants={merchants.data ?? []}
                 onAttachment={async (metadata) => {
                   await attachment.mutateAsync({ id: selectedRecord.id, fileID: metadata?.id ?? null });
                 }}
@@ -119,16 +121,17 @@ export function TransactionsView({ records }: TransactionsViewProps) {
 
 function TransactionDetail({
   record,
+  merchants,
   onAttachment,
   onPatch,
 }: {
   record: ExpenseTransaction;
+  merchants: import("../../types").Merchant[];
   onAttachment: (metadata: import("../../types").FileMetadata | null) => Promise<void>;
   onPatch: (values: Partial<ExpenseTransaction>) => Promise<void>;
 }) {
   const categories = useExpenseCategoriesQuery(true);
   const subcategories = useExpenseSubcategoriesQuery(record.categoryID, true);
-
   return (
     <article className="transaction-detail">
       <div className="detail-heading">
@@ -163,9 +166,12 @@ function TransactionDetail({
             onSave: async (value) => onPatch({ firstReceiptItem: value as boolean }),
           },
           {
-            label: "Merchant code",
+            label: "Merchant",
             value: record.merchantCode,
+            inputType: "select",
             nullable: true,
+            options: merchants.map((merchant) => ({ value: merchant.id, label: merchantDisplayName(merchant.name) })),
+            displayValue: merchantDisplayName(merchants.find((merchant) => merchant.id === record.merchantCode)?.name),
             onSave: async (value) => onPatch({ merchantCode: value as string | null }),
           },
           {
@@ -262,6 +268,11 @@ function TransactionDetail({
       />
     </article>
   );
+}
+
+function merchantDisplayName(name?: string) {
+  if (!name) return "—";
+  return name.replace(/^[\p{Extended_Pictographic}\p{Emoji_Presentation}\p{So}\p{Sk}\s]+/u, "").trim() || name;
 }
 
 function formatAmount(value: number | null) {

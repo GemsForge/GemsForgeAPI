@@ -40,6 +40,7 @@ enum EntryPoint {
         registerEmploymentRoutes(app)
         registerExpenseTransactionRoutes(app)
         registerExpenseCategoryRoutes(app)
+        registerMerchantRoutes(app)
         registerExpenseSubcategoryRoutes(app)
         registerEmojiLabelDefinitionRoutes(app)
         registerFileMetadataRoutes(app)

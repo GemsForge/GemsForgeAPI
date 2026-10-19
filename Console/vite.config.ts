@@ -58,6 +58,7 @@ export default defineConfig(({ mode }) => {
           "/transactions",
           "/expense-categories",
           "/expense-subcategories",
+          "/merchants",
           "/service-accounts",
           "/file-metadata",
           "/file-uploads",

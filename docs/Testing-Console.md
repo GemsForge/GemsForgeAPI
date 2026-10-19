@@ -247,3 +247,9 @@ Models                                   → existing table mappings
 The Console uses same-origin `fetch` requests through Vite's API proxy, so it
 does not require CORS. The API's `/app/` package is the production-base Console;
 the development UI runs on the Vite server.
+
+When adding a new API resource, add its path to the proxy allowlist in
+`Console/vite.config.ts` as well as registering the API route. For example,
+the merchant lookup requires `/merchants` in that list. Without the proxy
+entry, the Console receives the Vite application HTML instead of the API JSON,
+and dropdowns appear empty even though the API route and database query work.
