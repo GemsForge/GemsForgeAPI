@@ -6,7 +6,7 @@ import { AttachmentControl } from "../../components/AttachmentControl";
 import { GemEmptyState, GemRecordCard, GemRecordList } from "../../components/ui";
 import { useServiceAccountPatchMutation, useServiceAccountQuery } from "../../data/recordQueries";
 import type { ServiceAccount } from "../../types";
-import { EditableRecordFields, formatRecordTimestamp } from "../../components/EditableRecordFields";
+import { EditableRecordFields, formatRecordDate, formatRecordTimestamp } from "../../components/EditableRecordFields";
 import { useCreateServiceAccountMutation } from "../../data/recordQueries";
 import { ServiceAccountCreateForm } from "../create/RecordCreateForms";
 import { RecordImport } from "../../components/RecordImport";
@@ -201,6 +201,7 @@ function ServiceAccountDetail({
             value: record.since,
             inputType: "date",
             nullable: true,
+            displayValue: formatRecordDate(record.since),
             onSave: async (value) => onPatch({ since: value as string | null }),
           },
           {
@@ -226,6 +227,7 @@ function ServiceAccountDetail({
             value: record.emailUpdated,
             inputType: "date",
             nullable: true,
+            displayValue: formatRecordDate(record.emailUpdated),
             onSave: async (value) => onPatch({ emailUpdated: value as string | null }),
           },
           {

@@ -24,6 +24,16 @@ export function formatRecordTimestamp(value?: string | null): string {
   return Number.isNaN(timestamp.valueOf()) ? value : timestamp.toLocaleString();
 }
 
+/** Formats a date-only value without applying a timezone conversion. */
+export function formatRecordDate(value?: string | null): string {
+  const normalized = normalizeDateInput(value);
+  if (!normalized) return "Not recorded";
+  const [year, month, day] = normalized.split("-").map(Number);
+  return new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeZone: "UTC" }).format(
+    new Date(Date.UTC(year, month - 1, day)),
+  );
+}
+
 /** Shared field behavior with a resource-controlled semantic layout. */
 export function EditableRecordFields({ fields, className }: { fields: EditableRecordField[]; className?: string }) {
   return (
@@ -38,7 +48,7 @@ export function EditableRecordFields({ fields, className }: { fields: EditableRe
 function EditableField({ field }: { field: EditableRecordField }) {
   const instanceID = useId();
   const value = field.value ?? null;
-  const initialValue = value === null ? "" : String(value);
+  const initialValue = value === null ? "" : field.inputType === "date" ? normalizeDateInput(String(value)) : String(value);
   const editor = useRecordEditor(initialValue, async (draft) => {
     if (!field.onSave) return;
     await field.onSave(parseValue(draft, field));
@@ -135,6 +145,19 @@ function parseValue(value: string, field: EditableRecordField): EditableValue {
   if (value === "" && field.nullable) return null;
   if (field.inputType === "number") return Number(value);
   return value;
+}
+
+function normalizeDateInput(value?: string | null): string {
+  if (!value) return "";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+  const legacy = /^(\d{2})([A-Za-z]{3})(\d{4})$/.exec(value);
+  if (legacy) {
+    const month = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+      .indexOf(legacy[2]);
+    if (month >= 0) return `${legacy[3]}-${String(month + 1).padStart(2, "0")}-${legacy[1]}`;
+  }
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.valueOf()) ? "" : parsed.toISOString().slice(0, 10);
 }
 
 function presentValue(value: EditableValue): string {
