@@ -26,6 +26,7 @@ export function ServiceAccountsView({ records }: { records: ServiceAccount[] }) 
   const patch = useServiceAccountPatchMutation();
   const [creating, setCreating] = useState(false);
   const create = useCreateServiceAccountMutation();
+  const logos = useServiceLogosQuery(true);
   return (
     <>
       <PaginationControls {...paging} label="Services" />
@@ -77,7 +78,10 @@ export function ServiceAccountsView({ records }: { records: ServiceAccount[] }) 
             renderRecord={(record) => (
               <GemRecordCard
                 className="address-card"
-                icon="◎"
+                icon={(() => {
+                  const logo = logos.data?.find((item) => item.logoKey === record.logoKey);
+                  return logo ? <LegacyLogoPreview logo={logo} className="service-account-card-logo" /> : "◎";
+                })()}
                 title={record.service}
                 subtitle={`${record.type || "Service"} · ${record.id}`}
                 status={record.status || undefined}
