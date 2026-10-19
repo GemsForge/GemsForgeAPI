@@ -5,7 +5,7 @@ import { useEmploymentPatchMutation, useEmploymentRecordQuery } from "../../data
 import { QueryFeedback } from "../../components/QueryFeedback";
 import type { Employment } from "../../types";
 import { GemEmptyState, GemRecordCard, GemRecordList } from "../../components/ui";
-import { EditableRecordFields, formatRecordTimestamp } from "../../components/EditableRecordFields";
+import { EditableRecordFields, formatRecordDate, formatRecordTimestamp } from "../../components/EditableRecordFields";
 import { useCreateEmploymentMutation } from "../../data/recordQueries";
 import { useAddressesQuery } from "../../data/lifeQueries";
 import { EmploymentCreateForm } from "../create/RecordCreateForms";
@@ -168,6 +168,7 @@ function EmploymentDetail({
             value: record.startDate,
             inputType: "date",
             nullable: true,
+            displayValue: formatRecordDate(record.startDate),
             onSave: async (value) => onPatch({ startDate: value as string | null }),
           },
           {
@@ -175,6 +176,7 @@ function EmploymentDetail({
             value: record.endDate,
             inputType: "date",
             nullable: true,
+            displayValue: formatRecordDate(record.endDate),
             onSave: async (value) => onPatch({ endDate: value as string | null }),
           },
           {

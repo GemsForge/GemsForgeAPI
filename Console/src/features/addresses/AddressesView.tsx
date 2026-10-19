@@ -6,7 +6,7 @@ import { QueryFeedback } from "../../components/QueryFeedback";
 import type { Address } from "../../types";
 import { AttachmentControl } from "../../components/AttachmentControl";
 import { GemEmptyState, GemRecordCard, GemRecordList } from "../../components/ui";
-import { EditableRecordFields, formatRecordTimestamp } from "../../components/EditableRecordFields";
+import { EditableRecordFields, formatRecordDate, formatRecordTimestamp } from "../../components/EditableRecordFields";
 import { useCreateAddressMutation } from "../../data/recordQueries";
 import { AddressCreateForm } from "../create/RecordCreateForms";
 import { RecordImport } from "../../components/RecordImport";
@@ -183,6 +183,7 @@ function AddressDetail({
             value: record.startDate,
             inputType: "date",
             nullable: true,
+            displayValue: formatRecordDate(record.startDate),
             onSave: async (value) => onPatch({ startDate: value as string | null }),
           },
           {
@@ -190,6 +191,7 @@ function AddressDetail({
             value: record.endDate,
             inputType: "date",
             nullable: true,
+            displayValue: formatRecordDate(record.endDate),
             onSave: async (value) => onPatch({ endDate: value as string | null }),
           },
           {
