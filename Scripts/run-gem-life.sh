@@ -119,10 +119,9 @@ fi
 api_pid=$!
 
 api_ready=0
-# Swift may need more than ten seconds to build the API from a cold cache.
-# Keep polling long enough to cover a clean local build before reporting a
-# startup failure.
-for attempt in {1..300}; do
+# Swift may need substantially longer than the health-check interval on a
+# clean or invalidated build. Keep the selected port reserved while it builds.
+for attempt in {1..600}; do
   if ! kill -0 "$api_pid" 2>/dev/null; then break; fi
   if curl --silent --output /dev/null --max-time 1 "http://127.0.0.1:${api_port}/health"; then api_ready=1; break; fi
   sleep 0.1
