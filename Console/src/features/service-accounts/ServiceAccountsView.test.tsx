@@ -3,6 +3,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ServiceAccountsView } from "./ServiceAccountsView";
 import type { ServiceAccount } from "../../types";
+import { TamaguiProvider } from "tamagui";
+import { tamaguiConfig } from "../../design-system";
 
 const mocks = vi.hoisted(() => ({
   patch: vi.fn(),
@@ -47,7 +49,9 @@ describe("ServiceAccountsView", () => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     render(
       <QueryClientProvider client={client}>
-        <ServiceAccountsView records={[mocks.account]} />
+        <TamaguiProvider config={tamaguiConfig}>
+          <ServiceAccountsView records={[mocks.account]} />
+        </TamaguiProvider>
       </QueryClientProvider>,
     );
   }
