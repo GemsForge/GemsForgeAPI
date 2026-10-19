@@ -293,7 +293,6 @@ function ServiceAccountDetail({
           },
         ]}
       />
-      <LegacyLogoPreview logo={legacyLogo} />
       <AttachmentControl
         fileMetadataID={record.logoFileMetadataID ?? legacyLogo?.fileMetadataID}
         ownerType="ServiceAccount"
