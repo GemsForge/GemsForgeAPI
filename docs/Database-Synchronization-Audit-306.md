@@ -29,14 +29,15 @@ GemLife_DB_rebuild.sqlite → GemLife_DB_fit.sqlite
 | Employment | 5 | 5 | 5 |
 | Transactions | 49 | 49 | 49 |
 | Services | 57 | 57 | 57 |
-| FileMetadata | 0 | 65 | 65 |
+| FileMetadata | 65 | 65 | 65 |
 | ForgeKeeper | 0 | 0 | 0 |
 | GemHues | 23 | 23 | 23 |
 | HomeInventory | 0 | 0 | 0 |
 
-The business-record counts currently match for the tables checked. Dev and fit
-already contain 65 file-metadata rows that are absent from the main database;
-these must not be overwritten or blindly copied during synchronization.
+The business-record counts currently match for the tables checked, including
+the 65 `FileMetadata` rows now present in all three databases. The
+preview/backup workflow must still preserve these rows and reconcile file
+paths and ownership explicitly rather than blindly replacing them.
 
 ## Schema and ownership findings
 
