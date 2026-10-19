@@ -36,11 +36,24 @@ and target and refuses target names other than `GemLife_DB_fit.sqlite`.
 
 ## API and console startup
 
-From the repository root:
+Use two terminals for the integrated development app. In Terminal 1, from the
+`GemsForgeAPI` repository root (not `Console/` or a different project's root):
 
 ~~~bash
 swift run GemLife
 ~~~
+
+In Terminal 2, start the React Console:
+
+~~~bash
+cd Console
+npm run dev
+~~~
+
+`swift run GemLife` starts the API and native `GemLifeHost` window; it does not
+start Vite. The host loads the Console at `http://localhost:5173/`, so the
+window remains blank until the Console dev server is running. Stop the app by
+pressing Ctrl-C in Terminal 1.
 
 The launcher starts the API and Gem Life host. By default it asks the operating
 system for an available ephemeral loopback port, so separate local projects do

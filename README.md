@@ -232,31 +232,30 @@ DATABASE_PATH="/absolute/path/to/GemLife_DB_rebuild.sqlite" \
 swift run GemsForgeAPI serve --hostname 127.0.0.1 --port 8081
 ```
 
-To run the native host as well, first start the React Console from `Console/`
-with `npm run dev`, then run the combined launcher:
+## Run the integrated Gem Life app in development
 
-```bash
-DATABASE_PATH="/absolute/path/to/GemLife_DB_rebuild.sqlite" \
-./Scripts/run-gem-life.sh
-```
-
-The launcher starts both `swift run GemsForgeAPI` and `swift run GemLifeHost`.
-It selects an available API port automatically and the Console's Vite proxy
-follows that port. The host loads the Console from `http://localhost:5173/`.
-Press `Ctrl-C` once to stop both executables. The explicit executable names
-are required because bare `swift run` is ambiguous when the package contains
-both products.
-
-For a memorable Swift command, the package also provides a `GemLife` launcher
-target:
+Use two terminals. In Terminal 1, run the app launcher from the
+`GemsForgeAPI` repository root (not from `Console/` or another project):
 
 ```bash
 swift run GemLife
 ```
 
-`swift run GemLife` delegates to the same repository launcher, so the API and
-host lifecycle behavior stays in one place. The launcher reads the ignored
-`.env` file automatically; explicitly exported variables take precedence.
+In Terminal 2, start the React Console:
+
+```bash
+cd Console
+npm run dev
+```
+
+The launcher starts the API and native `GemLifeHost` window. The host displays
+the Console served at `http://localhost:5173/`; its Vite proxy follows the API
+port selected by the launcher. If the native window is blank, confirm the
+Console dev server is running. Press `Ctrl-C` in Terminal 1 to stop the API
+and host.
+
+The launcher reads the ignored `.env` file automatically; explicitly exported
+variables take precedence.
 
 The current verification checkpoint is the health test:
 

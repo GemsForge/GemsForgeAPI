@@ -33,22 +33,29 @@ fixture files only and do not connect to the configured personal database.
 
 ## Local development
 
-Start the React Console from `Console/`:
+For development, use two terminals. In Terminal 1, from the repository root,
+start the API and native host:
 
 ```text
+swift run GemLife
+```
+
+In Terminal 2, start the React Console from `Console/`:
+
+```text
+cd Console
 npm run dev
 ```
 
-Then run the `GemLifeHost` debug target. Debug defaults to `http://localhost:5173/`;
-release defaults to `http://127.0.0.1:8081/app/`. Set `GEM_LIFE_CONSOLE_URL`
-in the host scheme to use another loopback URL. Remote/file URLs are rejected.
+The native window loads `http://localhost:5173/`; it will appear blank until
+the Console dev server is running. The integrated release launcher passes the
+selected API port's `/app/` URL to the host. Set `GEM_LIFE_CONSOLE_URL` in the
+host scheme to use another loopback URL. Remote/file URLs are rejected.
 
-The repository-level `Scripts/run-gem-life.sh` launcher starts both the API and
-host together. The React Console still needs to be running from `Console/` with
-`npm run dev`.
-
-The same launcher is available as `swift run GemLife` when run from the
-repository root. It loads the ignored local `.env` file automatically.
+The repository-level launcher loads the ignored local `.env` file
+automatically. `swift run GemLife` is the convenient command for it and must
+be run from the `GemsForgeAPI` repository root, not from `Console/` or another
+repository.
 
 ## Bridge boundary
 
