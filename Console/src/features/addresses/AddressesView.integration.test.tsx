@@ -93,7 +93,7 @@ describe("Addresses create/edit integration", () => {
       within(addressType)
         .getAllByRole("option")
         .map((option) => option.textContent),
-    ).toEqual(["Residence", "Storage", "Work", "Other"]);
+    ).toEqual(["Residence", "Storage", "Work", "School", "Other"]);
     fireEvent.change(addressType, { target: { value: "Work" } });
     fireEvent.click(screen.getByRole("button", { name: "Save address type" }));
     await waitFor(() => expect(patch).toHaveBeenCalledWith("ADDR-273", { addressType: "Work" }));

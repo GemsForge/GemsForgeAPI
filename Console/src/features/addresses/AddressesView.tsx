@@ -136,6 +136,7 @@ function AddressDetail({
               { label: "Residence", value: "Residence" },
               { label: "Storage", value: "Storage" },
               { label: "Work", value: "Work" },
+              { label: "School", value: "School" },
               { label: "Other", value: "Other" },
             ],
             onSave: async (value) => onPatch({ addressType: value as string }),
