@@ -196,6 +196,13 @@ function AddressDetail({
             label: "Address status",
             value: record.addressStatus,
             required: true,
+            inputType: "select",
+            options: [
+              { label: "Current", value: "Current" },
+              { label: "Former", value: "Former" },
+              { label: "Seasonal", value: "Seasonal" },
+              { label: "Other", value: "Other" },
+            ],
             onSave: async (value) => onPatch({ addressStatus: value as string }),
           },
           {

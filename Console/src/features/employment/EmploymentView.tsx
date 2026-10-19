@@ -10,6 +10,14 @@ import { useCreateEmploymentMutation } from "../../data/recordQueries";
 import { useAddressesQuery } from "../../data/lifeQueries";
 import { EmploymentCreateForm } from "../create/RecordCreateForms";
 
+const employmentOptions = {
+  industry: ["Technology", "Healthcare", "Education", "Finance", "Government", "Retail", "Hospitality", "Manufacturing", "Other"],
+  employerType: ["Company", "Nonprofit", "Government", "Self-employed", "Other"],
+  status: ["Current", "Former", "On leave", "Seasonal"],
+};
+
+const toOptions = (values: string[]) => values.map((value) => ({ value, label: value }));
+
 interface EmploymentViewProps {
   records: Employment[];
 }
@@ -134,6 +142,8 @@ function EmploymentDetail({
           {
             label: "Employer type",
             value: record.employerType,
+            inputType: "select",
+            options: toOptions(employmentOptions.employerType),
             required: true,
             onSave: async (value) => onPatch({ employerType: value as string }),
           },
@@ -152,12 +162,16 @@ function EmploymentDetail({
           {
             label: "Employment status",
             value: record.employmentStatus,
+            inputType: "select",
+            options: toOptions(employmentOptions.status),
             required: true,
             onSave: async (value) => onPatch({ employmentStatus: value as string }),
           },
           {
             label: "Industry",
             value: record.industry,
+            inputType: "select",
+            options: toOptions(employmentOptions.industry),
             nullable: true,
             onSave: async (value) => onPatch({ industry: value as string | null }),
           },
