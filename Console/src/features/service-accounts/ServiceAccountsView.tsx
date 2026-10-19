@@ -6,7 +6,13 @@ import { AttachmentControl } from "../../components/AttachmentControl";
 import { GemEmptyState, GemRecordCard, GemRecordList } from "../../components/ui";
 import { useServiceAccountPatchMutation, useServiceAccountQuery } from "../../data/recordQueries";
 import type { ServiceAccount } from "../../types";
-import { EditableRecordFields, formatRecordDate, formatRecordTimestamp } from "../../components/EditableRecordFields";
+import {
+  EditableRecordFields,
+  formatRecordCurrency,
+  formatRecordDate,
+  formatRecordPercentage,
+  formatRecordTimestamp,
+} from "../../components/EditableRecordFields";
 import { useCreateServiceAccountMutation } from "../../data/recordQueries";
 import { ServiceAccountCreateForm } from "../create/RecordCreateForms";
 
@@ -168,6 +174,7 @@ function ServiceAccountDetail({
             inputType: "number",
             step: "0.01",
             nullable: true,
+            displayValue: formatRecordCurrency(record.monthlyAmount),
             onSave: async (value) => onPatch({ monthlyAmount: value as number | null }),
           },
           {
@@ -176,6 +183,7 @@ function ServiceAccountDetail({
             inputType: "number",
             step: "0.0001",
             nullable: true,
+            displayValue: formatRecordPercentage(record.interestRate),
             onSave: async (value) => onPatch({ interestRate: value as number | null }),
           },
           {
@@ -184,6 +192,7 @@ function ServiceAccountDetail({
             inputType: "number",
             step: "0.0001",
             nullable: true,
+            displayValue: formatRecordPercentage(record.apr),
             onSave: async (value) => onPatch({ apr: value as number | null }),
           },
           {

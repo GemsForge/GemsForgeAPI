@@ -34,6 +34,14 @@ export function formatRecordDate(value?: string | null): string {
   return `${String(day).padStart(2, "0")}${monthName}${year}`;
 }
 
+export function formatRecordCurrency(value?: number | null): string {
+  return value === null || value === undefined ? "Not recorded" : value.toLocaleString(undefined, { style: "currency", currency: "USD" });
+}
+
+export function formatRecordPercentage(value?: number | null): string {
+  return value === null || value === undefined ? "Not recorded" : `${value}%`;
+}
+
 /** Shared field behavior with a resource-controlled semantic layout. */
 export function EditableRecordFields({ fields, className }: { fields: EditableRecordField[]; className?: string }) {
   return (
