@@ -234,25 +234,17 @@ swift run GemsForgeAPI serve --hostname 127.0.0.1 --port 8081
 
 ## Run the integrated Gem Life app in development
 
-Use two terminals. In Terminal 1, run the app launcher from the
-`GemsForgeAPI` repository root (not from `Console/` or another project):
+Run the app launcher from the `GemsForgeAPI` repository root (not from
+`Console/` or another project):
 
 ```bash
 swift run GemLife
 ```
 
-In Terminal 2, start the React Console:
-
-```bash
-cd Console
-npm run dev
-```
-
-The launcher starts the API and native `GemLifeHost` window. The host displays
-the Console served at `http://127.0.0.1:5173/`; its Vite proxy follows the API
-port selected by the launcher. If the native window is blank, confirm the
-Console dev server is running. Press `Ctrl-C` in Terminal 1 to stop the API
-and host.
+The launcher starts the API, waits for the Console at `http://127.0.0.1:5173/`,
+then opens the native `GemLifeHost` window. Its Vite proxy follows the API port
+selected by the launcher. It reuses this project's Console if it is already
+running, and stops only processes it started when you press `Ctrl-C`.
 
 The launcher reads the ignored `.env` file automatically; explicitly exported
 variables take precedence.

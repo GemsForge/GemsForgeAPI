@@ -33,24 +33,17 @@ fixture files only and do not connect to the configured personal database.
 
 ## Local development
 
-For development, use two terminals. In Terminal 1, from the repository root,
-start the API and native host:
+For development, run the app launcher from the repository root:
 
 ```text
 swift run GemLife
 ```
 
-In Terminal 2, start the React Console from `Console/`:
-
-```text
-cd Console
-npm run dev
-```
-
-The native window loads `http://127.0.0.1:5173/`; it will appear blank until
-the Console dev server is running. The integrated release launcher passes the
-selected API port's `/app/` URL to the host. Set `GEM_LIFE_CONSOLE_URL` in the
-host scheme to use another loopback URL. Remote/file URLs are rejected.
+In development, the launcher starts the API and Console, waits for the Console
+to respond, and then opens the native host. The integrated release launcher
+passes the selected API port's `/app/` URL to the host. Set
+`GEM_LIFE_CONSOLE_URL` in the host scheme to use another loopback URL.
+Remote/file URLs are rejected.
 
 The repository-level launcher loads the ignored local `.env` file
 automatically. `swift run GemLife` is the convenient command for it and must

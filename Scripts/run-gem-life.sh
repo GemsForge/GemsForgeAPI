@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Start the Vapor API and native Gem Life host as one local development session.
+# Start the Vapor API, React Console and native Gem Life host together.
 set -Eeuo pipefail
 
 repository_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -35,6 +35,7 @@ temp_root="${TMPDIR:-/tmp}"
 port_lock_dir="${temp_root%/}/gemlife-api-port-allocation.lock"
 port_lock_owned=0
 api_pid=""
+console_pid=""
 
 acquire_port_lock() {
   local attempt
@@ -71,6 +72,12 @@ release_port_lock() {
 cleanup() {
   local exit_code=$?
   trap - EXIT INT TERM
+
+  if [[ -n "$console_pid" ]] && kill -0 "$console_pid" 2>/dev/null; then
+    echo "Stopping Gem Life Console (pid $console_pid)…"
+    kill "$console_pid" 2>/dev/null || true
+    wait "$console_pid" 2>/dev/null || true
+  fi
 
   if [[ -n "$api_pid" ]] && kill -0 "$api_pid" 2>/dev/null; then
     echo "Stopping GemsForgeAPI (pid $api_pid)…"
@@ -123,10 +130,46 @@ if [[ "$api_ready" != "1" ]]; then
 fi
 release_port_lock
 
+if [[ "${GEM_LIFE_PRODUCTION:-0}" != "1" ]]; then
+  console_directory="$repository_root/Console"
+  vite_executable="$console_directory/node_modules/.bin/vite"
+  console_url="http://127.0.0.1:5173/"
+
+  if ! curl --silent --fail --max-time 1 "$console_url" | grep -q '<title>Gem Life Testing Console</title>'; then
+    if [[ ! -x "$vite_executable" ]]; then
+      echo "Console dependencies are missing. Run 'cd Console && npm ci', then retry." >&2
+      exit 1
+    fi
+    echo "Starting Gem Life Console on ${console_url}…"
+    (
+      cd "$console_directory"
+      exec ./node_modules/.bin/vite --strictPort
+    ) &
+    console_pid=$!
+  else
+    echo "Using the already-running Gem Life Console at ${console_url}."
+  fi
+
+  console_ready=0
+  for attempt in {1..100}; do
+    if [[ -n "$console_pid" ]] && ! kill -0 "$console_pid" 2>/dev/null; then break; fi
+    if curl --silent --fail --max-time 1 "$console_url" | grep -q '<title>Gem Life Testing Console</title>'; then
+      console_ready=1
+      break
+    fi
+    sleep 0.1
+  done
+  if [[ "$console_ready" != "1" ]]; then
+    echo "The Gem Life Console did not become ready at ${console_url}. Check whether another app is using port 5173." >&2
+    exit 1
+  fi
+fi
+
 echo "Starting GemLifeHost…"
-echo "Stop both executables with Ctrl-C."
 if [[ "${GEM_LIFE_PRODUCTION:-0}" == "1" ]]; then
+  echo "Stop the API and host with Ctrl-C."
   "${binary_directory}/GemLifeHost"
 else
+  echo "Stop the API, Console and host with Ctrl-C."
   swift run GemLifeHost
 fi
