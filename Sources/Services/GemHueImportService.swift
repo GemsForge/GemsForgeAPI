@@ -20,7 +20,7 @@ struct GemHueImportService: Sendable {
             if !seen.insert(row.id).inserted { errors.append("HueID is duplicated in this import.") }
             if !seenNames.insert(row.colorName).inserted { errors.append("ColorName is duplicated in this import.") }
             if try await GemHueService(database: database, hubID: hubID).find(id: row.id) != nil { errors.append("HueID already exists in the database.") }
-            if try await GemHue.query(on: database).filter($.colorName == row.colorName).first() != nil { errors.append("ColorName already exists in the database.") }
+            if try await GemHue.query(on: database).filter(\.$colorName == row.colorName).first() != nil { errors.append("ColorName already exists in the database.") }
             if errors.isEmpty { valid.append(row) } else { invalid.append(.init(rowNumber: index + 1, errors: errors)) }
         }
         return .init(validRows: valid, invalidRows: invalid, readyToImport: !valid.isEmpty && invalid.isEmpty, warnings: ["Preview only: no database rows were changed.", "JSON rows must use Gem Hues table column names."])
