@@ -21,10 +21,24 @@ starting an HTTP server; it is not a public migration endpoint.
 
 ## Run the bootstrap
 
-From the repository root, provide the exact filename shown by `DATABASE_PATH`:
+The bootstrap is available for the local `dev` and `fit` environments. It is
+not available for `prod`. Set `GEMLIFE_ENVIRONMENT` and the matching database
+and backup variables before running it; the command selects the environment-
+specific paths automatically.
+
+From the repository root, provide the exact filename shown by the selected
+environment's database path (`DATABASE_PATH` for DEV or `DATABASE_PATH_FIT` for
+FIT):
 
 ```bash
 Scripts/bootstrap-legacy-database.sh GemLife_DB_dev.sqlite
+```
+
+For FIT, set `GEMLIFE_ENVIRONMENT=fit` and the FIT-specific database and backup
+variables, then run:
+
+```bash
+Scripts/bootstrap-legacy-database.sh GemLife_DB_fit.sqlite
 ```
 
 The script loads the ignored `.env` using the same safe environment-loading

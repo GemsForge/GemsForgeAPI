@@ -46,8 +46,8 @@ paths and ownership explicitly rather than blindly replacing them.
   migrated dev/fit schema.
 - Dev has `Accounts`, `AccountIdentities`, `AuthenticationSessions`, and
   `Hubs`; fit does not yet have those authentication tables.
-- Dev contains one account and one hub with ID
-  `94751B62-601D-4EE4-A9C0-142403E0B9F2`.
+- Dev contains one account with ID `94751B62-601D-4EE4-A9C0-142403E0B9F2` and
+  one hub with ID `E6F8137E-C2AC-4C00-A079-6E4272E344FD`.
 - All 25 dev address records currently have a null `HubID`, so the API hides
   them from the authenticated local account until ownership is explicitly
   reviewed and assigned.
@@ -66,3 +66,67 @@ paths and ownership explicitly rather than blindly replacing them.
    must not infer ownership silently.
 5. Priority gate: create verified backups and a dry-run plan before any target
    writes.
+
+## Final read-only verification — 2026-10-19
+
+The repository verifier was run against the approved source and both targets:
+
+```text
+python3 Scripts/verify-database-sync.py \
+  /Users/gemsforge/DBeaver/GemLife_DB_rebuild.sqlite \
+  /Users/gemsforge/DBeaver/GemLife_DB_dev.sqlite \
+  /Users/gemsforge/DBeaver/GemLife_DB_fit.sqlite
+```
+
+The initial verification result was `failed`. The managed row counts and all
+65 `FileMetadata` attachment references match across source, dev, and fit, but
+ownership was not ready for protected API use.
+
+The FIT schema blocker was then addressed on 2026-10-19. A byte-verified
+backup was created at:
+
+```text
+/Users/gemsforge/DBeaver/GemLife_DB_fit-before-hub-schema-20261019.sqlite
+```
+
+The approved ownership columns were added to FIT without copying or deleting
+records. The address ownership assignment was then explicitly applied to both
+DEV and FIT after confirming that all address rows belong to the local hub
+`E6F8137E-C2AC-4C00-A079-6E4272E344FD`. Fresh backups were created before that
+write:
+
+```text
+/Users/gemsforge/DBeaver/GemLife_DB_dev-before-address-ownership-20261019.sqlite
+/Users/gemsforge/DBeaver/GemLife_DB_fit-before-address-ownership-20261019.sqlite
+```
+
+The final read-only verification returned `verified`:
+
+- DEV: 25 of 25 address rows assigned; 0 unowned.
+- FIT: 25 of 25 address rows assigned; 0 unowned.
+
+The source database was not modified. The remaining verification step for
+#305 is the API smoke test against both target environments.
+
+## Repeatable FIT ownership procedure
+
+The local SQLite edits above are a completed environment repair, not the
+deployment mechanism. Future FIT setup must use a repeatable, versioned flow:
+
+```text
+verified backup → versioned HubID schema migration → explicit ownership seed
+→ row-count and ownership verification → API smoke test
+```
+
+The ownership seed must be idempotent, accept the intended `HubID` through
+environment configuration, and require an explicit confirmation flag before
+writing. It must not hard-code a personal account or hub ID, infer ownership
+from the source database, or overwrite production data. The FIT backup must be
+retained until verification succeeds. This is the required follow-up before
+considering #305 fully complete after merging to `master`.
+
+The repository entry point for this operation is
+`Scripts/seed-database-ownership.py`. It accepts only the DEV or FIT database
+filename, requires `--hub-id`, `--backup-directory`, and
+`--confirm-ownership-seed`, and skips tables that have not received the
+ownership schema yet.

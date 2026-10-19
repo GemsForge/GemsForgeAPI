@@ -16,7 +16,7 @@ enum LegacyDatabaseBootstrapError: Error, CustomStringConvertible {
     var description: String {
         switch self {
         case .developmentOnly:
-            return "Legacy database bootstrap is restricted to the dev environment."
+            return "Legacy database bootstrap is restricted to the dev and fit environments."
         case .confirmationRequired:
             return "Confirm the exact configured database filename before applying migrations."
         case .databaseMissing:
@@ -35,9 +35,9 @@ enum LegacyDatabaseBootstrapError: Error, CustomStringConvertible {
     }
 }
 
-/// Runs the repository migration profile offline for an existing dev database.
-/// This path exists for the first authenticated startup, when protected live
-/// migration routes cannot yet be reached because auth tables are missing.
+/// Runs the repository migration profile offline for an existing DEV or FIT
+/// database. This path exists for first authenticated startup, when protected
+/// live migration routes cannot yet be reached because auth tables are missing.
 struct LegacyDatabaseBootstrapService: Sendable {
     let environment: DatabaseEnvironment
     let backupConfiguration: LiveDatabaseBackupConfiguration?
@@ -46,7 +46,7 @@ struct LegacyDatabaseBootstrapService: Sendable {
         using application: Application,
         confirmationFilename: String
     ) async throws -> LiveRepositoryMigrationExecution {
-        guard environment == .dev else {
+        guard environment == .dev || environment == .fit else {
             throw LegacyDatabaseBootstrapError.developmentOnly
         }
         guard let backupConfiguration else {
@@ -96,7 +96,7 @@ struct LegacyDatabaseBootstrapService: Sendable {
         _ configuration: LiveDatabaseBackupConfiguration,
         confirmationFilename: String
     ) throws {
-        guard environment == .dev else {
+        guard environment == .dev || environment == .fit else {
             throw LegacyDatabaseBootstrapError.developmentOnly
         }
         let sourceURL = configuration.sourceURL.standardizedFileURL
