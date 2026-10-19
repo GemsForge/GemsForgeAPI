@@ -131,6 +131,7 @@ function ServiceAccountDetail({
   return (
     <article className="address-detail">
       <div className="detail-heading">
+        <LegacyLogoPreview logo={legacyLogo} className="service-logo-heading" />
         <div>
           <p className="eyebrow">Service account</p>
           <h3>{record.service}</h3>
@@ -303,7 +304,7 @@ function ServiceAccountDetail({
   );
 }
 
-function LegacyLogoPreview({ logo }: { logo?: { id: number; logoKey: string | null; imagePath: string } }) {
+function LegacyLogoPreview({ logo, className }: { logo?: { id: number; logoKey: string | null; imagePath: string }; className?: string }) {
   const [url, setUrl] = useState<string | null>(null);
   useEffect(() => {
     if (!logo) return;
@@ -321,5 +322,5 @@ function LegacyLogoPreview({ logo }: { logo?: { id: number; logoKey: string | nu
     };
   }, [logo?.id]);
   if (!logo || !url) return null;
-  return <img className="service-logo-preview" src={url} alt={`${logo.logoKey ?? "Service"} logo`} />;
+  return <img className={className ?? "service-logo-preview"} src={url} alt={`${logo.logoKey ?? "Service"} logo`} />;
 }
