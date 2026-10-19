@@ -42,10 +42,14 @@ From the repository root:
 swift run GemLife
 ~~~
 
-The launcher starts the API and Gem Life host. The API defaults to port 8081
-to avoid colliding with existing local API instances on port 8080. Override
-the port with `API_PORT` when needed. The React console can also be run
-independently from `Console/` with `npm run dev`.
+The launcher starts the API and Gem Life host. By default it asks the operating
+system for an available ephemeral loopback port, so separate local projects do
+not all compete for one fixed port. If `API_PORT` is set, the launcher uses it
+when available and automatically falls back to another free port when it is
+occupied. The selected port is printed at startup and exposed to the Console's
+Vite proxy through an ignored runtime file under `.build/`. The React console
+can also be run independently from `Console/` with `npm run dev`; set
+`VITE_API_TARGET` when the API is started outside the integrated launcher.
 
 The active console routes include /schema-builder and /live-database.
 /live-database is the reviewed interface for inspecting the configured live

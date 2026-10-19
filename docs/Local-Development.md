@@ -54,7 +54,8 @@ The active testing console is the React + TypeScript project in `Console/`.
 The legacy `Public/` root now provides sign-in guidance only and makes no
 anonymous API requests.
 
-Start the API on port `8081`, then run the console in a second terminal:
+For a standalone API and Console session, choose a free API port and set the
+same target for the Console. For example:
 
 ```bash
 cd Console
@@ -70,7 +71,7 @@ Open the React console:
 http://127.0.0.1:5173/
 ```
 
-The API-served root on the default local API port guides users to the packaged
+The standalone API-served root in the example port guides users to the packaged
 authenticated Console at `/app/`:
 
 ```text

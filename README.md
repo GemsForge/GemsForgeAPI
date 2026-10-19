@@ -241,9 +241,11 @@ DATABASE_PATH="/absolute/path/to/GemLife_DB_rebuild.sqlite" \
 ```
 
 The launcher starts both `swift run GemsForgeAPI` and `swift run GemLifeHost`.
-The host loads the Console from `http://localhost:5173/`. Press `Ctrl-C` once
-to stop both executables. The explicit executable names are required because
-bare `swift run` is ambiguous when the package contains both products.
+It selects an available API port automatically and the Console's Vite proxy
+follows that port. The host loads the Console from `http://localhost:5173/`.
+Press `Ctrl-C` once to stop both executables. The explicit executable names
+are required because bare `swift run` is ambiguous when the package contains
+both products.
 
 For a memorable Swift command, the package also provides a `GemLife` launcher
 target:
