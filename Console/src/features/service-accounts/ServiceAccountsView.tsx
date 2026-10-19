@@ -9,6 +9,7 @@ import type { ServiceAccount } from "../../types";
 import { EditableRecordFields, formatRecordDate, formatRecordTimestamp } from "../../components/EditableRecordFields";
 import { useCreateServiceAccountMutation } from "../../data/recordQueries";
 import { ServiceAccountCreateForm } from "../create/RecordCreateForms";
+import { RecordImport } from "../../components/RecordImport";
 
 export function ServiceAccountsView({ records }: { records: ServiceAccount[] }) {
   const paging = usePagedRecords(records);
@@ -31,6 +32,15 @@ export function ServiceAccountsView({ records }: { records: ServiceAccount[] }) 
           <button type="button" onClick={() => setCreating(true)}>
             Add service
           </button>
+          <RecordImport label="services" expectedColumns={["Service", "Type", "ExpenseGroup", "MonthlyAmount", "InterestRate", "APR", "Due", "Occurrence", "Status", "Since", "Website", "Notes", "PaymentMethod", "AccountNumber", "AssociatedAddress", "ServiceKey"]} onPublish={async (rows) => { for (const row of rows) await create.mutateAsync({
+            service: String(row.Service ?? row.service ?? ""), type: String(row.Type ?? row.type ?? "") || null,
+            expenseGroup: String(row.ExpenseGroup ?? "") || null, monthlyAmount: row.MonthlyAmount ? Number(row.MonthlyAmount) : null,
+            interestRate: row.InterestRate ? Number(row.InterestRate) : null, apr: row.APR ? Number(row.APR) : null,
+            due: String(row.Due ?? "") || null, occurrence: String(row.Occurrence ?? "") || null, status: String(row.Status ?? "") || null,
+            since: String(row.Since ?? "") || null, website: String(row.Website ?? "") || null, notes: String(row.Notes ?? "") || null,
+            paymentMethod: String(row.PaymentMethod ?? "") || null, accountNumber: String(row.AccountNumber ?? "") || null,
+            associatedAddress: String(row.AssociatedAddress ?? "") || null, serviceKey: String(row.ServiceKey ?? "") || null,
+          }); }} />
         </div>
       </div>
       {creating && (

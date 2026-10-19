@@ -129,6 +129,11 @@ export interface GemHue {
   notes: string | null;
 }
 
+export type GemHueCreate = Omit<GemHue, "id"> & { id: string };
+export interface GemHueImportPreview { validRows: GemHueCreate[]; invalidRows: { rowNumber: number; errors: string[] }[]; readyToImport: boolean; warnings: string[]; }
+export interface HubOwnershipPreview { hubID: string; unownedCounts: Record<string, number>; }
+export interface HubOwnershipAssignment { hubID: string; assignedCounts: Record<string, number>; }
+
 export interface Education {
   id: string;
   educationType: string;
