@@ -65,6 +65,10 @@ struct GemLifeWebView: NSViewRepresentable {
         func activateHostWindow(for webView: WKWebView) {
             DispatchQueue.main.async {
                 guard let window = webView.window else { return }
+                // A SwiftUI app launched directly from a terminal can start with
+                // an accessory activation policy. In that state the window may be
+                // visible, but it cannot become the active keyboard owner.
+                NSApp.setActivationPolicy(.regular)
                 NSApp.activate(ignoringOtherApps: true)
                 window.makeKeyAndOrderFront(nil)
                 window.makeFirstResponder(webView)
