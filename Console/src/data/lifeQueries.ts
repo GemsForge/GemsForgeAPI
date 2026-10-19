@@ -8,7 +8,6 @@ export const lifeQueryKeys = {
   addresses: ["addresses"] as const,
   transactions: ["transactions"] as const,
   serviceAccounts: ["service-accounts"] as const,
-  serviceLogos: ["service-logos"] as const,
   expenseCategories: ["expense-categories"] as const,
   merchants: ["merchants"] as const,
   expenseSubcategories: (categoryID: number | null) => ["expense-subcategories", categoryID] as const,
@@ -70,8 +69,4 @@ export function useServiceAccountsQuery(enabled: boolean) {
     queryFn: ({ signal }) => api.listServiceAccounts(signal),
     enabled,
   });
-}
-
-export function useServiceLogosQuery(enabled: boolean) {
-  return useQuery({ queryKey: lifeQueryKeys.serviceLogos, queryFn: ({ signal }) => api.listServiceLogos(signal), enabled });
 }

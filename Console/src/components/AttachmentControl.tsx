@@ -12,7 +12,6 @@ interface AttachmentControlProps {
   onAttach: (metadata: FileMetadata | null) => Promise<void>;
   /** Future native picker adapter returns a File or null when cancelled. */
   selectImage?: () => Promise<File | null>;
-  className?: string;
 }
 
 /** Reusable browser control for upload, replacement, preview, and removal. */
@@ -23,7 +22,6 @@ export function AttachmentControl({
   label,
   onAttach,
   selectImage,
-  className,
 }: AttachmentControlProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const {
@@ -40,7 +38,7 @@ export function AttachmentControl({
   }
 
   return (
-    <div className={className ? `attachment-control ${className}` : "attachment-control"}>
+    <div className="attachment-control">
       <div className="attachment-heading">
         <div>
           <p className="eyebrow">Attachment</p>
