@@ -16,6 +16,8 @@ import type {
   GemHue,
   GemHueCreate,
   GemHueImportPreview,
+  HubOwnershipPreview,
+  HubOwnershipAssignment,
   HomeInventoryCSVImportResult,
   HomeInventoryCSVPreview,
   LiveSchema,
@@ -108,6 +110,8 @@ export const api = {
   createGemHue: (payload: GemHueCreate) => request<GemHue>("/gemhues", { method: "POST", body: JSON.stringify(payload) }),
   previewGemHueImport: (rows: GemHueCreate[]) => request<GemHueImportPreview>("/gemhues/import/preview", { method: "POST", body: JSON.stringify(rows) }),
   importGemHues: (rows: GemHueCreate[]) => request<{ importedCount: number }>("/gemhues/import", { method: "POST", body: JSON.stringify({ rows, confirmImport: true }) }),
+  previewHubOwnership: () => request<HubOwnershipPreview>("/operator/hub-ownership/preview"),
+  assignHubOwnership: (expectedUnownedCounts: Record<string, number>) => request<HubOwnershipAssignment>("/operator/hub-ownership/assign", { method: "POST", body: JSON.stringify({ confirmation: "assign-unowned-records-to-my-hub", expectedUnownedCounts }) }),
   getGemHue: (hueID: string, signal?: AbortSignal) =>
     request<GemHue>(`/gemhues/${encodeURIComponent(hueID)}`, { signal }),
   getGemHueImage: (hueID: string, signal?: AbortSignal) =>

@@ -28,6 +28,7 @@ export function GemHuesView({ hues }: GemHuesViewProps) {
   const [importPreview, setImportPreview] = useFormState<Awaited<ReturnType<typeof api.previewGemHueImport>> | null>(null);
   const [importError, setImportError] = useFormState<string | null>(null);
   const [importing, setImporting] = useFormState(false);
+  const [ownership, setOwnership] = useFormState<{ counts: Record<string, number>; message?: string } | null>(null);
 
   useEffect(() => {
     if (!image.data) {
@@ -59,6 +60,16 @@ export function GemHuesView({ hues }: GemHuesViewProps) {
           <button type="button" onClick={() => setShowAdd(false)}>Import CSV / JSON</button>
         </div>
       </div>
+      <section className="record-form">
+        <h3>Assign existing records to my hub</h3>
+        <p className="muted">Use this only for legacy rows that already exist with no HubID. It does not create duplicates.</p>
+        <button type="button" onClick={async () => { const preview = await api.previewHubOwnership(); setOwnership({ counts: preview.unownedCounts }); }}>Preview ownership assignment</button>
+        {ownership && <>
+          <p>{Object.entries(ownership.counts).filter(([, count]) => count > 0).map(([table, count]) => `${table}: ${count}`).join(" · ") || "No unowned records found."}</p>
+          <button type="button" disabled={!Object.values(ownership.counts).some((count) => count > 0)} onClick={async () => { const result = await api.assignHubOwnership(ownership.counts); setOwnership({ counts: {}, message: `Assigned ${Object.values(result.assignedCounts).reduce((sum, count) => sum + count, 0)} records.` }); }}>Assign existing records</button>
+          {ownership.message && <p role="status">{ownership.message}</p>}
+        </>}
+      </section>
       <section className="record-form">
         <h3>Import Gem Hues</h3>
         <p className="muted">Paste a CSV export with headers such as HueID, ColorName, and HexCode, or a JSON array using those same names.</p>
