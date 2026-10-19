@@ -42,6 +42,7 @@ struct AddressSummaryResponse: Content {
     let endDate: String?
     let addressStatus: String
     let imageFileMetadataID: String?
+    let updatedAt: String?
 
     init(_ address: Address) {
         id = address.id
@@ -53,6 +54,7 @@ struct AddressSummaryResponse: Content {
         endDate = address.endDate
         addressStatus = address.addressStatus
         imageFileMetadataID = address.imageFileMetadataID
+        updatedAt = address.updatedAt
     }
 }
 
@@ -71,6 +73,7 @@ struct AddressDetailResponse: Content {
     let addressStatus: String
     let notes: String?
     let imageFileMetadataID: String?
+    let updatedAt: String?
 
     init(_ address: Address) {
         id = address.id
@@ -86,6 +89,7 @@ struct AddressDetailResponse: Content {
         addressStatus = address.addressStatus
         notes = address.notes
         imageFileMetadataID = address.imageFileMetadataID
+        updatedAt = address.updatedAt
     }
 }
 

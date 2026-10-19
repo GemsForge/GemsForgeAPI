@@ -52,6 +52,7 @@ struct EmploymentResponse: Content {
     let employerContactNumber: String?
     let employerContactEmail: String?
     let notes: String?
+    let updatedAt: String?
 
     init(_ record: Employment, address: AddressReferenceResponse?) {
         id = record.id
@@ -69,6 +70,7 @@ struct EmploymentResponse: Content {
         employerContactNumber = record.employerContactNumber
         employerContactEmail = record.employerContactEmail
         notes = record.notes
+        updatedAt = record.updatedAt
     }
 }
 
@@ -205,6 +207,7 @@ func registerEmploymentRoutes(_ app: Application) {
         record.employerContactNumber = value("employerContactNumber", record.employerContactNumber)
         record.employerContactEmail = value("employerContactEmail", record.employerContactEmail)
         record.notes = value("notes", record.notes)
+        record.updatedAt = RecordTimestamp.now()
         try await EmploymentService(database: request.db, hubID: request.authenticatedHubID).save(record)
         return try await employmentResponse(record, on: request.db)
     }

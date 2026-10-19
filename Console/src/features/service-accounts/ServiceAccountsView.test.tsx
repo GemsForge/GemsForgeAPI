@@ -70,4 +70,26 @@ describe("ServiceAccountsView", () => {
     expect(screen.queryByLabelText("Status")).not.toBeInTheDocument();
     expect(mocks.patch).not.toHaveBeenCalled();
   });
+
+  it("edits the service key through a changed-only PATCH", async () => {
+    renderView();
+    fireEvent.click(screen.getByRole("button", { name: /Internet/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Edit service key" }));
+    fireEvent.change(screen.getByLabelText("Service key"), { target: { value: "INTERNET_SERVICE" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save service key" }));
+    await waitFor(() => expect(mocks.patch).toHaveBeenCalledWith({ id: 7, patch: { serviceKey: "INTERNET_SERVICE" } }));
+  });
+
+  it("explains why legacy logo and address relationship values stay read-only", () => {
+    renderView();
+    fireEvent.click(screen.getByRole("button", { name: /Internet/ }));
+    expect(
+      screen.getByText("Legacy logo lookup relationship; no validated selector is available."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Legacy address value; no normalized, validated address selector is available."),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Edit logo key" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Edit associated address" })).not.toBeInTheDocument();
+  });
 });

@@ -8,6 +8,7 @@ final class AttachmentReferenceRouteTests: XCTestCase {
         try await withApp(configure: { app in
             app.databases.use(.sqlite(.memory), as: .sqlite)
             app.migrations.add(CreateAddresses())
+            app.migrations.add(AddAddressUpdatedAt())
             app.migrations.add(AddAddressAttachmentReference())
             app.migrations.add(CreateFileMetadata())
             try await app.autoMigrate()

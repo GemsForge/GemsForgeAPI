@@ -1,0 +1,143 @@
+import { useId, type ReactNode } from "react";
+import { useRecordEditor } from "../hooks/useRecordEditor";
+
+export type EditableValue = string | number | boolean | null | undefined;
+export type RecordInputType = "text" | "date" | "email" | "url" | "number" | "boolean" | "select" | "textarea";
+
+export interface EditableRecordField {
+  label: string;
+  value: EditableValue;
+  onSave?: (value: EditableValue) => Promise<void>;
+  inputType?: RecordInputType;
+  required?: boolean;
+  nullable?: boolean;
+  options?: Array<{ label: string; value: string }>;
+  step?: string;
+  displayValue?: ReactNode;
+  readOnlyReason?: string;
+  className?: string;
+}
+
+export function formatRecordTimestamp(value?: string | null): string {
+  if (!value) return "Not recorded";
+  const timestamp = new Date(value);
+  return Number.isNaN(timestamp.valueOf()) ? value : timestamp.toLocaleString();
+}
+
+/** Shared field behavior with a resource-controlled semantic layout. */
+export function EditableRecordFields({ fields, className }: { fields: EditableRecordField[]; className?: string }) {
+  return (
+    <dl className={className ? `record-fields ${className}` : "record-fields"}>
+      {fields.map((field) => (
+        <EditableField field={field} key={field.label} />
+      ))}
+    </dl>
+  );
+}
+
+function EditableField({ field }: { field: EditableRecordField }) {
+  const instanceID = useId();
+  const value = field.value ?? null;
+  const initialValue = value === null ? "" : String(value);
+  const editor = useRecordEditor(initialValue, async (draft) => {
+    if (!field.onSave) return;
+    await field.onSave(parseValue(draft, field));
+  });
+  const id = `edit-${instanceID}-${field.label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+  const labelID = `${id}-label`;
+  const common = {
+    id,
+    "aria-labelledby": labelID,
+    value: editor.draft,
+    required: field.required,
+    "aria-invalid": Boolean(editor.error),
+    onChange: (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
+      editor.setDraft(event.currentTarget.value),
+  };
+
+  return (
+    <div className={field.className}>
+      <dt className="editable-record-label" id={labelID}>
+        {field.label}
+        {field.onSave && !editor.editing && (
+          <button
+            type="button"
+            className="field-edit-button"
+            aria-label={`Edit ${field.label.toLowerCase()}`}
+            onClick={editor.begin}
+          >
+            <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+              <path d="M13.7 3.3a2 2 0 0 1 2.8 2.8L7.2 15.4l-3.7 1 1-3.7 9.2-9.4Z" />
+              <path d="m12.3 4.7 3 3" />
+            </svg>
+          </button>
+        )}
+      </dt>
+      <dd>
+        {!field.onSave || !editor.editing ? (
+          <>
+            {field.displayValue ?? presentValue(value)}
+            {field.readOnlyReason && <small className="field-readonly-reason">{field.readOnlyReason}</small>}
+          </>
+        ) : (
+          <form
+            className="edit-form editable-field-form"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void editor.save();
+            }}
+          >
+            {field.inputType === "textarea" ? (
+              <textarea {...common} rows={3} />
+            ) : field.inputType === "select" ? (
+              <select {...common}>
+                {field.nullable && <option value="">—</option>}
+                {(field.options ?? []).map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            ) : field.inputType === "boolean" ? (
+              <input
+                id={id}
+                aria-labelledby={labelID}
+                type="checkbox"
+                checked={editor.draft === "true"}
+                onChange={(event) => editor.setDraft(String(event.currentTarget.checked))}
+              />
+            ) : (
+              <input type={field.inputType ?? "text"} step={field.step} {...common} />
+            )}
+            {field.nullable && field.inputType !== "boolean" && field.inputType !== "select" && (
+              <button type="button" className="text-button" onClick={() => editor.setDraft("")}>
+                Clear value
+              </button>
+            )}
+            {editor.error && <p role="alert">{editor.error}</p>}
+            <div className="button-row">
+              <button type="submit" disabled={editor.saving || !editor.dirty}>
+                {editor.saving ? "Saving…" : `Save ${field.label.toLowerCase()}`}
+              </button>
+              <button type="button" className="secondary-button" disabled={editor.saving} onClick={editor.cancel}>
+                Cancel
+              </button>
+            </div>
+          </form>
+        )}
+      </dd>
+    </div>
+  );
+}
+
+function parseValue(value: string, field: EditableRecordField): EditableValue {
+  if (field.inputType === "boolean") return value === "true";
+  if (value === "" && field.nullable) return null;
+  if (field.inputType === "number") return Number(value);
+  return value;
+}
+
+function presentValue(value: EditableValue): string {
+  if (value == null || value === "") return "—";
+  return String(value);
+}

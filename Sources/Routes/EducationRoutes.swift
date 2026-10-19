@@ -52,6 +52,7 @@ struct EducationResponse: Content {
     let website: String?
     let notes: String?
     let documentFileMetadataID: String?
+    let updatedAt: String?
 
     init(_ record: Education, address: AddressReferenceResponse?) {
         id = record.id
@@ -69,6 +70,7 @@ struct EducationResponse: Content {
         website = record.website
         notes = record.notes
         documentFileMetadataID = record.documentFileMetadataID
+        updatedAt = record.updatedAt
     }
 }
 
@@ -211,6 +213,7 @@ func registerEducationRoutes(_ app: Application) {
         record.website = value("website", record.website)
         record.notes = value("notes", record.notes)
         record.documentFileMetadataID = documentFileMetadataID
+        record.updatedAt = RecordTimestamp.now()
         try await EducationService(database: request.db, hubID: request.authenticatedHubID).save(record)
         return try await educationResponse(record, on: request.db)
     }

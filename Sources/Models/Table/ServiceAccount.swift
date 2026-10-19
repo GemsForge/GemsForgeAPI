@@ -77,7 +77,9 @@ final class ServiceAccount: Model, Content, @unchecked Sendable {
     @OptionalField(key: "LogoFileMetadataID")
     var logoFileMetadataID: String?
 
-    // DateCreated and DateUpdated remain database-managed text columns.
+    /// Existing DateUpdated text column; changed only by server update handlers.
+    @OptionalField(key: "DateUpdated")
+    var updatedAt: String?
 
     init() {}
 

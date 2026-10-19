@@ -5,8 +5,8 @@ import { useEducationPatchMutation, useEducationRecordQuery } from "../../data/r
 import { QueryFeedback } from "../../components/QueryFeedback";
 import type { Education } from "../../types";
 import { GemEmptyState, GemRecordCard, GemRecordList } from "../../components/ui";
-import { RecordFields } from "../../components/RecordFields";
-import { PropertyEditor } from "../../components/PropertyEditor";
+import { AttachmentControl } from "../../components/AttachmentControl";
+import { EditableRecordFields, formatRecordTimestamp } from "../../components/EditableRecordFields";
 import { useCreateEducationMutation } from "../../data/recordQueries";
 import { useAddressesQuery } from "../../data/lifeQueries";
 import { EducationCreateForm } from "../create/RecordCreateForms";
@@ -92,6 +92,12 @@ export function EducationView({ records }: EducationViewProps) {
                 onPatch={async (values) => {
                   await patch.mutateAsync({ id: selectedRecord.id, patch: values });
                 }}
+                onAttachment={async (metadata) => {
+                  await patch.mutateAsync({
+                    id: selectedRecord.id,
+                    patch: { documentFileMetadataID: metadata?.id ?? null },
+                  });
+                }}
               />
             ) : (
               !selectedID && (
@@ -111,9 +117,11 @@ export function EducationView({ records }: EducationViewProps) {
 function EducationDetail({
   record,
   onPatch,
+  onAttachment,
 }: {
   record: Education;
   onPatch: (values: Partial<Education>) => Promise<void>;
+  onAttachment: (metadata: import("../../types").FileMetadata | null) => Promise<void>;
 }) {
   return (
     <article className="education-detail">
@@ -125,14 +133,7 @@ function EducationDetail({
         </div>
         <span className="status-pill">{record.status}</span>
       </div>
-      <PropertyEditor
-        label="Status"
-        initialValue={record.status}
-        editLabel="Edit status"
-        saveLabel="Save status"
-        onSave={async (status) => onPatch({ status })}
-      />
-      <RecordFields
+      <EditableRecordFields
         className="education-fields"
         fields={[
           { label: "Type", value: <EditableEducationField label="Type" value={record.educationType} editLabel="Edit type" onSave={(value) => onPatch({ educationType: value })} /> },
@@ -150,6 +151,13 @@ function EducationDetail({
           },
           { label: "Notes", value: <EditableEducationField label="Notes" value={record.notes} editLabel="Edit notes" onSave={(value) => onPatch({ notes: value || null })} />, className: "record-notes" },
         ]}
+      />
+      <AttachmentControl
+        fileMetadataID={record.documentFileMetadataID}
+        ownerType="Education"
+        ownerID={record.id}
+        label="Education document"
+        onAttach={onAttachment}
       />
     </article>
   );

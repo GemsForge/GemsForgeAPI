@@ -5,8 +5,7 @@ import { useEmploymentPatchMutation, useEmploymentRecordQuery } from "../../data
 import { QueryFeedback } from "../../components/QueryFeedback";
 import type { Employment } from "../../types";
 import { GemEmptyState, GemRecordCard, GemRecordList } from "../../components/ui";
-import { RecordFields } from "../../components/RecordFields";
-import { PropertyEditor } from "../../components/PropertyEditor";
+import { EditableRecordFields, formatRecordTimestamp } from "../../components/EditableRecordFields";
 import { useCreateEmploymentMutation } from "../../data/recordQueries";
 import { useAddressesQuery } from "../../data/lifeQueries";
 import { EmploymentCreateForm } from "../create/RecordCreateForms";
@@ -125,37 +124,105 @@ function EmploymentDetail({
         </div>
         <span className="status-pill">{record.employmentStatus}</span>
       </div>
-      <PropertyEditor
-        label="Position"
-        initialValue={record.positionTitle}
-        editLabel="Edit position"
-        saveLabel="Save position"
-        onSave={async (positionTitle) => onPatch({ positionTitle })}
-      />
-      <RecordFields
+      <EditableRecordFields
         className="employment-fields"
         fields={[
-          { label: "Position", value: record.positionTitle || "—" },
-          { label: "Employer type", value: record.employerType || "—" },
-          { label: "Employment type", value: record.employmentType || "—" },
-          { label: "Industry", value: record.industry || "—" },
-          { label: "Start date", value: record.startDate || "—" },
-          { label: "End date", value: record.endDate || "—" },
-          { label: "Work address", value: <AddressSummary address={record.address} /> },
+          {
+            label: "Employer",
+            value: record.employerName,
+            required: true,
+            onSave: async (value) => onPatch({ employerName: value as string }),
+          },
+          {
+            label: "Employer type",
+            value: record.employerType,
+            required: true,
+            onSave: async (value) => onPatch({ employerType: value as string }),
+          },
+          {
+            label: "Position",
+            value: record.positionTitle,
+            required: true,
+            onSave: async (value) => onPatch({ positionTitle: value as string }),
+          },
+          {
+            label: "Employment type",
+            value: record.employmentType,
+            required: true,
+            onSave: async (value) => onPatch({ employmentType: value as string }),
+          },
+          {
+            label: "Employment status",
+            value: record.employmentStatus,
+            required: true,
+            onSave: async (value) => onPatch({ employmentStatus: value as string }),
+          },
+          {
+            label: "Industry",
+            value: record.industry,
+            nullable: true,
+            onSave: async (value) => onPatch({ industry: value as string | null }),
+          },
+          {
+            label: "Start date",
+            value: record.startDate,
+            inputType: "date",
+            nullable: true,
+            onSave: async (value) => onPatch({ startDate: value as string | null }),
+          },
+          {
+            label: "End date",
+            value: record.endDate,
+            inputType: "date",
+            nullable: true,
+            onSave: async (value) => onPatch({ endDate: value as string | null }),
+          },
+          {
+            label: "Work address",
+            value: null,
+            displayValue: <AddressSummary address={record.address} />,
+            readOnlyReason: "Address relationship",
+          },
           {
             label: "Website",
-            value: record.website ? (
-              <a href={record.website} target="_blank" rel="noreferrer">
-                {record.website}
-              </a>
-            ) : (
-              "—"
-            ),
+            value: record.website,
+            inputType: "url",
+            nullable: true,
+            onSave: async (value) => onPatch({ website: value as string | null }),
           },
-          { label: "Contact", value: record.employerContact || "—" },
-          { label: "Contact number", value: record.employerContactNumber || "—" },
-          { label: "Contact email", value: record.employerContactEmail || "—" },
-          { label: "Notes", value: record.notes || "—", className: "record-notes" },
+          {
+            label: "Contact",
+            value: record.employerContact,
+            nullable: true,
+            onSave: async (value) => onPatch({ employerContact: value as string | null }),
+          },
+          {
+            label: "Contact number",
+            value: record.employerContactNumber,
+            nullable: true,
+            onSave: async (value) => onPatch({ employerContactNumber: value as string | null }),
+          },
+          {
+            label: "Contact email",
+            value: record.employerContactEmail,
+            inputType: "email",
+            nullable: true,
+            onSave: async (value) => onPatch({ employerContactEmail: value as string | null }),
+          },
+          {
+            label: "Notes",
+            value: record.notes,
+            inputType: "textarea",
+            nullable: true,
+            className: "record-notes",
+            onSave: async (value) => onPatch({ notes: value as string | null }),
+          },
+          {
+            label: "Last updated",
+            value: record.updatedAt ?? null,
+            readOnlyReason: "Server managed",
+            displayValue: formatRecordTimestamp(record.updatedAt),
+          },
         ]}
       />
     </article>

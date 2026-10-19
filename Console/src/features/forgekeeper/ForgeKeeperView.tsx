@@ -2,6 +2,7 @@ import { usePagedRecords } from "../../hooks/usePagedRecords";
 import { PaginationControls } from "../../components/PaginationControls";
 import { useEffect, useRef, useState } from "react";
 import type { Domain, ForgeKeeperPage, ForgeKeeperPatch } from "../../types";
+import { formatRecordTimestamp } from "../../components/EditableRecordFields";
 
 interface ForgeKeeperViewProps {
   domain: Domain | null;
@@ -55,6 +56,7 @@ export function ForgeKeeperView({ domain, pages, onLoadRoots, onLoadChildren, on
                 </div>
                 <h3>{page.title}</h3>
                 <p>{page.description || "No description"}</p>
+                <small>Last updated: {formatRecordTimestamp(page.updatedAt)}</small>
               </div>
               <div className="page-actions">
                 <button
@@ -99,7 +101,6 @@ export function ForgeKeeperView({ domain, pages, onLoadRoots, onLoadChildren, on
         {editingPage && (
           <PageEditor
             page={editingPage}
-            pages={pages}
             onSave={async (patch) => {
               await onPatch(editingPage.id, patch);
               closeEditor();
@@ -114,18 +115,15 @@ export function ForgeKeeperView({ domain, pages, onLoadRoots, onLoadChildren, on
 
 function PageEditor({
   page,
-  pages,
   onSave,
   onCancel,
 }: {
   page: ForgeKeeperPage;
-  pages: ForgeKeeperPage[];
   onSave: (patch: ForgeKeeperPatch) => Promise<void>;
   onCancel: () => void;
 }) {
   const [title, setTitle] = useState(page.title);
   const [description, setDescription] = useState(page.description);
-  const [parentID, setParentID] = useState(page.parentID?.toString() ?? "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const savingRef = useRef(false);
@@ -144,7 +142,11 @@ function PageEditor({
         setSaving(true);
         setError(null);
         try {
-          await onSave({ title, description, parentID: parentID ? Number(parentID) : null });
+          const patch: ForgeKeeperPatch = {};
+          if (title !== page.title) patch.title = title;
+          if (description !== page.description) patch.description = description;
+          if (!Object.keys(patch).length) return;
+          await onSave(patch);
         } catch (caught) {
           setError(caught instanceof Error ? caught.message : "Could not save the page.");
         } finally {
@@ -176,25 +178,16 @@ function PageEditor({
         Description
         <textarea value={description} onChange={(event) => setDescription(event.target.value)} rows={4} required />
       </label>
-      <label>
-        Parent page
-        <select value={parentID} onChange={(event) => setParentID(event.target.value)}>
-          <option value="">Root page</option>
-          {pages
-            .filter((item) => item.id !== page.id)
-            .map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.title}
-              </option>
-            ))}
-        </select>
-      </label>
+      <p className="muted">Parent relationship is read-only in this editor.</p>
       {error && <p role="alert">{error}</p>}
       <div className="dialog-actions">
         <button type="button" className="secondary-button" disabled={saving} onClick={onCancel}>
           Cancel
         </button>
-        <button className="primary-button" disabled={saving}>
+        <button
+          className="primary-button"
+          disabled={saving || (title === page.title && description === page.description)}
+        >
           {saving ? "Saving…" : "Save changes"}
         </button>
       </div>

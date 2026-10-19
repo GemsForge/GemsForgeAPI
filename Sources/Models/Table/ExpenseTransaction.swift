@@ -63,7 +63,9 @@ final class ExpenseTransaction: Model, Content, @unchecked Sendable {
     @OptionalField(key: "Image")
     var image: String?
 
-    // DateCreated and DateUpdated remain database-managed text columns.
+    /// Existing DateUpdated text column; changed only by server update handlers.
+    @OptionalField(key: "DateUpdated")
+    var updatedAt: String?
 
     init() {}
 

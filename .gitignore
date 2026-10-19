@@ -13,6 +13,7 @@ DerivedData/
 .env
 .env.*
 !.env.example
+!Console/.env.example
 
 # macOS metadata.
 .DS_Store

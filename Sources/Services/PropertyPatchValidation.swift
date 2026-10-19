@@ -1,6 +1,63 @@
 import Foundation
 import Vapor
 
+enum RecordTimestamp {
+    static func now() -> String {
+        ISO8601DateFormatter().string(from: Date())
+    }
+}
+
+/// A small heterogeneous JSON scalar used by PATCH handlers to distinguish an
+/// omitted field from an explicitly-cleared nullable field.
+enum PatchJSONValue: Decodable {
+    case null
+    case string(String)
+    case number(Double)
+    case bool(Bool)
+
+    init(from decoder: Decoder) throws {
+        let value = try decoder.singleValueContainer()
+        if value.decodeNil() {
+            self = .null
+        } else if let string = try? value.decode(String.self) {
+            self = .string(string)
+        } else if let bool = try? value.decode(Bool.self) {
+            self = .bool(bool)
+        } else if let number = try? value.decode(Double.self) {
+            self = .number(number)
+        } else {
+            throw DecodingError.typeMismatch(
+                PatchJSONValue.self,
+                .init(codingPath: decoder.codingPath, debugDescription: "PATCH values must be JSON scalars.")
+            )
+        }
+    }
+
+    func string() throws -> String? {
+        return switch self {
+        case .null: nil
+        case let .string(value): value
+        case .number, .bool: throw Abort(.unprocessableEntity, reason: "Expected a string value.")
+        }
+    }
+
+    func number() throws -> Double? {
+        return switch self {
+        case .null: nil
+        case let .number(value): value
+        case .string, .bool: throw Abort(.unprocessableEntity, reason: "Expected a numeric value.")
+        }
+    }
+
+    func bool() throws -> Bool? {
+        return switch self {
+        case .null: nil
+        case let .bool(value): value
+        case .string, .number: throw Abort(.unprocessableEntity, reason: "Expected a boolean value.")
+        }
+    }
+}
+
 /// Shared guardrails for property-level PATCH payloads.
 enum PropertyPatchValidation {
     static func requireKnownJSONProperties(
