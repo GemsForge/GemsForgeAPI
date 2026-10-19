@@ -7,12 +7,17 @@ modified.
 
 | Role | SQLite file |
 | --- | --- |
-| Main/source candidate | `/Users/gemsforge/DBeaver/GemLife_DB.sqlite` |
+| Main/source database | `/Users/gemsforge/DBeaver/GemLife_DB_rebuild.sqlite` |
 | Development target | `/Users/gemsforge/DBeaver/GemLife_DB_dev.sqlite` |
 | Fit target | `/Users/gemsforge/DBeaver/GemLife_DB_fit.sqlite` |
 
-The API's current local `.env` points to `GemLife_DB_dev.sqlite`, not the main
-database. The source designation must be confirmed before synchronization.
+The API's current local `.env` points to `GemLife_DB_dev.sqlite`. The approved
+source/target flow is:
+
+```text
+GemLife_DB_rebuild.sqlite → GemLife_DB_dev.sqlite
+GemLife_DB_rebuild.sqlite → GemLife_DB_fit.sqlite
+```
 
 ## Row-count comparison
 
@@ -51,7 +56,8 @@ these must not be overwritten or blindly copied during synchronization.
 
 ## Required next decisions
 
-1. Confirm that `GemLife_DB.sqlite` is the authoritative source.
+1. Treat `GemLife_DB_rebuild.sqlite` as the authoritative source for this
+   synchronization story.
 2. Decide whether the 65 existing dev/fit `FileMetadata` rows are retained,
    replaced, or reconciled separately.
 3. Apply the authentication and ownership schema to fit before copying data.
