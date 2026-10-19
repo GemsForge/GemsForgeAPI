@@ -29,9 +29,8 @@ export function formatRecordDate(value?: string | null): string {
   const normalized = normalizeDateInput(value);
   if (!normalized) return "Not recorded";
   const [year, month, day] = normalized.split("-").map(Number);
-  return new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeZone: "UTC" }).format(
-    new Date(Date.UTC(year, month - 1, day)),
-  );
+  const monthName = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][month - 1];
+  return `${String(day).padStart(2, "0")}${monthName}${year}`;
 }
 
 /** Shared field behavior with a resource-controlled semantic layout. */

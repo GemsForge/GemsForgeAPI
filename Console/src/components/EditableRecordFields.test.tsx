@@ -5,8 +5,8 @@ import { EditableRecordFields, formatRecordDate } from "./EditableRecordFields";
 
 describe("EditableRecordFields", () => {
   it("formats date-only values without shifting the calendar day", () => {
-    expect(formatRecordDate("08May2022")).toBe("May 8, 2022");
-    expect(formatRecordDate("2022-05-08")).toBe("May 8, 2022");
+    expect(formatRecordDate("08May2022")).toBe("08May2022");
+    expect(formatRecordDate("2022-05-08")).toBe("08May2022");
     expect(formatRecordDate(null)).toBe("Not recorded");
   });
 
