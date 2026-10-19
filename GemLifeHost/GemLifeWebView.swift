@@ -32,12 +32,14 @@ struct GemLifeWebView: NSViewRepresentable {
         context.coordinator.webView = webView
         webView.setValue(false, forKey: "drawsBackground")
         webView.load(URLRequest(url: consoleURL))
+        context.coordinator.activateHostWindow(for: webView)
         return webView
     }
 
     func updateNSView(_ webView: WKWebView, context: Context) {
         guard webView.url == nil else { return }
         webView.load(URLRequest(url: consoleURL))
+        context.coordinator.activateHostWindow(for: webView)
     }
 
     final class Coordinator: NSObject, WKNavigationDelegate {
@@ -54,6 +56,19 @@ struct GemLifeWebView: NSViewRepresentable {
             super.init()
             bridgeHandler.policy = policy
             bridgeHandler.onMessage = { [weak self] message in self?.receive(message) }
+        }
+
+        /// SwiftUI can create the window after the representable view. Explicitly
+        /// activating it makes the embedded WebKit view the keyboard responder;
+        /// without this, mouse clicks can highlight an input while keystrokes are
+        /// still routed to the terminal or previously focused app.
+        func activateHostWindow(for webView: WKWebView) {
+            DispatchQueue.main.async {
+                guard let window = webView.window else { return }
+                NSApp.activate(ignoringOtherApps: true)
+                window.makeKeyAndOrderFront(nil)
+                window.makeFirstResponder(webView)
+            }
         }
 
         func webView(_ webView: WKWebView, decidePolicyFor action: WKNavigationAction) async -> WKNavigationActionPolicy {
@@ -138,6 +153,7 @@ struct GemLifeWebView: NSViewRepresentable {
             consoleLoadRetryAttempt = 0
             consoleLoadRetry?.cancel()
             consoleLoadRetry = nil
+            activateHostWindow(for: webView)
         }
 
         private func retryInitialConsoleLoad(in webView: WKWebView) {
