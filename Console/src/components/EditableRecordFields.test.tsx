@@ -1,9 +1,15 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { APIError } from "../api";
-import { EditableRecordFields } from "./EditableRecordFields";
+import { EditableRecordFields, formatRecordDate } from "./EditableRecordFields";
 
 describe("EditableRecordFields", () => {
+  it("formats date-only values without shifting the calendar day", () => {
+    expect(formatRecordDate("08May2022")).toBe("May 8, 2022");
+    expect(formatRecordDate("2022-05-08")).toBe("May 8, 2022");
+    expect(formatRecordDate(null)).toBe("Not recorded");
+  });
+
   it("renders server-owned values read-only and editable values using their declared input type", () => {
     render(
       <EditableRecordFields
