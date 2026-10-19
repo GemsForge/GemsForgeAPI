@@ -141,6 +141,7 @@ export interface Education {
   endDate: string | null;
   awardedDate: string | null;
   status: string;
+  locationAddressID?: string | null;
   address: Address | null;
   documentFileMetadataID?: string | null;
   website: string | null;
@@ -159,6 +160,7 @@ export interface Employment {
   startDate: string | null;
   endDate: string | null;
   employmentStatus: string;
+  workAddressID?: string | null;
   address: Address | null;
   employerContact: string | null;
   employerContactNumber: string | null;

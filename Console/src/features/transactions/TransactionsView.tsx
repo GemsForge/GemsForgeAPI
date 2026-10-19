@@ -18,6 +18,7 @@ import {
 } from "../../components/EditableRecordFields";
 import { useCreateTransactionMutation } from "../../data/recordQueries";
 import { TransactionCreateForm } from "../create/RecordCreateForms";
+import { useExpenseCategoriesQuery, useExpenseSubcategoriesQuery } from "../../data/lifeQueries";
 
 interface TransactionsViewProps {
   records: ExpenseTransaction[];
@@ -125,6 +126,9 @@ function TransactionDetail({
   onAttachment: (metadata: import("../../types").FileMetadata | null) => Promise<void>;
   onPatch: (values: Partial<ExpenseTransaction>) => Promise<void>;
 }) {
+  const categories = useExpenseCategoriesQuery(true);
+  const subcategories = useExpenseSubcategoriesQuery(record.categoryID, true);
+
   return (
     <article className="transaction-detail">
       <div className="detail-heading">
@@ -133,7 +137,9 @@ function TransactionDetail({
           <h3>{record.item}</h3>
           <p className="transaction-code">{record.id}</p>
         </div>
-        <span className="status-pill">Category {record.categoryID}</span>
+        <span className="status-pill">
+          Category {categories.data?.find((category) => category.id === record.categoryID)?.name ?? record.categoryID}
+        </span>
       </div>
       <EditableRecordFields
         className="transaction-fields"
@@ -170,8 +176,24 @@ function TransactionDetail({
             displayValue: formatRecordDate(record.transactionDate),
             onSave: async (value) => onPatch({ transactionDate: value as string | null }),
           },
-          { label: "Category ID", value: record.categoryID, readOnlyReason: "Foreign key" },
-          { label: "Subcategory ID", value: record.subcategoryID, readOnlyReason: "Foreign key" },
+          {
+            label: "Category",
+            value: record.categoryID,
+            inputType: "select",
+            options: (categories.data ?? []).map((category) => ({ value: String(category.id), label: category.name })),
+            required: true,
+            displayValue: categories.data?.find((category) => category.id === record.categoryID)?.name ?? "—",
+            onSave: async (value) => onPatch({ categoryID: Number(value) }),
+          },
+          {
+            label: "Subcategory",
+            value: record.subcategoryID,
+            inputType: "select",
+            nullable: true,
+            options: (subcategories.data ?? []).map((subcategory) => ({ value: String(subcategory.id), label: subcategory.name })),
+            displayValue: subcategories.data?.find((subcategory) => subcategory.id === record.subcategoryID)?.name ?? "—",
+            onSave: async (value) => onPatch({ subcategoryID: value == null || value === "" ? null : Number(value) }),
+          },
           {
             label: "Quantity",
             value: record.quantity,

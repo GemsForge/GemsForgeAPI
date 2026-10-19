@@ -23,7 +23,7 @@ export function EducationView({ records }: EducationViewProps) {
   const selectedRecord = detail.data;
   const [creating, setCreating] = useState(false);
   const create = useCreateEducationMutation();
-  const addresses = useAddressesQuery(creating);
+  const addresses = useAddressesQuery(true);
 
   return (
     <>
@@ -121,6 +121,8 @@ function EducationDetail({
   onPatch: (values: Partial<Education>) => Promise<void>;
   onAttachment: (metadata: import("../../types").FileMetadata | null) => Promise<void>;
 }) {
+  const addresses = useAddressesQuery(true);
+
   return (
     <article className="education-detail">
       <div className="detail-heading">
@@ -199,9 +201,15 @@ function EducationDetail({
           },
           {
             label: "Location",
-            value: null,
+            value: record.address?.id ?? null,
+            inputType: "select",
+            nullable: true,
+            options: (addresses.data ?? []).map((address) => ({
+              value: address.id,
+              label: addressOptionLabel(address),
+            })),
             displayValue: <AddressSummary address={record.address} />,
-            readOnlyReason: "Address relationship",
+            onSave: async (value) => onPatch({ locationAddressID: value as string | null }),
           },
           {
             label: "Website",
@@ -240,4 +248,8 @@ function EducationDetail({
 function AddressSummary({ address }: { address: Education["address"] }) {
   if (!address) return <>—</>;
   return <>{[address.addressLine1, address.city, address.state, address.postalCode].filter(Boolean).join(", ")}</>;
+}
+
+function addressOptionLabel(address: NonNullable<Education["address"]>) {
+  return [address.addressType, address.addressLine1, address.city, address.state].filter(Boolean).join(" · ");
 }

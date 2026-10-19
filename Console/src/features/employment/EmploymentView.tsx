@@ -13,6 +13,7 @@ import { EmploymentCreateForm } from "../create/RecordCreateForms";
 const employmentOptions = {
   industry: ["Technology", "Healthcare", "Education", "Finance", "Government", "Retail", "Hospitality", "Manufacturing", "Other"],
   employerType: ["Company", "Nonprofit", "Government", "Self-employed", "Other"],
+  employmentType: ["Full-time", "Part-time", "Contract", "Temporary", "Internship", "Self-employed", "Other"],
   status: ["Current", "Former", "On leave", "Seasonal"],
 };
 
@@ -30,7 +31,7 @@ export function EmploymentView({ records }: EmploymentViewProps) {
   const selectedRecord = detail.data;
   const [creating, setCreating] = useState(false);
   const create = useCreateEmploymentMutation();
-  const addresses = useAddressesQuery(creating);
+  const addresses = useAddressesQuery(true);
 
   return (
     <>
@@ -120,6 +121,8 @@ function EmploymentDetail({
   record: Employment;
   onPatch: (values: Partial<Employment>) => Promise<void>;
 }) {
+  const addresses = useAddressesQuery(true);
+
   return (
     <article className="employment-detail">
       <div className="detail-heading">
@@ -156,6 +159,8 @@ function EmploymentDetail({
           {
             label: "Employment type",
             value: record.employmentType,
+            inputType: "select",
+            options: toOptions(employmentOptions.employmentType),
             required: true,
             onSave: async (value) => onPatch({ employmentType: value as string }),
           },
@@ -193,9 +198,15 @@ function EmploymentDetail({
           },
           {
             label: "Work address",
-            value: null,
+            value: record.address?.id ?? null,
+            inputType: "select",
+            nullable: true,
+            options: (addresses.data ?? []).map((address) => ({
+              value: address.id,
+              label: addressOptionLabel(address),
+            })),
             displayValue: <AddressSummary address={record.address} />,
-            readOnlyReason: "Address relationship",
+            onSave: async (value) => onPatch({ workAddressID: value as string | null }),
           },
           {
             label: "Website",
@@ -248,4 +259,8 @@ function EmploymentDetail({
 function AddressSummary({ address }: { address: Employment["address"] }) {
   if (!address) return <>—</>;
   return <>{[address.addressLine1, address.city, address.state, address.postalCode].filter(Boolean).join(", ")}</>;
+}
+
+function addressOptionLabel(address: NonNullable<Employment["address"]>) {
+  return [address.addressType, address.addressLine1, address.city, address.state].filter(Boolean).join(" · ");
 }
