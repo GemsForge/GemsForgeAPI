@@ -86,6 +86,19 @@ stop_process_tree() {
   fi
 }
 
+stop_port_listener() {
+  local port="$1"
+  local listener_pid
+  [[ "$port" =~ ^[1-9][0-9]*$ ]] || return 0
+  listener_pid="$(lsof -tiTCP:"$port" -sTCP:LISTEN 2>/dev/null || true)"
+  for listener_pid in $listener_pid; do
+    if [[ "$listener_pid" =~ ^[1-9][0-9]*$ ]]; then
+      kill "$listener_pid" 2>/dev/null || true
+      wait "$listener_pid" 2>/dev/null || true
+    fi
+  done
+}
+
 cleanup() {
   local exit_code=$?
   trap - EXIT INT TERM
@@ -98,6 +111,10 @@ cleanup() {
   if [[ -n "$api_pid" ]]; then
     echo "Stopping GemsForgeAPI (pid $api_pid)…"
     stop_process_tree "$api_pid"
+  fi
+
+  if [[ -n "$api_port" ]]; then
+    stop_port_listener "$api_port"
   fi
 
   if [[ -n "$api_port" && -f "$api_port_file" && "$(<"$api_port_file")" == "$api_port" ]]; then
