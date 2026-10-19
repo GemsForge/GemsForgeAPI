@@ -152,6 +152,7 @@ final class SessionAuthenticationMiddlewareTests: XCTestCase {
         app.migrations.add(CreateAuthenticationSchema())
         app.migrations.add(CreateHubs())
         app.migrations.add(CreateAddresses())
+        app.migrations.add(AddAddressUpdatedAt())
         app.migrations.add(CreateFileMetadata())
         app.migrations.add(AddAddressAttachmentReference())
         app.migrations.add(MakeAuthenticationProviderAgnostic())

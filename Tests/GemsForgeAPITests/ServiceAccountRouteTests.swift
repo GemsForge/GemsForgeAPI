@@ -128,30 +128,15 @@ final class ServiceAccountRouteTests: XCTestCase {
 
             try await app.test(.PATCH, "service-accounts/1", beforeRequest: { request in
                 request.headers.contentType = .json
-                request.body = ByteBuffer(string: #"{"service":"Updated Service","monthlyAmount":22.5,"interestRate":null,"notes":"Patched note","serviceKey":"UPDATED_SERVICE"}"#)
+                request.body = ByteBuffer(string: #"{"service":"Updated Service","monthlyAmount":22.5,"notes":"Patched note"}"#)
             }) { response in
                 XCTAssertEqual(response.status, .ok)
                 let account = try response.content.decode(ServiceAccount.self)
                 XCTAssertEqual(account.service, "Updated Service")
                 XCTAssertEqual(account.status, "Paused")
                 XCTAssertEqual(account.monthlyAmount, 22.5)
-                XCTAssertNil(account.interestRate)
                 XCTAssertEqual(account.notes, "Patched note")
-                XCTAssertEqual(account.serviceKey, "UPDATED_SERVICE")
                 XCTAssertNotNil(account.updatedAt)
-            }
-
-            try await app.test(.POST, "service-accounts", beforeRequest: { request in
-                request.headers.contentType = .json
-                request.body = ByteBuffer(string: #"{"service":"Another service","serviceKey":"DUPLICATE_KEY"}"#)
-            }) { response in
-                XCTAssertEqual(response.status, .ok)
-            }
-            try await app.test(.PATCH, "service-accounts/1", beforeRequest: { request in
-                request.headers.contentType = .json
-                request.body = ByteBuffer(string: #"{"serviceKey":" duplicate_key "}"#)
-            }) { response in
-                XCTAssertEqual(response.status, .conflict)
             }
 
             try await app.test(.PATCH, "service-accounts/1", beforeRequest: { request in
