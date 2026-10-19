@@ -1,4 +1,5 @@
 import { useId, type ReactNode } from "react";
+import { Checkbox } from "tamagui";
 import { useRecordEditor } from "../hooks/useRecordEditor";
 
 export type EditableValue = string | number | boolean | null | undefined;
@@ -108,13 +109,15 @@ function EditableField({ field }: { field: EditableRecordField }) {
                 ))}
               </select>
             ) : field.inputType === "boolean" ? (
-              <input
+              <Checkbox
                 id={id}
                 aria-labelledby={labelID}
-                type="checkbox"
                 checked={editor.draft === "true"}
-                onChange={(event) => editor.setDraft(String(event.currentTarget.checked))}
-              />
+                onCheckedChange={(checked) => editor.setDraft(String(checked))}
+                size="$3"
+              >
+                <Checkbox.Indicator>✓</Checkbox.Indicator>
+              </Checkbox>
             ) : (
               <input type={field.inputType ?? "text"} step={field.step} {...common} />
             )}
