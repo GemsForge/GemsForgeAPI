@@ -54,13 +54,14 @@ these must not be overwritten or blindly copied during synchronization.
   authentication/ownership migration before it can be an equivalent protected
   target.
 
-## Required next decisions
+## Recorded decisions and priority gates
 
 1. Treat `GemLife_DB_rebuild.sqlite` as the authoritative source for this
    synchronization story.
-2. Decide whether the 65 existing dev/fit `FileMetadata` rows are retained,
-   replaced, or reconciled separately.
+2. Preserve the 65 existing dev/fit `FileMetadata` rows and reconcile them
+   separately; do not overwrite or blindly copy them from the rebuild source.
 3. Apply the authentication and ownership schema to fit before copying data.
 4. Review and explicitly assign legacy records to the local hub; synchronization
    must not infer ownership silently.
-5. Create verified backups and a dry-run plan before any target writes.
+5. Priority gate: create verified backups and a dry-run plan before any target
+   writes.
