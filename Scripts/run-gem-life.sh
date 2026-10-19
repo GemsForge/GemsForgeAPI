@@ -28,7 +28,7 @@ fi
 
 api_host="127.0.0.1"
 if [[ -n "${API_HOST+x}" ]]; then api_host="$API_HOST"; fi
-requested_api_port="${API_PORT:-}"
+requested_api_port="${API_PORT:-8180}"
 api_port=""
 api_port_file="$repository_root/.build/gemlife-api-port"
 temp_root="${TMPDIR:-/tmp}"
@@ -119,7 +119,9 @@ fi
 api_pid=$!
 
 api_ready=0
-for attempt in {1..100}; do
+# Swift may need substantially longer than the health-check interval on a
+# clean or invalidated build. Keep the selected port reserved while it builds.
+for attempt in {1..600}; do
   if ! kill -0 "$api_pid" 2>/dev/null; then break; fi
   if curl --silent --output /dev/null --max-time 1 "http://127.0.0.1:${api_port}/health"; then api_ready=1; break; fi
   sleep 0.1

@@ -11,7 +11,9 @@ function bindPort(host, port) {
   });
 }
 
-export async function selectApiPort(host, requestedPort = "") {
+export const DEFAULT_API_PORT = 8180;
+
+export async function selectApiPort(host, requestedPort = String(DEFAULT_API_PORT)) {
   if (requestedPort) {
     const port = Number(requestedPort);
     if (!Number.isInteger(port) || port < 1 || port > 65535) {
@@ -20,17 +22,14 @@ export async function selectApiPort(host, requestedPort = "") {
 
     const availablePort = await bindPort(host, port);
     if (availablePort !== null) return { port: availablePort, usedFallback: false };
-    console.error(`API_PORT=${port} is already in use; selecting an available port instead.`);
+    throw new Error(`API_PORT=${port} is already in use; stop the process using it or set API_PORT explicitly.`);
   }
-
-  const port = await bindPort(host, 0);
-  if (port === null) throw new Error(`Could not allocate an available API port on ${host}.`);
-  return { port, usedFallback: Boolean(requestedPort) };
+  throw new Error("API_PORT must be configured for the local API.");
 }
 
 if (process.argv[1]?.endsWith("select-api-port.mjs")) {
   try {
-    const [, , host = "127.0.0.1", requestedPort = ""] = process.argv;
+    const [, , host = "127.0.0.1", requestedPort = String(DEFAULT_API_PORT)] = process.argv;
     const result = await selectApiPort(host, requestedPort);
     console.log(result.port);
   } catch (error) {

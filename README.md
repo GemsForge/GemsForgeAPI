@@ -229,7 +229,7 @@ To run the API against a selected database:
 
 ```bash
 DATABASE_PATH="/absolute/path/to/GemLife_DB_rebuild.sqlite" \
-swift run GemsForgeAPI serve --hostname 127.0.0.1 --port 8081
+swift run GemsForgeAPI serve --hostname 127.0.0.1 --port 8180
 ```
 
 ## Run the integrated Gem Life app in development

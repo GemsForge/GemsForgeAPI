@@ -35,7 +35,7 @@ swift run
 Verify the health endpoint:
 
 ```bash
-curl http://127.0.0.1:8081/health
+curl http://127.0.0.1:8180/health
 ```
 
 The expected response is:
@@ -45,7 +45,7 @@ ok
 ```
 
 For the full existing-database verification checkpoint, see
-[`ForgeKeeper.md`](ForgeKeeper.md). It uses port `8081` and read-only endpoints
+[`ForgeKeeper.md`](ForgeKeeper.md). It uses port `8180` and read-only endpoints
 so an existing Xcode server on the previous default port `8080` is not disturbed.
 
 ## Browser testing console
@@ -59,7 +59,7 @@ same target for the Console. For example:
 
 ```bash
 cd Console
-VITE_API_TARGET="http://127.0.0.1:8081" \
+VITE_API_TARGET="http://127.0.0.1:8180" \
 VITE_SUPABASE_URL="https://your-project-ref.supabase.co" \
 VITE_SUPABASE_PUBLISHABLE_KEY="your-supabase-publishable-key" \
 npm run dev
@@ -75,7 +75,7 @@ The standalone API-served root in the example port guides users to the packaged
 authenticated Console at `/app/`:
 
 ```text
-http://127.0.0.1:8081/
+http://127.0.0.1:8180/
 ```
 
 For authentication, configure Supabase email/password and the owner-only API

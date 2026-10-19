@@ -8,7 +8,7 @@ const apiPortFile = resolve(dirname(fileURLToPath(import.meta.url)), "../.build/
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
-  const configuredApiTarget = env.VITE_API_TARGET || "http://127.0.0.1:8081";
+  const configuredApiTarget = env.VITE_API_TARGET || "http://127.0.0.1:8180";
   const apiTargetForRequest = () => {
     try {
       const port = readFileSync(apiPortFile, "utf8").trim();
