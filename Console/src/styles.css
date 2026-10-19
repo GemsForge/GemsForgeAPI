@@ -1189,6 +1189,18 @@ dialog::backdrop {
   gap: 0.75rem;
   min-width: 0;
 }
+
+.service-logo-attachment .file-presentation {
+  min-height: 180px;
+  display: grid;
+  place-items: center;
+}
+
+.service-logo-attachment .file-presentation img {
+  width: 180px;
+  height: 180px;
+  object-fit: contain;
+}
 .file-presentation .empty-state {
   padding: 1.2rem;
 }

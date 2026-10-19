@@ -16,6 +16,7 @@ import {
 import { useCreateServiceAccountMutation } from "../../data/recordQueries";
 import { ServiceAccountCreateForm } from "../create/RecordCreateForms";
 import { RecordImport } from "../../components/RecordImport";
+import { useServiceLogosQuery } from "../../data/lifeQueries";
 
 export function ServiceAccountsView({ records }: { records: ServiceAccount[] }) {
   const paging = usePagedRecords(records);
@@ -124,6 +125,8 @@ function ServiceAccountDetail({
   onAttachment: (metadata: import("../../types").FileMetadata | null) => Promise<void>;
   onPatch: (values: Partial<ServiceAccount>) => Promise<void>;
 }) {
+  const logos = useServiceLogosQuery(true);
+  const legacyLogo = logos.data?.find((logo) => logo.logoKey === record.logoKey);
   return (
     <article className="address-detail">
       <div className="detail-heading">
@@ -292,11 +295,12 @@ function ServiceAccountDetail({
         ]}
       />
       <AttachmentControl
-        fileMetadataID={record.logoFileMetadataID}
+        fileMetadataID={record.logoFileMetadataID ?? legacyLogo?.fileMetadataID}
         ownerType="ServiceAccount"
         ownerID={String(record.id)}
         label="Service logo"
         onAttach={onAttachment}
+        className="service-logo-attachment"
       />
     </article>
   );

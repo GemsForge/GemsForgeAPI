@@ -53,6 +53,7 @@ struct ServiceLogoAssetSummary: Content {
     let mimeType: String
     let fileName: String?
     let fileSizeBytes: Int?
+    let fileMetadataID: String?
     let imagePath: String
 
     init(_ asset: ServiceLogoAsset) throws {
@@ -65,6 +66,7 @@ struct ServiceLogoAssetSummary: Content {
         self.mimeType = asset.mimeType
         self.fileName = asset.fileName
         self.fileSizeBytes = asset.fileSizeBytes ?? asset.logo.count
+        self.fileMetadataID = asset.fileMetadataID
         self.imagePath = "/service-logos/\(id)/image"
     }
 }
