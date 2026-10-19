@@ -7,6 +7,15 @@ func registerGemHueRoutes(
 ) {
     let hues = app.grouped("gemhues")
 
+    hues.post("import", "preview") { request async throws -> GemHueImportPreview in
+        let input = try request.content.decode([GemHueImportRow].self)
+        return try await GemHueImportService(database: request.db, hubID: request.authenticatedHubID).preview(input)
+    }
+    hues.post("import") { request async throws -> [String: Int] in
+        let input = try request.content.decode(GemHueImportRequest.self)
+        return ["importedCount": try await GemHueImportService(database: request.db, hubID: request.authenticatedHubID).publish(input)]
+    }
+
     hues.post { request async throws -> GemHue in
         let input = try request.content.decode(GemHue.self)
         guard let id = input.id?.trimmingCharacters(in: .whitespacesAndNewlines), !id.isEmpty,
