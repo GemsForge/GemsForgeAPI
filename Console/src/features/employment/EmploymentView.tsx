@@ -9,6 +9,7 @@ import { EditableRecordFields, formatRecordDate, formatRecordTimestamp } from ".
 import { useCreateEmploymentMutation } from "../../data/recordQueries";
 import { useAddressesQuery } from "../../data/lifeQueries";
 import { EmploymentCreateForm } from "../create/RecordCreateForms";
+import { RecordImport } from "../../components/RecordImport";
 
 const employmentOptions = {
   industry: ["Technology", "Healthcare", "Education", "Finance", "Government", "Retail", "Hospitality", "Manufacturing", "Other"],
@@ -49,6 +50,7 @@ export function EmploymentView({ records }: EmploymentViewProps) {
           <button type="button" onClick={() => setCreating(true)}>
             Add employment
           </button>
+          <RecordImport label="employment records" expectedColumns={["id", "employerName", "employerType", "positionTitle", "employmentType", "employmentStatus"]} onPublish={async (rows) => { for (const row of rows) await create.mutateAsync(row as Parameters<typeof create.mutateAsync>[0]); }} />
         </div>
       </div>
 

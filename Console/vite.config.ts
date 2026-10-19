@@ -70,6 +70,7 @@ export default defineConfig(({ mode }) => {
           "/live-database",
           "/schema-builder",
           "/home-inventory",
+          "/operator",
         ].map((path) => [
           path,
           {

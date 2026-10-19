@@ -19,6 +19,7 @@ import {
 import { useCreateTransactionMutation } from "../../data/recordQueries";
 import { TransactionCreateForm } from "../create/RecordCreateForms";
 import { useExpenseCategoriesQuery, useExpenseSubcategoriesQuery, useMerchantsQuery } from "../../data/lifeQueries";
+import { RecordImport } from "../../components/RecordImport";
 
 interface TransactionsViewProps {
   records: ExpenseTransaction[];
@@ -51,6 +52,7 @@ export function TransactionsView({ records }: TransactionsViewProps) {
           <button type="button" onClick={() => setCreating(true)}>
             Add transaction
           </button>
+          <RecordImport label="transactions" expectedColumns={["id", "item", "categoryID", "quantity"]} onPublish={async (rows) => { for (const row of rows) await create.mutateAsync(row as Parameters<typeof create.mutateAsync>[0]); }} />
         </div>
       </div>
 

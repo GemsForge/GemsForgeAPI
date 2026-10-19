@@ -108,6 +108,14 @@ export function useGemHueQuery(id: string | null) {
     enabled: id !== null,
   });
 }
+export function useCreateGemHueMutation() {
+  return useCreateMutation(
+    api.createGemHue,
+    lifeQueryKeys.gemHues,
+    (record) => record.id,
+    (id) => recordQueryKeys.hue(String(id)),
+  );
+}
 export function useGemHueImageQuery(id: string | null) {
   return useQuery({
     queryKey: [...lifeQueryKeys.gemHues, "image", id],
