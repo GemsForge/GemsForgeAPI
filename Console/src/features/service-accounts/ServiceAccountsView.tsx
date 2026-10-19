@@ -151,6 +151,14 @@ function ServiceAccountDetail({
           {
             label: "Expense group",
             value: record.expenseGroup,
+            inputType: "select",
+            options: [
+              { label: "Fixed Bills (Obligations)", value: "Fixed Bills (Obligations)" },
+              { label: "Variable Bills", value: "Variable Bills" },
+              { label: "Home", value: "Home" },
+              { label: "Lifestyle", value: "Lifestyle" },
+              { label: "Other", value: "Other" },
+            ],
             nullable: true,
             onSave: async (value) => onPatch({ expenseGroup: value as string | null }),
           },
