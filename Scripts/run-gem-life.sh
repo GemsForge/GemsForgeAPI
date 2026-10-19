@@ -69,20 +69,35 @@ release_port_lock() {
   fi
 }
 
+stop_process_tree() {
+  local pid="$1"
+  local child
+  local children
+
+  [[ "$pid" =~ ^[1-9][0-9]*$ ]] || return 0
+  kill -0 "$pid" 2>/dev/null || return 0
+
+  children="$(pgrep -P "$pid" 2>/dev/null || true)"
+  for child in $children; do
+    stop_process_tree "$child"
+  done
+
+  kill "$pid" 2>/dev/null || true
+  wait "$pid" 2>/dev/null || true
+}
+
 cleanup() {
   local exit_code=$?
   trap - EXIT INT TERM
 
   if [[ -n "$console_pid" ]] && kill -0 "$console_pid" 2>/dev/null; then
     echo "Stopping Gem Life Console (pid $console_pid)…"
-    kill "$console_pid" 2>/dev/null || true
-    wait "$console_pid" 2>/dev/null || true
+    stop_process_tree "$console_pid"
   fi
 
   if [[ -n "$api_pid" ]] && kill -0 "$api_pid" 2>/dev/null; then
     echo "Stopping GemsForgeAPI (pid $api_pid)…"
-    kill "$api_pid" 2>/dev/null || true
-    wait "$api_pid" 2>/dev/null || true
+    stop_process_tree "$api_pid"
   fi
 
   if [[ -n "$api_port" && -f "$api_port_file" && "$(<"$api_port_file")" == "$api_port" ]]; then
