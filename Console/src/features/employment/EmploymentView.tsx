@@ -207,6 +207,7 @@ function EmploymentDetail({
           {
             label: "Contact",
             value: record.employerContact,
+            inputType: "text",
             nullable: true,
             onSave: async (value) => onPatch({ employerContact: value as string | null }),
           },
