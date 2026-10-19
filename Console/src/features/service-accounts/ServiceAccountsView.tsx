@@ -33,7 +33,7 @@ export function ServiceAccountsView({ records }: { records: ServiceAccount[] }) 
           <button type="button" onClick={() => setCreating(true)}>
             Add service
           </button>
-          <RecordImport label="services" onPublish={async (rows) => { for (const row of rows) await create.mutateAsync({
+          <RecordImport label="services" expectedColumns={["Service", "Type", "ExpenseGroup", "MonthlyAmount", "InterestRate", "APR", "Due", "Occurrence", "Status", "Since", "Website", "Notes", "PaymentMethod", "AccountNumber", "AssociatedAddress", "ServiceKey"]} onPublish={async (rows) => { for (const row of rows) await create.mutateAsync({
             service: String(row.Service ?? row.service ?? ""), type: String(row.Type ?? row.type ?? "") || null,
             expenseGroup: String(row.ExpenseGroup ?? "") || null, monthlyAmount: row.MonthlyAmount ? Number(row.MonthlyAmount) : null,
             interestRate: row.InterestRate ? Number(row.InterestRate) : null, apr: row.APR ? Number(row.APR) : null,

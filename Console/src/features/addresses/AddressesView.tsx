@@ -40,7 +40,7 @@ export function AddressesView({ records }: AddressesViewProps) {
           <button type="button" onClick={() => setCreating(true)}>
             Add address
           </button>
-          <RecordImport label="addresses" onPublish={async (rows) => { for (const row of rows) await create.mutateAsync(row as Parameters<typeof create.mutateAsync>[0]); }} />
+          <RecordImport label="addresses" expectedColumns={["id", "addressType", "country"]} onPublish={async (rows) => { for (const row of rows) await create.mutateAsync(row as Parameters<typeof create.mutateAsync>[0]); }} />
         </div>
       </div>
 

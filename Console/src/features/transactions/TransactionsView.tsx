@@ -46,7 +46,7 @@ export function TransactionsView({ records }: TransactionsViewProps) {
           <button type="button" onClick={() => setCreating(true)}>
             Add transaction
           </button>
-          <RecordImport label="transactions" onPublish={async (rows) => { for (const row of rows) await create.mutateAsync(row as Parameters<typeof create.mutateAsync>[0]); }} />
+          <RecordImport label="transactions" expectedColumns={["id", "item", "categoryID", "quantity"]} onPublish={async (rows) => { for (const row of rows) await create.mutateAsync(row as Parameters<typeof create.mutateAsync>[0]); }} />
         </div>
       </div>
 

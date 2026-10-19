@@ -42,7 +42,7 @@ export function EducationView({ records }: EducationViewProps) {
           <button type="button" onClick={() => setCreating(true)}>
             Add education
           </button>
-          <RecordImport label="education records" onPublish={async (rows) => { for (const row of rows) await create.mutateAsync(row as Parameters<typeof create.mutateAsync>[0]); }} />
+          <RecordImport label="education records" expectedColumns={["id", "educationType", "institutionName", "status"]} onPublish={async (rows) => { for (const row of rows) await create.mutateAsync(row as Parameters<typeof create.mutateAsync>[0]); }} />
         </div>
       </div>
 

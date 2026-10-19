@@ -42,7 +42,7 @@ export function EmploymentView({ records }: EmploymentViewProps) {
           <button type="button" onClick={() => setCreating(true)}>
             Add employment
           </button>
-          <RecordImport label="employment records" onPublish={async (rows) => { for (const row of rows) await create.mutateAsync(row as Parameters<typeof create.mutateAsync>[0]); }} />
+          <RecordImport label="employment records" expectedColumns={["id", "employerName", "employerType", "positionTitle", "employmentType", "employmentStatus"]} onPublish={async (rows) => { for (const row of rows) await create.mutateAsync(row as Parameters<typeof create.mutateAsync>[0]); }} />
         </div>
       </div>
 

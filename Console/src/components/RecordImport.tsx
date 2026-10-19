@@ -26,7 +26,7 @@ function parseCSV(input: string): Row[] {
   });
 }
 
-export function RecordImport({ label, onPublish }: { label: string; onPublish: (rows: Row[]) => Promise<void> }) {
+export function RecordImport({ label, expectedColumns, onPublish }: { label: string; expectedColumns: string[]; onPublish: (rows: Row[]) => Promise<void> }) {
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
   const [rows, setRows] = useState<Row[] | null>(null);
@@ -39,6 +39,15 @@ export function RecordImport({ label, onPublish }: { label: string; onPublish: (
       else {
         setRows(parseCSV(text));
       }
+      const parsedRows = text.trim().startsWith("[") ? JSON.parse(text) as Row[] : parseCSV(text);
+      const expected = new Set(expectedColumns);
+      for (const [index, row] of parsedRows.entries()) {
+        const keys = Object.keys(row);
+        const missing = expectedColumns.filter((column) => !(column in row));
+        const unknown = keys.filter((key) => !expected.has(key));
+        if (missing.length || unknown.length) throw new Error(`Row ${index + 1} columns invalid. Missing: ${missing.join(", ") || "none"}; unknown: ${unknown.join(", ") || "none"}.`);
+      }
+      setRows(parsedRows);
     } catch (e) { setError(e instanceof Error ? e.message : "Could not parse the import."); }
   }
   return <>
