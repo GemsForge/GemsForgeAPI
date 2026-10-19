@@ -36,8 +36,10 @@ struct ExpenseTransactionCreateRequest: Content {
 
 struct ExpenseTransactionPatchRequest: Content {
     let item: String?
+    let firstReceiptItem: Bool?
     let categoryID: Int?
     let quantity: Double?
+    let regularPrice: Double?
     let total: Double?
     let notes: String?
     let image: String?
@@ -149,10 +151,11 @@ func registerExpenseTransactionRoutes(_ app: Application) {
         }
         try PropertyPatchValidation.requireKnownJSONProperties(
             request,
-            allowed: ["item", "categoryID", "quantity", "total", "notes", "image"],
+            allowed: ["item", "firstReceiptItem", "categoryID", "quantity", "regularPrice", "total", "notes", "image"],
             requireNonEmpty: true,
             emptyReason: "At least one editable field is required."
         )
+        let patchValues = try request.content.decode([String: PatchJSONValue].self)
         let input = try request.content.decode(ExpenseTransactionPatchRequest.self)
         let item = input.item ?? transaction.item
         guard !item.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { throw Abort(.unprocessableEntity, reason: "Transaction item cannot be empty.") }
@@ -165,11 +168,14 @@ func registerExpenseTransactionRoutes(_ app: Application) {
         let image = input.image ?? transaction.image
         try await AttachmentReferenceService(database: request.db, hubID: request.authenticatedHubID).replace(oldMetadataID: transaction.image, newMetadataID: image, ownerType: "ExpenseTransaction", ownerID: id)
         transaction.item = item
+        if let firstReceiptItem = input.firstReceiptItem { transaction.firstReceiptItem = firstReceiptItem }
         transaction.categoryID = categoryID
         transaction.quantity = quantity
+        transaction.regularPrice = input.regularPrice ?? transaction.regularPrice
         transaction.total = total
-        transaction.notes = input.notes ?? transaction.notes
+        if patchValues["notes"] != nil { transaction.notes = try patchValues["notes"]?.string() }
         transaction.image = image
+        transaction.updatedAt = RecordTimestamp.now()
         try await ExpenseTransactionService(database: request.db, hubID: request.authenticatedHubID).save(transaction)
         return transaction
     }

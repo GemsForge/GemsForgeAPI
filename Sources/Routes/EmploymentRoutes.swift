@@ -207,6 +207,7 @@ func registerEmploymentRoutes(_ app: Application) {
         record.employerContactNumber = value("employerContactNumber", record.employerContactNumber)
         record.employerContactEmail = value("employerContactEmail", record.employerContactEmail)
         record.notes = value("notes", record.notes)
+        record.updatedAt = RecordTimestamp.now()
         try await EmploymentService(database: request.db, hubID: request.authenticatedHubID).save(record)
         return try await employmentResponse(record, on: request.db)
     }

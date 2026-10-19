@@ -213,6 +213,7 @@ func registerEducationRoutes(_ app: Application) {
         record.website = value("website", record.website)
         record.notes = value("notes", record.notes)
         record.documentFileMetadataID = documentFileMetadataID
+        record.updatedAt = RecordTimestamp.now()
         try await EducationService(database: request.db, hubID: request.authenticatedHubID).save(record)
         return try await educationResponse(record, on: request.db)
     }
