@@ -15,14 +15,16 @@ struct LiveDatabaseBackupConfiguration: Sendable {
     }
 
     static func fromEnvironment() -> Self? {
-        guard let sourcePath = Environment.get("DATABASE_PATH"),
-              let destinationPath = Environment.get("LIVE_DATABASE_BACKUP_DIRECTORY") else {
+        guard let configuration = try? DatabaseEnvironment.resolve(
+            value: Environment.get("GEMLIFE_ENVIRONMENT"),
+            lookup: Environment.get
+        ) else {
             return nil
         }
 
         return Self(
-            sourceURL: URL(fileURLWithPath: sourcePath).standardizedFileURL,
-            destinationDirectory: URL(fileURLWithPath: destinationPath).standardizedFileURL
+            sourceURL: URL(fileURLWithPath: configuration.databasePath).standardizedFileURL,
+            destinationDirectory: URL(fileURLWithPath: configuration.backupDirectory).standardizedFileURL
         )
     }
 

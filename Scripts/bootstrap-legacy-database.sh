@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Load ignored local settings and run the offline, dev-only database bootstrap.
+# Load ignored local settings and run the offline DEV/FIT database bootstrap.
 set -Eeuo pipefail
 
 repository_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
