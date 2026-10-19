@@ -15,6 +15,7 @@ import type {
   ForgeKeeperPatch,
   GemHue,
   GemHueCreate,
+  GemHueImportPreview,
   HomeInventoryCSVImportResult,
   HomeInventoryCSVPreview,
   LiveSchema,
@@ -105,6 +106,8 @@ export const api = {
     }),
   listGemHues: (signal?: AbortSignal) => request<GemHue[]>("/gemhues", { signal }),
   createGemHue: (payload: GemHueCreate) => request<GemHue>("/gemhues", { method: "POST", body: JSON.stringify(payload) }),
+  previewGemHueImport: (rows: GemHueCreate[]) => request<GemHueImportPreview>("/gemhues/import/preview", { method: "POST", body: JSON.stringify(rows) }),
+  importGemHues: (rows: GemHueCreate[]) => request<{ importedCount: number }>("/gemhues/import", { method: "POST", body: JSON.stringify({ rows, confirmImport: true }) }),
   getGemHue: (hueID: string, signal?: AbortSignal) =>
     request<GemHue>(`/gemhues/${encodeURIComponent(hueID)}`, { signal }),
   getGemHueImage: (hueID: string, signal?: AbortSignal) =>

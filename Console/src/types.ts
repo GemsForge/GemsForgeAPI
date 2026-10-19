@@ -127,6 +127,7 @@ export interface GemHue {
 }
 
 export type GemHueCreate = Omit<GemHue, "id"> & { id: string };
+export interface GemHueImportPreview { validRows: GemHueCreate[]; invalidRows: { rowNumber: number; errors: string[] }[]; readyToImport: boolean; warnings: string[]; }
 
 export interface Education {
   id: string;

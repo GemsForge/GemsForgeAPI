@@ -8,6 +8,7 @@ import { RecordFields } from "../../components/RecordFields";
 import { useCreateGemHueMutation } from "../../data/recordQueries";
 import { useState as useFormState } from "react";
 import type { GemHueCreate } from "../../types";
+import { api } from "../../api";
 
 interface GemHuesViewProps {
   hues: GemHue[];
@@ -23,6 +24,10 @@ export function GemHuesView({ hues }: GemHuesViewProps) {
   const [showAdd, setShowAdd] = useFormState(false);
   const createHue = useCreateGemHueMutation();
   const [form, setForm] = useFormState<GemHueCreate>({ id: "", colorName: "", colorFamily: "", hexCode: "", mood: "", palette: "", description: "", createdDate: "", notes: "" });
+  const [importText, setImportText] = useFormState("");
+  const [importPreview, setImportPreview] = useFormState<Awaited<ReturnType<typeof api.previewGemHueImport>> | null>(null);
+  const [importError, setImportError] = useFormState<string | null>(null);
+  const [importing, setImporting] = useFormState(false);
 
   useEffect(() => {
     if (!image.data) {
@@ -51,8 +56,33 @@ export function GemHuesView({ hues }: GemHuesViewProps) {
         <div className="hue-heading-actions">
           <span className="record-count">{hues.length} records</span>
           <button type="button" onClick={() => setShowAdd((value) => !value)}>{showAdd ? "Close" : "Add Gem Hue"}</button>
+          <button type="button" onClick={() => setShowAdd(false)}>Import CSV / JSON</button>
         </div>
       </div>
+      <section className="record-form">
+        <h3>Import Gem Hues</h3>
+        <p className="muted">Paste a CSV export with headers such as HueID, ColorName, and HexCode, or a JSON array using those same names.</p>
+        <textarea aria-label="Gem Hue CSV or JSON" value={importText} onChange={(event) => setImportText(event.target.value)} rows={6} />
+        <button type="button" disabled={importing} onClick={async () => {
+          setImportError(null); setImportPreview(null);
+          try {
+            let rows: GemHueCreate[];
+            if (importText.trim().startsWith("[")) rows = JSON.parse(importText);
+            else {
+              const [headerLine, ...lines] = importText.trim().split(/\r?\n/);
+              const headers = headerLine.split(",").map((value) => value.trim());
+              rows = lines.filter(Boolean).map((line) => Object.fromEntries(line.split(",").map((value, index) => [headers[index], value.trim()])) as GemHueCreate);
+            }
+            setImportPreview(await api.previewGemHueImport(rows));
+          } catch (error) { setImportError(error instanceof Error ? error.message : "Could not parse the import."); }
+        }}>Preview import</button>
+        {importError && <p role="alert">{importError}</p>}
+        {importPreview && <>
+          <p>{importPreview.validRows.length} valid rows, {importPreview.invalidRows.length} invalid rows.</p>
+          {importPreview.invalidRows.map((row) => <p role="alert" key={row.rowNumber}>Row {row.rowNumber}: {row.errors.join(" ")}</p>)}
+          <button type="button" disabled={!importPreview.readyToImport || importing} onClick={async () => { setImporting(true); try { await api.importGemHues(importPreview.validRows); window.location.reload(); } catch (error) { setImportError(error instanceof Error ? error.message : "Could not publish the import."); } finally { setImporting(false); } }}>Publish records</button>
+        </>}
+      </section>
       {showAdd && (
         <form className="record-form" onSubmit={async (event) => {
           event.preventDefault();
