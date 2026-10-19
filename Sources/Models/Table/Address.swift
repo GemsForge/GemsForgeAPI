@@ -55,6 +55,9 @@ final class Address: Model, Content, @unchecked Sendable {
     @OptionalField(key: "ImageFileMetadataID")
     var imageFileMetadataID: String?
 
+    @OptionalField(key: "DateUpdated")
+    var updatedAt: String?
+
     init() {}
 
     /// Creates an Address model using the columns available in the existing table.

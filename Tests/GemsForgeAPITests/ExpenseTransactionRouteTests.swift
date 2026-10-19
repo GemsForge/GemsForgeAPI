@@ -119,19 +119,17 @@ final class ExpenseTransactionRouteTests: XCTestCase {
             }
 
             try await app.test(.PATCH, "transactions/TRX-0001", beforeRequest: { request in
-                try request.content.encode(ExpenseTransactionPatchRequest(
-                    item: "Patched Item",
-                    categoryID: nil,
-                    quantity: 3.0,
-                    total: nil,
-                    notes: nil,
-                    image: nil
-                ))
+                request.headers.contentType = .json
+                request.body = ByteBuffer(string: #"{"item":"Patched Item","quantity":3,"regularPrice":9.5,"firstReceiptItem":true,"notes":null}"#)
             }) { response async throws in
                 XCTAssertEqual(response.status, .ok)
                 let record = try response.content.decode(ExpenseTransaction.self)
                 XCTAssertEqual(record.quantity, 3.0)
                 XCTAssertEqual(record.item, "Patched Item")
+                XCTAssertEqual(record.regularPrice, 9.5)
+                XCTAssertTrue(record.firstReceiptItem)
+                XCTAssertNil(record.notes)
+                XCTAssertNotNil(record.updatedAt)
             }
 
             try await app.test(.PATCH, "transactions/TRX-0001", beforeRequest: { request in

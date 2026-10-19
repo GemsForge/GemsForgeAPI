@@ -55,6 +55,7 @@ func registerAddressRoutes(_ app: Application) {
         }
 
         let address = makeAddress(from: input, id: id)
+        address.updatedAt = RecordTimestamp.now()
         _ = try await AttachmentReferenceService(database: request.db, hubID: request.authenticatedHubID).attach(metadataID: address.imageFileMetadataID, ownerType: "Address", ownerID: id)
         try await AddressService(database: request.db, hubID: request.authenticatedHubID).save(address)
         return AddressDetailResponse(address)
@@ -109,6 +110,7 @@ func registerAddressRoutes(_ app: Application) {
         address.addressStatus = status
         address.notes = value("notes", address.notes)
         address.imageFileMetadataID = metadataID
+        address.updatedAt = RecordTimestamp.now()
         try await AddressService(database: request.db, hubID: request.authenticatedHubID).save(address)
         return AddressDetailResponse(address)
     }

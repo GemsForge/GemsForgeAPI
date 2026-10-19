@@ -177,6 +177,7 @@ func registerServiceAccountRoutes(_ app: Application) {
         account.status = input.status ?? account.status
         account.notes = input.notes ?? account.notes
         account.logoFileMetadataID = logoFileMetadataID
+        account.updatedAt = RecordTimestamp.now()
         try await ServiceAccountService(database: request.db, hubID: request.authenticatedHubID).save(account)
         return account
     }

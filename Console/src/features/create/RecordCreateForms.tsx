@@ -10,6 +10,11 @@ import {
 } from "react-hook-form";
 import { z } from "zod";
 import { CreateFormFrame, CreateSelectField, CreateTextField } from "../../components/forms/CreateForm";
+import {
+  GeoapifyAddressSearch,
+  type AddressSearchValues,
+  type GeoapifySearchClient,
+} from "../addresses/GeoapifyAddressSearch";
 import { useExpenseCategoriesQuery, useExpenseSubcategoriesQuery } from "../../data/lifeQueries";
 import type {
   Address,
@@ -245,9 +250,11 @@ export function DomainCreateForm({
 export function AddressCreateForm({
   onCreate,
   onCancel,
+  addressSearchClient,
 }: {
   onCreate: (payload: AddressCreate) => Promise<void>;
   onCancel: () => void;
+  addressSearchClient?: GeoapifySearchClient;
 }) {
   return (
     <FormShell
@@ -285,24 +292,35 @@ export function AddressCreateForm({
       }
       onCancel={onCancel}
     >
-      {(form) => (
-        <>
-          {fields(form, [
-            ["id", "Stable address ID", true],
-            ["addressType", "Address type", true],
-            ["addressLine1", "Address line 1"],
-            ["addressLine2", "Address line 2"],
-            ["city", "City"],
-            ["state", "State / region"],
-            ["postalCode", "Postal code"],
-            ["country", "Country", true],
-            ["startDate", "Start date"],
-            ["endDate", "End date"],
-            ["addressStatus", "Status", true],
-            ["notes", "Notes"],
-          ])}
-        </>
-      )}
+      {(form) => {
+        function applyAddress(values: AddressSearchValues) {
+          if (values.addressLine1) form.setValue("addressLine1", values.addressLine1, { shouldDirty: true });
+          if (values.city) form.setValue("city", values.city, { shouldDirty: true });
+          if (values.state) form.setValue("state", values.state, { shouldDirty: true });
+          if (values.postalCode) form.setValue("postalCode", values.postalCode, { shouldDirty: true });
+          if (values.country) form.setValue("country", values.country, { shouldDirty: true });
+        }
+
+        return (
+          <>
+            <GeoapifyAddressSearch onSelect={applyAddress} client={addressSearchClient} />
+            {fields(form, [
+              ["id", "Stable address ID", true],
+              ["addressType", "Address type", true],
+              ["addressLine1", "Address line 1"],
+              ["addressLine2", "Address line 2"],
+              ["city", "City"],
+              ["state", "State / region"],
+              ["postalCode", "Postal code"],
+              ["country", "Country", true],
+              ["startDate", "Start date"],
+              ["endDate", "End date"],
+              ["addressStatus", "Status", true],
+              ["notes", "Notes"],
+            ])}
+          </>
+        );
+      }}
     </FormShell>
   );
 }

@@ -61,6 +61,9 @@ final class Education: Model, Content, @unchecked Sendable {
     @OptionalField(key: "DocumentFileMetadataID")
     var documentFileMetadataID: String?
 
+    @OptionalField(key: "DateUpdated")
+    var updatedAt: String?
+
     init() {}
 
     /// Creates an Education model using the columns available in the existing table.

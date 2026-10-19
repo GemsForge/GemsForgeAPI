@@ -72,8 +72,11 @@ export default defineConfig(({ mode }) => {
         ].map((path) => [
           path,
           {
-            target: configuredApiTarget,
-            router: apiTargetForRequest,
+            // GemLife writes the selected API port before starting Vite.
+            // Resolve it into the proxy target at startup instead of relying
+            // on http-proxy's router callback, which can retain the fallback
+            // target for the lifetime of the dev server.
+            target: apiTargetForRequest(),
             bypass: (req: import("node:http").IncomingMessage) =>
               req.method === "GET" && req.headers.accept?.includes("text/html") ? "/index.html" : undefined,
           },

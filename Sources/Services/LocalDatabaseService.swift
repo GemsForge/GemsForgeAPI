@@ -51,6 +51,7 @@ enum LocalDatabaseProfile: String, Codable, CaseIterable, Sendable {
             app.migrations.add(CreateAuthenticationSchema())
             app.migrations.add(CreateHubs())
             app.migrations.add(CreateAddresses())
+            app.migrations.add(AddAddressUpdatedAt())
             app.migrations.add(CreateDomains())
             app.migrations.add(CreateEducation())
             app.migrations.add(CreateEmployment())

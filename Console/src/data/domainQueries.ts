@@ -25,3 +25,22 @@ export function useCreateDomainMutation() {
     },
   });
 }
+
+export function useDomainPatchMutation() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      patch,
+    }: {
+      id: string;
+      patch: Partial<Pick<import("../types").Domain, "title" | "description">>;
+    }) => api.patchDomain(id, patch),
+    onSuccess: async (domain) => {
+      client.setQueryData(domainQueryKeys.all, (current: import("../types").Domain[] | undefined) =>
+        current?.map((item) => (item.id === domain.id ? domain : item)),
+      );
+      await client.invalidateQueries({ queryKey: domainQueryKeys.all, exact: true });
+    },
+  });
+}

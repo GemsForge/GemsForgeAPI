@@ -9,6 +9,7 @@ final class AddressRouteTests: XCTestCase {
             app.databases.use(.sqlite(.memory), as: .sqlite)
             app.migrations.add(CreateHubs())
             app.migrations.add(CreateAddresses())
+            app.migrations.add(AddAddressUpdatedAt())
             app.migrations.add(CreateFileMetadata())
             app.migrations.add(AddAddressAttachmentReference())
             try await app.autoMigrate()
@@ -36,6 +37,7 @@ final class AddressRouteTests: XCTestCase {
                 let address = try response.content.decode(AddressDetailResponse.self)
                 XCTAssertEqual(address.id, "ADDR-0001")
                 XCTAssertEqual(address.addressLine1, "123 Test Street")
+                XCTAssertNotNil(address.updatedAt)
             }
 
             try await app.test(.GET, "addresses") { response async throws in
@@ -84,6 +86,7 @@ final class AddressRouteTests: XCTestCase {
                 let address = try response.content.decode(AddressDetailResponse.self)
                 XCTAssertEqual(address.city, "Atlanta")
                 XCTAssertEqual(address.addressLine1, "456 Updated Street")
+                XCTAssertNotNil(address.updatedAt)
             }
 
             try await app.test(.PATCH, "addresses/ADDR-0001", beforeRequest: { request in
@@ -107,6 +110,7 @@ final class AddressRouteTests: XCTestCase {
             app.databases.use(.sqlite(.memory), as: .sqlite)
             app.migrations.add(CreateHubs())
             app.migrations.add(CreateAddresses())
+            app.migrations.add(AddAddressUpdatedAt())
             app.migrations.add(CreateFileMetadata())
             app.migrations.add(AddAddressAttachmentReference())
             try await app.autoMigrate()

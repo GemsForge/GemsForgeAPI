@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { TamaguiProvider } from "tamagui";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { api } from "../../api";
@@ -86,6 +86,17 @@ describe("Addresses create/edit integration", () => {
     expect(patch.mock.calls[0][1]).toEqual({ city: "Cambridge" });
     expect(patch.mock.calls[0][1]).not.toHaveProperty("id");
     expect(patch.mock.calls[0][1]).not.toHaveProperty("createdAt");
+
+    fireEvent.click(screen.getByRole("button", { name: "Edit address type" }));
+    const addressType = screen.getByRole("combobox", { name: "Address type" });
+    expect(
+      within(addressType)
+        .getAllByRole("option")
+        .map((option) => option.textContent),
+    ).toEqual(["Residence", "Storage", "Work", "Other"]);
+    fireEvent.change(addressType, { target: { value: "Work" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save address type" }));
+    await waitFor(() => expect(patch).toHaveBeenCalledWith("ADDR-273", { addressType: "Work" }));
   });
 
   it("retains values after API failure and allows cancellation without retrying", async () => {

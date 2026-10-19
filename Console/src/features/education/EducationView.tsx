@@ -5,8 +5,8 @@ import { useEducationPatchMutation, useEducationRecordQuery } from "../../data/r
 import { QueryFeedback } from "../../components/QueryFeedback";
 import type { Education } from "../../types";
 import { GemEmptyState, GemRecordCard, GemRecordList } from "../../components/ui";
-import { RecordFields } from "../../components/RecordFields";
-import { PropertyEditor } from "../../components/PropertyEditor";
+import { AttachmentControl } from "../../components/AttachmentControl";
+import { EditableRecordFields, formatRecordTimestamp } from "../../components/EditableRecordFields";
 import { useCreateEducationMutation } from "../../data/recordQueries";
 import { useAddressesQuery } from "../../data/lifeQueries";
 import { EducationCreateForm } from "../create/RecordCreateForms";
@@ -90,6 +90,12 @@ export function EducationView({ records }: EducationViewProps) {
                 onPatch={async (values) => {
                   await patch.mutateAsync({ id: selectedRecord.id, patch: values });
                 }}
+                onAttachment={async (metadata) => {
+                  await patch.mutateAsync({
+                    id: selectedRecord.id,
+                    patch: { documentFileMetadataID: metadata?.id ?? null },
+                  });
+                }}
               />
             ) : (
               !selectedID && (
@@ -109,9 +115,11 @@ export function EducationView({ records }: EducationViewProps) {
 function EducationDetail({
   record,
   onPatch,
+  onAttachment,
 }: {
   record: Education;
   onPatch: (values: Partial<Education>) => Promise<void>;
+  onAttachment: (metadata: import("../../types").FileMetadata | null) => Promise<void>;
 }) {
   return (
     <article className="education-detail">
@@ -123,37 +131,107 @@ function EducationDetail({
         </div>
         <span className="status-pill">{record.status}</span>
       </div>
-      <PropertyEditor
-        label="Status"
-        initialValue={record.status}
-        editLabel="Edit status"
-        saveLabel="Save status"
-        onSave={async (status) => onPatch({ status })}
-      />
-      <RecordFields
+      <EditableRecordFields
         className="education-fields"
         fields={[
-          { label: "Type", value: record.educationType || "—" },
-          { label: "Program", value: record.program || "—" },
-          { label: "Field of study", value: record.fieldOfStudy || "—" },
-          { label: "Credential", value: record.credential || "—" },
-          { label: "Start date", value: record.startDate || "—" },
-          { label: "End date", value: record.endDate || "—" },
-          { label: "Awarded date", value: record.awardedDate || "—" },
-          { label: "Location", value: <AddressSummary address={record.address} /> },
-          { label: "Credential ID", value: record.credentialID || "—" },
+          {
+            label: "Type",
+            value: record.educationType,
+            required: true,
+            onSave: async (value) => onPatch({ educationType: value as string }),
+          },
+          {
+            label: "Institution",
+            value: record.institutionName,
+            required: true,
+            onSave: async (value) => onPatch({ institutionName: value as string }),
+          },
+          {
+            label: "Program",
+            value: record.program,
+            nullable: true,
+            onSave: async (value) => onPatch({ program: value as string | null }),
+          },
+          {
+            label: "Field of study",
+            value: record.fieldOfStudy,
+            nullable: true,
+            onSave: async (value) => onPatch({ fieldOfStudy: value as string | null }),
+          },
+          {
+            label: "Credential",
+            value: record.credential,
+            nullable: true,
+            onSave: async (value) => onPatch({ credential: value as string | null }),
+          },
+          {
+            label: "Credential ID",
+            value: record.credentialID,
+            nullable: true,
+            onSave: async (value) => onPatch({ credentialID: value as string | null }),
+          },
+          {
+            label: "Start date",
+            value: record.startDate,
+            inputType: "date",
+            nullable: true,
+            onSave: async (value) => onPatch({ startDate: value as string | null }),
+          },
+          {
+            label: "End date",
+            value: record.endDate,
+            inputType: "date",
+            nullable: true,
+            onSave: async (value) => onPatch({ endDate: value as string | null }),
+          },
+          {
+            label: "Awarded date",
+            value: record.awardedDate,
+            inputType: "date",
+            nullable: true,
+            onSave: async (value) => onPatch({ awardedDate: value as string | null }),
+          },
+          {
+            label: "Status",
+            value: record.status,
+            required: true,
+            onSave: async (value) => onPatch({ status: value as string }),
+          },
+          {
+            label: "Location",
+            value: null,
+            displayValue: <AddressSummary address={record.address} />,
+            readOnlyReason: "Address relationship",
+          },
           {
             label: "Website",
-            value: record.website ? (
-              <a href={record.website} target="_blank" rel="noreferrer">
-                {record.website}
-              </a>
-            ) : (
-              "—"
-            ),
+            value: record.website,
+            inputType: "url",
+            nullable: true,
+            onSave: async (value) => onPatch({ website: value as string | null }),
           },
-          { label: "Notes", value: record.notes || "—", className: "record-notes" },
+          {
+            label: "Notes",
+            value: record.notes,
+            inputType: "textarea",
+            nullable: true,
+            className: "record-notes",
+            onSave: async (value) => onPatch({ notes: value as string | null }),
+          },
+          {
+            label: "Last updated",
+            value: record.updatedAt ?? null,
+            readOnlyReason: "Server managed",
+            displayValue: formatRecordTimestamp(record.updatedAt),
+          },
         ]}
+      />
+      <AttachmentControl
+        fileMetadataID={record.documentFileMetadataID}
+        ownerType="Education"
+        ownerID={record.id}
+        label="Education document"
+        onAttach={onAttachment}
       />
     </article>
   );
