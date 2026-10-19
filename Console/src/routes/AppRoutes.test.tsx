@@ -6,10 +6,13 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { AppRoutes } from "./AppRoutes";
 import { api } from "../api";
 import { tamaguiConfig } from "../design-system";
+import { AuthProvider } from "../auth/AuthProvider";
+import { clearSession, saveSession } from "../auth/session";
 
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
+  clearSession();
 });
 function HistoryControls() {
   const navigate = useNavigate();
@@ -20,18 +23,22 @@ function HistoryControls() {
     </>
   );
 }
-function setup(path = "/") {
+function setup(path = "/", authenticated = true) {
   vi.spyOn(api, "listDomains").mockResolvedValue([
     { id: "Life", title: "Life domain", description: "Personal records" },
   ]);
+  vi.spyOn(api, "getHealth").mockResolvedValue(true);
+  if (authenticated) saveSession({ token: "test-session", expiresAt: "2099-01-01T00:00:00Z" });
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: 30_000 } } });
   render(
     <QueryClientProvider client={client}>
       <TamaguiProvider config={tamaguiConfig} defaultTheme="dark">
-        <MemoryRouter initialEntries={[path]}>
-          <HistoryControls />
-          <AppRoutes />
-        </MemoryRouter>
+        <AuthProvider>
+          <MemoryRouter initialEntries={[path]}>
+            <HistoryControls />
+            <AppRoutes />
+          </MemoryRouter>
+        </AuthProvider>
       </TamaguiProvider>
     </QueryClientProvider>,
   );
@@ -39,16 +46,27 @@ function setup(path = "/") {
 }
 
 describe("Gem Life navigation", () => {
+  it("redirects unauthenticated protected routes before loading record data", async () => {
+    const domains = vi.spyOn(api, "listDomains");
+    setup("/addresses", false);
+    expect(await screen.findByRole("heading", { name: "Sign in to Gem Life" })).toBeInTheDocument();
+    expect(domains).not.toHaveBeenCalled();
+  });
+
   it("supports the packaged /app base without changing API endpoints", async () => {
     vi.spyOn(api, "listDomains").mockResolvedValue([]);
     vi.spyOn(api, "listEducation").mockResolvedValue([]);
+    vi.spyOn(api, "getHealth").mockResolvedValue(true);
+    saveSession({ token: "test-session", expiresAt: "2099-01-01T00:00:00Z" });
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     render(
       <QueryClientProvider client={client}>
         <TamaguiProvider config={tamaguiConfig} defaultTheme="dark">
-          <MemoryRouter basename="/app" initialEntries={["/app/education"]}>
-            <AppRoutes />
-          </MemoryRouter>
+          <AuthProvider>
+            <MemoryRouter basename="/app" initialEntries={["/app/education"]}>
+              <AppRoutes />
+            </MemoryRouter>
+          </AuthProvider>
         </TamaguiProvider>
       </QueryClientProvider>,
     );
@@ -99,7 +117,7 @@ describe("Gem Life navigation", () => {
       )
       .mockResolvedValue([]);
     setup("/education");
-    expect(screen.getByRole("status")).toHaveTextContent("Loading records");
+    expect(screen.getByText("Loading records…")).toBeInTheDocument();
     await act(async () => reject(new Error("API unavailable")));
     const alert = await screen.findByRole("alert");
     expect(alert.textContent).toMatch(/something went wrong|api unavailable/i);

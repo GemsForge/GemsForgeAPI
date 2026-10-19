@@ -6,14 +6,18 @@ import Fluent
 /// table model so persistence logic remains complete and reusable.
 struct AddressService: Sendable {
     private let database: any Database
+    private let hubID: String?
 
-    init(database: any Database) {
+    init(database: any Database, hubID: String? = nil) {
         self.database = database
+        self.hubID = hubID
     }
 
     /// Returns address records ordered by status, city, and stable identifier.
     func list() async throws -> [Address] {
-        try await Address.query(on: database)
+        var query = Address.query(on: database)
+        if let hubID { query = query.filter(\.$hubID == hubID) }
+        return try await query
             .sort(\.$addressStatus)
             .sort(\.$city)
             .sort(\.$id)
@@ -22,12 +26,14 @@ struct AddressService: Sendable {
 
     /// Returns one address record by its stable AddressID.
     func find(id: String) async throws -> Address? {
-        try await Address.find(id, on: database)
+        var query = Address.query(on: database).filter(\.$id == id)
+        if let hubID { query = query.filter(\.$hubID == hubID) }
+        return try await query.first()
     }
 
     /// Creates or updates one address record.
     func save(_ address: Address) async throws {
-        address.updatedAt = RecordTimestamp.now()
+        if let hubID { address.hubID = hubID }
         try await address.save(on: database)
     }
 

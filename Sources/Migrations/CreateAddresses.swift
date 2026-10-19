@@ -8,6 +8,7 @@ struct CreateAddresses: AsyncMigration {
     func prepare(on database: any Database) async throws {
         try await database.schema(Address.schema)
             .field("AddressID", .string, .identifier(auto: false))
+            .field("HubID", .string)
             .field("AddressType", .string, .required)
             .field("AddressLine1", .string)
             .field("AddressLine2", .string)

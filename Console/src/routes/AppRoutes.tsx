@@ -11,7 +11,7 @@ import {
   useParams,
 } from "react-router-dom";
 import type { UseQueryResult } from "@tanstack/react-query";
-import { useDomainsQuery, useDomainPatchMutation } from "../data/domainQueries";
+import { useDomainsQuery } from "../data/domainQueries";
 import {
   useAddressesQuery,
   useEducationQuery,
@@ -27,7 +27,10 @@ import { GemLifeShell } from "../components/layout/GemLifeShell";
 import { DomainSidebar } from "../features/domains/DomainSidebar";
 import { useCreateDomainMutation } from "../data/domainQueries";
 import { DomainCreateForm } from "../features/create/RecordCreateForms";
-import { EditableRecordFields, formatRecordTimestamp } from "../components/EditableRecordFields";
+import { LocalSession } from "../components/LocalSession";
+import { RequireAuth } from "../auth/RequireAuth";
+import { SignInPage } from "../auth/SignInPage";
+import { isRecoveryLink, ResetPasswordPage } from "../auth/ResetPasswordPage";
 const ForgeKeeperView = lazy(() =>
   import("../features/forgekeeper/ForgeKeeperView").then((module) => ({ default: module.ForgeKeeperView })),
 );
@@ -149,7 +152,6 @@ function Home() {
 function Domains() {
   const query = useDomainsQuery();
   const create = useCreateDomainMutation();
-  const patch = useDomainPatchMutation();
   const [creating, setCreating] = useState(false);
   return (
     <>
@@ -173,38 +175,10 @@ function Domains() {
           <div className="page-list">
             {!domains.length && <p>No domains yet.</p>}
             {domains.map((domain) => (
-              <article className="page-card domain-card" key={domain.id}>
-                <Link className="domain-card-link" to={`/domains/${encodeURIComponent(domain.id)}`}>
-                  <small>{domain.id}</small>
-                </Link>
-                <EditableRecordFields
-                  className="domain-fields"
-                  fields={[
-                    {
-                      label: "Title",
-                      value: domain.title,
-                      required: true,
-                      onSave: async (value) => {
-                        await patch.mutateAsync({ id: domain.id, patch: { title: value as string } });
-                      },
-                    },
-                    {
-                      label: "Description",
-                      value: domain.description,
-                      required: true,
-                      onSave: async (value) => {
-                        await patch.mutateAsync({ id: domain.id, patch: { description: value as string } });
-                      },
-                    },
-                    {
-                      label: "Last updated",
-                      value: domain.updatedAt ?? null,
-                      readOnlyReason: "Server managed",
-                      displayValue: formatRecordTimestamp(domain.updatedAt),
-                    },
-                  ]}
-                />
-              </article>
+              <Link className="page-card" to={`/domains/${encodeURIComponent(domain.id)}`} key={domain.id}>
+                <h3>{domain.title}</h3>
+                <p>{domain.description}</p>
+              </Link>
             ))}
           </div>
         )}
@@ -290,23 +264,34 @@ function NotFound() {
 export function AppRoutes() {
   return (
     <Routes>
-      <Route element={<Layout />}>
-        <Route index element={<Home />} />
-        <Route path="domains" element={<Domains />} />
-        <Route path="domains/:domainID" element={<Pages kind="domain" />} />
-        <Route path="forgekeeper" element={<Pages kind="roots" />} />
-        <Route path="forgekeeper/:pageID/children" element={<Pages kind="children" />} />
-        <Route path="gemhues" element={<Hues />} />
-        <Route path="education" element={<Education />} />
-        <Route path="employment" element={<Employment />} />
-        <Route path="addresses" element={<Addresses />} />
-        <Route path="transactions" element={<Transactions />} />
-        <Route path="service-accounts" element={<ServiceAccounts />} />
-        <Route path="expenses" element={<Navigate to="/transactions" replace />} />
-        <Route path="local-databases" element={<Databases />} />
-        <Route path="schema-builder" element={<Schema />} />
-        <Route path="live-database" element={<LiveDatabase />} />
-        <Route path="*" element={<NotFound />} />
+      <Route path="login" element={isRecoveryLink() ? <ResetPasswordPage /> : <SignInPage />} />
+      <Route path="reset-password" element={<ResetPasswordPage />} />
+      <Route path="/" element={isRecoveryLink() ? <ResetPasswordPage /> : <Navigate to="/login" replace />} />
+      <Route element={<RequireAuth />}>
+        <Route
+          element={
+            <LocalSession>
+              <Layout />
+            </LocalSession>
+          }
+        >
+          <Route index element={<Home />} />
+          <Route path="domains" element={<Domains />} />
+          <Route path="domains/:domainID" element={<Pages kind="domain" />} />
+          <Route path="forgekeeper" element={<Pages kind="roots" />} />
+          <Route path="forgekeeper/:pageID/children" element={<Pages kind="children" />} />
+          <Route path="gemhues" element={<Hues />} />
+          <Route path="education" element={<Education />} />
+          <Route path="employment" element={<Employment />} />
+          <Route path="addresses" element={<Addresses />} />
+          <Route path="transactions" element={<Transactions />} />
+          <Route path="service-accounts" element={<ServiceAccounts />} />
+          <Route path="expenses" element={<Navigate to="/transactions" replace />} />
+          <Route path="local-databases" element={<Databases />} />
+          <Route path="schema-builder" element={<Schema />} />
+          <Route path="live-database" element={<LiveDatabase />} />
+          <Route path="*" element={<NotFound />} />
+        </Route>
       </Route>
     </Routes>
   );

@@ -35,7 +35,7 @@ swift run
 Verify the health endpoint:
 
 ```bash
-curl http://127.0.0.1:8080/health
+curl http://127.0.0.1:8081/health
 ```
 
 The expected response is:
@@ -45,20 +45,24 @@ ok
 ```
 
 For the full existing-database verification checkpoint, see
-[`ForgeKeeper.md`](ForgeKeeper.md). It uses a temporary port and read-only
-endpoints so an existing Xcode server on port `8080` is not disturbed.
+[`ForgeKeeper.md`](ForgeKeeper.md). It uses port `8081` and read-only endpoints
+so an existing Xcode server on the previous default port `8080` is not disturbed.
 
 ## Browser testing console
 
-The repository retains the original local browser console in `Public/` as a
-fallback. The active testing console is the React + TypeScript project in
-`Console/`.
+The active testing console is the React + TypeScript project in `Console/`.
+The legacy `Public/` root now provides sign-in guidance only and makes no
+anonymous API requests.
 
-Start the API on port `8081`, then run the console in a second terminal:
+For a standalone API and Console session, choose a free API port and set the
+same target for the Console. For example:
 
 ```bash
 cd Console
-VITE_API_TARGET="http://127.0.0.1:8081" npm run dev
+VITE_API_TARGET="http://127.0.0.1:8081" \
+VITE_SUPABASE_URL="https://your-project-ref.supabase.co" \
+VITE_SUPABASE_PUBLISHABLE_KEY="your-supabase-publishable-key" \
+npm run dev
 ```
 
 Open the React console:
@@ -67,20 +71,20 @@ Open the React console:
 http://127.0.0.1:5173/
 ```
 
-The API-served prototype remains available at the root of the Vapor server:
+The standalone API-served root in the example port guides users to the packaged
+authenticated Console at `/app/`:
 
 ```text
-http://127.0.0.1:8080/
+http://127.0.0.1:8081/
 ```
 
-Both consoles display stable domains, retrieve ForgeKeeper pages, navigate to
-immediate children, exercise page PATCH requests, render Gem Hue records and
-image previews, and read Education records. The Notes upload area is currently a design placeholder
-because page creation/import has not yet been defined as an API workflow. See
-[`Testing-Console.md`](Testing-Console.md).
+For authentication, configure Supabase email/password and the owner-only API
+identity mapping. See
+[`Console-Authentication-299.md`](Console-Authentication-299.md) for setup,
+storage behavior, and the deployment security gate. See
+[`Testing-Console.md`](Testing-Console.md) for the remaining UI workflows.
 
-The root URL `/` is not an application route, so a `404 Not Found` response at
-that URL is expected. It does not indicate that the server failed to start.
+The root URL `/` is a guidance page; it is not the authenticated application.
 
 ## Database location
 

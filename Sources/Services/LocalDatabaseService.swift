@@ -14,6 +14,8 @@ enum LocalDatabaseProfile: String, Codable, CaseIterable, Sendable {
 
     var migrationNames: [String] {
         [
+            "CreateAuthenticationSchema",
+            "CreateHubs",
             "CreateAddresses",
             "CreateDomains",
             "CreateEducation",
@@ -37,15 +39,17 @@ enum LocalDatabaseProfile: String, Codable, CaseIterable, Sendable {
             "AddEducationAttachmentReference",
             "AddHomeInventoryAttachmentReference",
             "AddFileMetadataForeignKeys",
-            "AddAddressUpdatedAt",
-            "AddEducationUpdatedAt",
-            "AddEmploymentUpdatedAt"
+            "AddHubOwnershipFields",
+            "MakeAuthenticationProviderAgnostic"
         ]
     }
 
     func registerMigrations(on app: Application) {
         switch self {
         case .gemLifeDevelopment:
+            // Ownership targets must exist before any hub-owned table is created.
+            app.migrations.add(CreateAuthenticationSchema())
+            app.migrations.add(CreateHubs())
             app.migrations.add(CreateAddresses())
             app.migrations.add(CreateDomains())
             app.migrations.add(CreateEducation())
@@ -69,9 +73,8 @@ enum LocalDatabaseProfile: String, Codable, CaseIterable, Sendable {
             app.migrations.add(AddEducationAttachmentReference())
             app.migrations.add(AddHomeInventoryAttachmentReference())
             app.migrations.add(AddFileMetadataForeignKeys())
-            app.migrations.add(AddAddressUpdatedAt())
-            app.migrations.add(AddEducationUpdatedAt())
-            app.migrations.add(AddEmploymentUpdatedAt())
+            app.migrations.add(AddHubOwnershipFields())
+            app.migrations.add(MakeAuthenticationProviderAgnostic())
         }
     }
 }

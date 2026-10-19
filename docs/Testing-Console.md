@@ -1,10 +1,12 @@
 # Local testing console
 
-The local testing console is a browser interface for exercising the API without
-using the terminal or a database client. The original prototype is served by
-Vapor from `Public/`. The current implementation is a separate React +
-TypeScript application under `Console/` and is intended for local development
-only.
+The React + TypeScript console under `Console/` is the authenticated browser
+interface for exercising the private API. The Vapor-served `Public/` root is
+now a guidance page; it does not load protected data anonymously.
+
+For an integrated local run, start `swift run GemLife`; the API receives an
+available ephemeral port, and the Console's Vite proxy reads that selected
+port automatically. The fixed-port commands below are for standalone testing.
 
 ## Start it
 
@@ -12,19 +14,29 @@ Configure `DATABASE_PATH`, then run the API from the repository directory:
 
 ```bash
 export DATABASE_PATH="/absolute/path/to/GemLife_DB_rebuild.sqlite"
-swift run GemsForgeAPI serve --hostname 127.0.0.1 --port 8080
-```
-
-Open `http://127.0.0.1:8080/` in a browser.
-
-If Xcode already has an API instance on port `8080`, use a temporary port:
-
-```bash
-DATABASE_PATH="/absolute/path/to/GemLife_DB_rebuild.sqlite" \
 swift run GemsForgeAPI serve --hostname 127.0.0.1 --port 8081
 ```
 
-Then open `http://127.0.0.1:8081/`.
+Open `http://127.0.0.1:8081/` for the guidance page, then use the React
+Console at `http://127.0.0.1:5173/` for sign-in and protected records.
+
+The examples use port `8081` for a standalone API. The integrated
+`swift run GemLife` launcher chooses an available port and its Vite proxy
+follows that port automatically. For standalone API and Console launches,
+choose a free port and set `VITE_API_TARGET` to match:
+
+```bash
+DATABASE_PATH="/absolute/path/to/GemLife_DB_rebuild.sqlite" \
+swift run GemsForgeAPI serve --hostname 127.0.0.1 --port 8082
+```
+
+Then open `http://127.0.0.1:8082/` for the guidance page and set
+`VITE_API_TARGET=http://127.0.0.1:8082` for the Console.
+
+Sign-in requires Supabase `VITE_SUPABASE_URL` and
+`VITE_SUPABASE_PUBLISHABLE_KEY`, plus API `SUPABASE_URL`,
+`SUPABASE_OWNER_SUBJECT`, and `GEM_LIFE_OPERATOR_ACCOUNT_ID`. Keep public
+signups disabled. See [`Console-Authentication-299.md`](Console-Authentication-299.md).
 
 ## Current capabilities
 
@@ -227,11 +239,12 @@ issue before the upload control is connected.
 
 ```text
 Console/src/                             → React testing interface
-Public/                                  → original local prototype
+Public/                                  → sign-in guidance page, no API calls
 Routes                                   → HTTP behavior
 Services                                 → database queries and updates
 Models                                   → existing table mappings
 ```
 
-The console uses same-origin `fetch` requests, so it does not require CORS or a
-second frontend server during local development.
+The Console uses same-origin `fetch` requests through Vite's API proxy, so it
+does not require CORS. The API's `/app/` package is the production-base Console;
+the development UI runs on the Vite server.

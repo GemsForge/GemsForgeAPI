@@ -8,6 +8,7 @@ struct CreateServiceLogoAssets: AsyncMigration {
     func prepare(on database: any Database) async throws {
         try await database.schema(ServiceLogoAsset.schema)
             .field("LogoAssetID", .int, .identifier(auto: true))
+            .field("HubID", .string)
             .field("Logo", .data, .required)
             .field("MimeType", .string, .required)
             .field("FileName", .string)

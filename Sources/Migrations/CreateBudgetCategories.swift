@@ -5,6 +5,7 @@ struct CreateBudgetCategories: AsyncMigration {
     func prepare(on database: any Database) async throws {
         try await database.schema(ExpenseCategory.schema)
             .field("CategoryID", .int, .identifier(auto: true))
+            .field("HubID", .string)
             .field("Category", .string, .required)
             .unique(on: "Category")
             .create()

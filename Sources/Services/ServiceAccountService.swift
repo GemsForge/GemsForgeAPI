@@ -6,26 +6,32 @@ import Fluent
 /// individual purchases remain in the separate Transactions table.
 struct ServiceAccountService: Sendable {
     private let database: any Database
+    private let hubID: String?
 
-    init(database: any Database) {
+    init(database: any Database, hubID: String? = nil) {
         self.database = database
+        self.hubID = hubID
     }
 
     /// Returns Service Accounts ordered by display name.
     func list() async throws -> [ServiceAccount] {
-        try await ServiceAccount.query(on: database)
+        var query = ServiceAccount.query(on: database)
+        if let hubID { query = query.filter(\.$hubID == hubID) }
+        return try await query
             .sort(\.$service)
             .all()
     }
 
     /// Returns one Service Account by its stable ServiceID.
     func find(id: Int) async throws -> ServiceAccount? {
-        try await ServiceAccount.find(id, on: database)
+        var query = ServiceAccount.query(on: database).filter(\.$id == id)
+        if let hubID { query = query.filter(\.$hubID == hubID) }
+        return try await query.first()
     }
 
     /// Creates or updates one Service Account.
     func save(_ account: ServiceAccount) async throws {
-        account.updatedAt = RecordTimestamp.now()
+        if let hubID { account.hubID = hubID }
         try await account.save(on: database)
     }
 

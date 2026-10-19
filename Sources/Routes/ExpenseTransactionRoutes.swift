@@ -34,6 +34,15 @@ struct ExpenseTransactionCreateRequest: Content {
     }
 }
 
+struct ExpenseTransactionPatchRequest: Content {
+    let item: String?
+    let categoryID: Int?
+    let quantity: Double?
+    let total: Double?
+    let notes: String?
+    let image: String?
+}
+
 private func validate(_ input: ExpenseTransactionRequest, requiresID: Bool = false) throws {
     guard !input.item.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
         throw Abort(.badRequest, reason: "Transaction item is required.")
@@ -104,7 +113,7 @@ func registerExpenseTransactionRoutes(_ app: Application) {
 
     transactions.get { request async throws -> [ExpenseTransaction] in
         // List documented expenses without loading image data or future related records.
-        try await ExpenseTransactionService(database: request.db).list()
+        try await ExpenseTransactionService(database: request.db, hubID: request.authenticatedHubID).list()
     }
 
     transactions.post { request async throws -> ExpenseTransaction in
@@ -112,7 +121,7 @@ func registerExpenseTransactionRoutes(_ app: Application) {
         try validate(input, requiresID: true)
 
         let id = input.id!.trimmingCharacters(in: .whitespacesAndNewlines)
-        let service = ExpenseTransactionService(database: request.db)
+        let service = ExpenseTransactionService(database: request.db, hubID: request.authenticatedHubID)
         if try await service.find(id: id) != nil {
             throw Abort(.conflict, reason: "A transaction with this ID already exists.")
         }
@@ -120,14 +129,14 @@ func registerExpenseTransactionRoutes(_ app: Application) {
         try await validateCategoryReferences(input, database: request.db)
 
         let transaction = makeTransaction(from: input, id: id)
-        _ = try await AttachmentReferenceService(database: request.db).attach(metadataID: transaction.image, ownerType: "ExpenseTransaction", ownerID: id)
+        _ = try await AttachmentReferenceService(database: request.db, hubID: request.authenticatedHubID).attach(metadataID: transaction.image, ownerType: "ExpenseTransaction", ownerID: id)
         try await service.save(transaction)
         return transaction
     }
 
     transactions.get(":id") { request async throws -> ExpenseTransaction in
         let (_, transaction) = try await requireRouteRecord(request.parameters.get("id")) {
-            try await ExpenseTransactionService(database: request.db).find(id: $0)
+            try await ExpenseTransactionService(database: request.db, hubID: request.authenticatedHubID).find(id: $0)
         }
 
         // Return one documented expense by its stable TransactionID.
@@ -135,65 +144,45 @@ func registerExpenseTransactionRoutes(_ app: Application) {
     }
 
     transactions.patch(":id") { request async throws -> ExpenseTransaction in
-        let (_, transaction) = try await requireRouteRecord(request.parameters.get("id")) {
-            try await ExpenseTransactionService(database: request.db).find(id: $0)
+        let (id, transaction) = try await requireRouteRecord(request.parameters.get("id")) {
+            try await ExpenseTransactionService(database: request.db, hubID: request.authenticatedHubID).find(id: $0)
         }
         try PropertyPatchValidation.requireKnownJSONProperties(
             request,
-            allowed: ["receiptID", "item", "firstReceiptItem", "merchantCode", "transactionDate", "quantity", "regularPrice", "paidPrice", "total", "discount", "notes"],
+            allowed: ["item", "categoryID", "quantity", "total", "notes", "image"],
             requireNonEmpty: true,
             emptyReason: "At least one editable field is required."
         )
-        let payload = try request.content.decode([String: PatchJSONValue].self)
-        func string(_ key: String, _ current: String?) throws -> String? {
-            guard let value = payload[key] else { return current }
-            return try value.string()
-        }
-        func number(_ key: String, _ current: Double?) throws -> Double? {
-            guard let value = payload[key] else { return current }
-            return try value.number()
-        }
-        let item = try string("item", transaction.item)
-        guard let item else { throw Abort(.unprocessableEntity, reason: "Transaction item cannot be cleared.") }
+        let input = try request.content.decode(ExpenseTransactionPatchRequest.self)
+        let item = input.item ?? transaction.item
         guard !item.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { throw Abort(.unprocessableEntity, reason: "Transaction item cannot be empty.") }
-        let quantity = try number("quantity", transaction.quantity) ?? 0
+        let categoryID = input.categoryID ?? transaction.categoryID
+        guard categoryID > 0 else { throw Abort(.unprocessableEntity, reason: "CategoryID must be greater than zero.") }
+        let quantity = input.quantity ?? transaction.quantity
         guard quantity > 0 else { throw Abort(.unprocessableEntity, reason: "Quantity must be greater than zero.") }
-        let regularPrice = try number("regularPrice", transaction.regularPrice)
-        let paidPrice = try number("paidPrice", transaction.paidPrice)
-        let total = try number("total", transaction.total)
-        let discount = try number("discount", transaction.discount)
-        guard [regularPrice, paidPrice, total, discount].compactMap({ $0 }).allSatisfy({ $0 >= 0 }) else {
-            throw Abort(.unprocessableEntity, reason: "Transaction prices and discounts cannot be negative.")
-        }
-        let firstReceiptItem: Bool
-        if let value = payload["firstReceiptItem"] {
-            guard case let .bool(parsed) = value else { throw Abort(.unprocessableEntity, reason: "Expected a boolean value.") }
-            firstReceiptItem = parsed
-        } else { firstReceiptItem = transaction.firstReceiptItem }
+        let total = input.total ?? transaction.total
+        if let total, total < 0 { throw Abort(.unprocessableEntity, reason: "Transaction total cannot be negative.") }
+        let image = input.image ?? transaction.image
+        try await AttachmentReferenceService(database: request.db, hubID: request.authenticatedHubID).replace(oldMetadataID: transaction.image, newMetadataID: image, ownerType: "ExpenseTransaction", ownerID: id)
         transaction.item = item
+        transaction.categoryID = categoryID
         transaction.quantity = quantity
-        transaction.receiptID = try string("receiptID", transaction.receiptID)
-        transaction.firstReceiptItem = firstReceiptItem
-        transaction.merchantCode = try string("merchantCode", transaction.merchantCode)
-        transaction.transactionDate = try string("transactionDate", transaction.transactionDate)
-        transaction.regularPrice = regularPrice
-        transaction.paidPrice = paidPrice
         transaction.total = total
-        transaction.discount = discount
-        transaction.notes = try string("notes", transaction.notes)
-        try await ExpenseTransactionService(database: request.db).save(transaction)
+        transaction.notes = input.notes ?? transaction.notes
+        transaction.image = image
+        try await ExpenseTransactionService(database: request.db, hubID: request.authenticatedHubID).save(transaction)
         return transaction
     }
 
     transactions.put(":id") { request async throws -> ExpenseTransaction in
         let (id, transaction) = try await requireRouteRecord(request.parameters.get("id")) {
-            try await ExpenseTransactionService(database: request.db).find(id: $0)
+            try await ExpenseTransactionService(database: request.db, hubID: request.authenticatedHubID).find(id: $0)
         }
 
         let input = try request.content.decode(ExpenseTransactionRequest.self)
         try validate(input)
         let replacement = makeTransaction(from: input, id: id)
-        try await AttachmentReferenceService(database: request.db).replace(oldMetadataID: transaction.image, newMetadataID: replacement.image, ownerType: "ExpenseTransaction", ownerID: id)
+        try await AttachmentReferenceService(database: request.db, hubID: request.authenticatedHubID).replace(oldMetadataID: transaction.image, newMetadataID: replacement.image, ownerType: "ExpenseTransaction", ownerID: id)
         transaction.receiptID = replacement.receiptID
         transaction.item = replacement.item
         transaction.firstReceiptItem = replacement.firstReceiptItem
@@ -208,17 +197,17 @@ func registerExpenseTransactionRoutes(_ app: Application) {
         transaction.discount = replacement.discount
         transaction.notes = replacement.notes
         transaction.image = replacement.image
-        try await ExpenseTransactionService(database: request.db).save(transaction)
+        try await ExpenseTransactionService(database: request.db, hubID: request.authenticatedHubID).save(transaction)
         return transaction
     }
 
     transactions.get(":id", "image") { request async throws -> FileMetadata in
         let (_, transaction) = try await requireRouteRecord(request.parameters.get("id")) {
-            try await ExpenseTransactionService(database: request.db).find(id: $0)
+            try await ExpenseTransactionService(database: request.db, hubID: request.authenticatedHubID).find(id: $0)
         }
 
         guard let imageID = transaction.image,
-              let metadata = try await FileMetadataService(database: request.db).find(id: imageID)
+              let metadata = try await FileMetadataService(database: request.db, hubID: request.authenticatedHubID).find(id: imageID)
         else {
             throw Abort(.notFound)
         }
@@ -229,10 +218,10 @@ func registerExpenseTransactionRoutes(_ app: Application) {
 
     transactions.delete(":id") { request async throws -> HTTPStatus in
         let (id, _) = try await requireRouteRecord(request.parameters.get("id")) {
-            try await ExpenseTransactionService(database: request.db).find(id: $0)
+            try await ExpenseTransactionService(database: request.db, hubID: request.authenticatedHubID).find(id: $0)
         }
 
-        try await ExpenseTransactionService(database: request.db).delete(id: id)
+        try await ExpenseTransactionService(database: request.db, hubID: request.authenticatedHubID).delete(id: id)
         return .noContent
     }
 }

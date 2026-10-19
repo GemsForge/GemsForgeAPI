@@ -17,7 +17,8 @@ func registerLocalImageUploadRoutes(
         let form = try request.content.decode(LocalImageUploadForm.self)
         return try await LocalImageUploadService(
             configuration: configuration,
-            database: request.db
+            database: request.db,
+            hubID: request.authenticatedHubID
         ).upload(
             file: form.file,
             fileKind: form.fileKind ?? "image",

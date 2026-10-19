@@ -16,6 +16,9 @@ final class ExpenseTransaction: Model, Content, @unchecked Sendable {
     @ID(custom: "TransactionID")
     var id: String?
 
+    @OptionalField(key: "HubID")
+    var hubID: String?
+
     @OptionalField(key: "ReceiptID")
     var receiptID: String?
 

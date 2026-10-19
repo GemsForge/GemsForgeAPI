@@ -81,7 +81,7 @@ func registerHomeInventoryRoutes(_ app: Application) {
 
     inventory.get { request async throws -> [HomeInventory] in
         // The testing console can confirm manually entered rows without SQL access.
-        try await HomeInventoryService(database: request.db).list()
+        try await HomeInventoryService(database: request.db, hubID: request.authenticatedHubID).list()
     }
 
     inventory.post { request async throws -> HomeInventory in
@@ -103,7 +103,7 @@ func registerHomeInventoryRoutes(_ app: Application) {
 
         let suppliedID = input.id?.trimmingCharacters(in: .whitespacesAndNewlines)
         let id = suppliedID.flatMap { $0.isEmpty ? nil : $0 } ?? HomeInventoryIdentifier.generate()
-        let service = HomeInventoryService(database: request.db)
+        let service = HomeInventoryService(database: request.db, hubID: request.authenticatedHubID)
         guard try await service.find(id: id) == nil else {
             throw Abort(.conflict, reason: "A HomeInventory record with this InventoryID already exists.")
         }
@@ -127,7 +127,7 @@ func registerHomeInventoryRoutes(_ app: Application) {
 
     inventory.get(":id") { request async throws -> HomeInventory in
         guard let id = request.parameters.get("id"),
-              let record = try await HomeInventoryService(database: request.db).find(id: id)
+              let record = try await HomeInventoryService(database: request.db, hubID: request.authenticatedHubID).find(id: id)
         else {
             throw Abort(.notFound)
         }

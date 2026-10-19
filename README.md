@@ -9,7 +9,10 @@ The project is designed to run locally on a Mac and remain private behind a secu
 The M3 Gem Life UI foundations are documented in
 [UI standards](Console/UI_STANDARDS.md), including local session scope,
 accessibility, responsive verification, performance and release packaging.
-Account authentication and remote deployment remain deferred. Live database
+The API includes owner-only Supabase Auth session authentication, with route
+authorization and per-account hub isolation in progress. Keep it private until
+that work and an operator-reviewed ownership migration are complete; see
+[Deployment-Security.md](docs/Deployment-Security.md). Live database
 attachment-column compatibility is tracked in
 [#178](https://github.com/GemsForge/GemsForgeAPI/issues/178); isolated test success
 does not imply the personal database has been migrated.
@@ -226,32 +229,25 @@ To run the API against a selected database:
 
 ```bash
 DATABASE_PATH="/absolute/path/to/GemLife_DB_rebuild.sqlite" \
-swift run GemsForgeAPI serve --hostname 127.0.0.1 --port 8080
+swift run GemsForgeAPI serve --hostname 127.0.0.1 --port 8081
 ```
 
-To run the native host as well, first start the React Console from `Console/`
-with `npm run dev`, then run the combined launcher:
+## Run the integrated Gem Life app in development
 
-```bash
-DATABASE_PATH="/absolute/path/to/GemLife_DB_rebuild.sqlite" \
-./Scripts/run-gem-life.sh
-```
-
-The launcher starts both `swift run GemsForgeAPI` and `swift run GemLifeHost`.
-The host loads the Console from `http://localhost:5173/`. Press `Ctrl-C` once
-to stop both executables. The explicit executable names are required because
-bare `swift run` is ambiguous when the package contains both products.
-
-For a memorable Swift command, the package also provides a `GemLife` launcher
-target:
+Run the app launcher from the `GemsForgeAPI` repository root (not from
+`Console/` or another project):
 
 ```bash
 swift run GemLife
 ```
 
-`swift run GemLife` delegates to the same repository launcher, so the API and
-host lifecycle behavior stays in one place. The launcher reads the ignored
-`.env` file automatically; explicitly exported variables take precedence.
+The launcher starts the API, waits for the Console at `http://127.0.0.1:5173/`,
+then opens the native `GemLifeHost` window. Its Vite proxy follows the API port
+selected by the launcher. It reuses this project's Console if it is already
+running, and stops only processes it started when you press `Ctrl-C`.
+
+The launcher reads the ignored `.env` file automatically; explicitly exported
+variables take precedence.
 
 The current verification checkpoint is the health test:
 

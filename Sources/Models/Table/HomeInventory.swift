@@ -15,6 +15,9 @@ final class HomeInventory: Model, Content, @unchecked Sendable {
     @ID(custom: "InventoryID")
     var id: String?
 
+    @OptionalField(key: "HubID")
+    var hubID: String?
+
     @Field(key: "ItemName")
     var itemName: String
 

@@ -14,6 +14,9 @@ final class Education: Model, Content, @unchecked Sendable {
     @ID(custom: "EducationID")
     var id: String?
 
+    @OptionalField(key: "HubID")
+    var hubID: String?
+
     @Field(key: "EducationType")
     var educationType: String
 

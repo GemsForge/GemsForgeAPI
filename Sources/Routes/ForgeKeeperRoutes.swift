@@ -5,26 +5,26 @@ func registerForgeKeeperRoutes(_ app: Application) {
     let pages = app.grouped("forgekeeper")
 
     pages.get { request async throws -> [ForgeKeeper] in
-        try await ForgeKeeperService(database: request.db).list()
+        try await ForgeKeeperService(database: request.db, hubID: request.authenticatedHubID).list()
     }
 
     pages.get("roots") { request async throws -> [ForgeKeeper] in
-        try await ForgeKeeperService(database: request.db).listRoots()
+        try await ForgeKeeperService(database: request.db, hubID: request.authenticatedHubID).listRoots()
     }
 
     pages.get(":id", "children") { request async throws -> [ForgeKeeper] in
         guard let id = request.parameters.get("id", as: Int.self),
-              try await ForgeKeeperService(database: request.db).find(id: id) != nil
+              try await ForgeKeeperService(database: request.db, hubID: request.authenticatedHubID).find(id: id) != nil
         else {
             throw Abort(.notFound)
         }
 
-        return try await ForgeKeeperService(database: request.db).listChildren(of: id)
+        return try await ForgeKeeperService(database: request.db, hubID: request.authenticatedHubID).listChildren(of: id)
     }
 
     pages.get(":id") { request async throws -> ForgeKeeper in
         guard let id = request.parameters.get("id", as: Int.self),
-              let page = try await ForgeKeeperService(database: request.db).find(id: id)
+              let page = try await ForgeKeeperService(database: request.db, hubID: request.authenticatedHubID).find(id: id)
         else {
             throw Abort(.notFound)
         }
@@ -34,7 +34,7 @@ func registerForgeKeeperRoutes(_ app: Application) {
 
     pages.patch(":id") { request async throws -> ForgeKeeper in
         guard let id = request.parameters.get("id", as: Int.self),
-              let page = try await ForgeKeeperService(database: request.db).find(id: id)
+              let page = try await ForgeKeeperService(database: request.db, hubID: request.authenticatedHubID).find(id: id)
         else {
             throw Abort(.notFound)
         }
@@ -61,12 +61,12 @@ func registerForgeKeeperRoutes(_ app: Application) {
         if let parentID = input.parentID {
             guard let parentID else {
                 page.$parent.id = nil
-                try await ForgeKeeperService(database: request.db).save(page)
+                try await ForgeKeeperService(database: request.db, hubID: request.authenticatedHubID).save(page)
                 return page
             }
 
             guard parentID != page.id,
-                  let parent = try await ForgeKeeperService(database: request.db).find(id: parentID),
+                  let parent = try await ForgeKeeperService(database: request.db, hubID: request.authenticatedHubID).find(id: parentID),
                   parent.$domain.id == page.$domain.id
             else {
                 throw Abort(.badRequest, reason: "Parent page must exist in the same domain and cannot be the page itself.")
@@ -75,7 +75,7 @@ func registerForgeKeeperRoutes(_ app: Application) {
             page.$parent.id = parentID
         }
 
-        try await ForgeKeeperService(database: request.db).save(page)
+        try await ForgeKeeperService(database: request.db, hubID: request.authenticatedHubID).save(page)
         return page
     }
 
@@ -86,6 +86,6 @@ func registerForgeKeeperRoutes(_ app: Application) {
             throw Abort(.notFound)
         }
 
-        return try await ForgeKeeperService(database: request.db).list(domainID: domainID)
+        return try await ForgeKeeperService(database: request.db, hubID: request.authenticatedHubID).list(domainID: domainID)
     }
 }

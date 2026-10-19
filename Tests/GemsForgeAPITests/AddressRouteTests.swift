@@ -7,6 +7,7 @@ final class AddressRouteTests: XCTestCase {
     func testAddressCRUDAndSummaryPrivacy() async throws {
         try await withApp(configure: { app in
             app.databases.use(.sqlite(.memory), as: .sqlite)
+            app.migrations.add(CreateHubs())
             app.migrations.add(CreateAddresses())
             app.migrations.add(AddAddressUpdatedAt())
             app.migrations.add(CreateFileMetadata())
@@ -107,6 +108,7 @@ final class AddressRouteTests: XCTestCase {
     func testAddressRejectsInvalidPayloadAndMissingRecords() async throws {
         try await withApp(configure: { app in
             app.databases.use(.sqlite(.memory), as: .sqlite)
+            app.migrations.add(CreateHubs())
             app.migrations.add(CreateAddresses())
             app.migrations.add(AddAddressUpdatedAt())
             app.migrations.add(CreateFileMetadata())

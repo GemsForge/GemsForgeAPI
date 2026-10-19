@@ -11,7 +11,12 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/vapor/vapor.git", from: "4.115.0"),
         .package(url: "https://github.com/vapor/fluent.git", from: "4.9.0"),
-        .package(url: "https://github.com/vapor/fluent-sqlite-driver.git", from: "4.8.0")
+        .package(url: "https://github.com/vapor/fluent-sqlite-driver.git", from: "4.8.0"),
+        // JWTKit 5.3+ compiles ML-DSA adapters that require macOS 26 SDK types,
+        // while CI validates against macOS 15. Supabase JWT verification is
+        // available in 5.2.0 and does not need those adapters.
+        .package(url: "https://github.com/vapor/jwt-kit.git", exact: "5.2.0"),
+        .package(url: "https://github.com/apple/swift-crypto.git", from: "4.1.0")
     ],
     targets: [
         .executableTarget(
@@ -19,7 +24,9 @@ let package = Package(
             dependencies: [
                 .product(name: "Vapor", package: "vapor"),
                 .product(name: "Fluent", package: "fluent"),
-                .product(name: "FluentSQLiteDriver", package: "fluent-sqlite-driver")
+                .product(name: "FluentSQLiteDriver", package: "fluent-sqlite-driver"),
+                .product(name: "JWTKit", package: "jwt-kit"),
+                .product(name: "Crypto", package: "swift-crypto")
             ],
             path: "Sources",
             exclude: ["GemLife"]
@@ -39,7 +46,9 @@ let package = Package(
             dependencies: [
                 "GemsForgeAPI",
                 .product(name: "XCTVapor", package: "vapor"),
-                .product(name: "VaporTesting", package: "vapor")
+                .product(name: "VaporTesting", package: "vapor"),
+                .product(name: "JWTKit", package: "jwt-kit"),
+                .product(name: "CryptoExtras", package: "swift-crypto")
             ],
             path: "Tests/GemsForgeAPITests"
         )

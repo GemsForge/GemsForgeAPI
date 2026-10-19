@@ -36,15 +36,26 @@ and target and refuses target names other than `GemLife_DB_fit.sqlite`.
 
 ## API and console startup
 
-From the repository root:
+Use one terminal for the integrated development app. From the
+`GemsForgeAPI` repository root (not `Console/` or a different project's root):
 
 ~~~bash
 swift run GemLife
 ~~~
 
-The launcher starts the API and Gem Life host. If port 8080 is already in use,
-stop the existing API instance before starting another one. The React console
-can also be run independently from Console/ with npm run dev.
+`swift run GemLife` starts the API, starts Vite at
+`http://127.0.0.1:5173/` if this project's Console is not already responding,
+waits for it, and then opens the native `GemLifeHost` window. Press Ctrl-C to
+stop the services started by the launcher.
+
+The launcher starts the API, Console, and Gem Life host. By default it asks the
+operating system for an available ephemeral loopback port, so separate local
+projects do not all compete for one fixed port. If `API_PORT` is set, the launcher uses it
+when available and automatically falls back to another free port when it is
+occupied. The selected port is printed at startup and exposed to the Console's
+Vite proxy through an ignored runtime file under `.build/`. The React console
+can also be run independently from `Console/` with `npm run dev`; set
+`VITE_API_TARGET` when the API is started outside the integrated launcher.
 
 The active console routes include /schema-builder and /live-database.
 /live-database is the reviewed interface for inspecting the configured live
@@ -78,6 +89,12 @@ missing changes such as HomeInventory to be applied.
 If execution fails, keep the generated backup, do not delete or recreate live
 tables, correct the reported configuration or migration issue, restart the
 API if necessary, and generate a fresh preview.
+
+For the pre-first-login case, when the missing authentication schema prevents
+access to protected migration routes, use the offline dev-only procedure in
+[`Legacy-Database-Bootstrap-301.md`](Legacy-Database-Bootstrap-301.md). It
+backs up the existing database before applying the repository profile and
+keeps legacy ownership assignment as a separate operator decision.
 
 ## FileMetadata and attachments
 

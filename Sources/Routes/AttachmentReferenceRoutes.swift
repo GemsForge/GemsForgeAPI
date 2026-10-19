@@ -10,52 +10,52 @@ struct AttachmentReferenceRequest: Content {
 func registerAttachmentReferenceRoutes(_ app: Application) {
     app.patch("addresses", ":id", "attachment") { request async throws -> AddressDetailResponse in
         guard let id = request.parameters.get("id"),
-              let address = try await AddressService(database: request.db).find(id: id)
+              let address = try await AddressService(database: request.db, hubID: request.authenticatedHubID).find(id: id)
         else { throw Abort(.notFound) }
 
         let input = try request.content.decode(AttachmentReferenceRequest.self)
-        try await AttachmentReferenceService(database: request.db).replace(
+        try await AttachmentReferenceService(database: request.db, hubID: request.authenticatedHubID).replace(
             oldMetadataID: address.imageFileMetadataID,
             newMetadataID: input.fileMetadataID,
             ownerType: "Address",
             ownerID: id
         )
         address.imageFileMetadataID = input.fileMetadataID
-        try await AddressService(database: request.db).save(address)
+        try await AddressService(database: request.db, hubID: request.authenticatedHubID).save(address)
         return AddressDetailResponse(address)
     }
 
     app.patch("transactions", ":id", "image") { request async throws -> ExpenseTransaction in
         guard let id = request.parameters.get("id"),
-              let transaction = try await ExpenseTransactionService(database: request.db).find(id: id)
+              let transaction = try await ExpenseTransactionService(database: request.db, hubID: request.authenticatedHubID).find(id: id)
         else { throw Abort(.notFound) }
 
         let input = try request.content.decode(AttachmentReferenceRequest.self)
-        try await AttachmentReferenceService(database: request.db).replace(
+        try await AttachmentReferenceService(database: request.db, hubID: request.authenticatedHubID).replace(
             oldMetadataID: transaction.image,
             newMetadataID: input.fileMetadataID,
             ownerType: "ExpenseTransaction",
             ownerID: id
         )
         transaction.image = input.fileMetadataID
-        try await ExpenseTransactionService(database: request.db).save(transaction)
+        try await ExpenseTransactionService(database: request.db, hubID: request.authenticatedHubID).save(transaction)
         return transaction
     }
 
     app.patch("home-inventory", ":id", "attachment") { request async throws -> HomeInventory in
         guard let id = request.parameters.get("id"),
-              let inventory = try await HomeInventoryService(database: request.db).find(id: id)
+              let inventory = try await HomeInventoryService(database: request.db, hubID: request.authenticatedHubID).find(id: id)
         else { throw Abort(.notFound) }
 
         let input = try request.content.decode(AttachmentReferenceRequest.self)
-        try await AttachmentReferenceService(database: request.db).replace(
+        try await AttachmentReferenceService(database: request.db, hubID: request.authenticatedHubID).replace(
             oldMetadataID: inventory.imageFileMetadataID,
             newMetadataID: input.fileMetadataID,
             ownerType: "HomeInventory",
             ownerID: id
         )
         inventory.imageFileMetadataID = input.fileMetadataID
-        try await HomeInventoryService(database: request.db).save(inventory)
+        try await HomeInventoryService(database: request.db, hubID: request.authenticatedHubID).save(inventory)
         return inventory
     }
 }

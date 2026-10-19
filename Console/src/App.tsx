@@ -1,13 +1,13 @@
 import { BrowserRouter } from "react-router-dom";
 import { AppRoutes } from "./routes/AppRoutes";
-import { LocalSession } from "./components/LocalSession";
+import { AuthProvider } from "./auth/AuthProvider";
 
 export function App() {
   return (
-    <LocalSession>
+    <AuthProvider>
       <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, "") || "/"}>
         <AppRoutes />
       </BrowserRouter>
-    </LocalSession>
+    </AuthProvider>
   );
 }

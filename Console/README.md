@@ -7,9 +7,11 @@ server-state hooks, a design system, native capabilities, local sessions,
 production asset packaging, accessibility and responsive/performance checks.
 
 Start with [UI standards](UI_STANDARDS.md) for the implemented conventions and
-documentation index. Device-local access is intentional; account sign-in and
-remote hosting are deferred. Live database attachment-column mismatches are
-tracked separately in [#178](https://github.com/GemsForge/GemsForgeAPI/issues/178).
+documentation index. Protected Console routes require the Supabase Auth
+session described in [Console authentication](../docs/Console-Authentication-299.md).
+This does not make the API public; see the deployment security gate before
+changing its private deployment posture. Live database attachment-column
+mismatches are tracked separately in [#178](https://github.com/GemsForge/GemsForgeAPI/issues/178).
 
 ## Start the API
 
@@ -26,8 +28,15 @@ In a second terminal:
 
 ```bash
 cd Console
-VITE_API_TARGET="http://127.0.0.1:8081" npm run dev
+VITE_API_TARGET="http://127.0.0.1:8081" \
+VITE_SUPABASE_URL="https://your-project-ref.supabase.co" \
+VITE_SUPABASE_PUBLISHABLE_KEY="your-supabase-publishable-key" \
+npm run dev
 ```
+
+Configure the API's `SUPABASE_URL`, `SUPABASE_OWNER_SUBJECT`, and
+`GEM_LIFE_OPERATOR_ACCOUNT_ID` as described in the authentication guide. Keep
+public Supabase signups disabled; this Console is owner-only.
 
 Open `http://127.0.0.1:5173/`.
 
@@ -44,6 +53,10 @@ Vite proxies API paths to Vapor so the browser can use same-origin requests:
 /file-metadata
 /file-uploads
 /health
+/auth
+/service-accounts
+/expense-categories
+/expense-subcategories
 /schema-builder
 /live-database
 ```

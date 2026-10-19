@@ -8,13 +8,13 @@ func registerServiceLogoRoutes(
     let logos = app.grouped("service-logos")
 
     logos.get { request async throws -> [ServiceLogoAssetSummary] in
-        let assets = try await ServiceLogoService(database: request.db).list()
+        let assets = try await ServiceLogoService(database: request.db, hubID: request.authenticatedHubID).list()
         return try assets.map(ServiceLogoAssetSummary.init)
     }
 
     logos.get(":id") { request async throws -> ServiceLogoAssetSummary in
         guard let id = request.parameters.get("id", as: Int.self),
-              let asset = try await ServiceLogoService(database: request.db).find(id: id)
+              let asset = try await ServiceLogoService(database: request.db, hubID: request.authenticatedHubID).find(id: id)
         else {
             throw Abort(.notFound)
         }
@@ -24,13 +24,13 @@ func registerServiceLogoRoutes(
 
     logos.get(":id", "image") { request async throws -> Response in
         guard let id = request.parameters.get("id", as: Int.self),
-              let asset = try await ServiceLogoService(database: request.db).find(id: id)
+              let asset = try await ServiceLogoService(database: request.db, hubID: request.authenticatedHubID).find(id: id)
         else {
             throw Abort(.notFound)
         }
 
         if let fileMetadataID = asset.fileMetadataID,
-           let metadata = try await FileMetadataService(database: request.db).find(id: fileMetadataID) {
+           let metadata = try await FileMetadataService(database: request.db, hubID: request.authenticatedHubID).find(id: fileMetadataID) {
             return try await streamFileMetadataContent(
                 metadata,
                 request: request,

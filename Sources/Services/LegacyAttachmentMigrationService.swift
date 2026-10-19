@@ -50,6 +50,7 @@ struct LegacyAttachmentMigrationService: Sendable {
                 ownerType: "GemHueImage",
                 ownerID: String(imageID)
             )
+            metadata.hubID = image.hubID
             do {
                 try await metadata.save(on: database)
                 image.fileMetadataID = metadataID
@@ -83,6 +84,7 @@ struct LegacyAttachmentMigrationService: Sendable {
                 ownerType: "ServiceLogoAsset",
                 ownerID: String(logoID)
             )
+            metadata.hubID = logo.hubID
             do {
                 try await metadata.save(on: database)
                 logo.fileMetadataID = metadataID
