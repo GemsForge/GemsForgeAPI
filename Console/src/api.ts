@@ -107,6 +107,8 @@ export const api = {
   listGemHues: (signal?: AbortSignal) => request<GemHue[]>("/gemhues", { signal }),
   getGemHue: (hueID: string, signal?: AbortSignal) =>
     request<GemHue>(`/gemhues/${encodeURIComponent(hueID)}`, { signal }),
+  patchGemHue: (hueID: string, patch: Partial<GemHue>) =>
+    request<GemHue>(`/gemhues/${encodeURIComponent(hueID)}`, { method: "PATCH", body: JSON.stringify(patch) }),
   getGemHueImage: (hueID: string, signal?: AbortSignal) =>
     checkedFetch(`/gemhues/${encodeURIComponent(hueID)}/image`, { signal }),
   listEducation: (signal?: AbortSignal) => request<Education[]>("/education", { signal }),
