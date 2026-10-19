@@ -18,7 +18,7 @@ func registerLocalAuthenticationRoutes(_ app: Application) {
         if try await AuthenticationAccount.find(accountID, on: request.db) == nil {
             try await AuthenticationAccount(id: accountID).save(on: request.db)
         }
-        if try await Hub.query(on: request.db).filter(\.$accountID == accountID).first() == nil {
+        if try await Hub.query(on: request.db).filter(\Hub.$accountID == accountID).first() == nil {
             try await Hub(accountID: accountID).save(on: request.db)
         }
         let issued = try await AuthenticationSessionService.issue(accountID: accountID, on: request.db)
