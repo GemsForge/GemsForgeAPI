@@ -250,6 +250,14 @@ h3 {
   background: transparent;
   color: var(--muted);
   font-size: 1.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.7rem;
+  border-radius: 0.45rem;
+  font-size: 0.8rem;
+  font-weight: 750;
 }
 .icon-button:hover {
   color: var(--ink);
