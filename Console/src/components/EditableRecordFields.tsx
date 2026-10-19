@@ -3,7 +3,7 @@ import { Checkbox, Form } from "tamagui";
 import { useRecordEditor } from "../hooks/useRecordEditor";
 
 export type EditableValue = string | number | boolean | null | undefined;
-export type RecordInputType = "text" | "date" | "email" | "url" | "number" | "boolean" | "select" | "textarea";
+export type RecordInputType = "text" | "date" | "email" | "url" | "tel" | "number" | "boolean" | "select" | "longText";
 
 export interface EditableRecordField {
   label: string;
@@ -113,7 +113,7 @@ function EditableField({ field }: { field: EditableRecordField }) {
             className="edit-form editable-field-form"
             onSubmit={() => void editor.save()}
           >
-            {field.inputType === "textarea" ? (
+            {field.inputType === "longText" ? (
               <textarea {...common} rows={3} />
             ) : field.inputType === "select" ? (
               <select {...common}>

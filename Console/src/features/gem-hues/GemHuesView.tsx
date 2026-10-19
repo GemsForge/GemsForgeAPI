@@ -86,8 +86,8 @@ export function GemHuesView({ hues }: GemHuesViewProps) {
                 { label: "Color family", value: selectedHue.colorFamily, inputType: "select", options: hueOptions(["Red", "Orange", "Yellow", "Green", "Blue", "Purple", "Pink", "Brown", "Gray", "Black", "White"]), nullable: true, onSave: async (value) => { await patch.mutateAsync({ id: selectedHue.id, patch: { colorFamily: value as string | null } }); } },
                 { label: "Mood", value: selectedHue.mood, inputType: "select", options: hueOptions(["Calm", "Warm", "Cool", "Energizing", "Grounding", "Romantic", "Playful", "Focused"]), nullable: true, onSave: async (value) => { await patch.mutateAsync({ id: selectedHue.id, patch: { mood: value as string | null } }); } },
                 { label: "Palette", value: selectedHue.palette, inputType: "select", options: hueOptions(["Monochromatic", "Analogous", "Complementary", "Triadic", "Neutral", "Pastel", "Earth tones"]), nullable: true, onSave: async (value) => { await patch.mutateAsync({ id: selectedHue.id, patch: { palette: value as string | null } }); } },
-                { label: "Description", value: selectedHue.description, nullable: true, onSave: async (value) => { await patch.mutateAsync({ id: selectedHue.id, patch: { description: value as string | null } }); } },
-                { label: "Notes", value: selectedHue.notes, nullable: true, className: "record-notes", onSave: async (value) => { await patch.mutateAsync({ id: selectedHue.id, patch: { notes: value as string | null } }); } },
+                { label: "Description", value: selectedHue.description, inputType: "longText", nullable: true, onSave: async (value) => { await patch.mutateAsync({ id: selectedHue.id, patch: { description: value as string | null } }); } },
+                { label: "Notes", value: selectedHue.notes, inputType: "longText", nullable: true, className: "record-notes", onSave: async (value) => { await patch.mutateAsync({ id: selectedHue.id, patch: { notes: value as string | null } }); } },
               ]}
             />
           </div>

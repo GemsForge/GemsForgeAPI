@@ -213,6 +213,7 @@ function EmploymentDetail({
           {
             label: "Contact number",
             value: record.employerContactNumber,
+            inputType: "tel",
             nullable: true,
             onSave: async (value) => onPatch({ employerContactNumber: value as string | null }),
           },
@@ -226,7 +227,7 @@ function EmploymentDetail({
           {
             label: "Notes",
             value: record.notes,
-            inputType: "textarea",
+            inputType: "longText",
             nullable: true,
             className: "record-notes",
             onSave: async (value) => onPatch({ notes: value as string | null }),
