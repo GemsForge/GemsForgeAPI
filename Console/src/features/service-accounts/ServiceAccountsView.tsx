@@ -214,10 +214,10 @@ function ServiceAccountDetail({
           },
           {
             label: "Email updated",
-            value: record.emailUpdated === "true",
+            value: record.emailUpdated,
             inputType: "boolean",
-            displayValue: record.emailUpdated === "true" ? "TRUE" : "FALSE",
-            onSave: async (value) => onPatch({ emailUpdated: value ? "true" : "false" }),
+            displayValue: record.emailUpdated ? "TRUE" : "FALSE",
+            onSave: async (value) => onPatch({ emailUpdated: Boolean(value) }),
           },
           {
             label: "Website",

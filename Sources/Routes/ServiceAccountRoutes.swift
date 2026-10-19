@@ -19,7 +19,7 @@ struct ServiceAccountRequest: Content {
     let notionPage: String?
     let paymentMethod: String?
     let accountNumber: String?
-    let emailUpdated: String?
+    let emailUpdated: Bool?
     let associatedAddress: String?
     let serviceKey: String?
     var logoFileMetadataID: String? = nil
@@ -57,6 +57,7 @@ struct ServiceAccountPatchRequest: Content {
     let monthlyAmount: Double?
     let status: String?
     let notes: String?
+    let emailUpdated: Bool?
     let logoFileMetadataID: String?
 }
 
@@ -161,7 +162,7 @@ func registerServiceAccountRoutes(_ app: Application) {
         }
         try PropertyPatchValidation.requireKnownJSONProperties(
             request,
-            allowed: ["service", "monthlyAmount", "status", "notes", "logoFileMetadataID"],
+            allowed: ["service", "monthlyAmount", "status", "notes", "emailUpdated", "logoFileMetadataID"],
             requireNonEmpty: true,
             emptyReason: "At least one editable field is required."
         )
@@ -176,6 +177,7 @@ func registerServiceAccountRoutes(_ app: Application) {
         account.monthlyAmount = monthlyAmount
         account.status = input.status ?? account.status
         account.notes = input.notes ?? account.notes
+        account.emailUpdated = input.emailUpdated ?? account.emailUpdated
         account.logoFileMetadataID = logoFileMetadataID
         account.updatedAt = RecordTimestamp.now()
         try await ServiceAccountService(database: request.db, hubID: request.authenticatedHubID).save(account)

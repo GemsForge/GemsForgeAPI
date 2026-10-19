@@ -214,7 +214,7 @@ export interface ServiceAccount {
   notionPage: string | null;
   paymentMethod: string | null;
   accountNumber: string | null;
-  emailUpdated: string | null;
+  emailUpdated: boolean | null;
   associatedAddress: string | null;
   serviceKey: string | null;
   logoFileMetadataID: string | null;

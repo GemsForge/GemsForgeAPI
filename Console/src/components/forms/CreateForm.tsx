@@ -1,5 +1,6 @@
-import type { FormEvent, ReactNode } from "react";
+import type { ReactNode } from "react";
 import type { UseFormRegisterReturn } from "react-hook-form";
+import { Form } from "tamagui";
 
 export function CreateFormFrame({
   title,
@@ -13,11 +14,11 @@ export function CreateFormFrame({
   submitting: boolean;
   error: string | null;
   onCancel: () => void;
-  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  onSubmit: () => void;
   children: ReactNode;
 }) {
   return (
-    <form className="edit-form create-record-form" aria-label={title} noValidate onSubmit={onSubmit}>
+    <Form className="edit-form create-record-form" aria-label={title} onSubmit={onSubmit}>
       <h3>{title}</h3>
       {error && <p role="alert">{error}</p>}
       {children}
@@ -29,7 +30,7 @@ export function CreateFormFrame({
           Cancel
         </button>
       </div>
-    </form>
+    </Form>
   );
 }
 

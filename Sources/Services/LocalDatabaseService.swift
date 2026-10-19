@@ -36,6 +36,7 @@ enum LocalDatabaseProfile: String, Codable, CaseIterable, Sendable {
             "CreateHomeInventory",
             "AddAddressAttachmentReference",
             "AddServiceAccountAttachmentReference",
+            "MakeServiceAccountEmailUpdatedBoolean",
             "AddEducationAttachmentReference",
             "AddHomeInventoryAttachmentReference",
             "AddFileMetadataForeignKeys",

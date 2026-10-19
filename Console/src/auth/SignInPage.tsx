@@ -1,6 +1,7 @@
 import { useEffect } from "react";
-import { useState, type FormEvent } from "react";
+import { useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
+import { Form } from "tamagui";
 import { useAuth } from "./AuthProvider";
 
 export function SignInPage() {
@@ -17,8 +18,7 @@ export function SignInPage() {
 
   if (auth.session) return <Navigate to="/" replace />;
 
-  async function signIn(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function signIn() {
     if (await auth.signIn(email, password)) {
       setPassword("");
       const path = destination?.pathname ?? "/";
@@ -48,7 +48,7 @@ export function SignInPage() {
             </p>
           </aside>
         )}
-        <form className="sign-in-form" onSubmit={(event) => void signIn(event)}>
+        <Form className="sign-in-form" onSubmit={() => void signIn()}>
           <label htmlFor="sign-in-email">Username</label>
           <input
             id="sign-in-email"
@@ -74,7 +74,7 @@ export function SignInPage() {
           <button className="credential-sign-in-button" type="submit" disabled={auth.busy || !auth.configurationReady}>
             {auth.busy ? "Signing in…" : "Sign in"}
           </button>
-        </form>
+        </Form>
         {auth.busy && <p role="status">Verifying your account…</p>}
         <p className="sign-in-footnote">Account creation is disabled. Ask the Gem Life owner to provision access.</p>
         <p className="sign-in-footnote">Only an API-issued, expiring bearer session unlocks protected records.</p>
