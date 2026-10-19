@@ -5,9 +5,10 @@ source_database="${1:-}"
 dev_database="${2:-}"
 fit_database="${3:-}"
 backup_directory="${4:-}"
+asset_directory="${5:-${ASSET_DIRECTORY:-}}"
 
 if [[ -z "$source_database" || -z "$dev_database" || -z "$fit_database" || -z "$backup_directory" ]]; then
-  echo "Usage: $0 SOURCE_DATABASE DEV_DATABASE FIT_DATABASE BACKUP_DIRECTORY" >&2
+  echo "Usage: $0 SOURCE_DATABASE DEV_DATABASE FIT_DATABASE BACKUP_DIRECTORY [ASSET_DIRECTORY]" >&2
   exit 64
 fi
 
@@ -46,6 +47,7 @@ echo "PLAN source=$source_absolute"
 echo "PLAN dev=$dev_absolute"
 echo "PLAN fit=$fit_absolute"
 echo "PLAN target_writes=0"
+echo "PLAN asset_directory=${asset_directory:-not-configured}"
 printf 'TABLE\tSOURCE\tDEV\tFIT\n'
 for table in "${tables[@]}"; do
   source_count="$(sqlite3 "$source_database" "SELECT COUNT(*) FROM \"$table\";" 2>/dev/null || echo MISSING)"
@@ -53,6 +55,30 @@ for table in "${tables[@]}"; do
   fit_count="$(sqlite3 "$fit_database" "SELECT COUNT(*) FROM \"$table\";" 2>/dev/null || echo MISSING)"
   printf '%s\t%s\t%s\t%s\n' "$table" "$source_count" "$dev_count" "$fit_count"
 done
+
+if sqlite3 "$source_database" "SELECT 1 FROM pragma_table_info('Addresses') WHERE name='HubID';" | grep -q 1; then
+  echo "OWNERSHIP source addresses_hub_column=present"
+else
+  echo "OWNERSHIP source addresses_hub_column=missing"
+fi
+for target in "$dev_database" "$fit_database"; do
+  target_label="$(basename "$target" .sqlite)"
+  if sqlite3 "$target" "SELECT 1 FROM pragma_table_info('Addresses') WHERE name='HubID';" | grep -q 1; then
+    echo "OWNERSHIP $target_label addresses_with_hub=$(sqlite3 "$target" 'SELECT COUNT(*) FROM Addresses WHERE HubID IS NOT NULL;') addresses_unassigned=$(sqlite3 "$target" 'SELECT COUNT(*) FROM Addresses WHERE HubID IS NULL;')"
+  else
+    echo "OWNERSHIP $target_label addresses_hub_column=missing"
+  fi
+done
+
+if [[ -n "$asset_directory" && -d "$asset_directory" ]]; then
+  missing_files=0
+  while IFS= read -r relative_path; do
+    [[ -n "$relative_path" && -f "$asset_directory/$relative_path" ]] || missing_files=$((missing_files + 1))
+  done < <(sqlite3 "$source_database" "SELECT RelativePath FROM FileMetadata WHERE RelativePath IS NOT NULL;")
+  echo "FILES source_missing=$missing_files"
+else
+  echo "FILES source_missing=not-checked"
+fi
 
 echo "SCHEMA_DIFF source_vs_dev"
 diff -u \
