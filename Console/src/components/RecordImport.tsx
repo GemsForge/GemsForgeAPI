@@ -2,6 +2,30 @@ import { useState } from "react";
 
 type Row = Record<string, unknown>;
 
+function parseCSV(input: string): Row[] {
+  const rows: string[][] = [];
+  let row: string[] = [], value = "", quoted = false;
+  for (let index = 0; index < input.length; index += 1) {
+    const character = input[index];
+    if (quoted) {
+      if (character === '"' && input[index + 1] === '"') { value += '"'; index += 1; }
+      else if (character === '"') quoted = false;
+      else value += character;
+    } else if (character === '"' && value === "") quoted = true;
+    else if (character === ",") { row.push(value); value = ""; }
+    else if (character === "\n") { row.push(value); rows.push(row); row = []; value = ""; }
+    else if (character !== "\r") value += character;
+  }
+  if (quoted) throw new Error("CSV contains an unterminated quoted value.");
+  if (value || row.length) { row.push(value); rows.push(row); }
+  const [headers, ...data] = rows;
+  if (!headers?.length) throw new Error("CSV must include a header row.");
+  return data.filter((values) => values.some(Boolean)).map((values, index) => {
+    if (values.length !== headers.length) throw new Error(`CSV row ${index + 2} has the wrong number of columns.`);
+    return Object.fromEntries(headers.map((header, column) => [header.trim(), values[column].trim()]));
+  });
+}
+
 export function RecordImport({ label, onPublish }: { label: string; onPublish: (rows: Row[]) => Promise<void> }) {
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
@@ -13,9 +37,7 @@ export function RecordImport({ label, onPublish }: { label: string; onPublish: (
     try {
       if (text.trim().startsWith("[")) setRows(JSON.parse(text));
       else {
-        const [header, ...lines] = text.trim().split(/\r?\n/);
-        const headers = header.split(",").map((v) => v.trim());
-        setRows(lines.filter(Boolean).map((line) => Object.fromEntries(line.split(",").map((v, i) => [headers[i], v.trim()]))));
+        setRows(parseCSV(text));
       }
     } catch (e) { setError(e instanceof Error ? e.message : "Could not parse the import."); }
   }
