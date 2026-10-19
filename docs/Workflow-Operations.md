@@ -36,16 +36,26 @@ and target and refuses target names other than `GemLife_DB_fit.sqlite`.
 
 ## API and console startup
 
-From the repository root:
+Use one terminal for the integrated development app. From the
+`GemsForgeAPI` repository root (not `Console/` or a different project's root):
 
 ~~~bash
 swift run GemLife
 ~~~
 
-The launcher starts the API and Gem Life host. The API defaults to port 8081
-to avoid colliding with existing local API instances on port 8080. Override
-the port with `API_PORT` when needed. The React console can also be run
-independently from `Console/` with `npm run dev`.
+`swift run GemLife` starts the API, starts Vite at
+`http://127.0.0.1:5173/` if this project's Console is not already responding,
+waits for it, and then opens the native `GemLifeHost` window. Press Ctrl-C to
+stop the services started by the launcher.
+
+The launcher starts the API, Console, and Gem Life host. By default it asks the
+operating system for an available ephemeral loopback port, so separate local
+projects do not all compete for one fixed port. If `API_PORT` is set, the launcher uses it
+when available and automatically falls back to another free port when it is
+occupied. The selected port is printed at startup and exposed to the Console's
+Vite proxy through an ignored runtime file under `.build/`. The React console
+can also be run independently from `Console/` with `npm run dev`; set
+`VITE_API_TARGET` when the API is started outside the integrated launcher.
 
 The active console routes include /schema-builder and /live-database.
 /live-database is the reviewed interface for inspecting the configured live

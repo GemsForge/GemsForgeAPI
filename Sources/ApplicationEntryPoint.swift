@@ -23,6 +23,7 @@ enum EntryPoint {
         try app.configureDatabase()
         app.asyncCommands.use(BootstrapLegacyDatabaseCommand(), as: "bootstrap-legacy-database")
         app.middleware.use(SessionAuthenticationMiddleware())
+        registerLocalAuthenticationRoutes(app)
         registerSupabaseAuthenticationRoutes(app)
         registerLocalDatabaseRoutes(app, configuration: .fromEnvironment())
         registerLiveSchemaRoutes(app)

@@ -43,18 +43,17 @@ export function SignInPage() {
           <aside className="sign-in-setup" aria-label="Sign-in setup required">
             <strong>Sign-in setup required</strong>
             <p>
-              Configure <code>VITE_SUPABASE_URL</code> and <code>VITE_SUPABASE_PUBLISHABLE_KEY</code> for the Console,
-              then set <code>SUPABASE_URL</code>, <code>SUPABASE_OWNER_SUBJECT</code>, and
+              Configure <code>LOCAL_AUTH_USERNAME</code>, <code>LOCAL_AUTH_PASSWORD</code>, and
               <code> GEM_LIFE_OPERATOR_ACCOUNT_ID</code> on the API.
             </p>
           </aside>
         )}
         <form className="sign-in-form" onSubmit={(event) => void signIn(event)}>
-          <label htmlFor="sign-in-email">Email</label>
+          <label htmlFor="sign-in-email">Username</label>
           <input
             id="sign-in-email"
             name="email"
-            type="email"
+            type="text"
             autoComplete="username"
             required
             value={email}

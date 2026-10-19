@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Start the Vapor API and native Gem Life host as one local development session.
+# Start the Vapor API, React Console and native Gem Life host together.
 set -Eeuo pipefail
 
 repository_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -27,14 +27,57 @@ if [[ -z "${DATABASE_PATH:-}" ]]; then
 fi
 
 api_host="127.0.0.1"
-api_port="8081"
 if [[ -n "${API_HOST+x}" ]]; then api_host="$API_HOST"; fi
-if [[ -n "${API_PORT+x}" ]]; then api_port="$API_PORT"; fi
+requested_api_port="${API_PORT:-}"
+api_port=""
+api_port_file="$repository_root/.build/gemlife-api-port"
+temp_root="${TMPDIR:-/tmp}"
+port_lock_dir="${temp_root%/}/gemlife-api-port-allocation.lock"
+port_lock_owned=0
 api_pid=""
+console_pid=""
+
+acquire_port_lock() {
+  local attempt
+  for attempt in {1..600}; do
+    if mkdir "$port_lock_dir" 2>/dev/null; then
+      port_lock_owned=1
+      printf '%s\n' "$$" > "$port_lock_dir/pid"
+      return 0
+    fi
+    if [[ -f "$port_lock_dir/pid" ]]; then
+      local lock_pid
+      lock_pid="$(<"$port_lock_dir/pid")"
+      if [[ "$lock_pid" =~ ^[1-9][0-9]*$ ]] && ! kill -0 "$lock_pid" 2>/dev/null; then
+        rm -f "$port_lock_dir/pid"
+        rmdir "$port_lock_dir" 2>/dev/null || true
+      fi
+    fi
+    sleep 0.1
+  done
+  echo "Timed out waiting for another local Gem Life API to claim its port." >&2
+  return 1
+}
+
+release_port_lock() {
+  if [[ "$port_lock_owned" == "1" ]]; then
+    if [[ -f "$port_lock_dir/pid" && "$(<"$port_lock_dir/pid")" == "$$" ]]; then
+      rm -f "$port_lock_dir/pid"
+    fi
+    rmdir "$port_lock_dir" 2>/dev/null || true
+    port_lock_owned=0
+  fi
+}
 
 cleanup() {
   local exit_code=$?
   trap - EXIT INT TERM
+
+  if [[ -n "$console_pid" ]] && kill -0 "$console_pid" 2>/dev/null; then
+    echo "Stopping Gem Life Console (pid $console_pid)…"
+    kill "$console_pid" 2>/dev/null || true
+    wait "$console_pid" 2>/dev/null || true
+  fi
 
   if [[ -n "$api_pid" ]] && kill -0 "$api_pid" 2>/dev/null; then
     echo "Stopping GemsForgeAPI (pid $api_pid)…"
@@ -42,11 +85,20 @@ cleanup() {
     wait "$api_pid" 2>/dev/null || true
   fi
 
+  if [[ -n "$api_port" && -f "$api_port_file" && "$(<"$api_port_file")" == "$api_port" ]]; then
+    rm -f "$api_port_file"
+  fi
+  release_port_lock
+
   exit "$exit_code"
 }
 
 trap cleanup EXIT INT TERM
 
+acquire_port_lock
+api_port="$(node "$repository_root/Scripts/select-api-port.mjs" "$api_host" "$requested_api_port")"
+mkdir -p "$(dirname "$api_port_file")"
+printf '%s\n' "$api_port" > "$api_port_file"
 echo "Starting GemsForgeAPI on http://${api_host}:${api_port}…"
 cd "$repository_root"
 if [[ "${GEM_LIFE_PRODUCTION:-0}" == "1" ]]; then
@@ -66,20 +118,58 @@ else
 fi
 api_pid=$!
 
-if [[ "${GEM_LIFE_PRODUCTION:-0}" == "1" ]]; then
-  api_ready=0
+api_ready=0
+for attempt in {1..100}; do
+  if ! kill -0 "$api_pid" 2>/dev/null; then break; fi
+  if curl --silent --output /dev/null --max-time 1 "http://127.0.0.1:${api_port}/health"; then api_ready=1; break; fi
+  sleep 0.1
+done
+if [[ "$api_ready" != "1" ]]; then
+  echo "The local API did not start listening on port ${api_port}. Check the API output above." >&2
+  exit 1
+fi
+release_port_lock
+
+if [[ "${GEM_LIFE_PRODUCTION:-0}" != "1" ]]; then
+  console_directory="$repository_root/Console"
+  vite_executable="$console_directory/node_modules/.bin/vite"
+  console_url="http://127.0.0.1:5173/"
+
+  if ! curl --silent --fail --max-time 1 "$console_url" | grep -q '<title>Gem Life Testing Console</title>'; then
+    if [[ ! -x "$vite_executable" ]]; then
+      echo "Console dependencies are missing. Run 'cd Console && npm ci', then retry." >&2
+      exit 1
+    fi
+    echo "Starting Gem Life Console on ${console_url}…"
+    (
+      cd "$console_directory"
+      exec ./node_modules/.bin/vite --strictPort
+    ) &
+    console_pid=$!
+  else
+    echo "Using the already-running Gem Life Console at ${console_url}."
+  fi
+
+  console_ready=0
   for attempt in {1..100}; do
-    if ! kill -0 "$api_pid" 2>/dev/null; then break; fi
-    if curl --silent --fail --max-time 1 "http://127.0.0.1:${api_port}/health" >/dev/null; then api_ready=1; break; fi
-    sleep 0.2
+    if [[ -n "$console_pid" ]] && ! kill -0 "$console_pid" 2>/dev/null; then break; fi
+    if curl --silent --fail --max-time 1 "$console_url" | grep -q '<title>Gem Life Testing Console</title>'; then
+      console_ready=1
+      break
+    fi
+    sleep 0.1
   done
-  if [[ "$api_ready" != "1" ]]; then echo "The local API did not become ready." >&2; exit 1; fi
+  if [[ "$console_ready" != "1" ]]; then
+    echo "The Gem Life Console did not become ready at ${console_url}. Check whether another app is using port 5173." >&2
+    exit 1
+  fi
 fi
 
 echo "Starting GemLifeHost…"
-echo "Stop both executables with Ctrl-C."
 if [[ "${GEM_LIFE_PRODUCTION:-0}" == "1" ]]; then
+  echo "Stop the API and host with Ctrl-C."
   "${binary_directory}/GemLifeHost"
 else
+  echo "Stop the API, Console and host with Ctrl-C."
   swift run GemLifeHost
 fi
