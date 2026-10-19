@@ -10,7 +10,12 @@ import { QueryFeedback } from "../../components/QueryFeedback";
 import type { ExpenseTransaction } from "../../types";
 import { AttachmentControl } from "../../components/AttachmentControl";
 import { GemEmptyState, GemRecordCard, GemRecordList } from "../../components/ui";
-import { EditableRecordFields, formatRecordDate, formatRecordTimestamp } from "../../components/EditableRecordFields";
+import {
+  EditableRecordFields,
+  formatRecordCurrency,
+  formatRecordDate,
+  formatRecordTimestamp,
+} from "../../components/EditableRecordFields";
 import { useCreateTransactionMutation } from "../../data/recordQueries";
 import { TransactionCreateForm } from "../create/RecordCreateForms";
 
@@ -180,6 +185,7 @@ function TransactionDetail({
             inputType: "number",
             step: "0.01",
             nullable: true,
+            displayValue: formatRecordCurrency(record.regularPrice),
             onSave: async (value) => onPatch({ regularPrice: value as number | null }),
           },
           {
@@ -188,6 +194,7 @@ function TransactionDetail({
             inputType: "number",
             step: "0.01",
             nullable: true,
+            displayValue: formatRecordCurrency(record.paidPrice),
             onSave: async (value) => onPatch({ paidPrice: value as number | null }),
           },
           {
@@ -196,6 +203,7 @@ function TransactionDetail({
             inputType: "number",
             step: "0.01",
             nullable: true,
+            displayValue: formatRecordCurrency(record.total),
             onSave: async (value) => onPatch({ total: value as number | null }),
           },
           {
@@ -204,6 +212,7 @@ function TransactionDetail({
             inputType: "number",
             step: "0.01",
             nullable: true,
+            displayValue: formatRecordCurrency(record.discount),
             onSave: async (value) => onPatch({ discount: value as number | null }),
           },
           {
