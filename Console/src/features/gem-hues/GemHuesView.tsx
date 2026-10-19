@@ -67,7 +67,18 @@ export function GemHuesView({ hues }: GemHuesViewProps) {
           setImportError(null); setImportPreview(null);
           try {
             let rows: GemHueCreate[];
-            if (importText.trim().startsWith("[")) rows = JSON.parse(importText);
+            if (importText.trim().startsWith("{")) {
+              const parsed = JSON.parse(importText);
+              const source = Array.isArray(parsed) ? parsed : parsed.GemHues;
+              if (!Array.isArray(source)) throw new Error("JSON must contain a GemHues array.");
+              rows = source.map((row) => ({
+                id: row.id ?? row.HueID, colorName: row.colorName ?? row.ColorName,
+                colorFamily: row.colorFamily ?? row.ColorFamily ?? null, hexCode: row.hexCode ?? row.HexCode,
+                mood: row.mood ?? row.Mood ?? null, palette: row.palette ?? row.Palette ?? null,
+                description: row.description ?? row.Description ?? null, createdDate: row.createdDate ?? row.CreatedDate ?? null,
+                notes: row.notes ?? row.Notes ?? null,
+              }));
+            } else if (importText.trim().startsWith("[")) rows = JSON.parse(importText);
             else {
               const [headerLine, ...lines] = importText.trim().split(/\r?\n/);
               const headers = headerLine.split(",").map((value) => value.trim());
