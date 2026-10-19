@@ -319,7 +319,7 @@ function LegacyLogoPreview({ logo }: { logo?: { id: number; logoKey: string | nu
       controller.abort();
       if (objectURL) URL.revokeObjectURL(objectURL);
     };
-  });
+  }, [logo?.id]);
   if (!logo || !url) return null;
   return <img className="service-logo-preview" src={url} alt={`${logo.logoKey ?? "Service"} logo`} />;
 }
