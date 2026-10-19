@@ -80,6 +80,17 @@ describe("ServiceAccountsView", () => {
     await waitFor(() => expect(mocks.patch).toHaveBeenCalledWith({ id: 7, patch: { serviceKey: "INTERNET_SERVICE" } }));
   });
 
+  it("edits Email Updated with a checkbox", async () => {
+    mocks.account.emailUpdated = "false";
+    renderView();
+    fireEvent.click(screen.getByRole("button", { name: /Internet/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Edit email updated" }));
+    fireEvent.click(screen.getByLabelText("Email updated"));
+    fireEvent.click(screen.getByRole("button", { name: "Save email updated" }));
+    await waitFor(() => expect(mocks.patch).toHaveBeenCalledWith({ id: 7, patch: { emailUpdated: "true" } }));
+    mocks.account.emailUpdated = null;
+  });
+
   it("explains why legacy logo and address relationship values stay read-only", () => {
     renderView();
     fireEvent.click(screen.getByRole("button", { name: /Internet/ }));
