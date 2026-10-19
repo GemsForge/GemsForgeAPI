@@ -1218,6 +1218,13 @@ dialog::backdrop {
   margin-right: 0.45rem;
 }
 
+.service-account-card-logo {
+  width: 2.5rem;
+  height: 2.5rem;
+  object-fit: contain;
+  display: block;
+}
+
 .service-heading-identity {
   display: flex;
   align-items: flex-start;
