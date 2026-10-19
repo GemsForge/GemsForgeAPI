@@ -28,7 +28,7 @@ fi
 
 api_host="127.0.0.1"
 if [[ -n "${API_HOST+x}" ]]; then api_host="$API_HOST"; fi
-requested_api_port="${API_PORT:-}"
+requested_api_port="${API_PORT:-8180}"
 api_port=""
 api_port_file="$repository_root/.build/gemlife-api-port"
 temp_root="${TMPDIR:-/tmp}"

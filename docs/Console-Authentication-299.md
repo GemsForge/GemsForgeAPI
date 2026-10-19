@@ -25,7 +25,7 @@ possible future identity provider and must not be required to use Gem Life.
    ```dotenv
    VITE_SUPABASE_URL=https://your-project-ref.supabase.co
    VITE_SUPABASE_PUBLISHABLE_KEY=your-supabase-publishable-key
-   VITE_API_TARGET=http://127.0.0.1:8081
+   VITE_API_TARGET=http://127.0.0.1:8180
    ```
 
 3. Configure the API process with the same project URL, the owner's stable

@@ -70,19 +70,19 @@ swift test
 ```
 
 For a read-only verification of the real local database, start the API on the
-default local port `8081`, avoiding an Xcode instance already using `8080`:
+default local port `8180`, avoiding an Xcode instance already using `8080`:
 
 ```bash
 DATABASE_PATH=/absolute/path/to/GemLife_DB_rebuild.sqlite \
-swift run GemsForgeAPI serve --hostname 127.0.0.1 --port 8081
+swift run GemsForgeAPI serve --hostname 127.0.0.1 --port 8180
 ```
 
 In another terminal, call only read endpoints:
 
 ```bash
-curl http://127.0.0.1:8081/health
-curl http://127.0.0.1:8081/domains
-curl http://127.0.0.1:8081/forgekeeper/roots
+curl http://127.0.0.1:8180/health
+curl http://127.0.0.1:8180/domains
+curl http://127.0.0.1:8180/forgekeeper/roots
 ```
 
 The verification performed for Issue #23 returned the four existing domains,

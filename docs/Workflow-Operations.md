@@ -48,14 +48,12 @@ swift run GemLife
 waits for it, and then opens the native `GemLifeHost` window. Press Ctrl-C to
 stop the services started by the launcher.
 
-The launcher starts the API, Console, and Gem Life host. By default it asks the
-operating system for an available ephemeral loopback port, so separate local
-projects do not all compete for one fixed port. If `API_PORT` is set, the launcher uses it
-when available and automatically falls back to another free port when it is
-occupied. The selected port is printed at startup and exposed to the Console's
-Vite proxy through an ignored runtime file under `.build/`. The React console
-can also be run independently from `Console/` with `npm run dev`; set
-`VITE_API_TARGET` when the API is started outside the integrated launcher.
+The launcher uses the standard local API port `8180` by default. Set `API_PORT`
+when intentionally running another local instance; the launcher fails clearly
+if the selected port is occupied instead of silently choosing a random port.
+The selected port is printed at startup and exposed to the Console's Vite proxy
+through an ignored runtime file under `.build/`. The React console can also be
+run independently from `Console/` with `VITE_API_TARGET` set to the API port.
 
 The active console routes include /schema-builder and /live-database.
 /live-database is the reviewed interface for inspecting the configured live
