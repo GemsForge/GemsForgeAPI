@@ -138,20 +138,28 @@ function EducationDetail({
       <EditableRecordFields
         className="education-fields"
         fields={[
-          { label: "Type", value: <EditableEducationField label="Type" value={record.educationType} editLabel="Edit type" onSave={(value) => onPatch({ educationType: value })} /> },
-          { label: "Program", value: <EditableEducationField label="Program" value={record.program} editLabel="Edit program" onSave={(value) => onPatch({ program: value || null })} /> },
-          { label: "Field of study", value: <EditableEducationField label="Field of study" value={record.fieldOfStudy} editLabel="Edit field of study" onSave={(value) => onPatch({ fieldOfStudy: value || null })} /> },
-          { label: "Credential", value: <EditableEducationField label="Credential" value={record.credential} editLabel="Edit credential" onSave={(value) => onPatch({ credential: value || null })} /> },
-          { label: "Start date", value: <EditableEducationField label="Start date" value={record.startDate} editLabel="Edit start date" onSave={(value) => onPatch({ startDate: value || null })} /> },
-          { label: "End date", value: <EditableEducationField label="End date" value={record.endDate} editLabel="Edit end date" onSave={(value) => onPatch({ endDate: value || null })} /> },
-          { label: "Awarded date", value: <EditableEducationField label="Awarded date" value={record.awardedDate} editLabel="Edit awarded date" onSave={(value) => onPatch({ awardedDate: value || null })} /> },
-          { label: "Location", value: <AddressSummary address={record.address} /> },
-          { label: "Credential ID", value: <EditableEducationField label="Credential ID" value={record.credentialID} editLabel="Edit credential ID" onSave={(value) => onPatch({ credentialID: value || null })} /> },
           {
-            label: "Website",
-            value: <EditableEducationField label="Website" value={record.website} editLabel="Edit website" onSave={(value) => onPatch({ website: value || null })} />,
+            label: "Type", value: record.educationType, required: true,
+            onSave: async (value) => onPatch({ educationType: value as string }),
           },
-          { label: "Notes", value: <EditableEducationField label="Notes" value={record.notes} editLabel="Edit notes" onSave={(value) => onPatch({ notes: value || null })} />, className: "record-notes" },
+          { label: "Institution", value: record.institutionName, required: true, onSave: async (value) => onPatch({ institutionName: value as string }) },
+          { label: "Program", value: record.program, nullable: true, onSave: async (value) => onPatch({ program: value as string | null }) },
+          { label: "Field of study", value: record.fieldOfStudy, nullable: true, onSave: async (value) => onPatch({ fieldOfStudy: value as string | null }) },
+          { label: "Credential", value: record.credential, nullable: true, onSave: async (value) => onPatch({ credential: value as string | null }) },
+          { label: "Credential ID", value: record.credentialID, nullable: true, onSave: async (value) => onPatch({ credentialID: value as string | null }) },
+          { label: "Start date", value: record.startDate, inputType: "date", nullable: true, onSave: async (value) => onPatch({ startDate: value as string | null }) },
+          { label: "End date", value: record.endDate, inputType: "date", nullable: true, onSave: async (value) => onPatch({ endDate: value as string | null }) },
+          { label: "Awarded date", value: record.awardedDate, inputType: "date", nullable: true, onSave: async (value) => onPatch({ awardedDate: value as string | null }) },
+          { label: "Status", value: record.status, required: true, onSave: async (value) => onPatch({ status: value as string }) },
+          {
+            label: "Location", value: record.address?.id ?? null, inputType: "select", nullable: true,
+            options: (addresses.data ?? []).map((address) => ({ value: address.id, label: addressOptionLabel(address) })),
+            displayValue: <AddressSummary address={record.address} />,
+            onSave: async (value) => onPatch({ locationAddressID: value as string | null }),
+          },
+          { label: "Website", value: record.website, inputType: "url", nullable: true, onSave: async (value) => onPatch({ website: value as string | null }) },
+          { label: "Notes", value: record.notes, inputType: "longText", nullable: true, className: "record-notes", onSave: async (value) => onPatch({ notes: value as string | null }) },
+          { label: "Last updated", value: record.updatedAt ?? null, readOnlyReason: "Server managed", displayValue: formatRecordTimestamp(record.updatedAt) },
         ]}
       />
       <AttachmentControl
@@ -163,10 +171,6 @@ function EducationDetail({
       />
     </article>
   );
-}
-
-function EditableEducationField({ label, value, editLabel, onSave }: { label: string; value: string | null; editLabel: string; onSave: (value: string) => Promise<void> }) {
-  return <span className="editable-field"><span>{value || "—"}</span><PropertyEditor label={label} initialValue={value || ""} editLabel={editLabel} saveLabel={`Save ${label.toLowerCase()}`} onSave={onSave} /></span>;
 }
 
 function AddressSummary({ address }: { address: Education["address"] }) {
