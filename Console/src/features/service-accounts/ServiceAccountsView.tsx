@@ -130,6 +130,16 @@ function ServiceAccountDetail({
           {
             label: "Type",
             value: record.type,
+            inputType: "select",
+            options: [
+              { label: "Utility", value: "Utility" },
+              { label: "Subscription", value: "Subscription" },
+              { label: "Credit", value: "Credit" },
+              { label: "Loan", value: "Loan" },
+              { label: "Insurance", value: "Insurance" },
+              { label: "Membership", value: "Membership" },
+              { label: "Other", value: "Other" },
+            ],
             nullable: true,
             onSave: async (value) => onPatch({ type: value as string | null }),
           },
