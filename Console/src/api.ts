@@ -14,6 +14,7 @@ import type {
   ForgeKeeperPage,
   ForgeKeeperPatch,
   GemHue,
+  GemHueCreate,
   HomeInventoryCSVImportResult,
   HomeInventoryCSVPreview,
   LiveSchema,
@@ -103,6 +104,7 @@ export const api = {
       body: JSON.stringify(patch),
     }),
   listGemHues: (signal?: AbortSignal) => request<GemHue[]>("/gemhues", { signal }),
+  createGemHue: (payload: GemHueCreate) => request<GemHue>("/gemhues", { method: "POST", body: JSON.stringify(payload) }),
   getGemHue: (hueID: string, signal?: AbortSignal) =>
     request<GemHue>(`/gemhues/${encodeURIComponent(hueID)}`, { signal }),
   getGemHueImage: (hueID: string, signal?: AbortSignal) =>

@@ -126,6 +126,8 @@ export interface GemHue {
   notes: string | null;
 }
 
+export type GemHueCreate = Omit<GemHue, "id"> & { id: string };
+
 export interface Education {
   id: string;
   educationType: string;
