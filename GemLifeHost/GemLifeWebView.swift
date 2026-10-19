@@ -45,6 +45,9 @@ struct GemLifeWebView: NSViewRepresentable {
         let policy: HostPolicy
         weak var webView: WKWebView?
         private var picker: NSOpenPanel?
+        private var initialConsoleLoadSucceeded = false
+        private var consoleLoadRetryAttempt = 0
+        private var consoleLoadRetry: DispatchWorkItem?
 
         init(policy: HostPolicy) {
             self.policy = policy
@@ -122,10 +125,35 @@ struct GemLifeWebView: NSViewRepresentable {
 
         func webView(_ webView: WKWebView, didFail navigation: WKNavigation?, withError error: Error) {
             NSLog("Gem Life Console navigation failed: %@", error.localizedDescription)
+            retryInitialConsoleLoad(in: webView)
         }
 
         func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation?, withError error: Error) {
             NSLog("Gem Life Console could not load: %@", error.localizedDescription)
+            retryInitialConsoleLoad(in: webView)
+        }
+
+        func webView(_ webView: WKWebView, didFinish navigation: WKNavigation?) {
+            initialConsoleLoadSucceeded = true
+            consoleLoadRetryAttempt = 0
+            consoleLoadRetry?.cancel()
+            consoleLoadRetry = nil
+        }
+
+        private func retryInitialConsoleLoad(in webView: WKWebView) {
+            guard !initialConsoleLoadSucceeded, consoleLoadRetry == nil else { return }
+
+            let delay = min(pow(2.0, Double(consoleLoadRetryAttempt)), 10.0)
+            consoleLoadRetryAttempt += 1
+            NSLog("Retrying Gem Life Console load in %.0f seconds", delay)
+
+            let retry = DispatchWorkItem { [weak self, weak webView] in
+                guard let self, let webView, !self.initialConsoleLoadSucceeded else { return }
+                self.consoleLoadRetry = nil
+                webView.load(URLRequest(url: self.policy.origin))
+            }
+            consoleLoadRetry = retry
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: retry)
         }
 
     }
