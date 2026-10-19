@@ -26,6 +26,7 @@ import type {
   LocalDatabaseCreationResult,
   SchemaBuilderGuidance,
   ServiceAccount,
+  ServiceLogo,
   ServiceAccountCreate,
   TransactionCreate,
   TableBuilderRequest,
