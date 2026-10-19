@@ -26,7 +26,6 @@ import type {
   LocalDatabaseCreationResult,
   SchemaBuilderGuidance,
   ServiceAccount,
-  ServiceLogo,
   ServiceAccountCreate,
   TransactionCreate,
   TableBuilderRequest,
@@ -187,7 +186,6 @@ export const api = {
     const response = await checkedFetch("/file-uploads", { method: "POST", body: form });
     return (await response.json()) as FileMetadata;
   },
-  listServiceLogos: (signal?: AbortSignal) => request<ServiceLogo[]>("/service-logos", { signal }),
   patchAddressAttachment: (addressID: string, fileMetadataID: string | null) =>
     request<Address>(`/addresses/${encodeURIComponent(addressID)}/attachment`, {
       method: "PATCH",
