@@ -51,7 +51,7 @@ npm run dev
 ~~~
 
 `swift run GemLife` starts the API and native `GemLifeHost` window; it does not
-start Vite. The host loads the Console at `http://localhost:5173/`, so the
+start Vite. The host loads the Console at `http://127.0.0.1:5173/`, so the
 window remains blank until the Console dev server is running. Stop the app by
 pressing Ctrl-C in Terminal 1.
 

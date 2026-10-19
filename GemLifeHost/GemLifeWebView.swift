@@ -9,7 +9,7 @@ struct GemLifeWebView: NSViewRepresentable {
     init(consoleURL: URL? = nil) {
         let configuredURL = ProcessInfo.processInfo.environment["GEM_LIFE_CONSOLE_URL"]
         #if DEBUG
-        let defaultURL = "http://localhost:5173/"
+        let defaultURL = "http://127.0.0.1:5173/"
         #else
         let defaultURL = "http://127.0.0.1:8080/app/"
         #endif

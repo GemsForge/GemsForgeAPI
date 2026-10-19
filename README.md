@@ -249,7 +249,7 @@ npm run dev
 ```
 
 The launcher starts the API and native `GemLifeHost` window. The host displays
-the Console served at `http://localhost:5173/`; its Vite proxy follows the API
+the Console served at `http://127.0.0.1:5173/`; its Vite proxy follows the API
 port selected by the launcher. If the native window is blank, confirm the
 Console dev server is running. Press `Ctrl-C` in Terminal 1 to stop the API
 and host.

@@ -45,6 +45,9 @@ export default defineConfig(({ mode }) => {
       globals: true,
     },
     server: {
+      // Use the same explicit loopback address as GemLifeHost. Resolving
+      // "localhost" can select IPv6 while the native WebView tries IPv4.
+      host: "127.0.0.1",
       port: 5173,
       proxy: Object.fromEntries(
         [
