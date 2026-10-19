@@ -16,7 +16,10 @@ describe("PropertyEditor", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Edit city" }));
+    const editButton = screen.getByRole("button", { name: "Edit city" });
+    expect(editButton).toHaveClass("icon-button");
+    expect(editButton).toHaveAttribute("title", "Edit city");
+    fireEvent.click(editButton);
     fireEvent.change(screen.getByLabelText("City"), { target: { value: "Queens" } });
     fireEvent.click(screen.getByRole("button", { name: "Save city" }));
 

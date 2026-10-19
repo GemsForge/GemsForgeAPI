@@ -19,8 +19,8 @@ export function PropertyEditor({
 
   if (!editor.editing) {
     return (
-      <button type="button" onClick={editor.begin}>
-        {editLabel}
+      <button className="icon-button" type="button" aria-label={editLabel} title={editLabel} onClick={editor.begin}>
+        <span aria-hidden="true">✎</span>
       </button>
     );
   }
