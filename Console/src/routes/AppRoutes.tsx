@@ -30,6 +30,7 @@ import { DomainCreateForm } from "../features/create/RecordCreateForms";
 import { LocalSession } from "../components/LocalSession";
 import { RequireAuth } from "../auth/RequireAuth";
 import { SignInPage } from "../auth/SignInPage";
+import { isRecoveryLink, ResetPasswordPage } from "../auth/ResetPasswordPage";
 const ForgeKeeperView = lazy(() =>
   import("../features/forgekeeper/ForgeKeeperView").then((module) => ({ default: module.ForgeKeeperView })),
 );
@@ -263,7 +264,9 @@ function NotFound() {
 export function AppRoutes() {
   return (
     <Routes>
-      <Route path="login" element={<SignInPage />} />
+      <Route path="login" element={isRecoveryLink() ? <ResetPasswordPage /> : <SignInPage />} />
+      <Route path="reset-password" element={<ResetPasswordPage />} />
+      <Route path="/" element={isRecoveryLink() ? <ResetPasswordPage /> : <Navigate to="/login" replace />} />
       <Route element={<RequireAuth />}>
         <Route
           element={

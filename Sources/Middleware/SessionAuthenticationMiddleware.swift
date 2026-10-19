@@ -44,6 +44,7 @@ struct SessionAuthenticationMiddleware: AsyncMiddleware {
     private static let publicRoutes: Set<String> = [
         "GET /health",
         "POST /auth/supabase",
+        "POST /auth/local",
     ]
 
     func respond(to request: Request, chainingTo next: AsyncResponder) async throws -> Response {

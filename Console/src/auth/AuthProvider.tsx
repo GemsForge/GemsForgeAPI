@@ -1,7 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { api } from "../api";
 import { queryClient } from "../data/queryClient";
-import { getSupabaseSignInConfiguration, requestSupabaseAccessToken } from "./supabaseSignIn";
 import {
   clearSession,
   consumeExpiredSessionNotice,
@@ -16,7 +15,7 @@ interface AuthContextValue {
   busy: boolean;
   error: string | null;
   configurationReady: boolean;
-  signIn: (email: string, password: string) => Promise<boolean>;
+  signIn: (username: string, password: string) => Promise<boolean>;
   signOut: () => Promise<void>;
   clearError: () => void;
 }
@@ -29,7 +28,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(() =>
     consumeExpiredSessionNotice() ? "Your sign-in expired or was revoked. Sign in again to continue." : null,
   );
-  const configuration = useMemo(() => getSupabaseSignInConfiguration(), []);
 
   useEffect(() => {
     const handleExpired = () => {
@@ -42,33 +40,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener(SESSION_EXPIRED_EVENT, handleExpired);
   }, []);
 
-  const signIn = useCallback(
-    async (email: string, password: string) => {
-      if (!configuration) {
-        setError(
-          "Supabase sign-in is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY, and configure SUPABASE_URL on the API.",
-        );
-        return false;
-      }
-      setBusy(true);
-      setError(null);
-      try {
-        const accessToken = await requestSupabaseAccessToken(email, password);
-        const response = await api.exchangeSupabaseIdentityToken(accessToken);
-        const nextSession = { token: response.sessionToken, expiresAt: response.expiresAt };
-        saveSession(nextSession);
-        setSession(nextSession);
-        queryClient.clear();
-        return true;
-      } catch (cause) {
-        setError(cause instanceof Error ? cause.message : "Sign-in could not be completed. Please try again.");
-        return false;
-      } finally {
-        setBusy(false);
-      }
-    },
-    [configuration],
-  );
+  const signIn = useCallback(async (username: string, password: string) => {
+    setBusy(true);
+    setError(null);
+    try {
+      const response = await api.localSignIn(username, password);
+      const nextSession = { token: response.sessionToken, expiresAt: response.expiresAt };
+      saveSession(nextSession);
+      setSession(nextSession);
+      queryClient.clear();
+      return true;
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Sign-in could not be completed. Please try again.");
+      return false;
+    } finally {
+      setBusy(false);
+    }
+  }, []);
 
   const signOut = useCallback(async () => {
     setError(null);
@@ -90,12 +78,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       session,
       busy,
       error,
-      configurationReady: configuration !== null,
+      configurationReady: true,
       signIn,
       signOut,
       clearError: () => setError(null),
     }),
-    [session, busy, error, configuration, signIn, signOut],
+    [session, busy, error, signIn, signOut],
   );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

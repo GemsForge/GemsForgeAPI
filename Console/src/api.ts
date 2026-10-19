@@ -47,7 +47,7 @@ export class APIError extends Error {
 async function checkedFetch(path: string, options: RequestInit = {}): Promise<Response> {
   let response: Response;
   const headers = new Headers(options.headers);
-  const isPublicAuthRequest = path === "/auth/supabase";
+  const isPublicAuthRequest = path === "/auth/supabase" || path === "/auth/local";
   const bearerToken = path === "/health" || isPublicAuthRequest ? null : getBearerToken();
   if (bearerToken) headers.set("Authorization", `Bearer ${bearerToken}`);
   try {
@@ -86,6 +86,8 @@ export const api = {
       method: "POST",
       headers: { Authorization: `Bearer ${accessToken}` },
     }),
+  localSignIn: (username: string, password: string) =>
+    request<APIAuthenticationSession>("/auth/local", { method: "POST", body: JSON.stringify({ username, password }) }),
   logout: () => request<void>("/auth/logout", { method: "POST" }),
   listDomains: (signal?: AbortSignal) => request<Domain[]>("/domains", { signal }),
   createDomain: (payload: DomainCreate) =>

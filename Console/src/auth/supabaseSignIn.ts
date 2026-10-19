@@ -7,6 +7,22 @@ interface SupabasePasswordResponse {
   access_token?: unknown;
 }
 
+export async function updateSupabasePassword(accessToken: string, password: string): Promise<void> {
+  const configuration = getSupabaseSignInConfiguration();
+  if (!configuration) throw new Error("Supabase sign-in is not configured.");
+  const response = await fetch(`${configuration.url}/auth/v1/user`, {
+    method: "PUT",
+    headers: {
+      apikey: configuration.publishableKey,
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ password }),
+    cache: "no-store",
+  });
+  if (!response.ok) throw new Error("Supabase could not update the password. Request a new reset link and try again.");
+}
+
 export function getSupabaseSignInConfiguration(): SupabaseAuthConfiguration | null {
   const url = import.meta.env.VITE_SUPABASE_URL?.trim();
   const publishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim();
