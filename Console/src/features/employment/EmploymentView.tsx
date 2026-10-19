@@ -10,6 +10,7 @@ import { PropertyEditor } from "../../components/PropertyEditor";
 import { useCreateEmploymentMutation } from "../../data/recordQueries";
 import { useAddressesQuery } from "../../data/lifeQueries";
 import { EmploymentCreateForm } from "../create/RecordCreateForms";
+import { RecordImport } from "../../components/RecordImport";
 
 interface EmploymentViewProps {
   records: Employment[];
@@ -41,6 +42,7 @@ export function EmploymentView({ records }: EmploymentViewProps) {
           <button type="button" onClick={() => setCreating(true)}>
             Add employment
           </button>
+          <RecordImport label="employment records" onPublish={async (rows) => { for (const row of rows) await create.mutateAsync(row as Parameters<typeof create.mutateAsync>[0]); }} />
         </div>
       </div>
 

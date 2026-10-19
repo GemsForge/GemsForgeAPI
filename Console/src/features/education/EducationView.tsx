@@ -10,6 +10,7 @@ import { PropertyEditor } from "../../components/PropertyEditor";
 import { useCreateEducationMutation } from "../../data/recordQueries";
 import { useAddressesQuery } from "../../data/lifeQueries";
 import { EducationCreateForm } from "../create/RecordCreateForms";
+import { RecordImport } from "../../components/RecordImport";
 
 interface EducationViewProps {
   records: Education[];
@@ -41,6 +42,7 @@ export function EducationView({ records }: EducationViewProps) {
           <button type="button" onClick={() => setCreating(true)}>
             Add education
           </button>
+          <RecordImport label="education records" onPublish={async (rows) => { for (const row of rows) await create.mutateAsync(row as Parameters<typeof create.mutateAsync>[0]); }} />
         </div>
       </div>
 

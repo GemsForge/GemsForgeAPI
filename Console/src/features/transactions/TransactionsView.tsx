@@ -14,6 +14,7 @@ import { RecordFields } from "../../components/RecordFields";
 import { PropertyEditor } from "../../components/PropertyEditor";
 import { useCreateTransactionMutation } from "../../data/recordQueries";
 import { TransactionCreateForm } from "../create/RecordCreateForms";
+import { RecordImport } from "../../components/RecordImport";
 
 interface TransactionsViewProps {
   records: ExpenseTransaction[];
@@ -45,6 +46,7 @@ export function TransactionsView({ records }: TransactionsViewProps) {
           <button type="button" onClick={() => setCreating(true)}>
             Add transaction
           </button>
+          <RecordImport label="transactions" onPublish={async (rows) => { for (const row of rows) await create.mutateAsync(row as Parameters<typeof create.mutateAsync>[0]); }} />
         </div>
       </div>
 

@@ -10,6 +10,7 @@ import { RecordFields } from "../../components/RecordFields";
 import { PropertyEditor } from "../../components/PropertyEditor";
 import { useCreateAddressMutation } from "../../data/recordQueries";
 import { AddressCreateForm } from "../create/RecordCreateForms";
+import { RecordImport } from "../../components/RecordImport";
 
 interface AddressesViewProps {
   records: Address[];
@@ -39,6 +40,7 @@ export function AddressesView({ records }: AddressesViewProps) {
           <button type="button" onClick={() => setCreating(true)}>
             Add address
           </button>
+          <RecordImport label="addresses" onPublish={async (rows) => { for (const row of rows) await create.mutateAsync(row as Parameters<typeof create.mutateAsync>[0]); }} />
         </div>
       </div>
 
