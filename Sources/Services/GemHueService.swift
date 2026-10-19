@@ -29,6 +29,11 @@ struct GemHueService: Sendable {
         return try await query.first()
     }
 
+    /// Creates a Gem Hue or updates an existing record.
+    func save(_ hue: GemHue) async throws {
+        try await hue.save(on: database)
+    }
+
     /// Returns the image record associated with one Gem Hue, if present.
     func findImage(hueID: String) async throws -> GemHueImage? {
         var query = GemHueImage.query(on: database)

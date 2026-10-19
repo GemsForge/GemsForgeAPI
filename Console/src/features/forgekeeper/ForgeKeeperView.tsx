@@ -1,6 +1,7 @@
 import { usePagedRecords } from "../../hooks/usePagedRecords";
 import { PaginationControls } from "../../components/PaginationControls";
 import { useEffect, useRef, useState } from "react";
+import { Form } from "tamagui";
 import type { Domain, ForgeKeeperPage, ForgeKeeperPatch } from "../../types";
 import { formatRecordTimestamp } from "../../components/EditableRecordFields";
 
@@ -129,14 +130,13 @@ function PageEditor({
   const savingRef = useRef(false);
 
   return (
-    <form
+    <Form
       className="edit-form"
       aria-busy={saving}
       onKeyDown={(event) => {
         if (event.key === "Escape" && saving) event.preventDefault();
       }}
-      onSubmit={async (event) => {
-        event.preventDefault();
+      onSubmit={async () => {
         if (savingRef.current) return;
         savingRef.current = true;
         setSaving(true);
@@ -191,6 +191,6 @@ function PageEditor({
           {saving ? "Saving…" : "Save changes"}
         </button>
       </div>
-    </form>
+    </Form>
   );
 }

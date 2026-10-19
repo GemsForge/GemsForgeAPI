@@ -1,9 +1,12 @@
 import { usePagedRecords } from "../../hooks/usePagedRecords";
 import { PaginationControls } from "../../components/PaginationControls";
 import { useEffect, useState } from "react";
-import { useGemHueQuery, useGemHueImageQuery } from "../../data/recordQueries";
+import { useGemHueQuery, useGemHueImageQuery, useGemHuePatchMutation } from "../../data/recordQueries";
 import { QueryFeedback } from "../../components/QueryFeedback";
 import type { GemHue } from "../../types";
+import { EditableRecordFields } from "../../components/EditableRecordFields";
+
+const hueOptions = (values: string[]) => values.map((value) => ({ value, label: value }));
 import { RecordFields } from "../../components/RecordFields";
 import { useCreateGemHueMutation } from "../../data/recordQueries";
 import { useState as useFormState } from "react";
@@ -19,6 +22,7 @@ export function GemHuesView({ hues }: GemHuesViewProps) {
   const [selectedID, setSelectedID] = useState<string | null>(null);
   const detail = useGemHueQuery(selectedID);
   const image = useGemHueImageQuery(selectedID);
+  const patch = useGemHuePatchMutation();
   const selectedHue = detail.data;
   const [imageURL, setImageURL] = useState<string | null>(null);
   const [showAdd, setShowAdd] = useFormState(false);
@@ -159,14 +163,14 @@ export function GemHuesView({ hues }: GemHuesViewProps) {
             <p className="hue-code">
               {selectedHue.id} · {selectedHue.hexCode}
             </p>
-            <RecordFields
+            <EditableRecordFields
               className="hue-fields"
               fields={[
-                { label: "Color family", value: selectedHue.colorFamily || "Not specified" },
-                { label: "Mood", value: selectedHue.mood || "Not specified" },
-                { label: "Palette", value: selectedHue.palette || "Not specified" },
-                { label: "Description", value: selectedHue.description || "Not specified" },
-                { label: "Notes", value: selectedHue.notes || "Not specified", className: "record-notes" },
+                { label: "Color family", value: selectedHue.colorFamily, inputType: "select", options: hueOptions(["Red", "Orange", "Yellow", "Green", "Blue", "Purple", "Pink", "Brown", "Gray", "Black", "White"]), nullable: true, onSave: async (value) => { await patch.mutateAsync({ id: selectedHue.id, patch: { colorFamily: value as string | null } }); } },
+                { label: "Mood", value: selectedHue.mood, inputType: "select", options: hueOptions(["Calm", "Warm", "Cool", "Energizing", "Grounding", "Romantic", "Playful", "Focused"]), nullable: true, onSave: async (value) => { await patch.mutateAsync({ id: selectedHue.id, patch: { mood: value as string | null } }); } },
+                { label: "Palette", value: selectedHue.palette, inputType: "select", options: hueOptions(["Monochromatic", "Analogous", "Complementary", "Triadic", "Neutral", "Pastel", "Earth tones"]), nullable: true, onSave: async (value) => { await patch.mutateAsync({ id: selectedHue.id, patch: { palette: value as string | null } }); } },
+                { label: "Description", value: selectedHue.description, inputType: "longText", nullable: true, onSave: async (value) => { await patch.mutateAsync({ id: selectedHue.id, patch: { description: value as string | null } }); } },
+                { label: "Notes", value: selectedHue.notes, inputType: "longText", nullable: true, className: "record-notes", onSave: async (value) => { await patch.mutateAsync({ id: selectedHue.id, patch: { notes: value as string | null } }); } },
               ]}
             />
           </div>

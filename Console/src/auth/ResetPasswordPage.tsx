@@ -1,5 +1,6 @@
-import { useState, type FormEvent } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Form } from "tamagui";
 import { getSupabaseSignInConfiguration, updateSupabasePassword } from "./supabaseSignIn";
 
 function recoveryToken(): string | null {
@@ -18,8 +19,7 @@ export function ResetPasswordPage() {
   const [error, setError] = useState<string | null>(null);
   const [complete, setComplete] = useState(false);
 
-  async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function submit() {
     if (!getSupabaseSignInConfiguration()) {
       setError("Supabase sign-in is not configured.");
       return;
@@ -79,7 +79,7 @@ export function ResetPasswordPage() {
             {error}
           </p>
         )}
-        <form className="sign-in-form" onSubmit={(event) => void submit(event)}>
+        <Form className="sign-in-form" onSubmit={() => void submit()}>
           <label htmlFor="new-password">New password</label>
           <input
             id="new-password"
@@ -103,7 +103,7 @@ export function ResetPasswordPage() {
           <button className="credential-sign-in-button" type="submit" disabled={busy}>
             {busy ? "Updating…" : "Update password"}
           </button>
-        </form>
+        </Form>
       </section>
     </main>
   );

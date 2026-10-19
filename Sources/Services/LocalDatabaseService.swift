@@ -17,6 +17,7 @@ enum LocalDatabaseProfile: String, Codable, CaseIterable, Sendable {
             "CreateAuthenticationSchema",
             "CreateHubs",
             "CreateAddresses",
+            "AllowSchoolAddressType",
             "CreateDomains",
             "CreateEducation",
             "CreateEmployment",
@@ -36,6 +37,8 @@ enum LocalDatabaseProfile: String, Codable, CaseIterable, Sendable {
             "CreateHomeInventory",
             "AddAddressAttachmentReference",
             "AddServiceAccountAttachmentReference",
+            "MakeServiceAccountEmailUpdatedBoolean",
+            "NormalizeServiceAccountEmailUpdatedValues",
             "AddEducationAttachmentReference",
             "AddHomeInventoryAttachmentReference",
             "AddFileMetadataForeignKeys",
@@ -52,9 +55,12 @@ enum LocalDatabaseProfile: String, Codable, CaseIterable, Sendable {
             app.migrations.add(CreateHubs())
             app.migrations.add(CreateAddresses())
             app.migrations.add(AddAddressUpdatedAt())
+            app.migrations.add(AllowSchoolAddressType())
             app.migrations.add(CreateDomains())
             app.migrations.add(CreateEducation())
+            app.migrations.add(AddEducationUpdatedAt())
             app.migrations.add(CreateEmployment())
+            app.migrations.add(AddEmploymentUpdatedAt())
             app.migrations.add(CreateBudgetCategories())
             app.migrations.add(CreateBudgetSubcategories())
             app.migrations.add(CreateExpenseTransactions())
@@ -71,6 +77,8 @@ enum LocalDatabaseProfile: String, Codable, CaseIterable, Sendable {
             app.migrations.add(CreateHomeInventory())
             app.migrations.add(AddAddressAttachmentReference())
             app.migrations.add(AddServiceAccountAttachmentReference())
+            app.migrations.add(MakeServiceAccountEmailUpdatedBoolean())
+            app.migrations.add(NormalizeServiceAccountEmailUpdatedValues())
             app.migrations.add(AddEducationAttachmentReference())
             app.migrations.add(AddHomeInventoryAttachmentReference())
             app.migrations.add(AddFileMetadataForeignKeys())

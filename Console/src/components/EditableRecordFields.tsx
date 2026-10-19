@@ -1,9 +1,9 @@
 import { useId, type ReactNode } from "react";
-import { Checkbox } from "tamagui";
+import { Checkbox, Form } from "tamagui";
 import { useRecordEditor } from "../hooks/useRecordEditor";
 
 export type EditableValue = string | number | boolean | null | undefined;
-export type RecordInputType = "text" | "date" | "email" | "url" | "number" | "boolean" | "select" | "textarea";
+export type RecordInputType = "text" | "date" | "email" | "url" | "tel" | "number" | "boolean" | "select" | "longText";
 
 export interface EditableRecordField {
   label: string;
@@ -32,6 +32,14 @@ export function formatRecordDate(value?: string | null): string {
   const [year, month, day] = normalized.split("-").map(Number);
   const monthName = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][month - 1];
   return `${String(day).padStart(2, "0")}${monthName}${year}`;
+}
+
+export function formatRecordCurrency(value?: number | null): string {
+  return value === null || value === undefined ? "Not recorded" : value.toLocaleString(undefined, { style: "currency", currency: "USD" });
+}
+
+export function formatRecordPercentage(value?: number | null): string {
+  return value === null || value === undefined ? "Not recorded" : `${value}%`;
 }
 
 /** Shared field behavior with a resource-controlled semantic layout. */
@@ -86,18 +94,26 @@ function EditableField({ field }: { field: EditableRecordField }) {
       <dd>
         {!field.onSave || !editor.editing ? (
           <>
-            {field.displayValue ?? presentValue(value)}
+            {field.inputType === "boolean" ? (
+              <input
+                type="checkbox"
+                className="field-checkbox field-checkbox-display"
+                checked={String(value).toLowerCase() === "true"}
+                disabled
+                aria-label={`${field.label}: ${String(value).toLowerCase() === "true" ? "checked" : "unchecked"}`}
+                readOnly
+              />
+            ) : (
+              (field.displayValue ?? presentValue(value))
+            )}
             {field.readOnlyReason && <small className="field-readonly-reason">{field.readOnlyReason}</small>}
           </>
         ) : (
-          <form
+          <Form
             className="edit-form editable-field-form"
-            onSubmit={(event) => {
-              event.preventDefault();
-              void editor.save();
-            }}
+            onSubmit={() => void editor.save()}
           >
-            {field.inputType === "textarea" ? (
+            {field.inputType === "longText" ? (
               <textarea {...common} rows={3} />
             ) : field.inputType === "select" ? (
               <select {...common}>
@@ -112,11 +128,12 @@ function EditableField({ field }: { field: EditableRecordField }) {
               <Checkbox
                 id={id}
                 aria-labelledby={labelID}
+                className="field-checkbox"
                 checked={editor.draft === "true"}
                 onCheckedChange={(checked) => editor.setDraft(String(checked))}
-                size="$3"
+                size="$2"
               >
-                <Checkbox.Indicator>✓</Checkbox.Indicator>
+                <Checkbox.Indicator />
               </Checkbox>
             ) : (
               <input type={field.inputType ?? "text"} step={field.step} {...common} />
@@ -135,7 +152,7 @@ function EditableField({ field }: { field: EditableRecordField }) {
                 Cancel
               </button>
             </div>
-          </form>
+          </Form>
         )}
       </dd>
     </div>

@@ -65,7 +65,7 @@ final class ServiceAccount: Model, Content, @unchecked Sendable {
     var accountNumber: String?
 
     @OptionalField(key: "EmailUpdated")
-    var emailUpdated: String?
+    var emailUpdated: Bool?
 
     @OptionalField(key: "AssociatedAddress")
     var associatedAddress: String?
@@ -102,7 +102,7 @@ final class ServiceAccount: Model, Content, @unchecked Sendable {
         notionPage: String? = nil,
         paymentMethod: String? = nil,
         accountNumber: String? = nil,
-        emailUpdated: String? = nil,
+        emailUpdated: Bool? = nil,
         associatedAddress: String? = nil,
         serviceKey: String? = nil,
         logoFileMetadataID: String? = nil

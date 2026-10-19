@@ -24,7 +24,7 @@ export function EducationView({ records }: EducationViewProps) {
   const selectedRecord = detail.data;
   const [creating, setCreating] = useState(false);
   const create = useCreateEducationMutation();
-  const addresses = useAddressesQuery(creating);
+  const addresses = useAddressesQuery(true);
 
   return (
     <>
@@ -123,6 +123,8 @@ function EducationDetail({
   onPatch: (values: Partial<Education>) => Promise<void>;
   onAttachment: (metadata: import("../../types").FileMetadata | null) => Promise<void>;
 }) {
+  const addresses = useAddressesQuery(true);
+
   return (
     <article className="education-detail">
       <div className="detail-heading">
@@ -170,4 +172,8 @@ function EditableEducationField({ label, value, editLabel, onSave }: { label: st
 function AddressSummary({ address }: { address: Education["address"] }) {
   if (!address) return <>—</>;
   return <>{[address.addressLine1, address.city, address.state, address.postalCode].filter(Boolean).join(", ")}</>;
+}
+
+function addressOptionLabel(address: NonNullable<Education["address"]>) {
+  return [address.addressType, address.addressLine1, address.city, address.state].filter(Boolean).join(" · ");
 }

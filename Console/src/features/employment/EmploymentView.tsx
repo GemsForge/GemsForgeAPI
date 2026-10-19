@@ -11,6 +11,15 @@ import { useAddressesQuery } from "../../data/lifeQueries";
 import { EmploymentCreateForm } from "../create/RecordCreateForms";
 import { RecordImport } from "../../components/RecordImport";
 
+const employmentOptions = {
+  industry: ["Technology", "Healthcare", "Education", "Finance", "Government", "Retail", "Hospitality", "Manufacturing", "Other"],
+  employerType: ["Company", "Nonprofit", "Government", "Self-employed", "Other"],
+  employmentType: ["Full-time", "Part-time", "Contract", "Temporary", "Internship", "Self-employed", "Other"],
+  status: ["Current", "Former", "On leave", "Seasonal"],
+};
+
+const toOptions = (values: string[]) => values.map((value) => ({ value, label: value }));
+
 interface EmploymentViewProps {
   records: Employment[];
 }
@@ -23,7 +32,7 @@ export function EmploymentView({ records }: EmploymentViewProps) {
   const selectedRecord = detail.data;
   const [creating, setCreating] = useState(false);
   const create = useCreateEmploymentMutation();
-  const addresses = useAddressesQuery(creating);
+  const addresses = useAddressesQuery(true);
 
   return (
     <>
@@ -114,6 +123,8 @@ function EmploymentDetail({
   record: Employment;
   onPatch: (values: Partial<Employment>) => Promise<void>;
 }) {
+  const addresses = useAddressesQuery(true);
+
   return (
     <article className="employment-detail">
       <div className="detail-heading">
@@ -136,6 +147,8 @@ function EmploymentDetail({
           {
             label: "Employer type",
             value: record.employerType,
+            inputType: "select",
+            options: toOptions(employmentOptions.employerType),
             required: true,
             onSave: async (value) => onPatch({ employerType: value as string }),
           },
@@ -148,18 +161,24 @@ function EmploymentDetail({
           {
             label: "Employment type",
             value: record.employmentType,
+            inputType: "select",
+            options: toOptions(employmentOptions.employmentType),
             required: true,
             onSave: async (value) => onPatch({ employmentType: value as string }),
           },
           {
             label: "Employment status",
             value: record.employmentStatus,
+            inputType: "select",
+            options: toOptions(employmentOptions.status),
             required: true,
             onSave: async (value) => onPatch({ employmentStatus: value as string }),
           },
           {
             label: "Industry",
             value: record.industry,
+            inputType: "select",
+            options: toOptions(employmentOptions.industry),
             nullable: true,
             onSave: async (value) => onPatch({ industry: value as string | null }),
           },
@@ -181,9 +200,15 @@ function EmploymentDetail({
           },
           {
             label: "Work address",
-            value: null,
+            value: record.address?.id ?? null,
+            inputType: "select",
+            nullable: true,
+            options: (addresses.data ?? []).map((address) => ({
+              value: address.id,
+              label: addressOptionLabel(address),
+            })),
             displayValue: <AddressSummary address={record.address} />,
-            readOnlyReason: "Address relationship",
+            onSave: async (value) => onPatch({ workAddressID: value as string | null }),
           },
           {
             label: "Website",
@@ -195,12 +220,14 @@ function EmploymentDetail({
           {
             label: "Contact",
             value: record.employerContact,
+            inputType: "text",
             nullable: true,
             onSave: async (value) => onPatch({ employerContact: value as string | null }),
           },
           {
             label: "Contact number",
             value: record.employerContactNumber,
+            inputType: "tel",
             nullable: true,
             onSave: async (value) => onPatch({ employerContactNumber: value as string | null }),
           },
@@ -214,7 +241,7 @@ function EmploymentDetail({
           {
             label: "Notes",
             value: record.notes,
-            inputType: "textarea",
+            inputType: "longText",
             nullable: true,
             className: "record-notes",
             onSave: async (value) => onPatch({ notes: value as string | null }),
@@ -234,4 +261,8 @@ function EmploymentDetail({
 function AddressSummary({ address }: { address: Employment["address"] }) {
   if (!address) return <>—</>;
   return <>{[address.addressLine1, address.city, address.state, address.postalCode].filter(Boolean).join(", ")}</>;
+}
+
+function addressOptionLabel(address: NonNullable<Employment["address"]>) {
+  return [address.addressType, address.addressLine1, address.city, address.state].filter(Boolean).join(" · ");
 }

@@ -38,6 +38,8 @@ struct ExpenseTransactionPatchRequest: Content {
     let item: String?
     let firstReceiptItem: Bool?
     let categoryID: Int?
+    let subcategoryID: Int??
+    let merchantCode: String??
     let quantity: Double?
     let regularPrice: Double?
     let total: Double?
@@ -151,7 +153,7 @@ func registerExpenseTransactionRoutes(_ app: Application) {
         }
         try PropertyPatchValidation.requireKnownJSONProperties(
             request,
-            allowed: ["item", "firstReceiptItem", "categoryID", "quantity", "regularPrice", "total", "notes", "image"],
+            allowed: ["item", "firstReceiptItem", "categoryID", "subcategoryID", "merchantCode", "quantity", "regularPrice", "total", "notes", "image"],
             requireNonEmpty: true,
             emptyReason: "At least one editable field is required."
         )
@@ -161,6 +163,18 @@ func registerExpenseTransactionRoutes(_ app: Application) {
         guard !item.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { throw Abort(.unprocessableEntity, reason: "Transaction item cannot be empty.") }
         let categoryID = input.categoryID ?? transaction.categoryID
         guard categoryID > 0 else { throw Abort(.unprocessableEntity, reason: "CategoryID must be greater than zero.") }
+        let subcategoryID = input.subcategoryID ?? transaction.subcategoryID
+        if let subcategoryID {
+            guard let subcategory = try await ExpenseSubcategoryService(database: request.db, hubID: request.authenticatedHubID).find(id: subcategoryID),
+                  subcategory.categoryID == categoryID
+            else { throw Abort(.unprocessableEntity, reason: "subcategoryID must belong to categoryID.") }
+        }
+        let merchantCode = input.merchantCode ?? transaction.merchantCode
+        if let merchantCode {
+            guard try await Merchant.query(on: request.db).filter(\.$id == merchantCode).first() != nil else {
+                throw Abort(.unprocessableEntity, reason: "merchantCode must reference an existing merchant.")
+            }
+        }
         let quantity = input.quantity ?? transaction.quantity
         guard quantity > 0 else { throw Abort(.unprocessableEntity, reason: "Quantity must be greater than zero.") }
         let total = input.total ?? transaction.total
@@ -170,6 +184,8 @@ func registerExpenseTransactionRoutes(_ app: Application) {
         transaction.item = item
         if let firstReceiptItem = input.firstReceiptItem { transaction.firstReceiptItem = firstReceiptItem }
         transaction.categoryID = categoryID
+        transaction.subcategoryID = subcategoryID
+        transaction.merchantCode = merchantCode
         transaction.quantity = quantity
         transaction.regularPrice = input.regularPrice ?? transaction.regularPrice
         transaction.total = total

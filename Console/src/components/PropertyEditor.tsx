@@ -1,3 +1,4 @@
+import { Form } from "tamagui";
 import { useRecordEditor } from "../hooks/useRecordEditor";
 
 /**
@@ -33,12 +34,9 @@ export function PropertyEditor({
   }
 
   return (
-    <form
+    <Form
       className="edit-form"
-      onSubmit={(event) => {
-        event.preventDefault();
-        void editor.save();
-      }}
+      onSubmit={() => void editor.save()}
     >
       <label>
         {label}
@@ -56,6 +54,6 @@ export function PropertyEditor({
       <button type="button" onClick={editor.cancel} disabled={editor.saving}>
         Cancel
       </button>
-    </form>
+    </Form>
   );
 }

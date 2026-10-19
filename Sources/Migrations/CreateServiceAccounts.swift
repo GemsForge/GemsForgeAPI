@@ -26,7 +26,7 @@ struct CreateServiceAccounts: AsyncMigration {
             .field("NotionPage", .string)
             .field("PaymentMethod", .string)
             .field("AccountNumber", .string)
-            .field("EmailUpdated", .string)
+            .field("EmailUpdated", .bool)
             .field("AssociatedAddress", .string)
             .field("ServiceKey", .string)
             .field("DateUpdated", .string)

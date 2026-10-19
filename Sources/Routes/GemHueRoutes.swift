@@ -53,6 +53,29 @@ func registerGemHueRoutes(
         return hue
     }
 
+    hues.patch(":hueID") { request async throws -> GemHue in
+        guard let hueID = request.parameters.get("hueID"),
+              let hue = try await GemHueService(database: request.db, hubID: request.authenticatedHubID).find(id: hueID)
+        else { throw Abort(.notFound) }
+        let payload = try request.content.decode([String: String?].self)
+        try PropertyPatchValidation.requireNonEmpty(payload)
+        try PropertyPatchValidation.requireKnownProperties(payload, allowed: ["colorName", "colorFamily", "hexCode", "mood", "palette", "description", "createdDate", "notes"])
+        let value: (String, String?) -> String? = { key, current in PropertyPatchValidation.value(key, in: payload, current: current) }
+        guard let colorName = value("colorName", hue.colorName), !colorName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+              let hexCode = value("hexCode", hue.hexCode), !hexCode.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        else { throw Abort(.unprocessableEntity, reason: "Color name and hex code cannot be empty.") }
+        hue.colorName = colorName
+        hue.colorFamily = value("colorFamily", hue.colorFamily)
+        hue.hexCode = hexCode
+        hue.mood = value("mood", hue.mood)
+        hue.palette = value("palette", hue.palette)
+        hue.description = value("description", hue.description)
+        hue.createdDate = value("createdDate", hue.createdDate)
+        hue.notes = value("notes", hue.notes)
+        try await GemHueService(database: request.db, hubID: request.authenticatedHubID).save(hue)
+        return hue
+    }
+
     hues.get(":hueID", "image") { request async throws -> Response in
         guard let hueID = request.parameters.get("hueID"),
               let image = try await GemHueService(database: request.db, hubID: request.authenticatedHubID).findImage(hueID: hueID)

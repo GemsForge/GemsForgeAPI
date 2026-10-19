@@ -146,6 +146,7 @@ export interface Education {
   endDate: string | null;
   awardedDate: string | null;
   status: string;
+  locationAddressID?: string | null;
   address: Address | null;
   documentFileMetadataID?: string | null;
   website: string | null;
@@ -164,6 +165,7 @@ export interface Employment {
   startDate: string | null;
   endDate: string | null;
   employmentStatus: string;
+  workAddressID?: string | null;
   address: Address | null;
   employerContact: string | null;
   employerContactNumber: string | null;
@@ -195,6 +197,10 @@ export interface ExpenseCategory {
   id: number;
   name: string;
 }
+export interface Merchant {
+  id: string;
+  name: string;
+}
 export interface ExpenseSubcategory {
   id: number;
   categoryID: number;
@@ -219,7 +225,7 @@ export interface ServiceAccount {
   notionPage: string | null;
   paymentMethod: string | null;
   accountNumber: string | null;
-  emailUpdated: string | null;
+  emailUpdated: boolean | null;
   associatedAddress: string | null;
   serviceKey: string | null;
   logoFileMetadataID: string | null;

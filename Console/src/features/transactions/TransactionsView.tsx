@@ -10,9 +10,15 @@ import { QueryFeedback } from "../../components/QueryFeedback";
 import type { ExpenseTransaction } from "../../types";
 import { AttachmentControl } from "../../components/AttachmentControl";
 import { GemEmptyState, GemRecordCard, GemRecordList } from "../../components/ui";
-import { EditableRecordFields, formatRecordDate, formatRecordTimestamp } from "../../components/EditableRecordFields";
+import {
+  EditableRecordFields,
+  formatRecordCurrency,
+  formatRecordDate,
+  formatRecordTimestamp,
+} from "../../components/EditableRecordFields";
 import { useCreateTransactionMutation } from "../../data/recordQueries";
 import { TransactionCreateForm } from "../create/RecordCreateForms";
+import { useExpenseCategoriesQuery, useExpenseSubcategoriesQuery, useMerchantsQuery } from "../../data/lifeQueries";
 import { RecordImport } from "../../components/RecordImport";
 
 interface TransactionsViewProps {
@@ -26,6 +32,7 @@ export function TransactionsView({ records }: TransactionsViewProps) {
   const attachment = useTransactionImageMutation();
   const patch = useTransactionPatchMutation();
   const selectedRecord = detail.data;
+  const merchants = useMerchantsQuery(true);
   const [creating, setCreating] = useState(false);
   const create = useCreateTransactionMutation();
 
@@ -91,6 +98,7 @@ export function TransactionsView({ records }: TransactionsViewProps) {
               <TransactionDetail
                 key={selectedRecord.id}
                 record={selectedRecord}
+                merchants={merchants.data ?? []}
                 onAttachment={async (metadata) => {
                   await attachment.mutateAsync({ id: selectedRecord.id, fileID: metadata?.id ?? null });
                 }}
@@ -115,13 +123,17 @@ export function TransactionsView({ records }: TransactionsViewProps) {
 
 function TransactionDetail({
   record,
+  merchants,
   onAttachment,
   onPatch,
 }: {
   record: ExpenseTransaction;
+  merchants: import("../../types").Merchant[];
   onAttachment: (metadata: import("../../types").FileMetadata | null) => Promise<void>;
   onPatch: (values: Partial<ExpenseTransaction>) => Promise<void>;
 }) {
+  const categories = useExpenseCategoriesQuery(true);
+  const subcategories = useExpenseSubcategoriesQuery(record.categoryID, true);
   return (
     <article className="transaction-detail">
       <div className="detail-heading">
@@ -130,7 +142,9 @@ function TransactionDetail({
           <h3>{record.item}</h3>
           <p className="transaction-code">{record.id}</p>
         </div>
-        <span className="status-pill">Category {record.categoryID}</span>
+        <span className="status-pill">
+          Category {categories.data?.find((category) => category.id === record.categoryID)?.name ?? record.categoryID}
+        </span>
       </div>
       <EditableRecordFields
         className="transaction-fields"
@@ -154,9 +168,12 @@ function TransactionDetail({
             onSave: async (value) => onPatch({ firstReceiptItem: value as boolean }),
           },
           {
-            label: "Merchant code",
+            label: "Merchant",
             value: record.merchantCode,
+            inputType: "select",
             nullable: true,
+            options: merchants.map((merchant) => ({ value: merchant.id, label: merchantDisplayName(merchant.name) })),
+            displayValue: merchantDisplayName(merchants.find((merchant) => merchant.id === record.merchantCode)?.name),
             onSave: async (value) => onPatch({ merchantCode: value as string | null }),
           },
           {
@@ -167,8 +184,24 @@ function TransactionDetail({
             displayValue: formatRecordDate(record.transactionDate),
             onSave: async (value) => onPatch({ transactionDate: value as string | null }),
           },
-          { label: "Category ID", value: record.categoryID, readOnlyReason: "Foreign key" },
-          { label: "Subcategory ID", value: record.subcategoryID, readOnlyReason: "Foreign key" },
+          {
+            label: "Category",
+            value: record.categoryID,
+            inputType: "select",
+            options: (categories.data ?? []).map((category) => ({ value: String(category.id), label: category.name })),
+            required: true,
+            displayValue: categories.data?.find((category) => category.id === record.categoryID)?.name ?? "—",
+            onSave: async (value) => onPatch({ categoryID: Number(value) }),
+          },
+          {
+            label: "Subcategory",
+            value: record.subcategoryID,
+            inputType: "select",
+            nullable: true,
+            options: (subcategories.data ?? []).map((subcategory) => ({ value: String(subcategory.id), label: subcategory.name })),
+            displayValue: subcategories.data?.find((subcategory) => subcategory.id === record.subcategoryID)?.name ?? "—",
+            onSave: async (value) => onPatch({ subcategoryID: value == null || value === "" ? null : Number(value) }),
+          },
           {
             label: "Quantity",
             value: record.quantity,
@@ -182,6 +215,7 @@ function TransactionDetail({
             inputType: "number",
             step: "0.01",
             nullable: true,
+            displayValue: formatRecordCurrency(record.regularPrice),
             onSave: async (value) => onPatch({ regularPrice: value as number | null }),
           },
           {
@@ -190,6 +224,7 @@ function TransactionDetail({
             inputType: "number",
             step: "0.01",
             nullable: true,
+            displayValue: formatRecordCurrency(record.paidPrice),
             onSave: async (value) => onPatch({ paidPrice: value as number | null }),
           },
           {
@@ -198,6 +233,7 @@ function TransactionDetail({
             inputType: "number",
             step: "0.01",
             nullable: true,
+            displayValue: formatRecordCurrency(record.total),
             onSave: async (value) => onPatch({ total: value as number | null }),
           },
           {
@@ -206,12 +242,13 @@ function TransactionDetail({
             inputType: "number",
             step: "0.01",
             nullable: true,
+            displayValue: formatRecordCurrency(record.discount),
             onSave: async (value) => onPatch({ discount: value as number | null }),
           },
           {
             label: "Notes",
             value: record.notes,
-            inputType: "textarea",
+            inputType: "longText",
             nullable: true,
             className: "record-notes",
             onSave: async (value) => onPatch({ notes: value as string | null }),
@@ -233,6 +270,11 @@ function TransactionDetail({
       />
     </article>
   );
+}
+
+function merchantDisplayName(name?: string) {
+  if (!name) return "—";
+  return name.replace(/^[\p{Extended_Pictographic}\p{Emoji_Presentation}\p{So}\p{Sk}\s]+/u, "").trim() || name;
 }
 
 function formatAmount(value: number | null) {

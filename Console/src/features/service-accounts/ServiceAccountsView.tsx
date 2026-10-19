@@ -6,7 +6,13 @@ import { AttachmentControl } from "../../components/AttachmentControl";
 import { GemEmptyState, GemRecordCard, GemRecordList } from "../../components/ui";
 import { useServiceAccountPatchMutation, useServiceAccountQuery } from "../../data/recordQueries";
 import type { ServiceAccount } from "../../types";
-import { EditableRecordFields, formatRecordDate, formatRecordTimestamp } from "../../components/EditableRecordFields";
+import {
+  EditableRecordFields,
+  formatRecordCurrency,
+  formatRecordDate,
+  formatRecordPercentage,
+  formatRecordTimestamp,
+} from "../../components/EditableRecordFields";
 import { useCreateServiceAccountMutation } from "../../data/recordQueries";
 import { ServiceAccountCreateForm } from "../create/RecordCreateForms";
 import { RecordImport } from "../../components/RecordImport";
@@ -140,6 +146,16 @@ function ServiceAccountDetail({
           {
             label: "Type",
             value: record.type,
+            inputType: "select",
+            options: [
+              { label: "Utility", value: "Utility" },
+              { label: "Subscription", value: "Subscription" },
+              { label: "Credit", value: "Credit" },
+              { label: "Loan", value: "Loan" },
+              { label: "Insurance", value: "Insurance" },
+              { label: "Membership", value: "Membership" },
+              { label: "Other", value: "Other" },
+            ],
             nullable: true,
             onSave: async (value) => onPatch({ type: value as string | null }),
           },
@@ -151,6 +167,14 @@ function ServiceAccountDetail({
           {
             label: "Expense group",
             value: record.expenseGroup,
+            inputType: "select",
+            options: [
+              { label: "Fixed Bills (Obligations)", value: "Fixed Bills (Obligations)" },
+              { label: "Variable Bills", value: "Variable Bills" },
+              { label: "Home", value: "Home" },
+              { label: "Lifestyle", value: "Lifestyle" },
+              { label: "Other", value: "Other" },
+            ],
             nullable: true,
             onSave: async (value) => onPatch({ expenseGroup: value as string | null }),
           },
@@ -160,6 +184,7 @@ function ServiceAccountDetail({
             inputType: "number",
             step: "0.01",
             nullable: true,
+            displayValue: formatRecordCurrency(record.monthlyAmount),
             onSave: async (value) => onPatch({ monthlyAmount: value as number | null }),
           },
           {
@@ -168,6 +193,7 @@ function ServiceAccountDetail({
             inputType: "number",
             step: "0.0001",
             nullable: true,
+            displayValue: formatRecordPercentage(record.interestRate),
             onSave: async (value) => onPatch({ interestRate: value as number | null }),
           },
           {
@@ -176,6 +202,7 @@ function ServiceAccountDetail({
             inputType: "number",
             step: "0.0001",
             nullable: true,
+            displayValue: formatRecordPercentage(record.apr),
             onSave: async (value) => onPatch({ apr: value as number | null }),
           },
           {
@@ -224,10 +251,10 @@ function ServiceAccountDetail({
           },
           {
             label: "Email updated",
-            value: record.emailUpdated === "true",
+            value: record.emailUpdated,
             inputType: "boolean",
-            displayValue: record.emailUpdated === "true" ? "TRUE" : "FALSE",
-            onSave: async (value) => onPatch({ emailUpdated: value ? "true" : "false" }),
+            displayValue: record.emailUpdated ? "TRUE" : "FALSE",
+            onSave: async (value) => onPatch({ emailUpdated: Boolean(value) }),
           },
           {
             label: "Website",
@@ -246,7 +273,7 @@ function ServiceAccountDetail({
           {
             label: "Notes",
             value: record.notes,
-            inputType: "textarea",
+            inputType: "longText",
             nullable: true,
             className: "record-notes",
             onSave: async (value) => onPatch({ notes: value as string | null }),

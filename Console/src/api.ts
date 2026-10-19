@@ -9,6 +9,7 @@ import type {
   EmploymentCreate,
   ExpenseTransaction,
   ExpenseCategory,
+  Merchant,
   ExpenseSubcategory,
   FileMetadata,
   ForgeKeeperPage,
@@ -79,6 +80,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 }
 
 export const api = {
+  listMerchants: (signal?: AbortSignal) => request<Merchant[]>("/merchants", { signal }),
   getHealth: async (signal?: AbortSignal) => {
     const response = await checkedFetch("/health", { signal });
     if ((await response.text()).trim() !== "ok")
@@ -116,6 +118,8 @@ export const api = {
   assignHubOwnership: (expectedUnownedCounts: Record<string, number>) => request<HubOwnershipAssignment>("/operator/hub-ownership/assign", { method: "POST", body: JSON.stringify({ confirmation: "assign-unowned-records-to-my-hub", expectedUnownedCounts }) }),
   getGemHue: (hueID: string, signal?: AbortSignal) =>
     request<GemHue>(`/gemhues/${encodeURIComponent(hueID)}`, { signal }),
+  patchGemHue: (hueID: string, patch: Partial<GemHue>) =>
+    request<GemHue>(`/gemhues/${encodeURIComponent(hueID)}`, { method: "PATCH", body: JSON.stringify(patch) }),
   getGemHueImage: (hueID: string, signal?: AbortSignal) =>
     checkedFetch(`/gemhues/${encodeURIComponent(hueID)}/image`, { signal }),
   listEducation: (signal?: AbortSignal) => request<Education[]>("/education", { signal }),
