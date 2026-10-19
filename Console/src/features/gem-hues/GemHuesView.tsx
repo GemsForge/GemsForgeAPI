@@ -62,6 +62,7 @@ export function GemHuesView({ hues }: GemHuesViewProps) {
       <section className="record-form">
         <h3>Import Gem Hues</h3>
         <p className="muted">Paste a CSV export with headers such as HueID, ColorName, and HexCode, or a JSON array using those same names.</p>
+        <label>Choose CSV or JSON file<input type="file" accept=".csv,.json,application/json,text/csv" onChange={async (event) => { const file = event.target.files?.[0]; if (file) setImportText(await file.text()); }} /></label>
         <textarea aria-label="Gem Hue CSV or JSON" value={importText} onChange={(event) => setImportText(event.target.value)} rows={6} />
         <button type="button" disabled={importing} onClick={async () => {
           setImportError(null); setImportPreview(null);

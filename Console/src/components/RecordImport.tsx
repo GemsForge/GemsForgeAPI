@@ -24,6 +24,7 @@ export function RecordImport({ label, onPublish }: { label: string; onPublish: (
     {open && <section className="record-form">
       <h3>Import {label}</h3>
       <p className="muted">Paste a CSV with a header row or a JSON array using the table column names.</p>
+      <label>Choose CSV or JSON file<input type="file" accept=".csv,.json,application/json,text/csv" onChange={async (event) => { const file = event.target.files?.[0]; if (file) setText(await file.text()); }} /></label>
       <textarea aria-label={`${label} CSV or JSON`} rows={7} value={text} onChange={(e) => setText(e.target.value)} />
       <button type="button" onClick={parse}>Preview import</button>
       {error && <p role="alert">{error}</p>}
