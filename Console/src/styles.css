@@ -1189,6 +1189,40 @@ dialog::backdrop {
   gap: 0.75rem;
   min-width: 0;
 }
+
+.service-logo-attachment .file-presentation {
+  min-height: 180px;
+  display: grid;
+  place-items: center;
+}
+
+.service-logo-attachment .file-presentation img {
+  width: 180px;
+  height: 180px;
+  object-fit: contain;
+}
+
+.service-logo-preview {
+  width: 180px;
+  height: 180px;
+  object-fit: contain;
+  display: block;
+  margin: 0.75rem 0;
+}
+
+.service-logo-heading {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  flex: 0 0 64px;
+  margin-right: 0.45rem;
+}
+
+.service-heading-identity {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+}
 .file-presentation .empty-state {
   padding: 1.2rem;
 }

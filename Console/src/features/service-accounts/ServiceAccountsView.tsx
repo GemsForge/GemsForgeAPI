@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { usePagedRecords } from "../../hooks/usePagedRecords";
 import { PaginationControls } from "../../components/PaginationControls";
 import { QueryFeedback } from "../../components/QueryFeedback";
@@ -16,6 +16,8 @@ import {
 import { useCreateServiceAccountMutation } from "../../data/recordQueries";
 import { ServiceAccountCreateForm } from "../create/RecordCreateForms";
 import { RecordImport } from "../../components/RecordImport";
+import { useServiceLogosQuery } from "../../data/lifeQueries";
+import { api } from "../../api";
 
 export function ServiceAccountsView({ records }: { records: ServiceAccount[] }) {
   const paging = usePagedRecords(records);
@@ -124,13 +126,18 @@ function ServiceAccountDetail({
   onAttachment: (metadata: import("../../types").FileMetadata | null) => Promise<void>;
   onPatch: (values: Partial<ServiceAccount>) => Promise<void>;
 }) {
+  const logos = useServiceLogosQuery(true);
+  const legacyLogo = logos.data?.find((logo) => logo.logoKey === record.logoKey);
   return (
     <article className="address-detail">
       <div className="detail-heading">
-        <div>
-          <p className="eyebrow">Service account</p>
-          <h3>{record.service}</h3>
-          <p className="address-code">{record.id}</p>
+        <div className="service-heading-identity">
+          <LegacyLogoPreview logo={legacyLogo} className="service-logo-heading" />
+          <div>
+            <p className="eyebrow">Service account</p>
+            <h3>{record.service}</h3>
+            <p className="address-code">{record.id}</p>
+          </div>
         </div>
         <span className="status-pill">{record.status || "—"}</span>
       </div>
@@ -158,11 +165,6 @@ function ServiceAccountDetail({
             ],
             nullable: true,
             onSave: async (value) => onPatch({ type: value as string | null }),
-          },
-          {
-            label: "Logo key",
-            value: record.logoKey,
-            readOnlyReason: "Legacy logo lookup relationship; no validated selector is available.",
           },
           {
             label: "Expense group",
@@ -292,12 +294,34 @@ function ServiceAccountDetail({
         ]}
       />
       <AttachmentControl
-        fileMetadataID={record.logoFileMetadataID}
+        fileMetadataID={record.logoFileMetadataID ?? legacyLogo?.fileMetadataID}
         ownerType="ServiceAccount"
         ownerID={String(record.id)}
         label="Service logo"
         onAttach={onAttachment}
+        className="service-logo-attachment"
       />
     </article>
   );
+}
+
+function LegacyLogoPreview({ logo, className }: { logo?: { id: number; logoKey: string | null; imagePath: string }; className?: string }) {
+  const [url, setUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (!logo) return;
+    let objectURL: string | undefined;
+    const controller = new AbortController();
+    void api.getServiceLogoImage(logo.id, controller.signal)
+      .then((blob) => {
+        objectURL = URL.createObjectURL(blob);
+        setUrl(objectURL);
+      })
+      .catch(() => undefined);
+    return () => {
+      controller.abort();
+      if (objectURL) URL.revokeObjectURL(objectURL);
+    };
+  }, [logo?.id]);
+  if (!logo || !url) return null;
+  return <img className={className ?? "service-logo-preview"} src={url} alt={`${logo.logoKey ?? "Service"} logo`} />;
 }

@@ -231,6 +231,7 @@ export interface ServiceAccount {
   logoFileMetadataID: string | null;
   updatedAt?: string | null;
 }
+export interface ServiceLogo { id: number; logoKey: string | null; mimeType: string; fileName: string | null; fileSizeBytes: number | null; fileMetadataID: string | null; imagePath: string; }
 
 export interface FileMetadata {
   id: string;

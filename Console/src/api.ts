@@ -26,6 +26,7 @@ import type {
   LocalDatabaseCreationResult,
   SchemaBuilderGuidance,
   ServiceAccount,
+  ServiceLogo,
   ServiceAccountCreate,
   TransactionCreate,
   TableBuilderRequest,
@@ -185,6 +186,11 @@ export const api = {
     form.append("ownerID", ownerID);
     const response = await checkedFetch("/file-uploads", { method: "POST", body: form });
     return (await response.json()) as FileMetadata;
+  },
+  listServiceLogos: (signal?: AbortSignal) => request<ServiceLogo[]>("/service-logos", { signal }),
+  getServiceLogoImage: async (id: number, signal?: AbortSignal) => {
+    const response = await checkedFetch(`/service-logos/${id}/image`, { signal });
+    return response.blob();
   },
   patchAddressAttachment: (addressID: string, fileMetadataID: string | null) =>
     request<Address>(`/addresses/${encodeURIComponent(addressID)}/attachment`, {
