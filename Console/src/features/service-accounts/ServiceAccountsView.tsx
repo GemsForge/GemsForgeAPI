@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { usePagedRecords } from "../../hooks/usePagedRecords";
 import { PaginationControls } from "../../components/PaginationControls";
 import { QueryFeedback } from "../../components/QueryFeedback";
@@ -17,6 +17,7 @@ import { useCreateServiceAccountMutation } from "../../data/recordQueries";
 import { ServiceAccountCreateForm } from "../create/RecordCreateForms";
 import { RecordImport } from "../../components/RecordImport";
 import { useServiceLogosQuery } from "../../data/lifeQueries";
+import { api } from "../../api";
 
 export function ServiceAccountsView({ records }: { records: ServiceAccount[] }) {
   const paging = usePagedRecords(records);
@@ -163,11 +164,6 @@ function ServiceAccountDetail({
             onSave: async (value) => onPatch({ type: value as string | null }),
           },
           {
-            label: "Logo key",
-            value: record.logoKey,
-            readOnlyReason: "Legacy logo lookup relationship; no validated selector is available.",
-          },
-          {
             label: "Expense group",
             value: record.expenseGroup,
             inputType: "select",
@@ -294,6 +290,7 @@ function ServiceAccountDetail({
           },
         ]}
       />
+      <LegacyLogoPreview logo={legacyLogo} />
       <AttachmentControl
         fileMetadataID={record.logoFileMetadataID ?? legacyLogo?.fileMetadataID}
         ownerType="ServiceAccount"
@@ -304,4 +301,25 @@ function ServiceAccountDetail({
       />
     </article>
   );
+}
+
+function LegacyLogoPreview({ logo }: { logo?: { id: number; logoKey: string | null; imagePath: string } }) {
+  const [url, setUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (!logo) return;
+    let objectURL: string | undefined;
+    const controller = new AbortController();
+    void api.getServiceLogoImage(logo.id, controller.signal)
+      .then((blob) => {
+        objectURL = URL.createObjectURL(blob);
+        setUrl(objectURL);
+      })
+      .catch(() => undefined);
+    return () => {
+      controller.abort();
+      if (objectURL) URL.revokeObjectURL(objectURL);
+    };
+  });
+  if (!logo || !url) return null;
+  return <img className="service-logo-preview" src={url} alt={`${logo.logoKey ?? "Service"} logo`} />;
 }

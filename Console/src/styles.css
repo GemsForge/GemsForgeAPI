@@ -1201,6 +1201,14 @@ dialog::backdrop {
   height: 180px;
   object-fit: contain;
 }
+
+.service-logo-preview {
+  width: 180px;
+  height: 180px;
+  object-fit: contain;
+  display: block;
+  margin: 0.75rem 0;
+}
 .file-presentation .empty-state {
   padding: 1.2rem;
 }
