@@ -76,8 +76,8 @@ describe("GemRecordList views", () => {
     );
 
     fireEvent.click(screen.getByText("Properties"));
-    expect(screen.getByRole("checkbox", { name: "Title" })).toBeChecked();
-    fireEvent.click(screen.getByRole("checkbox", { name: "Item ID" }));
+    expect(screen.getByRole("checkbox", { name: "Show Title property" })).toBeChecked();
+    fireEvent.click(screen.getByRole("checkbox", { name: "Show Item ID property" }));
     fireEvent.click(screen.getByText("View: List"));
     fireEvent.click(screen.getByRole("menuitemradio", { name: "Table" }));
     expect(screen.getByRole("columnheader", { name: "Title" })).toBeInTheDocument();

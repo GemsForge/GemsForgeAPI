@@ -94,9 +94,10 @@ export function GemRecordList<Record>({
                 Hide all
               </button>
               {filteredColumns.map((column) => (
-                <label key={column.key}>
+                <div key={column.key} className="gem-record-property-option">
                   <input
                     type="checkbox"
+                    aria-label={`Show ${column.label} property`}
                     checked={visibleColumns.has(column.key)}
                     onChange={() =>
                       setVisibleColumns((current) => {
@@ -107,8 +108,8 @@ export function GemRecordList<Record>({
                       })
                     }
                   />
-                  {column.label}
-                </label>
+                  <span>{column.label}</span>
+                </div>
               ))}
             </div>
           </details>

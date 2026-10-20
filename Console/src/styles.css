@@ -920,7 +920,8 @@ dialog::backdrop {
 .gem-record-property-menu > div {
   min-width: 15rem;
 }
-.gem-record-property-menu label {
+.gem-record-property-menu label,
+.gem-record-property-option {
   display: flex;
   align-items: center;
   gap: 0.5rem;
