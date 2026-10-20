@@ -91,10 +91,10 @@ jobs:
               return body.data;
             };
             const projectData = await gql(
-              "query($login:String!){user(login:$login){projectsV2(first:100){nodes{id number title}}}}",
-              { login: "GemsForge" }
+              "query($login:String!){organization(login:$login){projectsV2(first:100){nodes{id number title}}}}",
+              { login: "GemsForge-LLC" }
             );
-            const project = (projectData.user?.projectsV2?.nodes || [])
+            const project = (projectData.organization?.projectsV2?.nodes || [])
               .find((p) => p.number === projectNumber);
             if (!project) throw new Error("GemsForge Project #" + projectNumber + " was not found.");
             const fieldsData = await gql(
