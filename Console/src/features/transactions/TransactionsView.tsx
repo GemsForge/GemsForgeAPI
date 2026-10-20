@@ -35,6 +35,11 @@ export function TransactionsView({ records }: TransactionsViewProps) {
     {
       date: (a, b) => (a.transactionDate ?? "").localeCompare(b.transactionDate ?? ""),
       item: (a, b) => a.item.localeCompare(b.item),
+      merchant: (a, b) => (a.merchantCode ?? "").localeCompare(b.merchantCode ?? ""),
+      total: (a, b) => (a.total ?? 0) - (b.total ?? 0),
+      paid: (a, b) => (a.paidPrice ?? 0) - (b.paidPrice ?? 0),
+      category: (a, b) => a.categoryID - b.categoryID,
+      subcategory: (a, b) => (a.subcategoryID ?? 0) - (b.subcategoryID ?? 0),
     },
   );
   const paging = usePagedRecords(utilities.records);
@@ -81,6 +86,11 @@ export function TransactionsView({ records }: TransactionsViewProps) {
           sortOptions={[
             { value: "date", label: "Transaction date" },
             { value: "item", label: "Item" },
+            { value: "merchant", label: "Merchant" },
+            { value: "total", label: "Total" },
+            { value: "paid", label: "Paid price" },
+            { value: "category", label: "Category" },
+            { value: "subcategory", label: "Subcategory" },
           ]}
           filterOptions={Array.from(
             new Set(records.map((record) => record.merchantCode).filter((value): value is string => Boolean(value))),

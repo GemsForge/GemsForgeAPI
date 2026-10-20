@@ -29,6 +29,11 @@ export function ServiceAccountsView({ records }: { records: ServiceAccount[] }) 
     {
       service: (a, b) => a.service.localeCompare(b.service),
       amount: (a, b) => (a.monthlyAmount ?? 0) - (b.monthlyAmount ?? 0),
+      type: (a, b) => (a.type ?? "").localeCompare(b.type ?? ""),
+      group: (a, b) => (a.expenseGroup ?? "").localeCompare(b.expenseGroup ?? ""),
+      status: (a, b) => (a.status ?? "").localeCompare(b.status ?? ""),
+      due: (a, b) => (a.due ?? "").localeCompare(b.due ?? ""),
+      occurrence: (a, b) => (a.occurrence ?? "").localeCompare(b.occurrence ?? ""),
     },
   );
   const paging = usePagedRecords(utilities.records);
@@ -105,6 +110,11 @@ export function ServiceAccountsView({ records }: { records: ServiceAccount[] }) 
           sortOptions={[
             { value: "service", label: "Service" },
             { value: "amount", label: "Monthly amount" },
+            { value: "type", label: "Type" },
+            { value: "group", label: "Expense group" },
+            { value: "status", label: "Status" },
+            { value: "due", label: "Due date" },
+            { value: "occurrence", label: "Occurrence" },
           ]}
           filterOptions={Array.from(
             new Set(records.map((record) => record.status).filter((value): value is string => Boolean(value))),

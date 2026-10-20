@@ -1,4 +1,14 @@
 import type { ReactNode } from "react";
+import { GemStatusPill } from "./GemStatusPill";
+
+function statusTone(status: ReactNode): "default" | "success" | "warning" | "danger" {
+  if (typeof status !== "string") return "default";
+  const value = status.toLowerCase();
+  if (value.includes("active") || value.includes("current") || value.includes("completed")) return "success";
+  if (value.includes("paused") || value.includes("leave") || value.includes("seasonal")) return "warning";
+  if (value.includes("closed") || value.includes("former")) return "danger";
+  return "default";
+}
 
 export interface GemRecordCardProps {
   className: string;
@@ -38,9 +48,9 @@ export function GemRecordCard({
         <small>{subtitle}</small>
       </span>
       {status ? (
-        <div className="gem-record-status" data-record-status>
+        <GemStatusPill className="gem-record-status" tone={statusTone(status)} data-record-status>
           {status}
-        </div>
+        </GemStatusPill>
       ) : null}
     </button>
   );

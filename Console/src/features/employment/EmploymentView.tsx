@@ -44,6 +44,11 @@ export function EmploymentView({ records }: EmploymentViewProps) {
     {
       employer: (a, b) => a.employerName.localeCompare(b.employerName),
       start: (a, b) => (a.startDate ?? "").localeCompare(b.startDate ?? ""),
+      position: (a, b) => a.positionTitle.localeCompare(b.positionTitle),
+      industry: (a, b) => (a.industry ?? "").localeCompare(b.industry ?? ""),
+      type: (a, b) => a.employmentType.localeCompare(b.employmentType),
+      status: (a, b) => a.employmentStatus.localeCompare(b.employmentStatus),
+      end: (a, b) => (a.endDate ?? "").localeCompare(b.endDate ?? ""),
     },
   );
   const paging = usePagedRecords(utilities.records);
@@ -96,6 +101,11 @@ export function EmploymentView({ records }: EmploymentViewProps) {
           sortOptions={[
             { value: "employer", label: "Employer" },
             { value: "start", label: "Start date" },
+            { value: "position", label: "Position" },
+            { value: "industry", label: "Industry" },
+            { value: "type", label: "Employment type" },
+            { value: "status", label: "Status" },
+            { value: "end", label: "End date" },
           ]}
           filterOptions={Array.from(new Set(records.map((record) => record.employmentStatus))).sort()}
         />
