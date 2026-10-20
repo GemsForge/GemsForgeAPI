@@ -118,7 +118,7 @@ export function EducationView({ records }: EducationViewProps) {
                 className="education-card"
                 icon="✦"
                 title={record.institutionName}
-                subtitle={record.educationType}
+                subtitle={`${record.educationType} · ${record.id}`}
                 status={record.status}
                 selected={selectedRecord?.id === record.id}
                 onSelect={() => setSelectedID((current) => (current === record.id ? null : record.id))}

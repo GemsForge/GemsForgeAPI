@@ -66,9 +66,9 @@ export function GemRecordList<Record>({
                   key={key}
                   className={`gem-record-grid-card${key === expandedKey ? " is-active" : ""}`}
                   size={key === expandedKey ? "lg" : "md"}
+                  data-card-view="grid"
                 >
                   {renderRecord(record)}
-                  {key === expandedKey && <div className="gem-record-expansion">{renderExpanded?.(record)}</div>}
                 </Card>
               );
             })}

@@ -851,19 +851,24 @@ dialog::backdrop {
   gap: 0.75rem;
 }
 .gem-record-grid-rail {
-  display: flex !important;
-  flex-direction: row !important;
-  flex-wrap: wrap !important;
-  gap: 1rem;
+  display: grid !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.75rem;
   align-items: stretch;
   padding: 0.5rem 0.25rem 1rem;
   flex: 1;
 }
 .gem-record-grid-card {
-  flex: 0 0 calc(33.333% - 0.667rem) !important;
-  min-width: min(16rem, 100%);
-  min-height: 8.5rem;
-  height: 8.5rem;
+  min-width: 0;
+  aspect-ratio: 0.88 / 1;
+  min-height: 0;
+  height: auto;
+  display: flex;
+  padding: 0;
+  border: 1px solid rgba(120, 209, 189, 0.22);
+  border-radius: 1rem;
+  background: linear-gradient(145deg, rgba(23, 49, 56, 0.96), rgba(12, 29, 35, 0.96));
+  box-shadow: 0 0.65rem 1.5rem rgba(0, 0, 0, 0.18);
   overflow: hidden;
   opacity: 0.72;
   transition:
@@ -872,10 +877,108 @@ dialog::backdrop {
 }
 .gem-record-grid-card.is-active {
   transform: scale(1.03);
+  border-color: var(--mint);
   opacity: 1;
 }
 .gem-record-grid-card > button {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: 58% minmax(0, 1fr);
+  align-items: start;
+  gap: 0 0.75rem;
   width: 100%;
+  height: 100%;
+  min-height: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  box-shadow: none;
+}
+.gem-record-grid-card > button > [class$="-icon"] {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: 0.75rem 0.75rem 0.35rem 0.35rem;
+  background: rgba(7, 23, 28, 0.52);
+  color: var(--mint);
+  font-size: 3rem;
+}
+.gem-record-grid-card > button > [class$="-icon"] img,
+.gem-record-grid-card .service-account-card-logo {
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+.gem-record-grid-card > button > [class$="-copy"] {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  min-width: 0;
+  align-self: center;
+  width: 100%;
+  height: 100%;
+  padding: 0.75rem 1rem 0;
+  overflow: hidden;
+  border-top: 1px solid rgba(120, 209, 189, 0.16);
+  background: rgba(7, 23, 28, 0.34);
+}
+.gem-record-grid-card > button > [class$="-copy"] strong {
+  display: -webkit-box;
+  min-height: 2.2em;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  text-overflow: ellipsis;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.gem-record-grid-card > button > [class$="-copy"] small {
+  display: block;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gem-record-properties {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.35rem 0.65rem;
+  margin-top: 0.6rem;
+  color: var(--muted);
+  font-size: 0.68rem;
+}
+.gem-record-property {
+  min-width: 0;
+}
+.gem-record-property-label,
+.gem-record-property-value {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gem-record-property-label {
+  color: var(--muted);
+  font-size: 0.58rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.gem-record-property-value {
+  color: var(--ink);
+}
+.gem-record-grid-card > button > [data-record-status] {
+  display: none;
+}
+.gem-record-grid-card > button:hover,
+.gem-record-grid-card > button.selected {
+  border-color: transparent;
+  background: rgba(120, 209, 189, 0.08);
 }
 .gem-record-grid-nav {
   flex: 0 0 auto;
@@ -890,11 +993,37 @@ dialog::backdrop {
   .gem-record-grid-nav {
     display: none;
   }
+  .gem-record-grid-rail {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
   .gem-record-grid-card,
   .gem-record-grid-card.is-active {
-    flex-basis: 100% !important;
-    height: auto;
-    min-height: 8.5rem;
+    aspect-ratio: 0.88 / 1;
+  }
+}
+@media (min-width: 641px) and (max-width: 1080px) {
+  .gem-record-grid-rail {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .gem-record-grid-card > button > [class$="-copy"] strong {
+    font-size: 0.78rem;
+  }
+  .gem-record-grid-card > button > [class$="-copy"] small {
+    font-size: 0.64rem;
+  }
+}
+@media (max-width: 640px) {
+  .gem-record-grid-card > button > [class$="-copy"] strong {
+    font-size: 0.7rem;
+  }
+  .gem-record-grid-card > button > [class$="-copy"] small {
+    font-size: 0.58rem;
+  }
+  .gem-record-grid-card .gem-record-property-label {
+    font-size: 0.48rem;
+  }
+  .gem-record-grid-card .gem-record-property-value {
+    font-size: 0.56rem;
   }
 }
 .gem-record-expansion {
