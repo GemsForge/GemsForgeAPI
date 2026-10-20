@@ -862,8 +862,9 @@ dialog::backdrop {
 .gem-record-grid-card {
   flex: 0 0 calc(33.333% - 0.667rem) !important;
   min-width: min(16rem, 100%);
-  min-height: 8.5rem;
-  height: 8.5rem;
+  aspect-ratio: 1 / 1;
+  min-height: 0;
+  height: auto;
   display: flex;
   padding: 0;
   border: 1px solid rgba(120, 209, 189, 0.22);
@@ -935,7 +936,7 @@ dialog::backdrop {
   .gem-record-grid-card.is-active {
     flex-basis: 100% !important;
     height: auto;
-    min-height: 8.5rem;
+    aspect-ratio: 1 / 1;
   }
 }
 .gem-record-expansion {
