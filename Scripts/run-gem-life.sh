@@ -167,7 +167,7 @@ release_port_lock
 if [[ "${GEM_LIFE_PRODUCTION:-0}" != "1" ]]; then
   console_directory="$repository_root/Console"
   vite_executable="$console_directory/node_modules/.bin/vite"
-  console_url="http://127.0.0.1:5173/"
+  console_url="http://127.0.0.1:4173/"
 
   if ! curl --silent --fail --max-time 1 "$console_url" | grep -q '<title>Gem Life Testing Console</title>'; then
     if [[ ! -x "$vite_executable" ]]; then
@@ -194,7 +194,7 @@ if [[ "${GEM_LIFE_PRODUCTION:-0}" != "1" ]]; then
     sleep 0.1
   done
   if [[ "$console_ready" != "1" ]]; then
-    echo "The Gem Life Console did not become ready at ${console_url}. Check whether another app is using port 5173." >&2
+    echo "The Gem Life Console did not become ready at ${console_url}. Check whether another app is using port 4173." >&2
     exit 1
   fi
 fi

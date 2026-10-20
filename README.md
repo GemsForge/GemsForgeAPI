@@ -241,7 +241,7 @@ Run the app launcher from the `GemsForgeAPI` repository root (not from
 swift run GemLife
 ```
 
-The launcher starts the API, waits for the Console at `http://127.0.0.1:5173/`,
+The launcher starts the API on port `8180` and waits for the Console at `http://127.0.0.1:4173/`,
 then opens the native `GemLifeHost` window. Its Vite proxy follows the API port
 selected by the launcher. It reuses this project's Console if it is already
 running, and stops only processes it started when you press `Ctrl-C`.
