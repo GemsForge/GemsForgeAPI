@@ -44,7 +44,7 @@ swift run GemLife
 ~~~
 
 `swift run GemLife` starts the API, starts Vite at
-`http://127.0.0.1:5173/` if this project's Console is not already responding,
+`http://127.0.0.1:4173/` if this project's Console is not already responding,
 waits for it, and then opens the native `GemLifeHost` window. Press Ctrl-C to
 stop the services started by the launcher.
 
@@ -54,6 +54,24 @@ if the selected port is occupied instead of silently choosing a random port.
 The selected port is printed at startup and exposed to the Console's Vite proxy
 through an ignored runtime file under `.build/`. The React console can also be
 run independently from `Console/` with `VITE_API_TARGET` set to the API port.
+
+### Stop local listeners
+
+If the API or Console remains running after a terminal session ends, stop the
+standard local listeners with:
+
+~~~bash
+for port in 8180 4173; do
+  lsof -tiTCP:$port -sTCP:LISTEN | xargs kill 2>/dev/null
+done
+~~~
+
+Verify that both ports are free:
+
+~~~bash
+lsof -nP -iTCP:8180 -sTCP:LISTEN
+lsof -nP -iTCP:4173 -sTCP:LISTEN
+~~~
 
 The active console routes include /schema-builder and /live-database.
 /live-database is the reviewed interface for inspecting the configured live
