@@ -929,6 +929,22 @@ dialog::backdrop {
   border-top: 1px solid rgba(120, 209, 189, 0.16);
   background: rgba(7, 23, 28, 0.34);
 }
+.gem-record-grid-card > button > [class$="-copy"] strong {
+  display: -webkit-box;
+  min-height: 2.2em;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  text-overflow: ellipsis;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.gem-record-grid-card > button > [class$="-copy"] small {
+  display: block;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .gem-record-properties {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
