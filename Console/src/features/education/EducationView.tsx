@@ -110,7 +110,7 @@ export function EducationView({ records }: EducationViewProps) {
                 </div>
               )
             )}
-          />
+          </div>
         </div>
       )}
     </>

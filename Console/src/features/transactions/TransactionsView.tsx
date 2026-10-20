@@ -20,13 +20,18 @@ import { useCreateTransactionMutation } from "../../data/recordQueries";
 import { TransactionCreateForm } from "../create/RecordCreateForms";
 import { useExpenseCategoriesQuery, useExpenseSubcategoriesQuery, useMerchantsQuery } from "../../data/lifeQueries";
 import { RecordImport } from "../../components/RecordImport";
+import { RecordUtilities } from "../../components/RecordUtilities";
+import { useRecordUtilities } from "../../hooks/useRecordUtilities";
 
 interface TransactionsViewProps {
   records: ExpenseTransaction[];
 }
 
 export function TransactionsView({ records }: TransactionsViewProps) {
-  const paging = usePagedRecords(records);
+  const utilities = useRecordUtilities(records, (record) => [record.id, record.item, record.transactionDate, record.merchantCode], {
+    date: (a, b) => (a.transactionDate ?? "").localeCompare(b.transactionDate ?? ""), item: (a, b) => a.item.localeCompare(b.item),
+  });
+  const paging = usePagedRecords(utilities.records);
   const [selectedID, setSelectedID] = useState<string | null>(null);
   const detail = useTransactionQuery(selectedID);
   const attachment = useTransactionImageMutation();
@@ -55,6 +60,7 @@ export function TransactionsView({ records }: TransactionsViewProps) {
           <RecordImport label="transactions" expectedColumns={["id", "item", "categoryID", "quantity"]} onPublish={async (rows) => { for (const row of rows) await create.mutateAsync(row as Parameters<typeof create.mutateAsync>[0]); }} />
         </div>
       </div>
+      <RecordUtilities label="Transactions" {...utilities} sortOptions={[{ value: "date", label: "Transaction date" }, { value: "item", label: "Item" }]} />
 
       {creating && (
         <TransactionCreateForm
