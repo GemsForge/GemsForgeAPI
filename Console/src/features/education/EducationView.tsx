@@ -114,7 +114,7 @@ export function EducationView({ records }: EducationViewProps) {
             onExpandedChange={setSelectedID}
             getKey={(record) => record.id}
             tableColumns={[
-              { key: "institution", label: "Institution", render: (record) => record.institutionName },
+              { key: "institution", label: "Institution", icon: () => "✦", render: (record) => record.institutionName },
               { key: "type", label: "Category", render: (record) => record.educationType },
               { key: "id", label: "Item ID", render: (record) => record.id },
               { key: "status", label: "Status", render: (record) => record.status },

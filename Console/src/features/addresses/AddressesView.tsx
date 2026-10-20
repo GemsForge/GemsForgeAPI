@@ -107,7 +107,7 @@ export function AddressesView({ records }: AddressesViewProps) {
             onExpandedChange={setSelectedID}
             getKey={(record) => record.id}
             tableColumns={[
-              { key: "city", label: "City", render: (record) => record.city || "—" },
+              { key: "city", label: "City", icon: () => "⌂", render: (record) => record.city || "—" },
               { key: "type", label: "Category", render: (record) => record.addressType },
               { key: "id", label: "Item ID", render: (record) => record.id },
               { key: "status", label: "Status", render: (record) => record.addressStatus },

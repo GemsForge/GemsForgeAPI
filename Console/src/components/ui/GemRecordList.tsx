@@ -12,7 +12,12 @@ export interface GemRecordListProps<Record> {
   isExpanded?: (record: Record) => boolean;
   renderExpanded?: (record: Record) => ReactNode;
   onExpandedChange?: (key: string | null) => void;
-  tableColumns?: Array<{ key: string; label: string; render: (record: Record) => ReactNode }>;
+  tableColumns?: Array<{
+    key: string;
+    label: string;
+    render: (record: Record) => ReactNode;
+    icon?: (record: Record) => ReactNode;
+  }>;
 }
 
 /** Shared accessible list boundary for selectable feature records. */
@@ -104,7 +109,14 @@ export function GemRecordList<Record>({
               {records.map((record) => (
                 <tr key={getKey(record)}>
                   {tableColumns.map((column) => (
-                    <td key={column.key}>{column.render(record)}</td>
+                    <td key={column.key}>
+                      {column.icon ? (
+                        <span className="gem-record-table-icon" aria-hidden="true">
+                          {column.icon(record)}
+                        </span>
+                      ) : null}
+                      {column.render(record)}
+                    </td>
                   ))}
                 </tr>
               ))}

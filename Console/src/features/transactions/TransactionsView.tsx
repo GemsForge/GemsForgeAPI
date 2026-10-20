@@ -124,7 +124,7 @@ export function TransactionsView({ records }: TransactionsViewProps) {
             onExpandedChange={setSelectedID}
             getKey={(record) => record.id}
             tableColumns={[
-              { key: "item", label: "Item", render: (record) => record.item },
+              { key: "item", label: "Item", icon: () => "$", render: (record) => record.item },
               { key: "category", label: "Category", render: (record) => record.categoryID },
               { key: "id", label: "Item ID", render: (record) => record.id },
               { key: "date", label: "Date", render: (record) => record.transactionDate || "—" },
