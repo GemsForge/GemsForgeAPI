@@ -862,6 +862,9 @@ dialog::backdrop {
 .gem-record-grid-card {
   flex: 0 0 calc(33.333% - 0.667rem) !important;
   min-width: min(16rem, 100%);
+  min-height: 8.5rem;
+  height: 8.5rem;
+  overflow: hidden;
   opacity: 0.72;
   transition:
     transform 180ms ease,
@@ -890,6 +893,8 @@ dialog::backdrop {
   .gem-record-grid-card,
   .gem-record-grid-card.is-active {
     flex-basis: 100% !important;
+    height: auto;
+    min-height: 8.5rem;
   }
 }
 .gem-record-expansion {
@@ -989,6 +994,21 @@ dialog::backdrop {
   color: var(--mint);
   font-size: 0.7rem;
   white-space: nowrap;
+}
+.status-success {
+  border-color: rgba(120, 209, 189, 0.6);
+  color: var(--mint);
+  background: rgba(120, 209, 189, 0.12);
+}
+.status-warning {
+  border-color: rgba(240, 189, 115, 0.7);
+  color: var(--gold);
+  background: rgba(240, 189, 115, 0.12);
+}
+.status-danger {
+  border-color: rgba(240, 138, 131, 0.7);
+  color: var(--danger, #f08a83);
+  background: rgba(240, 138, 131, 0.12);
 }
 .detail-placeholder {
   display: grid;

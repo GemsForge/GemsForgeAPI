@@ -25,6 +25,10 @@ export function AddressesView({ records }: AddressesViewProps) {
     {
       city: (a, b) => (a.city ?? "").localeCompare(b.city ?? ""),
       type: (a, b) => a.addressType.localeCompare(b.addressType),
+      state: (a, b) => (a.state ?? "").localeCompare(b.state ?? ""),
+      country: (a, b) => a.country.localeCompare(b.country),
+      status: (a, b) => a.addressStatus.localeCompare(b.addressStatus),
+      id: (a, b) => a.id.localeCompare(b.id),
     },
   );
   const paging = usePagedRecords(utilities.records);
@@ -68,6 +72,10 @@ export function AddressesView({ records }: AddressesViewProps) {
           sortOptions={[
             { value: "city", label: "City" },
             { value: "type", label: "Address type" },
+            { value: "state", label: "State" },
+            { value: "country", label: "Country" },
+            { value: "status", label: "Status" },
+            { value: "id", label: "Record ID" },
           ]}
           filterOptions={Array.from(new Set(records.map((record) => record.addressStatus))).sort()}
         />

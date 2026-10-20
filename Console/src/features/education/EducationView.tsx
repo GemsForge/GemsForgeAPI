@@ -26,6 +26,10 @@ export function EducationView({ records }: EducationViewProps) {
     {
       institution: (a, b) => a.institutionName.localeCompare(b.institutionName),
       status: (a, b) => a.status.localeCompare(b.status),
+      type: (a, b) => a.educationType.localeCompare(b.educationType),
+      program: (a, b) => (a.program ?? "").localeCompare(b.program ?? ""),
+      start: (a, b) => (a.startDate ?? "").localeCompare(b.startDate ?? ""),
+      end: (a, b) => (a.endDate ?? "").localeCompare(b.endDate ?? ""),
     },
   );
   const paging = usePagedRecords(utilities.records);
@@ -74,6 +78,10 @@ export function EducationView({ records }: EducationViewProps) {
           sortOptions={[
             { value: "institution", label: "Institution" },
             { value: "status", label: "Status" },
+            { value: "type", label: "Education type" },
+            { value: "program", label: "Program" },
+            { value: "start", label: "Start date" },
+            { value: "end", label: "End date" },
           ]}
           filterOptions={Array.from(new Set(records.map((record) => record.status))).sort()}
         />
