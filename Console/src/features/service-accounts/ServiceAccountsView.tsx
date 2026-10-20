@@ -145,6 +145,12 @@ export function ServiceAccountsView({ records }: { records: ServiceAccount[] }) 
             label="Service account records"
             onExpandedChange={(key) => setSelectedID(key ? Number(key) : null)}
             getKey={(record) => String(record.id)}
+            tableColumns={[
+              { key: "service", label: "Service", render: (record) => record.service },
+              { key: "type", label: "Category", render: (record) => record.type || "Service" },
+              { key: "id", label: "Item ID", render: (record) => record.id },
+              { key: "group", label: "Group", render: (record) => record.expenseGroup || "—" },
+            ]}
             renderRecord={(record) => (
               <GemRecordCard
                 className="address-card"

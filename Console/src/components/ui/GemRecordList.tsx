@@ -12,6 +12,7 @@ export interface GemRecordListProps<Record> {
   isExpanded?: (record: Record) => boolean;
   renderExpanded?: (record: Record) => ReactNode;
   onExpandedChange?: (key: string | null) => void;
+  tableColumns?: Array<{ key: string; label: string; render: (record: Record) => ReactNode }>;
 }
 
 /** Shared accessible list boundary for selectable feature records. */
@@ -24,8 +25,9 @@ export function GemRecordList<Record>({
   isExpanded,
   renderExpanded,
   onExpandedChange,
+  tableColumns = [],
 }: GemRecordListProps<Record>) {
-  const [view, setView] = useState<"list" | "grid">("list");
+  const [view, setView] = useState<"list" | "gallery" | "table">("list");
   const expandedKey = records.find((record) => isExpanded?.(record))
     ? getKey(records.find((record) => isExpanded?.(record)) as Record)
     : undefined;
@@ -37,17 +39,20 @@ export function GemRecordList<Record>({
   };
 
   return (
-    <div className={`gem-record-collection ${view === "grid" ? "is-grid" : "is-list"}`}>
+    <div className={`gem-record-collection is-${view}`}>
       <XStack className="gem-record-view-toggle" aria-label={`${label} view`}>
         <span>View</span>
         <button type="button" aria-pressed={view === "list"} onClick={() => setView("list")}>
           List
         </button>
-        <button type="button" aria-pressed={view === "grid"} onClick={() => setView("grid")}>
-          Grid
+        <button type="button" aria-pressed={view === "gallery"} onClick={() => setView("gallery")}>
+          Gallery
+        </button>
+        <button type="button" aria-pressed={view === "table"} onClick={() => setView("table")}>
+          Table
         </button>
       </XStack>
-      {view === "grid" ? (
+      {view === "gallery" ? (
         <XStack className="gem-record-grid-shell">
           <button
             type="button"
@@ -83,6 +88,29 @@ export function GemRecordList<Record>({
             →
           </button>
         </XStack>
+      ) : view === "table" ? (
+        <div className="gem-record-table-wrap" role="region" aria-label={`${label} table`} tabIndex={0}>
+          <table className="gem-record-table">
+            <thead>
+              <tr>
+                {tableColumns.map((column) => (
+                  <th key={column.key} scope="col">
+                    {column.label}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {records.map((record) => (
+                <tr key={getKey(record)}>
+                  {tableColumns.map((column) => (
+                    <td key={column.key}>{column.render(record)}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       ) : (
         <Accordion
           className={className}
