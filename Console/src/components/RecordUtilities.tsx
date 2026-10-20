@@ -55,7 +55,8 @@ export function RecordUtilities({
         type="button"
         className="secondary-button"
         onClick={onDirection}
-        aria-label={`Sort ${direction === "asc" ? "descending" : "ascending"}`}
+        disabled={!sort}
+        aria-label={sort ? `Sort ${direction === "asc" ? "descending" : "ascending"}` : "Select a sort field first"}
       >
         {direction === "asc" ? "A–Z" : "Z–A"}
       </button>

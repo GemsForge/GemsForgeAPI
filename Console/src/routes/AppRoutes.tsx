@@ -68,16 +68,22 @@ const LiveDatabaseMigrationView = lazy(() =>
 
 type Notifications = { onError: (error: unknown) => void; onSuccess: (message: string) => void };
 
-class ScreenBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
-  state = { failed: false };
-  static getDerivedStateFromError() {
-    return { failed: true };
+export class ScreenBoundary extends Component<
+  { children: ReactNode },
+  { failed: boolean; errorMessage: string | null }
+> {
+  state = { failed: false, errorMessage: null as string | null };
+  static getDerivedStateFromError(error: unknown) {
+    return { failed: true, errorMessage: error instanceof Error ? error.message : String(error) };
   }
   render() {
     return this.state.failed ? (
       <section role="alert">
         <h2>This screen could not be displayed</h2>
         <p>Return home or reload the app if its version changed.</p>
+        {import.meta.env.DEV && this.state.errorMessage && (
+          <pre className="screen-error-details">{this.state.errorMessage}</pre>
+        )}
         <div className="button-row">
           <Link to="/">Return home</Link>
           <button className="secondary-button" onClick={() => window.location.reload()}>
