@@ -42,7 +42,7 @@ jobs:
             const projectNumbers = {
               "GemsForge/GemsForgeAPI": 7,
               "GemsForge/aura-logbook-api": 9,
-              "GemsForge/professional-portfolio": 8,
+              "GemsForge/professional-portfolio": 11,
             };
             const projectNumber = projectNumbers[fullName];
             if (!projectNumber) throw new Error("No Project mapping configured for " + fullName);
