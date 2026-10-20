@@ -21,22 +21,26 @@ permissions:
   contents: read
 
 jobs:
-  fit-validation:
-    name: FIT database validation
+  database-validation:
+    name: ${{ matrix.environment }} database validation
     runs-on: macos-15
-    environment: fit
+    environment: ${{ matrix.environment }}
+    strategy:
+      fail-fast: false
+      matrix:
+        environment: [dev, fit, prod]
+    timeout-minutes: 30
     env:
-      GEMLIFE_ENVIRONMENT: fit
-      DATABASE_PATH_FIT: "${{ github.workspace }}/.ci/GemLife_DB_fit.sqlite"
-      LIVE_DATABASE_BACKUP_DIRECTORY_FIT: "${{ github.workspace }}/.ci/database-backups/fit"
+      GEMLIFE_ENVIRONMENT: ${{ matrix.environment }}
+      DATABASE_PATH: ${{ github.workspace }}/.ci/GemLife_DB_${{ matrix.environment }}.sqlite
+      LIVE_DATABASE_BACKUP_DIRECTORY: ${{ github.workspace }}/.ci/database-backups/${{ matrix.environment }}
     steps:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - name: Prepare isolated FIT database paths
-        run: mkdir -p "$LIVE_DATABASE_BACKUP_DIRECTORY_FIT"
+      - name: Prepare isolated database paths
+        run: mkdir -p "$LIVE_DATABASE_BACKUP_DIRECTORY"
       - name: Report selected environment
-        run: |
-          echo "Validating Gem Life environment: $GEMLIFE_ENVIRONMENT"
+        run: echo "Validating Gem Life environment: $GEMLIFE_ENVIRONMENT"
       - name: Run API and migration tests
         run: swift test --parallel
