@@ -1,83 +1,23 @@
 name: Sync issue and pull request metadata
 
-# Workflow convention
-#
-# 1. The working issue is the source of truth for ownership and planning.
-# 2. Branches include the issue number, for example:
-#      feat/165-safe-launcher-defaults
-# 3. Pull requests should also include `Closes #165` (or equivalent) in the body.
-# 4. When a pull request opens or is reopened, copy the issue's assignee,
-#    labels, and milestone to the pull request.
-# 5. Add the linked issue and pull request to the user-owned GemsForgeAPI
-#    project when missing, then derive issue/PR Status from the development lifecycle.
-# 6. Project mutations use the PROJECTS_TOKEN secret because GITHUB_TOKEN
-#    cannot access user-owned projects.
-# 7. A merged same-repository pull request deletes its source branch after
-#    metadata and project reconciliation; closed-but-unmerged and fork branches remain.
-#
-# Lifecycle policy (uses the existing Status options in project #7)
-# - Development branch created: In progress; branch name identifies the issue.
-# - Open PR (including draft): In review; issue and PR receive that status.
-# - Closes #170 in a PR body closes #170 only on merge into the default branch.
-# - Closed issue / merged closing PR: Done. A mere #170 mention never closes it.
-# - PR closed without merge: In progress unless another related PR is open.
-# - Reconciliation checks live PRs/branches so late events do not regress review.
-# - Tags and branches without an issue number are ignored.
-# - Branch/issue events and manual repair reuse this same workflow.
-# - Existing native relationship metadata is preserved.
-#
-# Relationship policy
-# - Parent/sub-issue links and blocked-by/blocking dependencies are native
-#   GitHub relationships. Do not duplicate them in issue descriptions.
-# - Supply issue_number (or pr_number), parent_issue, blocked_by, and blocking
-#   through workflow_dispatch. Issue-creation scripts can call the same workflow
-#   with gh workflow run; no pull request is required.
-# - Inputs are repository-local issue numbers. Blank inputs preserve existing
-#   relationships. Repeated runs skip existing links; a different parent fails
-#   rather than silently reparenting. GitHub rejects dependency/hierarchy cycles.
-# - "Related" is not assumed to mean "blocks": choose the actual relationship.
-# - Issue opened/reopened events ensure project membership automatically.
-# - This workflow does not create issues, commits, branches, or pull requests.
-# - Merged same-repository PR source branches are deleted after synchronization;
-#   the default branch, fork branches, and closed-but-unmerged branches are preserved.
-# API references:
-# https://docs.github.com/en/rest/issues/sub-issues
-# https://docs.github.com/en/rest/issues/issue-dependencies
-#
-# Implementation notes
-# - actions/github-script accepts only its declared action inputs. The manual
-#   PR number is passed through the environment rather than as a custom input.
-# - Octokit's REST client exposes addAssignees/removeAssignees, so replacement
-#   behavior is implemented by removing stale assignees and adding the issue's.
-
 on:
-  create:
   issues:
     types: [opened, reopened, closed]
   pull_request:
     types: [opened, reopened, edited, ready_for_review, closed]
+  pull_request_review:
+    types: [submitted, edited, dismissed]
   workflow_dispatch:
     inputs:
-      pr_number:
-        description: Pull request number to synchronize
-        required: false
-        type: number
       issue_number:
-        description: Working issue number (required when no PR is supplied)
-        required: false
+        description: Working issue number
+        required: true
         type: number
-      parent_issue:
-        description: Parent issue number (blank preserves current parent)
+      qa_acceptance:
+        description: Authorize QA acceptance and close the issue
         required: false
-        type: string
-      blocked_by:
-        description: Issues blocking this issue (comma-separated numbers)
-        required: false
-        type: string
-      blocking:
-        description: Issues this issue blocks (comma-separated numbers)
-        required: false
-        type: string
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -86,487 +26,126 @@ permissions:
 
 jobs:
   sync:
-    name: Maintain issue relationships and metadata
     runs-on: ubuntu-latest
     steps:
-      - name: Synchronize metadata from the working issue
-        uses: actions/github-script@v8
+      - uses: actions/github-script@v8
         env:
-          PR_NUMBER: ${{ inputs.pr_number || '' }}
           ISSUE_NUMBER: ${{ inputs.issue_number || '' }}
-          PARENT_ISSUE: ${{ inputs.parent_issue }}
-          BLOCKED_BY: ${{ inputs.blocked_by }}
-          BLOCKING: ${{ inputs.blocking }}
+          QA_ACCEPTANCE: ${{ inputs.qa_acceptance || 'false' }}
           PROJECTS_TOKEN: ${{ secrets.PROJECTS_TOKEN }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            if (context.eventName === "create" &&
-                context.payload.ref_type !== "branch") {
-              core.notice("Ignoring tag creation.");
-              return;
-            }
-            const branchIssueNumber = (ref) => Number((ref ?? "").match(
-              /^(?:feat|fix|docs|refactor|test|chore|ci|build|perf|style)\/(\d+)(?:-|$)/i,
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const fullName = owner + "/" + repo;
+            const projectNumbers = {
+              "GemsForge/GemsForgeAPI": 7,
+              "GemsForge/aura-logbook-api": 9,
+              "GemsForge/professional-portfolio": 8,
+            };
+            const projectNumber = projectNumbers[fullName];
+            if (!projectNumber) throw new Error("No Project mapping configured for " + fullName);
+            const issueFromRef = (ref) => Number((ref || "").match(
+              /^(?:feat|fix|docs|refactor|test|chore|ci|build|perf|style)\/(\d+)(?:-|$)/i
             )?.[1]) || undefined;
-            const createdBranchIssue = context.eventName === "create"
-              ? branchIssueNumber(context.payload.ref) : undefined;
-            if (context.eventName === "create" && !createdBranchIssue) {
-              core.notice("Ignoring branch without a working issue number.");
-              return;
-            }
-            const parseNumbers = (raw, name) => {
-              const text = String(raw ?? "").trim();
-              if (!text) return [];
-              const parts = text.split(",").map((part) => part.trim());
-              if (parts.some((part) => !/^[1-9]\d*$/.test(part) ||
-                  !Number.isSafeInteger(Number(part)))) {
-                throw new Error(name + " must contain positive issue numbers separated by commas.");
-              }
-              return [...new Set(parts.map(Number))];
-            };
-            const oneNumber = (raw, name) => {
-              const numbers = parseNumbers(raw, name);
-              if (numbers.length > 1) throw new Error(name + " accepts one number.");
-              return numbers[0];
-            };
-            const manualNumber = oneNumber(process.env.PR_NUMBER, "pr_number");
-            const explicitIssue = oneNumber(process.env.ISSUE_NUMBER, "issue_number");
-            const parentNumber = oneNumber(process.env.PARENT_ISSUE, "parent_issue");
-            const blockedBy = parseNumbers(process.env.BLOCKED_BY, "blocked_by");
-            const blocking = parseNumbers(process.env.BLOCKING, "blocking");
-            const pullRequest = context.payload.pull_request ?? (manualNumber ? (
-              await github.rest.pulls.get({
-                ...context.repo,
-                pull_number: manualNumber,
-              })
-            ).data : null);
-            const branchIssue = branchIssueNumber(pullRequest?.head.ref);
-            // Optional colon and word boundaries match GitHub's documented syntax.
-            // Only repository-local closing references are interpreted here.
-            const closingIssues = (body) => [...new Set([...((body ?? "").matchAll(
-              /\b(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?):?\s+#([1-9]\d*)\b/gi,
-            ))].map((match) => Number(match[1])))];
-            const bodyIssues = closingIssues(pullRequest?.body);
-            const linkedIssue = branchIssue ?? bodyIssues[0];
-            const issueNumber = context.payload.issue?.number ?? explicitIssue ??
-              createdBranchIssue ?? linkedIssue;
-            if (!issueNumber) {
-              throw new Error("Supply issue_number or a PR linked to its working issue.");
-            }
-            if (pullRequest && explicitIssue && explicitIssue !== linkedIssue) {
-              throw new Error("issue_number must match the PR's linked working issue.");
-            }
-            if ([parentNumber, ...blockedBy, ...blocking].includes(issueNumber)) {
-              throw new Error("An issue cannot be its own parent or dependency.");
-            }
-            if (blockedBy.some((number) => blocking.includes(number))) {
-              throw new Error("An issue cannot both block and be blocked by the same issue.");
-            }
+            const closingIssues = (body) => [...new Set([...((body || "").matchAll(
+              /\b(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?):?\s+#([1-9]\d*)\b/gi
+            ))].map((m) => Number(m[1])))];
+            const inputIssue = Number(process.env.ISSUE_NUMBER) || undefined;
+            const pr = context.payload.pull_request;
+            const issueNumber = context.payload.issue?.number ||
+              inputIssue || issueFromRef(pr?.head?.ref) || closingIssues(pr?.body)[0];
+            if (!issueNumber) throw new Error("Unable to resolve a working issue.");
             const issue = (await github.rest.issues.get({
-              ...context.repo, issue_number: issueNumber,
+              ...context.repo, issue_number: issueNumber
             })).data;
-            if (issue.pull_request) throw new Error("The working item must be an issue, not a PR.");
-
-            const defaultBranch = context.payload.repository?.default_branch;
-            const mergedClosingReference = Boolean(
-              pullRequest?.merged && defaultBranch &&
-              pullRequest.base?.ref === defaultBranch &&
-              bodyIssues.includes(issueNumber),
-            );
-            // GitHub normally closes these natively. Ensure repair/merge runs
-            // also reconcile closure if the issue event has not arrived yet.
-            if (mergedClosingReference && issue.state !== "closed") {
+            const reviewState = context.eventName === "pull_request_review"
+              ? (context.payload.review?.state || "").toLowerCase() : "";
+            if (process.env.QA_ACCEPTANCE === "true") {
+              if (context.actor !== "GemsForge") {
+                throw new Error("Only the GemsForge account may authorize QA acceptance.");
+              }
               await github.rest.issues.update({
                 ...context.repo, issue_number: issueNumber,
-                state: "closed", state_reason: "completed",
+                state: "closed", state_reason: "completed"
               });
-              issue.state = "closed";
-              core.notice("Closed issue #" + issueNumber + " after its closing PR merged.");
             }
-
-            // Validate all targets before writing any relationship.
-            const targets = new Map();
-            for (const number of new Set([parentNumber, ...blockedBy, ...blocking].filter(Boolean))) {
-              const target = (await github.rest.issues.get({
-                ...context.repo, issue_number: number,
-              })).data;
-              if (target.pull_request) throw new Error("Relationship target #" + number + " is a PR.");
-              targets.set(number, target);
-            }
-            const request = (route, params) => github.request(route, {
-              ...context.repo,
-              headers: { "X-GitHub-Api-Version": "2026-03-10" },
-              ...params,
-            });
-            let currentParent;
-            if (parentNumber) {
-              try {
-                currentParent = (await request(
-                  "GET /repos/{owner}/{repo}/issues/{issue_number}/parent",
-                  { issue_number: issueNumber },
-                )).data;
-              } catch (error) {
-                if (error.status !== 404) throw error;
+            const token = process.env.PROJECTS_TOKEN;
+            if (!token) throw new Error("PROJECTS_TOKEN is required.");
+            const gql = async (query, variables) => {
+              const response = await fetch("https://api.github.com/graphql", {
+                method: "POST",
+                headers: {
+                  accept: "application/vnd.github+json",
+                  authorization: "Bearer " + token,
+                  "content-type": "application/json",
+                  "x-github-api-version": "2022-11-28"
+                },
+                body: JSON.stringify({ query, variables })
+              });
+              const body = await response.json();
+              if (!response.ok || body.errors?.length) {
+                throw new Error(JSON.stringify(body.errors || body));
               }
-              if (currentParent && currentParent.id !== targets.get(parentNumber).id) {
-                throw new Error("Issue #" + issueNumber + " already has parent #" +
-                  currentParent.number + "; refusing to replace it automatically.");
-              }
-            }
-            const dependencyPlans = [];
-            const planDependency = async (blocked, blocker) => {
-              const existing = await github.paginate(
-                "GET /repos/{owner}/{repo}/issues/{issue_number}/dependencies/blocked_by",
-                { ...context.repo, issue_number: blocked.number, per_page: 100,
-                  headers: { "X-GitHub-Api-Version": "2026-03-10" } },
-              );
-              if (!existing.some((item) => item.id === blocker.id)) {
-                dependencyPlans.push({ blocked, blocker });
-              }
+              return body.data;
             };
-            for (const number of blockedBy) await planDependency(issue, targets.get(number));
-            for (const number of blocking) await planDependency(targets.get(number), issue);
-            if (parentNumber && !currentParent) {
-              await request("POST /repos/{owner}/{repo}/issues/{issue_number}/sub_issues", {
-                issue_number: parentNumber, sub_issue_id: issue.id, replace_parent: false,
-              });
-            }
-            for (const { blocked, blocker } of dependencyPlans) {
-              await request("POST /repos/{owner}/{repo}/issues/{issue_number}/dependencies/blocked_by", {
-                issue_number: blocked.number, issue_id: blocker.id,
-              });
-            }
-            core.notice("Issue #" + issueNumber + ": relationships checked; " +
-              (parentNumber && !currentParent ? 1 : 0) + " parent link and " +
-              dependencyPlans.length + " dependency links added.");
-
-            const labels = issue.labels.map((label) =>
-              typeof label === "string" ? label : label.name,
+            const projectData = await gql(
+              "query($login:String!){user(login:$login){projectsV2(first:100){nodes{id number title}}}}",
+              { login: "GemsForge" }
             );
-            const assignees = issue.assignees.map((assignee) => assignee.login);
-
-            if (pullRequest) {
-              await github.rest.issues.setLabels({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: pullRequest.number,
-                labels,
-              });
-
-              const currentAssignees = pullRequest.assignees.map(
-                (assignee) => assignee.login,
-              );
-              const staleAssignees = currentAssignees.filter(
-                (assignee) => !assignees.includes(assignee),
-              );
-
-              if (staleAssignees.length > 0) {
-                await github.rest.issues.removeAssignees({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  issue_number: pullRequest.number,
-                  assignees: staleAssignees,
-                });
-              }
-
-              const newAssignees = assignees.filter(
-                (assignee) => !currentAssignees.includes(assignee),
-              );
-
-              if (newAssignees.length > 0) {
-                await github.rest.issues.addAssignees({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  issue_number: pullRequest.number,
-                  assignees: newAssignees,
-                });
-              }
-
-              await github.rest.issues.update({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: pullRequest.number,
-                milestone: issue.milestone?.number ?? null,
-              });
-
-              core.notice(
-                `Synchronized PR #${pullRequest.number} from issue #${issueNumber}: ${labels.length} labels, ${assignees.length} assignees, and milestone ${issue.milestone?.title ?? "none"}.`,
-              );
-            }
-            const projectsToken = process.env.PROJECTS_TOKEN;
-            if (!projectsToken) {
-              core.setFailed(
-                "PROJECTS_TOKEN is required to synchronize the GemsForgeAPI project.",
-              );
-              return;
-            }
-
-            const projectApi = async (query, variables) => {
-              // Use fetch so Octokit's GITHUB_TOKEN auth hook cannot replace
-              // PROJECTS_TOKEN with the repository-scoped token.
-              try {
-                const response = await fetch("https://api.github.com/graphql", {
-                  method: "POST",
-                  headers: {
-                    accept: "application/vnd.github+json",
-                    authorization: `Bearer ${projectsToken}`,
-                    "content-type": "application/json",
-                    "x-github-api-version": "2022-11-28",
-                  },
-                  body: JSON.stringify({ query, variables }),
-                });
-                const payload = await response.json();
-                if (!response.ok) {
-                  throw new Error(
-                    `GitHub GraphQL HTTP ${response.status}: ${JSON.stringify(payload)}`,
-                  );
-                }
-                if (payload.errors?.length) {
-                  throw new Error(
-                    `GitHub GraphQL request failed: ${payload.errors
-                      .map((error) => error.message)
-                      .join("; ")}`,
-                  );
-                }
-                return payload.data;
-              } catch (error) {
-                const message = error instanceof Error ? error.message : String(error);
-                if (/(Resource not accessible|GraphQL HTTP (401|403)|\b(401|403)\b)/i.test(message)) {
-                  core.setFailed(
-                    "PROJECTS_TOKEN cannot access user-owned Projects. Ensure it is a PAT owned by GemsForge with Projects read/write permission and repository access to GemsForge/GemsForgeAPI; do not use GITHUB_TOKEN.",
-                  );
-                }
-                throw error;
-              }
+            const project = (projectData.user?.projectsV2?.nodes || [])
+              .find((p) => p.number === projectNumber);
+            if (!project) throw new Error("GemsForge Project #" + projectNumber + " was not found.");
+            const fieldsData = await gql(
+              "query($id:ID!){node(id:$id){... on ProjectV2{fields(first:100){nodes{... on ProjectV2SingleSelectField{id name options{id name}}}}}}}",
+              { id: project.id }
+            );
+            const statusField = (fieldsData.node?.fields?.nodes || [])
+              .find((f) => f.name === "Status");
+            if (!statusField) throw new Error("Project Status field is missing.");
+            const status = (name) => {
+              const found = statusField.options.find((o) => o.name.toLowerCase() === name.toLowerCase());
+              if (!found) throw new Error("Missing Project Status option: " + name);
+              return found.id;
             };
-
-            // Enumerate the authenticated user's visible projects, then select the
-            // documented user-owned project by number and title. This also lets
-            // the failure message distinguish a token-access problem from a
-            // project-number or project-title mismatch.
-            const projectQuery = `query($login: String!) {
-              viewer {
-                login
-              }
-              user(login: $login) {
-                projectsV2(first: 100) {
-                  nodes {
-                    id
-                    number
-                    title
-                    public
-                  }
-                }
-              }
-            }`;
-
-            const projectData = await projectApi(projectQuery, {
-              login: "GemsForge",
-            });
-            const visibleProjects = projectData.user?.projectsV2?.nodes ?? [];
-            const project = visibleProjects.find(
-              (candidate) =>
-                candidate.number === 7 &&
-                candidate.title?.trim() === "GemsForgeAPI",
-            );
-
-            if (!project) {
-              const visibleProjectSummary =
-                visibleProjects
-                  .map((candidate) => `#${candidate.number} ${candidate.title}`)
-                  .join(", ") || "none";
-              core.setFailed(
-                `PROJECTS_TOKEN authenticated as ${projectData.viewer?.login ?? "unknown"} but could not see user project GemsForgeAPI (#7). Visible user projects: ${visibleProjectSummary}. Confirm the repository secret contains a classic PAT generated for GemsForge with both project and repo scopes.`,
+            const addItem = async (nodeId) => {
+              const data = await gql(
+                "mutation($p:ID!,$c:ID!){addProjectV2ItemById(input:{projectId:$p,contentId:$c}){item{id}}}",
+                { p: project.id, c: nodeId }
               );
-              return;
-            }
-
-            const itemQuery = `query($projectId: ID!) {
-              node(id: $projectId) {
-                ... on ProjectV2 {
-                  items(first: 100) {
-                    nodes {
-                      id
-                      content {
-                        __typename
-                        ... on Issue { number repository { nameWithOwner } }
-                        ... on PullRequest { number repository { nameWithOwner } }
-                      }
-                      fieldValues(first: 50) {
-                        nodes {
-                          __typename
-                          ... on ProjectV2ItemFieldSingleSelectValue {
-                            optionId
-                            name
-                            field {
-                              ... on ProjectV2SingleSelectField { id name }
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }`;
-
-            const projectItems = (
-              await projectApi(itemQuery, { projectId: project.id })
-            ).node?.items?.nodes ?? [];
-            let issueItem = projectItems.find(
-              (item) =>
-                item.content?.__typename === "Issue" &&
-                item.content.number === issueNumber &&
-                item.content.repository?.nameWithOwner === context.repo.owner + "/" + context.repo.repo,
-            );
-
-            if (!issueItem) {
-              const addIssueMutation = `mutation($projectId: ID!, $contentId: ID!) {
-                addProjectV2ItemById(input: {projectId: $projectId, contentId: $contentId}) {
-                  item { id }
-                }
-              }`;
-              const addedIssue = await projectApi(addIssueMutation, {
-                projectId: project.id,
-                contentId: issue.node_id,
-              });
-              issueItem = {
-                id: addedIssue.addProjectV2ItemById.item.id,
-                fieldValues: { nodes: [] },
-              };
-              core.notice(
-                `Added issue #${issueNumber} to the GemsForgeAPI project.`,
-              );
-            }
-
-            // Reconcile from current repository state rather than event order.
-            let desiredStatus = "Done";
-            if (issue.state !== "closed") {
-              const openPulls = await github.paginate(github.rest.pulls.list, {
-                ...context.repo, state: "open", per_page: 100,
-              });
-              const matchesWorkingIssue = (pr) =>
-                branchIssueNumber(pr.head?.ref) === issueNumber ||
-                closingIssues(pr.body).includes(issueNumber);
-              const inReview = openPulls.some(matchesWorkingIssue) ||
-                (pullRequest?.state === "open" && matchesWorkingIssue(pullRequest));
-              if (inReview) {
-                desiredStatus = "In review";
-              } else {
-                const branches = await github.paginate(github.rest.repos.listBranches, {
-                  ...context.repo, per_page: 100,
-                });
-                const hasBranch = branches.some((branch) =>
-                  branchIssueNumber(branch.name) === issueNumber);
-                desiredStatus = hasBranch || createdBranchIssue === issueNumber ||
-                  Boolean(pullRequest) ? "In progress" : "Backlog";
-              }
-            }
-            const fieldsQuery = `query($projectId: ID!) {
-              node(id: $projectId) {
-                ... on ProjectV2 {
-                  fields(first: 100) {
-                    nodes {
-                      ... on ProjectV2SingleSelectField {
-                        id name options { id name }
-                      }
-                    }
-                  }
-                }
-              }
-            }`;
-            const fields = (await projectApi(fieldsQuery, {
-              projectId: project.id,
-            })).node?.fields?.nodes ?? [];
-            const statusField = fields.find((field) => field.name === "Status");
-            const option = statusField?.options?.find((candidate) =>
-              candidate.name.toLowerCase() === desiredStatus.toLowerCase());
-            if (!option) {
-              throw new Error("Project Status option '" + desiredStatus +
-                "' is missing. Available: " +
-                (statusField?.options ?? []).map((value) => value.name).join(", "));
-            }
-            const setStatus = async (item, status = desiredStatus) => {
-              const targetOption = statusField.options.find((candidate) =>
-                candidate.name.toLowerCase() === status.toLowerCase());
-              if (!targetOption) throw new Error("Missing project Status option: " + status);
-              const current = item.fieldValues?.nodes?.find((value) =>
-                value.field?.id === statusField.id);
-              if (current?.optionId === targetOption.id) return;
-              const mutation = `mutation(
-                $projectId: ID!, $itemId: ID!, $fieldId: ID!, $optionId: String!
-              ) {
-                updateProjectV2ItemFieldValue(input: {
-                  projectId: $projectId, itemId: $itemId, fieldId: $fieldId,
-                  value: { singleSelectOptionId: $optionId }
-                }) { projectV2Item { id } }
-              }`;
-              await projectApi(mutation, {
-                projectId: project.id, itemId: item.id,
-                fieldId: statusField.id, optionId: targetOption.id,
-              });
+              return data.addProjectV2ItemById.item.id;
             };
-            await setStatus(issueItem);
-            core.notice("Issue #" + issueNumber + " → " + option.name + ".");
-
-            if (pullRequest) {
-              let pullRequestItem = projectItems.find(
-                (item) =>
-                  item.content?.__typename === "PullRequest" &&
-                  item.content.number === pullRequest.number &&
-                  item.content.repository?.nameWithOwner === context.repo.owner + "/" + context.repo.repo,
-              );
-
-              if (!pullRequestItem) {
-                const addItemMutation = `mutation($projectId: ID!, $contentId: ID!) {
-                  addProjectV2ItemById(input: {projectId: $projectId, contentId: $contentId}) {
-                    item { id }
-                  }
-                }`;
-                const added = await projectApi(addItemMutation, {
-                  projectId: project.id,
-                  contentId: pullRequest.node_id,
-                });
-                pullRequestItem = { id: added.addProjectV2ItemById.item.id };
-              }
-
-              await setStatus(pullRequestItem,
-                pullRequest.state === "closed" ? "Done" : desiredStatus);
-
-            core.notice(
-              `Synchronized PR #${pullRequest.number} from issue #${issueNumber}: ${labels.length} labels, ${assignees.length} assignees, milestone ${issue.milestone?.title ?? "none"}, and project GemsForgeAPI.`,
+            const itemsData = await gql(
+              "query($id:ID!){node(id:$id){... on ProjectV2{items(first:100){nodes{id content{__typename ... on Issue{number repository{nameWithOwner}} ... on PullRequest{number repository{nameWithOwner}}}}}}}}",
+              { id: project.id }
             );
-            } else {
-              core.notice(`Issue #${issueNumber} is in project GemsForgeAPI.`);
+            const items = itemsData.node?.items?.nodes || [];
+            const findItem = (kind, number) => items.find((i) =>
+              i.content?.__typename === kind &&
+              i.content.number === number &&
+              i.content.repository?.nameWithOwner === fullName
+            );
+            const issueItem = findItem("Issue", issueNumber) || await addItem(issue.node_id);
+            const setStatus = async (itemId, name) => {
+              await gql(
+                "mutation($p:ID!,$i:ID!,$f:ID!,$o:String!){updateProjectV2ItemFieldValue(input:{projectId:$p,itemId:$i,fieldId:$f,value:{singleSelectOptionId:$o}}){projectV2Item{id}}}",
+                { p: project.id, i: itemId, f: statusField.id, o: status(name) }
+              );
+            };
+            let desired = "Backlog";
+            if (issue.state === "closed") desired = "Done";
+            else if (pr?.merged) desired = "QA";
+            else if (reviewState === "changes_requested") desired = "Changes requested";
+            else if (pr?.draft) desired = "In progress";
+            else if (pr || context.eventName === "pull_request_review") desired = "In review";
+            else {
+              const branches = await github.paginate(github.rest.repos.listBranches, {...context.repo, per_page:100});
+              desired = branches.some((b) => issueFromRef(b.name) === issueNumber) ? "In progress" : "Backlog";
             }
-
-            // Remove only the repository branch that produced a merged PR.
-            // Closed-but-unmerged PRs retain their source branch for recovery.
-            if (pullRequest?.merged) {
-              const sourceBranch = pullRequest.head?.ref;
-              const sourceRepository = pullRequest.head?.repo?.full_name;
-              const defaultBranch = context.payload.repository?.default_branch;
-              if (!sourceBranch || sourceBranch === defaultBranch) {
-                core.notice("Skipped source-branch deletion for the default or missing branch.");
-              } else if (sourceRepository !== context.repo.owner + "/" + context.repo.repo) {
-                core.notice("Skipped source-branch deletion for a fork branch.");
-              } else {
-                try {
-                  await github.rest.git.deleteRef({
-                    ...context.repo,
-                    ref: "heads/" + sourceBranch,
-                  });
-                  core.notice("Deleted merged PR source branch " + sourceBranch + ".");
-                } catch (error) {
-                  if (error.status === 403 || error.status === 404 || error.status === 422) {
-                    core.notice(
-                      "Source branch " + sourceBranch +
-                      " was not deleted because branch cleanup is unavailable to this workflow token.",
-                    );
-                  } else {
-                    throw error;
-                  }
-                }
-              }
+            await setStatus(issueItem, desired);
+            if (pr) {
+              const prItem = findItem("PullRequest", pr.number) || await addItem(pr.node_id);
+              await setStatus(prItem, pr.merged ? "QA" : pr.state === "closed" ? "Done" : desired);
             }
+            core.notice("Issue #" + issueNumber + " synchronized to " + desired + " in Project #" + projectNumber + ".");
