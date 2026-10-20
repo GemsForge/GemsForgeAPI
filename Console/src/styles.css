@@ -883,13 +883,13 @@ dialog::backdrop {
 .gem-record-grid-card > button {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  grid-template-rows: 58% 1fr auto;
+  grid-template-rows: 58% minmax(0, 1fr) auto;
   align-items: start;
   gap: 0 0.75rem;
   width: 100%;
   height: 100%;
   min-height: 100%;
-  padding: 1.15rem;
+  padding: 0;
   border: 0;
   border-radius: inherit;
   background: transparent;
@@ -903,6 +903,7 @@ dialog::backdrop {
   width: 100%;
   height: 100%;
   min-height: 0;
+  overflow: hidden;
   border-radius: 0.75rem 0.75rem 0.35rem 0.35rem;
   background: rgba(7, 23, 28, 0.52);
   color: var(--mint);
@@ -921,12 +922,21 @@ dialog::backdrop {
   grid-row: 2;
   min-width: 0;
   align-self: center;
-  padding-top: 0.75rem;
+  width: 100%;
+  height: 100%;
+  padding: 0.75rem 1rem 0;
+  overflow: hidden;
+  border-top: 1px solid rgba(120, 209, 189, 0.16);
+  background: rgba(7, 23, 28, 0.34);
 }
 .gem-record-grid-card > button > [data-record-status] {
   grid-column: 2;
   grid-row: 3;
   justify-self: end;
+  align-self: end;
+  margin: 0;
+  padding: 0.5rem 1rem 0.75rem;
+  background: rgba(7, 23, 28, 0.34);
 }
 .gem-record-grid-card > button:hover,
 .gem-record-grid-card > button.selected {
