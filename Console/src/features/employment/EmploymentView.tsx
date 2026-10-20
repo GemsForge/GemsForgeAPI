@@ -137,6 +137,12 @@ export function EmploymentView({ records }: EmploymentViewProps) {
             label="Employment records"
             onExpandedChange={setSelectedID}
             getKey={(record) => record.id}
+            tableColumns={[
+              { key: "employer", label: "Employer", icon: () => "◆", render: (record) => record.employerName },
+              { key: "position", label: "Category", render: (record) => record.positionTitle },
+              { key: "id", label: "Item ID", render: (record) => record.id },
+              { key: "status", label: "Status", render: (record) => record.employmentStatus },
+            ]}
             renderRecord={(record) => (
               <GemRecordCard
                 className="employment-card"

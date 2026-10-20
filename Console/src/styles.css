@@ -845,6 +845,45 @@ dialog::backdrop {
   border-color: var(--mint);
   color: var(--mint);
 }
+.gem-record-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 0.85rem;
+  background: var(--panel);
+}
+.gem-record-table {
+  width: 100%;
+  min-width: 42rem;
+  border-collapse: collapse;
+  text-align: left;
+}
+.gem-record-table th,
+.gem-record-table td {
+  padding: 0.8rem 1rem;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+.gem-record-table th {
+  color: var(--ink);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.gem-record-table td {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+.gem-record-table-icon {
+  display: inline-flex;
+  width: 1.35rem;
+  margin-right: 0.45rem;
+  justify-content: center;
+  color: var(--mint);
+  font-size: 1rem;
+}
+.gem-record-table tr:last-child td {
+  border-bottom: 0;
+}
 .gem-record-grid-shell {
   display: flex;
   align-items: center;

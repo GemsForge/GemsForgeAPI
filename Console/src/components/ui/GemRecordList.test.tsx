@@ -28,7 +28,7 @@ describe("GemRecordList views", () => {
       </TamaguiProvider>,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Grid" }));
+    fireEvent.click(screen.getByRole("button", { name: "Gallery" }));
     expect(screen.getByRole("button", { name: "Next example record" })).toBeEnabled();
     fireEvent.click(screen.getByRole("button", { name: "Next example record" }));
     expect(onExpandedChange).toHaveBeenCalledWith("two");
@@ -50,7 +50,7 @@ describe("GemRecordList views", () => {
       </TamaguiProvider>,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Grid" }));
+    fireEvent.click(screen.getByRole("button", { name: "Gallery" }));
     expect(screen.getByRole("button", { name: "One" })).toBeInTheDocument();
     expect(screen.queryByText("Details should stay in List view")).not.toBeInTheDocument();
     expect(document.querySelector('[data-card-view="grid"]')).toBeTruthy();
