@@ -38,7 +38,7 @@ Configure the API's `SUPABASE_URL`, `SUPABASE_OWNER_SUBJECT`, and
 `GEM_LIFE_OPERATOR_ACCOUNT_ID` as described in the authentication guide. Keep
 public Supabase signups disabled; this Console is owner-only.
 
-Open `http://127.0.0.1:5173/`.
+Open `http://127.0.0.1:4173/`.
 
 Vite proxies API paths to Vapor so the browser can use same-origin requests:
 

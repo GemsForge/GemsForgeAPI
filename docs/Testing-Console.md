@@ -18,7 +18,7 @@ swift run GemsForgeAPI serve --hostname 127.0.0.1 --port 8180
 ```
 
 Open `http://127.0.0.1:8180/` for the guidance page, then use the React
-Console at `http://127.0.0.1:5173/` for sign-in and protected records.
+Console at `http://127.0.0.1:4173/` for sign-in and protected records.
 
 The examples use port `8180` for both integrated and standalone API launches.
 For a second standalone instance, choose another port explicitly and set
@@ -48,7 +48,7 @@ cd Console
 VITE_API_TARGET="http://127.0.0.1:8180" npm run dev
 ```
 
-Open `http://127.0.0.1:5173/`.
+Open `http://127.0.0.1:4173/`.
 
 - View the four stable Domains records.
 - Select a domain and retrieve its ForgeKeeper pages.

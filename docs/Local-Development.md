@@ -68,7 +68,7 @@ npm run dev
 Open the React console:
 
 ```text
-http://127.0.0.1:5173/
+http://127.0.0.1:4173/
 ```
 
 The standalone API-served root in the example port guides users to the packaged
