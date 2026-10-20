@@ -58,7 +58,7 @@ export function GemRecordList<Record>({
           >
             ←
           </button>
-          <XStack className={`${className} gem-record-grid-rail`} aria-label={`${label} records`}>
+          <XStack className={`${className} gem-record-grid-rail`} flexWrap="wrap" aria-label={`${label} records`}>
             {records.map((record) => {
               const key = getKey(record);
               return (

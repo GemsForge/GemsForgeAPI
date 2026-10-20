@@ -853,21 +853,20 @@ dialog::backdrop {
 .gem-record-grid-rail {
   display: flex;
   gap: 1rem;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
+  align-items: stretch;
   padding: 0.5rem 0.25rem 1rem;
   flex: 1;
 }
 .gem-record-grid-card {
-  flex: 0 0 min(72vw, 22rem);
-  scroll-snap-align: center;
+  flex: 1 1 min(18rem, 30%);
+  min-width: min(16rem, 100%);
   opacity: 0.72;
   transition:
     flex-basis 180ms ease,
     opacity 180ms ease;
 }
 .gem-record-grid-card.is-active {
-  flex-basis: min(82vw, 34rem);
+  flex-basis: min(34rem, 60%);
   opacity: 1;
 }
 .gem-record-grid-card > button {
@@ -885,6 +884,10 @@ dialog::backdrop {
 @media (max-width: 640px) {
   .gem-record-grid-nav {
     display: none;
+  }
+  .gem-record-grid-card,
+  .gem-record-grid-card.is-active {
+    flex-basis: 100%;
   }
 }
 .gem-record-expansion {
