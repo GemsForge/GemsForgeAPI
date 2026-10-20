@@ -71,6 +71,7 @@ export function EducationView({ records }: EducationViewProps) {
             className="education-list"
             records={paging.items}
             label="Education records"
+            onExpandedChange={setSelectedID}
             getKey={(record) => record.id}
             renderRecord={(record) => (
               <GemRecordCard
@@ -80,7 +81,7 @@ export function EducationView({ records }: EducationViewProps) {
                 subtitle={record.educationType}
                 status={record.status}
                 selected={selectedRecord?.id === record.id}
-                onSelect={() => setSelectedID(record.id)}
+                onSelect={() => setSelectedID((current) => current === record.id ? null : record.id)}
               />
             )}
           />
@@ -109,7 +110,7 @@ export function EducationView({ records }: EducationViewProps) {
                 </div>
               )
             )}
-          </div>
+          />
         </div>
       )}
     </>

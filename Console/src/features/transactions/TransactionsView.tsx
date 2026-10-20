@@ -79,6 +79,7 @@ export function TransactionsView({ records }: TransactionsViewProps) {
             className="transaction-list"
             records={paging.items}
             label="Expense transactions"
+            onExpandedChange={setSelectedID}
             getKey={(record) => record.id}
             renderRecord={(record) => (
               <GemRecordCard
@@ -88,33 +89,27 @@ export function TransactionsView({ records }: TransactionsViewProps) {
                 subtitle={`${record.transactionDate || "Undated"} · ${record.id}`}
                 status={formatAmount(record.total ?? record.paidPrice)}
                 selected={selectedID === record.id}
-                onSelect={() => setSelectedID(record.id)}
+                onSelect={() => setSelectedID((current) => current === record.id ? null : record.id)}
               />
+            )}
+            isExpanded={(record) => selectedID === record.id}
+            renderExpanded={() => (
+              <>
+                <QueryFeedback query={detail} />
+                {selectedRecord && <TransactionDetail
+                  key={selectedRecord.id}
+                  record={selectedRecord}
+                  merchants={merchants.data ?? []}
+                  onAttachment={async (metadata) => {
+                    await attachment.mutateAsync({ id: selectedRecord.id, fileID: metadata?.id ?? null });
+                  }}
+                  onPatch={async (values) => {
+                    await patch.mutateAsync({ id: selectedRecord.id, patch: values });
+                  }}
+                />}
+              </>
             )}
           />
-          <div>
-            <QueryFeedback query={detail} />
-            {selectedRecord ? (
-              <TransactionDetail
-                key={selectedRecord.id}
-                record={selectedRecord}
-                merchants={merchants.data ?? []}
-                onAttachment={async (metadata) => {
-                  await attachment.mutateAsync({ id: selectedRecord.id, fileID: metadata?.id ?? null });
-                }}
-                onPatch={async (values) => {
-                  await patch.mutateAsync({ id: selectedRecord.id, patch: values });
-                }}
-              />
-            ) : (
-              !selectedID && (
-                <div className="detail-placeholder">
-                  <span>$</span>
-                  <p>Select an expense transaction to view its details.</p>
-                </div>
-              )
-            )}
-          </div>
         </div>
       )}
     </>

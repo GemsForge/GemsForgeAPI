@@ -808,14 +808,48 @@ dialog::backdrop {
   color: var(--mint);
 }
 .education-layout {
-  display: grid;
-  grid-template-columns: minmax(18rem, 0.8fr) minmax(0, 1.4fr);
-  gap: 1rem;
-  align-items: start;
+  display: block;
 }
 .education-list {
   display: grid;
   gap: 0.65rem;
+}
+.gem-record-status {
+  justify-self: end;
+  align-self: center;
+  min-width: 0;
+  padding: 0.3rem 0.6rem;
+  border: 1px solid rgba(120, 209, 189, 0.3);
+  border-radius: 999px;
+  color: var(--mint);
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.gem-record-list-row {
+  min-width: 0;
+}
+.gem-record-expansion {
+  margin-top: -0.65rem;
+  padding: 0.65rem;
+  border: 1px solid rgba(120, 209, 189, 0.42);
+  border-top: 0;
+  border-radius: 0 0 1rem 1rem;
+  background: var(--panel-light);
+}
+.gem-record-expansion .education-detail,
+.gem-record-expansion .employment-detail,
+.gem-record-expansion .address-detail,
+.gem-record-expansion .transaction-detail {
+  border: 0;
+  border-radius: 0.65rem;
+  background: transparent;
+}
+.gem-record-list-row:has(> .selected) > .selected,
+.hue-list-item:has(> .hue-card.selected) > .hue-card.selected {
+  border-bottom-color: transparent;
+  border-radius: 1rem 1rem 0 0;
 }
 .education-card {
   display: grid;
@@ -913,10 +947,7 @@ dialog::backdrop {
   margin: 0;
 }
 .employment-layout {
-  display: grid;
-  grid-template-columns: minmax(18rem, 0.8fr) minmax(0, 1.4fr);
-  gap: 1rem;
-  align-items: start;
+  display: block;
 }
 .employment-list {
   display: grid;
@@ -981,10 +1012,7 @@ dialog::backdrop {
   font-size: 0.72rem;
 }
 .address-layout {
-  display: grid;
-  grid-template-columns: minmax(18rem, 0.8fr) minmax(0, 1.4fr);
-  gap: 1rem;
-  align-items: start;
+  display: block;
 }
 .address-list {
   display: grid;
@@ -1094,10 +1122,7 @@ dialog::backdrop {
 }
 
 .transaction-layout {
-  display: grid;
-  grid-template-columns: minmax(20rem, 0.8fr) minmax(0, 1.4fr);
-  gap: 1rem;
-  align-items: start;
+  display: block;
 }
 .transaction-list {
   display: grid;

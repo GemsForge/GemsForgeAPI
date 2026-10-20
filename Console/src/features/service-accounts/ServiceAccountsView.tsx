@@ -74,6 +74,7 @@ export function ServiceAccountsView({ records }: { records: ServiceAccount[] }) 
             className="address-list"
             records={paging.items}
             label="Service account records"
+            onExpandedChange={(key) => setSelectedID(key ? Number(key) : null)}
             getKey={(record) => String(record.id)}
             renderRecord={(record) => (
               <GemRecordCard
@@ -86,35 +87,26 @@ export function ServiceAccountsView({ records }: { records: ServiceAccount[] }) 
                 subtitle={`${record.type || "Service"} · ${record.id}`}
                 status={record.status || undefined}
                 selected={selectedID === record.id}
-                onSelect={() => setSelectedID(record.id)}
+                onSelect={() => setSelectedID((current) => current === record.id ? null : record.id)}
               />
+            )}
+            isExpanded={(record) => selectedID === record.id}
+            renderExpanded={() => (
+              <>
+                <QueryFeedback query={detail} />
+                {detail.data && <ServiceAccountDetail
+                  key={detail.data.id}
+                  record={detail.data}
+                  onAttachment={async (metadata) => {
+                    await patch.mutateAsync({ id: detail.data!.id, patch: { logoFileMetadataID: metadata?.id ?? null } });
+                  }}
+                  onPatch={async (values) => {
+                    await patch.mutateAsync({ id: detail.data!.id, patch: values });
+                  }}
+                />}
+              </>
             )}
           />
-          <div>
-            <QueryFeedback query={detail} />
-            {detail.data ? (
-              <ServiceAccountDetail
-                key={detail.data.id}
-                record={detail.data}
-                onAttachment={async (metadata) => {
-                  await patch.mutateAsync({
-                    id: detail.data!.id,
-                    patch: { logoFileMetadataID: metadata?.id ?? null },
-                  });
-                }}
-                onPatch={async (values) => {
-                  await patch.mutateAsync({ id: detail.data!.id, patch: values });
-                }}
-              />
-            ) : (
-              !selectedID && (
-                <div className="detail-placeholder">
-                  <span>◎</span>
-                  <p>Select a service to view its details.</p>
-                </div>
-              )
-            )}
-          </div>
         </div>
       )}
     </>
@@ -134,17 +126,6 @@ function ServiceAccountDetail({
   const legacyLogo = logos.data?.find((logo) => logo.logoKey === record.logoKey);
   return (
     <article className="address-detail">
-      <div className="detail-heading">
-        <div className="service-heading-identity">
-          <LegacyLogoPreview logo={legacyLogo} className="service-logo-heading" />
-          <div>
-            <p className="eyebrow">Service account</p>
-            <h3>{record.service}</h3>
-            <p className="address-code">{record.id}</p>
-          </div>
-        </div>
-        <span className="status-pill">{record.status || "—"}</span>
-      </div>
       <EditableRecordFields
         className="address-fields"
         fields={[

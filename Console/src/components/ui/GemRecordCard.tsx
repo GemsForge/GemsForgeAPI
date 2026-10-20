@@ -27,6 +27,7 @@ export function GemRecordCard({
       className={`${className}${selected ? " selected" : ""}`}
       aria-label={ariaLabel}
       aria-pressed={selected}
+      aria-expanded={selected}
       onClick={onSelect}
     >
       <span className={`${className}-icon`} aria-hidden="true">
@@ -36,7 +37,11 @@ export function GemRecordCard({
         <strong>{title}</strong>
         <small>{subtitle}</small>
       </span>
-      {status ? <span className={`${className}-status`}>{status}</span> : null}
+      {status ? (
+        <div className="gem-record-status" data-record-status>
+          {status}
+        </div>
+      ) : null}
     </button>
   );
 }
