@@ -962,7 +962,8 @@ dialog::backdrop {
   justify-self: end;
   align-self: end;
   margin: 0;
-  padding: 0.5rem 1rem 0.75rem;
+  padding: 0.35rem 0.65rem 0.5rem;
+  font-size: 0.65rem;
   background: rgba(7, 23, 28, 0.34);
 }
 .gem-record-grid-card > button:hover,
