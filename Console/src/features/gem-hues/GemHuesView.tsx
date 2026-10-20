@@ -7,7 +7,6 @@ import type { GemHue } from "../../types";
 import { EditableRecordFields } from "../../components/EditableRecordFields";
 
 const hueOptions = (values: string[]) => values.map((value) => ({ value, label: value }));
-import { RecordFields } from "../../components/RecordFields";
 import { useCreateGemHueMutation } from "../../data/recordQueries";
 import { useState as useFormState } from "react";
 import type { GemHueCreate } from "../../types";

@@ -8,7 +8,7 @@ import { tamaguiConfig } from "../design-system";
 
 function renderFields(fields: ComponentProps<typeof EditableRecordFields>["fields"]) {
   return render(
-    <TamaguiProvider config={tamaguiConfig}>
+    <TamaguiProvider config={tamaguiConfig} defaultTheme="dark">
       <EditableRecordFields fields={fields} />
     </TamaguiProvider>,
   );
