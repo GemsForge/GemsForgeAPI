@@ -47,7 +47,7 @@ export function AddressesView({ records }: AddressesViewProps) {
           <RecordImport label="addresses" expectedColumns={["id", "addressType", "country"]} onPublish={async (rows) => { for (const row of rows) await create.mutateAsync(row as Parameters<typeof create.mutateAsync>[0]); }} />
         </div>
       </div>
-      <RecordUtilities label="Addresses" {...utilities} sortOptions={[{ value: "city", label: "City" }, { value: "type", label: "Address type" }]} filterOptions={Array.from(new Set(records.map((record) => record.addressStatus))).sort()} />
+      <RecordUtilities label="Addresses" {...utilities} totalCount={records.length} visibleCount={utilities.records.length} sortOptions={[{ value: "city", label: "City" }, { value: "type", label: "Address type" }]} filterOptions={Array.from(new Set(records.map((record) => record.addressStatus))).sort()} />
 
       {creating && (
         <AddressCreateForm

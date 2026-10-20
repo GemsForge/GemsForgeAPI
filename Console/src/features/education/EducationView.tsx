@@ -51,7 +51,7 @@ export function EducationView({ records }: EducationViewProps) {
           <RecordImport label="education records" expectedColumns={["id", "educationType", "institutionName", "status"]} onPublish={async (rows) => { for (const row of rows) await create.mutateAsync(row as Parameters<typeof create.mutateAsync>[0]); }} />
         </div>
       </div>
-      <RecordUtilities label="Education" {...utilities} sortOptions={[{ value: "institution", label: "Institution" }, { value: "status", label: "Status" }]} filterOptions={Array.from(new Set(records.map((record) => record.status))).sort()} />
+      <RecordUtilities label="Education" {...utilities} totalCount={records.length} visibleCount={utilities.records.length} sortOptions={[{ value: "institution", label: "Institution" }, { value: "status", label: "Status" }]} filterOptions={Array.from(new Set(records.map((record) => record.status))).sort()} />
 
       {creating && (
         <EducationCreateForm
