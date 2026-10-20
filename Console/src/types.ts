@@ -130,9 +130,20 @@ export interface GemHue {
 }
 
 export type GemHueCreate = Omit<GemHue, "id"> & { id: string };
-export interface GemHueImportPreview { validRows: GemHueCreate[]; invalidRows: { rowNumber: number; errors: string[] }[]; readyToImport: boolean; warnings: string[]; }
-export interface HubOwnershipPreview { hubID: string; unownedCounts: Record<string, number>; }
-export interface HubOwnershipAssignment { hubID: string; assignedCounts: Record<string, number>; }
+export interface GemHueImportPreview {
+  validRows: GemHueCreate[];
+  invalidRows: { rowNumber: number; errors: string[] }[];
+  readyToImport: boolean;
+  warnings: string[];
+}
+export interface HubOwnershipPreview {
+  hubID: string;
+  unownedCounts: Record<string, number>;
+}
+export interface HubOwnershipAssignment {
+  hubID: string;
+  assignedCounts: Record<string, number>;
+}
 
 export interface Education {
   id: string;
@@ -231,7 +242,15 @@ export interface ServiceAccount {
   logoFileMetadataID: string | null;
   updatedAt?: string | null;
 }
-export interface ServiceLogo { id: number; logoKey: string | null; mimeType: string; fileName: string | null; fileSizeBytes: number | null; fileMetadataID: string | null; imagePath: string; }
+export interface ServiceLogo {
+  id: number;
+  logoKey: string | null;
+  mimeType: string;
+  fileName: string | null;
+  fileSizeBytes: number | null;
+  fileMetadataID: string | null;
+  imagePath: string;
+}
 
 export interface FileMetadata {
   id: string;

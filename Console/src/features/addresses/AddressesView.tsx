@@ -19,9 +19,14 @@ interface AddressesViewProps {
 }
 
 export function AddressesView({ records }: AddressesViewProps) {
-  const utilities = useRecordUtilities(records, (record) => [record.id, record.city, record.state, record.addressType, record.country, record.addressStatus], {
-    city: (a, b) => (a.city ?? "").localeCompare(b.city ?? ""), type: (a, b) => a.addressType.localeCompare(b.addressType),
-  });
+  const utilities = useRecordUtilities(
+    records,
+    (record) => [record.id, record.city, record.state, record.addressType, record.country, record.addressStatus],
+    {
+      city: (a, b) => (a.city ?? "").localeCompare(b.city ?? ""),
+      type: (a, b) => a.addressType.localeCompare(b.addressType),
+    },
+  );
   const paging = usePagedRecords(utilities.records);
   const [selectedID, setSelectedID] = useState<string | null>(null);
   const detail = useAddressQuery(selectedID);
@@ -45,10 +50,28 @@ export function AddressesView({ records }: AddressesViewProps) {
           <button type="button" onClick={() => setCreating(true)}>
             Add address
           </button>
-          <RecordImport label="addresses" expectedColumns={["id", "addressType", "country"]} onPublish={async (rows) => { for (const row of rows) await create.mutateAsync(row as Parameters<typeof create.mutateAsync>[0]); }} />
+          <RecordImport
+            label="addresses"
+            expectedColumns={["id", "addressType", "country"]}
+            onPublish={async (rows) => {
+              for (const row of rows) await create.mutateAsync(row as Parameters<typeof create.mutateAsync>[0]);
+            }}
+          />
         </div>
       </div>
-      <RecordCollection><RecordUtilities label="Addresses" {...utilities} totalCount={records.length} visibleCount={utilities.records.length} sortOptions={[{ value: "city", label: "City" }, { value: "type", label: "Address type" }]} filterOptions={Array.from(new Set(records.map((record) => record.addressStatus))).sort()} /></RecordCollection>
+      <RecordCollection>
+        <RecordUtilities
+          label="Addresses"
+          {...utilities}
+          totalCount={records.length}
+          visibleCount={utilities.records.length}
+          sortOptions={[
+            { value: "city", label: "City" },
+            { value: "type", label: "Address type" },
+          ]}
+          filterOptions={Array.from(new Set(records.map((record) => record.addressStatus))).sort()}
+        />
+      </RecordCollection>
 
       {creating && (
         <AddressCreateForm
@@ -83,23 +106,25 @@ export function AddressesView({ records }: AddressesViewProps) {
                 subtitle={`${record.addressType} · ${record.id}`}
                 status={record.addressStatus}
                 selected={selectedID === record.id}
-                onSelect={() => setSelectedID((current) => current === record.id ? null : record.id)}
+                onSelect={() => setSelectedID((current) => (current === record.id ? null : record.id))}
               />
             )}
             isExpanded={(record) => selectedID === record.id}
             renderExpanded={() => (
               <>
                 <QueryFeedback query={detail} />
-                {selectedAddress && <AddressDetail
-                  key={selectedAddress.id}
-                  record={selectedAddress}
-                  onAttachment={async (metadata) => {
-                    await attachment.mutateAsync({ id: selectedAddress.id, fileID: metadata?.id ?? null });
-                  }}
-                  onPatch={async (values) => {
-                    await patch.mutateAsync({ id: selectedAddress.id, patch: values });
-                  }}
-                />}
+                {selectedAddress && (
+                  <AddressDetail
+                    key={selectedAddress.id}
+                    record={selectedAddress}
+                    onAttachment={async (metadata) => {
+                      await attachment.mutateAsync({ id: selectedAddress.id, fileID: metadata?.id ?? null });
+                    }}
+                    onPatch={async (values) => {
+                      await patch.mutateAsync({ id: selectedAddress.id, patch: values });
+                    }}
+                  />
+                )}
               </>
             )}
           />

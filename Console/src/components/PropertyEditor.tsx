@@ -34,10 +34,7 @@ export function PropertyEditor({
   }
 
   return (
-    <Form
-      className="edit-form"
-      onSubmit={() => void editor.save()}
-    >
+    <Form className="edit-form" onSubmit={() => void editor.save()}>
       <label>
         {label}
         <input

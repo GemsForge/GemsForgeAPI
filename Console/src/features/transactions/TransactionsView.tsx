@@ -29,9 +29,14 @@ interface TransactionsViewProps {
 }
 
 export function TransactionsView({ records }: TransactionsViewProps) {
-  const utilities = useRecordUtilities(records, (record) => [record.id, record.item, record.transactionDate, record.merchantCode], {
-    date: (a, b) => (a.transactionDate ?? "").localeCompare(b.transactionDate ?? ""), item: (a, b) => a.item.localeCompare(b.item),
-  });
+  const utilities = useRecordUtilities(
+    records,
+    (record) => [record.id, record.item, record.transactionDate, record.merchantCode],
+    {
+      date: (a, b) => (a.transactionDate ?? "").localeCompare(b.transactionDate ?? ""),
+      item: (a, b) => a.item.localeCompare(b.item),
+    },
+  );
   const paging = usePagedRecords(utilities.records);
   const [selectedID, setSelectedID] = useState<string | null>(null);
   const detail = useTransactionQuery(selectedID);
@@ -58,10 +63,30 @@ export function TransactionsView({ records }: TransactionsViewProps) {
           <button type="button" onClick={() => setCreating(true)}>
             Add transaction
           </button>
-          <RecordImport label="transactions" expectedColumns={["id", "item", "categoryID", "quantity"]} onPublish={async (rows) => { for (const row of rows) await create.mutateAsync(row as Parameters<typeof create.mutateAsync>[0]); }} />
+          <RecordImport
+            label="transactions"
+            expectedColumns={["id", "item", "categoryID", "quantity"]}
+            onPublish={async (rows) => {
+              for (const row of rows) await create.mutateAsync(row as Parameters<typeof create.mutateAsync>[0]);
+            }}
+          />
         </div>
       </div>
-      <RecordCollection><RecordUtilities label="Transactions" {...utilities} totalCount={records.length} visibleCount={utilities.records.length} sortOptions={[{ value: "date", label: "Transaction date" }, { value: "item", label: "Item" }]} filterOptions={Array.from(new Set(records.map((record) => record.merchantCode).filter((value): value is string => Boolean(value)))).sort()} /></RecordCollection>
+      <RecordCollection>
+        <RecordUtilities
+          label="Transactions"
+          {...utilities}
+          totalCount={records.length}
+          visibleCount={utilities.records.length}
+          sortOptions={[
+            { value: "date", label: "Transaction date" },
+            { value: "item", label: "Item" },
+          ]}
+          filterOptions={Array.from(
+            new Set(records.map((record) => record.merchantCode).filter((value): value is string => Boolean(value))),
+          ).sort()}
+        />
+      </RecordCollection>
 
       {creating && (
         <TransactionCreateForm
@@ -96,24 +121,26 @@ export function TransactionsView({ records }: TransactionsViewProps) {
                 subtitle={`${record.transactionDate || "Undated"} · ${record.id}`}
                 status={formatAmount(record.total ?? record.paidPrice)}
                 selected={selectedID === record.id}
-                onSelect={() => setSelectedID((current) => current === record.id ? null : record.id)}
+                onSelect={() => setSelectedID((current) => (current === record.id ? null : record.id))}
               />
             )}
             isExpanded={(record) => selectedID === record.id}
             renderExpanded={() => (
               <>
                 <QueryFeedback query={detail} />
-                {selectedRecord && <TransactionDetail
-                  key={selectedRecord.id}
-                  record={selectedRecord}
-                  merchants={merchants.data ?? []}
-                  onAttachment={async (metadata) => {
-                    await attachment.mutateAsync({ id: selectedRecord.id, fileID: metadata?.id ?? null });
-                  }}
-                  onPatch={async (values) => {
-                    await patch.mutateAsync({ id: selectedRecord.id, patch: values });
-                  }}
-                />}
+                {selectedRecord && (
+                  <TransactionDetail
+                    key={selectedRecord.id}
+                    record={selectedRecord}
+                    merchants={merchants.data ?? []}
+                    onAttachment={async (metadata) => {
+                      await attachment.mutateAsync({ id: selectedRecord.id, fileID: metadata?.id ?? null });
+                    }}
+                    onPatch={async (values) => {
+                      await patch.mutateAsync({ id: selectedRecord.id, patch: values });
+                    }}
+                  />
+                )}
               </>
             )}
           />
@@ -200,8 +227,12 @@ function TransactionDetail({
             value: record.subcategoryID,
             inputType: "select",
             nullable: true,
-            options: (subcategories.data ?? []).map((subcategory) => ({ value: String(subcategory.id), label: subcategory.name })),
-            displayValue: subcategories.data?.find((subcategory) => subcategory.id === record.subcategoryID)?.name ?? "—",
+            options: (subcategories.data ?? []).map((subcategory) => ({
+              value: String(subcategory.id),
+              label: subcategory.name,
+            })),
+            displayValue:
+              subcategories.data?.find((subcategory) => subcategory.id === record.subcategoryID)?.name ?? "—",
             onSave: async (value) => onPatch({ subcategoryID: value == null || value === "" ? null : Number(value) }),
           },
           {

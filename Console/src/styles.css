@@ -1827,8 +1827,15 @@ dialog {
   border-radius: 0.6rem;
   background: var(--panel);
 }
-.record-collection { display: contents; }
-.record-utilities label { display: grid; gap: 0.25rem; color: var(--ink); font-size: 0.8rem; }
+.record-collection {
+  display: contents;
+}
+.record-utilities label {
+  display: grid;
+  gap: 0.25rem;
+  color: var(--ink);
+  font-size: 0.8rem;
+}
 .record-utilities input,
 .record-utilities select {
   min-height: 2.25rem;
@@ -1837,8 +1844,18 @@ dialog {
   background: var(--canvas);
   color: var(--ink);
 }
-.record-utilities input::placeholder { color: var(--muted); opacity: 1; }
+.record-utilities input::placeholder {
+  color: var(--muted);
+  opacity: 1;
+}
 .record-utilities input:disabled,
 .record-utilities select:disabled,
-.record-utilities button:disabled { opacity: 0.55; }
-.record-utility-summary { margin-left: auto; align-self: center; color: var(--ink); font-size: 0.85rem; }
+.record-utilities button:disabled {
+  opacity: 0.55;
+}
+.record-utility-summary {
+  margin-left: auto;
+  align-self: center;
+  color: var(--ink);
+  font-size: 0.85rem;
+}

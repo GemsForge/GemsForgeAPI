@@ -23,9 +23,14 @@ import { useRecordUtilities } from "../../hooks/useRecordUtilities";
 import { api } from "../../api";
 
 export function ServiceAccountsView({ records }: { records: ServiceAccount[] }) {
-  const utilities = useRecordUtilities(records, (record) => [record.id, record.service, record.type, record.status, record.expenseGroup], {
-    service: (a, b) => a.service.localeCompare(b.service), amount: (a, b) => (a.monthlyAmount ?? 0) - (b.monthlyAmount ?? 0),
-  });
+  const utilities = useRecordUtilities(
+    records,
+    (record) => [record.id, record.service, record.type, record.status, record.expenseGroup],
+    {
+      service: (a, b) => a.service.localeCompare(b.service),
+      amount: (a, b) => (a.monthlyAmount ?? 0) - (b.monthlyAmount ?? 0),
+    },
+  );
   const paging = usePagedRecords(utilities.records);
   const [selectedID, setSelectedID] = useState<number | null>(null);
   const detail = useServiceAccountQuery(selectedID);
@@ -47,18 +52,65 @@ export function ServiceAccountsView({ records }: { records: ServiceAccount[] }) 
           <button type="button" onClick={() => setCreating(true)}>
             Add service
           </button>
-          <RecordImport label="services" expectedColumns={["Service", "Type", "ExpenseGroup", "MonthlyAmount", "InterestRate", "APR", "Due", "Occurrence", "Status", "Since", "Website", "Notes", "PaymentMethod", "AccountNumber", "AssociatedAddress", "ServiceKey"]} onPublish={async (rows) => { for (const row of rows) await create.mutateAsync({
-            service: String(row.Service ?? row.service ?? ""), type: String(row.Type ?? row.type ?? "") || null,
-            expenseGroup: String(row.ExpenseGroup ?? "") || null, monthlyAmount: row.MonthlyAmount ? Number(row.MonthlyAmount) : null,
-            interestRate: row.InterestRate ? Number(row.InterestRate) : null, apr: row.APR ? Number(row.APR) : null,
-            due: String(row.Due ?? "") || null, occurrence: String(row.Occurrence ?? "") || null, status: String(row.Status ?? "") || null,
-            since: String(row.Since ?? "") || null, website: String(row.Website ?? "") || null, notes: String(row.Notes ?? "") || null,
-            paymentMethod: String(row.PaymentMethod ?? "") || null, accountNumber: String(row.AccountNumber ?? "") || null,
-            associatedAddress: String(row.AssociatedAddress ?? "") || null, serviceKey: String(row.ServiceKey ?? "") || null,
-          }); }} />
+          <RecordImport
+            label="services"
+            expectedColumns={[
+              "Service",
+              "Type",
+              "ExpenseGroup",
+              "MonthlyAmount",
+              "InterestRate",
+              "APR",
+              "Due",
+              "Occurrence",
+              "Status",
+              "Since",
+              "Website",
+              "Notes",
+              "PaymentMethod",
+              "AccountNumber",
+              "AssociatedAddress",
+              "ServiceKey",
+            ]}
+            onPublish={async (rows) => {
+              for (const row of rows)
+                await create.mutateAsync({
+                  service: String(row.Service ?? row.service ?? ""),
+                  type: String(row.Type ?? row.type ?? "") || null,
+                  expenseGroup: String(row.ExpenseGroup ?? "") || null,
+                  monthlyAmount: row.MonthlyAmount ? Number(row.MonthlyAmount) : null,
+                  interestRate: row.InterestRate ? Number(row.InterestRate) : null,
+                  apr: row.APR ? Number(row.APR) : null,
+                  due: String(row.Due ?? "") || null,
+                  occurrence: String(row.Occurrence ?? "") || null,
+                  status: String(row.Status ?? "") || null,
+                  since: String(row.Since ?? "") || null,
+                  website: String(row.Website ?? "") || null,
+                  notes: String(row.Notes ?? "") || null,
+                  paymentMethod: String(row.PaymentMethod ?? "") || null,
+                  accountNumber: String(row.AccountNumber ?? "") || null,
+                  associatedAddress: String(row.AssociatedAddress ?? "") || null,
+                  serviceKey: String(row.ServiceKey ?? "") || null,
+                });
+            }}
+          />
         </div>
       </div>
-      <RecordCollection><RecordUtilities label="Services" {...utilities} totalCount={records.length} visibleCount={utilities.records.length} sortOptions={[{ value: "service", label: "Service" }, { value: "amount", label: "Monthly amount" }]} filterOptions={Array.from(new Set(records.map((record) => record.status).filter((value): value is string => Boolean(value)))).sort()} /></RecordCollection>
+      <RecordCollection>
+        <RecordUtilities
+          label="Services"
+          {...utilities}
+          totalCount={records.length}
+          visibleCount={utilities.records.length}
+          sortOptions={[
+            { value: "service", label: "Service" },
+            { value: "amount", label: "Monthly amount" },
+          ]}
+          filterOptions={Array.from(
+            new Set(records.map((record) => record.status).filter((value): value is string => Boolean(value))),
+          ).sort()}
+        />
+      </RecordCollection>
       {creating && (
         <ServiceAccountCreateForm
           onCancel={() => setCreating(false)}
@@ -94,23 +146,28 @@ export function ServiceAccountsView({ records }: { records: ServiceAccount[] }) 
                 subtitle={`${record.type || "Service"} · ${record.id}`}
                 status={record.status || undefined}
                 selected={selectedID === record.id}
-                onSelect={() => setSelectedID((current) => current === record.id ? null : record.id)}
+                onSelect={() => setSelectedID((current) => (current === record.id ? null : record.id))}
               />
             )}
             isExpanded={(record) => selectedID === record.id}
             renderExpanded={() => (
               <>
                 <QueryFeedback query={detail} />
-                {detail.data && <ServiceAccountDetail
-                  key={detail.data.id}
-                  record={detail.data}
-                  onAttachment={async (metadata) => {
-                    await patch.mutateAsync({ id: detail.data!.id, patch: { logoFileMetadataID: metadata?.id ?? null } });
-                  }}
-                  onPatch={async (values) => {
-                    await patch.mutateAsync({ id: detail.data!.id, patch: values });
-                  }}
-                />}
+                {detail.data && (
+                  <ServiceAccountDetail
+                    key={detail.data.id}
+                    record={detail.data}
+                    onAttachment={async (metadata) => {
+                      await patch.mutateAsync({
+                        id: detail.data!.id,
+                        patch: { logoFileMetadataID: metadata?.id ?? null },
+                      });
+                    }}
+                    onPatch={async (values) => {
+                      await patch.mutateAsync({ id: detail.data!.id, patch: values });
+                    }}
+                  />
+                )}
               </>
             )}
           />
@@ -297,13 +354,20 @@ function ServiceAccountDetail({
   );
 }
 
-function LegacyLogoPreview({ logo, className }: { logo?: { id: number; logoKey: string | null; imagePath: string }; className?: string }) {
+function LegacyLogoPreview({
+  logo,
+  className,
+}: {
+  logo?: { id: number; logoKey: string | null; imagePath: string };
+  className?: string;
+}) {
   const [url, setUrl] = useState<string | null>(null);
   useEffect(() => {
     if (!logo) return;
     let objectURL: string | undefined;
     const controller = new AbortController();
-    void api.getServiceLogoImage(logo.id, controller.signal)
+    void api
+      .getServiceLogoImage(logo.id, controller.signal)
       .then((blob) => {
         objectURL = URL.createObjectURL(blob);
         setUrl(objectURL);

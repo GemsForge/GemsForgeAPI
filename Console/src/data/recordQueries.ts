@@ -133,7 +133,8 @@ export function useGemHueImageQuery(id: string | null) {
 export function useGemHuePatchMutation() {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, patch }: { id: string; patch: Partial<import("../types").GemHue> }) => api.patchGemHue(id, patch),
+    mutationFn: ({ id, patch }: { id: string; patch: Partial<import("../types").GemHue> }) =>
+      api.patchGemHue(id, patch),
     onSuccess: async (record) => {
       client.setQueryData(recordQueryKeys.hue(record.id), record);
       await client.invalidateQueries({ queryKey: lifeQueryKeys.gemHues, exact: true });
