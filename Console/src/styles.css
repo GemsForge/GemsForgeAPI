@@ -1040,9 +1040,20 @@ dialog::backdrop {
     aspect-ratio: 0.88 / 1;
   }
 }
-@media (min-width: 641px) and (max-width: 1080px) {
+@media (min-width: 901px) and (max-width: 1080px) {
   .gem-record-grid-rail {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .gem-record-grid-card > button > [class$="-copy"] strong {
+    font-size: 0.78rem;
+  }
+  .gem-record-grid-card > button > [class$="-copy"] small {
+    font-size: 0.64rem;
+  }
+}
+@media (min-width: 641px) and (max-width: 900px) {
+  .gem-record-grid-rail {
+    grid-template-columns: minmax(0, 1fr);
   }
   .gem-record-grid-card > button > [class$="-copy"] strong {
     font-size: 0.78rem;
@@ -1994,7 +2005,7 @@ dialog {
   }
   .sidebar {
     min-height: 0;
-    padding: 1rem;
+    padding: 0.5rem 0.75rem;
     border-right: 0;
     border-bottom: 1px solid var(--line);
   }
@@ -2008,6 +2019,28 @@ dialog {
   }
   .navigation-links.is-open {
     padding-top: 1rem;
+  }
+  .navigation-links nav[aria-label="Gem Life navigation"] {
+    display: flex;
+    gap: 0.4rem;
+    overflow-x: auto;
+    padding-bottom: 0.25rem;
+  }
+  .navigation-links nav[aria-label="Gem Life navigation"] .resource-button {
+    flex: 0 0 auto;
+    min-width: 0;
+    padding: 0.45rem 0.6rem;
+  }
+  .navigation-links nav[aria-label="Gem Life navigation"] .resource-button > span:last-child {
+    display: none;
+  }
+  .navigation-links nav[aria-label="Gem Life navigation"] .resource-mark {
+    margin: 0;
+  }
+  .navigation-links .section-heading,
+  .navigation-links .domain-list,
+  .navigation-links .sidebar-note {
+    display: none;
   }
   .sidebar-note {
     display: none;
