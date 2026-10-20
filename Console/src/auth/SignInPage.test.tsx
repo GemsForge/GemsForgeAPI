@@ -1,11 +1,17 @@
 import { QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render as rtlRender, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { api } from "../api";
 import { queryClient } from "../data/queryClient";
 import { AuthProvider } from "./AuthProvider";
 import { SignInPage } from "./SignInPage";
+import { TamaguiProvider } from "tamagui";
+import { tamaguiConfig } from "../design-system";
+
+function render(ui: React.ReactElement) {
+  return rtlRender(<TamaguiProvider config={tamaguiConfig}>{ui}</TamaguiProvider>);
+}
 
 const localSignIn = vi.hoisted(() => vi.fn());
 

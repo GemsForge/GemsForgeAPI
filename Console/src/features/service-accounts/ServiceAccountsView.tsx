@@ -301,6 +301,11 @@ function ServiceAccountDetail({
             onSave: async (value) => onPatch({ serviceKey: value as string | null }),
           },
           {
+            label: "Legacy logo lookup relationship",
+            value: record.logoKey,
+            readOnlyReason: "Legacy logo lookup relationship; no validated selector is available.",
+          },
+          {
             label: "Email updated",
             value: record.emailUpdated,
             inputType: "boolean",
