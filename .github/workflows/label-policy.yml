@@ -1,0 +1,42 @@
+name: Story label policy
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened, labeled, unlabeled]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  label-policy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate title and required labels
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          set -eu
+          title=$(gh pr view "$PR" --repo "$REPO" --json title --jq .title)
+          if ! printf '%s\n' "$title" | grep -Eq '^(feat|fix|refactor|test|docs|chore|ci)\([a-z0-9-]+\): #[1-9][0-9]* [a-z][a-z0-9-]*( |$)'; then
+            echo "PR title must match: type(scope): #issue short imperative description"
+            exit 1
+          fi
+          labels=$(gh pr view "$PR" --repo "$REPO" --json labels --jq '.labels[].name')
+          type=$(printf '%s\n' "$title" | sed -E 's/^([^:]+)\(.*/\1/')
+          case "$type" in
+            feat) required="feature" ;;
+            fix) required="fix" ;;
+            refactor) required="refactor" ;;
+            test) required="testing" ;;
+            docs) required="documentation" ;;
+            chore) required="chore" ;;
+            ci) required="ci" ;;
+          esac
+          if ! printf '%s\n' "$labels" | grep -Fxq "$required"; then
+            echo "Missing required label: $required"
+            exit 1
+          fi
+          echo "Title and label policy passed."
