@@ -10,6 +10,8 @@ import { useCreateEmploymentMutation } from "../../data/recordQueries";
 import { useAddressesQuery } from "../../data/lifeQueries";
 import { EmploymentCreateForm } from "../create/RecordCreateForms";
 import { RecordImport } from "../../components/RecordImport";
+import { RecordUtilities } from "../../components/RecordUtilities";
+import { useRecordUtilities } from "../../hooks/useRecordUtilities";
 
 const employmentOptions = {
   industry: ["Technology", "Healthcare", "Education", "Finance", "Government", "Retail", "Hospitality", "Manufacturing", "Other"],
@@ -25,7 +27,8 @@ interface EmploymentViewProps {
 }
 
 export function EmploymentView({ records }: EmploymentViewProps) {
-  const paging = usePagedRecords(records);
+  const utilities = useRecordUtilities(records, (record) => [record.id, record.employerName, record.positionTitle, record.industry, record.employmentStatus]);
+  const paging = usePagedRecords(utilities.records);
   const [selectedID, setSelectedID] = useState<string | null>(null);
   const detail = useEmploymentRecordQuery(selectedID);
   const patch = useEmploymentPatchMutation();
@@ -53,6 +56,7 @@ export function EmploymentView({ records }: EmploymentViewProps) {
           <RecordImport label="employment records" expectedColumns={["id", "employerName", "employerType", "positionTitle", "employmentType", "employmentStatus"]} onPublish={async (rows) => { for (const row of rows) await create.mutateAsync(row as Parameters<typeof create.mutateAsync>[0]); }} />
         </div>
       </div>
+      <RecordUtilities label="Employment" {...utilities} sortOptions={[]} />
 
       {creating && (
         <EmploymentCreateForm
