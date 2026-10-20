@@ -989,6 +989,26 @@ dialog::backdrop {
   .gem-record-grid-rail {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
+  .gem-record-grid-card > button > [class$="-copy"] strong {
+    font-size: 0.78rem;
+  }
+  .gem-record-grid-card > button > [class$="-copy"] small {
+    font-size: 0.64rem;
+  }
+}
+@media (max-width: 640px) {
+  .gem-record-grid-card > button > [class$="-copy"] strong {
+    font-size: 0.7rem;
+  }
+  .gem-record-grid-card > button > [class$="-copy"] small {
+    font-size: 0.58rem;
+  }
+  .gem-record-grid-card .gem-record-property-label {
+    font-size: 0.48rem;
+  }
+  .gem-record-grid-card .gem-record-property-value {
+    font-size: 0.56rem;
+  }
 }
 .gem-record-expansion {
   margin-top: -0.65rem;
