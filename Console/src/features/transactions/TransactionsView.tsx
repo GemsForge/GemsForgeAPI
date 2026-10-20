@@ -21,6 +21,7 @@ import { TransactionCreateForm } from "../create/RecordCreateForms";
 import { useExpenseCategoriesQuery, useExpenseSubcategoriesQuery, useMerchantsQuery } from "../../data/lifeQueries";
 import { RecordImport } from "../../components/RecordImport";
 import { RecordUtilities } from "../../components/RecordUtilities";
+import { RecordCollection } from "../../components/RecordCollection";
 import { useRecordUtilities } from "../../hooks/useRecordUtilities";
 
 interface TransactionsViewProps {
@@ -60,7 +61,7 @@ export function TransactionsView({ records }: TransactionsViewProps) {
           <RecordImport label="transactions" expectedColumns={["id", "item", "categoryID", "quantity"]} onPublish={async (rows) => { for (const row of rows) await create.mutateAsync(row as Parameters<typeof create.mutateAsync>[0]); }} />
         </div>
       </div>
-      <RecordUtilities label="Transactions" {...utilities} totalCount={records.length} visibleCount={utilities.records.length} sortOptions={[{ value: "date", label: "Transaction date" }, { value: "item", label: "Item" }]} filterOptions={Array.from(new Set(records.map((record) => record.merchantCode).filter((value): value is string => Boolean(value)))).sort()} />
+      <RecordCollection><RecordUtilities label="Transactions" {...utilities} totalCount={records.length} visibleCount={utilities.records.length} sortOptions={[{ value: "date", label: "Transaction date" }, { value: "item", label: "Item" }]} filterOptions={Array.from(new Set(records.map((record) => record.merchantCode).filter((value): value is string => Boolean(value)))).sort()} /></RecordCollection>
 
       {creating && (
         <TransactionCreateForm

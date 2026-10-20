@@ -18,6 +18,7 @@ import { ServiceAccountCreateForm } from "../create/RecordCreateForms";
 import { RecordImport } from "../../components/RecordImport";
 import { useServiceLogosQuery } from "../../data/lifeQueries";
 import { RecordUtilities } from "../../components/RecordUtilities";
+import { RecordCollection } from "../../components/RecordCollection";
 import { useRecordUtilities } from "../../hooks/useRecordUtilities";
 import { api } from "../../api";
 
@@ -57,7 +58,7 @@ export function ServiceAccountsView({ records }: { records: ServiceAccount[] }) 
           }); }} />
         </div>
       </div>
-      <RecordUtilities label="Services" {...utilities} totalCount={records.length} visibleCount={utilities.records.length} sortOptions={[{ value: "service", label: "Service" }, { value: "amount", label: "Monthly amount" }]} filterOptions={Array.from(new Set(records.map((record) => record.status).filter((value): value is string => Boolean(value)))).sort()} />
+      <RecordCollection><RecordUtilities label="Services" {...utilities} totalCount={records.length} visibleCount={utilities.records.length} sortOptions={[{ value: "service", label: "Service" }, { value: "amount", label: "Monthly amount" }]} filterOptions={Array.from(new Set(records.map((record) => record.status).filter((value): value is string => Boolean(value)))).sort()} /></RecordCollection>
       {creating && (
         <ServiceAccountCreateForm
           onCancel={() => setCreating(false)}

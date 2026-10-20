@@ -12,6 +12,7 @@ import { useAddressesQuery } from "../../data/lifeQueries";
 import { EducationCreateForm } from "../create/RecordCreateForms";
 import { RecordImport } from "../../components/RecordImport";
 import { RecordUtilities } from "../../components/RecordUtilities";
+import { RecordCollection } from "../../components/RecordCollection";
 import { useRecordUtilities } from "../../hooks/useRecordUtilities";
 
 interface EducationViewProps {
@@ -51,7 +52,7 @@ export function EducationView({ records }: EducationViewProps) {
           <RecordImport label="education records" expectedColumns={["id", "educationType", "institutionName", "status"]} onPublish={async (rows) => { for (const row of rows) await create.mutateAsync(row as Parameters<typeof create.mutateAsync>[0]); }} />
         </div>
       </div>
-      <RecordUtilities label="Education" {...utilities} totalCount={records.length} visibleCount={utilities.records.length} sortOptions={[{ value: "institution", label: "Institution" }, { value: "status", label: "Status" }]} filterOptions={Array.from(new Set(records.map((record) => record.status))).sort()} />
+      <RecordCollection><RecordUtilities label="Education" {...utilities} totalCount={records.length} visibleCount={utilities.records.length} sortOptions={[{ value: "institution", label: "Institution" }, { value: "status", label: "Status" }]} filterOptions={Array.from(new Set(records.map((record) => record.status))).sort()} /></RecordCollection>
 
       {creating && (
         <EducationCreateForm

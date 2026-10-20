@@ -11,6 +11,7 @@ import { useAddressesQuery } from "../../data/lifeQueries";
 import { EmploymentCreateForm } from "../create/RecordCreateForms";
 import { RecordImport } from "../../components/RecordImport";
 import { RecordUtilities } from "../../components/RecordUtilities";
+import { RecordCollection } from "../../components/RecordCollection";
 import { useRecordUtilities } from "../../hooks/useRecordUtilities";
 
 const employmentOptions = {
@@ -58,7 +59,7 @@ export function EmploymentView({ records }: EmploymentViewProps) {
           <RecordImport label="employment records" expectedColumns={["id", "employerName", "employerType", "positionTitle", "employmentType", "employmentStatus"]} onPublish={async (rows) => { for (const row of rows) await create.mutateAsync(row as Parameters<typeof create.mutateAsync>[0]); }} />
         </div>
       </div>
-      <RecordUtilities label="Employment" {...utilities} totalCount={records.length} visibleCount={utilities.records.length} sortOptions={[{ value: "employer", label: "Employer" }, { value: "start", label: "Start date" }]} filterOptions={Array.from(new Set(records.map((record) => record.employmentStatus))).sort()} />
+      <RecordCollection><RecordUtilities label="Employment" {...utilities} totalCount={records.length} visibleCount={utilities.records.length} sortOptions={[{ value: "employer", label: "Employer" }, { value: "start", label: "Start date" }]} filterOptions={Array.from(new Set(records.map((record) => record.employmentStatus))).sort()} /></RecordCollection>
 
       {creating && (
         <EmploymentCreateForm
