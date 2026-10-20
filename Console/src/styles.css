@@ -225,9 +225,28 @@ h3 {
 }
 .workspace {
   display: grid;
-  grid-template-columns: minmax(15rem, 20rem) 1fr;
+  grid-template-columns: var(--sidebar-width, minmax(15rem, 20rem)) 0.5rem minmax(0, 1fr);
   max-width: 1440px;
   margin: 0 auto;
+}
+.sidebar-resizer {
+  position: relative;
+  z-index: 2;
+  width: 0.5rem;
+  min-width: 0.5rem;
+  cursor: col-resize;
+  touch-action: none;
+}
+.sidebar-resizer::after {
+  position: absolute;
+  inset: 0 0.2rem;
+  content: "";
+  background: transparent;
+  transition: background 120ms ease;
+}
+.sidebar-resizer:hover::after,
+.sidebar-resizer:focus-visible::after {
+  background: var(--mint);
 }
 .sidebar {
   min-height: calc(100vh - 124px);
@@ -2001,45 +2020,54 @@ dialog {
 }
 @media (max-width: 900px) {
   .workspace {
-    display: block;
+    display: grid;
+    grid-template-columns: var(--sidebar-width, 4.25rem) 0.5rem minmax(0, 1fr);
   }
   .sidebar {
-    min-height: 0;
-    padding: 0.5rem 0.75rem;
-    border-right: 0;
-    border-bottom: 1px solid var(--line);
+    position: sticky;
+    top: 0;
+    align-self: start;
+    min-height: 100dvh;
+    max-height: 100dvh;
+    overflow-y: auto;
+    padding: 0.75rem 0.5rem;
+    border-right: 1px solid var(--line);
+    border-bottom: 0;
   }
   .sidebar-toggle {
-    display: flex;
-    width: 100%;
-    justify-content: space-between;
-  }
-  .navigation-links:not(.is-open) {
     display: none;
   }
+  .navigation-links,
+  .navigation-links:not(.is-open),
   .navigation-links.is-open {
-    padding-top: 1rem;
+    display: block;
+    padding-top: 0;
   }
   .navigation-links nav[aria-label="Gem Life navigation"] {
-    display: flex;
+    display: grid;
     gap: 0.4rem;
-    overflow-x: auto;
-    padding-bottom: 0.25rem;
-  }
-  .navigation-links nav[aria-label="Gem Life navigation"] .resource-button {
-    flex: 0 0 auto;
-    min-width: 0;
-    padding: 0.45rem 0.6rem;
-  }
-  .navigation-links nav[aria-label="Gem Life navigation"] .resource-button > span:last-child {
-    display: none;
-  }
-  .navigation-links nav[aria-label="Gem Life navigation"] .resource-mark {
     margin: 0;
   }
-  .navigation-links .section-heading,
-  .navigation-links .domain-list,
-  .navigation-links .sidebar-note {
+  .workspace[data-sidebar-collapsed="true"] .navigation-links nav[aria-label="Gem Life navigation"] .resource-button {
+    grid-template-columns: 1fr;
+    width: 3.25rem;
+    min-width: 3.25rem;
+    padding: 0.55rem;
+    place-items: center;
+  }
+  .workspace[data-sidebar-collapsed="true"]
+    .navigation-links
+    nav[aria-label="Gem Life navigation"]
+    .resource-button
+    > span:last-child {
+    display: none;
+  }
+  .workspace[data-sidebar-collapsed="true"] .navigation-links nav[aria-label="Gem Life navigation"] .resource-mark {
+    margin: 0;
+  }
+  .workspace[data-sidebar-collapsed="true"] .navigation-links .section-heading,
+  .workspace[data-sidebar-collapsed="true"] .navigation-links .domain-list,
+  .workspace[data-sidebar-collapsed="true"] .navigation-links .sidebar-note {
     display: none;
   }
   .sidebar-note {
