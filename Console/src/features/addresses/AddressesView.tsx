@@ -66,6 +66,7 @@ export function AddressesView({ records }: AddressesViewProps) {
             className="address-list"
             records={paging.items}
             label="Address records"
+            onExpandedChange={setSelectedID}
             getKey={(record) => record.id}
             renderRecord={(record) => (
               <GemRecordCard
@@ -75,32 +76,26 @@ export function AddressesView({ records }: AddressesViewProps) {
                 subtitle={`${record.addressType} · ${record.id}`}
                 status={record.addressStatus}
                 selected={selectedID === record.id}
-                onSelect={() => setSelectedID(record.id)}
+                onSelect={() => setSelectedID((current) => current === record.id ? null : record.id)}
               />
+            )}
+            isExpanded={(record) => selectedID === record.id}
+            renderExpanded={() => (
+              <>
+                <QueryFeedback query={detail} />
+                {selectedAddress && <AddressDetail
+                  key={selectedAddress.id}
+                  record={selectedAddress}
+                  onAttachment={async (metadata) => {
+                    await attachment.mutateAsync({ id: selectedAddress.id, fileID: metadata?.id ?? null });
+                  }}
+                  onPatch={async (values) => {
+                    await patch.mutateAsync({ id: selectedAddress.id, patch: values });
+                  }}
+                />}
+              </>
             )}
           />
-          <div>
-            <QueryFeedback query={detail} />
-            {selectedAddress ? (
-              <AddressDetail
-                key={selectedAddress.id}
-                record={selectedAddress}
-                onAttachment={async (metadata) => {
-                  await attachment.mutateAsync({ id: selectedAddress.id, fileID: metadata?.id ?? null });
-                }}
-                onPatch={async (values) => {
-                  await patch.mutateAsync({ id: selectedAddress.id, patch: values });
-                }}
-              />
-            ) : (
-              !selectedID && (
-                <div className="detail-placeholder">
-                  <span>⌂</span>
-                  <p>Select an address to view its details.</p>
-                </div>
-              )
-            )}
-          </div>
         </div>
       )}
     </>

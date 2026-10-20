@@ -47,6 +47,11 @@ export function GemHuesView({ hues }: GemHuesViewProps) {
   }, [image.data]);
 
   function openHue(hueID: string) {
+    if (hueID === selectedID) {
+      setSelectedID(null);
+      setImageURL(null);
+      return;
+    }
     if (hueID !== selectedID) setImageURL(null);
     setSelectedID(hueID);
   }
@@ -132,25 +137,24 @@ export function GemHuesView({ hues }: GemHuesViewProps) {
       )}
       <div className="hue-list">
         {paging.items.map((hue) => (
-          <button
-            className={`hue-card ${selectedHue?.id === hue.id ? "selected" : ""}`}
-            key={hue.id}
-            onClick={() => void openHue(hue.id)}
-          >
-            <span className="hue-swatch" style={{ "--hue-color": hue.hexCode } as React.CSSProperties} />
-            <span className="hue-card-copy">
-              <strong>{hue.colorName}</strong>
-              <small>
-                {hue.hexCode} · {hue.colorFamily || "Unclassified"}
-              </small>
-            </span>
-            <span className="arrow">›</span>
-          </button>
-        ))}
-      </div>
-      <QueryFeedback query={detail} />
-      <QueryFeedback query={image} />
-      {selectedHue && (
+          <div key={hue.id} className="hue-list-item">
+            <button
+              className={`hue-card ${selectedHue?.id === hue.id ? "selected" : ""}`}
+              onClick={() => void openHue(hue.id)}
+            >
+              <span className="hue-swatch" style={{ "--hue-color": hue.hexCode } as React.CSSProperties} />
+              <span className="hue-card-copy">
+                <strong>{hue.colorName}</strong>
+                <small>
+                  {hue.hexCode} · {hue.colorFamily || "Unclassified"}
+                </small>
+              </span>
+              <span className="arrow">›</span>
+            </button>
+            {selectedID === hue.id && <div className="gem-record-expansion">
+              <QueryFeedback query={detail} />
+              <QueryFeedback query={image} />
+              {selectedHue && (
         <section className="hue-detail">
           <div className="hue-detail-swatch" style={{ "--hue-color": selectedHue.hexCode } as React.CSSProperties}>
             {imageURL && (
@@ -175,7 +179,11 @@ export function GemHuesView({ hues }: GemHuesViewProps) {
             />
           </div>
         </section>
-      )}
+              )}
+            </div>}
+          </div>
+        ))}
+      </div>
     </>
   );
 }

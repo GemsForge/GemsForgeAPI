@@ -78,6 +78,7 @@ export function EmploymentView({ records }: EmploymentViewProps) {
             className="employment-list"
             records={paging.items}
             label="Employment records"
+            onExpandedChange={setSelectedID}
             getKey={(record) => record.id}
             renderRecord={(record) => (
               <GemRecordCard
@@ -87,29 +88,23 @@ export function EmploymentView({ records }: EmploymentViewProps) {
                 subtitle={record.positionTitle}
                 status={record.employmentStatus}
                 selected={selectedRecord?.id === record.id}
-                onSelect={() => setSelectedID(record.id)}
+                onSelect={() => setSelectedID((current) => current === record.id ? null : record.id)}
               />
+            )}
+            isExpanded={(record) => selectedID === record.id}
+            renderExpanded={() => (
+              <>
+                <QueryFeedback query={detail} />
+                {selectedRecord && <EmploymentDetail
+                  key={selectedRecord.id}
+                  record={selectedRecord}
+                  onPatch={async (values) => {
+                    await patch.mutateAsync({ id: selectedRecord.id, patch: values });
+                  }}
+                />}
+              </>
             )}
           />
-          <div>
-            <QueryFeedback query={detail} />
-            {selectedRecord ? (
-              <EmploymentDetail
-                key={selectedRecord.id}
-                record={selectedRecord}
-                onPatch={async (values) => {
-                  await patch.mutateAsync({ id: selectedRecord.id, patch: values });
-                }}
-              />
-            ) : (
-              !selectedID && (
-                <div className="detail-placeholder">
-                  <span>◆</span>
-                  <p>Select an employment record to view its details.</p>
-                </div>
-              )
-            )}
-          </div>
         </div>
       )}
     </>

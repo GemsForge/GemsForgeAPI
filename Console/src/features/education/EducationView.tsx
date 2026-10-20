@@ -70,6 +70,7 @@ export function EducationView({ records }: EducationViewProps) {
             className="education-list"
             records={paging.items}
             label="Education records"
+            onExpandedChange={setSelectedID}
             getKey={(record) => record.id}
             renderRecord={(record) => (
               <GemRecordCard
@@ -79,35 +80,26 @@ export function EducationView({ records }: EducationViewProps) {
                 subtitle={record.educationType}
                 status={record.status}
                 selected={selectedRecord?.id === record.id}
-                onSelect={() => setSelectedID(record.id)}
+                onSelect={() => setSelectedID((current) => current === record.id ? null : record.id)}
               />
+            )}
+            isExpanded={(record) => selectedID === record.id}
+            renderExpanded={() => (
+              <>
+                <QueryFeedback query={detail} />
+                {selectedRecord && <EducationDetail
+                  key={selectedRecord.id}
+                  record={selectedRecord}
+                  onPatch={async (values) => {
+                    await patch.mutateAsync({ id: selectedRecord.id, patch: values });
+                  }}
+                  onAttachment={async (metadata) => {
+                    await patch.mutateAsync({ id: selectedRecord.id, patch: { documentFileMetadataID: metadata?.id ?? null } });
+                  }}
+                />}
+              </>
             )}
           />
-          <div>
-            <QueryFeedback query={detail} />
-            {selectedRecord ? (
-              <EducationDetail
-                key={selectedRecord.id}
-                record={selectedRecord}
-                onPatch={async (values) => {
-                  await patch.mutateAsync({ id: selectedRecord.id, patch: values });
-                }}
-                onAttachment={async (metadata) => {
-                  await patch.mutateAsync({
-                    id: selectedRecord.id,
-                    patch: { documentFileMetadataID: metadata?.id ?? null },
-                  });
-                }}
-              />
-            ) : (
-              !selectedID && (
-                <div className="detail-placeholder">
-                  <span>✦</span>
-                  <p>Select an education record to view its details.</p>
-                </div>
-              )
-            )}
-          </div>
         </div>
       )}
     </>
