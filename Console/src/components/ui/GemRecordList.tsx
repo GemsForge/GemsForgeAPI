@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { useState } from "react";
 import { Accordion } from "@tamagui/accordion";
-import { XStack, YStack } from "tamagui";
+import { Card, XStack } from "tamagui";
 
 export interface GemRecordListProps<Record> {
   records: Record[];
@@ -62,10 +62,14 @@ export function GemRecordList<Record>({
             {records.map((record) => {
               const key = getKey(record);
               return (
-                <YStack key={key} className={`gem-record-grid-card${key === expandedKey ? " is-active" : ""}`}>
+                <Card
+                  key={key}
+                  className={`gem-record-grid-card${key === expandedKey ? " is-active" : ""}`}
+                  size={key === expandedKey ? "lg" : "md"}
+                >
                   {renderRecord(record)}
                   {key === expandedKey && <div className="gem-record-expansion">{renderExpanded?.(record)}</div>}
-                </YStack>
+                </Card>
               );
             })}
           </XStack>

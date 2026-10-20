@@ -858,15 +858,15 @@ dialog::backdrop {
   flex: 1;
 }
 .gem-record-grid-card {
-  flex: 1 1 min(18rem, 30%);
+  flex: 0 0 calc(33.333% - 0.667rem);
   min-width: min(16rem, 100%);
   opacity: 0.72;
   transition:
-    flex-basis 180ms ease,
+    transform 180ms ease,
     opacity 180ms ease;
 }
 .gem-record-grid-card.is-active {
-  flex-basis: min(34rem, 60%);
+  transform: scale(1.03);
   opacity: 1;
 }
 .gem-record-grid-card > button {
