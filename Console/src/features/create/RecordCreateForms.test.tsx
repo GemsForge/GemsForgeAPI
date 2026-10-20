@@ -1,7 +1,17 @@
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render as rtlRender, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { GeoapifySearchClient } from "../addresses/GeoapifyAddressSearch";
 import { AddressCreateForm } from "./RecordCreateForms";
+import { TamaguiProvider } from "tamagui";
+import { tamaguiConfig } from "../../design-system";
+
+function render(ui: React.ReactElement) {
+  return rtlRender(
+    <TamaguiProvider config={tamaguiConfig} defaultTheme="dark">
+      {ui}
+    </TamaguiProvider>,
+  );
+}
 
 afterEach(() => {
   vi.useRealTimers();

@@ -1,7 +1,17 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render as rtlRender, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { APIError } from "../api";
 import { PropertyEditor } from "./PropertyEditor";
+import { TamaguiProvider } from "tamagui";
+import { tamaguiConfig } from "../design-system";
+
+function render(ui: React.ReactElement) {
+  return rtlRender(
+    <TamaguiProvider config={tamaguiConfig} defaultTheme="dark">
+      {ui}
+    </TamaguiProvider>,
+  );
+}
 
 describe("PropertyEditor", () => {
   it("saves only a changed value and closes after success", async () => {
