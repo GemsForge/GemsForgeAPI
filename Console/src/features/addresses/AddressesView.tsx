@@ -1,6 +1,8 @@
 import { usePagedRecords } from "../../hooks/usePagedRecords";
 import { PaginationControls } from "../../components/PaginationControls";
 import { useState } from "react";
+import { RecordUtilities } from "../../components/RecordUtilities";
+import { useRecordUtilities } from "../../hooks/useRecordUtilities";
 import { useAddressQuery, useAddressAttachmentMutation, useAddressPatchMutation } from "../../data/recordQueries";
 import { QueryFeedback } from "../../components/QueryFeedback";
 import type { Address } from "../../types";
@@ -16,7 +18,10 @@ interface AddressesViewProps {
 }
 
 export function AddressesView({ records }: AddressesViewProps) {
-  const paging = usePagedRecords(records);
+  const utilities = useRecordUtilities(records, (record) => [record.id, record.city, record.state, record.addressType, record.country, record.addressStatus], {
+    city: (a, b) => (a.city ?? "").localeCompare(b.city ?? ""), type: (a, b) => a.addressType.localeCompare(b.addressType),
+  });
+  const paging = usePagedRecords(utilities.records);
   const [selectedID, setSelectedID] = useState<string | null>(null);
   const detail = useAddressQuery(selectedID);
   const attachment = useAddressAttachmentMutation();
@@ -42,6 +47,7 @@ export function AddressesView({ records }: AddressesViewProps) {
           <RecordImport label="addresses" expectedColumns={["id", "addressType", "country"]} onPublish={async (rows) => { for (const row of rows) await create.mutateAsync(row as Parameters<typeof create.mutateAsync>[0]); }} />
         </div>
       </div>
+      <RecordUtilities label="Addresses" {...utilities} sortOptions={[{ value: "city", label: "City" }, { value: "type", label: "Address type" }]} filterOptions={Array.from(new Set(records.map((record) => record.addressStatus))).sort()} />
 
       {creating && (
         <AddressCreateForm

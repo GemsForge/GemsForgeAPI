@@ -1816,3 +1816,16 @@ dialog {
     padding: 1rem;
   }
 }
+.record-utilities {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: end;
+  margin: 0 0 1rem;
+  padding: 0.75rem;
+  border: 1px solid var(--border, #d8d2c8);
+  border-radius: 0.6rem;
+  background: var(--surface-subtle, #faf8f4);
+}
+.record-utilities label { display: grid; gap: 0.25rem; font-size: 0.8rem; }
+.record-utilities input, .record-utilities select { min-height: 2.25rem; }
