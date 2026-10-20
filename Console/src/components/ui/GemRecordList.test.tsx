@@ -34,4 +34,25 @@ describe("GemRecordList views", () => {
     expect(onExpandedChange).toHaveBeenCalledWith("two");
     expect(screen.getByRole("button", { name: "Previous example record" })).toBeDisabled();
   });
+
+  it("uses fixed Tamagui Cards without inline expandable details in Grid view", () => {
+    const records = [{ id: "one", title: "One" }];
+    render(
+      <TamaguiProvider config={tamaguiConfig} defaultTheme="dark">
+        <GemRecordList
+          records={records}
+          label="Example"
+          getKey={(record) => record.id}
+          renderRecord={(record) => <button type="button">{record.title}</button>}
+          isExpanded={() => true}
+          renderExpanded={() => <div>Details should stay in List view</div>}
+        />
+      </TamaguiProvider>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Grid" }));
+    expect(screen.getByRole("button", { name: "One" })).toBeInTheDocument();
+    expect(screen.queryByText("Details should stay in List view")).not.toBeInTheDocument();
+    expect(document.querySelector('[data-card-view="grid"]')).toBeTruthy();
+  });
 });
