@@ -17,10 +17,13 @@ import { useCreateServiceAccountMutation } from "../../data/recordQueries";
 import { ServiceAccountCreateForm } from "../create/RecordCreateForms";
 import { RecordImport } from "../../components/RecordImport";
 import { useServiceLogosQuery } from "../../data/lifeQueries";
+import { RecordUtilities } from "../../components/RecordUtilities";
+import { useRecordUtilities } from "../../hooks/useRecordUtilities";
 import { api } from "../../api";
 
 export function ServiceAccountsView({ records }: { records: ServiceAccount[] }) {
-  const paging = usePagedRecords(records);
+  const utilities = useRecordUtilities(records, (record) => [record.id, record.service, record.type, record.status, record.expenseGroup]);
+  const paging = usePagedRecords(utilities.records);
   const [selectedID, setSelectedID] = useState<number | null>(null);
   const detail = useServiceAccountQuery(selectedID);
   const patch = useServiceAccountPatchMutation();
@@ -52,6 +55,7 @@ export function ServiceAccountsView({ records }: { records: ServiceAccount[] }) 
           }); }} />
         </div>
       </div>
+      <RecordUtilities label="Services" {...utilities} sortOptions={[]} />
       {creating && (
         <ServiceAccountCreateForm
           onCancel={() => setCreating(false)}

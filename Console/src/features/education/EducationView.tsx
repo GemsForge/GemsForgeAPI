@@ -11,13 +11,16 @@ import { useCreateEducationMutation } from "../../data/recordQueries";
 import { useAddressesQuery } from "../../data/lifeQueries";
 import { EducationCreateForm } from "../create/RecordCreateForms";
 import { RecordImport } from "../../components/RecordImport";
+import { RecordUtilities } from "../../components/RecordUtilities";
+import { useRecordUtilities } from "../../hooks/useRecordUtilities";
 
 interface EducationViewProps {
   records: Education[];
 }
 
 export function EducationView({ records }: EducationViewProps) {
-  const paging = usePagedRecords(records);
+  const utilities = useRecordUtilities(records, (record) => [record.id, record.institutionName, record.educationType, record.program, record.status]);
+  const paging = usePagedRecords(utilities.records);
   const [selectedID, setSelectedID] = useState<string | null>(null);
   const detail = useEducationRecordQuery(selectedID);
   const patch = useEducationPatchMutation();
@@ -46,6 +49,7 @@ export function EducationView({ records }: EducationViewProps) {
           <RecordImport label="education records" expectedColumns={["id", "educationType", "institutionName", "status"]} onPublish={async (rows) => { for (const row of rows) await create.mutateAsync(row as Parameters<typeof create.mutateAsync>[0]); }} />
         </div>
       </div>
+      <RecordUtilities label="Education" {...utilities} sortOptions={[]} />
 
       {creating && (
         <EducationCreateForm
