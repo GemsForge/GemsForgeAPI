@@ -25,6 +25,7 @@ export function EducationView({ records }: EducationViewProps) {
   const [creating, setCreating] = useState(false);
   const create = useCreateEducationMutation();
   const addresses = useAddressesQuery(true);
+  const programOptions = Array.from(new Set(records.map((record) => record.program).filter((program): program is string => Boolean(program)))).sort();
 
   return (
     <>
@@ -83,21 +84,31 @@ export function EducationView({ records }: EducationViewProps) {
                 onSelect={() => setSelectedID((current) => current === record.id ? null : record.id)}
               />
             )}
-            isExpanded={(record) => selectedID === record.id}
-            renderExpanded={() => (
-              <>
-                <QueryFeedback query={detail} />
-                {selectedRecord && <EducationDetail
-                  key={selectedRecord.id}
-                  record={selectedRecord}
-                  onPatch={async (values) => {
-                    await patch.mutateAsync({ id: selectedRecord.id, patch: values });
-                  }}
-                  onAttachment={async (metadata) => {
-                    await patch.mutateAsync({ id: selectedRecord.id, patch: { documentFileMetadataID: metadata?.id ?? null } });
-                  }}
-                />}
-              </>
+          />
+          <div>
+            <QueryFeedback query={detail} />
+            {selectedRecord ? (
+              <EducationDetail
+                key={selectedRecord.id}
+                record={selectedRecord}
+                programOptions={programOptions}
+                onPatch={async (values) => {
+                  await patch.mutateAsync({ id: selectedRecord.id, patch: values });
+                }}
+                onAttachment={async (metadata) => {
+                  await patch.mutateAsync({
+                    id: selectedRecord.id,
+                    patch: { documentFileMetadataID: metadata?.id ?? null },
+                  });
+                }}
+              />
+            ) : (
+              !selectedID && (
+                <div className="detail-placeholder">
+                  <span>✦</span>
+                  <p>Select an education record to view its details.</p>
+                </div>
+              )
             )}
           />
         </div>
@@ -108,10 +119,12 @@ export function EducationView({ records }: EducationViewProps) {
 
 function EducationDetail({
   record,
+  programOptions,
   onPatch,
   onAttachment,
 }: {
   record: Education;
+  programOptions: string[];
   onPatch: (values: Partial<Education>) => Promise<void>;
   onAttachment: (metadata: import("../../types").FileMetadata | null) => Promise<void>;
 }) {
@@ -135,7 +148,14 @@ function EducationDetail({
             onSave: async (value) => onPatch({ educationType: value as string }),
           },
           { label: "Institution", value: record.institutionName, required: true, onSave: async (value) => onPatch({ institutionName: value as string }) },
-          { label: "Program", value: record.program, nullable: true, onSave: async (value) => onPatch({ program: value as string | null }) },
+          {
+            label: "Program",
+            value: record.program,
+            inputType: "select",
+            nullable: true,
+            options: programOptions.map((program) => ({ value: program, label: program })),
+            onSave: async (value) => onPatch({ program: value as string | null }),
+          },
           { label: "Field of study", value: record.fieldOfStudy, nullable: true, onSave: async (value) => onPatch({ fieldOfStudy: value as string | null }) },
           { label: "Credential", value: record.credential, nullable: true, onSave: async (value) => onPatch({ credential: value as string | null }) },
           { label: "Credential ID", value: record.credentialID, nullable: true, onSave: async (value) => onPatch({ credentialID: value as string | null }) },
