@@ -8,7 +8,7 @@ import { tamaguiConfig } from "../design-system";
 
 function renderFields(fields: ComponentProps<typeof EditableRecordFields>["fields"]) {
   return render(
-    <TamaguiProvider config={tamaguiConfig}>
+    <TamaguiProvider config={tamaguiConfig} defaultTheme="dark">
       <EditableRecordFields fields={fields} />
     </TamaguiProvider>,
   );
@@ -23,10 +23,10 @@ describe("EditableRecordFields", () => {
 
   it("renders server-owned values read-only and editable values using their declared input type", () => {
     renderFields([
-          { label: "Address line 1", value: "3283 Boring Rd", onSave: vi.fn() },
-          { label: "Address ID", value: "ADDR-1", readOnlyReason: "Primary key" },
-          { label: "Address line 2", value: undefined },
-          { label: "Last updated", value: "2026-10-18T12:00:00Z", readOnlyReason: "Server managed" },
+      { label: "Address line 1", value: "3283 Boring Rd", onSave: vi.fn() },
+      { label: "Address ID", value: "ADDR-1", readOnlyReason: "Primary key" },
+      { label: "Address line 2", value: undefined },
+      { label: "Last updated", value: "2026-10-18T12:00:00Z", readOnlyReason: "Server managed" },
     ]);
 
     expect(screen.getByText("3283 Boring Rd")).toBeInTheDocument();
@@ -41,8 +41,8 @@ describe("EditableRecordFields", () => {
     const saveNumber = vi.fn().mockResolvedValue(undefined);
     const saveNullable = vi.fn().mockRejectedValueOnce(new APIError("Invalid value", 422)).mockResolvedValue(undefined);
     renderFields([
-          { label: "Monthly amount", value: 80, inputType: "number", onSave: saveNumber },
-          { label: "Notes", value: "Old note", nullable: true, onSave: saveNullable },
+      { label: "Monthly amount", value: 80, inputType: "number", onSave: saveNumber },
+      { label: "Notes", value: "Old note", nullable: true, onSave: saveNullable },
     ]);
 
     fireEvent.click(screen.getByRole("button", { name: "Edit monthly amount" }));
@@ -64,17 +64,17 @@ describe("EditableRecordFields", () => {
     const saveBoolean = vi.fn().mockResolvedValue(undefined);
     const saveStatus = vi.fn().mockResolvedValue(undefined);
     renderFields([
-          { label: "First receipt item", value: false, inputType: "boolean", onSave: saveBoolean },
-          {
-            label: "Status",
-            value: "Current",
-            inputType: "select",
-            options: [
-              { label: "Current", value: "Current" },
-              { label: "Former", value: "Former" },
-            ],
-            onSave: saveStatus,
-          },
+      { label: "First receipt item", value: false, inputType: "boolean", onSave: saveBoolean },
+      {
+        label: "Status",
+        value: "Current",
+        inputType: "select",
+        options: [
+          { label: "Current", value: "Current" },
+          { label: "Former", value: "Former" },
+        ],
+        onSave: saveStatus,
+      },
     ]);
 
     fireEvent.click(screen.getByRole("button", { name: "Edit first receipt item" }));

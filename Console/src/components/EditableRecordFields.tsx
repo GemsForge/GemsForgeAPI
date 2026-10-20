@@ -35,7 +35,9 @@ export function formatRecordDate(value?: string | null): string {
 }
 
 export function formatRecordCurrency(value?: number | null): string {
-  return value === null || value === undefined ? "Not recorded" : value.toLocaleString(undefined, { style: "currency", currency: "USD" });
+  return value === null || value === undefined
+    ? "Not recorded"
+    : value.toLocaleString(undefined, { style: "currency", currency: "USD" });
 }
 
 export function formatRecordPercentage(value?: number | null): string {
@@ -56,7 +58,8 @@ export function EditableRecordFields({ fields, className }: { fields: EditableRe
 function EditableField({ field }: { field: EditableRecordField }) {
   const instanceID = useId();
   const value = field.value ?? null;
-  const initialValue = value === null ? "" : field.inputType === "date" ? normalizeDateInput(String(value)) : String(value);
+  const initialValue =
+    value === null ? "" : field.inputType === "date" ? normalizeDateInput(String(value)) : String(value);
   const editor = useRecordEditor(initialValue, async (draft) => {
     if (!field.onSave) return;
     await field.onSave(parseValue(draft, field));
@@ -109,10 +112,7 @@ function EditableField({ field }: { field: EditableRecordField }) {
             {field.readOnlyReason && <small className="field-readonly-reason">{field.readOnlyReason}</small>}
           </>
         ) : (
-          <Form
-            className="edit-form editable-field-form"
-            onSubmit={() => void editor.save()}
-          >
+          <Form className="edit-form editable-field-form" onSubmit={() => void editor.save()}>
             {field.inputType === "longText" ? (
               <textarea {...common} rows={3} />
             ) : field.inputType === "select" ? (
@@ -171,8 +171,9 @@ function normalizeDateInput(value?: string | null): string {
   if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
   const legacy = /^(\d{2})([A-Za-z]{3})(\d{4})$/.exec(value);
   if (legacy) {
-    const month = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-      .indexOf(legacy[2]);
+    const month = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"].indexOf(
+      legacy[2],
+    );
     if (month >= 0) return `${legacy[3]}-${String(month + 1).padStart(2, "0")}-${legacy[1]}`;
   }
   const parsed = new Date(value);

@@ -1,7 +1,17 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render as rtlRender, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ForgeKeeperView } from "./ForgeKeeperView";
 import type { ForgeKeeperPage } from "../../types";
+import { TamaguiProvider } from "tamagui";
+import { tamaguiConfig } from "../../design-system";
+
+function render(ui: React.ReactElement) {
+  return rtlRender(
+    <TamaguiProvider config={tamaguiConfig} defaultTheme="dark">
+      {ui}
+    </TamaguiProvider>,
+  );
+}
 
 const page = { id: 1, title: "Example page", description: "Notes", parentID: null } as ForgeKeeperPage;
 const originalShow = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, "showModal");

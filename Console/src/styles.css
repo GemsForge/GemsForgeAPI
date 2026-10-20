@@ -1823,11 +1823,39 @@ dialog {
   align-items: end;
   margin: 0 0 1rem;
   padding: 0.75rem;
-  border: 1px solid var(--border, #d8d2c8);
+  border: 1px solid var(--line);
   border-radius: 0.6rem;
-  background: var(--surface-subtle, #faf8f4);
+  background: var(--panel);
 }
-.record-collection { display: contents; }
-.record-utilities label { display: grid; gap: 0.25rem; font-size: 0.8rem; }
-.record-utilities input, .record-utilities select { min-height: 2.25rem; }
-.record-utility-summary { margin-left: auto; align-self: center; color: var(--muted, #6f6a61); font-size: 0.85rem; }
+.record-collection {
+  display: contents;
+}
+.record-utilities label {
+  display: grid;
+  gap: 0.25rem;
+  color: var(--ink);
+  font-size: 0.8rem;
+}
+.record-utilities input,
+.record-utilities select {
+  min-height: 2.25rem;
+  border: 1px solid var(--line);
+  border-radius: 0.35rem;
+  background: var(--canvas);
+  color: var(--ink);
+}
+.record-utilities input::placeholder {
+  color: var(--muted);
+  opacity: 1;
+}
+.record-utilities input:disabled,
+.record-utilities select:disabled,
+.record-utilities button:disabled {
+  opacity: 0.55;
+}
+.record-utility-summary {
+  margin-left: auto;
+  align-self: center;
+  color: var(--ink);
+  font-size: 0.85rem;
+}

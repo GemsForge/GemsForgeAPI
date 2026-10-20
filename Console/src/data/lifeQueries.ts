@@ -73,5 +73,9 @@ export function useServiceAccountsQuery(enabled: boolean) {
 }
 
 export function useServiceLogosQuery(enabled: boolean) {
-  return useQuery({ queryKey: lifeQueryKeys.serviceLogos, queryFn: ({ signal }) => api.listServiceLogos(signal), enabled });
+  return useQuery({
+    queryKey: lifeQueryKeys.serviceLogos,
+    queryFn: ({ signal }) => api.listServiceLogos(signal),
+    enabled,
+  });
 }
