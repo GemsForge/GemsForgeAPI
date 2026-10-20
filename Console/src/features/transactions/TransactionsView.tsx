@@ -60,7 +60,7 @@ export function TransactionsView({ records }: TransactionsViewProps) {
           <RecordImport label="transactions" expectedColumns={["id", "item", "categoryID", "quantity"]} onPublish={async (rows) => { for (const row of rows) await create.mutateAsync(row as Parameters<typeof create.mutateAsync>[0]); }} />
         </div>
       </div>
-      <RecordUtilities label="Transactions" {...utilities} sortOptions={[{ value: "date", label: "Transaction date" }, { value: "item", label: "Item" }]} />
+      <RecordUtilities label="Transactions" {...utilities} sortOptions={[{ value: "date", label: "Transaction date" }, { value: "item", label: "Item" }]} filterOptions={Array.from(new Set(records.map((record) => record.merchantCode).filter((value): value is string => Boolean(value)))).sort()} />
 
       {creating && (
         <TransactionCreateForm
