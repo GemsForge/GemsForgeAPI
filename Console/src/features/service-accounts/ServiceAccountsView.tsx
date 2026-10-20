@@ -22,7 +22,9 @@ import { useRecordUtilities } from "../../hooks/useRecordUtilities";
 import { api } from "../../api";
 
 export function ServiceAccountsView({ records }: { records: ServiceAccount[] }) {
-  const utilities = useRecordUtilities(records, (record) => [record.id, record.service, record.type, record.status, record.expenseGroup]);
+  const utilities = useRecordUtilities(records, (record) => [record.id, record.service, record.type, record.status, record.expenseGroup], {
+    service: (a, b) => a.service.localeCompare(b.service), amount: (a, b) => (a.monthlyAmount ?? 0) - (b.monthlyAmount ?? 0),
+  });
   const paging = usePagedRecords(utilities.records);
   const [selectedID, setSelectedID] = useState<number | null>(null);
   const detail = useServiceAccountQuery(selectedID);
@@ -55,7 +57,7 @@ export function ServiceAccountsView({ records }: { records: ServiceAccount[] }) 
           }); }} />
         </div>
       </div>
-      <RecordUtilities label="Services" {...utilities} sortOptions={[]} />
+      <RecordUtilities label="Services" {...utilities} sortOptions={[{ value: "service", label: "Service" }, { value: "amount", label: "Monthly amount" }]} />
       {creating && (
         <ServiceAccountCreateForm
           onCancel={() => setCreating(false)}

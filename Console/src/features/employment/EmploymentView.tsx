@@ -27,7 +27,9 @@ interface EmploymentViewProps {
 }
 
 export function EmploymentView({ records }: EmploymentViewProps) {
-  const utilities = useRecordUtilities(records, (record) => [record.id, record.employerName, record.positionTitle, record.industry, record.employmentStatus]);
+  const utilities = useRecordUtilities(records, (record) => [record.id, record.employerName, record.positionTitle, record.industry, record.employmentStatus], {
+    employer: (a, b) => a.employerName.localeCompare(b.employerName), start: (a, b) => (a.startDate ?? "").localeCompare(b.startDate ?? ""),
+  });
   const paging = usePagedRecords(utilities.records);
   const [selectedID, setSelectedID] = useState<string | null>(null);
   const detail = useEmploymentRecordQuery(selectedID);
@@ -56,7 +58,7 @@ export function EmploymentView({ records }: EmploymentViewProps) {
           <RecordImport label="employment records" expectedColumns={["id", "employerName", "employerType", "positionTitle", "employmentType", "employmentStatus"]} onPublish={async (rows) => { for (const row of rows) await create.mutateAsync(row as Parameters<typeof create.mutateAsync>[0]); }} />
         </div>
       </div>
-      <RecordUtilities label="Employment" {...utilities} sortOptions={[]} />
+      <RecordUtilities label="Employment" {...utilities} sortOptions={[{ value: "employer", label: "Employer" }, { value: "start", label: "Start date" }]} />
 
       {creating && (
         <EmploymentCreateForm

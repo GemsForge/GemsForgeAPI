@@ -19,7 +19,9 @@ interface EducationViewProps {
 }
 
 export function EducationView({ records }: EducationViewProps) {
-  const utilities = useRecordUtilities(records, (record) => [record.id, record.institutionName, record.educationType, record.program, record.status]);
+  const utilities = useRecordUtilities(records, (record) => [record.id, record.institutionName, record.educationType, record.program, record.status], {
+    institution: (a, b) => a.institutionName.localeCompare(b.institutionName), status: (a, b) => a.status.localeCompare(b.status),
+  });
   const paging = usePagedRecords(utilities.records);
   const [selectedID, setSelectedID] = useState<string | null>(null);
   const detail = useEducationRecordQuery(selectedID);
@@ -49,7 +51,7 @@ export function EducationView({ records }: EducationViewProps) {
           <RecordImport label="education records" expectedColumns={["id", "educationType", "institutionName", "status"]} onPublish={async (rows) => { for (const row of rows) await create.mutateAsync(row as Parameters<typeof create.mutateAsync>[0]); }} />
         </div>
       </div>
-      <RecordUtilities label="Education" {...utilities} sortOptions={[]} />
+      <RecordUtilities label="Education" {...utilities} sortOptions={[{ value: "institution", label: "Institution" }, { value: "status", label: "Status" }]} />
 
       {creating && (
         <EducationCreateForm
