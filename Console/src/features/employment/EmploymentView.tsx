@@ -142,11 +142,7 @@ export function EmploymentView({ records }: EmploymentViewProps) {
                 className="employment-card"
                 icon="◆"
                 title={record.employerName}
-                subtitle={record.positionTitle}
-                properties={[
-                  { label: "Industry", value: record.industry },
-                  { label: "Type", value: record.employmentType },
-                ]}
+                subtitle={`${record.positionTitle} · ${record.id}`}
                 status={record.employmentStatus}
                 selected={selectedRecord?.id === record.id}
                 onSelect={() => setSelectedID((current) => (current === record.id ? null : record.id))}

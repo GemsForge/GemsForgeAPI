@@ -112,10 +112,6 @@ export function AddressesView({ records }: AddressesViewProps) {
                 icon="⌂"
                 title={record.city || record.addressType}
                 subtitle={`${record.addressType} · ${record.id}`}
-                properties={[
-                  { label: "State", value: record.state },
-                  { label: "Country", value: record.country },
-                ]}
                 status={record.addressStatus}
                 selected={selectedID === record.id}
                 onSelect={() => setSelectedID((current) => (current === record.id ? null : record.id))}
