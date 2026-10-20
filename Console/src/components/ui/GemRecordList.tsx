@@ -17,6 +17,7 @@ export interface GemRecordListProps<Record> {
     label: string;
     render: (record: Record) => ReactNode;
     icon?: (record: Record) => ReactNode;
+    visible?: boolean;
   }>;
 }
 
@@ -33,6 +34,14 @@ export function GemRecordList<Record>({
   tableColumns = [],
 }: GemRecordListProps<Record>) {
   const [view, setView] = useState<"list" | "gallery" | "table">("list");
+  const [visibleColumns, setVisibleColumns] = useState(
+    () => new Set(tableColumns.filter((column) => column.visible !== false).map((column) => column.key)),
+  );
+  const [propertySearch, setPropertySearch] = useState("");
+  const activeColumns = tableColumns.filter((column) => visibleColumns.has(column.key));
+  const filteredColumns = tableColumns.filter((column) =>
+    column.label.toLowerCase().includes(propertySearch.trim().toLowerCase()),
+  );
   const expandedKey = records.find((record) => isExpanded?.(record))
     ? getKey(records.find((record) => isExpanded?.(record)) as Record)
     : undefined;
@@ -45,17 +54,65 @@ export function GemRecordList<Record>({
 
   return (
     <div className={`gem-record-collection is-${view}`}>
-      <XStack className="gem-record-view-toggle" aria-label={`${label} view`}>
-        <span>View</span>
-        <button type="button" aria-pressed={view === "list"} onClick={() => setView("list")}>
-          List
-        </button>
-        <button type="button" aria-pressed={view === "gallery"} onClick={() => setView("gallery")}>
-          Gallery
-        </button>
-        <button type="button" aria-pressed={view === "table"} onClick={() => setView("table")}>
-          Table
-        </button>
+      <XStack className="gem-record-view-toggle" aria-label={`${label} view controls`}>
+        <details className="gem-record-view-menu">
+          <summary>View: {view[0].toUpperCase() + view.slice(1)}</summary>
+          <div role="menu" aria-label={`${label} views`}>
+            {(["list", "gallery", "table"] as const).map((option) => (
+              <button
+                key={option}
+                type="button"
+                role="menuitemradio"
+                aria-checked={view === option}
+                onClick={() => setView(option)}
+              >
+                {option[0].toUpperCase() + option.slice(1)}
+              </button>
+            ))}
+          </div>
+        </details>
+        {tableColumns.length > 0 && (
+          <details className="gem-record-property-menu">
+            <summary>Properties</summary>
+            <div role="group" aria-label={`${label} visible properties`}>
+              <label className="gem-record-property-search">
+                <span className="sr-only">Search properties</span>
+                <input
+                  type="search"
+                  value={propertySearch}
+                  onChange={(event) => setPropertySearch(event.target.value)}
+                  placeholder="Search properties…"
+                />
+              </label>
+              <button
+                type="button"
+                onClick={() => setVisibleColumns(new Set(tableColumns.map((column) => column.key)))}
+              >
+                Show all
+              </button>
+              <button type="button" onClick={() => setVisibleColumns(new Set())}>
+                Hide all
+              </button>
+              {filteredColumns.map((column) => (
+                <label key={column.key}>
+                  <input
+                    type="checkbox"
+                    checked={visibleColumns.has(column.key)}
+                    onChange={() =>
+                      setVisibleColumns((current) => {
+                        const next = new Set(current);
+                        if (next.has(column.key)) next.delete(column.key);
+                        else next.add(column.key);
+                        return next;
+                      })
+                    }
+                  />
+                  {column.label}
+                </label>
+              ))}
+            </div>
+          </details>
+        )}
       </XStack>
       {view === "gallery" ? (
         <XStack className="gem-record-grid-shell">
@@ -98,7 +155,7 @@ export function GemRecordList<Record>({
           <table className="gem-record-table">
             <thead>
               <tr>
-                {tableColumns.map((column) => (
+                {activeColumns.map((column) => (
                   <th key={column.key} scope="col">
                     {column.label}
                   </th>
@@ -108,7 +165,7 @@ export function GemRecordList<Record>({
             <tbody>
               {records.map((record) => (
                 <tr key={getKey(record)}>
-                  {tableColumns.map((column) => (
+                  {activeColumns.map((column) => (
                     <td key={column.key}>
                       {column.icon ? (
                         <span className="gem-record-table-icon" aria-hidden="true">

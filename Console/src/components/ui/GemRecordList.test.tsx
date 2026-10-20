@@ -28,7 +28,8 @@ describe("GemRecordList views", () => {
       </TamaguiProvider>,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Gallery" }));
+    fireEvent.click(screen.getByText("View: List"));
+    fireEvent.click(screen.getByRole("menuitemradio", { name: "Gallery" }));
     expect(screen.getByRole("button", { name: "Next example record" })).toBeEnabled();
     fireEvent.click(screen.getByRole("button", { name: "Next example record" }));
     expect(onExpandedChange).toHaveBeenCalledWith("two");
@@ -50,9 +51,36 @@ describe("GemRecordList views", () => {
       </TamaguiProvider>,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Gallery" }));
+    fireEvent.click(screen.getByText("View: List"));
+    fireEvent.click(screen.getByRole("menuitemradio", { name: "Gallery" }));
     expect(screen.getByRole("button", { name: "One" })).toBeInTheDocument();
     expect(screen.queryByText("Details should stay in List view")).not.toBeInTheDocument();
     expect(document.querySelector('[data-card-view="grid"]')).toBeTruthy();
+  });
+
+  it("configures visible table properties from an accessible menu", () => {
+    const records = [{ id: "one", title: "One" }];
+    render(
+      <TamaguiProvider config={tamaguiConfig} defaultTheme="dark">
+        <GemRecordList
+          records={records}
+          label="Example"
+          getKey={(record) => record.id}
+          renderRecord={(record) => <button type="button">{record.title}</button>}
+          tableColumns={[
+            { key: "title", label: "Title", render: (record) => record.title },
+            { key: "id", label: "Item ID", render: (record) => record.id },
+          ]}
+        />
+      </TamaguiProvider>,
+    );
+
+    fireEvent.click(screen.getByText("Properties"));
+    expect(screen.getByRole("checkbox", { name: "Title" })).toBeChecked();
+    fireEvent.click(screen.getByRole("checkbox", { name: "Item ID" }));
+    fireEvent.click(screen.getByText("View: List"));
+    fireEvent.click(screen.getByRole("menuitemradio", { name: "Table" }));
+    expect(screen.getByRole("columnheader", { name: "Title" })).toBeInTheDocument();
+    expect(screen.queryByRole("columnheader", { name: "Item ID" })).not.toBeInTheDocument();
   });
 });

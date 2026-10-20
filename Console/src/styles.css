@@ -884,6 +884,78 @@ dialog::backdrop {
   justify-content: flex-end;
   margin-bottom: 0.75rem;
 }
+.gem-record-view-menu,
+.gem-record-property-menu {
+  position: relative;
+}
+.gem-record-view-menu summary,
+.gem-record-property-menu summary {
+  min-height: 44px;
+  padding: 0.65rem 0.8rem;
+  border: 1px solid var(--line);
+  border-radius: 0.55rem;
+  color: var(--ink);
+  cursor: pointer;
+  list-style: none;
+}
+.gem-record-view-menu summary::-webkit-details-marker,
+.gem-record-property-menu summary::-webkit-details-marker {
+  display: none;
+}
+.gem-record-view-menu > div,
+.gem-record-property-menu > div {
+  position: absolute;
+  z-index: 5;
+  top: calc(100% + 0.35rem);
+  right: 0;
+  display: grid;
+  min-width: 12rem;
+  gap: 0.35rem;
+  padding: 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 0.65rem;
+  background: var(--panel);
+  box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.25);
+}
+.gem-record-property-menu > div {
+  min-width: 15rem;
+}
+.gem-record-property-menu label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem;
+  color: var(--ink);
+  font-size: 0.8rem;
+}
+.gem-record-property-search {
+  display: block !important;
+}
+.gem-record-property-search input {
+  width: 100%;
+  min-height: 2.4rem;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 0.45rem;
+  background: var(--canvas);
+  color: var(--ink);
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.gem-record-property-menu input {
+  accent-color: var(--mint);
+}
+.gem-record-collection {
+  container-type: inline-size;
+}
 .gem-record-view-toggle span {
   color: var(--muted);
   font-size: 0.85rem;
@@ -938,7 +1010,8 @@ dialog::backdrop {
 }
 .gem-record-grid-rail {
   display: grid !important;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-auto-rows: 18rem;
   gap: 0.75rem;
   align-items: stretch;
   padding: 0.5rem 0.25rem 1rem;
@@ -946,7 +1019,8 @@ dialog::backdrop {
 }
 .gem-record-grid-card {
   min-width: 0;
-  aspect-ratio: 0.88 / 1;
+  height: 18rem;
+  aspect-ratio: auto;
   min-height: 0;
   height: auto;
   display: flex;
@@ -1070,6 +1144,32 @@ dialog::backdrop {
   flex: 0 0 auto;
   min-width: 2.5rem;
 }
+@container (min-width: 40rem) and (max-width: 56.25rem) {
+  .gem-record-collection.is-gallery .gem-record-grid-rail {
+    grid-template-columns: 1fr;
+  }
+  .gem-record-collection.is-gallery .gem-record-grid-card,
+  .gem-record-collection.is-gallery .gem-record-grid-card.is-active {
+    aspect-ratio: auto;
+    height: 8rem;
+  }
+  .gem-record-collection.is-gallery .gem-record-grid-card > button {
+    grid-template-columns: 7rem minmax(0, 1fr);
+    grid-template-rows: 1fr;
+  }
+  .gem-record-collection.is-gallery .gem-record-grid-card > button > [class$="-icon"] {
+    grid-column: 1;
+    grid-row: 1;
+    border-radius: 0.75rem 0.35rem 0.35rem 0.75rem;
+  }
+  .gem-record-collection.is-gallery .gem-record-grid-card > button > [class$="-copy"] {
+    grid-column: 2;
+    grid-row: 1;
+    padding: 0.75rem;
+    border-top: 0;
+    border-left: 1px solid rgba(120, 209, 189, 0.16);
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   .gem-record-grid-card {
     transition: none;
@@ -1081,10 +1181,11 @@ dialog::backdrop {
   }
   .gem-record-grid-rail {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-auto-rows: 14rem;
   }
   .gem-record-grid-card,
   .gem-record-grid-card.is-active {
-    aspect-ratio: 0.88 / 1;
+    height: 14rem;
   }
 }
 @media (min-width: 901px) and (max-width: 1080px) {
