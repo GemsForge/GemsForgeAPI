@@ -851,18 +851,16 @@ dialog::backdrop {
   gap: 0.75rem;
 }
 .gem-record-grid-rail {
-  display: flex !important;
-  flex-direction: row !important;
-  flex-wrap: wrap !important;
-  gap: 1rem;
+  display: grid !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.75rem;
   align-items: stretch;
   padding: 0.5rem 0.25rem 1rem;
   flex: 1;
 }
 .gem-record-grid-card {
-  flex: 0 0 calc(33.333% - 0.667rem) !important;
-  min-width: min(16rem, 100%);
-  aspect-ratio: 1 / 1;
+  min-width: 0;
+  aspect-ratio: 0.88 / 1;
   min-height: 0;
   height: auto;
   display: flex;
@@ -948,11 +946,17 @@ dialog::backdrop {
   .gem-record-grid-nav {
     display: none;
   }
+  .gem-record-grid-rail {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
   .gem-record-grid-card,
   .gem-record-grid-card.is-active {
-    flex-basis: 100% !important;
-    height: auto;
-    aspect-ratio: 1 / 1;
+    aspect-ratio: 0.88 / 1;
+  }
+}
+@media (min-width: 641px) and (max-width: 1080px) {
+  .gem-record-grid-rail {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 .gem-record-expansion {
