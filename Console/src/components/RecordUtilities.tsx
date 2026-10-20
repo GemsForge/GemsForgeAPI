@@ -1,6 +1,6 @@
 import type { RecordSortDirection } from "../hooks/useRecordUtilities";
 
-export function RecordUtilities({ label, search, onSearch, sort, onSort, direction, onDirection, filter, onFilter, filterOptions = [], sortOptions }: {
+export function RecordUtilities({ label, search, onSearch, sort, onSort, direction, onDirection, filter, onFilter, filterOptions = [], sortOptions, totalCount, visibleCount }: {
   label: string; search: string; onSearch: (value: string) => void; sort: string; onSort: (value: string) => void;
   direction: RecordSortDirection; onDirection: () => void; filter: string; onFilter: (value: string) => void;
   filterOptions?: string[]; sortOptions: { value: string; label: string }[]; totalCount?: number; visibleCount?: number;
