@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { useState } from "react";
 import { Accordion } from "@tamagui/accordion";
+import { XStack, YStack } from "tamagui";
 
 export interface GemRecordListProps<Record> {
   records: Record[];
@@ -37,7 +38,7 @@ export function GemRecordList<Record>({
 
   return (
     <div className={`gem-record-collection ${view === "grid" ? "is-grid" : "is-list"}`}>
-      <div className="gem-record-view-toggle" aria-label={`${label} view`}>
+      <XStack className="gem-record-view-toggle" aria-label={`${label} view`}>
         <span>View</span>
         <button type="button" aria-pressed={view === "list"} onClick={() => setView("list")}>
           List
@@ -45,9 +46,9 @@ export function GemRecordList<Record>({
         <button type="button" aria-pressed={view === "grid"} onClick={() => setView("grid")}>
           Grid
         </button>
-      </div>
+      </XStack>
       {view === "grid" ? (
-        <div className="gem-record-grid-shell">
+        <XStack className="gem-record-grid-shell">
           <button
             type="button"
             className="gem-record-grid-nav"
@@ -57,17 +58,17 @@ export function GemRecordList<Record>({
           >
             ←
           </button>
-          <div className={`${className} gem-record-grid-rail`} aria-label={`${label} records`}>
+          <XStack className={`${className} gem-record-grid-rail`} aria-label={`${label} records`}>
             {records.map((record) => {
               const key = getKey(record);
               return (
-                <div key={key} className={`gem-record-grid-card${key === expandedKey ? " is-active" : ""}`}>
+                <YStack key={key} className={`gem-record-grid-card${key === expandedKey ? " is-active" : ""}`}>
                   {renderRecord(record)}
                   {key === expandedKey && <div className="gem-record-expansion">{renderExpanded?.(record)}</div>}
-                </div>
+                </YStack>
               );
             })}
-          </div>
+          </XStack>
           <button
             type="button"
             className="gem-record-grid-nav"
@@ -77,7 +78,7 @@ export function GemRecordList<Record>({
           >
             →
           </button>
-        </div>
+        </XStack>
       ) : (
         <Accordion
           className={className}
