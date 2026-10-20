@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter, useNavigate } from "react-router-dom";
 import { TamaguiProvider } from "tamagui";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { AppRoutes } from "./AppRoutes";
+import { AppRoutes, ScreenBoundary } from "./AppRoutes";
 import { api } from "../api";
 import { tamaguiConfig } from "../design-system";
 import { AuthProvider } from "../auth/AuthProvider";
@@ -22,6 +22,9 @@ function HistoryControls() {
       <button onClick={() => navigate(1)}>Go forward</button>
     </>
   );
+}
+function BrokenScreen(): never {
+  throw new Error("employment render failed");
 }
 function setup(path = "/", authenticated = true) {
   vi.spyOn(api, "listDomains").mockResolvedValue([
@@ -46,6 +49,16 @@ function setup(path = "/", authenticated = true) {
 }
 
 describe("Gem Life navigation", () => {
+  it("exposes a captured screen render error during development", () => {
+    render(
+      <MemoryRouter>
+        <ScreenBoundary>
+          <BrokenScreen />
+        </ScreenBoundary>
+      </MemoryRouter>,
+    );
+    expect(screen.getByRole("alert")).toHaveTextContent("employment render failed");
+  });
   it("redirects unauthenticated protected routes before loading record data", async () => {
     const domains = vi.spyOn(api, "listDomains");
     setup("/addresses", false);
