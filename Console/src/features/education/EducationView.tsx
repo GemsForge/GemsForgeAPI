@@ -20,9 +20,14 @@ interface EducationViewProps {
 }
 
 export function EducationView({ records }: EducationViewProps) {
-  const utilities = useRecordUtilities(records, (record) => [record.id, record.institutionName, record.educationType, record.program, record.status], {
-    institution: (a, b) => a.institutionName.localeCompare(b.institutionName), status: (a, b) => a.status.localeCompare(b.status),
-  });
+  const utilities = useRecordUtilities(
+    records,
+    (record) => [record.id, record.institutionName, record.educationType, record.program, record.status],
+    {
+      institution: (a, b) => a.institutionName.localeCompare(b.institutionName),
+      status: (a, b) => a.status.localeCompare(b.status),
+    },
+  );
   const paging = usePagedRecords(utilities.records);
   const [selectedID, setSelectedID] = useState<string | null>(null);
   const detail = useEducationRecordQuery(selectedID);
@@ -31,7 +36,9 @@ export function EducationView({ records }: EducationViewProps) {
   const [creating, setCreating] = useState(false);
   const create = useCreateEducationMutation();
   const addresses = useAddressesQuery(true);
-  const programOptions = Array.from(new Set(records.map((record) => record.program).filter((program): program is string => Boolean(program)))).sort();
+  const programOptions = Array.from(
+    new Set(records.map((record) => record.program).filter((program): program is string => Boolean(program))),
+  ).sort();
 
   return (
     <>
@@ -49,10 +56,28 @@ export function EducationView({ records }: EducationViewProps) {
           <button type="button" onClick={() => setCreating(true)}>
             Add education
           </button>
-          <RecordImport label="education records" expectedColumns={["id", "educationType", "institutionName", "status"]} onPublish={async (rows) => { for (const row of rows) await create.mutateAsync(row as Parameters<typeof create.mutateAsync>[0]); }} />
+          <RecordImport
+            label="education records"
+            expectedColumns={["id", "educationType", "institutionName", "status"]}
+            onPublish={async (rows) => {
+              for (const row of rows) await create.mutateAsync(row as Parameters<typeof create.mutateAsync>[0]);
+            }}
+          />
         </div>
       </div>
-      <RecordCollection><RecordUtilities label="Education" {...utilities} totalCount={records.length} visibleCount={utilities.records.length} sortOptions={[{ value: "institution", label: "Institution" }, { value: "status", label: "Status" }]} filterOptions={Array.from(new Set(records.map((record) => record.status))).sort()} /></RecordCollection>
+      <RecordCollection>
+        <RecordUtilities
+          label="Education"
+          {...utilities}
+          totalCount={records.length}
+          visibleCount={utilities.records.length}
+          sortOptions={[
+            { value: "institution", label: "Institution" },
+            { value: "status", label: "Status" },
+          ]}
+          filterOptions={Array.from(new Set(records.map((record) => record.status))).sort()}
+        />
+      </RecordCollection>
 
       {creating && (
         <EducationCreateForm
@@ -88,7 +113,7 @@ export function EducationView({ records }: EducationViewProps) {
                 subtitle={record.educationType}
                 status={record.status}
                 selected={selectedRecord?.id === record.id}
-                onSelect={() => setSelectedID((current) => current === record.id ? null : record.id)}
+                onSelect={() => setSelectedID((current) => (current === record.id ? null : record.id))}
               />
             )}
           />
@@ -151,10 +176,17 @@ function EducationDetail({
         className="education-fields"
         fields={[
           {
-            label: "Type", value: record.educationType, required: true,
+            label: "Type",
+            value: record.educationType,
+            required: true,
             onSave: async (value) => onPatch({ educationType: value as string }),
           },
-          { label: "Institution", value: record.institutionName, required: true, onSave: async (value) => onPatch({ institutionName: value as string }) },
+          {
+            label: "Institution",
+            value: record.institutionName,
+            required: true,
+            onSave: async (value) => onPatch({ institutionName: value as string }),
+          },
           {
             label: "Program",
             value: record.program,
@@ -163,22 +195,84 @@ function EducationDetail({
             options: programOptions.map((program) => ({ value: program, label: program })),
             onSave: async (value) => onPatch({ program: value as string | null }),
           },
-          { label: "Field of study", value: record.fieldOfStudy, nullable: true, onSave: async (value) => onPatch({ fieldOfStudy: value as string | null }) },
-          { label: "Credential", value: record.credential, nullable: true, onSave: async (value) => onPatch({ credential: value as string | null }) },
-          { label: "Credential ID", value: record.credentialID, nullable: true, onSave: async (value) => onPatch({ credentialID: value as string | null }) },
-          { label: "Start date", value: record.startDate, inputType: "date", nullable: true, onSave: async (value) => onPatch({ startDate: value as string | null }) },
-          { label: "End date", value: record.endDate, inputType: "date", nullable: true, onSave: async (value) => onPatch({ endDate: value as string | null }) },
-          { label: "Awarded date", value: record.awardedDate, inputType: "date", nullable: true, onSave: async (value) => onPatch({ awardedDate: value as string | null }) },
-          { label: "Status", value: record.status, required: true, onSave: async (value) => onPatch({ status: value as string }) },
           {
-            label: "Location", value: record.address?.id ?? null, inputType: "select", nullable: true,
-            options: (addresses.data ?? []).map((address) => ({ value: address.id, label: addressOptionLabel(address) })),
+            label: "Field of study",
+            value: record.fieldOfStudy,
+            nullable: true,
+            onSave: async (value) => onPatch({ fieldOfStudy: value as string | null }),
+          },
+          {
+            label: "Credential",
+            value: record.credential,
+            nullable: true,
+            onSave: async (value) => onPatch({ credential: value as string | null }),
+          },
+          {
+            label: "Credential ID",
+            value: record.credentialID,
+            nullable: true,
+            onSave: async (value) => onPatch({ credentialID: value as string | null }),
+          },
+          {
+            label: "Start date",
+            value: record.startDate,
+            inputType: "date",
+            nullable: true,
+            onSave: async (value) => onPatch({ startDate: value as string | null }),
+          },
+          {
+            label: "End date",
+            value: record.endDate,
+            inputType: "date",
+            nullable: true,
+            onSave: async (value) => onPatch({ endDate: value as string | null }),
+          },
+          {
+            label: "Awarded date",
+            value: record.awardedDate,
+            inputType: "date",
+            nullable: true,
+            onSave: async (value) => onPatch({ awardedDate: value as string | null }),
+          },
+          {
+            label: "Status",
+            value: record.status,
+            required: true,
+            onSave: async (value) => onPatch({ status: value as string }),
+          },
+          {
+            label: "Location",
+            value: record.address?.id ?? null,
+            inputType: "select",
+            nullable: true,
+            options: (addresses.data ?? []).map((address) => ({
+              value: address.id,
+              label: addressOptionLabel(address),
+            })),
             displayValue: <AddressSummary address={record.address} />,
             onSave: async (value) => onPatch({ locationAddressID: value as string | null }),
           },
-          { label: "Website", value: record.website, inputType: "url", nullable: true, onSave: async (value) => onPatch({ website: value as string | null }) },
-          { label: "Notes", value: record.notes, inputType: "longText", nullable: true, className: "record-notes", onSave: async (value) => onPatch({ notes: value as string | null }) },
-          { label: "Last updated", value: record.updatedAt ?? null, readOnlyReason: "Server managed", displayValue: formatRecordTimestamp(record.updatedAt) },
+          {
+            label: "Website",
+            value: record.website,
+            inputType: "url",
+            nullable: true,
+            onSave: async (value) => onPatch({ website: value as string | null }),
+          },
+          {
+            label: "Notes",
+            value: record.notes,
+            inputType: "longText",
+            nullable: true,
+            className: "record-notes",
+            onSave: async (value) => onPatch({ notes: value as string | null }),
+          },
+          {
+            label: "Last updated",
+            value: record.updatedAt ?? null,
+            readOnlyReason: "Server managed",
+            displayValue: formatRecordTimestamp(record.updatedAt),
+          },
         ]}
       />
       <AttachmentControl

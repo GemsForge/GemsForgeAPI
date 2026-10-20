@@ -41,16 +41,10 @@ export function GemRecordList<Record>({
         return (
           <Accordion.Item key={key} value={key} className="gem-record-list-row">
             <Accordion.Header>
-              <Accordion.Trigger asChild>
-                {renderRecord(record)}
-              </Accordion.Trigger>
+              <Accordion.Trigger asChild>{renderRecord(record)}</Accordion.Trigger>
             </Accordion.Header>
             <Accordion.Content>
-              {isExpanded?.(record) && (
-                <div className="gem-record-expansion">
-                  {renderExpanded?.(record)}
-                </div>
-              )}
+              {isExpanded?.(record) && <div className="gem-record-expansion">{renderExpanded?.(record)}</div>}
             </Accordion.Content>
           </Accordion.Item>
         );

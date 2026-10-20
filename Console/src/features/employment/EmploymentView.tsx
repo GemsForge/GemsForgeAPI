@@ -15,7 +15,17 @@ import { RecordCollection } from "../../components/RecordCollection";
 import { useRecordUtilities } from "../../hooks/useRecordUtilities";
 
 const employmentOptions = {
-  industry: ["Technology", "Healthcare", "Education", "Finance", "Government", "Retail", "Hospitality", "Manufacturing", "Other"],
+  industry: [
+    "Technology",
+    "Healthcare",
+    "Education",
+    "Finance",
+    "Government",
+    "Retail",
+    "Hospitality",
+    "Manufacturing",
+    "Other",
+  ],
   employerType: ["Company", "Nonprofit", "Government", "Self-employed", "Other"],
   employmentType: ["Full-time", "Part-time", "Contract", "Temporary", "Internship", "Self-employed", "Other"],
   status: ["Current", "Former", "On leave", "Seasonal"],
@@ -28,9 +38,14 @@ interface EmploymentViewProps {
 }
 
 export function EmploymentView({ records }: EmploymentViewProps) {
-  const utilities = useRecordUtilities(records, (record) => [record.id, record.employerName, record.positionTitle, record.industry, record.employmentStatus], {
-    employer: (a, b) => a.employerName.localeCompare(b.employerName), start: (a, b) => (a.startDate ?? "").localeCompare(b.startDate ?? ""),
-  });
+  const utilities = useRecordUtilities(
+    records,
+    (record) => [record.id, record.employerName, record.positionTitle, record.industry, record.employmentStatus],
+    {
+      employer: (a, b) => a.employerName.localeCompare(b.employerName),
+      start: (a, b) => (a.startDate ?? "").localeCompare(b.startDate ?? ""),
+    },
+  );
   const paging = usePagedRecords(utilities.records);
   const [selectedID, setSelectedID] = useState<string | null>(null);
   const detail = useEmploymentRecordQuery(selectedID);
@@ -56,10 +71,35 @@ export function EmploymentView({ records }: EmploymentViewProps) {
           <button type="button" onClick={() => setCreating(true)}>
             Add employment
           </button>
-          <RecordImport label="employment records" expectedColumns={["id", "employerName", "employerType", "positionTitle", "employmentType", "employmentStatus"]} onPublish={async (rows) => { for (const row of rows) await create.mutateAsync(row as Parameters<typeof create.mutateAsync>[0]); }} />
+          <RecordImport
+            label="employment records"
+            expectedColumns={[
+              "id",
+              "employerName",
+              "employerType",
+              "positionTitle",
+              "employmentType",
+              "employmentStatus",
+            ]}
+            onPublish={async (rows) => {
+              for (const row of rows) await create.mutateAsync(row as Parameters<typeof create.mutateAsync>[0]);
+            }}
+          />
         </div>
       </div>
-      <RecordCollection><RecordUtilities label="Employment" {...utilities} totalCount={records.length} visibleCount={utilities.records.length} sortOptions={[{ value: "employer", label: "Employer" }, { value: "start", label: "Start date" }]} filterOptions={Array.from(new Set(records.map((record) => record.employmentStatus))).sort()} /></RecordCollection>
+      <RecordCollection>
+        <RecordUtilities
+          label="Employment"
+          {...utilities}
+          totalCount={records.length}
+          visibleCount={utilities.records.length}
+          sortOptions={[
+            { value: "employer", label: "Employer" },
+            { value: "start", label: "Start date" },
+          ]}
+          filterOptions={Array.from(new Set(records.map((record) => record.employmentStatus))).sort()}
+        />
+      </RecordCollection>
 
       {creating && (
         <EmploymentCreateForm
@@ -95,20 +135,22 @@ export function EmploymentView({ records }: EmploymentViewProps) {
                 subtitle={record.positionTitle}
                 status={record.employmentStatus}
                 selected={selectedRecord?.id === record.id}
-                onSelect={() => setSelectedID((current) => current === record.id ? null : record.id)}
+                onSelect={() => setSelectedID((current) => (current === record.id ? null : record.id))}
               />
             )}
             isExpanded={(record) => selectedID === record.id}
             renderExpanded={() => (
               <>
                 <QueryFeedback query={detail} />
-                {selectedRecord && <EmploymentDetail
-                  key={selectedRecord.id}
-                  record={selectedRecord}
-                  onPatch={async (values) => {
-                    await patch.mutateAsync({ id: selectedRecord.id, patch: values });
-                  }}
-                />}
+                {selectedRecord && (
+                  <EmploymentDetail
+                    key={selectedRecord.id}
+                    record={selectedRecord}
+                    onPatch={async (values) => {
+                      await patch.mutateAsync({ id: selectedRecord.id, patch: values });
+                    }}
+                  />
+                )}
               </>
             )}
           />

@@ -9,9 +9,11 @@ describe("useRecordUtilities", () => {
       { name: "Alpha", status: "Former" },
       { name: "beta", status: "Current" },
     ];
-    const hook = renderHook(() => useRecordUtilities(records, (record) => [record.name, record.status], {
-      name: (a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" }),
-    }));
+    const hook = renderHook(() =>
+      useRecordUtilities(records, (record) => [record.name, record.status], {
+        name: (a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" }),
+      }),
+    );
 
     act(() => hook.result.current.onFilter("current"));
     act(() => hook.result.current.onSort("name"));

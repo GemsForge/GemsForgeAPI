@@ -1827,7 +1827,21 @@ dialog {
   border-radius: 0.6rem;
   background: var(--surface-subtle, #faf8f4);
 }
-.record-collection { display: contents; }
-.record-utilities label { display: grid; gap: 0.25rem; font-size: 0.8rem; }
-.record-utilities input, .record-utilities select { min-height: 2.25rem; }
-.record-utility-summary { margin-left: auto; align-self: center; color: var(--muted, #6f6a61); font-size: 0.85rem; }
+.record-collection {
+  display: contents;
+}
+.record-utilities label {
+  display: grid;
+  gap: 0.25rem;
+  font-size: 0.8rem;
+}
+.record-utilities input,
+.record-utilities select {
+  min-height: 2.25rem;
+}
+.record-utility-summary {
+  margin-left: auto;
+  align-self: center;
+  color: var(--muted, #6f6a61);
+  font-size: 0.85rem;
+}
