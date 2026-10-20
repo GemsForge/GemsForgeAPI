@@ -929,6 +929,33 @@ dialog::backdrop {
   border-top: 1px solid rgba(120, 209, 189, 0.16);
   background: rgba(7, 23, 28, 0.34);
 }
+.gem-record-properties {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.35rem 0.65rem;
+  margin-top: 0.6rem;
+  color: var(--muted);
+  font-size: 0.68rem;
+}
+.gem-record-property {
+  min-width: 0;
+}
+.gem-record-property-label,
+.gem-record-property-value {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gem-record-property-label {
+  color: var(--muted);
+  font-size: 0.58rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.gem-record-property-value {
+  color: var(--ink);
+}
 .gem-record-grid-card > button > [data-record-status] {
   grid-column: 2;
   grid-row: 3;

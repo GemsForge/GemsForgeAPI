@@ -154,6 +154,10 @@ export function ServiceAccountsView({ records }: { records: ServiceAccount[] }) 
                 })()}
                 title={record.service}
                 subtitle={`${record.type || "Service"} · ${record.id}`}
+                properties={[
+                  { label: "Group", value: record.expenseGroup },
+                  { label: "Monthly", value: formatRecordCurrency(record.monthlyAmount) },
+                ]}
                 status={record.status || undefined}
                 selected={selectedID === record.id}
                 onSelect={() => setSelectedID((current) => (current === record.id ? null : record.id))}

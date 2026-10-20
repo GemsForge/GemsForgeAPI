@@ -15,6 +15,7 @@ export interface GemRecordCardProps {
   icon: ReactNode;
   title: string;
   subtitle: string;
+  properties?: Array<{ label: string; value: ReactNode }>;
   status?: ReactNode;
   selected?: boolean;
   ariaLabel?: string;
@@ -27,6 +28,7 @@ export function GemRecordCard({
   icon,
   title,
   subtitle,
+  properties = [],
   status,
   selected = false,
   ariaLabel,
@@ -46,6 +48,16 @@ export function GemRecordCard({
       <span className={`${className}-copy`}>
         <strong>{title}</strong>
         <small>{subtitle}</small>
+        {properties.length > 0 && (
+          <span className="gem-record-properties" aria-label="Selected properties">
+            {properties.map(({ label, value }) => (
+              <span className="gem-record-property" key={label}>
+                <span className="gem-record-property-label">{label}</span>
+                <span className="gem-record-property-value">{value || "—"}</span>
+              </span>
+            ))}
+          </span>
+        )}
       </span>
       {status ? (
         <GemStatusPill className="gem-record-status" tone={statusTone(status)} data-record-status>

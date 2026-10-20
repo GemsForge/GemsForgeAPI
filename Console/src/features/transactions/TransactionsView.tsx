@@ -129,6 +129,10 @@ export function TransactionsView({ records }: TransactionsViewProps) {
                 icon="$"
                 title={record.item}
                 subtitle={`${record.transactionDate || "Undated"} · ${record.id}`}
+                properties={[
+                  { label: "Merchant", value: record.merchantCode },
+                  { label: "Total", value: record.total },
+                ]}
                 status={formatAmount(record.total ?? record.paidPrice)}
                 selected={selectedID === record.id}
                 onSelect={() => setSelectedID((current) => (current === record.id ? null : record.id))}

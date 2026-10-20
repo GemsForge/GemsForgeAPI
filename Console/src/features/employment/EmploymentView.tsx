@@ -143,6 +143,10 @@ export function EmploymentView({ records }: EmploymentViewProps) {
                 icon="◆"
                 title={record.employerName}
                 subtitle={record.positionTitle}
+                properties={[
+                  { label: "Industry", value: record.industry },
+                  { label: "Type", value: record.employmentType },
+                ]}
                 status={record.employmentStatus}
                 selected={selectedRecord?.id === record.id}
                 onSelect={() => setSelectedID((current) => (current === record.id ? null : record.id))}
