@@ -9,8 +9,9 @@ export function useRecordUtilities<T>(records: readonly T[], searchable: (record
   const [filter, setFilter] = useState("");
   const filtered = useMemo(() => {
     const term = search.trim().toLocaleLowerCase();
+    const normalizedFilter = filter.trim().toLocaleLowerCase();
     const result = records.filter((record) => !term || searchable(record).some((value) => String(value ?? "").toLocaleLowerCase().includes(term)))
-      .filter((record) => !filter || searchable(record).some((value) => String(value ?? "") === filter));
+      .filter((record) => !normalizedFilter || searchable(record).some((value) => String(value ?? "").trim().toLocaleLowerCase() === normalizedFilter));
     const compare = sortOptions[sort];
     if (!compare) return result;
     return [...result].sort((a, b) => (direction === "asc" ? compare(a, b) : compare(b, a)));
