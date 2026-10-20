@@ -6,7 +6,11 @@ import { TamaguiProvider } from "tamagui";
 import { tamaguiConfig } from "../design-system";
 
 function render(ui: React.ReactElement) {
-  return rtlRender(<TamaguiProvider config={tamaguiConfig}>{ui}</TamaguiProvider>);
+  return rtlRender(
+    <TamaguiProvider config={tamaguiConfig} defaultTheme="dark">
+      {ui}
+    </TamaguiProvider>,
+  );
 }
 
 describe("PropertyEditor", () => {

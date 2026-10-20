@@ -30,7 +30,7 @@ const mocks = vi.hoisted(() => ({
     associatedAddress: null,
     serviceKey: null,
     logoFileMetadataID: null,
-  } satisfies ServiceAccount,
+  } as ServiceAccount,
 }));
 
 vi.mock("../../data/recordQueries", () => ({
@@ -49,7 +49,7 @@ describe("ServiceAccountsView", () => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     render(
       <QueryClientProvider client={client}>
-        <TamaguiProvider config={tamaguiConfig}>
+        <TamaguiProvider config={tamaguiConfig} defaultTheme="dark">
           <ServiceAccountsView records={[mocks.account]} />
         </TamaguiProvider>
       </QueryClientProvider>,
