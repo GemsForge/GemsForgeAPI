@@ -882,6 +882,11 @@ dialog::backdrop {
   opacity: 1;
 }
 .gem-record-grid-card > button {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: auto 1fr auto;
+  align-items: start;
+  gap: 0.45rem 0.75rem;
   width: 100%;
   height: 100%;
   min-height: 100%;
@@ -890,6 +895,23 @@ dialog::backdrop {
   border-radius: inherit;
   background: transparent;
   box-shadow: none;
+}
+.gem-record-grid-card > button > [class$="-icon"] {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  width: 2.75rem;
+  height: 2.75rem;
+}
+.gem-record-grid-card > button > [class$="-copy"] {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  min-width: 0;
+  align-self: center;
+}
+.gem-record-grid-card > button > [data-record-status] {
+  grid-column: 2;
+  grid-row: 3;
+  justify-self: end;
 }
 .gem-record-grid-card > button:hover,
 .gem-record-grid-card > button.selected {
