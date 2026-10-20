@@ -81,6 +81,27 @@ src/
 The console currently preserves the prototype's styling and behavior while
 separating API access and feature UI into maintainable modules.
 
+## Record collections
+
+Record-list screens share `RecordCollection`, `RecordUtilities`,
+`useRecordUtilities`, and `usePagedRecords`. This keeps query state local to
+the active collection while applying search, sort, filters, result summaries,
+and pagination in a consistent order.
+
+When extending a record view:
+
+1. Pass the complete record set to `useRecordUtilities`.
+2. Include the ID and relevant display fields in its searchable values.
+3. Add stable comparators for supported text, date, and numeric sort fields.
+4. Provide readable categorical values through `filterOptions`.
+5. Pass the filtered records to `usePagedRecords` and show the total and
+   matching counts in `RecordUtilities`.
+
+Use the built-in clear action to reset search, sort, and filter state together.
+Keep create/edit forms, loading and error feedback, empty states, and list
+content within the collection's boundary so query changes do not alter form
+submission behavior.
+
 ## Design system
 
 Tamagui is configured in `src/design-system/tamagui.config.ts`. The existing

@@ -75,6 +75,30 @@ Open `http://127.0.0.1:5173/`.
   `GET /transactions/:transactionID`, with a reusable receipt-image control for
   upload, preview, replacement, and removal.
 
+### Record collection utilities
+
+The Education, Employment, Addresses, Transactions, and Services views use a
+shared `RecordCollection` boundary with the `RecordUtilities` controls. The
+controls are scoped to the active collection and update the visible records
+without reloading the page.
+
+- Search matches the record ID and the main display fields for the active
+  table. Search is case-insensitive and can be cleared with **Clear filters**.
+- Sort controls expose the fields relevant to each table and toggle ascending
+  or descending order. Dates and numeric amounts are compared as stored values.
+- Filters expose readable categorical values, including address status,
+  education status, employment status, service status, and transaction
+  merchant reference. The **All** option removes the active filter.
+- Search, sorting, and filtering compose before pagination. The result summary
+  reports the matching count against the total loaded records, and pagination
+  operates on that matching result set.
+
+The controls use labelled search inputs, native selects, visible sort direction,
+status announcements for result summaries, and a single clear action for the
+active query state. When adding a new record collection, keep its form and
+empty/error states inside the same collection boundary and add its searchable
+fields, sort comparators, and categorical filter options explicitly.
+
 The React project keeps the API client and UI features separate:
 
 ```text
