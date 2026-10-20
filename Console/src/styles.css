@@ -248,6 +248,34 @@ h3 {
 .sidebar-resizer:focus-visible::after {
   background: var(--mint);
 }
+.workspace[data-sidebar-collapsed="true"] .sidebar {
+  padding-inline: 0.5rem;
+}
+.workspace[data-sidebar-collapsed="false"] .sidebar {
+  padding-inline: clamp(0.75rem, 1.5vw, 1.25rem);
+}
+.workspace[data-sidebar-collapsed="true"] .navigation-links nav[aria-label="Gem Life navigation"] .resource-button {
+  grid-template-columns: 1fr;
+  width: 3.25rem;
+  min-width: 3.25rem;
+  padding: 0.55rem;
+  place-items: center;
+}
+.workspace[data-sidebar-collapsed="true"]
+  .navigation-links
+  nav[aria-label="Gem Life navigation"]
+  .resource-button
+  > span:last-child {
+  display: none;
+}
+.workspace[data-sidebar-collapsed="true"] .navigation-links nav[aria-label="Gem Life navigation"] .resource-mark {
+  margin: 0;
+}
+.workspace[data-sidebar-collapsed="true"] .navigation-links .section-heading,
+.workspace[data-sidebar-collapsed="true"] .navigation-links .domain-list,
+.workspace[data-sidebar-collapsed="true"] .navigation-links .sidebar-note {
+  display: none;
+}
 .sidebar {
   min-height: calc(100vh - 124px);
   padding: 2rem clamp(1.25rem, 4vw, 3rem);
@@ -1938,7 +1966,7 @@ body {
   min-width: 0;
 }
 .workspace {
-  grid-template-columns: minmax(15rem, 20rem) minmax(0, 1fr);
+  grid-template-columns: var(--sidebar-width, minmax(15rem, 20rem)) 0.5rem minmax(0, 1fr);
 }
 .workspace > *,
 .content > *,

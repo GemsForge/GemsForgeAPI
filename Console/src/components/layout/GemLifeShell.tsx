@@ -7,6 +7,12 @@ interface GemLifeShellProps {
   sidebar: ReactNode;
 }
 
+const COLLAPSED_SIDEBAR_WIDTH = 68;
+const EXPANDED_SIDEBAR_WIDTH = 288;
+const SIDEBAR_LABEL_THRESHOLD = 160;
+const MAX_SIDEBAR_WIDTH = 360;
+const MIN_CONTENT_WIDTH = 420;
+
 /** Shared application frame for the Gem Life interface. */
 export function GemLifeShell({ children, sidebar }: GemLifeShellProps) {
   const { signOut } = useAuth();
@@ -14,14 +20,25 @@ export function GemLifeShell({ children, sidebar }: GemLifeShellProps) {
   const resizingRef = useRef(false);
   const manuallyResizedRef = useRef(false);
   const [sidebarWidth, setSidebarWidth] = useState(() =>
-    typeof window !== "undefined" && window.innerWidth <= 900 ? 68 : 288,
+    typeof window !== "undefined" && window.innerWidth <= 900 ? COLLAPSED_SIDEBAR_WIDTH : EXPANDED_SIDEBAR_WIDTH,
   );
 
-  const resizeSidebar = (width: number) => setSidebarWidth(Math.min(360, Math.max(68, width)));
+  const resizeSidebar = (width: number) => {
+    const availableWidth = workspaceRef.current?.clientWidth ?? MAX_SIDEBAR_WIDTH + MIN_CONTENT_WIDTH;
+    const responsiveMaximum = Math.min(MAX_SIDEBAR_WIDTH, availableWidth - MIN_CONTENT_WIDTH);
+    setSidebarWidth(
+      Math.min(Math.max(COLLAPSED_SIDEBAR_WIDTH, responsiveMaximum), Math.max(COLLAPSED_SIDEBAR_WIDTH, width)),
+    );
+  };
 
   useEffect(() => {
     const handleWindowResize = () => {
-      if (!manuallyResizedRef.current) resizeSidebar(window.innerWidth <= 900 ? 68 : 288);
+      const availableWidth = workspaceRef.current?.clientWidth ?? MAX_SIDEBAR_WIDTH + MIN_CONTENT_WIDTH;
+      const responsiveMaximum = Math.min(MAX_SIDEBAR_WIDTH, availableWidth - MIN_CONTENT_WIDTH);
+      const maximum = Math.max(COLLAPSED_SIDEBAR_WIDTH, responsiveMaximum);
+      const defaultWidth = window.innerWidth <= 900 ? COLLAPSED_SIDEBAR_WIDTH : EXPANDED_SIDEBAR_WIDTH;
+
+      setSidebarWidth((currentWidth) => Math.min(maximum, manuallyResizedRef.current ? currentWidth : defaultWidth));
     };
     window.addEventListener("resize", handleWindowResize);
     return () => window.removeEventListener("resize", handleWindowResize);
@@ -37,8 +54,8 @@ export function GemLifeShell({ children, sidebar }: GemLifeShellProps) {
     if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
     event.preventDefault();
     manuallyResizedRef.current = true;
-    if (event.key === "Home") resizeSidebar(68);
-    else if (event.key === "End") resizeSidebar(360);
+    if (event.key === "Home") resizeSidebar(COLLAPSED_SIDEBAR_WIDTH);
+    else if (event.key === "End") resizeSidebar(MAX_SIDEBAR_WIDTH);
     else resizeSidebar(sidebarWidth + (event.key === "ArrowRight" ? 16 : -16));
   };
 
@@ -62,7 +79,7 @@ export function GemLifeShell({ children, sidebar }: GemLifeShellProps) {
       <main
         ref={workspaceRef}
         className="workspace"
-        data-sidebar-collapsed={sidebarWidth < 160}
+        data-sidebar-collapsed={sidebarWidth < SIDEBAR_LABEL_THRESHOLD}
         style={{ "--sidebar-width": `${sidebarWidth}px` } as CSSProperties}
       >
         {sidebar}
@@ -71,14 +88,14 @@ export function GemLifeShell({ children, sidebar }: GemLifeShellProps) {
           role="separator"
           aria-label="Resize navigation pane"
           aria-orientation="vertical"
-          aria-valuemin={68}
-          aria-valuemax={360}
+          aria-valuemin={COLLAPSED_SIDEBAR_WIDTH}
+          aria-valuemax={MAX_SIDEBAR_WIDTH}
           aria-valuenow={sidebarWidth}
           tabIndex={0}
           onKeyDown={handleResizeKey}
           onDoubleClick={() => {
             manuallyResizedRef.current = true;
-            resizeSidebar(sidebarWidth < 160 ? 288 : 68);
+            resizeSidebar(sidebarWidth < SIDEBAR_LABEL_THRESHOLD ? EXPANDED_SIDEBAR_WIDTH : COLLAPSED_SIDEBAR_WIDTH);
           }}
           onPointerDown={(event) => {
             manuallyResizedRef.current = true;
