@@ -57,7 +57,7 @@ export function ServiceAccountsView({ records }: { records: ServiceAccount[] }) 
           }); }} />
         </div>
       </div>
-      <RecordUtilities label="Services" {...utilities} sortOptions={[{ value: "service", label: "Service" }, { value: "amount", label: "Monthly amount" }]} />
+      <RecordUtilities label="Services" {...utilities} sortOptions={[{ value: "service", label: "Service" }, { value: "amount", label: "Monthly amount" }]} filterOptions={Array.from(new Set(records.map((record) => record.status).filter((value): value is string => Boolean(value)))).sort()} />
       {creating && (
         <ServiceAccountCreateForm
           onCancel={() => setCreating(false)}
