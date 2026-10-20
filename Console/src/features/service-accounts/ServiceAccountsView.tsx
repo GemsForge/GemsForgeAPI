@@ -377,7 +377,7 @@ function LegacyLogoPreview({
       controller.abort();
       if (objectURL) URL.revokeObjectURL(objectURL);
     };
-  }, [logo?.id]);
+  }, [logo]);
   if (!logo || !url) return null;
   return <img className={className ?? "service-logo-preview"} src={url} alt={`${logo.logoKey ?? "Service"} logo`} />;
 }
