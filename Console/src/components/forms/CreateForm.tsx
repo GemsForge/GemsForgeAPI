@@ -14,7 +14,7 @@ interface CreateFieldFrameProps {
 function CreateFieldFrame({ id, label, required, error, children }: CreateFieldFrameProps) {
   const errorId = `${id}-error`;
   return (
-    <YStack className="create-form-field" gap="$2">
+    <YStack className="create-form-field" gap="$1">
       <Label htmlFor={id} color="$gemMuted" fontSize="$2" fontWeight="700">
         {label}
         {required ? " *" : ""}

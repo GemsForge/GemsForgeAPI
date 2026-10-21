@@ -608,8 +608,9 @@ dialog::backdrop {
   color: var(--danger);
   font-size: 0.75rem;
 }
+/* Keep labels and controls compact so multi-field forms remain scannable. */
 .create-form-field {
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
 }
 .create-form-field > label {
   margin: 0;

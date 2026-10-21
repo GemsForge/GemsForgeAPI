@@ -69,11 +69,13 @@ const optionalEmploymentEmail = optional.refine(
   (value) => !value.trim() || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim()),
   "Enter a valid email address.",
 );
+/** Accept international numbers with country codes, common separators, and optional extensions. */
+const employmentPhonePattern = /^\+?[0-9().\-\s]+(?:\s*(?:x|ext\.?)\s*[0-9]+)?$/i;
 const optionalEmploymentPhone = optional.refine((value) => {
   const normalized = value.trim();
   if (!normalized) return true;
   const digitCount = (normalized.match(/\d/g) ?? []).length;
-  return /^\+?[0-9().\-\s]+(?:\s*(?:x|ext\.?)\s*[0-9]+)?$/i.test(normalized) && digitCount >= 7;
+  return employmentPhonePattern.test(normalized) && digitCount >= 7;
 }, "Enter a valid phone number.");
 const optionalNumber = z
   .string()
