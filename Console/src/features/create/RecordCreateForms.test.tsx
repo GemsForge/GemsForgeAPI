@@ -155,4 +155,34 @@ describe("shared create form workflow", () => {
     expect(screen.getByLabelText("End date").closest(".create-form-grid--compact")).toBeInTheDocument();
     expect(screen.getByLabelText("Status *").closest(".create-form-grid--compact")).toBeInTheDocument();
   });
+
+  it("rejects invalid employment contact and date values before submitting", async () => {
+    const onCreate = vi.fn().mockResolvedValue(undefined);
+    render(
+      <EmploymentCreateForm
+        addresses={[]}
+        employerTypeOptions={[{ value: "Company", label: "Company" }]}
+        industryOptions={[]}
+        employmentTypeOptions={[{ value: "Full-time", label: "Full-time" }]}
+        statusOptions={[{ value: "Current", label: "Current" }]}
+        onCreate={onCreate}
+        onCancel={vi.fn()}
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText("Employer name *"), { target: { value: "Acme" } });
+    fireEvent.change(screen.getByLabelText("Position title *"), { target: { value: "Engineer" } });
+    fireEvent.change(screen.getByLabelText("Website"), { target: { value: "acme.example" } });
+    fireEvent.change(screen.getByLabelText("Start date"), { target: { value: "2025-02-01" } });
+    fireEvent.change(screen.getByLabelText("End date"), { target: { value: "2025-01-01" } });
+    fireEvent.change(screen.getByLabelText("Contact number"), { target: { value: "fdfafr" } });
+    fireEvent.change(screen.getByLabelText("Contact email"), { target: { value: "not-an-email" } });
+    fireEvent.click(screen.getByRole("button", { name: "Create record" }));
+
+    expect(await screen.findByText("Enter a valid URL starting with http:// or https://.")).toBeInTheDocument();
+    expect(screen.getByText("Enter a valid phone number.")).toBeInTheDocument();
+    expect(screen.getByText("Enter a valid email address.")).toBeInTheDocument();
+    expect(screen.getByText("End date must be on or after start date.")).toBeInTheDocument();
+    expect(onCreate).not.toHaveBeenCalled();
+  });
 });

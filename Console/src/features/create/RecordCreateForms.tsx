@@ -35,6 +35,46 @@ import type {
 
 const required = (label: string) => z.string().trim().min(1, `${label} is required.`);
 const optional = z.string();
+/** Keep browser date inputs strict so JavaScript cannot normalize invalid calendar dates. */
+function isValidDateInput(value: string): boolean {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (!match) return false;
+
+  const [, year, month, day] = match;
+  const date = new Date(`${value}T00:00:00Z`);
+  return (
+    !Number.isNaN(date.getTime()) &&
+    date.getUTCFullYear() === Number(year) &&
+    date.getUTCMonth() + 1 === Number(month) &&
+    date.getUTCDate() === Number(day)
+  );
+}
+
+/** Validate optional Employment contact values without rejecting intentionally blank fields. */
+const optionalEmploymentDate = optional.refine(
+  (value) => !value.trim() || isValidDateInput(value.trim()),
+  "Enter a valid date.",
+);
+const optionalEmploymentURL = optional.refine((value) => {
+  const normalized = value.trim();
+  if (!normalized) return true;
+  try {
+    const url = new URL(normalized);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+}, "Enter a valid URL starting with http:// or https://.");
+const optionalEmploymentEmail = optional.refine(
+  (value) => !value.trim() || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim()),
+  "Enter a valid email address.",
+);
+const optionalEmploymentPhone = optional.refine((value) => {
+  const normalized = value.trim();
+  if (!normalized) return true;
+  const digitCount = (normalized.match(/\d/g) ?? []).length;
+  return /^\+?[0-9().\-\s]+(?:\s*(?:x|ext\.?)\s*[0-9]+)?$/i.test(normalized) && digitCount >= 7;
+}, "Enter a valid phone number.");
 const optionalNumber = z
   .string()
   .refine(
@@ -71,23 +111,33 @@ const educationSchema = z.object({
   website: optional,
   notes: optional,
 });
-const employmentSchema = z.object({
-  id: required("Employment ID"),
-  employerName: required("Employer name"),
-  employerType: required("Employer type"),
-  industry: optional,
-  website: optional,
-  positionTitle: required("Position title"),
-  employmentType: required("Employment type"),
-  startDate: optional,
-  endDate: optional,
-  employmentStatus: required("Status"),
-  workAddressID: optional,
-  employerContact: optional,
-  employerContactNumber: optional,
-  employerContactEmail: optional,
-  notes: optional,
-});
+const employmentSchema = z
+  .object({
+    id: required("Employment ID"),
+    employerName: required("Employer name"),
+    employerType: required("Employer type"),
+    industry: optional,
+    website: optionalEmploymentURL,
+    positionTitle: required("Position title"),
+    employmentType: required("Employment type"),
+    startDate: optionalEmploymentDate,
+    endDate: optionalEmploymentDate,
+    employmentStatus: required("Status"),
+    workAddressID: optional,
+    employerContact: optional,
+    employerContactNumber: optionalEmploymentPhone,
+    employerContactEmail: optionalEmploymentEmail,
+    notes: optional,
+  })
+  .superRefine((values, context) => {
+    if (values.startDate && values.endDate && values.endDate < values.startDate) {
+      context.addIssue({
+        code: "custom",
+        path: ["endDate"],
+        message: "End date must be on or after start date.",
+      });
+    }
+  });
 const transactionSchema = z.object({
   id: required("Transaction ID"),
   receiptID: optional,
