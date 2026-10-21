@@ -14,6 +14,8 @@ QA gate: PR checks validate the proposed change before merge. After merge to `ma
 
 ## Technology guidance
 
+Read `docs/governance/technology-and-coding-standards.md` as the shared cross-stack coding reference.
+
 ## PO routing and team awareness
 
 The project POs are distinct but coordinated:
