@@ -226,3 +226,10 @@ npm run build
 ~~~
 
 These checks are also run by the repository GitHub Actions where configured.
+
+
+## Post-merge QA gate
+
+Pull-request checks validate the proposed change before merge. After the PR is merged into the development branch (master for this repository), QA validates the merged branch against the story's acceptance criteria, regression risk, accessibility, responsive behavior, security/privacy expectations, and evidence from the merged branch.
+
+QA may set Project status to `QA` and recommend corrective work or release. QA does not merge PRs, release deployments, or close stories; issue closure and release remain separate human-approved actions.
