@@ -7,4 +7,4 @@ export { GemLoadingState } from "./GemLoadingState";
 export { GemSectionHeader } from "./GemSectionHeader";
 export { GemStatusPill } from "./GemStatusPill";
 export { GemRecordCard } from "./GemRecordCard--LEGACY";
-export { GemRecordList } from "./GemRecordList--LEGACY";
+export { GemRecordList } from "./GemRecordList";

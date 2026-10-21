@@ -1,10 +1,12 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { TamaguiProvider } from "tamagui";
-import { tamaguiConfig } from "../../design-system";
-import { GemRecordList } from "./GemRecordList--LEGACY";
+import { tamaguiConfig } from "../design-system";
+import { RecordCollection } from "./RecordCollection";
 
-describe("GemRecordList views", () => {
+const GemRecordList = RecordCollection;
+
+describe("RecordCollection views", () => {
   it("switches to a grid without rendering arrow controls", () => {
     const onExpandedChange = vi.fn();
     const records = [
@@ -54,7 +56,7 @@ describe("GemRecordList views", () => {
     fireEvent.click(screen.getByRole("menuitemradio", { name: "Gallery" }));
     expect(screen.getByRole("button", { name: "One" })).toBeInTheDocument();
     expect(screen.queryByText("Details should stay in List view")).not.toBeInTheDocument();
-    const activeCard = document.querySelector('[data-card-view="grid"]');
+    const activeCard = document.querySelector('[data-record-card="gallery"]');
     expect(activeCard).toHaveClass("is-active");
     expect(activeCard).not.toHaveStyle({ transform: "scale(1.03)" });
   });

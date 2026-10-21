@@ -1,0 +1,246 @@
+import type { ReactNode } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Accordion } from "@tamagui/accordion";
+import { Card, XStack, YStack } from "tamagui";
+
+export interface RecordCollectionProps<Record> {
+  records: Record[];
+  label: string;
+  className?: string;
+  getKey: (record: Record) => string;
+  renderRecord: (record: Record) => ReactNode;
+  isExpanded?: (record: Record) => boolean;
+  renderExpanded?: (record: Record) => ReactNode;
+  onExpandedChange?: (key: string | null) => void;
+  tableColumns?: Array<{
+    key: string;
+    label: string;
+    render: (record: Record) => ReactNode;
+    icon?: (record: Record) => ReactNode;
+    visible?: boolean;
+  }>;
+}
+
+/** Shared Notion-style record collection used by Table Kit view adapters. */
+export function RecordCollection<Record>({
+  records,
+  label,
+  className = "gem-record-list",
+  getKey,
+  renderRecord,
+  isExpanded,
+  renderExpanded,
+  onExpandedChange,
+  tableColumns = [],
+}: RecordCollectionProps<Record>) {
+  const [view, setView] = useState<"list" | "gallery" | "table">("list");
+  const [visibleColumns, setVisibleColumns] = useState(
+    () => new Set(tableColumns.filter((column) => column.visible !== false).map((column) => column.key)),
+  );
+  const [propertySearch, setPropertySearch] = useState("");
+  const [modalRecord, setModalRecord] = useState<Record | null>(null);
+  const modalRef = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    setVisibleColumns((current) => {
+      const availableKeys = new Set(tableColumns.map((column) => column.key));
+      const next = new Set([...current].filter((key) => availableKeys.has(key)));
+      if (next.size === 0) tableColumns.forEach((column) => column.visible !== false && next.add(column.key));
+      if (next.size === current.size && [...next].every((key) => current.has(key))) return current;
+      return next;
+    });
+  }, [tableColumns]);
+  useEffect(() => {
+    if (modalRecord) modalRef.current?.showModal();
+  }, [modalRecord]);
+  const activeColumns = tableColumns.filter((column) => visibleColumns.has(column.key));
+  const filteredColumns = tableColumns.filter((column) =>
+    column.label.toLowerCase().includes(propertySearch.trim().toLowerCase()),
+  );
+  const expandedKey = records.find((record) => isExpanded?.(record))
+    ? getKey(records.find((record) => isExpanded?.(record)) as Record)
+    : undefined;
+
+  return (
+    <YStack className={`table-kit-record-collection is-${view}`}>
+      <XStack className="table-kit-record-toolbar" aria-label={`${label} view controls`}>
+        <details className="gem-record-view-menu">
+          <summary>View: {view[0].toUpperCase() + view.slice(1)}</summary>
+          <div role="menu" aria-label={`${label} views`}>
+            {(["list", "gallery", "table"] as const).map((option) => (
+              <button
+                key={option}
+                type="button"
+                role="menuitemradio"
+                aria-checked={view === option}
+                onClick={(event) => {
+                  setView(option);
+                  event.currentTarget.closest("details")?.removeAttribute("open");
+                }}
+              >
+                {option[0].toUpperCase() + option.slice(1)}
+              </button>
+            ))}
+          </div>
+        </details>
+        {tableColumns.length > 0 && (
+          <details className="gem-record-property-menu">
+            <summary>Properties</summary>
+            <div role="group" aria-label={`${label} visible properties`}>
+              <label className="gem-record-property-search">
+                <span className="sr-only">Search properties</span>
+                <input
+                  type="search"
+                  value={propertySearch}
+                  onChange={(event) => setPropertySearch(event.target.value)}
+                  placeholder="Search properties…"
+                />
+              </label>
+              <button
+                type="button"
+                onClick={() => setVisibleColumns(new Set(tableColumns.map((column) => column.key)))}
+              >
+                Show all
+              </button>
+              <button type="button" onClick={() => setVisibleColumns(new Set())}>
+                Hide all
+              </button>
+              {filteredColumns.map((column) => (
+                <div key={column.key} className="gem-record-property-option">
+                  <input
+                    type="checkbox"
+                    aria-label={`Show ${column.label} property`}
+                    checked={visibleColumns.has(column.key)}
+                    onChange={() =>
+                      setVisibleColumns((current) => {
+                        const next = new Set(current);
+                        if (next.has(column.key)) next.delete(column.key);
+                        else next.add(column.key);
+                        return next;
+                      })
+                    }
+                  />
+                  <span>{column.label}</span>
+                </div>
+              ))}
+            </div>
+          </details>
+        )}
+      </XStack>
+      {view === "gallery" ? (
+        <YStack className="table-kit-record-grid-shell" aria-label={`${label} gallery`}>
+          <XStack
+            className={`${className} table-kit-record-grid`}
+            display="grid"
+            role="list"
+            aria-label={`${label} records`}
+          >
+            {records.map((record) => {
+              const key = getKey(record);
+              return (
+                <Card
+                  key={key}
+                  className={`table-kit-record-card${key === expandedKey ? " is-active" : ""}`}
+                  data-record-card="gallery"
+                  role="listitem"
+                  onClick={() => setModalRecord(record)}
+                >
+                  {renderRecord(record)}
+                </Card>
+              );
+            })}
+          </XStack>
+        </YStack>
+      ) : view === "table" ? (
+        <div className="gem-record-table-wrap" role="region" aria-label={`${label} table`} tabIndex={0}>
+          <table className="gem-record-table">
+            <caption className="sr-only">{label} table</caption>
+            <thead>
+              <tr>
+                {activeColumns.map((column) => (
+                  <th key={column.key} scope="col">
+                    {column.label}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {activeColumns.length === 0 ? (
+                <tr>
+                  <td colSpan={1} className="gem-record-table-unconfigured">
+                    Unconfigured
+                  </td>
+                </tr>
+              ) : (
+                records.map((record) => (
+                  <tr key={getKey(record)}>
+                    {activeColumns.map((column) => (
+                      <td key={column.key}>
+                        {column.icon ? (
+                          <span className="gem-record-table-icon" aria-hidden="true">
+                            {column.icon(record)}
+                          </span>
+                        ) : null}
+                        {column.render(record)}
+                      </td>
+                    ))}
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <Accordion
+          className={className}
+          aria-label={label}
+          type="single"
+          collapsible
+          value={expandedKey}
+          onValueChange={(value) => onExpandedChange?.(value || null)}
+        >
+          {records.map((record) => {
+            const key = getKey(record);
+            return (
+              <Accordion.Item key={key} value={key} className="gem-record-list-row">
+                <Accordion.Header>
+                  <Accordion.Trigger asChild>{renderRecord(record)}</Accordion.Trigger>
+                </Accordion.Header>
+                <Accordion.Content>
+                  {isExpanded?.(record) && <div className="gem-record-expansion">{renderExpanded?.(record)}</div>}
+                </Accordion.Content>
+              </Accordion.Item>
+            );
+          })}
+        </Accordion>
+      )}
+      <dialog
+        ref={modalRef}
+        className="gem-record-detail-dialog"
+        aria-labelledby="gem-record-detail-title"
+        onCancel={(event) => {
+          event.preventDefault();
+          modalRef.current?.close();
+          setModalRecord(null);
+        }}
+      >
+        {modalRecord && (
+          <div className="gem-record-detail-dialog-content">
+            <div className="gem-record-detail-dialog-header">
+              <h2 id="gem-record-detail-title">Account Details</h2>
+              <button
+                type="button"
+                onClick={() => {
+                  modalRef.current?.close();
+                  setModalRecord(null);
+                }}
+              >
+                Close
+              </button>
+            </div>
+            <div className="gem-record-detail-dialog-body">{renderExpanded?.(modalRecord)}</div>
+          </div>
+        )}
+      </dialog>
+    </YStack>
+  );
+}

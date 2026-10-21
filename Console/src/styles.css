@@ -1186,59 +1186,56 @@ dialog::backdrop {
   overflow-y: auto;
   overscroll-behavior: contain;
 }
-@container (min-width: 40rem) and (max-width: 75rem) {
-  .gem-record-collection.is-gallery .gem-record-grid-rail {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    grid-auto-rows: 8rem;
-  }
-  .gem-record-collection.is-gallery .gem-record-grid-card,
-  .gem-record-collection.is-gallery .gem-record-grid-card.is-active {
-    aspect-ratio: auto;
-    height: 8rem;
-  }
-  .gem-record-collection.is-gallery .gem-record-grid-card > button {
-    grid-template-columns: 7rem minmax(0, 1fr);
-    grid-template-rows: 1fr;
-  }
-  .gem-record-collection.is-gallery .gem-record-grid-card > button > [class$="-icon"] {
-    grid-column: 1;
-    grid-row: 1;
-    border-radius: 0.75rem 0.35rem 0.35rem 0.75rem;
-  }
-  .gem-record-collection.is-gallery .gem-record-grid-card > button > [class$="-copy"] {
-    grid-column: 2;
-    grid-row: 1;
-    padding: 0.75rem;
-    border-top: 0;
-    border-left: 1px solid rgba(120, 209, 189, 0.16);
-  }
+/* Gallery layout is content-container driven so browser zoom cannot select a
+ * conflicting viewport fallback. Compact cards remain two-column and bounded. */
+.gem-record-collection.is-gallery .gem-record-grid-rail {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: 8rem;
 }
-/* Keep gallery cards bounded by the content pane when zoom or navigation width
- * makes the pane narrower than the tablet breakpoint. */
-@container (max-width: 39.99rem) {
+.gem-record-collection.is-gallery .gem-record-grid-card,
+.gem-record-collection.is-gallery .gem-record-grid-card.is-active {
+  height: 8rem;
+}
+.gem-record-collection.is-gallery .gem-record-grid-card > button {
+  grid-template-columns: 7rem minmax(0, 1fr);
+  grid-template-rows: 1fr;
+}
+.gem-record-collection.is-gallery .gem-record-grid-card > button > [class$="-icon"] {
+  grid-column: 1;
+  grid-row: 1;
+  border-radius: 0.75rem 0.35rem 0.35rem 0.75rem;
+}
+.gem-record-collection.is-gallery .gem-record-grid-card > button > [class$="-copy"] {
+  grid-column: 2;
+  grid-row: 1;
+  padding: 0.75rem;
+  border-top: 0;
+  border-left: 1px solid rgba(120, 209, 189, 0.16);
+}
+@container (min-width: 60rem) {
   .gem-record-collection.is-gallery .gem-record-grid-rail {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    grid-auto-rows: 8rem;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-auto-rows: 18rem;
   }
   .gem-record-collection.is-gallery .gem-record-grid-card,
   .gem-record-collection.is-gallery .gem-record-grid-card.is-active {
-    height: 8rem;
+    height: 18rem;
   }
   .gem-record-collection.is-gallery .gem-record-grid-card > button {
-    grid-template-columns: 5.5rem minmax(0, 1fr);
-    grid-template-rows: 1fr;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: 58% minmax(0, 1fr);
   }
   .gem-record-collection.is-gallery .gem-record-grid-card > button > [class$="-icon"] {
-    grid-column: 1;
+    grid-column: 1 / -1;
     grid-row: 1;
-    border-radius: 0.75rem 0.35rem 0.35rem 0.75rem;
+    border-radius: 0.75rem 0.75rem 0.35rem 0.35rem;
   }
   .gem-record-collection.is-gallery .gem-record-grid-card > button > [class$="-copy"] {
-    grid-column: 2;
-    grid-row: 1;
-    padding: 0.65rem;
-    border-top: 0;
-    border-left: 1px solid rgba(120, 209, 189, 0.16);
+    grid-column: 1 / -1;
+    grid-row: 2;
+    padding: 0.75rem 1rem 0;
+    border-top: 1px solid rgba(120, 209, 189, 0.16);
+    border-left: 0;
   }
 }
 @container (min-width: 75rem) {
@@ -1314,17 +1311,6 @@ dialog::backdrop {
   }
   .gem-record-grid-card .gem-record-property-value {
     font-size: 0.56rem;
-  }
-}
-/* Container sizing wins over viewport zoom rules so compact rows never reopen
- * the desktop track height when the navigation pane or browser zoom changes. */
-@container (max-width: 75rem) {
-  .gem-record-collection.is-gallery .gem-record-grid-rail {
-    grid-auto-rows: 8rem;
-  }
-  .gem-record-collection.is-gallery .gem-record-grid-card,
-  .gem-record-collection.is-gallery .gem-record-grid-card.is-active {
-    height: 8rem;
   }
 }
 .gem-record-expansion {
@@ -1965,6 +1951,157 @@ dialog::backdrop {
 @media (max-width: 900px) {
   .schema-guidance-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+/* Table Kit record collection: one bounded grid contract for every view. */
+.table-kit-record-collection {
+  container-type: inline-size;
+  container-name: table-kit-records;
+}
+.table-kit-record-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+.table-kit-record-grid-shell {
+  container-type: inline-size;
+  container-name: table-kit-record-grid;
+  width: 100%;
+}
+.table-kit-record-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: 8rem;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.25rem;
+}
+.table-kit-record-card {
+  min-width: 0;
+  min-height: 0;
+  height: 8rem;
+  overflow: hidden;
+  border: 1px solid rgba(120, 209, 189, 0.22);
+  border-radius: 0.85rem;
+  background: linear-gradient(145deg, rgba(23, 49, 56, 0.96), rgba(12, 29, 35, 0.96));
+  box-shadow: 0 0.65rem 1.5rem rgba(0, 0, 0, 0.18);
+  transition:
+    border-color 180ms ease,
+    background 180ms ease;
+}
+.table-kit-record-card.is-active,
+.table-kit-record-card:hover {
+  border-color: var(--mint);
+  background: var(--panel-light);
+}
+.table-kit-record-card > button {
+  display: grid;
+  grid-template-columns: 7rem minmax(0, 1fr);
+  grid-template-rows: 1fr;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  box-shadow: none;
+  text-align: left;
+}
+.table-kit-record-card > button:hover,
+.table-kit-record-card > button.selected {
+  border-color: transparent;
+  background: rgba(120, 209, 189, 0.08);
+}
+.table-kit-record-card > button > [class$="-icon"] {
+  grid-column: 1;
+  grid-row: 1;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: 0.75rem 0.35rem 0.35rem 0.75rem;
+  background: rgba(7, 23, 28, 0.52);
+  color: var(--mint);
+  font-size: 2.5rem;
+}
+.table-kit-record-card > button > [class$="-icon"] img,
+.table-kit-record-card .service-account-card-logo {
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+.table-kit-record-card > button > [class$="-copy"] {
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+  align-self: center;
+  width: 100%;
+  height: auto;
+  max-height: 100%;
+  padding: 0.75rem;
+  overflow: hidden;
+  border-left: 1px solid rgba(120, 209, 189, 0.16);
+}
+.table-kit-record-card > button > [class$="-copy"] strong {
+  display: -webkit-box;
+  min-height: 0;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  text-overflow: ellipsis;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.table-kit-record-card > button > [class$="-copy"] small {
+  display: block;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.table-kit-record-card > button > [data-record-status] {
+  display: none;
+}
+@container table-kit-record-grid (min-width: 60rem) {
+  .table-kit-record-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-auto-rows: 18rem;
+  }
+  .table-kit-record-card {
+    height: 18rem;
+  }
+  .table-kit-record-card > button {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: 58% minmax(0, 1fr);
+  }
+  .table-kit-record-card > button > [class$="-icon"] {
+    grid-column: 1;
+    grid-row: 1;
+    border-radius: 0.75rem 0.75rem 0.35rem 0.35rem;
+  }
+  .table-kit-record-card > button > [class$="-copy"] {
+    grid-column: 1;
+    grid-row: 2;
+    padding: 0.75rem 1rem 0;
+    border-top: 1px solid rgba(120, 209, 189, 0.16);
+    border-left: 0;
+  }
+}
+@container table-kit-record-grid (min-width: 75rem) {
+  .table-kit-record-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+@container table-kit-record-grid (min-width: 90rem) {
+  .table-kit-record-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
   }
 }
 .schema-layout {

@@ -26,6 +26,8 @@ export type {
 export { useTableQueryState } from "./query";
 export { TableImportWorkflow } from "./ImportWorkflow";
 export type { TableImportWorkflowProps } from "./ImportWorkflow";
+export { RecordCollection } from "./RecordCollection";
+export type { RecordCollectionProps } from "./RecordCollection";
 export { parseCsv, parseJson, previewCsv, previewJson } from "./import";
 export type { ImportColumn, ImportFieldError, ImportPreview } from "./import";
 export { useTableSelection } from "./selection";
