@@ -1,19 +1,23 @@
+/** Describes a validation failure associated with one imported record. */
 export interface ImportFieldError {
   row: number;
   field?: string;
   message: string;
 }
 
+/** Contains successfully parsed rows and any row- or field-level errors. */
 export interface ImportPreview<Row> {
   rows: readonly Row[];
   errors: readonly ImportFieldError[];
 }
 
+/** Maps an imported CSV column to a table field and optional parser. */
 export interface ImportColumn {
   id: string;
   parse?: (value: string, row: number) => unknown;
 }
 
+/** Parses comma-separated records into trimmed cells. */
 export function parseCsv(text: string): string[][] {
   return text
     .trim()
@@ -22,6 +26,7 @@ export function parseCsv(text: string): string[][] {
     .map((line) => line.split(",").map((cell) => cell.trim()));
 }
 
+/** Parses and validates a JSON array whose entries are objects. */
 export function parseJson(text: string): unknown[] {
   const parsed: unknown = JSON.parse(text);
   if (!Array.isArray(parsed) || parsed.some((row) => row === null || typeof row !== "object" || Array.isArray(row))) {
@@ -30,6 +35,7 @@ export function parseJson(text: string): unknown[] {
   return parsed;
 }
 
+/** Parses CSV text and applies the table schema to each record. */
 export function previewCsv<Row>(text: string, columns: readonly ImportColumn[]): ImportPreview<Row> {
   const [header = [], ...records] = parseCsv(text);
   const errors: ImportFieldError[] = [];
@@ -54,6 +60,7 @@ export function previewCsv<Row>(text: string, columns: readonly ImportColumn[]):
   return { rows, errors };
 }
 
+/** Parses JSON text and validates each record with the supplied callback. */
 export function previewJson<Row>(text: string, validate: (value: unknown, row: number) => Row): ImportPreview<Row> {
   const rows: Row[] = [];
   const errors: ImportFieldError[] = [];

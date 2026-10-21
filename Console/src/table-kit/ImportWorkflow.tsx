@@ -1,6 +1,7 @@
 import { useState, type ChangeEvent } from "react";
 import { previewCsv, previewJson, type ImportColumn, type ImportPreview } from "./import";
 
+/** Props for the reusable CSV/JSON import workflow. */
 export interface TableImportWorkflowProps<Row> {
   columns: readonly ImportColumn[];
   validateJson: (value: unknown, row: number) => Row;
@@ -8,6 +9,7 @@ export interface TableImportWorkflowProps<Row> {
   onCancel?: () => void;
 }
 
+/** Provides paste, file selection, preview, validation, and confirmation for imports. */
 export function TableImportWorkflow<Row>({
   columns,
   validateJson,
