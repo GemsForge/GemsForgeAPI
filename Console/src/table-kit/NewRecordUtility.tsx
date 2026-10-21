@@ -179,7 +179,6 @@ export function NewRecordUtility({
                   onKeyDown={(event) => handleOptionKeyDown(event, index)}
                 >
                   <strong>{option.label}</strong>
-                  {option.description && <span>{option.description}</span>}
                 </Button>
               ))}
             </div>

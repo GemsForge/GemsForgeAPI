@@ -1598,12 +1598,6 @@ dialog::backdrop {
   box-shadow: 0 0 0 2px rgb(120 209 189 / 22%);
 }
 
-.table-kit-new-record-options > button span {
-  min-width: 0;
-  color: var(--muted);
-  font-size: 0.82rem;
-}
-
 .table-kit-new-record-content {
   min-width: 0;
 }
