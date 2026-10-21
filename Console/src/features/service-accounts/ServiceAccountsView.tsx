@@ -150,9 +150,135 @@ export function ServiceAccountsView({ records }: { records: ServiceAccount[] }) 
             detailId={selectedID == null ? null : String(selectedID)}
             onDetailChange={(id) => setSelectedID(id == null ? null : Number(id))}
             actions={{
-              newRecordOptions: [{ id: "new-service", label: "New service", onSelect: () => setCreating(true) }],
-              onImport: () => setImporting(true),
-              importLabel: "Import services",
+              newRecordUtility: {
+                options: [
+                  {
+                    id: "new-service",
+                    label: "Input Form",
+                    description: "Open the service account form.",
+                    render: ({ close }) => (
+                      <ServiceAccountCreateForm
+                        onCancel={close}
+                        onCreate={async (payload) => {
+                          const created = await create.mutateAsync(payload);
+                          setSelectedID(created.id);
+                          close();
+                        }}
+                      />
+                    ),
+                  },
+                  {
+                    id: "import-service-file",
+                    label: "Import File",
+                    description: "Choose a CSV or JSON file.",
+                    render: ({ close }) => (
+                      <RecordImport
+                        label="services"
+                        expectedColumns={[
+                          "Service",
+                          "Type",
+                          "ExpenseGroup",
+                          "MonthlyAmount",
+                          "InterestRate",
+                          "APR",
+                          "Due",
+                          "Occurrence",
+                          "Status",
+                          "Since",
+                          "Website",
+                          "Notes",
+                          "PaymentMethod",
+                          "AccountNumber",
+                          "AssociatedAddress",
+                          "ServiceKey",
+                        ]}
+                        mode="file"
+                        open
+                        onOpenChange={(open) => {
+                          if (!open) close();
+                        }}
+                        showTrigger={false}
+                        onPublish={async (rows) => {
+                          for (const row of rows)
+                            await create.mutateAsync({
+                              service: String(row.Service ?? row.service ?? ""),
+                              type: String(row.Type ?? row.type ?? "") || null,
+                              expenseGroup: String(row.ExpenseGroup ?? "") || null,
+                              monthlyAmount: row.MonthlyAmount ? Number(row.MonthlyAmount) : null,
+                              interestRate: row.InterestRate ? Number(row.InterestRate) : null,
+                              apr: row.APR ? Number(row.APR) : null,
+                              due: String(row.Due ?? "") || null,
+                              occurrence: String(row.Occurrence ?? "") || null,
+                              status: String(row.Status ?? "") || null,
+                              since: String(row.Since ?? "") || null,
+                              website: String(row.Website ?? "") || null,
+                              notes: String(row.Notes ?? "") || null,
+                              paymentMethod: String(row.PaymentMethod ?? "") || null,
+                              accountNumber: String(row.AccountNumber ?? "") || null,
+                              associatedAddress: String(row.AssociatedAddress ?? "") || null,
+                              serviceKey: String(row.ServiceKey ?? "") || null,
+                            });
+                        }}
+                      />
+                    ),
+                  },
+                  {
+                    id: "paste-service-data",
+                    label: "Paste data",
+                    description: "Paste CSV or JSON records.",
+                    render: ({ close }) => (
+                      <RecordImport
+                        label="services"
+                        expectedColumns={[
+                          "Service",
+                          "Type",
+                          "ExpenseGroup",
+                          "MonthlyAmount",
+                          "InterestRate",
+                          "APR",
+                          "Due",
+                          "Occurrence",
+                          "Status",
+                          "Since",
+                          "Website",
+                          "Notes",
+                          "PaymentMethod",
+                          "AccountNumber",
+                          "AssociatedAddress",
+                          "ServiceKey",
+                        ]}
+                        mode="paste"
+                        open
+                        onOpenChange={(open) => {
+                          if (!open) close();
+                        }}
+                        showTrigger={false}
+                        onPublish={async (rows) => {
+                          for (const row of rows)
+                            await create.mutateAsync({
+                              service: String(row.Service ?? row.service ?? ""),
+                              type: String(row.Type ?? row.type ?? "") || null,
+                              expenseGroup: String(row.ExpenseGroup ?? "") || null,
+                              monthlyAmount: row.MonthlyAmount ? Number(row.MonthlyAmount) : null,
+                              interestRate: row.InterestRate ? Number(row.InterestRate) : null,
+                              apr: row.APR ? Number(row.APR) : null,
+                              due: String(row.Due ?? "") || null,
+                              occurrence: String(row.Occurrence ?? "") || null,
+                              status: String(row.Status ?? "") || null,
+                              since: String(row.Since ?? "") || null,
+                              website: String(row.Website ?? "") || null,
+                              notes: String(row.Notes ?? "") || null,
+                              paymentMethod: String(row.PaymentMethod ?? "") || null,
+                              accountNumber: String(row.AccountNumber ?? "") || null,
+                              associatedAddress: String(row.AssociatedAddress ?? "") || null,
+                              serviceKey: String(row.ServiceKey ?? "") || null,
+                            });
+                        }}
+                      />
+                    ),
+                  },
+                ],
+              },
             }}
             detail={
               selectedID == null ? null : (

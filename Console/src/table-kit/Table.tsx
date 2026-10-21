@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
-import { Menu, ToggleGroup, Tooltip, type TamaguiElement } from "tamagui";
+import { Button, Menu, ToggleGroup, Tooltip, type TamaguiElement } from "tamagui";
 import { TableContext } from "./context";
 import type {
   TableActionsProps,
@@ -14,6 +14,7 @@ import type { TableQueryState } from "./query";
 import { useTableContext } from "./context";
 import { useTableSelection, type TableSelectionScope } from "./selection";
 import { TablePropertyControls } from "./PropertyControls";
+import { NewRecordUtility } from "./NewRecordUtility";
 
 function Root<Row>({
   rows,
@@ -166,7 +167,7 @@ function Metadata({ children }: { children?: ReactNode }) {
   return <dl className="table-kit-metadata">{children}</dl>;
 }
 
-/** Render the single-selection Tamagui ToggleGroup that scopes each view renderer. */
+/** Render the single-selection xs Tamagui ToggleGroup that scopes each view renderer. */
 function Views<Row>() {
   const { views, viewId, setViewId } = useTableContext<Row>();
   if (!views.length) return null;
@@ -183,7 +184,7 @@ function Views<Row>() {
       aria-label="Table views"
     >
       {views.map((view) => (
-        <ToggleGroup.Item key={view.id} value={view.id} aria-label={view.label}>
+        <ToggleGroup.Item key={view.id} value={view.id} size="xs" color="$gemInk" aria-label={view.label}>
           <Tooltip placement="top" delay={300}>
             <Tooltip.Trigger asChild>
               <span className="table-kit-view-icon" aria-hidden="true">
@@ -309,7 +310,7 @@ function QueryControls({
   );
 }
 
-/** Render the compact plus utility while preserving consumer-owned create/import actions in one menu. */
+/** Render the compact xs plus utility while preserving consumer-owned create/import actions in one menu. */
 function Actions({
   onNew,
   onImport,
@@ -319,13 +320,14 @@ function Actions({
   onPasteJson,
   newLabel = "New",
   newOptionsLabel,
+  newRecordUtility,
   importLabel = "Import",
   disabled = false,
   pending = false,
 }: TableActionsProps) {
   const isDisabled = disabled || pending;
   const [menuOpen, setMenuOpen] = useState(false);
-  const menuTriggerRef = useRef<HTMLButtonElement>(null);
+  const menuTriggerRef = useRef<TamaguiElement>(null);
   const menuContentRef = useRef<TamaguiElement>(null);
   const previousMenuOpen = useRef(menuOpen);
   const hasNewRecordMenu = newRecordOptions.length > 0;
@@ -366,11 +368,20 @@ function Actions({
   };
   return (
     <div className="table-kit-actions" role="group" aria-busy={pending}>
-      {onNew && !hasMenu && (
+      {newRecordUtility && (
+        <NewRecordUtility {...newRecordUtility} triggerRef={menuTriggerRef} disabled={disabled} pending={pending} />
+      )}
+      {!newRecordUtility && onNew && !hasMenu && (
         <Tooltip placement="top" delay={300}>
           <Tooltip.Trigger asChild>
-            <button
+            <Button
               type="button"
+              size="xs"
+              color="$gemInk"
+              backgroundColor="$gemPanel"
+              borderColor="$gemPanelLight"
+              borderWidth={1}
+              borderRadius="$gemControl"
               className="compact-icon-button"
               onClick={() => void onNew()}
               disabled={isDisabled}
@@ -379,7 +390,7 @@ function Actions({
             >
               <span aria-hidden="true">＋</span>
               <span className="sr-only">{newLabel}</span>
-            </button>
+            </Button>
           </Tooltip.Trigger>
           <Tooltip.Content className="table-kit-tooltip">
             <Tooltip.Arrow />
@@ -387,18 +398,35 @@ function Actions({
           </Tooltip.Content>
         </Tooltip>
       )}
-      {onImport && !hasMenu && (
-        <button type="button" onClick={() => void onImport()} disabled={isDisabled} aria-busy={pending}>
+      {!newRecordUtility && onImport && !hasMenu && (
+        <Button
+          size="xs"
+          color="$gemInk"
+          backgroundColor="$gemPanel"
+          borderColor="$gemPanelLight"
+          borderWidth={1}
+          borderRadius="$gemControl"
+          type="button"
+          onClick={() => void onImport()}
+          disabled={isDisabled}
+          aria-busy={pending}
+        >
           {importLabel}
-        </button>
+        </Button>
       )}
-      {hasMenu && (
+      {!newRecordUtility && hasMenu && (
         <Menu open={menuOpen} onOpenChange={setMenuOpen} placement="bottom-end" modal={false}>
           <Tooltip placement="top" delay={300}>
             <Tooltip.Trigger asChild>
-              <button
+              <Button
                 ref={menuTriggerRef}
                 type="button"
+                size="xs"
+                color="$gemInk"
+                backgroundColor="$gemPanel"
+                borderColor="$gemPanelLight"
+                borderWidth={1}
+                borderRadius="$gemControl"
                 aria-label={menuLabel}
                 disabled={isDisabled}
                 className="compact-icon-button"
@@ -406,7 +434,7 @@ function Actions({
               >
                 <span aria-hidden="true">＋</span>
                 <span className="sr-only">{menuLabel}</span>
-              </button>
+              </Button>
             </Tooltip.Trigger>
             <Tooltip.Content className="table-kit-tooltip">
               <Tooltip.Arrow />

@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import { Menu, Tooltip } from "tamagui";
+import { Button, Menu, Tooltip, type TamaguiElement } from "tamagui";
 import type { RecordSortDirection } from "../hooks/useRecordUtilities";
 
 type CompactUtilityMenu = "sort" | "filter" | null;
 
+/** Render record query actions with Tamagui's compact xs button contract. */
 export function RecordUtilities({
   label,
   search,
@@ -39,8 +40,8 @@ export function RecordUtilities({
   const [compactMenu, setCompactMenu] = useState<CompactUtilityMenu>(null);
   const [searchOpen, setSearchOpen] = useState(Boolean(search));
   const searchRef = useRef<HTMLInputElement>(null);
-  const sortTriggerRef = useRef<HTMLButtonElement>(null);
-  const filterTriggerRef = useRef<HTMLButtonElement>(null);
+  const sortTriggerRef = useRef<TamaguiElement>(null);
+  const filterTriggerRef = useRef<TamaguiElement>(null);
   const previousCompactMenu = useRef<CompactUtilityMenu>(null);
   useEffect(() => {
     if (searchOpen) searchRef.current?.focus();
@@ -69,15 +70,21 @@ export function RecordUtilities({
         >
           <Tooltip placement="top" delay={300}>
             <Tooltip.Trigger asChild>
-              <button
+              <Button
                 ref={sortTriggerRef}
                 type="button"
+                size="xs"
+                color="$gemInk"
+                backgroundColor="$gemPanel"
+                borderColor="$gemPanelLight"
+                borderWidth={1}
+                borderRadius="$gemControl"
                 className="compact-icon-button"
                 aria-label="Sort records"
                 onClick={() => setCompactMenu((current) => (current === "sort" ? null : "sort"))}
               >
                 <span aria-hidden="true">↕</span>
-              </button>
+              </Button>
             </Tooltip.Trigger>
             <Tooltip.Content className="table-kit-tooltip">
               <Tooltip.Arrow />
@@ -125,15 +132,21 @@ export function RecordUtilities({
           >
             <Tooltip placement="top" delay={300}>
               <Tooltip.Trigger asChild>
-                <button
+                <Button
                   ref={filterTriggerRef}
                   type="button"
+                  size="xs"
+                  color="$gemInk"
+                  backgroundColor="$gemPanel"
+                  borderColor="$gemPanelLight"
+                  borderWidth={1}
+                  borderRadius="$gemControl"
                   className="compact-icon-button"
                   aria-label="Filter records"
                   onClick={() => setCompactMenu((current) => (current === "filter" ? null : "filter"))}
                 >
                   <span aria-hidden="true">≡</span>
-                </button>
+                </Button>
               </Tooltip.Trigger>
               <Tooltip.Content className="table-kit-tooltip">
                 <Tooltip.Arrow />
@@ -187,14 +200,20 @@ export function RecordUtilities({
         )}
         <Tooltip placement="top" delay={300}>
           <Tooltip.Trigger asChild>
-            <button
+            <Button
               type="button"
+              size="xs"
+              color="$gemInk"
+              backgroundColor="$gemPanel"
+              borderColor="$gemPanelLight"
+              borderWidth={1}
+              borderRadius="$gemControl"
               className="compact-icon-button"
               aria-label={searchOpen ? "Close search" : `Search ${label.toLowerCase()}`}
               onClick={() => setSearchOpen((open) => !open)}
             >
               <span aria-hidden="true">⌕</span>
-            </button>
+            </Button>
           </Tooltip.Trigger>
           <Tooltip.Content className="table-kit-tooltip">
             <Tooltip.Arrow />
@@ -227,15 +246,21 @@ export function RecordUtilities({
           ))}
         </select>
       </label>
-      <button
+      <Button
         type="button"
+        size="xs"
+        color="$gemInk"
+        backgroundColor="$gemPanel"
+        borderColor="$gemPanelLight"
+        borderWidth={1}
+        borderRadius="$gemControl"
         className="secondary-button"
         onClick={onDirection}
         disabled={!sort}
         aria-label={sort ? `Sort ${direction === "asc" ? "descending" : "ascending"}` : "Select a sort field first"}
       >
         {direction === "asc" ? "A–Z" : "Z–A"}
-      </button>
+      </Button>
       {filterOptions.length > 0 && (
         <label>
           Filter
@@ -250,8 +275,14 @@ export function RecordUtilities({
         </label>
       )}
       {(search || sort || filter) && (
-        <button
+        <Button
           type="button"
+          size="xs"
+          color="$gemInk"
+          backgroundColor="$gemPanel"
+          borderColor="$gemPanelLight"
+          borderWidth={1}
+          borderRadius="$gemControl"
           className="secondary-button"
           onClick={() => {
             onSearch("");
@@ -260,7 +291,7 @@ export function RecordUtilities({
           }}
         >
           Clear filters
-        </button>
+        </Button>
       )}
       <span className="record-utility-summary" role="status">
         {visibleCount ?? totalCount ?? 0} of {totalCount ?? visibleCount ?? 0} matching

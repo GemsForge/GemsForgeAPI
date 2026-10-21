@@ -48,6 +48,7 @@ export function RecordImport({
   open,
   onOpenChange,
   showTrigger = true,
+  mode = "both",
 }: {
   label: string;
   expectedColumns: string[];
@@ -58,6 +59,8 @@ export function RecordImport({
   onOpenChange?: (open: boolean) => void;
   /** Hide the legacy inline trigger when the compact header owns the action. */
   showTrigger?: boolean;
+  /** Limit the workflow to file selection, pasted data, or retain both inputs. */
+  mode?: "both" | "file" | "paste";
 }) {
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
   const [text, setText] = useState("");
@@ -103,31 +106,32 @@ export function RecordImport({
         <section className="record-form">
           <div className="detail-heading">
             <h3>Import {label}</h3>
-            <button type="button" onClick={() => setOpen(false)} aria-label={`Close import ${label}`}>
-              Close
+            <button type="button" onClick={parse}>
+              Preview import
             </button>
           </div>
           <p className="muted">Paste a CSV with a header row or a JSON array using the table column names.</p>
-          <label>
-            Choose CSV or JSON file
-            <input
-              type="file"
-              accept=".csv,.json,application/json,text/csv"
-              onChange={async (event) => {
-                const file = event.target.files?.[0];
-                if (file) setText(await file.text());
-              }}
+          {mode !== "paste" && (
+            <label>
+              Choose CSV or JSON file
+              <input
+                type="file"
+                accept=".csv,.json,application/json,text/csv"
+                onChange={async (event) => {
+                  const file = event.target.files?.[0];
+                  if (file) setText(await file.text());
+                }}
+              />
+            </label>
+          )}
+          {mode !== "file" && (
+            <textarea
+              aria-label={`${label} CSV or JSON`}
+              rows={7}
+              value={text}
+              onChange={(e) => setText(e.target.value)}
             />
-          </label>
-          <textarea
-            aria-label={`${label} CSV or JSON`}
-            rows={7}
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-          />
-          <button type="button" onClick={parse}>
-            Preview import
-          </button>
+          )}
           {error && <p role="alert">{error}</p>}
           {rows && (
             <>

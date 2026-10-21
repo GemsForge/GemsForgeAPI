@@ -118,6 +118,24 @@ export interface TableNewRecordOperations {
   options: readonly TableNewRecordOperationOption[];
 }
 
+/** Controls one consumer-owned operation rendered inside the New Record utility. */
+export interface TableNewRecordUtilityOption {
+  id: string;
+  label: string;
+  description?: ReactNode;
+  /** Render the selected workflow and use close to finish or cancel it. */
+  render: (controls: { close: () => void }) => ReactNode;
+}
+
+/** Configures the short-lived modal opened by the compact plus action. */
+export interface TableNewRecordUtilityProps {
+  title?: string;
+  description?: ReactNode;
+  options: readonly TableNewRecordUtilityOption[];
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
+
 /** The complete, domain-neutral configuration for a Table.Root instance. */
 export interface TableRootProps<Row> {
   rows: readonly Row[];
@@ -163,6 +181,8 @@ export interface TableActionsProps {
   onPasteJson?: () => void | Promise<void>;
   newLabel?: string;
   newOptionsLabel?: string;
+  /** Optional consumer-owned modal workflow for create, import, and paste operations. */
+  newRecordUtility?: TableNewRecordUtilityProps;
   importLabel?: string;
   disabled?: boolean;
   pending?: boolean;

@@ -105,6 +105,42 @@ final class AddressRouteTests: XCTestCase {
         }
     }
 
+    func testAddressCreateGeneratesIDWhenOmitted() async throws {
+        try await withApp(configure: { app in
+            app.databases.use(.sqlite(.memory), as: .sqlite)
+            app.migrations.add(CreateHubs())
+            app.migrations.add(CreateAddresses())
+            app.migrations.add(AddAddressUpdatedAt())
+            app.migrations.add(CreateFileMetadata())
+            app.migrations.add(AddAddressAttachmentReference())
+            try await app.autoMigrate()
+            registerAddressRoutes(app)
+        }) { app in
+            let payload = AddressRequest(
+                id: nil,
+                addressType: "Residence",
+                addressLine1: "123 Generated Street",
+                addressLine2: nil,
+                city: "Atlanta",
+                state: "GA",
+                postalCode: "30301",
+                country: "US",
+                startDate: nil,
+                endDate: nil,
+                addressStatus: "Current",
+                notes: nil
+            )
+
+            try await app.test(.POST, "addresses", beforeRequest: { request in
+                try request.content.encode(payload)
+            }) { response async throws in
+                XCTAssertEqual(response.status, .ok)
+                let address = try response.content.decode(AddressDetailResponse.self)
+                XCTAssertTrue(address.id?.hasPrefix("ADDR-") == true)
+            }
+        }
+    }
+
     func testAddressRejectsInvalidPayloadAndMissingRecords() async throws {
         try await withApp(configure: { app in
             app.databases.use(.sqlite(.memory), as: .sqlite)

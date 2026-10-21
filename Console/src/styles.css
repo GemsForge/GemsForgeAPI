@@ -608,6 +608,59 @@ dialog::backdrop {
   color: var(--danger);
   font-size: 0.75rem;
 }
+/* Keep labels and controls compact so multi-field forms remain scannable. */
+.create-form-field {
+  margin-bottom: 0.75rem;
+}
+.create-form-field > label {
+  margin: 0;
+}
+.create-form-control {
+  width: 100%;
+  min-height: 2.75rem;
+}
+/* Map semantic field widths to compact controls without changing the shared field shell. */
+.create-form-control--short {
+  max-width: 12rem;
+}
+.create-form-control--medium {
+  max-width: 20rem;
+}
+.create-form-control--long {
+  max-width: 100%;
+}
+/* Keep related form fields readable in columns while preserving a single-column compact layout. */
+.create-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 1rem;
+  align-items: start;
+}
+.create-form-grid > .create-form-field {
+  min-width: 0;
+}
+.create-form-grid--compact {
+  grid-template-columns: repeat(3, minmax(9rem, 12rem));
+}
+.create-form-grid--contact {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.create-form-grid--address-location {
+  grid-template-columns: repeat(4, minmax(7rem, 1fr));
+}
+@media (max-width: 640px) {
+  .create-form-grid,
+  .create-form-grid--compact,
+  .create-form-grid--contact,
+  .create-form-grid--address-location {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 900px) {
+  .create-form-grid--address-location {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
 .create-record-form [aria-invalid="true"] {
   border-color: var(--danger);
 }
@@ -1476,6 +1529,94 @@ dialog::backdrop {
   gap: 0.45rem;
   padding: 0;
   list-style: none;
+}
+
+/* Keep the New Record workflow over the collection while preserving its width. */
+.table-kit-utility-backdrop {
+  position: fixed;
+  z-index: 40;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 1rem clamp(1rem, 3vw, 2rem);
+  background: rgb(3 11 14 / 72%);
+  backdrop-filter: blur(4px);
+}
+
+.table-kit-new-record-utility {
+  width: min(36rem, 100%);
+  max-height: min(48rem, calc(100vh - 2rem));
+  overflow: auto;
+  padding: 1.25rem;
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  background: var(--panel);
+  color: var(--ink);
+  box-shadow: 0 2rem 8rem rgb(0 0 0 / 45%);
+}
+
+.table-kit-new-record-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.table-kit-new-record-heading h2 {
+  margin: 0;
+}
+
+.table-kit-new-record-heading p {
+  margin: 0.35rem 0 0;
+  color: var(--muted);
+}
+
+.table-kit-new-record-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin: 1.25rem 0;
+}
+
+/* Keep each operation as one scan-friendly action while allowing its statement to wrap. */
+.table-kit-new-record-options > button {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  flex: 1 1 10rem;
+  min-height: 2.75rem;
+  padding: 0.65rem 0.85rem;
+  text-align: left;
+}
+
+.table-kit-new-record-options > button[aria-selected="true"],
+.table-kit-new-record-options > button:hover,
+.table-kit-new-record-options > button:focus-visible {
+  border-color: var(--mint);
+  outline: 0;
+  box-shadow: 0 0 0 2px rgb(120 209 189 / 22%);
+}
+
+.table-kit-new-record-content {
+  min-width: 0;
+}
+
+.table-kit-new-record-content .create-record-form,
+.table-kit-new-record-content .record-form {
+  max-width: none;
+  margin: 0;
+}
+
+@media (max-width: 640px) {
+  .table-kit-new-record-utility {
+    max-height: calc(100vh - 1rem);
+    padding: 1rem;
+  }
+
+  .table-kit-new-record-options > button {
+    flex-basis: 100%;
+  }
 }
 /* Keep intermediate gallery cards wide enough to preserve readable titles and properties. */
 @media (min-width: 641px) and (max-width: 1080px) {

@@ -1,7 +1,53 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import type { UseFormRegisterReturn } from "react-hook-form";
-import { Form } from "tamagui";
+import { Form, Input, Label, Select, SizableText, TextArea, YStack } from "tamagui";
 
+interface CreateFieldFrameProps {
+  id: string;
+  label: string;
+  required: boolean;
+  error?: string;
+  children: ReactNode;
+}
+
+/** Apply the shared label, control spacing, and validation message contract to every create field. */
+function CreateFieldFrame({ id, label, required, error, children }: CreateFieldFrameProps) {
+  const errorId = `${id}-error`;
+  return (
+    <YStack className="create-form-field" gap="$1">
+      <Label htmlFor={id} color="$gemMuted" fontSize="$2" fontWeight="700">
+        {label}
+        {required ? " *" : ""}
+      </Label>
+      {children}
+      {error && (
+        <SizableText id={errorId} role="alert" color="$gemDanger" fontSize="$1">
+          {error}
+        </SizableText>
+      )}
+    </YStack>
+  );
+}
+
+const controlStyle = {
+  width: "100%" as const,
+  minHeight: "$5" as const,
+  borderColor: "$gemPanelLight" as const,
+  borderWidth: 1,
+  borderRadius: "$gemControl" as const,
+  backgroundColor: "$gemCanvas" as const,
+  color: "$gemInk" as const,
+};
+
+/** Constrain shared text controls to the width appropriate for their value. */
+export type CreateFieldWidth = "short" | "medium" | "long";
+
+/** Give every text control a useful prompt while allowing a feature to provide a more specific one. */
+function defaultTextPlaceholder(label: string): string {
+  return `Enter ${label.toLowerCase()}…`;
+}
+
+/** Render the shared Tamagui form shell used by every record-creation workflow. */
 export function CreateFormFrame({
   title,
   submitting,
@@ -41,6 +87,8 @@ export function CreateTextField({
   required = false,
   type = "text",
   multiline = false,
+  placeholder,
+  width = "long",
 }: {
   label: string;
   registration: UseFormRegisterReturn;
@@ -48,75 +96,173 @@ export function CreateTextField({
   required?: boolean;
   type?: string;
   multiline?: boolean;
+  placeholder?: string;
+  width?: CreateFieldWidth;
 }) {
   const id = registration.name;
+  const inputPlaceholder = placeholder ?? defaultTextPlaceholder(label);
+  const controlClassName = `create-form-control create-form-control--${width}`;
   return (
-    <label htmlFor={id}>
-      {label}
-      {required ? " *" : ""}
+    <CreateFieldFrame id={id} label={label} required={required} error={error}>
       {multiline ? (
-        <textarea
+        <TextArea
           id={id}
+          className={controlClassName}
+          {...controlStyle}
           aria-invalid={Boolean(error)}
           aria-describedby={error ? `${id}-error` : undefined}
+          required={required}
+          placeholder={inputPlaceholder}
           {...registration}
+          ref={(element) => registration.ref(element as HTMLTextAreaElement | null)}
         />
       ) : (
-        <input
+        <Input
           id={id}
+          className={controlClassName}
+          {...controlStyle}
           type={type}
           required={required}
           aria-invalid={Boolean(error)}
           aria-describedby={error ? `${id}-error` : undefined}
+          placeholder={inputPlaceholder}
           {...registration}
+          ref={(element) => registration.ref(element as HTMLInputElement | null)}
         />
       )}
-      {error && (
-        <span id={`${id}-error`} className="field-error">
-          {error}
-        </span>
-      )}
-    </label>
+    </CreateFieldFrame>
   );
 }
 
-export function CreateSelectField({
-  label,
-  registration,
+interface CreateSelectControlProps {
+  id: string;
+  name: string;
+  value: string;
+  onValueChange: (value: string) => void;
+  onBlur: () => void;
+  error?: string;
+  options: Array<{ value: string; label: string }>;
+  required: boolean;
+}
+
+/** Render the shared select control used by both regular and searchable selectors. */
+function CreateSelectControl({
+  id,
+  name,
+  value,
+  onValueChange,
+  onBlur,
   error,
   options,
-  required = false,
-}: {
+  required,
+}: CreateSelectControlProps) {
+  return (
+    <Select name={name} value={value || undefined} onValueChange={onValueChange}>
+      <Select.Trigger
+        id={id}
+        className="create-form-control"
+        {...controlStyle}
+        aria-invalid={Boolean(error)}
+        aria-describedby={error ? `${id}-error` : undefined}
+        aria-required={required}
+        onBlur={onBlur}
+      >
+        <Select.Value placeholder="Select…" />
+      </Select.Trigger>
+      <Select.Content>
+        <Select.Viewport minWidth={240}>
+          {options.map((option) => (
+            <Select.Item key={option.value} value={option.value}>
+              <Select.ItemText>{option.label}</Select.ItemText>
+            </Select.Item>
+          ))}
+        </Select.Viewport>
+      </Select.Content>
+    </Select>
+  );
+}
+
+interface CreateSelectFieldProps {
   label: string;
-  registration: UseFormRegisterReturn;
+  name: string;
+  value: string;
+  onValueChange: (value: string) => void;
+  onBlur: () => void;
   error?: string;
   options: Array<{ value: string; label: string }>;
   required?: boolean;
-}) {
-  const id = registration.name;
+}
+
+/** Render a keyboard-accessible Tamagui select while keeping React Hook Form as its value owner. */
+export function CreateSelectField({
+  label,
+  name,
+  value,
+  onValueChange,
+  onBlur,
+  error,
+  options,
+  required = false,
+}: CreateSelectFieldProps) {
+  const id = name;
   return (
-    <label htmlFor={id}>
-      {label}
-      {required ? " *" : ""}
-      <select
+    <CreateFieldFrame id={id} label={label} required={required} error={error}>
+      <CreateSelectControl
         id={id}
+        name={name}
+        value={value}
+        onValueChange={onValueChange}
+        onBlur={onBlur}
+        error={error}
+        options={options}
         required={required}
-        aria-invalid={Boolean(error)}
-        aria-describedby={error ? `${id}-error` : undefined}
-        {...registration}
-      >
-        <option value="">Select…</option>
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
-      {error && (
-        <span id={`${id}-error`} className="field-error">
-          {error}
-        </span>
-      )}
-    </label>
+      />
+    </CreateFieldFrame>
+  );
+}
+
+/** Render a searchable existing-record selector while preserving the selected record ID. */
+export function CreateSearchableSelectField({
+  label,
+  name,
+  value,
+  onValueChange,
+  onBlur,
+  error,
+  options,
+  required = false,
+  searchPlaceholder = "Search options…",
+}: CreateSelectFieldProps & { searchPlaceholder?: string }) {
+  const [query, setQuery] = useState("");
+  const normalizedQuery = query.trim().toLowerCase();
+  const filteredOptions = normalizedQuery
+    ? options.filter((option) => `${option.label} ${option.value}`.toLowerCase().includes(normalizedQuery))
+    : options;
+
+  return (
+    <CreateFieldFrame id={name} label={label} required={required} error={error}>
+      <YStack gap="$2">
+        <Input
+          type="search"
+          className="create-form-control"
+          {...controlStyle}
+          aria-label={`Search ${label}`}
+          placeholder={searchPlaceholder}
+          autoComplete="off"
+          value={query}
+          onChange={(event) => setQuery(event.currentTarget.value)}
+        />
+        <CreateSelectControl
+          id={name}
+          name={name}
+          value={value}
+          onValueChange={onValueChange}
+          onBlur={onBlur}
+          error={error}
+          options={filteredOptions}
+          required={required}
+        />
+      </YStack>
+    </CreateFieldFrame>
   );
 }

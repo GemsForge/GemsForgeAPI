@@ -1,7 +1,9 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState, type ReactNode } from "react";
 import {
+  Controller,
   useForm,
+  type Control,
   type DefaultValues,
   type FieldValues,
   type Path,
@@ -9,7 +11,13 @@ import {
   type UseFormReturn,
 } from "react-hook-form";
 import { z } from "zod";
-import { CreateFormFrame, CreateSelectField, CreateTextField } from "../../components/forms/CreateForm";
+import {
+  CreateFormFrame,
+  CreateSearchableSelectField,
+  CreateSelectField,
+  CreateTextField,
+  type CreateFieldWidth,
+} from "../../components/forms/CreateForm";
 import {
   GeoapifyAddressSearch,
   type AddressSearchValues,
@@ -28,26 +36,97 @@ import type {
 
 const required = (label: string) => z.string().trim().min(1, `${label} is required.`);
 const optional = z.string();
+/** Keep browser date inputs strict so JavaScript cannot normalize invalid calendar dates. */
+function isValidDateInput(value: string): boolean {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (!match) return false;
+
+  const [, year, month, day] = match;
+  const date = new Date(`${value}T00:00:00Z`);
+  return (
+    !Number.isNaN(date.getTime()) &&
+    date.getUTCFullYear() === Number(year) &&
+    date.getUTCMonth() + 1 === Number(month) &&
+    date.getUTCDate() === Number(day)
+  );
+}
+
+/** Validate optional Employment contact values without rejecting intentionally blank fields. */
+const optionalEmploymentDate = optional.refine(
+  (value) => !value.trim() || isValidDateInput(value.trim()),
+  "Enter a valid date.",
+);
+const optionalEmploymentURL = optional.refine((value) => {
+  const normalized = value.trim();
+  if (!normalized) return true;
+  try {
+    const url = new URL(normalized);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+}, "Enter a valid URL starting with http:// or https://.");
+const optionalEmploymentEmail = optional.refine(
+  (value) => !value.trim() || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim()),
+  "Enter a valid email address.",
+);
+/** Accept international numbers with country codes, common separators, and optional extensions. */
+const employmentPhonePattern = /^\+?[0-9().\-\s]+(?:\s*(?:x|ext\.?)\s*[0-9]+)?$/i;
+const optionalEmploymentPhone = optional.refine((value) => {
+  const normalized = value.trim();
+  if (!normalized) return true;
+  const digitCount = (normalized.match(/\d/g) ?? []).length;
+  return employmentPhonePattern.test(normalized) && digitCount >= 7;
+}, "Enter a valid phone number.");
 const optionalNumber = z
   .string()
   .refine(
     (value) => value === "" || (/^\d+(\.\d+)?$/.test(value) && Number(value) >= 0),
     "Enter a non-negative number.",
   );
-const addressSchema = z.object({
-  id: required("Address ID"),
-  addressType: required("Address type"),
-  addressLine1: optional,
-  addressLine2: optional,
-  city: optional,
-  state: optional,
-  postalCode: optional,
-  country: required("Country"),
-  startDate: optional,
-  endDate: optional,
-  addressStatus: required("Status"),
-  notes: optional,
-});
+/** Accept international city and region names while rejecting punctuation-only values. */
+const optionalAddressLocation = optional.refine(
+  (value) => !value.trim() || /^[\p{L}\p{M}0-9 .,'’&()/-]+$/u.test(value.trim()),
+  "Enter a valid location.",
+);
+/** Accept common domestic and international postal-code characters. */
+const optionalPostalCode = optional.refine(
+  (value) => !value.trim() || /^[\p{L}\p{N}][\p{L}\p{N} .-]*$/u.test(value.trim()),
+  "Enter a valid postal code.",
+);
+const optionalAddressDate = optional.refine(
+  (value) => !value.trim() || isValidDateInput(value.trim()),
+  "Enter a valid date.",
+);
+const addressSchema = z
+  .object({
+    addressType: required("Address type"),
+    addressLine1: optional,
+    addressLine2: optional,
+    city: optionalAddressLocation,
+    state: optionalAddressLocation,
+    postalCode: optionalPostalCode,
+    country: required("Country"),
+    startDate: optionalAddressDate,
+    endDate: optionalAddressDate,
+    addressStatus: required("Status"),
+    notes: optional,
+  })
+  .superRefine((values, context) => {
+    if (values.startDate && values.endDate && values.endDate < values.startDate) {
+      context.addIssue({
+        code: "custom",
+        path: ["endDate"],
+        message: "End date must be on or after start date.",
+      });
+    }
+  });
+
+const addressTypeOptions = ["Residence", "Storage", "Work", "School", "Other"].map((value) => ({
+  value,
+  label: value,
+}));
+const addressStatusOptions = ["Current", "Former", "Seasonal", "Other"].map((value) => ({ value, label: value }));
 const educationSchema = z.object({
   id: required("Education ID"),
   educationType: required("Education type"),
@@ -64,23 +143,33 @@ const educationSchema = z.object({
   website: optional,
   notes: optional,
 });
-const employmentSchema = z.object({
-  id: required("Employment ID"),
-  employerName: required("Employer name"),
-  employerType: required("Employer type"),
-  industry: optional,
-  website: optional,
-  positionTitle: required("Position title"),
-  employmentType: required("Employment type"),
-  startDate: optional,
-  endDate: optional,
-  employmentStatus: required("Status"),
-  workAddressID: optional,
-  employerContact: optional,
-  employerContactNumber: optional,
-  employerContactEmail: optional,
-  notes: optional,
-});
+const employmentSchema = z
+  .object({
+    id: required("Employment ID"),
+    employerName: required("Employer name"),
+    employerType: required("Employer type"),
+    industry: optional,
+    website: optionalEmploymentURL,
+    positionTitle: required("Position title"),
+    employmentType: required("Employment type"),
+    startDate: optionalEmploymentDate,
+    endDate: optionalEmploymentDate,
+    employmentStatus: required("Status"),
+    workAddressID: optional,
+    employerContact: optional,
+    employerContactNumber: optionalEmploymentPhone,
+    employerContactEmail: optionalEmploymentEmail,
+    notes: optional,
+  })
+  .superRefine((values, context) => {
+    if (values.startDate && values.endDate && values.endDate < values.startDate) {
+      context.addIssue({
+        code: "custom",
+        path: ["endDate"],
+        message: "End date must be on or after start date.",
+      });
+    }
+  });
 const transactionSchema = z.object({
   id: required("Transaction ID"),
   receiptID: optional,
@@ -170,6 +259,8 @@ function Text<T extends FieldValues>({
   required: isRequired = false,
   type = "text",
   multiline = false,
+  placeholder,
+  width = "long",
 }: {
   form: UseFormReturn<T>;
   name: Path<T>;
@@ -177,6 +268,8 @@ function Text<T extends FieldValues>({
   required?: boolean;
   type?: string;
   multiline?: boolean;
+  placeholder?: string;
+  width?: CreateFieldWidth;
 }) {
   const message = form.formState.errors[name]?.message;
   return (
@@ -186,6 +279,8 @@ function Text<T extends FieldValues>({
       required={isRequired}
       type={type}
       multiline={multiline}
+      placeholder={placeholder}
+      width={width}
       error={typeof message === "string" ? message : undefined}
     />
   );
@@ -195,19 +290,49 @@ function Select<T extends FieldValues>({
   name,
   label,
   options,
+  required = false,
+  searchable = false,
+  searchPlaceholder,
 }: {
   form: UseFormReturn<T>;
   name: Path<T>;
   label: string;
   options: Array<{ value: string; label: string }>;
+  required?: boolean;
+  searchable?: boolean;
+  searchPlaceholder?: string;
 }) {
   const message = form.formState.errors[name]?.message;
   return (
-    <CreateSelectField
-      label={label}
-      registration={form.register(name)}
-      options={options}
-      error={typeof message === "string" ? message : undefined}
+    <Controller
+      control={form.control as Control<T>}
+      name={name}
+      render={({ field }) =>
+        searchable ? (
+          <CreateSearchableSelectField
+            label={label}
+            name={field.name}
+            value={String(field.value ?? "")}
+            onValueChange={field.onChange}
+            onBlur={field.onBlur}
+            options={options}
+            required={required}
+            searchPlaceholder={searchPlaceholder}
+            error={typeof message === "string" ? message : undefined}
+          />
+        ) : (
+          <CreateSelectField
+            label={label}
+            name={field.name}
+            value={String(field.value ?? "")}
+            onValueChange={field.onChange}
+            onBlur={field.onBlur}
+            options={options}
+            required={required}
+            error={typeof message === "string" ? message : undefined}
+          />
+        )
+      }
     />
   );
 }
@@ -215,6 +340,11 @@ function fields<T extends FieldValues>(form: UseFormReturn<T>, definitions: Arra
   return definitions.map(([name, label, requiredField]) => (
     <Text key={name} form={form} name={name} label={label} required={requiredField} />
   ));
+}
+
+/** Generate the stable EmploymentID required by the existing API without exposing it as form input. */
+function createEmploymentID(): string {
+  return `EMP-${crypto.randomUUID()}`;
 }
 
 export function DomainCreateForm({
@@ -261,7 +391,6 @@ export function AddressCreateForm({
       title="Create address"
       schema={addressSchema}
       defaultValues={{
-        id: "",
         addressType: "Residence",
         addressLine1: "",
         addressLine2: "",
@@ -276,7 +405,6 @@ export function AddressCreateForm({
       }}
       onCreate={async (v) =>
         onCreate({
-          id: v.id.trim(),
           addressType: v.addressType,
           addressLine1: blank(v.addressLine1),
           addressLine2: blank(v.addressLine2),
@@ -304,20 +432,23 @@ export function AddressCreateForm({
         return (
           <>
             <GeoapifyAddressSearch onSelect={applyAddress} client={addressSearchClient} />
-            {fields(form, [
-              ["id", "Stable address ID", true],
-              ["addressType", "Address type", true],
-              ["addressLine1", "Address line 1"],
-              ["addressLine2", "Address line 2"],
-              ["city", "City"],
-              ["state", "State / region"],
-              ["postalCode", "Postal code"],
-              ["country", "Country", true],
-              ["startDate", "Start date"],
-              ["endDate", "End date"],
-              ["addressStatus", "Status", true],
-              ["notes", "Notes"],
-            ])}
+            <div className="create-form-grid">
+              <Select form={form} name="addressType" label="Address type" options={addressTypeOptions} required />
+              <Text form={form} name="addressLine1" label="Address line 1" width="long" />
+              <Text form={form} name="addressLine2" label="Address line 2" width="long" />
+              <Text form={form} name="country" label="Country" required width="medium" />
+            </div>
+            <div className="create-form-grid create-form-grid--address-location">
+              <Text form={form} name="city" label="City" width="short" />
+              <Text form={form} name="state" label="State / region" width="short" />
+              <Text form={form} name="postalCode" label="Postal code" width="short" />
+            </div>
+            <div className="create-form-grid create-form-grid--compact">
+              <Text form={form} name="startDate" label="Start date" type="date" width="short" />
+              <Text form={form} name="endDate" label="End date" type="date" width="short" />
+              <Select form={form} name="addressStatus" label="Status" options={addressStatusOptions} required />
+            </div>
+            <Text form={form} name="notes" label="Notes" multiline width="long" />
           </>
         );
       }}
@@ -404,21 +535,32 @@ export function EducationCreateForm({
   );
 }
 
+/** Render an employment create form with parent-supplied classification options. */
 export function EmploymentCreateForm({
   addresses,
+  employerTypeOptions,
+  industryOptions,
+  employmentTypeOptions,
+  statusOptions,
   onCreate,
   onCancel,
 }: {
   addresses: Address[];
+  employerTypeOptions: Array<{ value: string; label: string }>;
+  industryOptions: Array<{ value: string; label: string }>;
+  employmentTypeOptions: Array<{ value: string; label: string }>;
+  statusOptions: Array<{ value: string; label: string }>;
   onCreate: (payload: EmploymentCreate) => Promise<void>;
   onCancel: () => void;
 }) {
+  const [generatedID] = useState(createEmploymentID);
+
   return (
     <FormShell
       title="Create employment record"
       schema={employmentSchema}
       defaultValues={{
-        id: "",
+        id: generatedID,
         employerName: "",
         employerType: "",
         industry: "",
@@ -453,26 +595,41 @@ export function EmploymentCreateForm({
     >
       {(form) => (
         <>
-          {fields(form, [
-            ["id", "Stable employment ID", true],
-            ["employerName", "Employer name", true],
-            ["employerType", "Employer type", true],
-            ["industry", "Industry"],
-            ["website", "Website"],
-            ["positionTitle", "Position title", true],
-            ["employmentType", "Employment type", true],
-            ["startDate", "Start date"],
-            ["endDate", "End date"],
-            ["employmentStatus", "Status", true],
-            ["employerContact", "Contact"],
-            ["employerContactNumber", "Contact number"],
-            ["employerContactEmail", "Contact email"],
-            ["notes", "Notes"],
-          ])}
+          <div className="create-form-grid">
+            {fields(form, [["employerName", "Employer name", true]])}
+            <Select form={form} name="employerType" label="Employer type" options={employerTypeOptions} required />
+          </div>
+          <div className="create-form-grid">
+            <Select form={form} name="industry" label="Industry" options={industryOptions} />
+            <Text form={form} name="website" label="Website" type="url" width="medium" />
+          </div>
+          <div className="create-form-grid">
+            {fields(form, [["positionTitle", "Position title", true]])}
+            <Select
+              form={form}
+              name="employmentType"
+              label="Employment type"
+              options={employmentTypeOptions}
+              required
+            />
+          </div>
+          <div className="create-form-grid create-form-grid--compact">
+            <Text form={form} name="startDate" label="Start date" type="date" width="short" />
+            <Text form={form} name="endDate" label="End date" type="date" width="short" />
+            <Select form={form} name="employmentStatus" label="Status" options={statusOptions} required />
+          </div>
+          <div className="create-form-grid create-form-grid--contact">
+            <Text form={form} name="employerContact" label="Contact" />
+            <Text form={form} name="employerContactNumber" label="Contact number" type="tel" width="short" />
+            <Text form={form} name="employerContactEmail" label="Contact email" type="email" width="medium" />
+          </div>
+          <Text form={form} name="notes" label="Notes" multiline />
           <Select
             form={form}
             name="workAddressID"
             label="Work address"
+            searchable
+            searchPlaceholder="Search existing addresses"
             options={addresses.map((a) => ({
               value: a.id,
               label: [a.addressType, a.city, a.id].filter(Boolean).join(" · "),

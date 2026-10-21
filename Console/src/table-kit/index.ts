@@ -22,7 +22,10 @@ export type {
   TableNewRecordOperationOption,
   TableNewRecordOperations,
   TableNewRecordOperationType,
+  TableNewRecordUtilityOption,
+  TableNewRecordUtilityProps,
 } from "./types";
+export { NewRecordUtility } from "./NewRecordUtility";
 export { defaultTableQueryState, deriveClientQuery, normalizeTableQueryState } from "./query";
 export type {
   ClientQueryOptions,

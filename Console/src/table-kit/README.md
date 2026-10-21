@@ -89,11 +89,12 @@ return (
 );
 ```
 
-The property menu uses native buttons, checkboxes, and search input for keyboard
-and screen-reader support. It provides show-all, hide-all, reorder, and reset
-actions. If a saved property no longer exists in the current schema, the hook
-filters it out, appends newly available properties, and exposes
-`missingPropertyIds`; the menu reports that recovery visibly.
+The property menu uses Tamagui `Button` controls at `size="xs"`, native
+checkboxes, and a search input for keyboard and screen-reader support. It
+provides show-all, hide-all, reorder, and reset actions. If a saved property no
+longer exists in the current schema, the hook filters it out, appends newly
+available properties, and exposes `missingPropertyIds`; the menu reports that
+recovery visibly.
 
 The query contract in `query.ts` provides normalized state, deterministic
 client-side derivation, and the adapter shape for server-side results. It does
@@ -116,20 +117,25 @@ and persistence callbacks:
 />
 ```
 
-The New Record menu is a compact popover surface: it supports native button
-activation, visible focus, Escape dismissal, arrow-key navigation, and focus
-restoration to its trigger. Selecting an operation invokes the consumer-owned
-form or intake view, so domain validation and persistence stay with the feature.
+The New Record menu is a right-aligned hybrid utility surface: its trigger and
+dismissal action use compact Tamagui `Button` controls at `size="xs"`, while
+vertically stacked operation cards use a readable button size. It supports
+native button activation, visible focus, Escape dismissal, arrow-key navigation,
+and focus restoration to its trigger. Selecting an operation invokes the
+consumer-owned form or intake view, so domain validation and persistence stay
+with the feature.
 
 ## Compact utility row
 
 The consumer shell keeps the view ToggleGroup and utility header aligned across
-the table width. The properties gear is attached before the query controls;
-search sits at the trailing utility position, starts as a labeled icon button,
-and expands into a focused search field. Sort and filter are separate
-keyboard-accessible icon menus; active choices remain exposed through
-`aria-checked` states and the matching summary. All icon controls expose
-Tamagui Tooltip help while retaining accessible names and native title fallback.
+the table width. View items and utility actions use Tamagui's `size="xs"`
+controls with the shared `$gemInk` color token. The properties gear is attached
+before the query controls; search sits at the trailing utility position, starts
+as a labeled icon button, and expands into a focused search field. Sort and
+filter are separate keyboard-accessible icon menus; active choices remain
+exposed through `aria-checked` states and the matching summary. All icon
+controls expose Tamagui Tooltip help while retaining accessible names and
+native title fallback.
 `Table.Selection` stays below the header so selection counts and Select all
 actions remain discoverable without expanding query controls.
 

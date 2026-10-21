@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState } from "react";
-import { Tooltip } from "tamagui";
+import { Button, Tooltip, type TamaguiElement } from "tamagui";
 import { filterTableProperties, type TablePropertyConfigurationState, type TablePropertyOption } from "./configuration";
 
 /** Accessible property menu backed by the consumer-owned configuration state. */
@@ -15,7 +15,7 @@ export interface TablePropertyControlsProps {
   closeLabel?: string;
 }
 
-/** Render searchable, reorderable property controls without changing record data. */
+/** Render searchable, reorderable xs property controls without changing record data. */
 export function TablePropertyControls({
   properties,
   configuration,
@@ -28,7 +28,7 @@ export function TablePropertyControls({
 }: TablePropertyControlsProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
-  const triggerRef = useRef<HTMLButtonElement>(null);
+  const triggerRef = useRef<TamaguiElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   const dialogId = useId();
   const dialogTitleId = useId();
@@ -49,9 +49,15 @@ export function TablePropertyControls({
     <div className="table-kit-property-controls" role="group" aria-label="Property configuration">
       <Tooltip placement="top" delay={300}>
         <Tooltip.Trigger asChild>
-          <button
+          <Button
             ref={triggerRef}
             type="button"
+            size="xs"
+            color="$gemInk"
+            backgroundColor="$gemPanel"
+            borderColor="$gemPanelLight"
+            borderWidth={1}
+            borderRadius="$gemControl"
             className="table-kit-property-button compact-icon-button"
             aria-controls={dialogId}
             aria-haspopup="dialog"
@@ -60,7 +66,7 @@ export function TablePropertyControls({
           >
             <span aria-hidden="true">⚙</span>
             <span className="sr-only">{label}</span>
-          </button>
+          </Button>
         </Tooltip.Trigger>
         <Tooltip.Content className="table-kit-tooltip">
           <Tooltip.Arrow />
@@ -82,9 +88,19 @@ export function TablePropertyControls({
           }}
         >
           <h2 id={dialogTitleId}>{label}</h2>
-          <button type="button" aria-label={closeLabel} onClick={() => setOpen(false)}>
+          <Button
+            size="xs"
+            color="$gemInk"
+            backgroundColor="$gemPanel"
+            borderColor="$gemPanelLight"
+            borderWidth={1}
+            borderRadius="$gemControl"
+            type="button"
+            aria-label={closeLabel}
+            onClick={() => setOpen(false)}
+          >
             {closeLabel}
-          </button>
+          </Button>
           <label>
             {searchLabel}
             <input
@@ -95,15 +111,42 @@ export function TablePropertyControls({
             />
           </label>
           <div role="toolbar" aria-label="Property actions">
-            <button type="button" onClick={configuration.showAll}>
+            <Button
+              size="xs"
+              color="$gemInk"
+              backgroundColor="$gemPanel"
+              borderColor="$gemPanelLight"
+              borderWidth={1}
+              borderRadius="$gemControl"
+              type="button"
+              onClick={configuration.showAll}
+            >
               {showAllLabel}
-            </button>
-            <button type="button" onClick={configuration.hideAll}>
+            </Button>
+            <Button
+              size="xs"
+              color="$gemInk"
+              backgroundColor="$gemPanel"
+              borderColor="$gemPanelLight"
+              borderWidth={1}
+              borderRadius="$gemControl"
+              type="button"
+              onClick={configuration.hideAll}
+            >
               {hideAllLabel}
-            </button>
-            <button type="button" onClick={configuration.reset}>
+            </Button>
+            <Button
+              size="xs"
+              color="$gemInk"
+              backgroundColor="$gemPanel"
+              borderColor="$gemPanelLight"
+              borderWidth={1}
+              borderRadius="$gemControl"
+              type="button"
+              onClick={configuration.reset}
+            >
               {resetLabel}
-            </button>
+            </Button>
           </div>
           {configuration.missingPropertyIds.length > 0 && (
             <p role="status">Some saved properties are unavailable and were reset.</p>
@@ -122,22 +165,34 @@ export function TablePropertyControls({
                     />
                     <span>{property.label}</span>
                   </label>
-                  <button
+                  <Button
                     type="button"
+                    size="xs"
+                    color="$gemInk"
+                    backgroundColor="$gemPanel"
+                    borderColor="$gemPanelLight"
+                    borderWidth={1}
+                    borderRadius="$gemControl"
                     aria-label={`Move ${property.label} up`}
                     disabled={index <= 0}
                     onClick={() => configuration.move(property.id, "up")}
                   >
                     Move up
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
+                    size="xs"
+                    color="$gemInk"
+                    backgroundColor="$gemPanel"
+                    borderColor="$gemPanelLight"
+                    borderWidth={1}
+                    borderRadius="$gemControl"
                     aria-label={`Move ${property.label} down`}
                     disabled={index < 0 || index >= configuration.configuration.order.length - 1}
                     onClick={() => configuration.move(property.id, "down")}
                   >
                     Move down
-                  </button>
+                  </Button>
                 </li>
               );
             })}

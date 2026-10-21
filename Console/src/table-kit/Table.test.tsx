@@ -136,6 +136,59 @@ describe("Table Kit", () => {
     expect(onAddress).toHaveBeenCalledOnce();
   });
 
+  it("opens the New Record utility, switches workflows, and restores focus on close", () => {
+    renderActions(
+      <Table.Actions
+        newRecordUtility={{
+          options: [
+            {
+              id: "create",
+              label: "New record",
+              description: "Open the create form.",
+              render: ({ close }) => (
+                <button type="button" onClick={close}>
+                  Create workflow
+                </button>
+              ),
+            },
+            {
+              id: "import",
+              label: "Import file",
+              description: "Choose a file.",
+              render: () => <p>Import workflow</p>,
+            },
+            {
+              id: "paste",
+              label: "Paste data",
+              description: "Paste records.",
+              render: () => <p>Paste workflow</p>,
+            },
+          ],
+        }}
+      />,
+    );
+
+    const trigger = screen.getByRole("button", { name: "New record" });
+    fireEvent.click(trigger);
+    expect(screen.getByRole("dialog", { name: "New record" })).toBeInTheDocument();
+    expect(screen.getByText("Create workflow")).toBeInTheDocument();
+    expect(screen.getByRole("dialog")).toHaveTextContent("Open the create form.");
+    expect(screen.queryByText("Choose an operation.")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("tab", { name: /Import file/ }));
+    expect(screen.getByText("Import workflow")).toBeInTheDocument();
+    expect(screen.queryByText("Create workflow")).not.toBeInTheDocument();
+    expect(screen.getByRole("dialog")).toHaveTextContent("Choose a file.");
+
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(screen.queryByRole("dialog", { name: "New record" })).not.toBeInTheDocument();
+    expect(trigger).toHaveFocus();
+
+    fireEvent.click(trigger);
+    fireEvent.click(screen.getByRole("button", { name: "Close new record utility" }));
+    expect(trigger).toHaveFocus();
+  });
+
   it("composes the scoped table primitives with typed rows", () => {
     render(
       <Table.Root<Row> rows={rows} columns={columns} rowKey={(row) => row.id} caption="Records">
