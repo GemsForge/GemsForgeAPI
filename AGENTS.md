@@ -8,13 +8,57 @@ Use the shared GemsForge Scrum/PO operating model: GitHub is the system of recor
 
 Preserve this repository's existing stack, workflows, scripts, labels, and documentation. Before proposing work, read the relevant README and project documentation, then inspect the applicable files under `.github/workflows/` and `Scripts/`. Do not assume another repository's commands or paths apply here.
 
+Code documentation rule: every code change must include an appropriate
+documentation comment for the changed behavior or public contract. Use focused
+comments for implementation logic, JSDoc/TSDoc for JavaScript or TypeScript
+APIs and reusable components, and XML documentation comments for Swift or
+other XML-documentation-supported APIs. Keep comments accurate and explain
+intent, invariants, inputs, outputs, or constraints; do not add empty comments
+solely to satisfy this rule. Review and update nearby comments when a change
+makes them stale.
+
+Automation coordination: the active Scrum Master automation is the shared
+coordinator for Aura Logbook, GemsForgeAPI, and Professional Portfolio. It is
+attached to the shared SCRUM TEAM project and covers all three repository
+working directories. Do not create duplicate per-project automations that
+could work the same stories concurrently.
+
 For issue creation, use `Scripts/create-github-story.mjs` and its tests as the established implementation. Before creating a story, inspect this repository's current GitHub milestones and Project configuration through the GitHub integration or browser. Select and pass the matching milestone with `--milestone`; do not substitute a milestone from another repository. Add the issue to this repository's configured Project and verify the issue URL, milestone, labels, assignees, and Project membership after creation. Use `.github/ISSUE_WORKFLOW.md` and the repository's metadata workflow as the operational reference. Do not replace or bypass this working mechanism without explicit approval.
 
-QA gate: PR checks validate the proposed change before merge. After merge to `master`, QA validates the merged development branch against the story's acceptance criteria, regression, accessibility, responsive behavior, security/privacy expectations, and required evidence. QA may set Project status to `QA` and recommend release or corrective work; QA does not merge, release, or close the story.
+Lifecycle gate: when a PR is created, the linked issue and PR move to `QA` for internal Codex Review. An approved Codex Review moves them to `In review` for the human PR decision. A merged PR moves them to `Merged` and closes the linked story; the resulting closed story becomes `Done`. Required corrections use `Changes requested`; QA does not merge or release.
 
 ## Technology guidance
 
 Read `docs/governance/technology-and-coding-standards.md` as the shared cross-stack coding reference.
+
+## Shared agent target contract
+
+All three project teams use the same agent-facing file contract. Target the
+repository-local copies of these files when the request is shared policy or
+workflow work:
+
+- `AGENTS.md` for routing, handoff, commit/push, rebase, and QA rules.
+- `Scripts/create-github-story.mjs` and `Scripts/create-github-story.test.mjs`
+  for issue/story creation.
+- `Scripts/commit-policy.mjs`, `Scripts/commit-policy.json`, and their tests
+  for focused commit subjects.
+- `.github/workflows/branch-policy.yml` for branch and base-branch policy.
+- `.github/workflows/commit-policy.yml` for commit and PR-title policy.
+- `.github/workflows/label-policy.yml` for required labels.
+- `.github/workflows/sync-issue-metadata.yml` for issue metadata and Project
+  synchronization.
+- `.github/workflows/sync-pr-metadata.yml` for PR metadata synchronization.
+- `.github/agents/*.agent.md` for the PO, developer, Scrum Master, and QA
+  operating instructions.
+- `docs/governance/gemsforge-ai-scrum-team.md`,
+  `docs/governance/github-actions-standard.md`, and the technology,
+  accessibility, definition-of-done, and workflow documents for the shared
+  process contract.
+
+Preserve this repository's `Scripts/` casing and repository-specific project,
+milestone, label, base-branch, and technology values. A cross-repository
+request updates the equivalent file in each repository; a project-local
+request updates only this repository.
 
 ## PO routing and team awareness
 
