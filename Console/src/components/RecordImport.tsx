@@ -48,6 +48,7 @@ export function RecordImport({
   open,
   onOpenChange,
   showTrigger = true,
+  showCloseButton = true,
   mode = "both",
 }: {
   label: string;
@@ -59,6 +60,8 @@ export function RecordImport({
   onOpenChange?: (open: boolean) => void;
   /** Hide the legacy inline trigger when the compact header owns the action. */
   showTrigger?: boolean;
+  /** Hide the embedded close control when the parent utility owns dismissal. */
+  showCloseButton?: boolean;
   /** Limit the workflow to file selection, pasted data, or retain both inputs. */
   mode?: "both" | "file" | "paste";
 }) {
@@ -106,9 +109,11 @@ export function RecordImport({
         <section className="record-form">
           <div className="detail-heading">
             <h3>Import {label}</h3>
-            <button type="button" onClick={() => setOpen(false)} aria-label={`Close import ${label}`}>
-              Close
-            </button>
+            {showCloseButton && (
+              <button type="button" onClick={() => setOpen(false)} aria-label={`Close import ${label}`}>
+                Close
+              </button>
+            )}
           </div>
           <p className="muted">Paste a CSV with a header row or a JSON array using the table column names.</p>
           {mode !== "paste" && (

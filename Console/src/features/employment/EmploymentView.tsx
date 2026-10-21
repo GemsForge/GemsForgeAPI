@@ -179,6 +179,7 @@ export function EmploymentView({ records }: EmploymentViewProps) {
                           if (!open) close();
                         }}
                         showTrigger={false}
+                        showCloseButton={false}
                         onPublish={async (rows) => {
                           for (const row of rows)
                             await create.mutateAsync(row as Parameters<typeof create.mutateAsync>[0]);

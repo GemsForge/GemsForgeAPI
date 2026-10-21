@@ -198,6 +198,7 @@ export function ServiceAccountsView({ records }: { records: ServiceAccount[] }) 
                           if (!open) close();
                         }}
                         showTrigger={false}
+                        showCloseButton={false}
                         onPublish={async (rows) => {
                           for (const row of rows)
                             await create.mutateAsync({
