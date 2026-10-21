@@ -20,6 +20,10 @@ permissions:
 jobs:
   commit-policy:
     name: Commit policy
+    # A newly-created branch push does not identify a non-default PR base.
+    # Let the pull_request event validate that branch against its actual base
+    # SHA instead of falsely revalidating the base branch's grandfathered history.
+    if: ${{ github.event_name != 'push' || !github.event.created }}
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
