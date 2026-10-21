@@ -197,11 +197,13 @@ function Select<T extends FieldValues>({
   name,
   label,
   options,
+  required = false,
 }: {
   form: UseFormReturn<T>;
   name: Path<T>;
   label: string;
   options: Array<{ value: string; label: string }>;
+  required?: boolean;
 }) {
   const message = form.formState.errors[name]?.message;
   return (
@@ -216,6 +218,7 @@ function Select<T extends FieldValues>({
           onValueChange={field.onChange}
           onBlur={field.onBlur}
           options={options}
+          required={required}
           error={typeof message === "string" ? message : undefined}
         />
       )}
@@ -415,12 +418,19 @@ export function EducationCreateForm({
   );
 }
 
+/** Render an employment create form with parent-supplied classification options. */
 export function EmploymentCreateForm({
   addresses,
+  employerTypeOptions,
+  industryOptions,
+  statusOptions,
   onCreate,
   onCancel,
 }: {
   addresses: Address[];
+  employerTypeOptions: Array<{ value: string; label: string }>;
+  industryOptions: Array<{ value: string; label: string }>;
+  statusOptions: Array<{ value: string; label: string }>;
   onCreate: (payload: EmploymentCreate) => Promise<void>;
   onCancel: () => void;
 }) {
@@ -467,14 +477,18 @@ export function EmploymentCreateForm({
           {fields(form, [
             ["id", "Stable employment ID", true],
             ["employerName", "Employer name", true],
-            ["employerType", "Employer type", true],
-            ["industry", "Industry"],
-            ["website", "Website"],
+          ])}
+          <Select form={form} name="employerType" label="Employer type" options={employerTypeOptions} required />
+          <Select form={form} name="industry" label="Industry" options={industryOptions} />
+          <Text form={form} name="website" label="Website" type="url" />
+          {fields(form, [
             ["positionTitle", "Position title", true],
             ["employmentType", "Employment type", true],
-            ["startDate", "Start date"],
-            ["endDate", "End date"],
-            ["employmentStatus", "Status", true],
+          ])}
+          <Text form={form} name="startDate" label="Start date" type="date" />
+          <Text form={form} name="endDate" label="End date" type="date" />
+          <Select form={form} name="employmentStatus" label="Status" options={statusOptions} required />
+          {fields(form, [
             ["employerContact", "Contact"],
             ["employerContactNumber", "Contact number"],
             ["employerContactEmail", "Contact email"],

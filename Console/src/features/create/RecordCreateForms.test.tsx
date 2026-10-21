@@ -1,7 +1,7 @@
 import { act, fireEvent, render as rtlRender, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { GeoapifySearchClient } from "../addresses/GeoapifyAddressSearch";
-import { AddressCreateForm } from "./RecordCreateForms";
+import { AddressCreateForm, EmploymentCreateForm } from "./RecordCreateForms";
 import { TamaguiProvider } from "tamagui";
 import { tamaguiConfig } from "../../design-system";
 
@@ -107,5 +107,25 @@ describe("shared create form workflow", () => {
     fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
     expect(onCancel).toHaveBeenCalledOnce();
     expect(onCreate).not.toHaveBeenCalled();
+  });
+
+  it("renders employment classifications as shared Tamagui selects", () => {
+    render(
+      <EmploymentCreateForm
+        addresses={[]}
+        employerTypeOptions={[{ value: "Company", label: "Company" }]}
+        industryOptions={[{ value: "Technology", label: "Technology" }]}
+        statusOptions={[{ value: "Current", label: "Current" }]}
+        onCreate={vi.fn().mockResolvedValue(undefined)}
+        onCancel={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByLabelText("Employer type *")).toHaveAttribute("aria-haspopup", "listbox");
+    expect(screen.getByLabelText("Industry")).toHaveAttribute("aria-haspopup", "listbox");
+    expect(screen.getByLabelText("Status *")).toHaveAttribute("aria-haspopup", "listbox");
+    expect(screen.getByLabelText("Website")).toHaveAttribute("type", "url");
+    expect(screen.getByLabelText("Start date")).toHaveAttribute("type", "date");
+    expect(screen.getByLabelText("End date")).toHaveAttribute("type", "date");
   });
 });

@@ -97,6 +97,9 @@ export function EmploymentView({ records }: EmploymentViewProps) {
       {creating && (
         <EmploymentCreateForm
           addresses={addresses.data ?? []}
+          employerTypeOptions={toOptions(employmentOptions.employerType)}
+          industryOptions={toOptions(employmentOptions.industry)}
+          statusOptions={toOptions(employmentOptions.status)}
           onCancel={() => setCreating(false)}
           onCreate={async (payload) => {
             const created = await create.mutateAsync(payload);
@@ -141,6 +144,9 @@ export function EmploymentView({ records }: EmploymentViewProps) {
                     render: ({ close }) => (
                       <EmploymentCreateForm
                         addresses={addresses.data ?? []}
+                        employerTypeOptions={toOptions(employmentOptions.employerType)}
+                        industryOptions={toOptions(employmentOptions.industry)}
+                        statusOptions={toOptions(employmentOptions.status)}
                         onCancel={close}
                         onCreate={async (payload) => {
                           const created = await create.mutateAsync(payload);
