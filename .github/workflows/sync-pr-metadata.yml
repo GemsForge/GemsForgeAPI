@@ -8,7 +8,7 @@ name: Sync issue and pull request metadata
 # 3. Pull requests should include `#165` (without a closing keyword) in the body.
 # 4. When a pull request opens or is reopened, copy the issue's assignee,
 #    labels, and milestone to the pull request.
-# 5. Add the linked issue and pull request to the user-owned GemsForgeAPI
+# 5. Add the linked issue and pull request to the user-owned Gem Life POS v1
 #    project when missing, then derive issue/PR Status from the development lifecycle.
 # 6. Project mutations use the PROJECTS_TOKEN secret because GITHUB_TOKEN
 #    cannot access user-owned projects.
@@ -278,7 +278,7 @@ jobs:
             const projectsToken = process.env.PROJECTS_TOKEN;
             if (!projectsToken) {
               core.setFailed(
-                "PROJECTS_TOKEN is required to synchronize the GemsForgeAPI project.",
+                "PROJECTS_TOKEN is required to synchronize the Gem Life POS v1 project.",
               );
               return;
             }
@@ -349,7 +349,7 @@ jobs:
             const project = visibleProjects.find(
               (candidate) =>
                 candidate.number === 7 &&
-                candidate.title?.trim() === "GemsForgeAPI",
+              candidate.title?.trim() === "Gem Life POS v1",
             );
 
             if (!project) {
@@ -358,7 +358,7 @@ jobs:
                   .map((candidate) => `#${candidate.number} ${candidate.title}`)
                   .join(", ") || "none";
               core.setFailed(
-                `PROJECTS_TOKEN authenticated as ${projectData.viewer?.login ?? "unknown"} but could not see user project GemsForgeAPI (#7). Visible user projects: ${visibleProjectSummary}. Confirm the repository secret contains a classic PAT generated for GemsForge with both project and repo scopes.`,
+                `PROJECTS_TOKEN authenticated as ${projectData.viewer?.login ?? "unknown"} but could not see user project Gem Life POS v1 (#7). Visible user projects: ${visibleProjectSummary}. Confirm the repository secret contains a classic PAT generated for GemsForge with both project and repo scopes.`,
               );
               return;
             }
@@ -517,10 +517,10 @@ jobs:
                 pullRequest.state === "closed" ? "Done" : desiredStatus);
 
             core.notice(
-              `Synchronized PR #${pullRequest.number} from issue #${issueNumber}: ${labels.length} labels, ${assignees.length} assignees, milestone ${issue.milestone?.title ?? "none"}, and project GemsForgeAPI.`,
+              `Synchronized PR #${pullRequest.number} from issue #${issueNumber}: ${labels.length} labels, ${assignees.length} assignees, milestone ${issue.milestone?.title ?? "none"}, and project Gem Life POS v1.`,
             );
             } else {
-              core.notice(`Issue #${issueNumber} is in project GemsForgeAPI.`);
+              core.notice(`Issue #${issueNumber} is in project Gem Life POS v1.`);
             }
 
             // Remove only the repository branch that produced a merged PR.

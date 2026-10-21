@@ -28,7 +28,8 @@ describe("GemRecordList views", () => {
       </TamaguiProvider>,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Gallery" }));
+    fireEvent.click(screen.getByText("View: List"));
+    fireEvent.click(screen.getByRole("menuitemradio", { name: "Gallery" }));
     expect(screen.getByRole("button", { name: "Next example record" })).toBeEnabled();
     fireEvent.click(screen.getByRole("button", { name: "Next example record" }));
     expect(onExpandedChange).toHaveBeenCalledWith("two");
@@ -50,9 +51,71 @@ describe("GemRecordList views", () => {
       </TamaguiProvider>,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Gallery" }));
+    fireEvent.click(screen.getByText("View: List"));
+    fireEvent.click(screen.getByRole("menuitemradio", { name: "Gallery" }));
     expect(screen.getByRole("button", { name: "One" })).toBeInTheDocument();
     expect(screen.queryByText("Details should stay in List view")).not.toBeInTheDocument();
     expect(document.querySelector('[data-card-view="grid"]')).toBeTruthy();
+  });
+
+  it("configures visible table properties from an accessible menu", () => {
+    const records = [{ id: "one", title: "One" }];
+    render(
+      <TamaguiProvider config={tamaguiConfig} defaultTheme="dark">
+        <GemRecordList
+          records={records}
+          label="Example"
+          getKey={(record) => record.id}
+          renderRecord={(record) => <button type="button">{record.title}</button>}
+          tableColumns={[
+            { key: "title", label: "Title", render: (record) => record.title },
+            { key: "id", label: "Item ID", render: (record) => record.id },
+          ]}
+        />
+      </TamaguiProvider>,
+    );
+
+    fireEvent.click(screen.getByText("Properties"));
+    expect(screen.getByRole("checkbox", { name: "Show Title property" })).toBeChecked();
+    fireEvent.click(screen.getByRole("checkbox", { name: "Show Item ID property" }));
+    fireEvent.click(screen.getByText("View: List"));
+    fireEvent.click(screen.getByRole("menuitemradio", { name: "Table" }));
+    expect(screen.getByRole("columnheader", { name: "Title" })).toBeInTheDocument();
+    expect(screen.queryByRole("columnheader", { name: "Item ID" })).not.toBeInTheDocument();
+  });
+
+  it("keeps the table caption and drops properties removed by a feature", () => {
+    const records = [{ id: "one", title: "One" }];
+    const { rerender } = render(
+      <TamaguiProvider config={tamaguiConfig} defaultTheme="dark">
+        <GemRecordList
+          records={records}
+          label="Example"
+          getKey={(record) => record.id}
+          renderRecord={(record) => <button type="button">{record.title}</button>}
+          tableColumns={[{ key: "title", label: "Title", render: (record) => record.title }]}
+        />
+      </TamaguiProvider>,
+    );
+
+    fireEvent.click(screen.getByText("View: List"));
+    fireEvent.click(screen.getByRole("menuitemradio", { name: "Table" }));
+    expect(screen.getByRole("table", { name: "Example table" })).toBeInTheDocument();
+    expect(screen.getByText("View: Table").closest("details")).not.toHaveAttribute("open");
+
+    rerender(
+      <TamaguiProvider config={tamaguiConfig} defaultTheme="dark">
+        <GemRecordList
+          records={records}
+          label="Example"
+          getKey={(record) => record.id}
+          renderRecord={(record) => <button type="button">{record.title}</button>}
+          tableColumns={[{ key: "id", label: "Item ID", render: (record) => record.id }]}
+        />
+      </TamaguiProvider>,
+    );
+
+    expect(screen.getByRole("columnheader", { name: "Item ID" })).toBeInTheDocument();
+    expect(screen.queryByRole("columnheader", { name: "Title" })).not.toBeInTheDocument();
   });
 });

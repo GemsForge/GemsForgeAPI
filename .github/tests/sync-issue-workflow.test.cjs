@@ -71,7 +71,7 @@ function fixture() {
     let data;
     if (query.includes("viewer")) {
       data = { viewer: { login: "GemsForge" }, user: { projectsV2: { nodes: [
-        { id: "P7", number: 7, title: "GemsForgeAPI" },
+        { id: "P7", number: 7, title: "Gem Life POS v1" },
       ] } } };
     } else if (query.includes("fields(first")) {
       data = { node: { fields: { nodes: [{id: "F", name: "Status", options}] } } };
