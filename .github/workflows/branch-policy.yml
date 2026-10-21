@@ -1,0 +1,34 @@
+name: Branch workflow policy
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened, edited]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  branch-and-link:
+    name: Branch and issue linkage
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Validate branch and issue reference
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            if (pr.base.ref !== "master") {
+              core.setFailed("Pull requests must target master.");
+              return;
+            }
+            const branchPattern = /^(feat|fix|docs|refactor|test|chore|ci|build|perf|style)\/[1-9][0-9]*-[a-z0-9][a-z0-9-]*$/;
+            if (!branchPattern.test(pr.head.ref)) {
+              core.setFailed("Branch must match <type>/<issue-number>-<short-description>.");
+              return;
+            }
+            const issue = pr.head.ref.match(/^[^/]+\/(\d+)-/)[1];
+            if (!new RegExp(`#${issue}\\b`).test(pr.body || "")) {
+              core.setFailed(`PR body must reference #${issue}; merging does not close the story.`);
+            }

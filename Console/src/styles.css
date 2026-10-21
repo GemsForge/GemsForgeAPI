@@ -1262,6 +1262,17 @@ dialog::backdrop {
     font-size: 0.64rem;
   }
 }
+@media (min-width: 641px) and (max-width: 900px) {
+  .gem-record-grid-rail {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .gem-record-grid-card > button > [class$="-copy"] strong {
+    font-size: 0.78rem;
+  }
+  .gem-record-grid-card > button > [class$="-copy"] small {
+    font-size: 0.64rem;
+  }
+}
 @media (max-width: 640px) {
   .gem-record-grid-card > button > [class$="-copy"] strong {
     font-size: 0.7rem;

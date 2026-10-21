@@ -60,4 +60,22 @@ describe("Table Kit query contract", () => {
     expect(hook.result.current.state.search).toBe("grid");
     expect(onStateChange).toHaveBeenCalledTimes(2);
   });
+
+  it("restores a named view's initial configuration until that view is changed", () => {
+    const hook = renderHook(
+      ({ viewId }) =>
+        useTableQueryState({
+          viewId,
+          views: [{ id: "grid", configuration: { pageSize: 10, search: "grid" } }],
+        }),
+      { initialProps: { viewId: "grid" } },
+    );
+
+    expect(hook.result.current.state).toMatchObject({ pageSize: 10, search: "grid" });
+    act(() => hook.result.current.setState((current) => ({ ...current, search: "changed" })));
+    act(() => hook.rerender({ viewId: "list" }));
+    act(() => hook.rerender({ viewId: "grid" }));
+
+    expect(hook.result.current.state.search).toBe("changed");
+  });
 });

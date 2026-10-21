@@ -170,3 +170,27 @@ branches or PRs with that token should explicitly dispatch this workflow as well
 - [Sub-issue API](https://docs.github.com/en/rest/issues/sub-issues)
 - [Issue dependency API](https://docs.github.com/en/rest/issues/issue-dependencies)
 - [Projects automation with Actions](https://docs.github.com/en/issues/planning-and-tracking-with-projects/automating-your-project/automating-projects-using-actions)
+
+## Shared GemsForge issue and delivery contract
+
+The existing repository rules remain authoritative. The issue is the source of truth for scope, assignee, labels, milestone, Project fields, and native relationships; the PR adopts that metadata.
+
+### Story and delivery format
+
+Stories include Story, Outcome, Acceptance criteria, Verification, Delivery checks, and Relationships sections. Branches use <type>/<issue-number>-<short-description>. Commit and PR titles use type(scope): #issue-number short imperative description.
+
+Approved commit types: feat, fix, refactor, test, docs, chore. Approved chore scopes: ci, deps, build. `docs` is a type, not a scope. Existing labels only are used; automation creates no labels.
+
+### Global Project status model
+
+GemsForge Projects use Backlog, Ready, In progress, In review, and Done. Automation resolves options by name and fails clearly when a required status is missing.
+
+### Lifecycle and closing rules
+
+Numbered branch and PR events reconcile metadata. Closes, Fixes, and Resolves references close an issue only when the PR merges into the default branch. Preserve merged, closed-without-merge, fork, default-branch, and source-branch behavior. Preserve manual repair and live verification.
+
+### Credentials and security
+
+GITHUB_TOKEN handles repository metadata and native relationships. PROJECTS_TOKEN handles user-owned Project #7 mutations. Never use GITHUB_TOKEN for Project mutations or commit either token.
+
+Preserve the exact test command: node --test .github/tests/sync-issue-workflow.test.cjs. Preserve live dispatch verification, API references, and security guidance.

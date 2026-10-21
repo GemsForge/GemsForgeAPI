@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import type { TableQueryState } from "./query";
 
 /** A typed column definition supplied by a consuming table. */
 export interface TableColumn<Row> {
@@ -12,6 +13,17 @@ export interface TableColumn<Row> {
 export interface TableView {
   id: string;
   label: string;
+  icon?: ReactNode;
+  description?: string;
+  /** Optional initial query configuration restored for this named view. */
+  configuration?: Partial<TableQueryState>;
+}
+
+export interface TableHeaderProps {
+  title?: ReactNode;
+  description?: ReactNode;
+  metadata?: ReactNode;
+  collapsibleDescription?: boolean;
 }
 
 /** Server-facing pagination metadata returned with a result page. */
@@ -41,6 +53,36 @@ export interface TableRootProps<Row> {
   pagination?: TablePagination;
   defaultPagination?: TablePaginationState;
   onPaginationChange?: (pagination: TablePaginationState) => void;
+}
+
+export interface TableQueryFilterOption {
+  value: string;
+  label: string;
+}
+export interface TableQueryFilter {
+  id: string;
+  label: string;
+  options: readonly TableQueryFilterOption[];
+}
+export interface TableQueryControlsProps {
+  state: TableQueryState;
+  onStateChange: (state: TableQueryState) => void;
+  filters?: readonly TableQueryFilter[];
+  searchLabel?: string;
+  searchPlaceholder?: string;
+  disabled?: boolean;
+  pending?: boolean;
+}
+export interface TableActionsProps {
+  onNew?: () => void | Promise<void>;
+  onImport?: () => void | Promise<void>;
+  onImportFile?: () => void | Promise<void>;
+  onPasteCsv?: () => void | Promise<void>;
+  onPasteJson?: () => void | Promise<void>;
+  newLabel?: string;
+  importLabel?: string;
+  disabled?: boolean;
+  pending?: boolean;
 }
 
 /** State and integration callbacks exposed to compound Table children. */
