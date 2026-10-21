@@ -37,7 +37,6 @@ const typeLabels = new Map([
   ["test", "testing"],
   ["docs", "documentation"],
   ["chore", "chore"],
-  ["ci", "ci"],
 ]);
 
 const scopeLabels = new Set([
@@ -46,7 +45,7 @@ const scopeLabels = new Set([
 ]);
 
 export function inferLabels(title, explicitLabels = []) {
-  const match = /^(feat|fix|refactor|test|docs|chore|ci)\(([a-z0-9-]+)\):\s+/.exec(title);
+  const match = /^(feat|fix|refactor|test|docs|chore)\(([a-z0-9-]+)\):\s+/.exec(title);
   if (!match) throw new Error("Title must use type(scope): short imperative description.");
   const [, type, scope] = match;
   if (!typeLabels.has(type)) {
