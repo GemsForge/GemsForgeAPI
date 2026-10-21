@@ -20,7 +20,7 @@ jobs:
           script: |
             const pr = context.payload.pull_request;
             const title = pr.title || "";
-            const match = /^(feat|fix|refactor|test|docs|chore|ci)\(([a-z0-9-]+)\): #[1-9][0-9]* [a-z][a-z0-9-]*(?:\s+\S.*)?$/.exec(title);
+            const match = /^(feat|fix|refactor|test|docs|chore)\(([a-z0-9-]+)\): #[1-9][0-9]* [a-z][a-z0-9-]*(?:\s+\S.*)?$/.exec(title);
             if (!match) {
               core.setFailed("PR title must match type(scope): #issue short imperative description.");
               return;
@@ -32,7 +32,6 @@ jobs:
               test: "testing",
               docs: "documentation",
               chore: "chore",
-              ci: "ci",
             }[match[1]];
             const labels = (pr.labels || []).map(({ name }) => name);
             if (!labels.includes(required)) {
