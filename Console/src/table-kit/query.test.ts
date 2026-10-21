@@ -1,5 +1,6 @@
-import { describe, expect, it } from "vitest";
-import { deriveClientQuery, normalizeTableQueryState } from "./query";
+import { renderHook, act } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
+import { deriveClientQuery, normalizeTableQueryState, useTableQueryState } from "./query";
 
 interface Row {
   name: string;
@@ -42,5 +43,21 @@ describe("Table Kit query contract", () => {
 
     expect(result.total).toBe(2);
     expect(result.rows).toEqual([{ name: "Gamma", category: "A" }]);
+  });
+
+  it("restores uncontrolled query state per view and reports controlled changes", () => {
+    const onStateChange = vi.fn();
+    const hook = renderHook(({ viewId }) => useTableQueryState({ viewId, onStateChange }), {
+      initialProps: { viewId: "grid" },
+    });
+
+    act(() => hook.result.current.setState((current) => ({ ...current, search: "grid" })));
+    act(() => hook.rerender({ viewId: "list" }));
+    expect(hook.result.current.state.search).toBe("");
+    act(() => hook.result.current.setState((current) => ({ ...current, search: "list" })));
+    act(() => hook.rerender({ viewId: "grid" }));
+
+    expect(hook.result.current.state.search).toBe("grid");
+    expect(onStateChange).toHaveBeenCalledTimes(2);
   });
 });

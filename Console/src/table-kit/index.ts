@@ -9,4 +9,13 @@ export type {
   TableView,
 } from "./types";
 export { defaultTableQueryState, deriveClientQuery, normalizeTableQueryState } from "./query";
-export type { ClientQueryOptions, SortDirection, TableQueryAdapter, TableQueryResult, TableQueryState } from "./query";
+export type {
+  ClientQueryOptions,
+  SortDirection,
+  TableQueryAdapter,
+  TableQueryResult,
+  TableQueryState,
+  UseTableQueryStateOptions,
+  UseTableQueryStateResult,
+} from "./query";
+export { useTableQueryState } from "./query";
