@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Accordion } from "@tamagui/accordion";
 import { Card, XStack } from "tamagui";
 
@@ -38,6 +38,8 @@ export function GemRecordList<Record>({
     () => new Set(tableColumns.filter((column) => column.visible !== false).map((column) => column.key)),
   );
   const [propertySearch, setPropertySearch] = useState("");
+  const [modalRecord, setModalRecord] = useState<Record | null>(null);
+  const modalRef = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     setVisibleColumns((current) => {
       const availableKeys = new Set(tableColumns.map((column) => column.key));
@@ -47,6 +49,9 @@ export function GemRecordList<Record>({
       return next;
     });
   }, [tableColumns]);
+  useEffect(() => {
+    if (modalRecord) modalRef.current?.showModal();
+  }, [modalRecord]);
   const activeColumns = tableColumns.filter((column) => visibleColumns.has(column.key));
   const filteredColumns = tableColumns.filter((column) =>
     column.label.toLowerCase().includes(propertySearch.trim().toLowerCase()),
@@ -132,6 +137,7 @@ export function GemRecordList<Record>({
                   className={`gem-record-grid-card${key === expandedKey ? " is-active" : ""}`}
                   size={key === expandedKey ? "lg" : "md"}
                   data-card-view="grid"
+                  onClick={() => setModalRecord(record)}
                 >
                   {renderRecord(record)}
                 </Card>
@@ -202,6 +208,34 @@ export function GemRecordList<Record>({
           })}
         </Accordion>
       )}
+      <dialog
+        ref={modalRef}
+        className="gem-record-detail-dialog"
+        aria-labelledby="gem-record-detail-title"
+        onCancel={(event) => {
+          event.preventDefault();
+          modalRef.current?.close();
+          setModalRecord(null);
+        }}
+      >
+        {modalRecord && (
+          <div className="gem-record-detail-dialog-content">
+            <div className="gem-record-detail-dialog-header">
+              <h2 id="gem-record-detail-title">Account Details</h2>
+              <button
+                type="button"
+                onClick={() => {
+                  modalRef.current?.close();
+                  setModalRecord(null);
+                }}
+              >
+                Close
+              </button>
+            </div>
+            <div className="gem-record-detail-dialog-body">{renderExpanded?.(modalRecord)}</div>
+          </div>
+        )}
+      </dialog>
     </div>
   );
 }

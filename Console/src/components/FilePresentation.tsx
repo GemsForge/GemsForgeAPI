@@ -46,29 +46,33 @@ function StoredFile({ id, label }: { id: string; label: string }) {
   const name = file.fileName || file.relativePath.split("/").pop() || "Unnamed file";
   return (
     <div className="file-presentation">
-      <dl className="file-metadata" aria-label={`${label} file details`}>
-        <div>
-          <dt>File name</dt>
-          <dd>{name}</dd>
+      <div className="file-presentation-main">
+        <div className="file-presentation-image">
+          {file.mimeType.toLowerCase().startsWith("image/") ? (
+            <ImagePreview key={`${id}:${file.relativePath}:${file.mimeType}`} file={file} label={label} />
+          ) : (
+            <p role="status">Preview is not available for this file type.</p>
+          )}
         </div>
-        <div>
-          <dt>Kind</dt>
-          <dd>{file.fileKind}</dd>
-        </div>
-        <div>
-          <dt>Type</dt>
-          <dd>{file.mimeType}</dd>
-        </div>
-        <div>
-          <dt>Size</dt>
-          <dd>{file.byteSize === null ? "Unknown" : `${file.byteSize.toLocaleString()} bytes`}</dd>
-        </div>
-      </dl>
-      {file.mimeType.toLowerCase().startsWith("image/") ? (
-        <ImagePreview key={`${id}:${file.relativePath}:${file.mimeType}`} file={file} label={label} />
-      ) : (
-        <p role="status">Preview is not available for this file type.</p>
-      )}
+        <dl className="file-metadata" aria-label={`${label} file details`}>
+          <div>
+            <dt>File name</dt>
+            <dd>{name}</dd>
+          </div>
+          <div>
+            <dt>Kind</dt>
+            <dd>{file.fileKind}</dd>
+          </div>
+          <div>
+            <dt>Type</dt>
+            <dd>{file.mimeType}</dd>
+          </div>
+          <div>
+            <dt>Size</dt>
+            <dd>{file.byteSize === null ? "Unknown" : `${file.byteSize.toLocaleString()} bytes`}</dd>
+          </div>
+        </dl>
+      </div>
     </div>
   );
 }
