@@ -19,3 +19,5 @@ export type {
   UseTableQueryStateResult,
 } from "./query";
 export { useTableQueryState } from "./query";
+export { TableImportWorkflow } from "./ImportWorkflow";
+export type { TableImportWorkflowProps } from "./ImportWorkflow";
