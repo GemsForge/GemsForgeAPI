@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Accordion } from "@tamagui/accordion";
 import { Card, XStack } from "tamagui";
 
@@ -38,6 +38,15 @@ export function GemRecordList<Record>({
     () => new Set(tableColumns.filter((column) => column.visible !== false).map((column) => column.key)),
   );
   const [propertySearch, setPropertySearch] = useState("");
+  useEffect(() => {
+    setVisibleColumns((current) => {
+      const availableKeys = new Set(tableColumns.map((column) => column.key));
+      const next = new Set([...current].filter((key) => availableKeys.has(key)));
+      if (next.size === 0) tableColumns.forEach((column) => column.visible !== false && next.add(column.key));
+      if (next.size === current.size && [...next].every((key) => current.has(key))) return current;
+      return next;
+    });
+  }, [tableColumns]);
   const activeColumns = tableColumns.filter((column) => visibleColumns.has(column.key));
   const filteredColumns = tableColumns.filter((column) =>
     column.label.toLowerCase().includes(propertySearch.trim().toLowerCase()),
@@ -154,6 +163,7 @@ export function GemRecordList<Record>({
       ) : view === "table" ? (
         <div className="gem-record-table-wrap" role="region" aria-label={`${label} table`} tabIndex={0}>
           <table className="gem-record-table">
+            <caption className="sr-only">{label} table</caption>
             <thead>
               <tr>
                 {activeColumns.map((column) => (

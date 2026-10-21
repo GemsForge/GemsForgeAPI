@@ -1023,7 +1023,6 @@ dialog::backdrop {
   height: 18rem;
   aspect-ratio: auto;
   min-height: 0;
-  height: auto;
   display: flex;
   padding: 0;
   border: 1px solid rgba(120, 209, 189, 0.22);
