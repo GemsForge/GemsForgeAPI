@@ -30,3 +30,18 @@ export { parseCsv, parseJson, previewCsv, previewJson } from "./import";
 export type { ImportColumn, ImportFieldError, ImportPreview } from "./import";
 export { useTableSelection } from "./selection";
 export type { TableSelection } from "./selection";
+export { getPrimaryRecordProperty, orderRecordProperties } from "./recordContracts";
+export type {
+  RecordAdapter,
+  RecordExpansionHandlers,
+  RecordExpansionState,
+  RecordImage,
+  RecordPropertyDefinition,
+  RecordPropertyKind,
+  RecordPropertyValue,
+  RecordSelectionHandlers,
+  RecordSelectionState,
+  RecordStatus,
+  TableRecord,
+  TableRecordId,
+} from "./recordContracts";

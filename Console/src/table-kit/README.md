@@ -55,3 +55,38 @@ renderers without changing the existing table implementation.
 The query contract in `query.ts` provides normalized state, deterministic
 client-side derivation, and the adapter shape for server-side results. It does
 not own a transport, cache, or feature-specific filter vocabulary.
+
+## Record contracts
+
+`recordContracts.ts` defines the domain-neutral boundary used by future record
+renderers. A feature adapter normalizes each record through `toTableRecord`,
+which supplies a stable string ID, optional title, subtitle, image, and status
+metadata. It separately supplies one collection-level property schema through
+`getPropertyDefinitions`; each definition resolves its value for a record while
+keeping semantic kind, visibility, ordering, primary-property, sorting, and
+filtering hints stable across every row. Property values keep both a display
+payload and optional raw value so a view can render the same record without
+reimplementing domain mapping.
+
+Selection and expansion are controlled integration contracts: the Table Kit
+renderer receives the current state and reports changes through callbacks. The
+contracts intentionally do not store selection, expansion, query, or server
+state. A feature may provide uncontrolled defaults in its own adapter, while a
+persisted or collaborative consumer remains the owner of controlled state.
+
+```tsx
+const adapter: RecordAdapter<Service> = {
+  toTableRecord: (service) => ({
+    id: String(service.id),
+    source: service,
+    title: service.name,
+  }),
+  getPropertyDefinitions: () => [
+    { id: "name", label: "Name", primary: true, getValue: (service) => ({ display: service.name }) },
+  ],
+};
+```
+
+Use `orderRecordProperties` before rendering and
+`getPrimaryRecordProperty` when a view needs one canonical title/property.
+Adapters remain responsible for domain-specific formatting and validation.
