@@ -12,9 +12,12 @@ test("infers the type and scope labels while preserving explicit labels", () => 
   assert.deepEqual(inferLabels("test(database): verify migration", []), ["testing", "database"]);
   assert.deepEqual(inferLabels("docs(ui): document edit states", ["feature"]),
     ["documentation", "ui", "feature"]);
+  assert.deepEqual(inferLabels("docs(any-scope): document policy", []), ["documentation", "any-scope"]);
+  assert.deepEqual(inferLabels("chore(ci): update workflow", []), ["chore", "ci"]);
 });
 
 test("rejects malformed titles and unknown scopes", () => {
   assert.throws(() => inferLabels("feature(api): missing supported type"), /type\(scope\)/);
   assert.throws(() => inferLabels("feat(unknown): add support"), /Unknown story scope/);
+  assert.throws(() => inferLabels("ci(api): invalid"), /type\(scope\)/);
 });

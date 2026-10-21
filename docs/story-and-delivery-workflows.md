@@ -179,7 +179,7 @@ The existing repository rules remain authoritative. The issue is the source of t
 
 Stories include Story, Outcome, Acceptance criteria, Verification, Delivery checks, and Relationships sections. Branches use <type>/<issue-number>-<short-description>. Commit and PR titles use type(scope): #issue-number short imperative description.
 
-Approved commit types: feat, fix, refactor, test, chore. Approved chore scopes: docs, ci, deps, build. Existing labels only are used; automation creates no labels.
+Approved commit types: feat, fix, refactor, test, docs, chore. Approved chore scopes: ci, deps, build. `docs` is a type, not a scope. Existing labels only are used; automation creates no labels.
 
 ### Global Project status model
 
