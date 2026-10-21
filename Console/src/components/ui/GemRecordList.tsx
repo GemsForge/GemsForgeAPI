@@ -73,7 +73,10 @@ export function GemRecordList<Record>({
                 type="button"
                 role="menuitemradio"
                 aria-checked={view === option}
-                onClick={() => setView(option)}
+                onClick={(event) => {
+                  setView(option);
+                  event.currentTarget.closest("details")?.removeAttribute("open");
+                }}
               >
                 {option[0].toUpperCase() + option.slice(1)}
               </button>

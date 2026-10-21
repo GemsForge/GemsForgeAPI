@@ -101,6 +101,7 @@ describe("GemRecordList views", () => {
     fireEvent.click(screen.getByText("View: List"));
     fireEvent.click(screen.getByRole("menuitemradio", { name: "Table" }));
     expect(screen.getByRole("table", { name: "Example table" })).toBeInTheDocument();
+    expect(screen.getByText("View: Table").closest("details")).not.toHaveAttribute("open");
 
     rerender(
       <TamaguiProvider config={tamaguiConfig} defaultTheme="dark">
