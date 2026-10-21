@@ -25,3 +25,12 @@ Handoff format:
 5. Recommendation: ready for review, revise, blocked, or stop.
 
 Do not expand scope, silently waive failures, invent test evidence, merge or release changes, close issues, alter Projects, change secrets, or weaken security and privacy boundaries. A passing check does not replace Product Owner, human review, merge, or release approval.
+
+
+## Mandatory repository workflow
+
+- Never commit directly to the repository default branch (main or master).
+- Work only on an issue-linked branch that follows the repository's naming policy.
+- Route changes through a pull request, required checks, review, and the repository's approval process.
+- If an issue, compliant branch, or pull-request path is unavailable, stop and report the blocker; do not bypass the workflow.
+- Do not merge, close the issue, change Projects, alter branch protection, change secrets, or deploy without separate explicit authorization.
