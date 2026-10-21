@@ -212,17 +212,39 @@ function Actions({
           {newLabel}
         </button>
       )}
-      {onImport && <button type="button" onClick={() => void onImport()} disabled={isDisabled} aria-busy={pending}>{importLabel}</button>}
+      {onImport && (
+        <button type="button" onClick={() => void onImport()} disabled={isDisabled} aria-busy={pending}>
+          {importLabel}
+        </button>
+      )}
       {hasImportMenu && (
         <div className="table-kit-import-menu">
-          <button type="button" aria-haspopup="menu" aria-expanded={menuOpen} onClick={() => setMenuOpen((open) => !open)} disabled={isDisabled}>
+          <button
+            type="button"
+            aria-haspopup="menu"
+            aria-expanded={menuOpen}
+            onClick={() => setMenuOpen((open) => !open)}
+            disabled={isDisabled}
+          >
             Import options
           </button>
           {menuOpen && (
             <div role="menu">
-              {onImportFile && <button type="button" role="menuitem" onClick={() => void onImportFile()}>Import file</button>}
-              {onPasteCsv && <button type="button" role="menuitem" onClick={() => void onPasteCsv()}>Paste CSV</button>}
-              {onPasteJson && <button type="button" role="menuitem" onClick={() => void onPasteJson()}>Paste JSON</button>}
+              {onImportFile && (
+                <button type="button" role="menuitem" onClick={() => void onImportFile()}>
+                  Import file
+                </button>
+              )}
+              {onPasteCsv && (
+                <button type="button" role="menuitem" onClick={() => void onPasteCsv()}>
+                  Paste CSV
+                </button>
+              )}
+              {onPasteJson && (
+                <button type="button" role="menuitem" onClick={() => void onPasteJson()}>
+                  Paste JSON
+                </button>
+              )}
             </div>
           )}
         </div>

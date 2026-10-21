@@ -346,7 +346,7 @@ jobs:
             const visibleProjects = projectData.user?.projectsV2?.nodes ?? [];
             const project = visibleProjects.find(
               (candidate) =>
-                candidate.number === 7 && candidate.title?.trim() === "GemsForgeAPI",
+                candidate.number === 7 && candidate.title?.trim() === "Gem Life POS v1",
             );
 
             if (!project) {
@@ -355,7 +355,7 @@ jobs:
                   .map((candidate) => `#${candidate.number} ${candidate.title}`)
                   .join(", ") || "none";
               core.setFailed(
-                `PROJECTS_TOKEN authenticated as ${projectData.viewer?.login ?? "unknown"} but could not see user project GemsForgeAPI (#7). Visible user projects: ${visibleProjectSummary}. Confirm the repository secret contains a classic PAT generated for GemsForge with both project and repo scopes.`,
+                `PROJECTS_TOKEN authenticated as ${projectData.viewer?.login ?? "unknown"} but could not see user project Gem Life POS v1 (#7). Visible user projects: ${visibleProjectSummary}. Confirm the repository secret contains a classic PAT generated for GemsForge with both project and repo scopes.`,
               );
               return;
             }
