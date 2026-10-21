@@ -295,7 +295,21 @@ jobs:
                   },
                   body: JSON.stringify({ query, variables }),
                 });
-                const payload = await response.json();
+                const responseText = await response.text();
+                let payload;
+                try {
+                  payload = responseText ? JSON.parse(responseText) : null;
+                } catch (parseError) {
+                  throw new Error(
+                    `GitHub GraphQL returned non-JSON data (HTTP ${response.status} ${response.statusText}): ` +
+                    (responseText.slice(0, 500) || "<empty response body>"),
+                  );
+                }
+                if (!payload || typeof payload !== "object") {
+                  throw new Error(
+                    `GitHub GraphQL returned an empty or invalid response (HTTP ${response.status} ${response.statusText}).`,
+                  );
+                }
                 if (!response.ok) {
                   throw new Error(
                     `GitHub GraphQL HTTP ${response.status}: ${JSON.stringify(payload)}`,
