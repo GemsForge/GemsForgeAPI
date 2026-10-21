@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import type { TableQueryState } from "./query";
+import type { TableSelectionContext } from "./selection";
 
 /** A typed column definition supplied by a consuming table. */
 export interface TableColumn<Row> {
@@ -39,6 +40,29 @@ export interface TablePaginationState {
   pageSize: number;
 }
 
+/** Selection integration supplied by a consuming table instance. */
+export interface TableRootSelectionProps<Row> {
+  /** IDs for the complete effective result set, excluding non-selectable records. */
+  matchingIds?: readonly string[];
+  /** Return false for disabled or otherwise non-selectable records on the current page. */
+  isSelectable?: (row: Row, index: number) => boolean;
+  /** Return false for IDs that cannot participate in bulk actions, including off-page records. */
+  isSelectableId?: (id: string) => boolean;
+  /** Controlled selected IDs. Omit to let the Table.Root own selection state. */
+  selectedIds?: ReadonlySet<string>;
+  /** Initial selected IDs for an uncontrolled Table.Root. */
+  defaultSelectedIds?: readonly string[];
+  /** Called with a new immutable selection set after a user action. */
+  onSelectionChange?: (selectedIds: ReadonlySet<string>) => void;
+}
+
+/** Props for the shared Select All control rendered inside a Table.Root. */
+export interface TableSelectionProps {
+  label?: string;
+  clearLabel?: string;
+  allMatchingLabel?: string;
+}
+
 /** The complete, domain-neutral configuration for a Table.Root instance. */
 export interface TableRootProps<Row> {
   rows: readonly Row[];
@@ -53,6 +77,7 @@ export interface TableRootProps<Row> {
   pagination?: TablePagination;
   defaultPagination?: TablePaginationState;
   onPaginationChange?: (pagination: TablePaginationState) => void;
+  selection?: TableRootSelectionProps<Row>;
 }
 
 export interface TableQueryFilterOption {
@@ -96,4 +121,5 @@ export interface TableContextValue<Row> {
   setViewId: (viewId: string) => void;
   pagination: TablePagination | undefined;
   setPagination: (pagination: TablePaginationState) => void;
+  selection: TableSelectionContext;
 }

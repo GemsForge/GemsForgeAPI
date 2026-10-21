@@ -11,6 +11,8 @@ export type {
   TablePagination,
   TablePaginationState,
   TableRootProps,
+  TableRootSelectionProps,
+  TableSelectionProps,
   TableView,
 } from "./types";
 export { defaultTableQueryState, deriveClientQuery, normalizeTableQueryState } from "./query";
@@ -31,7 +33,13 @@ export type { ImportColumn, ImportFieldError, ImportPreview } from "./import";
 export { RecordGallery, RecordList, RecordTable } from "./renderers";
 export type { TableRendererProps } from "./renderers";
 export { useTableSelection } from "./selection";
-export type { TableSelection } from "./selection";
+export type {
+  TableSelection,
+  TableSelectionContext,
+  TableSelectionScope,
+  TableSelectionSummary,
+  UseTableSelectionOptions,
+} from "./selection";
 export { getPrimaryRecordProperty, orderRecordProperties } from "./recordContracts";
 export type {
   RecordAdapter,

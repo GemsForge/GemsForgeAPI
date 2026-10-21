@@ -1,5 +1,6 @@
-import type { ReactNode } from "react";
+import { useContext, type ReactNode } from "react";
 import { Image, Paragraph, Separator, SizableText, XStack, YStack } from "tamagui";
+import { TableContext } from "./context";
 import {
   orderRecordProperties,
   type RecordPropertyDefinition,
@@ -18,6 +19,51 @@ export interface TableRendererProps<Record> {
   onRecordSelect?: (id: TableRecordId) => void;
   onExpansionChange?: (id: TableRecordId | undefined) => void;
   renderExpanded?: (record: Record) => ReactNode;
+}
+
+interface RendererSelection {
+  selectedIds: ReadonlySet<TableRecordId>;
+  onRecordSelect?: (id: TableRecordId) => void;
+  isSelectable: (id: TableRecordId) => boolean;
+}
+
+/** Resolve selection from the nearest Table.Root while preserving standalone renderer compatibility. */
+function useRendererSelection(
+  selectedIds: ReadonlySet<TableRecordId> | undefined,
+  onRecordSelect: ((id: TableRecordId) => void) | undefined,
+): RendererSelection {
+  const context = useContext(TableContext);
+  const scopedSelection = context?.selection.enabled ? context.selection : undefined;
+  return {
+    selectedIds: scopedSelection?.selectedIds ?? selectedIds ?? new Set<TableRecordId>(),
+    onRecordSelect: scopedSelection?.toggle ?? onRecordSelect,
+    isSelectable: scopedSelection ? (id) => scopedSelection.currentPageIds.includes(id) : () => true,
+  };
+}
+
+function SelectionButton({
+  record,
+  selection,
+  compact = false,
+}: {
+  record: TableRecord<unknown>;
+  selection: RendererSelection;
+  compact?: boolean;
+}) {
+  if (!selection.onRecordSelect) return null;
+  const selected = selection.selectedIds.has(record.id);
+  const title = String(record.title ?? record.id);
+  return (
+    <button
+      type="button"
+      aria-label={`${selected ? "Deselect" : "Select"} ${title}`}
+      aria-pressed={selected}
+      disabled={!selection.isSelectable(record.id)}
+      onClick={() => selection.onRecordSelect?.(record.id)}
+    >
+      {compact ? (selected ? "Deselect" : "Select") : selected ? `Deselect ${title}` : `Select ${title}`}
+    </button>
+  );
 }
 
 function propertiesFor<Record>(
@@ -78,11 +124,12 @@ export function RecordList<Record>({
   onRecordSelect,
   onExpansionChange,
 }: TableRendererProps<Record>) {
+  const selection = useRendererSelection(selectedIds, onRecordSelect);
   const visibleProperties = propertiesFor(properties, propertyIds).slice(0, 2);
   return (
     <YStack role="list" gap="$2">
       {records.map((record) => {
-        const selected = selectedIds?.has(record.id);
+        const selected = selection.selectedIds.has(record.id);
         return (
           <XStack
             key={record.id}
@@ -103,15 +150,7 @@ export function RecordList<Record>({
               ))}
             </YStack>
             {record.status && <SizableText aria-label={record.status.label}>{record.status.label}</SizableText>}
-            {onRecordSelect && (
-              <button
-                type="button"
-                aria-label={`Select ${String(record.title ?? record.id)}`}
-                onClick={() => onRecordSelect(record.id)}
-              >
-                Select
-              </button>
-            )}
+            <SelectionButton record={record} selection={selection} />
             {onExpansionChange && (
               <button
                 type="button"
@@ -139,10 +178,11 @@ export function RecordGallery<Record>({
   expandedId,
   renderExpanded,
 }: TableRendererProps<Record>) {
+  const selection = useRendererSelection(selectedIds, onRecordSelect);
   return (
     <XStack flexWrap="wrap" gap="$3" role="list">
       {records.map((record) => {
-        const selected = selectedIds?.has(record.id);
+        const selected = selection.selectedIds.has(record.id);
         const expanded = expandedId === record.id;
         const visibleProperties = propertiesFor(properties, propertyIds);
         return (
@@ -173,13 +213,9 @@ export function RecordGallery<Record>({
                   <PropertyValue value={propertyValue(property, record)} />
                 </XStack>
               ))}
-              {(onRecordSelect || onExpansionChange) && (
+              {(selection.onRecordSelect || onExpansionChange) && (
                 <XStack gap="$2">
-                  {onRecordSelect && (
-                    <button type="button" onClick={() => onRecordSelect(record.id)}>
-                      Select
-                    </button>
-                  )}
+                  <SelectionButton record={record} selection={selection} compact />
                   {onExpansionChange && (
                     <button type="button" onClick={() => onExpansionChange(expanded ? undefined : record.id)}>
                       {expanded ? "Hide" : "View"}
@@ -205,6 +241,7 @@ export function RecordTable<Record>({
   onRecordSelect,
   onExpansionChange,
 }: TableRendererProps<Record>) {
+  const selection = useRendererSelection(selectedIds, onRecordSelect);
   const visibleProperties = propertiesFor(properties, propertyIds);
   return (
     <YStack
@@ -223,7 +260,12 @@ export function RecordTable<Record>({
         ))}
       </XStack>
       {records.map((record) => (
-        <YStack key={record.id} role="row" borderLeftWidth={selectedIds?.has(record.id) ? 3 : 0} borderColor="$gemMint">
+        <YStack
+          key={record.id}
+          role="row"
+          borderLeftWidth={selection.selectedIds.has(record.id) ? 3 : 0}
+          borderColor="$gemMint"
+        >
           <XStack padding="$3" gap="$2" alignItems="center" borderBottomWidth={1} borderColor="$gemPanelLight">
             {visibleProperties.map((property) => (
               <Paragraph key={property.id} role="cell" flex={1}>
@@ -231,15 +273,7 @@ export function RecordTable<Record>({
               </Paragraph>
             ))}
             {record.status && <SizableText aria-label={record.status.label}>{record.status.label}</SizableText>}
-            {onRecordSelect && (
-              <button
-                type="button"
-                aria-label={`Select ${String(record.title ?? record.id)}`}
-                onClick={() => onRecordSelect(record.id)}
-              >
-                Select
-              </button>
-            )}
+            <SelectionButton record={record} selection={selection} />
             {onExpansionChange && (
               <button
                 type="button"

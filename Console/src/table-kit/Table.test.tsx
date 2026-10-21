@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
+import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { Table, useTableContext } from "./index";
 
@@ -29,6 +30,24 @@ function PaginationHarness() {
 function StateHarness() {
   const { viewId, pagination } = useTableContext<Row>();
   return <output>{`${viewId ?? "none"}:${pagination?.pageIndex ?? "none"}`}</output>;
+}
+
+function SelectionPagingHarness() {
+  const [pageIndex, setPageIndex] = useState(0);
+  const pageRows = [rows[pageIndex]];
+  return (
+    <Table.Root<Row>
+      rows={pageRows}
+      columns={columns}
+      rowKey={(row) => row.id}
+      selection={{ matchingIds: rows.map((row) => row.id) }}
+    >
+      <Table.Selection />
+      <button type="button" onClick={() => setPageIndex(1)}>
+        Next page
+      </button>
+    </Table.Root>
+  );
 }
 
 describe("Table Kit", () => {
@@ -109,6 +128,114 @@ describe("Table Kit", () => {
     screen.getByRole("button", { name: "Advance page" }).click();
     expect(onViewChange).toHaveBeenCalledWith("list");
     expect(onPaginationChange).toHaveBeenCalledWith({ pageIndex: 1, pageSize: 1 });
+  });
+
+  it("coordinates current-page, all-matching, and clear selection in the scoped context", () => {
+    const onSelectionChange = vi.fn();
+    render(
+      <Table.Root<Row>
+        rows={rows}
+        columns={columns}
+        rowKey={(row) => row.id}
+        selection={{ matchingIds: ["one", "two", "three"], onSelectionChange }}
+      >
+        <Table.Selection />
+      </Table.Root>,
+    );
+
+    fireEvent.click(screen.getByRole("checkbox", { name: "Select all" }));
+    expect(onSelectionChange).toHaveBeenLastCalledWith(new Set(["one", "two"]));
+    fireEvent.click(screen.getByRole("button", { name: "Select all matching" }));
+    expect(onSelectionChange).toHaveBeenLastCalledWith(new Set(["one", "two", "three"]));
+    expect(screen.getByText("3 selected")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Clear selection" }));
+    expect(onSelectionChange).toHaveBeenLastCalledWith(new Set());
+  });
+
+  it("exposes an indeterminate state for partial current-page selection", () => {
+    render(
+      <Table.Root<Row>
+        rows={rows}
+        columns={columns}
+        rowKey={(row) => row.id}
+        selection={{ defaultSelectedIds: ["one"], matchingIds: ["one", "two", "three"] }}
+      >
+        <Table.Selection />
+      </Table.Root>,
+    );
+
+    const checkbox = screen.getByRole("checkbox", { name: "Select all" });
+    expect(checkbox).not.toBeChecked();
+    expect((checkbox as HTMLInputElement).indeterminate).toBe(true);
+    expect(checkbox).toHaveAttribute("aria-checked", "mixed");
+    expect(screen.getByRole("button", { name: "Select all matching" })).toBeInTheDocument();
+  });
+
+  it("preserves selected IDs across page updates while applying current-page toggles", () => {
+    render(<SelectionPagingHarness />);
+
+    fireEvent.click(screen.getByRole("checkbox", { name: "Select all" }));
+    fireEvent.click(screen.getByRole("button", { name: "Next page" }));
+
+    expect(screen.getByRole("status")).toHaveTextContent("1 selected");
+    fireEvent.click(screen.getByRole("checkbox", { name: "Select all" }));
+    expect(screen.getByRole("status")).toHaveTextContent("2 selected");
+  });
+
+  it("excludes disabled current-page records from bulk selection", () => {
+    const onSelectionChange = vi.fn();
+    render(
+      <Table.Root<Row>
+        rows={rows}
+        columns={columns}
+        rowKey={(row) => row.id}
+        selection={{ isSelectable: (row) => row.id === "one", onSelectionChange }}
+      >
+        <Table.Selection />
+      </Table.Root>,
+    );
+
+    fireEvent.click(screen.getByRole("checkbox", { name: "Select all" }));
+    expect(onSelectionChange).toHaveBeenCalledWith(new Set(["one"]));
+  });
+
+  it("excludes disabled off-page IDs from all-matching selection", () => {
+    const onSelectionChange = vi.fn();
+    render(
+      <Table.Root<Row>
+        rows={[rows[0]]}
+        columns={columns}
+        rowKey={(row) => row.id}
+        selection={{
+          matchingIds: ["one", "two", "disabled"],
+          isSelectableId: (id) => id !== "disabled",
+          onSelectionChange,
+        }}
+      >
+        <Table.Selection />
+      </Table.Root>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Select all matching" }));
+    expect(onSelectionChange).toHaveBeenCalledWith(new Set(["one", "two"]));
+  });
+
+  it("keeps selection isolated between Table.Root instances", () => {
+    render(
+      <>
+        <Table.Root<Row> rows={rows} columns={columns} rowKey={(row) => row.id}>
+          <Table.Selection />
+        </Table.Root>
+        <Table.Root<Row> rows={rows} columns={columns} rowKey={(row) => row.id}>
+          <Table.Selection />
+        </Table.Root>
+      </>,
+    );
+
+    const checkboxes = screen.getAllByRole("checkbox", { name: "Select all" });
+    fireEvent.click(checkboxes[0]);
+
+    expect(screen.getAllByRole("status").map((status) => status.textContent)).toEqual(["2 selected", "0 selected"]);
   });
 
   it("throws when a compound component is outside Root", () => {
