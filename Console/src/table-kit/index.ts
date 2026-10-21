@@ -8,3 +8,5 @@ export type {
   TableRootProps,
   TableView,
 } from "./types";
+export { defaultTableQueryState, deriveClientQuery, normalizeTableQueryState } from "./query";
+export type { ClientQueryOptions, SortDirection, TableQueryAdapter, TableQueryResult, TableQueryState } from "./query";

@@ -20,3 +20,7 @@ compose those behaviors through these slots.
 boundaries. `defaultViewId` and `defaultPagination` provide uncontrolled
 integration. External querying, persistence, rendering, styling, and
 design-system adapters remain the responsibility of the consuming UI layer.
+
+The query contract in `query.ts` provides normalized state, deterministic
+client-side derivation, and the adapter shape for server-side results. It does
+not own a transport, cache, or feature-specific filter vocabulary.
