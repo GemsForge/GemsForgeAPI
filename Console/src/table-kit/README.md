@@ -56,6 +56,34 @@ The query contract in `query.ts` provides normalized state, deterministic
 client-side derivation, and the adapter shape for server-side results. It does
 not own a transport, cache, or feature-specific filter vocabulary.
 
+## Shared selection
+
+`Table.Root` owns one scoped selection context for its child components. Add
+`<Table.Selection />` inside the root to provide the accessible current-page
+Select All control, an explicit all-matching action when the adapter supplies
+IDs beyond the current page, selected-count feedback, and clear selection.
+
+```tsx
+<Table.Root
+  rows={pageRows}
+  columns={columns}
+  rowKey={(row) => row.id}
+  selection={{
+    matchingIds: queryResult.matchingIds,
+    isSelectable: (row) => !row.archived,
+    onSelectionChange: setSelectedIds,
+  }}
+>
+  <Table.Selection />
+  <Table.Content />
+</Table.Root>
+```
+
+`matchingIds` represents the complete effective filtered/sorted result set and
+must already exclude records that cannot participate in bulk actions. The
+selection state is local to each root, preserves IDs across pagination and
+view changes, and never persists or mutates records by itself.
+
 ## Record contracts
 
 `recordContracts.ts` defines the domain-neutral boundary used by future record

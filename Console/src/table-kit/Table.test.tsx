@@ -111,6 +111,81 @@ describe("Table Kit", () => {
     expect(onPaginationChange).toHaveBeenCalledWith({ pageIndex: 1, pageSize: 1 });
   });
 
+  it("coordinates current-page, all-matching, and clear selection in the scoped context", () => {
+    const onSelectionChange = vi.fn();
+    render(
+      <Table.Root<Row>
+        rows={rows}
+        columns={columns}
+        rowKey={(row) => row.id}
+        selection={{ matchingIds: ["one", "two", "three"], onSelectionChange }}
+      >
+        <Table.Selection />
+      </Table.Root>,
+    );
+
+    fireEvent.click(screen.getByRole("checkbox", { name: "Select all" }));
+    expect(onSelectionChange).toHaveBeenLastCalledWith(new Set(["one", "two"]));
+    fireEvent.click(screen.getByRole("button", { name: "Select all matching" }));
+    expect(onSelectionChange).toHaveBeenLastCalledWith(new Set(["one", "two", "three"]));
+    expect(screen.getByText("3 selected")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Clear selection" }));
+    expect(onSelectionChange).toHaveBeenLastCalledWith(new Set());
+  });
+
+  it("exposes an indeterminate state for partial current-page selection", () => {
+    render(
+      <Table.Root<Row>
+        rows={rows}
+        columns={columns}
+        rowKey={(row) => row.id}
+        selection={{ defaultSelectedIds: ["one"], matchingIds: ["one", "two", "three"] }}
+      >
+        <Table.Selection />
+      </Table.Root>,
+    );
+
+    const checkbox = screen.getByRole("checkbox", { name: "Select all" });
+    expect(checkbox).not.toBeChecked();
+    expect((checkbox as HTMLInputElement).indeterminate).toBe(true);
+    expect(screen.getByRole("button", { name: "Select all matching" })).toBeInTheDocument();
+  });
+
+  it("excludes disabled current-page records from bulk selection", () => {
+    const onSelectionChange = vi.fn();
+    render(
+      <Table.Root<Row>
+        rows={rows}
+        columns={columns}
+        rowKey={(row) => row.id}
+        selection={{ isSelectable: (row) => row.id === "one", onSelectionChange }}
+      >
+        <Table.Selection />
+      </Table.Root>,
+    );
+
+    fireEvent.click(screen.getByRole("checkbox", { name: "Select all" }));
+    expect(onSelectionChange).toHaveBeenCalledWith(new Set(["one"]));
+  });
+
+  it("keeps selection isolated between Table.Root instances", () => {
+    render(
+      <>
+        <Table.Root<Row> rows={rows} columns={columns} rowKey={(row) => row.id}>
+          <Table.Selection />
+        </Table.Root>
+        <Table.Root<Row> rows={rows} columns={columns} rowKey={(row) => row.id}>
+          <Table.Selection />
+        </Table.Root>
+      </>,
+    );
+
+    const checkboxes = screen.getAllByRole("checkbox", { name: "Select all" });
+    fireEvent.click(checkboxes[0]);
+
+    expect(screen.getAllByRole("status").map((status) => status.textContent)).toEqual(["2 selected", "0 selected"]);
+  });
+
   it("throws when a compound component is outside Root", () => {
     expect(() => render(<Table.Content />)).toThrow("Table Kit components must be rendered inside Table.Root");
   });
