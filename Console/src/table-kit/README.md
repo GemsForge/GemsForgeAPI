@@ -117,8 +117,9 @@ and persistence callbacks:
 />
 ```
 
-The New Record menu is a compact popover surface: its trigger, operation cards,
-and dismissal action use Tamagui `Button` controls at `size="xs"`. It supports
+The New Record menu is a right-aligned hybrid utility surface: its trigger and
+dismissal action use compact Tamagui `Button` controls at `size="xs"`, while
+vertically stacked operation cards use a readable button size. It supports
 native button activation, visible focus, Escape dismissal, arrow-key navigation,
 and focus restoration to its trigger. Selecting an operation invokes the
 consumer-owned form or intake view, so domain validation and persistence stay

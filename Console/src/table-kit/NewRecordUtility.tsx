@@ -11,9 +11,9 @@ interface NewRecordUtilityComponentProps extends TableNewRecordUtilityProps {
 /**
  * Render the consumer-owned create/import/paste surface over the active table.
  * The utility owns only presentation state; the selected workflow owns data and
- * closes the surface through the supplied control. Compact utility actions use
- * Tamagui's xs button preset so the trigger and dismissal affordance stay
- * aligned with the shared table header.
+ * closes the surface through the supplied control. The compact header trigger
+ * and dismissal affordance use Tamagui's xs button preset, while operation
+ * choices keep a larger reading size inside the utility panel.
  */
 export function NewRecordUtility({
   title = "New record",
@@ -164,8 +164,12 @@ export function NewRecordUtility({
                 <Button
                   key={option.id}
                   type="button"
-                  size="xs"
+                  size="sm"
                   color="$gemInk"
+                  backgroundColor="$gemPanelLight"
+                  borderColor="$gemPanelLight"
+                  borderWidth={1}
+                  borderRadius="$gemControl"
                   data-new-record-option
                   role="tab"
                   aria-selected={option.id === selectedOption?.id}
