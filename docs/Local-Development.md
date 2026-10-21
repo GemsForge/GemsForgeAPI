@@ -236,7 +236,7 @@ The expected sequence is:
 7. Review the staged files and commit only the approved significant change,
    using the lowercase commit-message policy above.
 8. Push the branch and open a pull request targeting `master`.
-9. Include a closing keyword such as `Closes #8` in the pull request body.
+9. Reference the working issue, such as `#8`, in the pull request body. Do not use a closing keyword; QA follows after merge.
 10. Merge only after review and verification, then delete the merged branch.
 
 ## Private hosting assumption
