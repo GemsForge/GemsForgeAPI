@@ -254,12 +254,20 @@ jobs:
               );
 
               if (newAssignees.length > 0) {
-                await github.rest.issues.addAssignees({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  issue_number: pullRequest.number,
-                  assignees: newAssignees,
-                });
+                try {
+                  await github.rest.issues.addAssignees({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: pullRequest.number,
+                    assignees: newAssignees,
+                  });
+                } catch (error) {
+                  // GitHub can report an already-assigned user during concurrent retries.
+                  if (error.status !== 422 || !String(error.message).includes("already been taken")) {
+                    throw error;
+                  }
+                  core.notice("PR assignees were already synchronized by a concurrent run.");
+                }
               }
 
               await github.rest.issues.update({

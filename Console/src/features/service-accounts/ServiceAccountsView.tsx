@@ -18,10 +18,15 @@ import { ServiceAccountCreateForm } from "../create/RecordCreateForms";
 import { RecordImport } from "../../components/RecordImport";
 import { useServiceLogosQuery } from "../../data/lifeQueries";
 import { RecordUtilities } from "../../components/RecordUtilities";
-import { RecordCollection } from "../../components/RecordCollection--LEGACY";
 import { useRecordUtilities } from "../../hooks/useRecordUtilities";
 import { api } from "../../api";
+import { Table } from "../../table-kit";
 
+/**
+ * Renders service-account records through the incremental Table Kit boundary.
+ * Existing domain utilities and detail renderers remain injected until the
+ * remaining Table/Gallery/List consumers migrate to the shared composition.
+ */
 export function ServiceAccountsView({ records }: { records: ServiceAccount[] }) {
   const utilities = useRecordUtilities(
     records,
@@ -101,26 +106,38 @@ export function ServiceAccountsView({ records }: { records: ServiceAccount[] }) 
           />
         </div>
       </div>
-      <RecordCollection>
-        <RecordUtilities
-          label="Services"
-          {...utilities}
-          totalCount={records.length}
-          visibleCount={utilities.records.length}
-          sortOptions={[
-            { value: "service", label: "Service" },
-            { value: "amount", label: "Monthly amount" },
-            { value: "type", label: "Type" },
-            { value: "group", label: "Expense group" },
-            { value: "status", label: "Status" },
-            { value: "due", label: "Due date" },
-            { value: "occurrence", label: "Occurrence" },
-          ]}
-          filterOptions={Array.from(
-            new Set(records.map((record) => record.status).filter((value): value is string => Boolean(value))),
-          ).sort()}
-        />
-      </RecordCollection>
+      {/* Keep existing controls and renderers intact while migrating this consumer into Table Kit. */}
+      <Table.Root<ServiceAccount>
+        rows={utilities.records}
+        columns={[
+          { id: "service", header: "Service", cell: (record) => record.service },
+          { id: "type", header: "Type", cell: (record) => record.type ?? "Service" },
+          { id: "status", header: "Status", cell: (record) => record.status ?? "—" },
+        ]}
+        rowKey={(record) => String(record.id)}
+        caption="Services"
+      >
+        <Table.Content>
+          <RecordUtilities
+            label="Services"
+            {...utilities}
+            totalCount={records.length}
+            visibleCount={utilities.records.length}
+            sortOptions={[
+              { value: "service", label: "Service" },
+              { value: "amount", label: "Monthly amount" },
+              { value: "type", label: "Type" },
+              { value: "group", label: "Expense group" },
+              { value: "status", label: "Status" },
+              { value: "due", label: "Due date" },
+              { value: "occurrence", label: "Occurrence" },
+            ]}
+            filterOptions={Array.from(
+              new Set(records.map((record) => record.status).filter((value): value is string => Boolean(value))),
+            ).sort()}
+          />
+        </Table.Content>
+      </Table.Root>
       {creating && (
         <ServiceAccountCreateForm
           onCancel={() => setCreating(false)}
