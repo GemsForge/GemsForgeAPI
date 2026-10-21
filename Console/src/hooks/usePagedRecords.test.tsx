@@ -1,7 +1,7 @@
 import { act, cleanup, fireEvent, render, renderHook, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { usePagedRecords } from "./usePagedRecords";
-import { GemDataTable } from "../components/ui/GemDataTable";
+import { GemDataTable } from "../components/ui/GemDataTable--LEGACY";
 afterEach(cleanup);
 describe("bounded large-list rendering", () => {
   it("only selects one page from 10,000 records and clamps shrinking data", () => {
