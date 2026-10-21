@@ -1573,8 +1573,8 @@ dialog::backdrop {
 }
 
 .table-kit-new-record-options {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
+  display: flex;
+  flex-wrap: wrap;
   gap: 0.65rem;
   margin: 1.25rem 0;
 }
@@ -1584,6 +1584,7 @@ dialog::backdrop {
   display: flex;
   align-items: baseline;
   gap: 0.5rem;
+  flex: 1 1 10rem;
   min-height: 2.75rem;
   padding: 0.65rem 0.85rem;
   text-align: left;
@@ -1619,8 +1620,8 @@ dialog::backdrop {
     padding: 1rem;
   }
 
-  .table-kit-new-record-options {
-    grid-template-columns: 1fr;
+  .table-kit-new-record-options > button {
+    flex-basis: 100%;
   }
 }
 /* Keep intermediate gallery cards wide enough to preserve readable titles and properties. */
