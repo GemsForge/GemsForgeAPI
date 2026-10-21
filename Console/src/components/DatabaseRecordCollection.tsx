@@ -11,6 +11,7 @@ import {
   useTablePropertyConfiguration,
   type RecordAdapter,
   type RecordPropertyDefinition,
+  type TableActionsProps,
   type TableRecord,
 } from "../table-kit";
 import type { TableActionsProps } from "../table-kit";
@@ -40,7 +41,7 @@ export interface DatabaseRecordCollectionProps<Record> {
   detailId: string | null;
   onDetailChange: (id: string | null) => void;
   detail?: ReactNode;
-  /** Optional consumer-owned create/import actions rendered by the compact header. */
+  /** Optional consumer-owned create and intake actions rendered in the utility row. */
   actions?: TableActionsProps;
 }
 
