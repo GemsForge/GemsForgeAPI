@@ -75,31 +75,14 @@ function Toolbar({ children }: { children?: ReactNode }) {
   return <div className="table-kit-toolbar" role="toolbar">{children}</div>;
 }
 
-function Content<Row>() {
-  const { rows, columns, rowKey, caption } = useTableContext<Row>();
-  const visibleColumns = columns.filter((column) => column.visible !== false);
-  return (
-    <div className="table-kit-content" role="region" aria-label={caption} tabIndex={0}>
-      <table>
-        <caption>{caption}</caption>
-        <thead><tr>{visibleColumns.map((column) => <th key={column.id} scope="col">{column.header}</th>)}</tr></thead>
-        <tbody>{rows.map((row, index) => <tr key={rowKey(row, index)}>{visibleColumns.map((column) => <td key={column.id}>{column.cell(row)}</td>)}</tr>)}</tbody>
-      </table>
-    </div>
-  );
+function Content<Row>({ children }: { children?: ReactNode }) {
+  useTableContext<Row>();
+  return <section className="table-kit-content" aria-label="Table content">{children}</section>;
 }
 
-function Pagination<Row>() {
-  const { pagination, setPagination } = useTableContext<Row>();
-  if (!pagination) return null;
-  const pageCount = Math.max(1, Math.ceil(pagination.total / pagination.pageSize));
-  return (
-    <nav aria-label="Table pagination" className="table-kit-pagination">
-      <button type="button" disabled={pagination.pageIndex === 0} onClick={() => setPagination({ ...pagination, pageIndex: pagination.pageIndex - 1 })}>Previous</button>
-      <span>Page {pagination.pageIndex + 1} of {pageCount}</span>
-      <button type="button" disabled={pagination.pageIndex >= pageCount - 1} onClick={() => setPagination({ ...pagination, pageIndex: pagination.pageIndex + 1 })}>Next</button>
-    </nav>
-  );
+function Pagination<Row>({ children }: { children?: ReactNode }) {
+  useTableContext<Row>();
+  return <nav aria-label="Table pagination" className="table-kit-pagination">{children}</nav>;
 }
 
 export const Table = { Root, Header, Views, Toolbar, Content, Pagination };
