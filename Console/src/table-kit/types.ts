@@ -20,6 +20,34 @@ export interface TableView {
   configuration?: Partial<TableQueryState>;
 }
 
+/** The view identifiers supported by the compact Table Kit header. */
+export type TableViewId = "list" | "gallery" | "table";
+
+/** Controlled selection of exactly one compact-header presentation. */
+export interface TableViewSelection {
+  /** The accessible name for the view-selection control. */
+  label: string;
+  /** The currently selected Table Kit presentation. */
+  viewId: TableViewId;
+  /** Select the next presentation without owning rendering or persistence. */
+  onViewChange: (viewId: TableViewId) => void;
+}
+
+/** Utility menus that can be opened from the compact Table Kit header. */
+export type TableUtilityMenuId = "search" | "sort" | "filter" | "properties";
+
+/** Controlled open-menu state for the compact utility controls. */
+export interface TableUtilityMenuState {
+  /** The accessible label for each utility menu. */
+  labels: Readonly<Record<TableUtilityMenuId, string>>;
+  /** The open menu, or `null` when all utility menus are closed. */
+  openMenu: TableUtilityMenuId | null;
+  /** Open one utility menu and close any other menu. */
+  onOpenMenu: (menu: TableUtilityMenuId) => void;
+  /** Close the currently open utility menu. */
+  onCloseMenu: () => void;
+}
+
 export interface TableHeaderProps {
   title?: ReactNode;
   description?: ReactNode;
@@ -67,8 +95,27 @@ export interface TableSelectionProps {
 export interface TableNewRecordOption {
   id: string;
   label: string;
+  /** Optional accessible name when the visible label needs more context. */
+  ariaLabel?: string;
   description?: ReactNode;
   onSelect: () => void | Promise<void>;
+}
+
+/** Operation families exposed by a compact New Record menu. */
+export type TableNewRecordOperationType = "create" | "import" | "paste";
+
+/** A labeled, consumer-owned create, import, or paste operation. */
+export interface TableNewRecordOperationOption extends TableNewRecordOption {
+  /** Identifies the operation family for grouping or analytics. */
+  operation: TableNewRecordOperationType;
+}
+
+/** Accessible label and options for a consumer-owned New Record menu. */
+export interface TableNewRecordOperations {
+  /** Accessible name announced for the operation menu. */
+  label: string;
+  /** Ordered operations rendered by the consumer-owned menu. */
+  options: readonly TableNewRecordOperationOption[];
 }
 
 /** The complete, domain-neutral configuration for a Table.Root instance. */

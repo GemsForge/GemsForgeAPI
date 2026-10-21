@@ -1,5 +1,7 @@
 import { act, fireEvent, render, renderHook, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+import { TamaguiProvider } from "tamagui";
+import { tamaguiConfig } from "../design-system/tamagui.config";
 import {
   normalizeTablePropertyConfiguration,
   TablePropertyControls,
@@ -110,7 +112,11 @@ describe("Table Kit property configuration", () => {
 
   it("provides an accessible searchable property menu", () => {
     const hook = renderHook(() => useTablePropertyConfiguration({ properties }));
-    render(<TablePropertyControls properties={properties} configuration={hook.result.current} />);
+    render(
+      <TamaguiProvider config={tamaguiConfig} defaultTheme="dark">
+        <TablePropertyControls properties={properties} configuration={hook.result.current} />
+      </TamaguiProvider>,
+    );
 
     fireEvent.click(screen.getByRole("button", { name: "Properties" }));
     expect(screen.getByRole("dialog", { name: "Properties" })).toBeInTheDocument();

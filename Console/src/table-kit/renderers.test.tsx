@@ -227,7 +227,7 @@ describe("Table Kit record renderers", () => {
     );
 
     fireEvent.click(screen.getByRole("checkbox", { name: "Select all" }));
-    fireEvent.click(screen.getByRole("tab", { name: "List" }));
+    fireEvent.click(screen.getByRole("button", { name: "List" }));
 
     expect(screen.getByRole("button", { name: "Deselect Alpha" })).toHaveAttribute("aria-pressed", "true");
   });

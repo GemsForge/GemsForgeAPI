@@ -1,6 +1,8 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
+import { TamaguiProvider } from "tamagui";
+import { tamaguiConfig } from "../design-system/tamagui.config";
 import { Table, useTableContext } from "./index";
 
 interface Row {
@@ -12,6 +14,14 @@ const rows = [
   { id: "one", name: "One" },
   { id: "two", name: "Two" },
 ];
+
+function renderActions(actions: ReactNode) {
+  render(
+    <TamaguiProvider config={tamaguiConfig} defaultTheme="dark">
+      {actions}
+    </TamaguiProvider>,
+  );
+}
 
 function PaginationHarness() {
   const { pagination, setPagination } = useTableContext<Row>();
@@ -66,20 +76,30 @@ describe("Table Kit", () => {
     expect(onStateChange).toHaveBeenLastCalledWith({ search: "", filters: {}, sort: [], pageIndex: 0, pageSize: 25 });
   });
 
-  it("injects accessible New and Import actions and disables them while pending", () => {
+  it("combines New and Import actions behind the compact trigger while pending", () => {
     const onNew = vi.fn();
     const onImport = vi.fn();
-    render(<Table.Actions onNew={onNew} onImport={onImport} pending />);
-    expect(screen.getByRole("button", { name: "New" })).toBeDisabled();
-    expect(screen.getByRole("button", { name: "Import" })).toBeDisabled();
+    renderActions(<Table.Actions onNew={onNew} onImport={onImport} pending />);
+    expect(screen.getByRole("button", { name: "New record options" })).toBeDisabled();
     expect(screen.getByRole("group")).toHaveAttribute("aria-busy", "true");
+  });
+
+  it("opens New and Import operations from the plus utility", () => {
+    const onNew = vi.fn();
+    const onImport = vi.fn();
+    renderActions(<Table.Actions onNew={onNew} onImport={onImport} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "New record options" }));
+    expect(screen.getByRole("menuitem", { name: "New" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("menuitem", { name: "Import" }));
+    expect(onImport).toHaveBeenCalledOnce();
   });
 
   it("exposes separate file and paste import menu entry points", () => {
     const onImportFile = vi.fn();
     const onPasteCsv = vi.fn();
     const onPasteJson = vi.fn();
-    render(<Table.Actions onImportFile={onImportFile} onPasteCsv={onPasteCsv} onPasteJson={onPasteJson} />);
+    renderActions(<Table.Actions onImportFile={onImportFile} onPasteCsv={onPasteCsv} onPasteJson={onPasteJson} />);
     fireEvent.click(screen.getByRole("button", { name: "Import options" }));
     fireEvent.click(screen.getByRole("menuitem", { name: "Paste CSV" }));
     expect(onPasteCsv).toHaveBeenCalledOnce();
@@ -92,7 +112,7 @@ describe("Table Kit", () => {
     const onNew = vi.fn();
     const onAddress = vi.fn();
     const onPaste = vi.fn();
-    render(
+    renderActions(
       <Table.Actions
         onNew={onNew}
         newRecordOptions={[{ id: "address", label: "New address", onSelect: onAddress }]}
@@ -102,6 +122,9 @@ describe("Table Kit", () => {
 
     const trigger = screen.getByRole("button", { name: "New record options" });
     fireEvent.click(trigger);
+    const defaultNew = screen.getByRole("menuitem", { name: "New" });
+    expect(defaultNew).toHaveFocus();
+    fireEvent.keyDown(screen.getByRole("menu"), { key: "ArrowDown" });
     const address = screen.getByRole("menuitem", { name: "New address" });
     expect(address).toHaveFocus();
     fireEvent.keyDown(screen.getByRole("menu"), { key: "ArrowDown" });
@@ -131,26 +154,28 @@ describe("Table Kit", () => {
     const onViewChange = vi.fn();
     const onPaginationChange = vi.fn();
     render(
-      <Table.Root<Row>
-        rows={rows}
-        columns={columns}
-        rowKey={(row) => row.id}
-        views={[
-          { id: "grid", label: "Grid" },
-          { id: "list", label: "List" },
-        ]}
-        viewId="grid"
-        onViewChange={onViewChange}
-        pagination={{ pageIndex: 0, pageSize: 1, total: 2 }}
-        onPaginationChange={onPaginationChange}
-      >
-        <Table.Views />
-        <Table.Pagination>
-          <PaginationHarness />
-        </Table.Pagination>
-      </Table.Root>,
+      <TamaguiProvider config={tamaguiConfig} defaultTheme="dark">
+        <Table.Root<Row>
+          rows={rows}
+          columns={columns}
+          rowKey={(row) => row.id}
+          views={[
+            { id: "grid", label: "Grid" },
+            { id: "list", label: "List" },
+          ]}
+          viewId="grid"
+          onViewChange={onViewChange}
+          pagination={{ pageIndex: 0, pageSize: 1, total: 2 }}
+          onPaginationChange={onPaginationChange}
+        >
+          <Table.Views />
+          <Table.Pagination>
+            <PaginationHarness />
+          </Table.Pagination>
+        </Table.Root>
+      </TamaguiProvider>,
     );
-    screen.getByRole("tab", { name: "List" }).click();
+    screen.getByRole("button", { name: "List" }).click();
     screen.getByRole("button", { name: "Advance page" }).click();
     expect(onViewChange).toHaveBeenCalledWith("list");
     expect(onPaginationChange).toHaveBeenCalledWith({ pageIndex: 1, pageSize: 1 });

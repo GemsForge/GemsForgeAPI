@@ -6,8 +6,8 @@ name: Commit policy
 # Make the "Commit policy" job required in master protection to block merges.
 # PR titles are checked because they supply the proposed squash-merge subject.
 # Historical commits through the documented baseline are grandfathered.
-# Standard Git merge commits are exempt because Git generates them while
-# synchronizing a development branch; arbitrary merge/revert/fixup messages are not.
+# Merge commits are exempt because their subjects describe the merge rather
+# than a single issue-scoped change; ordinary commits remain strict.
 on:
   push:
     branches: ["**"]

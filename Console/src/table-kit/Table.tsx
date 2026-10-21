@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import { Menu, ToggleGroup, Tooltip, type TamaguiElement } from "tamagui";
 import { TableContext } from "./context";
 import type {
   TableActionsProps,
@@ -165,24 +166,39 @@ function Metadata({ children }: { children?: ReactNode }) {
   return <dl className="table-kit-metadata">{children}</dl>;
 }
 
+/** Render the single-selection Tamagui ToggleGroup that scopes each view renderer. */
 function Views<Row>() {
   const { views, viewId, setViewId } = useTableContext<Row>();
   if (!views.length) return null;
   return (
-    <div className="table-kit-views" role="tablist" aria-label="Table views">
+    <ToggleGroup
+      type="single"
+      value={viewId}
+      onValueChange={(next: string | string[]) => {
+        if (typeof next === "string" && next) setViewId(next);
+      }}
+      orientation="horizontal"
+      disableDeactivation
+      className="table-kit-views"
+      aria-label="Table views"
+    >
       {views.map((view) => (
-        <button
-          key={view.id}
-          type="button"
-          role="tab"
-          aria-selected={view.id === viewId}
-          onClick={() => setViewId(view.id)}
-        >
-          {view.icon}
-          <span>{view.label}</span>
-        </button>
+        <ToggleGroup.Item key={view.id} value={view.id} aria-label={view.label}>
+          <Tooltip placement="top" delay={300}>
+            <Tooltip.Trigger asChild>
+              <span className="table-kit-view-icon" aria-hidden="true">
+                {view.icon}
+              </span>
+            </Tooltip.Trigger>
+            <Tooltip.Content className="table-kit-tooltip">
+              <Tooltip.Arrow />
+              <span>{view.label}</span>
+            </Tooltip.Content>
+          </Tooltip>
+          <span className="sr-only">{view.label}</span>
+        </ToggleGroup.Item>
       ))}
-    </div>
+    </ToggleGroup>
   );
 }
 
@@ -293,6 +309,7 @@ function QueryControls({
   );
 }
 
+/** Render the compact plus utility while preserving consumer-owned create/import actions in one menu. */
 function Actions({
   onNew,
   onImport,
@@ -309,105 +326,125 @@ function Actions({
   const isDisabled = disabled || pending;
   const [menuOpen, setMenuOpen] = useState(false);
   const menuTriggerRef = useRef<HTMLButtonElement>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
+  const menuContentRef = useRef<TamaguiElement>(null);
+  const previousMenuOpen = useRef(menuOpen);
   const hasNewRecordMenu = newRecordOptions.length > 0;
   const hasImportMenu = Boolean(onImportFile || onPasteCsv || onPasteJson);
-  const hasMenu = hasNewRecordMenu || hasImportMenu;
-  const menuLabel = newOptionsLabel ?? (hasNewRecordMenu ? "New record options" : "Import options");
-  const closeMenu = useCallback(() => setMenuOpen(false), []);
-
+  const hasMenu = hasNewRecordMenu || hasImportMenu || Boolean(onNew && onImport);
+  const menuLabel = newOptionsLabel ?? (onNew || hasNewRecordMenu ? "New record options" : "Import options");
+  const menuOptions: TableNewRecordOption[] = [
+    ...(onNew ? [{ id: "default-new", label: newLabel, onSelect: onNew }] : []),
+    ...newRecordOptions,
+    ...(onImport && hasMenu ? [{ id: "default-import", label: importLabel, onSelect: onImport }] : []),
+  ];
   useEffect(() => {
-    if (menuOpen) {
-      menuRef.current?.querySelector<HTMLButtonElement>('[role="menuitem"]')?.focus();
-    } else {
-      menuTriggerRef.current?.focus();
+    if (previousMenuOpen.current && !menuOpen) menuTriggerRef.current?.focus();
+    if (!previousMenuOpen.current && menuOpen) {
+      (menuContentRef.current as unknown as HTMLElement | null)
+        ?.querySelector<HTMLElement>('[role="menuitem"]')
+        ?.focus();
     }
+    previousMenuOpen.current = menuOpen;
   }, [menuOpen]);
-
-  const activateMenuItem = async (action: TableNewRecordOption["onSelect"]) => {
-    closeMenu();
-    await action();
-  };
-
+  /** Keep controlled-menu keyboard movement predictable when no trigger owns focus. */
   const handleMenuKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    const items = [...(menuRef.current?.querySelectorAll<HTMLButtonElement>('[role="menuitem"]') ?? [])].filter(
-      (item) => !item.disabled,
-    );
+    if (!["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) return;
+    const items = Array.from(
+      (menuContentRef.current as unknown as HTMLElement | null)?.querySelectorAll<HTMLElement>('[role^="menuitem"]') ??
+        [],
+    ).filter((item) => !item.hasAttribute("aria-disabled"));
     if (!items.length) return;
-    const currentIndex = items.indexOf(document.activeElement as HTMLButtonElement);
-    if (event.key === "Escape") {
-      event.preventDefault();
-      closeMenu();
-      return;
-    }
-    if (event.key === "ArrowDown" || event.key === "ArrowUp" || event.key === "Home" || event.key === "End") {
-      event.preventDefault();
-      const nextIndex =
-        event.key === "Home"
-          ? 0
-          : event.key === "End"
-            ? items.length - 1
-            : (currentIndex + (event.key === "ArrowDown" ? 1 : -1) + items.length) % items.length;
-      items[nextIndex]?.focus();
-    }
+    event.preventDefault();
+    const currentIndex = items.indexOf(document.activeElement as HTMLElement);
+    const nextIndex =
+      event.key === "Home"
+        ? 0
+        : event.key === "End"
+          ? items.length - 1
+          : (currentIndex + (event.key === "ArrowUp" ? -1 : 1) + items.length) % items.length;
+    items[nextIndex]?.focus();
   };
-
   return (
     <div className="table-kit-actions" role="group" aria-busy={pending}>
-      {onNew && (
-        <button type="button" onClick={() => void onNew()} disabled={isDisabled} aria-busy={pending}>
-          {newLabel}
-        </button>
+      {onNew && !hasMenu && (
+        <Tooltip placement="top" delay={300}>
+          <Tooltip.Trigger asChild>
+            <button
+              type="button"
+              className="compact-icon-button"
+              onClick={() => void onNew()}
+              disabled={isDisabled}
+              aria-busy={pending}
+              aria-label={newLabel}
+            >
+              <span aria-hidden="true">＋</span>
+              <span className="sr-only">{newLabel}</span>
+            </button>
+          </Tooltip.Trigger>
+          <Tooltip.Content className="table-kit-tooltip">
+            <Tooltip.Arrow />
+            <span>{newLabel}</span>
+          </Tooltip.Content>
+        </Tooltip>
       )}
-      {onImport && (
+      {onImport && !hasMenu && (
         <button type="button" onClick={() => void onImport()} disabled={isDisabled} aria-busy={pending}>
           {importLabel}
         </button>
       )}
       {hasMenu && (
-        <div className="table-kit-import-menu">
-          <button
-            ref={menuTriggerRef}
-            type="button"
-            aria-haspopup="menu"
-            aria-expanded={menuOpen}
-            aria-label={menuLabel}
-            onClick={() => setMenuOpen((open) => !open)}
-            disabled={isDisabled}
-          >
-            {menuLabel}
-          </button>
-          {menuOpen && (
-            <div ref={menuRef} role="menu" tabIndex={-1} onKeyDown={handleMenuKeyDown} aria-label={menuLabel}>
-              {newRecordOptions.map((option) => (
-                <button
-                  key={option.id}
-                  type="button"
-                  role="menuitem"
-                  onClick={() => void activateMenuItem(option.onSelect)}
-                >
-                  <span>{option.label}</span>
-                  {option.description && <small>{option.description}</small>}
-                </button>
+        <Menu open={menuOpen} onOpenChange={setMenuOpen} placement="bottom-end" modal={false}>
+          <Tooltip placement="top" delay={300}>
+            <Tooltip.Trigger asChild>
+              <button
+                ref={menuTriggerRef}
+                type="button"
+                aria-label={menuLabel}
+                disabled={isDisabled}
+                className="compact-icon-button"
+                onClick={() => setMenuOpen((current) => !current)}
+              >
+                <span aria-hidden="true">＋</span>
+                <span className="sr-only">{menuLabel}</span>
+              </button>
+            </Tooltip.Trigger>
+            <Tooltip.Content className="table-kit-tooltip">
+              <Tooltip.Arrow />
+              <span>{menuLabel}</span>
+            </Tooltip.Content>
+          </Tooltip>
+          <Menu.Portal zIndex={20}>
+            <Menu.Content
+              ref={menuContentRef}
+              className="table-kit-menu-content"
+              aria-label={menuLabel}
+              loop
+              onKeyDown={handleMenuKeyDown}
+            >
+              {menuOptions.map((option) => (
+                <Menu.Item key={option.id} onSelect={() => void option.onSelect()} textValue={option.label}>
+                  <Menu.ItemTitle>{option.label}</Menu.ItemTitle>
+                  {option.description && <Menu.ItemSubtitle>{option.description}</Menu.ItemSubtitle>}
+                </Menu.Item>
               ))}
               {onImportFile && (
-                <button type="button" role="menuitem" onClick={() => void activateMenuItem(onImportFile)}>
-                  Import file
-                </button>
+                <Menu.Item onSelect={() => void onImportFile()} textValue="Import file">
+                  <Menu.ItemTitle>Import file</Menu.ItemTitle>
+                </Menu.Item>
               )}
               {onPasteCsv && (
-                <button type="button" role="menuitem" onClick={() => void activateMenuItem(onPasteCsv)}>
-                  Paste CSV
-                </button>
+                <Menu.Item onSelect={() => void onPasteCsv()} textValue="Paste CSV">
+                  <Menu.ItemTitle>Paste CSV</Menu.ItemTitle>
+                </Menu.Item>
               )}
               {onPasteJson && (
-                <button type="button" role="menuitem" onClick={() => void activateMenuItem(onPasteJson)}>
-                  Paste JSON
-                </button>
+                <Menu.Item onSelect={() => void onPasteJson()} textValue="Paste JSON">
+                  <Menu.ItemTitle>Paste JSON</Menu.ItemTitle>
+                </Menu.Item>
               )}
-            </div>
-          )}
-        </div>
+            </Menu.Content>
+          </Menu.Portal>
+        </Menu>
       )}
     </div>
   );

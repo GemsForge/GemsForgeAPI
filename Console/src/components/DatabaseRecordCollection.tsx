@@ -14,6 +14,7 @@ import {
   type TableActionsProps,
   type TableRecord,
 } from "../table-kit";
+import type { TableActionsProps } from "../table-kit";
 import { usePagedRecords } from "../hooks/usePagedRecords";
 import type { ReactNode } from "react";
 
@@ -88,9 +89,9 @@ export function DatabaseRecordCollection<Record>({
       rowKey={(record) => record.id}
       caption={`${label} records`}
       views={[
-        { id: "list", label: "List" },
-        { id: "gallery", label: "Gallery" },
-        { id: "table", label: "Table" },
+        { id: "list", label: "List", icon: "☷" },
+        { id: "gallery", label: "Gallery", icon: "▦" },
+        { id: "table", label: "Table", icon: "▤" },
       ]}
       defaultViewId="list"
       selection={{ matchingIds: matchingRecords.map((record) => record.id) }}
@@ -152,20 +153,24 @@ function DatabaseRecordTableShell<Record>({
 
   return (
     <>
-      <Table.Views />
-      <Table.Toolbar>
-        <RecordUtilities
-          label={label}
-          {...utilities}
-          totalCount={records.length}
-          visibleCount={utilities.records.length}
-          sortOptions={sortOptions}
-          filterOptions={filterOptions}
-          compact
-        />
-        {actions && <Table.Actions {...actions} />}
-        <Table.PropertyControls properties={propertyOptions} configuration={configuration} />
-      </Table.Toolbar>
+      <Table.Header>
+        <div className="table-kit-header-controls">
+          <Table.Views />
+          <Table.Toolbar>
+            <Table.PropertyControls properties={propertyOptions} configuration={configuration} />
+            <RecordUtilities
+              label={label}
+              {...utilities}
+              totalCount={records.length}
+              visibleCount={utilities.records.length}
+              sortOptions={sortOptions}
+              filterOptions={filterOptions}
+              compact
+            />
+            {actions && <Table.Actions {...actions} />}
+          </Table.Toolbar>
+        </div>
+      </Table.Header>
       <Table.Selection />
       <Table.Content>
         <DatabaseRecordRenderer

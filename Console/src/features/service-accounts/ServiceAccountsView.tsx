@@ -39,6 +39,7 @@ export function ServiceAccountsView({ records }: { records: ServiceAccount[] }) 
   const detail = useServiceAccountQuery(selectedID);
   const patch = useServiceAccountPatchMutation();
   const [creating, setCreating] = useState(false);
+  const [importing, setImporting] = useState(false);
   const create = useCreateServiceAccountMutation();
   const logos = useServiceLogosQuery(true);
   const tableAdapter = useMemo(
@@ -59,52 +60,57 @@ export function ServiceAccountsView({ records }: { records: ServiceAccount[] }) 
         </div>
         <div className="button-row">
           <span className="record-count">{records.length} records</span>
-          <button type="button" onClick={() => setCreating(true)}>
-            Add service
-          </button>
-          <RecordImport
-            label="services"
-            expectedColumns={[
-              "Service",
-              "Type",
-              "ExpenseGroup",
-              "MonthlyAmount",
-              "InterestRate",
-              "APR",
-              "Due",
-              "Occurrence",
-              "Status",
-              "Since",
-              "Website",
-              "Notes",
-              "PaymentMethod",
-              "AccountNumber",
-              "AssociatedAddress",
-              "ServiceKey",
-            ]}
-            onPublish={async (rows) => {
-              for (const row of rows)
-                await create.mutateAsync({
-                  service: String(row.Service ?? row.service ?? ""),
-                  type: String(row.Type ?? row.type ?? "") || null,
-                  expenseGroup: String(row.ExpenseGroup ?? "") || null,
-                  monthlyAmount: row.MonthlyAmount ? Number(row.MonthlyAmount) : null,
-                  interestRate: row.InterestRate ? Number(row.InterestRate) : null,
-                  apr: row.APR ? Number(row.APR) : null,
-                  due: String(row.Due ?? "") || null,
-                  occurrence: String(row.Occurrence ?? "") || null,
-                  status: String(row.Status ?? "") || null,
-                  since: String(row.Since ?? "") || null,
-                  website: String(row.Website ?? "") || null,
-                  notes: String(row.Notes ?? "") || null,
-                  paymentMethod: String(row.PaymentMethod ?? "") || null,
-                  accountNumber: String(row.AccountNumber ?? "") || null,
-                  associatedAddress: String(row.AssociatedAddress ?? "") || null,
-                  serviceKey: String(row.ServiceKey ?? "") || null,
-                });
-            }}
-          />
+          {records.length === 0 && (
+            <button type="button" onClick={() => setCreating(true)}>
+              Add service
+            </button>
+          )}
         </div>
+        <RecordImport
+          label="services"
+          expectedColumns={[
+            "Service",
+            "Type",
+            "ExpenseGroup",
+            "MonthlyAmount",
+            "InterestRate",
+            "APR",
+            "Due",
+            "Occurrence",
+            "Status",
+            "Since",
+            "Website",
+            "Notes",
+            "PaymentMethod",
+            "AccountNumber",
+            "AssociatedAddress",
+            "ServiceKey",
+          ]}
+          open={importing}
+          onOpenChange={setImporting}
+          showTrigger={records.length === 0}
+          onPublish={async (rows) => {
+            for (const row of rows)
+              await create.mutateAsync({
+                service: String(row.Service ?? row.service ?? ""),
+                type: String(row.Type ?? row.type ?? "") || null,
+                expenseGroup: String(row.ExpenseGroup ?? "") || null,
+                monthlyAmount: row.MonthlyAmount ? Number(row.MonthlyAmount) : null,
+                interestRate: row.InterestRate ? Number(row.InterestRate) : null,
+                apr: row.APR ? Number(row.APR) : null,
+                due: String(row.Due ?? "") || null,
+                occurrence: String(row.Occurrence ?? "") || null,
+                status: String(row.Status ?? "") || null,
+                since: String(row.Since ?? "") || null,
+                website: String(row.Website ?? "") || null,
+                notes: String(row.Notes ?? "") || null,
+                paymentMethod: String(row.PaymentMethod ?? "") || null,
+                accountNumber: String(row.AccountNumber ?? "") || null,
+                associatedAddress: String(row.AssociatedAddress ?? "") || null,
+                serviceKey: String(row.ServiceKey ?? "") || null,
+              });
+          }}
+        />
       </div>
       {creating && (
         <ServiceAccountCreateForm
@@ -143,6 +149,11 @@ export function ServiceAccountsView({ records }: { records: ServiceAccount[] }) 
             ).sort()}
             detailId={selectedID == null ? null : String(selectedID)}
             onDetailChange={(id) => setSelectedID(id == null ? null : Number(id))}
+            actions={{
+              newRecordOptions: [{ id: "new-service", label: "New service", onSelect: () => setCreating(true) }],
+              onImport: () => setImporting(true),
+              importLabel: "Import services",
+            }}
             detail={
               selectedID == null ? null : (
                 <>
