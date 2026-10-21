@@ -5,7 +5,7 @@ import { tamaguiConfig } from "../../design-system";
 import { GemRecordList } from "./GemRecordList";
 
 describe("GemRecordList views", () => {
-  it("switches to a navigable grid without changing the selected record contract", () => {
+  it("switches to a grid without rendering arrow controls", () => {
     const onExpandedChange = vi.fn();
     const records = [
       { id: "one", title: "One" },
@@ -30,10 +30,9 @@ describe("GemRecordList views", () => {
 
     fireEvent.click(screen.getByText("View: List"));
     fireEvent.click(screen.getByRole("menuitemradio", { name: "Gallery" }));
-    expect(screen.getByRole("button", { name: "Next example record" })).toBeEnabled();
-    fireEvent.click(screen.getByRole("button", { name: "Next example record" }));
-    expect(onExpandedChange).toHaveBeenCalledWith("two");
-    expect(screen.getByRole("button", { name: "Previous example record" })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: "Next example record" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Previous example record" })).not.toBeInTheDocument();
+    expect(onExpandedChange).not.toHaveBeenCalled();
   });
 
   it("uses fixed Tamagui Cards without inline expandable details in Grid view", () => {

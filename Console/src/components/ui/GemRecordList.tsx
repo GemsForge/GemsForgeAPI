@@ -55,12 +55,6 @@ export function GemRecordList<Record>({
     ? getKey(records.find((record) => isExpanded?.(record)) as Record)
     : undefined;
 
-  const activeIndex = expandedKey ? records.findIndex((record) => getKey(record) === expandedKey) : 0;
-  const selectRecord = (index: number) => {
-    const record = records[index];
-    if (record) onExpandedChange?.(getKey(record));
-  };
-
   return (
     <div className={`gem-record-collection is-${view}`}>
       <XStack className="gem-record-view-toggle" aria-label={`${label} view controls`}>
@@ -129,15 +123,6 @@ export function GemRecordList<Record>({
       </XStack>
       {view === "gallery" ? (
         <XStack className="gem-record-grid-shell">
-          <button
-            type="button"
-            className="gem-record-grid-nav"
-            aria-label={`Previous ${label.toLowerCase()} record`}
-            onClick={() => selectRecord(Math.max(0, activeIndex - 1))}
-            disabled={activeIndex <= 0}
-          >
-            ←
-          </button>
           <XStack className={`${className} gem-record-grid-rail`} flexWrap="wrap" aria-label={`${label} records`}>
             {records.map((record) => {
               const key = getKey(record);
@@ -153,15 +138,6 @@ export function GemRecordList<Record>({
               );
             })}
           </XStack>
-          <button
-            type="button"
-            className="gem-record-grid-nav"
-            aria-label={`Next ${label.toLowerCase()} record`}
-            onClick={() => selectRecord(Math.min(records.length - 1, activeIndex + 1))}
-            disabled={activeIndex >= records.length - 1}
-          >
-            →
-          </button>
         </XStack>
       ) : view === "table" ? (
         <div className="gem-record-table-wrap" role="region" aria-label={`${label} table`} tabIndex={0}>
