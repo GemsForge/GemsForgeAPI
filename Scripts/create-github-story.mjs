@@ -99,6 +99,12 @@ export function createStory(options, run = runGh) {
   for (const assignee of options.assignees) issueArgs.push("-f", `assignees[]=${assignee}`);
   if (options.milestone) issueArgs.push("-f", `milestone=${options.milestone}`);
   const issue = run(issueArgs);
+  const numberedTitle = /^([^:]+):\s+#([1-9]\d*)\s+/.test(options.title)
+    ? options.title
+    : options.title.replace(/^([^:]+):\s+/, `$1: #${issue.number} `);
+  if (numberedTitle !== options.title) {
+    run(["api", `repos/${options.repo}/issues/${issue.number}`, "--method", "PATCH", "-f", `title=${numberedTitle}`]);
+  }
   const metadataWorkflow = options.metadataWorkflow || process.env.GITHUB_METADATA_WORKFLOW || "sync-issue-metadata.yml";
   const workflowArgs = ["workflow", "run", metadataWorkflow, "--repo", options.repo, "--ref", "master",
     "-f", `issue_number=${issue.number}`];
