@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Accordion } from "@tamagui/accordion";
 import { Card, XStack } from "tamagui";
 
@@ -38,6 +38,8 @@ export function GemRecordList<Record>({
     () => new Set(tableColumns.filter((column) => column.visible !== false).map((column) => column.key)),
   );
   const [propertySearch, setPropertySearch] = useState("");
+  const [modalRecord, setModalRecord] = useState<Record | null>(null);
+  const modalRef = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     setVisibleColumns((current) => {
       const availableKeys = new Set(tableColumns.map((column) => column.key));
@@ -47,6 +49,9 @@ export function GemRecordList<Record>({
       return next;
     });
   }, [tableColumns]);
+  useEffect(() => {
+    if (modalRecord) modalRef.current?.showModal();
+  }, [modalRecord]);
   const activeColumns = tableColumns.filter((column) => visibleColumns.has(column.key));
   const filteredColumns = tableColumns.filter((column) =>
     column.label.toLowerCase().includes(propertySearch.trim().toLowerCase()),
@@ -54,12 +59,6 @@ export function GemRecordList<Record>({
   const expandedKey = records.find((record) => isExpanded?.(record))
     ? getKey(records.find((record) => isExpanded?.(record)) as Record)
     : undefined;
-
-  const activeIndex = expandedKey ? records.findIndex((record) => getKey(record) === expandedKey) : 0;
-  const selectRecord = (index: number) => {
-    const record = records[index];
-    if (record) onExpandedChange?.(getKey(record));
-  };
 
   return (
     <div className={`gem-record-collection is-${view}`}>
@@ -129,15 +128,6 @@ export function GemRecordList<Record>({
       </XStack>
       {view === "gallery" ? (
         <XStack className="gem-record-grid-shell">
-          <button
-            type="button"
-            className="gem-record-grid-nav"
-            aria-label={`Previous ${label.toLowerCase()} record`}
-            onClick={() => selectRecord(Math.max(0, activeIndex - 1))}
-            disabled={activeIndex <= 0}
-          >
-            ←
-          </button>
           <XStack className={`${className} gem-record-grid-rail`} flexWrap="wrap" aria-label={`${label} records`}>
             {records.map((record) => {
               const key = getKey(record);
@@ -147,21 +137,13 @@ export function GemRecordList<Record>({
                   className={`gem-record-grid-card${key === expandedKey ? " is-active" : ""}`}
                   size={key === expandedKey ? "lg" : "md"}
                   data-card-view="grid"
+                  onClick={() => setModalRecord(record)}
                 >
                   {renderRecord(record)}
                 </Card>
               );
             })}
           </XStack>
-          <button
-            type="button"
-            className="gem-record-grid-nav"
-            aria-label={`Next ${label.toLowerCase()} record`}
-            onClick={() => selectRecord(Math.min(records.length - 1, activeIndex + 1))}
-            disabled={activeIndex >= records.length - 1}
-          >
-            →
-          </button>
         </XStack>
       ) : view === "table" ? (
         <div className="gem-record-table-wrap" role="region" aria-label={`${label} table`} tabIndex={0}>
@@ -177,20 +159,28 @@ export function GemRecordList<Record>({
               </tr>
             </thead>
             <tbody>
-              {records.map((record) => (
-                <tr key={getKey(record)}>
-                  {activeColumns.map((column) => (
-                    <td key={column.key}>
-                      {column.icon ? (
-                        <span className="gem-record-table-icon" aria-hidden="true">
-                          {column.icon(record)}
-                        </span>
-                      ) : null}
-                      {column.render(record)}
-                    </td>
-                  ))}
+              {activeColumns.length === 0 ? (
+                <tr>
+                  <td colSpan={1} className="gem-record-table-unconfigured">
+                    Unconfigured
+                  </td>
                 </tr>
-              ))}
+              ) : (
+                records.map((record) => (
+                  <tr key={getKey(record)}>
+                    {activeColumns.map((column) => (
+                      <td key={column.key}>
+                        {column.icon ? (
+                          <span className="gem-record-table-icon" aria-hidden="true">
+                            {column.icon(record)}
+                          </span>
+                        ) : null}
+                        {column.render(record)}
+                      </td>
+                    ))}
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -218,6 +208,34 @@ export function GemRecordList<Record>({
           })}
         </Accordion>
       )}
+      <dialog
+        ref={modalRef}
+        className="gem-record-detail-dialog"
+        aria-labelledby="gem-record-detail-title"
+        onCancel={(event) => {
+          event.preventDefault();
+          modalRef.current?.close();
+          setModalRecord(null);
+        }}
+      >
+        {modalRecord && (
+          <div className="gem-record-detail-dialog-content">
+            <div className="gem-record-detail-dialog-header">
+              <h2 id="gem-record-detail-title">Account Details</h2>
+              <button
+                type="button"
+                onClick={() => {
+                  modalRef.current?.close();
+                  setModalRecord(null);
+                }}
+              >
+                Close
+              </button>
+            </div>
+            <div className="gem-record-detail-dialog-body">{renderExpanded?.(modalRecord)}</div>
+          </div>
+        )}
+      </dialog>
     </div>
   );
 }

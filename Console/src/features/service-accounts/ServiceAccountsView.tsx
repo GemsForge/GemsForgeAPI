@@ -146,7 +146,19 @@ export function ServiceAccountsView({ records }: { records: ServiceAccount[] }) 
             onExpandedChange={(key) => setSelectedID(key ? Number(key) : null)}
             getKey={(record) => String(record.id)}
             tableColumns={[
-              { key: "service", label: "Service", icon: () => "◎", render: (record) => record.service },
+              {
+                key: "logo",
+                label: "Logo",
+                render: (record) => {
+                  const logo = logos.data?.find((item) => item.logoKey === record.logoKey);
+                  return logo ? <LegacyLogoPreview logo={logo} className="service-account-card-logo" /> : "—";
+                },
+              },
+              {
+                key: "service",
+                label: "Service",
+                render: (record) => record.service,
+              },
               { key: "type", label: "Category", render: (record) => record.type || "Service" },
               { key: "id", label: "Item ID", render: (record) => record.id },
               { key: "group", label: "Group", render: (record) => record.expenseGroup || "—" },

@@ -5,7 +5,7 @@ import { tamaguiConfig } from "../../design-system";
 import { GemRecordList } from "./GemRecordList";
 
 describe("GemRecordList views", () => {
-  it("switches to a navigable grid without changing the selected record contract", () => {
+  it("switches to a grid without rendering arrow controls", () => {
     const onExpandedChange = vi.fn();
     const records = [
       { id: "one", title: "One" },
@@ -30,10 +30,9 @@ describe("GemRecordList views", () => {
 
     fireEvent.click(screen.getByText("View: List"));
     fireEvent.click(screen.getByRole("menuitemradio", { name: "Gallery" }));
-    expect(screen.getByRole("button", { name: "Next example record" })).toBeEnabled();
-    fireEvent.click(screen.getByRole("button", { name: "Next example record" }));
-    expect(onExpandedChange).toHaveBeenCalledWith("two");
-    expect(screen.getByRole("button", { name: "Previous example record" })).toBeDisabled();
+    expect(screen.queryByRole("button", { name: "Next example record" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Previous example record" })).not.toBeInTheDocument();
+    expect(onExpandedChange).not.toHaveBeenCalled();
   });
 
   it("uses fixed Tamagui Cards without inline expandable details in Grid view", () => {
@@ -55,7 +54,9 @@ describe("GemRecordList views", () => {
     fireEvent.click(screen.getByRole("menuitemradio", { name: "Gallery" }));
     expect(screen.getByRole("button", { name: "One" })).toBeInTheDocument();
     expect(screen.queryByText("Details should stay in List view")).not.toBeInTheDocument();
-    expect(document.querySelector('[data-card-view="grid"]')).toBeTruthy();
+    const activeCard = document.querySelector('[data-card-view="grid"]');
+    expect(activeCard).toHaveClass("is-active");
+    expect(activeCard).not.toHaveStyle({ transform: "scale(1.03)" });
   });
 
   it("configures visible table properties from an accessible menu", () => {
@@ -117,5 +118,26 @@ describe("GemRecordList views", () => {
 
     expect(screen.getByRole("columnheader", { name: "Item ID" })).toBeInTheDocument();
     expect(screen.queryByRole("columnheader", { name: "Title" })).not.toBeInTheDocument();
+  });
+
+  it("shows an unconfigured state when all table properties are hidden", () => {
+    const records = [{ id: "one", title: "One" }];
+    render(
+      <TamaguiProvider config={tamaguiConfig} defaultTheme="dark">
+        <GemRecordList
+          records={records}
+          label="Example"
+          getKey={(record) => record.id}
+          renderRecord={(record) => <button type="button">{record.title}</button>}
+          tableColumns={[{ key: "title", label: "Title", render: (record) => record.title }]}
+        />
+      </TamaguiProvider>,
+    );
+
+    fireEvent.click(screen.getByText("View: List"));
+    fireEvent.click(screen.getByRole("menuitemradio", { name: "Table" }));
+    fireEvent.click(screen.getByText("Properties"));
+    fireEvent.click(screen.getByRole("checkbox", { name: "Show Title property" }));
+    expect(screen.getByText("Unconfigured")).toBeInTheDocument();
   });
 });
