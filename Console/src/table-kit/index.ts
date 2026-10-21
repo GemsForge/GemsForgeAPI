@@ -19,3 +19,7 @@ export type {
   UseTableQueryStateResult,
 } from "./query";
 export { useTableQueryState } from "./query";
+export { parseCsv, parseJson, previewCsv, previewJson } from "./import";
+export type { ImportColumn, ImportFieldError, ImportPreview } from "./import";
+export { useTableSelection } from "./selection";
+export type { TableSelection } from "./selection";
