@@ -32,6 +32,7 @@ function Root<Row>({
   const viewId = controlledViewId ?? uncontrolledViewId;
   const effectivePagination = pagination;
   const isSelectable = selectionConfig?.isSelectable;
+  const isSelectableId = selectionConfig?.isSelectableId;
   const configuredMatchingIds = selectionConfig?.matchingIds;
   const currentPageSelectableIds = useMemo(
     () =>
@@ -41,7 +42,10 @@ function Root<Row>({
       }, []),
     [isSelectable, rowKey, rows],
   );
-  const allMatchingIds = configuredMatchingIds ?? currentPageSelectableIds;
+  const allMatchingIds = useMemo(
+    () => (configuredMatchingIds ?? currentPageSelectableIds).filter((id) => isSelectableId?.(id) ?? true),
+    [configuredMatchingIds, currentPageSelectableIds, isSelectableId],
+  );
   const selectionState = useTableSelection({
     defaultSelectedIds: selectionConfig?.defaultSelectedIds,
     selectedIds: selectionConfig?.selectedIds,
@@ -74,6 +78,7 @@ function Root<Row>({
   );
   const selection = useMemo(
     () => ({
+      enabled: selectionConfig !== undefined,
       selectedIds: selectionState.selectedIds,
       currentPageIds: currentPageSelectableIds,
       allMatchingIds,
@@ -85,7 +90,7 @@ function Root<Row>({
       getSummary: (scope: TableSelectionScope) =>
         selectionState.getSummary(scope === "all-matching" ? allMatchingIds : currentPageSelectableIds),
     }),
-    [allMatchingIds, currentPageSelectableIds, selectAll, selectionState, toggleAll],
+    [allMatchingIds, currentPageSelectableIds, selectAll, selectionConfig, selectionState, toggleAll],
   );
   const value = useMemo(
     () => ({
@@ -214,6 +219,7 @@ function Selection({
           checked={currentPage.allSelected}
           disabled={currentPage.totalCount === 0}
           aria-label={label}
+          aria-checked={currentPage.indeterminate ? "mixed" : currentPage.allSelected}
           onChange={() => selection.toggleAll("current-page")}
         />
         <span>{currentPage.selectedCount > 0 ? `${currentPage.selectedCount} selected` : label}</span>

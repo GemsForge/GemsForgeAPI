@@ -106,6 +106,8 @@ export function useTableSelection<RowId extends string = string>({
 
 /** Shared selection operations exposed through one Table.Root context. */
 export interface TableSelectionContext<RowId extends string = string> {
+  /** Whether the root explicitly opted its renderers into shared selection. */
+  enabled: boolean;
   selectedIds: ReadonlySet<RowId>;
   currentPageIds: readonly RowId[];
   allMatchingIds: readonly RowId[];

@@ -46,6 +46,8 @@ export interface TableRootSelectionProps<Row> {
   matchingIds?: readonly string[];
   /** Return false for disabled or otherwise non-selectable records on the current page. */
   isSelectable?: (row: Row, index: number) => boolean;
+  /** Return false for IDs that cannot participate in bulk actions, including off-page records. */
+  isSelectableId?: (id: string) => boolean;
   /** Controlled selected IDs. Omit to let the Table.Root own selection state. */
   selectedIds?: ReadonlySet<string>;
   /** Initial selected IDs for an uncontrolled Table.Root. */

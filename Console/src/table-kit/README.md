@@ -71,6 +71,7 @@ IDs beyond the current page, selected-count feedback, and clear selection.
   selection={{
     matchingIds: queryResult.matchingIds,
     isSelectable: (row) => !row.archived,
+    isSelectableId: (id) => !queryResult.nonSelectableIds.has(id),
     onSelectionChange: setSelectedIds,
   }}
 >
@@ -80,9 +81,10 @@ IDs beyond the current page, selected-count feedback, and clear selection.
 ```
 
 `matchingIds` represents the complete effective filtered/sorted result set and
-must already exclude records that cannot participate in bulk actions. The
-selection state is local to each root, preserves IDs across pagination and
-view changes, and never persists or mutates records by itself.
+must already represent the effective result set. Use `isSelectable` for loaded
+rows and `isSelectableId` when the adapter also needs to exclude disabled
+off-page IDs. The selection state is local to each root, preserves IDs across
+pagination and view changes, and never persists or mutates records by itself.
 
 ## Record contracts
 

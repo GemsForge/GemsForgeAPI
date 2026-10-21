@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
+import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { Table, useTableContext } from "./index";
 
@@ -29,6 +30,24 @@ function PaginationHarness() {
 function StateHarness() {
   const { viewId, pagination } = useTableContext<Row>();
   return <output>{`${viewId ?? "none"}:${pagination?.pageIndex ?? "none"}`}</output>;
+}
+
+function SelectionPagingHarness() {
+  const [pageIndex, setPageIndex] = useState(0);
+  const pageRows = [rows[pageIndex]];
+  return (
+    <Table.Root<Row>
+      rows={pageRows}
+      columns={columns}
+      rowKey={(row) => row.id}
+      selection={{ matchingIds: rows.map((row) => row.id) }}
+    >
+      <Table.Selection />
+      <button type="button" onClick={() => setPageIndex(1)}>
+        Next page
+      </button>
+    </Table.Root>
+  );
 }
 
 describe("Table Kit", () => {
@@ -148,7 +167,19 @@ describe("Table Kit", () => {
     const checkbox = screen.getByRole("checkbox", { name: "Select all" });
     expect(checkbox).not.toBeChecked();
     expect((checkbox as HTMLInputElement).indeterminate).toBe(true);
+    expect(checkbox).toHaveAttribute("aria-checked", "mixed");
     expect(screen.getByRole("button", { name: "Select all matching" })).toBeInTheDocument();
+  });
+
+  it("preserves selected IDs across page updates while applying current-page toggles", () => {
+    render(<SelectionPagingHarness />);
+
+    fireEvent.click(screen.getByRole("checkbox", { name: "Select all" }));
+    fireEvent.click(screen.getByRole("button", { name: "Next page" }));
+
+    expect(screen.getByRole("status")).toHaveTextContent("1 selected");
+    fireEvent.click(screen.getByRole("checkbox", { name: "Select all" }));
+    expect(screen.getByRole("status")).toHaveTextContent("2 selected");
   });
 
   it("excludes disabled current-page records from bulk selection", () => {
@@ -166,6 +197,27 @@ describe("Table Kit", () => {
 
     fireEvent.click(screen.getByRole("checkbox", { name: "Select all" }));
     expect(onSelectionChange).toHaveBeenCalledWith(new Set(["one"]));
+  });
+
+  it("excludes disabled off-page IDs from all-matching selection", () => {
+    const onSelectionChange = vi.fn();
+    render(
+      <Table.Root<Row>
+        rows={[rows[0]]}
+        columns={columns}
+        rowKey={(row) => row.id}
+        selection={{
+          matchingIds: ["one", "two", "disabled"],
+          isSelectableId: (id) => id !== "disabled",
+          onSelectionChange,
+        }}
+      >
+        <Table.Selection />
+      </Table.Root>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Select all matching" }));
+    expect(onSelectionChange).toHaveBeenCalledWith(new Set(["one", "two"]));
   });
 
   it("keeps selection isolated between Table.Root instances", () => {
