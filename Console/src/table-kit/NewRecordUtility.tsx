@@ -12,8 +12,9 @@ interface NewRecordUtilityComponentProps extends TableNewRecordUtilityProps {
  * Render the consumer-owned create/import/paste surface over the active table.
  * The utility owns only presentation state; the selected workflow owns data and
  * closes the surface through the supplied control. The compact header trigger
- * and dismissal affordance use Tamagui's xs button preset, while operation
- * choices keep a larger reading size inside the utility panel.
+ * and dismissal affordance use Tamagui's xs button preset. Each operation is
+ * an inline action, and its declarative statement becomes the active workflow
+ * description so the panel always explains the action being presented.
  */
 export function NewRecordUtility({
   title = "New record",
@@ -33,6 +34,7 @@ export function NewRecordUtility({
   const descriptionId = `${utilityId}-description`;
   const isOpen = open ?? uncontrolledOpen;
   const selectedOption = options.find((option) => option.id === selectedId) ?? options[0];
+  const activeDescription = selectedOption?.description ?? description;
   const wasOpen = useRef(isOpen);
 
   const setOpen = useCallback(
@@ -142,7 +144,7 @@ export function NewRecordUtility({
             <div className="table-kit-new-record-heading">
               <div>
                 <h2 id={titleId}>{title}</h2>
-                <p id={descriptionId}>{description}</p>
+                <p id={descriptionId}>{activeDescription}</p>
               </div>
               <Button
                 type="button"

@@ -16,6 +16,7 @@ import {
   CreateSearchableSelectField,
   CreateSelectField,
   CreateTextField,
+  type CreateFieldWidth,
 } from "../../components/forms/CreateForm";
 import {
   GeoapifyAddressSearch,
@@ -83,20 +84,49 @@ const optionalNumber = z
     (value) => value === "" || (/^\d+(\.\d+)?$/.test(value) && Number(value) >= 0),
     "Enter a non-negative number.",
   );
-const addressSchema = z.object({
-  id: required("Address ID"),
-  addressType: required("Address type"),
-  addressLine1: optional,
-  addressLine2: optional,
-  city: optional,
-  state: optional,
-  postalCode: optional,
-  country: required("Country"),
-  startDate: optional,
-  endDate: optional,
-  addressStatus: required("Status"),
-  notes: optional,
-});
+/** Accept international city and region names while rejecting punctuation-only values. */
+const optionalAddressLocation = optional.refine(
+  (value) => !value.trim() || /^[\p{L}\p{M}0-9 .,'’&()/-]+$/u.test(value.trim()),
+  "Enter a valid location.",
+);
+/** Accept common domestic and international postal-code characters. */
+const optionalPostalCode = optional.refine(
+  (value) => !value.trim() || /^[\p{L}\p{N}][\p{L}\p{N} .-]*$/u.test(value.trim()),
+  "Enter a valid postal code.",
+);
+const optionalAddressDate = optional.refine(
+  (value) => !value.trim() || isValidDateInput(value.trim()),
+  "Enter a valid date.",
+);
+const addressSchema = z
+  .object({
+    addressType: required("Address type"),
+    addressLine1: optional,
+    addressLine2: optional,
+    city: optionalAddressLocation,
+    state: optionalAddressLocation,
+    postalCode: optionalPostalCode,
+    country: required("Country"),
+    startDate: optionalAddressDate,
+    endDate: optionalAddressDate,
+    addressStatus: required("Status"),
+    notes: optional,
+  })
+  .superRefine((values, context) => {
+    if (values.startDate && values.endDate && values.endDate < values.startDate) {
+      context.addIssue({
+        code: "custom",
+        path: ["endDate"],
+        message: "End date must be on or after start date.",
+      });
+    }
+  });
+
+const addressTypeOptions = ["Residence", "Storage", "Work", "School", "Other"].map((value) => ({
+  value,
+  label: value,
+}));
+const addressStatusOptions = ["Current", "Former", "Seasonal", "Other"].map((value) => ({ value, label: value }));
 const educationSchema = z.object({
   id: required("Education ID"),
   educationType: required("Education type"),
@@ -230,6 +260,7 @@ function Text<T extends FieldValues>({
   type = "text",
   multiline = false,
   placeholder,
+  width = "long",
 }: {
   form: UseFormReturn<T>;
   name: Path<T>;
@@ -238,6 +269,7 @@ function Text<T extends FieldValues>({
   type?: string;
   multiline?: boolean;
   placeholder?: string;
+  width?: CreateFieldWidth;
 }) {
   const message = form.formState.errors[name]?.message;
   return (
@@ -248,6 +280,7 @@ function Text<T extends FieldValues>({
       type={type}
       multiline={multiline}
       placeholder={placeholder}
+      width={width}
       error={typeof message === "string" ? message : undefined}
     />
   );
@@ -358,7 +391,6 @@ export function AddressCreateForm({
       title="Create address"
       schema={addressSchema}
       defaultValues={{
-        id: "",
         addressType: "Residence",
         addressLine1: "",
         addressLine2: "",
@@ -373,7 +405,6 @@ export function AddressCreateForm({
       }}
       onCreate={async (v) =>
         onCreate({
-          id: v.id.trim(),
           addressType: v.addressType,
           addressLine1: blank(v.addressLine1),
           addressLine2: blank(v.addressLine2),
@@ -401,20 +432,23 @@ export function AddressCreateForm({
         return (
           <>
             <GeoapifyAddressSearch onSelect={applyAddress} client={addressSearchClient} />
-            {fields(form, [
-              ["id", "Stable address ID", true],
-              ["addressType", "Address type", true],
-              ["addressLine1", "Address line 1"],
-              ["addressLine2", "Address line 2"],
-              ["city", "City"],
-              ["state", "State / region"],
-              ["postalCode", "Postal code"],
-              ["country", "Country", true],
-              ["startDate", "Start date"],
-              ["endDate", "End date"],
-              ["addressStatus", "Status", true],
-              ["notes", "Notes"],
-            ])}
+            <div className="create-form-grid">
+              <Select form={form} name="addressType" label="Address type" options={addressTypeOptions} required />
+              <Text form={form} name="addressLine1" label="Address line 1" width="long" />
+              <Text form={form} name="addressLine2" label="Address line 2" width="long" />
+              <Text form={form} name="country" label="Country" required width="medium" />
+            </div>
+            <div className="create-form-grid create-form-grid--address-location">
+              <Text form={form} name="city" label="City" width="short" />
+              <Text form={form} name="state" label="State / region" width="short" />
+              <Text form={form} name="postalCode" label="Postal code" width="short" />
+            </div>
+            <div className="create-form-grid create-form-grid--compact">
+              <Text form={form} name="startDate" label="Start date" type="date" width="short" />
+              <Text form={form} name="endDate" label="End date" type="date" width="short" />
+              <Select form={form} name="addressStatus" label="Status" options={addressStatusOptions} required />
+            </div>
+            <Text form={form} name="notes" label="Notes" multiline width="long" />
           </>
         );
       }}
@@ -567,7 +601,7 @@ export function EmploymentCreateForm({
           </div>
           <div className="create-form-grid">
             <Select form={form} name="industry" label="Industry" options={industryOptions} />
-            <Text form={form} name="website" label="Website" type="url" />
+            <Text form={form} name="website" label="Website" type="url" width="medium" />
           </div>
           <div className="create-form-grid">
             {fields(form, [["positionTitle", "Position title", true]])}
@@ -580,14 +614,14 @@ export function EmploymentCreateForm({
             />
           </div>
           <div className="create-form-grid create-form-grid--compact">
-            <Text form={form} name="startDate" label="Start date" type="date" />
-            <Text form={form} name="endDate" label="End date" type="date" />
+            <Text form={form} name="startDate" label="Start date" type="date" width="short" />
+            <Text form={form} name="endDate" label="End date" type="date" width="short" />
             <Select form={form} name="employmentStatus" label="Status" options={statusOptions} required />
           </div>
           <div className="create-form-grid create-form-grid--contact">
             <Text form={form} name="employerContact" label="Contact" />
-            <Text form={form} name="employerContactNumber" label="Contact number" type="tel" />
-            <Text form={form} name="employerContactEmail" label="Contact email" type="email" />
+            <Text form={form} name="employerContactNumber" label="Contact number" type="tel" width="short" />
+            <Text form={form} name="employerContactEmail" label="Contact email" type="email" width="medium" />
           </div>
           <Text form={form} name="notes" label="Notes" multiline />
           <Select

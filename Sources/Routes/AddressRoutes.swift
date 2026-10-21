@@ -1,17 +1,16 @@
 import Vapor
 
-private func validate(_ input: AddressRequest, requiresID: Bool = false) throws {
+private func validate(_ input: AddressRequest) throws {
     let status = input.addressStatus.trimmingCharacters(in: .whitespacesAndNewlines)
 
     guard !status.isEmpty else {
         throw Abort(.badRequest, reason: "Address status is required.")
     }
+}
 
-    if requiresID {
-        guard let id = input.id?.trimmingCharacters(in: .whitespacesAndNewlines), !id.isEmpty else {
-            throw Abort(.badRequest, reason: "AddressID is required when creating an address.")
-        }
-    }
+/// Generate a recognizable stable address identifier when the create client omits one.
+private func generatedAddressID() -> String {
+    "ADDR-\(UUID().uuidString)"
 }
 
 private func makeAddress(from input: AddressRequest, id: String?) -> Address {
@@ -47,9 +46,11 @@ func registerAddressRoutes(_ app: Application) {
 
     addresses.post { request async throws -> AddressDetailResponse in
         let input = try request.content.decode(AddressCreateRequest.self).value
-        try validate(input, requiresID: true)
+        try validate(input)
 
-        let id = input.id!.trimmingCharacters(in: .whitespacesAndNewlines)
+        let id = input.id?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false
+            ? input.id!.trimmingCharacters(in: .whitespacesAndNewlines)
+            : generatedAddressID()
         if try await AddressService(database: request.db, hubID: request.authenticatedHubID).find(id: id) != nil {
             throw Abort(.conflict, reason: "An address with this ID already exists.")
         }

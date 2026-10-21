@@ -20,11 +20,12 @@ afterEach(() => {
 });
 
 describe("shared create form workflow", () => {
-  it("validates required fields before submitting", async () => {
+  it("validates address location fields before submitting", async () => {
     const onCreate = vi.fn();
     render(<AddressCreateForm onCreate={onCreate} onCancel={vi.fn()} />);
+    fireEvent.change(screen.getByLabelText("City"), { target: { value: "***" } });
     fireEvent.click(screen.getByRole("button", { name: "Create record" }));
-    expect(await screen.findByText("Address ID is required.")).toBeInTheDocument();
+    expect(await screen.findByText("Enter a valid location.")).toBeInTheDocument();
     expect(onCreate).not.toHaveBeenCalled();
   });
 
@@ -32,14 +33,14 @@ describe("shared create form workflow", () => {
     const onCreate = vi.fn().mockResolvedValue(undefined);
     const onCancel = vi.fn();
     render(<AddressCreateForm onCreate={onCreate} onCancel={onCancel} />);
-    fireEvent.change(screen.getByLabelText("Stable address ID *"), { target: { value: " A-1 " } });
     fireEvent.change(screen.getByLabelText("City"), { target: { value: "Boston" } });
     fireEvent.click(screen.getByRole("button", { name: "Create record" }));
     await waitFor(() =>
       expect(onCreate).toHaveBeenCalledWith(
-        expect.objectContaining({ id: "A-1", city: "Boston", country: "US", addressStatus: "Current" }),
+        expect.objectContaining({ city: "Boston", country: "US", addressStatus: "Current" }),
       ),
     );
+    expect(onCreate.mock.calls[0][0]).not.toHaveProperty("id");
     expect(onCancel).not.toHaveBeenCalled();
   });
 
@@ -61,27 +62,24 @@ describe("shared create form workflow", () => {
     const onCreate = vi.fn().mockResolvedValue(undefined);
     render(<AddressCreateForm onCreate={onCreate} onCancel={vi.fn()} addressSearchClient={addressSearchClient} />);
 
-    fireEvent.change(screen.getByLabelText("Stable address ID *"), { target: { value: "ADDR-USER" } });
     fireEvent.change(screen.getByLabelText("Search places or addresses"), { target: { value: "1600 Pennsylvania" } });
     await act(async () => {
       await vi.advanceTimersByTimeAsync(350);
     });
     fireEvent.click(screen.getByRole("button", { name: suggestion.properties.formatted }));
 
-    expect(screen.getByLabelText("Stable address ID *")).toHaveValue("ADDR-USER");
     expect(screen.getByLabelText("Address line 1")).toHaveValue("1600 Pennsylvania Avenue NW");
     expect(screen.getByLabelText("City")).toHaveValue("Washington");
     expect(screen.getByLabelText("State / region")).toHaveValue("DC");
     expect(screen.getByLabelText("Postal code")).toHaveValue("20500");
     expect(screen.getByLabelText("Country *")).toHaveValue("US");
-    expect(screen.getByLabelText("Address type *")).toHaveValue("Residence");
+    expect(screen.getByLabelText("Address type *")).toHaveTextContent("Residence");
 
     vi.useRealTimers();
     fireEvent.click(screen.getByRole("button", { name: "Create record" }));
     await waitFor(() =>
       expect(onCreate).toHaveBeenCalledWith(
         expect.objectContaining({
-          id: "ADDR-USER",
           addressLine1: "1600 Pennsylvania Avenue NW",
           city: "Washington",
           state: "DC",
@@ -91,15 +89,16 @@ describe("shared create form workflow", () => {
         }),
       ),
     );
+    expect(onCreate.mock.calls[0][0]).not.toHaveProperty("id");
   });
 
   it("preserves entered values after an API failure and exposes the error", async () => {
     const onCreate = vi.fn().mockRejectedValue(new Error("Address ID already exists."));
     render(<AddressCreateForm onCreate={onCreate} onCancel={vi.fn()} />);
-    fireEvent.change(screen.getByLabelText("Stable address ID *"), { target: { value: "A-1" } });
+    fireEvent.change(screen.getByLabelText("City"), { target: { value: "Boston" } });
     fireEvent.click(screen.getByRole("button", { name: "Create record" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("Address ID already exists.");
-    expect(screen.getByLabelText("Stable address ID *")).toHaveValue("A-1");
+    expect(screen.getByLabelText("City")).toHaveValue("Boston");
   });
 
   it("cancels without submitting", () => {
@@ -109,6 +108,22 @@ describe("shared create form workflow", () => {
     fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
     expect(onCancel).toHaveBeenCalledOnce();
     expect(onCreate).not.toHaveBeenCalled();
+  });
+
+  it("renders address fields with shared controls, validation, and compact widths", () => {
+    render(<AddressCreateForm onCreate={vi.fn().mockResolvedValue(undefined)} onCancel={vi.fn()} />);
+
+    expect(screen.queryByLabelText("Stable address ID *")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Address type *")).toHaveAttribute("aria-haspopup", "listbox");
+    expect(screen.getByLabelText("Status *")).toHaveAttribute("aria-haspopup", "listbox");
+    expect(screen.getByLabelText("City")).toHaveClass("create-form-control--short");
+    expect(screen.getByLabelText("State / region")).toHaveClass("create-form-control--short");
+    expect(screen.getByLabelText("Postal code")).toHaveClass("create-form-control--short");
+    expect(screen.getByLabelText("Start date")).toHaveAttribute("type", "date");
+    expect(screen.getByLabelText("Start date")).toHaveClass("create-form-control--short");
+    expect(screen.getByLabelText("End date")).toHaveClass("create-form-control--short");
+    expect(screen.getByLabelText("Country *")).toHaveClass("create-form-control--medium");
+    expect(screen.getByLabelText("Notes")).toHaveClass("create-form-control--long");
   });
 
   it("renders employment classifications as shared Tamagui selects", () => {
@@ -145,13 +160,17 @@ describe("shared create form workflow", () => {
     expect(screen.getByLabelText("Employment type *")).toHaveAttribute("aria-haspopup", "listbox");
     expect(screen.getByLabelText("Status *")).toHaveAttribute("aria-haspopup", "listbox");
     expect(screen.getByLabelText("Website")).toHaveAttribute("type", "url");
+    expect(screen.getByLabelText("Website")).toHaveClass("create-form-control--medium");
     expect(screen.getByLabelText("Employer name *")).toHaveAttribute("placeholder", "Enter employer name…");
     expect(screen.getByLabelText("Website")).toHaveAttribute("placeholder", "Enter website…");
     expect(screen.getByLabelText("Start date")).toHaveAttribute("type", "date");
+    expect(screen.getByLabelText("Start date")).toHaveClass("create-form-control--short");
     expect(screen.getByLabelText("End date")).toHaveAttribute("type", "date");
+    expect(screen.getByLabelText("End date")).toHaveClass("create-form-control--short");
     expect(screen.getByLabelText("Contact")).toHaveAttribute("type", "text");
     expect(screen.getByLabelText("Contact number")).toHaveAttribute("type", "tel");
     expect(screen.getByLabelText("Contact email")).toHaveAttribute("type", "email");
+    expect(screen.getByLabelText("Contact email")).toHaveClass("create-form-control--medium");
     expect(screen.getByLabelText("Search Work address")).toHaveAttribute("placeholder", "Search existing addresses");
     expect(screen.queryByLabelText("Stable employment ID *")).not.toBeInTheDocument();
     expect(screen.getByLabelText("Start date").closest(".create-form-grid--compact")).toBeInTheDocument();

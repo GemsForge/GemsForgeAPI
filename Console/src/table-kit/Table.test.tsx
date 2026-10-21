@@ -172,10 +172,13 @@ describe("Table Kit", () => {
     fireEvent.click(trigger);
     expect(screen.getByRole("dialog", { name: "New record" })).toBeInTheDocument();
     expect(screen.getByText("Create workflow")).toBeInTheDocument();
+    expect(screen.getByRole("dialog")).toHaveTextContent("Open the create form.");
+    expect(screen.queryByText("Choose an operation.")).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("tab", { name: /Import file/ }));
     expect(screen.getByText("Import workflow")).toBeInTheDocument();
     expect(screen.queryByText("Create workflow")).not.toBeInTheDocument();
+    expect(screen.getByRole("dialog")).toHaveTextContent("Choose a file.");
 
     fireEvent.keyDown(document, { key: "Escape" });
     expect(screen.queryByRole("dialog", { name: "New record" })).not.toBeInTheDocument();

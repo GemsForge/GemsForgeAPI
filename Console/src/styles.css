@@ -619,7 +619,17 @@ dialog::backdrop {
   width: 100%;
   min-height: 2.75rem;
 }
-/* Keep related Employment fields readable in columns while preserving a single-column compact layout. */
+/* Map semantic field widths to compact controls without changing the shared field shell. */
+.create-form-control--short {
+  max-width: 12rem;
+}
+.create-form-control--medium {
+  max-width: 20rem;
+}
+.create-form-control--long {
+  max-width: 100%;
+}
+/* Keep related form fields readable in columns while preserving a single-column compact layout. */
 .create-form-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -635,11 +645,20 @@ dialog::backdrop {
 .create-form-grid--contact {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
+.create-form-grid--address-location {
+  grid-template-columns: repeat(4, minmax(7rem, 1fr));
+}
 @media (max-width: 640px) {
   .create-form-grid,
   .create-form-grid--compact,
-  .create-form-grid--contact {
+  .create-form-grid--contact,
+  .create-form-grid--address-location {
     grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 900px) {
+  .create-form-grid--address-location {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 .create-record-form [aria-invalid="true"] {
@@ -1560,11 +1579,13 @@ dialog::backdrop {
   margin: 1.25rem 0;
 }
 
+/* Keep each operation as one scan-friendly action while allowing its statement to wrap. */
 .table-kit-new-record-options > button {
-  display: grid;
-  gap: 0.3rem;
-  min-height: 5.5rem;
-  padding: 1rem;
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+  padding: 0.65rem 0.85rem;
   text-align: left;
 }
 
@@ -1577,6 +1598,7 @@ dialog::backdrop {
 }
 
 .table-kit-new-record-options > button span {
+  min-width: 0;
   color: var(--muted);
   font-size: 0.82rem;
 }

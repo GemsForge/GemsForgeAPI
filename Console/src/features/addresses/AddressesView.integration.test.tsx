@@ -55,14 +55,12 @@ describe("Addresses create/edit integration", () => {
     renderScreen();
 
     fireEvent.click(await screen.findByRole("button", { name: "Add address" }));
-    fireEvent.change(screen.getByLabelText("Stable address ID *"), { target: { value: " ADDR-273 " } });
     fireEvent.change(screen.getByLabelText("City"), { target: { value: "Boston" } });
     fireEvent.click(screen.getByRole("button", { name: "Create record" }));
 
     expect(await screen.findByRole("heading", { name: "Residence" })).toBeInTheDocument();
     expect(create).toHaveBeenCalledOnce();
     expect(create.mock.calls[0][0]).toEqual({
-      id: "ADDR-273",
       addressType: "Residence",
       addressLine1: null,
       addressLine2: null,
@@ -75,6 +73,7 @@ describe("Addresses create/edit integration", () => {
       addressStatus: "Current",
       notes: null,
     });
+    expect(create.mock.calls[0][0]).not.toHaveProperty("id");
     await waitFor(() => expect(list).toHaveBeenCalledTimes(2));
     expect(screen.getByText("1 records")).toBeInTheDocument();
     expect(screen.queryByLabelText("Stable address ID *")).not.toBeInTheDocument();
@@ -101,13 +100,13 @@ describe("Addresses create/edit integration", () => {
 
   it("retains values after API failure and allows cancellation without retrying", async () => {
     vi.spyOn(api, "listAddresses").mockResolvedValue([]);
-    const create = vi.spyOn(api, "createAddress").mockRejectedValue(new Error("Duplicate address ID."));
+    const create = vi.spyOn(api, "createAddress").mockRejectedValue(new Error("Could not create address."));
     renderScreen();
     fireEvent.click(await screen.findByRole("button", { name: "Add address" }));
-    fireEvent.change(screen.getByLabelText("Stable address ID *"), { target: { value: "ADDR-273" } });
+    fireEvent.change(screen.getByLabelText("City"), { target: { value: "Boston" } });
     fireEvent.click(screen.getByRole("button", { name: "Create record" }));
-    expect(await screen.findByRole("alert")).toHaveTextContent("Duplicate address ID.");
-    expect(screen.getByLabelText("Stable address ID *")).toHaveValue("ADDR-273");
+    expect(await screen.findByRole("alert")).toHaveTextContent("Could not create address.");
+    expect(screen.getByLabelText("City")).toHaveValue("Boston");
 
     fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
     expect(screen.queryByRole("form", { name: "Create address" })).not.toBeInTheDocument();

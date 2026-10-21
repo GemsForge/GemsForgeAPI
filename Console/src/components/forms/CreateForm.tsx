@@ -39,6 +39,9 @@ const controlStyle = {
   color: "$gemInk" as const,
 };
 
+/** Constrain shared text controls to the width appropriate for their value. */
+export type CreateFieldWidth = "short" | "medium" | "long";
+
 /** Give every text control a useful prompt while allowing a feature to provide a more specific one. */
 function defaultTextPlaceholder(label: string): string {
   return `Enter ${label.toLowerCase()}…`;
@@ -85,6 +88,7 @@ export function CreateTextField({
   type = "text",
   multiline = false,
   placeholder,
+  width = "long",
 }: {
   label: string;
   registration: UseFormRegisterReturn;
@@ -93,15 +97,17 @@ export function CreateTextField({
   type?: string;
   multiline?: boolean;
   placeholder?: string;
+  width?: CreateFieldWidth;
 }) {
   const id = registration.name;
   const inputPlaceholder = placeholder ?? defaultTextPlaceholder(label);
+  const controlClassName = `create-form-control create-form-control--${width}`;
   return (
     <CreateFieldFrame id={id} label={label} required={required} error={error}>
       {multiline ? (
         <TextArea
           id={id}
-          className="create-form-control"
+          className={controlClassName}
           {...controlStyle}
           aria-invalid={Boolean(error)}
           aria-describedby={error ? `${id}-error` : undefined}
@@ -113,7 +119,7 @@ export function CreateTextField({
       ) : (
         <Input
           id={id}
-          className="create-form-control"
+          className={controlClassName}
           {...controlStyle}
           type={type}
           required={required}
