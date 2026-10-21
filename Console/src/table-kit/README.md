@@ -49,8 +49,16 @@ return (
 ```
 
 The toolkit does not import feature routes, API clients, persistence models, or
-the legacy table components. Later stories may supply those adapters and
-renderers without changing the existing table implementation.
+the legacy table components. `RecordTable` uses AG Grid Community behind a
+small renderer adapter; AG Grid types and configuration do not cross the
+domain-neutral Table Kit contracts. `RecordList` and `RecordGallery` remain
+Tamagui-based renderers. Enterprise-only AG Grid modules are intentionally out
+of scope for this toolkit.
+
+AG Grid initializes its row and column model after mount, so renderer tests
+provide deterministic jsdom layout metrics and await the accessible grid
+content. This keeps the contract tests focused on Table Kit behavior while the
+production build verifies the real AG Grid integration.
 
 The query contract in `query.ts` provides normalized state, deterministic
 client-side derivation, and the adapter shape for server-side results. It does

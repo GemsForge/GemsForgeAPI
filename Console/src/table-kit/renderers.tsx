@@ -1,5 +1,13 @@
 import { useContext, type ReactNode } from "react";
-import { Image, Paragraph, Separator, SizableText, XStack, YStack } from "tamagui";
+import { AgGridReact } from "ag-grid-react";
+import {
+  AllCommunityModule,
+  ModuleRegistry,
+  themeQuartz,
+  type ColDef,
+  type ICellRendererParams,
+} from "ag-grid-community";
+import { Image, Paragraph, SizableText, XStack, YStack } from "tamagui";
 import { TableContext } from "./context";
 import {
   orderRecordProperties,
@@ -8,6 +16,9 @@ import {
   type TableRecord,
   type TableRecordId,
 } from "./recordContracts";
+
+// Register the free Community modules once so every Table Kit grid shares the same engine setup.
+ModuleRegistry.registerModules([AllCommunityModule]);
 
 /** Shared props for all database renderers, backed by the canonical record contract. */
 export interface TableRendererProps<Record> {
@@ -113,6 +124,35 @@ function RecordImage<Record>({ record, size }: { record: TableRecord<Record>; si
 
 function PropertyValue({ value }: { value: RecordPropertyValue }) {
   return <Paragraph color="$gemMuted">{displayValue(value)}</Paragraph>;
+}
+
+/** Render a property value through AG Grid without changing the record contract. */
+function GridPropertyCell({ value }: ICellRendererParams<TableRecord<unknown>>) {
+  return <span>{value ?? "unconfigured"}</span>;
+}
+
+interface GridActionCellParams<Record> extends ICellRendererParams<TableRecord<Record>> {
+  selection: RendererSelection;
+  onExpansionChange?: (id: TableRecordId) => void;
+}
+
+/** Keep row actions connected to the scoped Table.Root selection context. */
+function GridActionCell<Record>({ data, selection, onExpansionChange }: GridActionCellParams<Record>) {
+  if (!data) return null;
+  return (
+    <XStack gap="$2" alignItems="center">
+      <SelectionButton record={data} selection={selection} />
+      {onExpansionChange && (
+        <button
+          type="button"
+          aria-label={`Expand ${String(data.title ?? data.id)}`}
+          onClick={() => onExpansionChange(data.id)}
+        >
+          View
+        </button>
+      )}
+    </XStack>
+  );
 }
 
 /** Renders records as a compact, accessible list using Tamagui layout primitives. */
@@ -232,7 +272,7 @@ export function RecordGallery<Record>({
   );
 }
 
-/** Renders records as a semantic table while keeping cells generic and adapter-owned. */
+/** Renders records with AG Grid while keeping the Table Kit contract engine-neutral. */
 export function RecordTable<Record>({
   records,
   properties,
@@ -243,50 +283,62 @@ export function RecordTable<Record>({
 }: TableRendererProps<Record>) {
   const selection = useRendererSelection(selectedIds, onRecordSelect);
   const visibleProperties = propertiesFor(properties, propertyIds);
+  const hasStatus = records.some((record) => record.status !== undefined);
+  const hasActions = Boolean(selection.onRecordSelect || onExpansionChange);
+  const columnDefs = visibleProperties.map<ColDef<TableRecord<Record>>>((property) => ({
+    colId: property.id,
+    headerName: property.label,
+    flex: 1,
+    minWidth: 140,
+    sortable: property.sortable ?? false,
+    valueGetter: ({ data }) => (data ? displayValue(propertyValue(property, data)) : ""),
+    cellRenderer: GridPropertyCell,
+  }));
+
+  if (hasStatus) {
+    columnDefs.push({
+      colId: "status",
+      headerName: "Status",
+      flex: 1,
+      minWidth: 120,
+      valueGetter: ({ data }) => data?.status?.label ?? "—",
+    });
+  }
+
+  if (hasActions) {
+    columnDefs.push({
+      colId: "actions",
+      headerName: "Actions",
+      minWidth: onExpansionChange ? 180 : 150,
+      sortable: false,
+      resizable: false,
+      cellRenderer: GridActionCell,
+      cellRendererParams: { selection, onExpansionChange },
+    });
+  }
+
   return (
     <YStack
-      role="table"
+      role="region"
       aria-label="Records"
       borderWidth={1}
       borderColor="$gemPanelLight"
       borderRadius="$4"
       overflow="hidden"
     >
-      <XStack role="row" padding="$3" backgroundColor="$gemPanelLight">
-        {visibleProperties.map((property) => (
-          <SizableText key={property.id} role="columnheader" flex={1} fontWeight="700">
-            {property.label}
-          </SizableText>
-        ))}
-      </XStack>
-      {records.map((record) => (
-        <YStack
-          key={record.id}
-          role="row"
-          borderLeftWidth={selection.selectedIds.has(record.id) ? 3 : 0}
-          borderColor="$gemMint"
-        >
-          <XStack padding="$3" gap="$2" alignItems="center" borderBottomWidth={1} borderColor="$gemPanelLight">
-            {visibleProperties.map((property) => (
-              <Paragraph key={property.id} role="cell" flex={1}>
-                {displayValue(propertyValue(property, record))}
-              </Paragraph>
-            ))}
-            {record.status && <SizableText aria-label={record.status.label}>{record.status.label}</SizableText>}
-            <SelectionButton record={record} selection={selection} />
-            {onExpansionChange && (
-              <button
-                type="button"
-                aria-label={`Expand ${String(record.title ?? record.id)}`}
-                onClick={() => onExpansionChange(record.id)}
-              >
-                View
-              </button>
-            )}
-          </XStack>
-          <Separator />
-        </YStack>
-      ))}
+      <AgGridReact<TableRecord<Record>>
+        aria-label="Records table"
+        className="table-kit-record-grid"
+        containerStyle={{ width: "100%" }}
+        theme={themeQuartz}
+        columnDefs={columnDefs}
+        rowData={[...records]}
+        getRowId={({ data }) => data.id}
+        defaultColDef={{ flex: 1, minWidth: 140, resizable: true }}
+        domLayout="autoHeight"
+        animateRows={false}
+        suppressCellFocus
+      />
     </YStack>
   );
 }
