@@ -1,5 +1,7 @@
 # GemsForge project agent context
 
+Implementation feedback rule: when the user suggests or corrects a code, workflow, documentation, test, or policy behavior, treat it as an implementation request for the owning developer agent. Inspect the relevant files, prepare the smallest complete change, run focused verification, create a policy-compliant commit, and push it to the story branch. Do not respond with an explanation only when a repository change is expected.
+
 This repository is the source of truth for GemsForgeAPI.
 
 Use the shared GemsForge Scrum/PO operating model: GitHub is the system of record; issues must state the user outcome, scope, non-goals, acceptance criteria, risks, dependencies, and verification expectations. PO agents may create and prioritize issues, assign work when authorized, maintain project metadata, and comment on PRs. Human approval remains required for merges, releases, privacy-sensitive decisions, destructive migrations, and changes to shared policy.
