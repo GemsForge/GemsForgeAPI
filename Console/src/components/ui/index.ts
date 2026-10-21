@@ -1,10 +1,10 @@
 export { GemButton } from "./GemButton";
 export { GemCard } from "./GemCard";
 export { GemField } from "./GemField";
-export { GemDataTable } from "./GemDataTable";
+export { GemDataTable } from "./GemDataTable--LEGACY";
 export { GemEmptyState } from "./GemEmptyState";
 export { GemLoadingState } from "./GemLoadingState";
 export { GemSectionHeader } from "./GemSectionHeader";
 export { GemStatusPill } from "./GemStatusPill";
-export { GemRecordCard } from "./GemRecordCard";
-export { GemRecordList } from "./GemRecordList";
+export { GemRecordCard } from "./GemRecordCard--LEGACY";
+export { GemRecordList } from "./GemRecordList--LEGACY";

@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { TamaguiProvider } from "tamagui";
 import { tamaguiConfig } from "../../design-system";
-import { GemRecordList } from "./GemRecordList";
+import { GemRecordList } from "./GemRecordList--LEGACY";
 
 describe("GemRecordList views", () => {
   it("switches to a grid without rendering arrow controls", () => {

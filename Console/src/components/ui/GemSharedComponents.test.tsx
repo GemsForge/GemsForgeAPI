@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import type { ReactElement } from "react";
 import { describe, expect, it } from "vitest";
-import { GemDataTable } from "./GemDataTable";
+import { GemDataTable } from "./GemDataTable--LEGACY";
 import { GemEmptyState } from "./GemEmptyState";
 import { GemLoadingState } from "./GemLoadingState";
 import { GemSectionHeader } from "./GemSectionHeader";
