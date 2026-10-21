@@ -11,6 +11,7 @@ import type {
 import type { TableQueryState } from "./query";
 import { useTableContext } from "./context";
 import { useTableSelection, type TableSelectionScope } from "./selection";
+import { TablePropertyControls } from "./PropertyControls";
 
 function Root<Row>({
   rows,
@@ -382,6 +383,7 @@ export const Table = {
   Selection,
   QueryControls,
   Actions,
+  PropertyControls: TablePropertyControls,
   Content,
   Pagination,
 };
