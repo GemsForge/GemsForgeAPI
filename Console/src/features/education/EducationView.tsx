@@ -108,9 +108,68 @@ export function EducationView({ records }: EducationViewProps) {
             detailId={selectedID}
             onDetailChange={setSelectedID}
             actions={{
-              newRecordOptions: [{ id: "new-education", label: "New education", onSelect: () => setCreating(true) }],
-              onImport: () => setImporting(true),
-              importLabel: "Import education records",
+              newRecordUtility: {
+                options: [
+                  {
+                    id: "new-education",
+                    label: "New education",
+                    description: "Open the education form.",
+                    render: ({ close }) => (
+                      <EducationCreateForm
+                        addresses={addresses.data ?? []}
+                        onCancel={close}
+                        onCreate={async (payload) => {
+                          const created = await create.mutateAsync(payload);
+                          setSelectedID(created.id);
+                          close();
+                        }}
+                      />
+                    ),
+                  },
+                  {
+                    id: "import-education-file",
+                    label: "Import file",
+                    description: "Choose a CSV or JSON file.",
+                    render: ({ close }) => (
+                      <RecordImport
+                        label="education records"
+                        expectedColumns={["id", "educationType", "institutionName", "status"]}
+                        mode="file"
+                        open
+                        onOpenChange={(open) => {
+                          if (!open) close();
+                        }}
+                        showTrigger={false}
+                        onPublish={async (rows) => {
+                          for (const row of rows)
+                            await create.mutateAsync(row as Parameters<typeof create.mutateAsync>[0]);
+                        }}
+                      />
+                    ),
+                  },
+                  {
+                    id: "paste-education-data",
+                    label: "Paste data",
+                    description: "Paste CSV or JSON records.",
+                    render: ({ close }) => (
+                      <RecordImport
+                        label="education records"
+                        expectedColumns={["id", "educationType", "institutionName", "status"]}
+                        mode="paste"
+                        open
+                        onOpenChange={(open) => {
+                          if (!open) close();
+                        }}
+                        showTrigger={false}
+                        onPublish={async (rows) => {
+                          for (const row of rows)
+                            await create.mutateAsync(row as Parameters<typeof create.mutateAsync>[0]);
+                        }}
+                      />
+                    ),
+                  },
+                ],
+              },
             }}
             detail={
               selectedRecord ? (

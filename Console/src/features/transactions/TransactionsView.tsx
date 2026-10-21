@@ -118,11 +118,67 @@ export function TransactionsView({ records }: TransactionsViewProps) {
             detailId={selectedID}
             onDetailChange={setSelectedID}
             actions={{
-              newRecordOptions: [
-                { id: "new-transaction", label: "New transaction", onSelect: () => setCreating(true) },
-              ],
-              onImport: () => setImporting(true),
-              importLabel: "Import transactions",
+              newRecordUtility: {
+                options: [
+                  {
+                    id: "new-transaction",
+                    label: "New transaction",
+                    description: "Open the transaction form.",
+                    render: ({ close }) => (
+                      <TransactionCreateForm
+                        onCancel={close}
+                        onCreate={async (payload) => {
+                          const created = await create.mutateAsync(payload);
+                          setSelectedID(created.id);
+                          close();
+                        }}
+                      />
+                    ),
+                  },
+                  {
+                    id: "import-transaction-file",
+                    label: "Import file",
+                    description: "Choose a CSV or JSON file.",
+                    render: ({ close }) => (
+                      <RecordImport
+                        label="transactions"
+                        expectedColumns={["id", "item", "categoryID", "quantity"]}
+                        mode="file"
+                        open
+                        onOpenChange={(open) => {
+                          if (!open) close();
+                        }}
+                        showTrigger={false}
+                        onPublish={async (rows) => {
+                          for (const row of rows)
+                            await create.mutateAsync(row as Parameters<typeof create.mutateAsync>[0]);
+                        }}
+                      />
+                    ),
+                  },
+                  {
+                    id: "paste-transaction-data",
+                    label: "Paste data",
+                    description: "Paste CSV or JSON records.",
+                    render: ({ close }) => (
+                      <RecordImport
+                        label="transactions"
+                        expectedColumns={["id", "item", "categoryID", "quantity"]}
+                        mode="paste"
+                        open
+                        onOpenChange={(open) => {
+                          if (!open) close();
+                        }}
+                        showTrigger={false}
+                        onPublish={async (rows) => {
+                          for (const row of rows)
+                            await create.mutateAsync(row as Parameters<typeof create.mutateAsync>[0]);
+                        }}
+                      />
+                    ),
+                  },
+                ],
+              },
             }}
             detail={
               selectedID ? (

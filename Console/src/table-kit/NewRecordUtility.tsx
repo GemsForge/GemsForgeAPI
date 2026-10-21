@@ -1,0 +1,174 @@
+import { useCallback, useEffect, useId, useRef, useState, type KeyboardEvent, type RefObject } from "react";
+import { Tooltip } from "tamagui";
+import type { TableNewRecordUtilityProps } from "./types";
+
+interface NewRecordUtilityComponentProps extends TableNewRecordUtilityProps {
+  triggerRef: RefObject<HTMLButtonElement | null>;
+  disabled?: boolean;
+  pending?: boolean;
+}
+
+/**
+ * Render the consumer-owned create/import/paste surface over the active table.
+ * The utility owns only presentation state; the selected workflow owns data and
+ * closes the surface through the supplied control.
+ */
+export function NewRecordUtility({
+  title = "New record",
+  description = "Choose an operation.",
+  options,
+  open,
+  onOpenChange,
+  triggerRef,
+  disabled = false,
+  pending = false,
+}: NewRecordUtilityComponentProps) {
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
+  const [selectedId, setSelectedId] = useState(options[0]?.id);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const utilityId = useId();
+  const titleId = `${utilityId}-title`;
+  const descriptionId = `${utilityId}-description`;
+  const isOpen = open ?? uncontrolledOpen;
+  const selectedOption = options.find((option) => option.id === selectedId) ?? options[0];
+  const wasOpen = useRef(isOpen);
+
+  const setOpen = useCallback(
+    (nextOpen: boolean) => {
+      setUncontrolledOpen(nextOpen);
+      onOpenChange?.(nextOpen);
+    },
+    [onOpenChange],
+  );
+
+  useEffect(() => {
+    if (wasOpen.current && !isOpen) triggerRef.current?.focus();
+    wasOpen.current = isOpen;
+  }, [isOpen, triggerRef]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setSelectedId(options[0]?.id);
+    dialogRef.current?.querySelector<HTMLButtonElement>("[data-new-record-option]")?.focus();
+  }, [isOpen, options]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (event: globalThis.KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setOpen(false);
+        return;
+      }
+      if (event.key !== "Tab" || !dialogRef.current) return;
+      const focusable = Array.from(
+        dialogRef.current.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ),
+      );
+      if (!focusable.length) return;
+      const currentIndex = focusable.indexOf(document.activeElement as HTMLElement);
+      const nextIndex = event.shiftKey
+        ? currentIndex <= 0
+          ? focusable.length - 1
+          : currentIndex - 1
+        : currentIndex === focusable.length - 1
+          ? 0
+          : currentIndex + 1;
+      if (currentIndex === -1 || nextIndex !== currentIndex + (event.shiftKey ? -1 : 1)) {
+        event.preventDefault();
+        focusable[nextIndex]?.focus();
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, setOpen]);
+
+  const handleOptionKeyDown = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
+    if (!options.length || !["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) return;
+    event.preventDefault();
+    const nextIndex =
+      event.key === "Home"
+        ? 0
+        : event.key === "End"
+          ? options.length - 1
+          : (index + (event.key === "ArrowDown" ? 1 : -1) + options.length) % options.length;
+    const next = options[nextIndex];
+    setSelectedId(next.id);
+    dialogRef.current?.querySelectorAll<HTMLButtonElement>("[data-new-record-option]")[nextIndex]?.focus();
+  };
+
+  return (
+    <>
+      <Tooltip placement="top" delay={300}>
+        <Tooltip.Trigger asChild>
+          <button
+            ref={triggerRef}
+            type="button"
+            className="compact-icon-button"
+            aria-label="New record"
+            aria-haspopup="dialog"
+            aria-expanded={isOpen}
+            disabled={disabled || pending}
+            onClick={() => setOpen(true)}
+          >
+            <span aria-hidden="true">＋</span>
+            <span className="sr-only">New record</span>
+          </button>
+        </Tooltip.Trigger>
+        <Tooltip.Content className="table-kit-tooltip">
+          <Tooltip.Arrow />
+          <span>New record</span>
+        </Tooltip.Content>
+      </Tooltip>
+      {isOpen && (
+        <div className="table-kit-utility-backdrop" role="presentation">
+          <div
+            ref={dialogRef}
+            className="table-kit-new-record-utility"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={titleId}
+            aria-describedby={descriptionId}
+          >
+            <div className="table-kit-new-record-heading">
+              <div>
+                <h2 id={titleId}>{title}</h2>
+                <p id={descriptionId}>{description}</p>
+              </div>
+              <button
+                type="button"
+                className="secondary-button"
+                aria-label="Close new record utility"
+                onClick={() => setOpen(false)}
+              >
+                ×
+              </button>
+            </div>
+            <div className="table-kit-new-record-options" role="tablist" aria-label="New record operations">
+              {options.map((option, index) => (
+                <button
+                  key={option.id}
+                  type="button"
+                  data-new-record-option
+                  role="tab"
+                  aria-selected={option.id === selectedOption?.id}
+                  onClick={() => setSelectedId(option.id)}
+                  onKeyDown={(event) => handleOptionKeyDown(event, index)}
+                >
+                  <strong>{option.label}</strong>
+                  {option.description && <span>{option.description}</span>}
+                </button>
+              ))}
+            </div>
+            {selectedOption && (
+              <section className="table-kit-new-record-content" aria-label={`${selectedOption.label} workflow`}>
+                {selectedOption.render({ close: () => setOpen(false) })}
+              </section>
+            )}
+          </div>
+        </div>
+      )}
+    </>
+  );
+}

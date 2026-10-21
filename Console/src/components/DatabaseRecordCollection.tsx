@@ -1,6 +1,7 @@
-import { useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { PaginationControls } from "./PaginationControls";
 import { RecordUtilities } from "./RecordUtilities";
+import { useGemLifeShell } from "./layout/GemLifeShell";
 import type { RecordSortDirection } from "../hooks/useRecordUtilities";
 import {
   RecordGallery,
@@ -14,7 +15,6 @@ import {
   type TableActionsProps,
   type TableRecord,
 } from "../table-kit";
-import type { TableActionsProps } from "../table-kit";
 import { usePagedRecords } from "../hooks/usePagedRecords";
 import type { ReactNode } from "react";
 
@@ -150,6 +150,27 @@ function DatabaseRecordTableShell<Record>({
     [properties],
   );
   const configuration = useTablePropertyConfiguration({ properties: propertyOptions, viewId });
+  const shell = useGemLifeShell();
+  const utilityConfig = actions?.newRecordUtility;
+  const [utilityOpen, setUtilityOpen] = useState(utilityConfig?.open ?? false);
+  const handleUtilityChange = useCallback(
+    (open: boolean) => {
+      setUtilityOpen(open);
+      shell.setUtilityOpen(open);
+      utilityConfig?.onOpenChange?.(open);
+    },
+    [shell, utilityConfig],
+  );
+  const resolvedActions = utilityConfig
+    ? {
+        ...actions,
+        newRecordUtility: {
+          ...utilityConfig,
+          open: utilityOpen,
+          onOpenChange: handleUtilityChange,
+        },
+      }
+    : actions;
 
   return (
     <>
@@ -167,7 +188,7 @@ function DatabaseRecordTableShell<Record>({
               filterOptions={filterOptions}
               compact
             />
-            {actions && <Table.Actions {...actions} />}
+            {resolvedActions && <Table.Actions {...resolvedActions} />}
           </Table.Toolbar>
         </div>
       </Table.Header>

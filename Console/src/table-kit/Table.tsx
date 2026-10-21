@@ -14,6 +14,7 @@ import type { TableQueryState } from "./query";
 import { useTableContext } from "./context";
 import { useTableSelection, type TableSelectionScope } from "./selection";
 import { TablePropertyControls } from "./PropertyControls";
+import { NewRecordUtility } from "./NewRecordUtility";
 
 function Root<Row>({
   rows,
@@ -319,6 +320,7 @@ function Actions({
   onPasteJson,
   newLabel = "New",
   newOptionsLabel,
+  newRecordUtility,
   importLabel = "Import",
   disabled = false,
   pending = false,
@@ -366,7 +368,10 @@ function Actions({
   };
   return (
     <div className="table-kit-actions" role="group" aria-busy={pending}>
-      {onNew && !hasMenu && (
+      {newRecordUtility && (
+        <NewRecordUtility {...newRecordUtility} triggerRef={menuTriggerRef} disabled={disabled} pending={pending} />
+      )}
+      {!newRecordUtility && onNew && !hasMenu && (
         <Tooltip placement="top" delay={300}>
           <Tooltip.Trigger asChild>
             <button
@@ -387,12 +392,12 @@ function Actions({
           </Tooltip.Content>
         </Tooltip>
       )}
-      {onImport && !hasMenu && (
+      {!newRecordUtility && onImport && !hasMenu && (
         <button type="button" onClick={() => void onImport()} disabled={isDisabled} aria-busy={pending}>
           {importLabel}
         </button>
       )}
-      {hasMenu && (
+      {!newRecordUtility && hasMenu && (
         <Menu open={menuOpen} onOpenChange={setMenuOpen} placement="bottom-end" modal={false}>
           <Tooltip placement="top" delay={300}>
             <Tooltip.Trigger asChild>

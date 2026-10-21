@@ -132,9 +132,82 @@ export function EmploymentView({ records }: EmploymentViewProps) {
             detailId={selectedID}
             onDetailChange={setSelectedID}
             actions={{
-              newRecordOptions: [{ id: "new-employment", label: "New employment", onSelect: () => setCreating(true) }],
-              onImport: () => setImporting(true),
-              importLabel: "Import employment records",
+              newRecordUtility: {
+                options: [
+                  {
+                    id: "new-employment",
+                    label: "New employment",
+                    description: "Open the employment form.",
+                    render: ({ close }) => (
+                      <EmploymentCreateForm
+                        addresses={addresses.data ?? []}
+                        onCancel={close}
+                        onCreate={async (payload) => {
+                          const created = await create.mutateAsync(payload);
+                          setSelectedID(created.id);
+                          close();
+                        }}
+                      />
+                    ),
+                  },
+                  {
+                    id: "import-employment-file",
+                    label: "Import file",
+                    description: "Choose a CSV or JSON file.",
+                    render: ({ close }) => (
+                      <RecordImport
+                        label="employment records"
+                        expectedColumns={[
+                          "id",
+                          "employerName",
+                          "employerType",
+                          "positionTitle",
+                          "employmentType",
+                          "employmentStatus",
+                        ]}
+                        mode="file"
+                        open
+                        onOpenChange={(open) => {
+                          if (!open) close();
+                        }}
+                        showTrigger={false}
+                        onPublish={async (rows) => {
+                          for (const row of rows)
+                            await create.mutateAsync(row as Parameters<typeof create.mutateAsync>[0]);
+                        }}
+                      />
+                    ),
+                  },
+                  {
+                    id: "paste-employment-data",
+                    label: "Paste data",
+                    description: "Paste CSV or JSON records.",
+                    render: ({ close }) => (
+                      <RecordImport
+                        label="employment records"
+                        expectedColumns={[
+                          "id",
+                          "employerName",
+                          "employerType",
+                          "positionTitle",
+                          "employmentType",
+                          "employmentStatus",
+                        ]}
+                        mode="paste"
+                        open
+                        onOpenChange={(open) => {
+                          if (!open) close();
+                        }}
+                        showTrigger={false}
+                        onPublish={async (rows) => {
+                          for (const row of rows)
+                            await create.mutateAsync(row as Parameters<typeof create.mutateAsync>[0]);
+                        }}
+                      />
+                    ),
+                  },
+                ],
+              },
             }}
             detail={
               selectedID ? (
