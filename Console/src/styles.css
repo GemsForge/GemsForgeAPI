@@ -1241,7 +1241,7 @@ dialog::backdrop {
   }
 }
 
-/* Keep the shared header full width while secondary options remain dismissible and keyboard reachable. */
+/* Keep the shared header full width and view choices horizontal while secondary options remain dismissible and keyboard reachable. */
 .table-kit-header {
   width: 100%;
   display: grid;
@@ -1258,9 +1258,13 @@ dialog::backdrop {
 
 .table-kit-views {
   display: inline-flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
   flex: 0 0 auto;
   align-items: stretch;
   gap: 0;
+  min-width: max-content;
+  max-width: 100%;
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 0.55rem;
@@ -1268,6 +1272,7 @@ dialog::backdrop {
 }
 
 .table-kit-views > button {
+  flex: 0 0 auto;
   min-height: 2.75rem;
   padding: 0.55rem 0.8rem;
   border: 0;
@@ -1275,6 +1280,7 @@ dialog::backdrop {
   border-radius: 0;
   background: transparent;
   color: var(--ink);
+  white-space: nowrap;
 }
 
 .table-kit-views > button:last-child {
