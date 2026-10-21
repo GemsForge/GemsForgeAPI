@@ -75,6 +75,10 @@ export function RecordUtilities({
                 type="button"
                 size="xs"
                 color="$gemInk"
+                backgroundColor="$gemPanel"
+                borderColor="$gemPanelLight"
+                borderWidth={1}
+                borderRadius="$gemControl"
                 className="compact-icon-button"
                 aria-label="Sort records"
                 onClick={() => setCompactMenu((current) => (current === "sort" ? null : "sort"))}
@@ -133,6 +137,10 @@ export function RecordUtilities({
                   type="button"
                   size="xs"
                   color="$gemInk"
+                  backgroundColor="$gemPanel"
+                  borderColor="$gemPanelLight"
+                  borderWidth={1}
+                  borderRadius="$gemControl"
                   className="compact-icon-button"
                   aria-label="Filter records"
                   onClick={() => setCompactMenu((current) => (current === "filter" ? null : "filter"))}
@@ -196,6 +204,10 @@ export function RecordUtilities({
               type="button"
               size="xs"
               color="$gemInk"
+              backgroundColor="$gemPanel"
+              borderColor="$gemPanelLight"
+              borderWidth={1}
+              borderRadius="$gemControl"
               className="compact-icon-button"
               aria-label={searchOpen ? "Close search" : `Search ${label.toLowerCase()}`}
               onClick={() => setSearchOpen((open) => !open)}
@@ -238,6 +250,10 @@ export function RecordUtilities({
         type="button"
         size="xs"
         color="$gemInk"
+        backgroundColor="$gemPanel"
+        borderColor="$gemPanelLight"
+        borderWidth={1}
+        borderRadius="$gemControl"
         className="secondary-button"
         onClick={onDirection}
         disabled={!sort}
@@ -263,6 +279,10 @@ export function RecordUtilities({
           type="button"
           size="xs"
           color="$gemInk"
+          backgroundColor="$gemPanel"
+          borderColor="$gemPanelLight"
+          borderWidth={1}
+          borderRadius="$gemControl"
           className="secondary-button"
           onClick={() => {
             onSearch("");

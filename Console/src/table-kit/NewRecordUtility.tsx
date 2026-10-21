@@ -109,6 +109,10 @@ export function NewRecordUtility({
             type="button"
             size="xs"
             color="$gemInk"
+            backgroundColor="$gemPanel"
+            borderColor="$gemPanelLight"
+            borderWidth={1}
+            borderRadius="$gemControl"
             className="compact-icon-button"
             aria-label="New record"
             aria-haspopup="dialog"
@@ -144,6 +148,10 @@ export function NewRecordUtility({
                 type="button"
                 size="xs"
                 color="$gemInk"
+                backgroundColor="$gemPanel"
+                borderColor="$gemPanelLight"
+                borderWidth={1}
+                borderRadius="$gemControl"
                 className="secondary-button"
                 aria-label="Close new record utility"
                 onClick={() => setOpen(false)}

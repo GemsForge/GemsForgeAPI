@@ -54,6 +54,10 @@ export function TablePropertyControls({
             type="button"
             size="xs"
             color="$gemInk"
+            backgroundColor="$gemPanel"
+            borderColor="$gemPanelLight"
+            borderWidth={1}
+            borderRadius="$gemControl"
             className="table-kit-property-button compact-icon-button"
             aria-controls={dialogId}
             aria-haspopup="dialog"
@@ -84,7 +88,17 @@ export function TablePropertyControls({
           }}
         >
           <h2 id={dialogTitleId}>{label}</h2>
-          <Button size="xs" color="$gemInk" type="button" aria-label={closeLabel} onClick={() => setOpen(false)}>
+          <Button
+            size="xs"
+            color="$gemInk"
+            backgroundColor="$gemPanel"
+            borderColor="$gemPanelLight"
+            borderWidth={1}
+            borderRadius="$gemControl"
+            type="button"
+            aria-label={closeLabel}
+            onClick={() => setOpen(false)}
+          >
             {closeLabel}
           </Button>
           <label>
@@ -97,13 +111,40 @@ export function TablePropertyControls({
             />
           </label>
           <div role="toolbar" aria-label="Property actions">
-            <Button size="xs" color="$gemInk" type="button" onClick={configuration.showAll}>
+            <Button
+              size="xs"
+              color="$gemInk"
+              backgroundColor="$gemPanel"
+              borderColor="$gemPanelLight"
+              borderWidth={1}
+              borderRadius="$gemControl"
+              type="button"
+              onClick={configuration.showAll}
+            >
               {showAllLabel}
             </Button>
-            <Button size="xs" color="$gemInk" type="button" onClick={configuration.hideAll}>
+            <Button
+              size="xs"
+              color="$gemInk"
+              backgroundColor="$gemPanel"
+              borderColor="$gemPanelLight"
+              borderWidth={1}
+              borderRadius="$gemControl"
+              type="button"
+              onClick={configuration.hideAll}
+            >
               {hideAllLabel}
             </Button>
-            <Button size="xs" color="$gemInk" type="button" onClick={configuration.reset}>
+            <Button
+              size="xs"
+              color="$gemInk"
+              backgroundColor="$gemPanel"
+              borderColor="$gemPanelLight"
+              borderWidth={1}
+              borderRadius="$gemControl"
+              type="button"
+              onClick={configuration.reset}
+            >
               {resetLabel}
             </Button>
           </div>
@@ -128,6 +169,10 @@ export function TablePropertyControls({
                     type="button"
                     size="xs"
                     color="$gemInk"
+                    backgroundColor="$gemPanel"
+                    borderColor="$gemPanelLight"
+                    borderWidth={1}
+                    borderRadius="$gemControl"
                     aria-label={`Move ${property.label} up`}
                     disabled={index <= 0}
                     onClick={() => configuration.move(property.id, "up")}
@@ -138,6 +183,10 @@ export function TablePropertyControls({
                     type="button"
                     size="xs"
                     color="$gemInk"
+                    backgroundColor="$gemPanel"
+                    borderColor="$gemPanelLight"
+                    borderWidth={1}
+                    borderRadius="$gemControl"
                     aria-label={`Move ${property.label} down`}
                     disabled={index < 0 || index >= configuration.configuration.order.length - 1}
                     onClick={() => configuration.move(property.id, "down")}

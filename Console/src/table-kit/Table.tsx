@@ -378,6 +378,10 @@ function Actions({
               type="button"
               size="xs"
               color="$gemInk"
+              backgroundColor="$gemPanel"
+              borderColor="$gemPanelLight"
+              borderWidth={1}
+              borderRadius="$gemControl"
               className="compact-icon-button"
               onClick={() => void onNew()}
               disabled={isDisabled}
@@ -398,6 +402,10 @@ function Actions({
         <Button
           size="xs"
           color="$gemInk"
+          backgroundColor="$gemPanel"
+          borderColor="$gemPanelLight"
+          borderWidth={1}
+          borderRadius="$gemControl"
           type="button"
           onClick={() => void onImport()}
           disabled={isDisabled}
@@ -415,6 +423,10 @@ function Actions({
                 type="button"
                 size="xs"
                 color="$gemInk"
+                backgroundColor="$gemPanel"
+                borderColor="$gemPanelLight"
+                borderWidth={1}
+                borderRadius="$gemControl"
                 aria-label={menuLabel}
                 disabled={isDisabled}
                 className="compact-icon-button"
