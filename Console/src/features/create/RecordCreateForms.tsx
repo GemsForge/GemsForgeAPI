@@ -229,6 +229,7 @@ function Text<T extends FieldValues>({
   required: isRequired = false,
   type = "text",
   multiline = false,
+  placeholder,
 }: {
   form: UseFormReturn<T>;
   name: Path<T>;
@@ -236,6 +237,7 @@ function Text<T extends FieldValues>({
   required?: boolean;
   type?: string;
   multiline?: boolean;
+  placeholder?: string;
 }) {
   const message = form.formState.errors[name]?.message;
   return (
@@ -245,6 +247,7 @@ function Text<T extends FieldValues>({
       required={isRequired}
       type={type}
       multiline={multiline}
+      placeholder={placeholder}
       error={typeof message === "string" ? message : undefined}
     />
   );

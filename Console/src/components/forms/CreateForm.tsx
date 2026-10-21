@@ -39,6 +39,11 @@ const controlStyle = {
   color: "$gemInk" as const,
 };
 
+/** Give every text control a useful prompt while allowing a feature to provide a more specific one. */
+function defaultTextPlaceholder(label: string): string {
+  return `Enter ${label.toLowerCase()}…`;
+}
+
 /** Render the shared Tamagui form shell used by every record-creation workflow. */
 export function CreateFormFrame({
   title,
@@ -79,6 +84,7 @@ export function CreateTextField({
   required = false,
   type = "text",
   multiline = false,
+  placeholder,
 }: {
   label: string;
   registration: UseFormRegisterReturn;
@@ -86,8 +92,10 @@ export function CreateTextField({
   required?: boolean;
   type?: string;
   multiline?: boolean;
+  placeholder?: string;
 }) {
   const id = registration.name;
+  const inputPlaceholder = placeholder ?? defaultTextPlaceholder(label);
   return (
     <CreateFieldFrame id={id} label={label} required={required} error={error}>
       {multiline ? (
@@ -98,6 +106,7 @@ export function CreateTextField({
           aria-invalid={Boolean(error)}
           aria-describedby={error ? `${id}-error` : undefined}
           required={required}
+          placeholder={inputPlaceholder}
           {...registration}
           ref={(element) => registration.ref(element as HTMLTextAreaElement | null)}
         />
@@ -110,6 +119,7 @@ export function CreateTextField({
           required={required}
           aria-invalid={Boolean(error)}
           aria-describedby={error ? `${id}-error` : undefined}
+          placeholder={inputPlaceholder}
           {...registration}
           ref={(element) => registration.ref(element as HTMLInputElement | null)}
         />

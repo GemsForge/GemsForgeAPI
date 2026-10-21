@@ -145,6 +145,8 @@ describe("shared create form workflow", () => {
     expect(screen.getByLabelText("Employment type *")).toHaveAttribute("aria-haspopup", "listbox");
     expect(screen.getByLabelText("Status *")).toHaveAttribute("aria-haspopup", "listbox");
     expect(screen.getByLabelText("Website")).toHaveAttribute("type", "url");
+    expect(screen.getByLabelText("Employer name *")).toHaveAttribute("placeholder", "Enter employer name…");
+    expect(screen.getByLabelText("Website")).toHaveAttribute("placeholder", "Enter website…");
     expect(screen.getByLabelText("Start date")).toHaveAttribute("type", "date");
     expect(screen.getByLabelText("End date")).toHaveAttribute("type", "date");
     expect(screen.getByLabelText("Contact")).toHaveAttribute("type", "text");
