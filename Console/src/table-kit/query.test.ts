@@ -78,4 +78,30 @@ describe("Table Kit query contract", () => {
 
     expect(hook.result.current.state.search).toBe("changed");
   });
+
+  it("supports controlled state updates and reset", () => {
+    const onStateChange = vi.fn();
+    const hook = renderHook(() =>
+      useTableQueryState({
+        state: { ...defaultState(), search: "controlled" },
+        onStateChange,
+      }),
+    );
+
+    act(() => hook.result.current.setState((current) => ({ ...current, pageIndex: 2 })));
+    expect(onStateChange).toHaveBeenCalledWith({ ...defaultState(), search: "controlled", pageIndex: 2 });
+
+    act(() => hook.result.current.reset());
+    expect(onStateChange).toHaveBeenLastCalledWith(defaultState());
+  });
 });
+
+function defaultState() {
+  return {
+    search: "",
+    filters: {},
+    sort: [],
+    pageIndex: 0,
+    pageSize: 25,
+  } as const;
+}
