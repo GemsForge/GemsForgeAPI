@@ -1146,7 +1146,7 @@ dialog::backdrop {
 }
 @container (min-width: 40rem) and (max-width: 56.25rem) {
   .gem-record-collection.is-gallery .gem-record-grid-rail {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .gem-record-collection.is-gallery .gem-record-grid-card,
   .gem-record-collection.is-gallery .gem-record-grid-card.is-active {
