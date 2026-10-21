@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useId, useRef, useState, type KeyboardEvent, type RefObject } from "react";
-import { Tooltip } from "tamagui";
+import { Button, Tooltip, type TamaguiElement } from "tamagui";
 import type { TableNewRecordUtilityProps } from "./types";
 
 interface NewRecordUtilityComponentProps extends TableNewRecordUtilityProps {
-  triggerRef: RefObject<HTMLButtonElement | null>;
+  triggerRef: RefObject<TamaguiElement | null>;
   disabled?: boolean;
   pending?: boolean;
 }
@@ -11,7 +11,9 @@ interface NewRecordUtilityComponentProps extends TableNewRecordUtilityProps {
 /**
  * Render the consumer-owned create/import/paste surface over the active table.
  * The utility owns only presentation state; the selected workflow owns data and
- * closes the surface through the supplied control.
+ * closes the surface through the supplied control. Compact utility actions use
+ * Tamagui's xs button preset so the trigger and dismissal affordance stay
+ * aligned with the shared table header.
  */
 export function NewRecordUtility({
   title = "New record",
@@ -84,7 +86,7 @@ export function NewRecordUtility({
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, setOpen]);
 
-  const handleOptionKeyDown = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
+  const handleOptionKeyDown = (event: KeyboardEvent<HTMLElement>, index: number) => {
     if (!options.length || !["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) return;
     event.preventDefault();
     const nextIndex =
@@ -102,9 +104,11 @@ export function NewRecordUtility({
     <>
       <Tooltip placement="top" delay={300}>
         <Tooltip.Trigger asChild>
-          <button
+          <Button
             ref={triggerRef}
             type="button"
+            size="xs"
+            color="$gemInk"
             className="compact-icon-button"
             aria-label="New record"
             aria-haspopup="dialog"
@@ -114,7 +118,7 @@ export function NewRecordUtility({
           >
             <span aria-hidden="true">＋</span>
             <span className="sr-only">New record</span>
-          </button>
+          </Button>
         </Tooltip.Trigger>
         <Tooltip.Content className="table-kit-tooltip">
           <Tooltip.Arrow />
@@ -136,20 +140,24 @@ export function NewRecordUtility({
                 <h2 id={titleId}>{title}</h2>
                 <p id={descriptionId}>{description}</p>
               </div>
-              <button
+              <Button
                 type="button"
+                size="xs"
+                color="$gemInk"
                 className="secondary-button"
                 aria-label="Close new record utility"
                 onClick={() => setOpen(false)}
               >
                 ×
-              </button>
+              </Button>
             </div>
             <div className="table-kit-new-record-options" role="tablist" aria-label="New record operations">
               {options.map((option, index) => (
-                <button
+                <Button
                   key={option.id}
                   type="button"
+                  size="xs"
+                  color="$gemInk"
                   data-new-record-option
                   role="tab"
                   aria-selected={option.id === selectedOption?.id}
@@ -158,7 +166,7 @@ export function NewRecordUtility({
                 >
                   <strong>{option.label}</strong>
                   {option.description && <span>{option.description}</span>}
-                </button>
+                </Button>
               ))}
             </div>
             {selectedOption && (

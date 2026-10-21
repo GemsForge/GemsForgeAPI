@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
-import { Menu, ToggleGroup, Tooltip, type TamaguiElement } from "tamagui";
+import { Button, Menu, ToggleGroup, Tooltip, type TamaguiElement } from "tamagui";
 import { TableContext } from "./context";
 import type {
   TableActionsProps,
@@ -167,7 +167,7 @@ function Metadata({ children }: { children?: ReactNode }) {
   return <dl className="table-kit-metadata">{children}</dl>;
 }
 
-/** Render the single-selection Tamagui ToggleGroup that scopes each view renderer. */
+/** Render the single-selection xs Tamagui ToggleGroup that scopes each view renderer. */
 function Views<Row>() {
   const { views, viewId, setViewId } = useTableContext<Row>();
   if (!views.length) return null;
@@ -184,7 +184,7 @@ function Views<Row>() {
       aria-label="Table views"
     >
       {views.map((view) => (
-        <ToggleGroup.Item key={view.id} value={view.id} aria-label={view.label}>
+        <ToggleGroup.Item key={view.id} value={view.id} size="xs" color="$gemInk" aria-label={view.label}>
           <Tooltip placement="top" delay={300}>
             <Tooltip.Trigger asChild>
               <span className="table-kit-view-icon" aria-hidden="true">
@@ -310,7 +310,7 @@ function QueryControls({
   );
 }
 
-/** Render the compact plus utility while preserving consumer-owned create/import actions in one menu. */
+/** Render the compact xs plus utility while preserving consumer-owned create/import actions in one menu. */
 function Actions({
   onNew,
   onImport,
@@ -327,7 +327,7 @@ function Actions({
 }: TableActionsProps) {
   const isDisabled = disabled || pending;
   const [menuOpen, setMenuOpen] = useState(false);
-  const menuTriggerRef = useRef<HTMLButtonElement>(null);
+  const menuTriggerRef = useRef<TamaguiElement>(null);
   const menuContentRef = useRef<TamaguiElement>(null);
   const previousMenuOpen = useRef(menuOpen);
   const hasNewRecordMenu = newRecordOptions.length > 0;
@@ -374,8 +374,10 @@ function Actions({
       {!newRecordUtility && onNew && !hasMenu && (
         <Tooltip placement="top" delay={300}>
           <Tooltip.Trigger asChild>
-            <button
+            <Button
               type="button"
+              size="xs"
+              color="$gemInk"
               className="compact-icon-button"
               onClick={() => void onNew()}
               disabled={isDisabled}
@@ -384,7 +386,7 @@ function Actions({
             >
               <span aria-hidden="true">＋</span>
               <span className="sr-only">{newLabel}</span>
-            </button>
+            </Button>
           </Tooltip.Trigger>
           <Tooltip.Content className="table-kit-tooltip">
             <Tooltip.Arrow />
@@ -393,17 +395,26 @@ function Actions({
         </Tooltip>
       )}
       {!newRecordUtility && onImport && !hasMenu && (
-        <button type="button" onClick={() => void onImport()} disabled={isDisabled} aria-busy={pending}>
+        <Button
+          size="xs"
+          color="$gemInk"
+          type="button"
+          onClick={() => void onImport()}
+          disabled={isDisabled}
+          aria-busy={pending}
+        >
           {importLabel}
-        </button>
+        </Button>
       )}
       {!newRecordUtility && hasMenu && (
         <Menu open={menuOpen} onOpenChange={setMenuOpen} placement="bottom-end" modal={false}>
           <Tooltip placement="top" delay={300}>
             <Tooltip.Trigger asChild>
-              <button
+              <Button
                 ref={menuTriggerRef}
                 type="button"
+                size="xs"
+                color="$gemInk"
                 aria-label={menuLabel}
                 disabled={isDisabled}
                 className="compact-icon-button"
@@ -411,7 +422,7 @@ function Actions({
               >
                 <span aria-hidden="true">＋</span>
                 <span className="sr-only">{menuLabel}</span>
-              </button>
+              </Button>
             </Tooltip.Trigger>
             <Tooltip.Content className="table-kit-tooltip">
               <Tooltip.Arrow />
