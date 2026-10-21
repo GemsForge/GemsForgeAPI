@@ -14,3 +14,12 @@ At checkpoints, report:
 - delivery: completed and outstanding work, evidence, decisions, risks, and recommended next sprint.
 
 Do not silently expand scope or start another story. Stop after the requested verification and delivery report. Merge, deployment, issue closure, Project changes, and secret changes require separate explicit approval.
+
+
+## Mandatory repository workflow
+
+- Never commit directly to the repository default branch (main or master).
+- Work only on an issue-linked branch that follows the repository's naming policy.
+- Route changes through a pull request, required checks, review, and the repository's approval process.
+- If an issue, compliant branch, or pull-request path is unavailable, stop and report the blocker; do not bypass the workflow.
+- Do not merge, close the issue, change Projects, alter branch protection, change secrets, or deploy without separate explicit authorization.
