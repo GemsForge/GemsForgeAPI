@@ -91,43 +91,42 @@ export function DatabaseRecordCollection<Record>({
       defaultViewId="list"
       selection={{ matchingIds: matchingRecords.map((record) => record.id) }}
     >
-      <Table.Views />
-      <Table.Toolbar>
-        <RecordUtilities
-          label={label}
-          {...utilities}
-          totalCount={records.length}
-          visibleCount={utilities.records.length}
-          sortOptions={sortOptions}
-          filterOptions={filterOptions}
-        />
-      </Table.Toolbar>
-      <Table.Selection />
-      <Table.Content>
-        <DatabaseRecordRenderer
-          properties={properties}
-          label={label}
-          detailId={detailId}
-          onDetailChange={onDetailChange}
-          detail={detail}
-        />
-      </Table.Content>
-      <Table.Pagination>
-        <PaginationControls {...paging} label={label} />
-      </Table.Pagination>
+      <DatabaseRecordTableShell
+        properties={properties}
+        label={label}
+        utilities={utilities}
+        records={records}
+        sortOptions={sortOptions}
+        filterOptions={filterOptions}
+        paging={paging}
+        detailId={detailId}
+        onDetailChange={onDetailChange}
+        detail={detail}
+      />
     </Table.Root>
   );
 }
 
-function DatabaseRecordRenderer<Record>({
+/** Keep the compact utility row and renderer on one view-scoped configuration. */
+function DatabaseRecordTableShell<Record>({
   properties,
   label,
+  utilities,
+  records,
+  sortOptions,
+  filterOptions,
+  paging,
   detailId,
   onDetailChange,
   detail,
 }: {
   properties: readonly RecordPropertyDefinition<Record>[];
   label: string;
+  utilities: DatabaseRecordUtilities<Record>;
+  records: readonly Record[];
+  sortOptions: { value: string; label: string }[];
+  filterOptions: string[];
+  paging: ReturnType<typeof usePagedRecords<Record>>;
   detailId: string | null;
   onDetailChange: (id: string | null) => void;
   detail?: ReactNode;
@@ -143,32 +142,67 @@ function DatabaseRecordRenderer<Record>({
     [properties],
   );
   const configuration = useTablePropertyConfiguration({ properties: propertyOptions, viewId });
+
+  return (
+    <>
+      <Table.Views />
+      <Table.Toolbar>
+        <RecordUtilities
+          label={label}
+          {...utilities}
+          totalCount={records.length}
+          visibleCount={utilities.records.length}
+          sortOptions={sortOptions}
+          filterOptions={filterOptions}
+          compact
+        />
+        <Table.PropertyControls properties={propertyOptions} configuration={configuration} />
+      </Table.Toolbar>
+      <Table.Selection />
+      <Table.Content>
+        <DatabaseRecordRenderer
+          properties={properties}
+          propertyIds={configuration.visibleIds}
+          label={label}
+          detailId={detailId}
+          onDetailChange={onDetailChange}
+          detail={detail}
+        />
+      </Table.Content>
+      <Table.Pagination>
+        <PaginationControls {...paging} label={label} />
+      </Table.Pagination>
+    </>
+  );
+}
+
+function DatabaseRecordRenderer<Record>({
+  properties,
+  propertyIds,
+  label,
+  detailId,
+  onDetailChange,
+  detail,
+}: {
+  properties: readonly RecordPropertyDefinition<Record>[];
+  propertyIds: readonly string[];
+  label: string;
+  detailId: string | null;
+  onDetailChange: (id: string | null) => void;
+  detail?: ReactNode;
+}) {
+  const { viewId } = useTableContext<TableRecord<Record>>();
   const onExpansionChange = (id: string | undefined) => onDetailChange(id === detailId ? null : (id ?? null));
 
   return (
     <>
-      <div className="database-record-property-controls">
-        <Table.PropertyControls properties={propertyOptions} configuration={configuration} />
-      </div>
       <div className="database-record-renderer" aria-label={`${label} view`}>
         {viewId === "gallery" ? (
-          <RecordGallery
-            properties={properties}
-            propertyIds={configuration.visibleIds}
-            onExpansionChange={onExpansionChange}
-          />
+          <RecordGallery properties={properties} propertyIds={propertyIds} onExpansionChange={onExpansionChange} />
         ) : viewId === "table" ? (
-          <RecordTable
-            properties={properties}
-            propertyIds={configuration.visibleIds}
-            onExpansionChange={onExpansionChange}
-          />
+          <RecordTable properties={properties} propertyIds={propertyIds} onExpansionChange={onExpansionChange} />
         ) : (
-          <RecordList
-            properties={properties}
-            propertyIds={configuration.visibleIds}
-            onExpansionChange={onExpansionChange}
-          />
+          <RecordList properties={properties} propertyIds={propertyIds} onExpansionChange={onExpansionChange} />
         )}
       </div>
       {detail ? <div className="database-record-detail">{detail}</div> : null}

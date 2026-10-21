@@ -71,4 +71,31 @@ describe("DatabaseRecordCollection", () => {
     fireEvent.click(screen.getByRole("tab", { name: "Table" }));
     expect(screen.getByRole("tab", { name: "Table" })).toHaveAttribute("aria-selected", "true");
   });
+
+  it("keeps the property menu in the compact utility toolbar", () => {
+    render(
+      <TamaguiProvider config={tamaguiConfig} defaultTheme="dark">
+        <Harness />
+      </TamaguiProvider>,
+    );
+
+    expect(screen.getByRole("group", { name: "Property configuration" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Properties" }));
+    expect(screen.getByRole("dialog", { name: "Properties" })).toBeInTheDocument();
+  });
+
+  it("keeps secondary query controls behind the compact More utilities action", () => {
+    render(
+      <TamaguiProvider config={tamaguiConfig} defaultTheme="dark">
+        <Harness />
+      </TamaguiProvider>,
+    );
+
+    expect(screen.queryByRole("dialog", { name: "Examples query utilities" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "More utilities" }));
+    expect(screen.getByRole("dialog", { name: "Examples query utilities" })).toBeInTheDocument();
+    fireEvent.keyDown(screen.getByRole("dialog", { name: "Examples query utilities" }), { key: "Escape" });
+    expect(screen.queryByRole("dialog", { name: "Examples query utilities" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "More utilities" })).toHaveFocus();
+  });
 });
