@@ -13,6 +13,14 @@ describe("Table Kit selection", () => {
     expect(hook.result.current.selectedIds.size).toBe(0);
   });
 
+  it("adds a drag-selected range atomically without toggling existing IDs", () => {
+    const hook = renderHook(() => useTableSelection<string>({ defaultSelectedIds: ["one"] }));
+
+    act(() => hook.result.current.add(["one", "two", "three"]));
+
+    expect(hook.result.current.selectedIds).toEqual(new Set(["one", "two", "three"]));
+  });
+
   it("preserves selections outside a bulk-action scope and reports partial selection", () => {
     const hook = renderHook(() => useTableSelection<string>({ defaultSelectedIds: ["off-page", "one"] }));
 

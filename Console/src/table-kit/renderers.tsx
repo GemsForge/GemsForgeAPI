@@ -1,4 +1,11 @@
-import { useContext, type ReactNode } from "react";
+import {
+  useContext,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type PointerEvent as ReactPointerEvent,
+  type ReactNode,
+} from "react";
 import { AgGridReact } from "ag-grid-react";
 import {
   AllCommunityModule,
@@ -36,6 +43,7 @@ export interface TableRendererProps<Record> {
 interface RendererSelection {
   selectedIds: ReadonlySet<TableRecordId>;
   onRecordSelect?: (id: TableRecordId) => void;
+  addRecords?: (ids: readonly TableRecordId[]) => void;
   isSelectable: (id: TableRecordId) => boolean;
 }
 
@@ -49,6 +57,7 @@ function useRendererSelection(
   return {
     selectedIds: scopedSelection?.selectedIds ?? selectedIds ?? new Set<TableRecordId>(),
     onRecordSelect: scopedSelection?.toggle ?? onRecordSelect,
+    addRecords: scopedSelection?.add,
     isSelectable: scopedSelection ? (id) => scopedSelection.currentPageIds.includes(id) : () => true,
   };
 }
@@ -109,27 +118,16 @@ function displayValue(value: RecordPropertyValue): ReactNode {
   return value.display || "unconfigured";
 }
 
-function RecordImage<Record>({ record, size }: { record: TableRecord<Record>; size: number }) {
-  if (!record.image) return null;
-  return record.image.src ? (
+function RecordImage<Record>({ image, size }: { image?: TableRecord<Record>["image"]; size: number }) {
+  if (!image?.src?.trim()) return null;
+  return (
     <Image
-      source={{ uri: record.image.src }}
-      accessibilityLabel={record.image.alt}
+      source={{ uri: image.src }}
+      accessibilityLabel={image.alt}
       width={size}
       height={size}
-      objectFit={record.image.fit ?? "cover"}
+      objectFit={image.fit ?? "cover"}
     />
-  ) : (
-    <YStack
-      width={size}
-      height={size}
-      alignItems="center"
-      justifyContent="center"
-      backgroundColor="$gemPanelLight"
-      aria-label={record.image.alt}
-    >
-      <SizableText color="$gemMuted">{record.image.alt}</SizableText>
-    </YStack>
   );
 }
 
@@ -194,7 +192,7 @@ export function RecordList<Record>({
             backgroundColor="$gemPanel"
             alignItems="center"
           >
-            <RecordImage record={record} size={48} />
+            <RecordImage image={record.image} size={48} />
             <YStack flex={1} gap="$1">
               <SizableText fontWeight="700">{record.title ?? record.subtitle ?? record.id}</SizableText>
               {visibleProperties.map((property) => (
@@ -232,56 +230,142 @@ export function RecordGallery<Record>({
 }: TableRendererProps<Record>) {
   const effectiveRecords = useRendererRecords(records);
   const selection = useRendererSelection(selectedIds, onRecordSelect);
+  const [cardSize, setCardSize] = useState<"small" | "medium" | "large">("medium");
+  const visibleProperties = propertiesFor(properties, propertyIds);
+  const dragStartRef = useRef<{ index: number; x: number; y: number } | null>(null);
+  const dragSelectedIdsRef = useRef<Set<TableRecordId>>(new Set());
+  const suppressClickRef = useRef(false);
+
+  /** Use the adapter image first, then allow an image property to supply the cover. */
+  const getImage = (record: TableRecord<Record>) =>
+    (record.image?.src?.trim() ? record.image : undefined) ??
+    visibleProperties.map((property) => propertyValue(property, record).image).find((image) => Boolean(image?.src));
+
+  /** Keep the card surface keyboard-equivalent to a mouse click without nesting buttons. */
+  const handleCardKeyDown = (event: KeyboardEvent<HTMLDivElement>, record: TableRecord<Record>) => {
+    if (!onExpansionChange || (event.key !== "Enter" && event.key !== " ")) return;
+    event.preventDefault();
+    onExpansionChange(expandedId === record.id ? undefined : record.id);
+  };
+
+  const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>, index: number) => {
+    if (!selection.onRecordSelect || event.button !== 0) return;
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+    dragStartRef.current = { index, x: event.clientX, y: event.clientY };
+    dragSelectedIdsRef.current = new Set(selection.selectedIds);
+    suppressClickRef.current = false;
+  };
+
+  const handlePointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const start = dragStartRef.current;
+    if (!start || !selection.onRecordSelect) return;
+    if (Math.hypot(event.clientX - start.x, event.clientY - start.y) < 8) return;
+    suppressClickRef.current = true;
+    const target = document
+      .elementFromPoint(event.clientX, event.clientY)
+      ?.closest<HTMLElement>("[data-gallery-record-id]");
+    const targetId = target?.dataset.galleryRecordId;
+    const targetIndex = effectiveRecords.findIndex((record) => record.id === targetId);
+    if (targetIndex < 0) return;
+    const [from, to] = start.index <= targetIndex ? [start.index, targetIndex] : [targetIndex, start.index];
+    const idsToAdd: TableRecordId[] = [];
+    effectiveRecords.slice(from, to + 1).forEach((record) => {
+      if (!dragSelectedIdsRef.current.has(record.id)) {
+        idsToAdd.push(record.id);
+        dragSelectedIdsRef.current.add(record.id);
+      }
+    });
+    if (idsToAdd.length > 0) {
+      if (selection.addRecords) selection.addRecords(idsToAdd);
+      else idsToAdd.forEach((id) => selection.onRecordSelect?.(id));
+    }
+  };
+
+  const handlePointerEnd = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (event.currentTarget.hasPointerCapture?.(event.pointerId))
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    dragStartRef.current = null;
+  };
+
   return (
-    <XStack flexWrap="wrap" gap="$3" role="list">
-      {effectiveRecords.map((record) => {
-        const selected = selection.selectedIds.has(record.id);
-        const expanded = expandedId === record.id;
-        const visibleProperties = propertiesFor(properties, propertyIds);
-        return (
-          <YStack
-            key={record.id}
-            role="listitem"
-            flexBasis={280}
-            flexGrow={1}
-            maxWidth={420}
-            minWidth={240}
-            overflow="hidden"
-            borderWidth={1}
-            borderColor={selected ? "$gemMint" : "$gemPanelLight"}
-            borderRadius="$4"
-            backgroundColor="$gemPanel"
-          >
-            <YStack height={180} alignItems="center" justifyContent="center" backgroundColor="$gemCanvas">
-              <RecordImage record={record} size={180} />
-            </YStack>
-            <YStack padding="$3" gap="$2">
-              <XStack justifyContent="space-between" alignItems="center">
-                <SizableText fontWeight="700">{record.title ?? record.id}</SizableText>
-                {record.status && <SizableText aria-label={record.status.label}>{record.status.label}</SizableText>}
-              </XStack>
-              {visibleProperties.map((property) => (
-                <XStack key={property.id} justifyContent="space-between" gap="$2">
-                  <SizableText color="$gemMuted">{property.label}</SizableText>
-                  <PropertyValue value={propertyValue(property, record)} />
-                </XStack>
-              ))}
-              {(selection.onRecordSelect || onExpansionChange) && (
-                <XStack gap="$2">
-                  <SelectionButton record={record} selection={selection} compact />
-                  {onExpansionChange && (
-                    <button type="button" onClick={() => onExpansionChange(expanded ? undefined : record.id)}>
-                      {expanded ? "Hide" : "View"}
-                    </button>
+    <div className={`table-kit-gallery is-${cardSize}`}>
+      <label className="table-kit-gallery-size">
+        Card size
+        <select value={cardSize} onChange={(event) => setCardSize(event.target.value as typeof cardSize)}>
+          <option value="small">Small</option>
+          <option value="medium">Medium</option>
+          <option value="large">Large</option>
+        </select>
+      </label>
+      <XStack flexWrap="wrap" gap="$3" role="list" aria-label="Gallery records">
+        {effectiveRecords.map((record) => {
+          const selected = selection.selectedIds.has(record.id);
+          const expanded = expandedId === record.id;
+          const title = String(record.title ?? record.id);
+          const image = getImage(record);
+          return (
+            <div
+              key={record.id}
+              className={`table-kit-gallery-card${selected ? " is-selected" : ""}${expanded ? " is-expanded" : ""}`}
+              role="listitem"
+              data-gallery-record-id={record.id}
+            >
+              <div
+                className="table-kit-gallery-card-surface"
+                role={onExpansionChange ? "button" : undefined}
+                tabIndex={onExpansionChange ? 0 : undefined}
+                aria-label={onExpansionChange ? `Open ${title}` : undefined}
+                onClick={() => {
+                  if (suppressClickRef.current) {
+                    suppressClickRef.current = false;
+                    return;
+                  }
+                  onExpansionChange?.(expanded ? undefined : record.id);
+                }}
+                onKeyDown={(event) => handleCardKeyDown(event, record)}
+                onPointerDown={(event) => handlePointerDown(event, effectiveRecords.indexOf(record))}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerEnd}
+                onPointerCancel={handlePointerEnd}
+              >
+                <div className="table-kit-gallery-image" aria-label={`${title} image preview`}>
+                  <RecordImage image={image} size={180} />
+                </div>
+                <div className="table-kit-gallery-copy">
+                  <div className="table-kit-gallery-title" title={title}>
+                    {title}
+                  </div>
+                  {record.subtitle && (
+                    <div className="table-kit-gallery-subtitle" title={record.subtitle}>
+                      {record.subtitle}
+                    </div>
                   )}
-                </XStack>
-              )}
+                  {record.status && <span className="table-kit-gallery-status">{record.status.label}</span>}
+                  <div className="table-kit-gallery-properties" aria-label="Visible properties">
+                    {visibleProperties.map((property) => {
+                      const value = propertyValue(property, record);
+                      const text = String(value.display || "unconfigured");
+                      return (
+                        <div
+                          key={property.id}
+                          className="table-kit-gallery-property"
+                          aria-label={`${property.label}: ${text}`}
+                          title={text}
+                        >
+                          <PropertyValue value={value} />
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+              {selection.onRecordSelect && <SelectionButton record={record} selection={selection} compact />}
               {expanded && renderExpanded?.(record.source)}
-            </YStack>
-          </YStack>
-        );
-      })}
-    </XStack>
+            </div>
+          );
+        })}
+      </XStack>
+    </div>
   );
 }
 

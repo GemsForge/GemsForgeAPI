@@ -85,14 +85,67 @@ describe("Table Kit record renderers", () => {
     expect(screen.getByText("Service")).toBeInTheDocument();
   });
 
-  it("renders a gallery with stable media and expansion callbacks", () => {
+  it("opens the consumer detail from the whole gallery card without a View button", () => {
     const onExpand = vi.fn();
     renderWithTheme(
       <RecordGallery records={records} properties={properties} onExpansionChange={() => onExpand(records[0])} />,
     );
-    screen.getByRole("button", { name: "View" }).click();
+    screen.getByRole("button", { name: "Open Alpha" }).click();
     expect(onExpand).toHaveBeenCalledWith(records[0]);
+    expect(screen.queryByRole("button", { name: "View" })).not.toBeInTheDocument();
     expect(screen.getByText("unconfigured")).toBeInTheDocument();
+  });
+
+  it("keeps the gallery image region blank when no valid image is configured", () => {
+    renderWithTheme(
+      <RecordGallery records={[{ ...records[0], image: { src: "", alt: "Missing logo" } }]} properties={properties} />,
+    );
+
+    expect(screen.queryByRole("img")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Alpha image preview")).toBeInTheDocument();
+  });
+
+  it("supports a labeled card size control and keyboard card activation", () => {
+    const onExpand = vi.fn();
+    renderWithTheme(
+      <RecordGallery records={records} properties={properties} onExpansionChange={() => onExpand(records[0])} />,
+    );
+
+    fireEvent.change(screen.getByRole("combobox", { name: "Card size" }), { target: { value: "large" } });
+    const card = screen.getByRole("button", { name: "Open Alpha" });
+    fireEvent.keyDown(card, { key: "Enter" });
+
+    expect(card).toHaveAttribute("aria-label", "Open Alpha");
+    expect(onExpand).toHaveBeenCalledWith(records[0]);
+  });
+
+  it("selects a contiguous card range by pointer drag without opening details", () => {
+    const onExpand = vi.fn();
+    const onSelectionChange = vi.fn();
+    const galleryRecords = [records[0], { id: "2", source: { name: "Beta", kind: "Service" }, title: "Beta" }];
+    const originalElementFromPoint = document.elementFromPoint;
+    renderWithTheme(
+      <Table.Root
+        rows={galleryRecords}
+        columns={columns}
+        rowKey={(record) => record.id}
+        selection={{ matchingIds: galleryRecords.map((record) => record.id), onSelectionChange }}
+      >
+        <RecordGallery records={galleryRecords} properties={properties} onExpansionChange={onExpand} />
+      </Table.Root>,
+    );
+
+    const firstCard = screen.getByRole("button", { name: "Open Alpha" });
+    const secondCard = screen.getByRole("button", { name: "Open Beta" });
+    document.elementFromPoint = () => secondCard.closest("[data-gallery-record-id]") as HTMLElement;
+    fireEvent.pointerDown(firstCard, { button: 0, pointerId: 1, clientX: 0, clientY: 0 });
+    fireEvent.pointerMove(firstCard, { pointerId: 1, clientX: 20, clientY: 0 });
+    fireEvent.pointerUp(firstCard, { pointerId: 1, clientX: 20, clientY: 0 });
+    fireEvent.click(firstCard);
+
+    expect(onSelectionChange).toHaveBeenLastCalledWith(new Set(["1", "2"]));
+    expect(onExpand).not.toHaveBeenCalled();
+    document.elementFromPoint = originalElementFromPoint;
   });
 
   it("renders ordered properties as table columns and supports selection", async () => {
