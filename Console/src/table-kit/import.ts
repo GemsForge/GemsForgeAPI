@@ -41,7 +41,11 @@ export function previewCsv<Row>(text: string, columns: readonly ImportColumn[]):
       try {
         (row as Record<string, unknown>)[column.id] = column.parse?.(value, index + 2) ?? value;
       } catch (error) {
-        errors.push({ row: index + 2, field: column.id, message: error instanceof Error ? error.message : "Invalid value" });
+        errors.push({
+          row: index + 2,
+          field: column.id,
+          message: error instanceof Error ? error.message : "Invalid value",
+        });
       }
     });
     if (header.length !== columns.length) errors.push({ row: 1, message: "CSV header does not match the schema" });
@@ -66,4 +70,3 @@ export function previewJson<Row>(text: string, validate: (value: unknown, row: n
   }
   return { rows, errors };
 }
-

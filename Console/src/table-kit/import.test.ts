@@ -14,4 +14,3 @@ describe("Table Kit import contracts", () => {
     expect(result.errors[0]?.message).toMatch(/JSON/);
   });
 });
-
