@@ -19,16 +19,16 @@ jobs:
         with:
           script: |
             const pr = context.payload.pull_request;
-            if (pr.base.ref !== "master") {
-              core.setFailed("Pull requests must target master.");
+            if (!["master", "master-toolkit"].includes(pr.base.ref)) {
+              core.setFailed("Pull requests must target master or master-toolkit.");
               return;
             }
-            const branchPattern = /^(feat|fix|docs|refactor|test|chore|ci|build|perf|style)\/[1-9][0-9]*-[a-z0-9][a-z0-9-]*$/;
+            const branchPattern = /^(feat|fix|docs|refactor|test|chore|ci|build|perf|style)\\/[1-9][0-9]*-[a-z0-9][a-z0-9-]*$/;
             if (!branchPattern.test(pr.head.ref)) {
               core.setFailed("Branch must match <type>/<issue-number>-<short-description>.");
               return;
             }
-            const issue = pr.head.ref.match(/^[^/]+\/(\d+)-/)[1];
-            if (!new RegExp(`#${issue}\\b`).test(pr.body || "")) {
+            const issue = pr.head.ref.match(/^[^/]+\\/(\\d+)-/)[1];
+            if (!new RegExp(`#${issue}\\\\b`).test(pr.body || "")) {
               core.setFailed(`PR body must reference #${issue}; merging does not close the story.`);
             }
