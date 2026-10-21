@@ -58,6 +58,7 @@ describe("ServiceAccountsView", () => {
 
   it("sends only the edited service property", async () => {
     renderView();
+    // Keep a regression guard for the first consumer migrated to Table Kit.
     expect(screen.getByRole("region", { name: "Table content" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /Internet/ }));
     fireEvent.click(screen.getByRole("button", { name: "Edit service" }));

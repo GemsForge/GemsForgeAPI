@@ -22,6 +22,11 @@ import { useRecordUtilities } from "../../hooks/useRecordUtilities";
 import { api } from "../../api";
 import { Table } from "../../table-kit";
 
+/**
+ * Renders service-account records through the incremental Table Kit boundary.
+ * Existing domain utilities and detail renderers remain injected until the
+ * remaining Table/Gallery/List consumers migrate to the shared composition.
+ */
 export function ServiceAccountsView({ records }: { records: ServiceAccount[] }) {
   const utilities = useRecordUtilities(
     records,
