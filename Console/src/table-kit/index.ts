@@ -28,6 +28,8 @@ export { TableImportWorkflow } from "./ImportWorkflow";
 export type { TableImportWorkflowProps } from "./ImportWorkflow";
 export { parseCsv, parseJson, previewCsv, previewJson } from "./import";
 export type { ImportColumn, ImportFieldError, ImportPreview } from "./import";
+export { RecordGallery, RecordList, RecordTable } from "./renderers";
+export type { TableRendererProps } from "./renderers";
 export { useTableSelection } from "./selection";
 export type { TableSelection } from "./selection";
 export { getPrimaryRecordProperty, orderRecordProperties } from "./recordContracts";
