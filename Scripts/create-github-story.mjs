@@ -97,13 +97,14 @@ export function createStory(options, run = runGh) {
   for (const assignee of options.assignees) issueArgs.push("-f", `assignees[]=${assignee}`);
   if (options.milestone) issueArgs.push("-f", `milestone=${options.milestone}`);
   const issue = run(issueArgs);
-  const workflowArgs = ["workflow", "run", "sync-pr-metadata.yml", "--repo", options.repo, "--ref", "master",
+  const metadataWorkflow = options.metadataWorkflow || process.env.GITHUB_METADATA_WORKFLOW || "sync-issue-metadata.yml";
+  const workflowArgs = ["workflow", "run", metadataWorkflow, "--repo", options.repo, "--ref", "master",
     "-f", `issue_number=${issue.number}`];
   if (options.parentIssue) workflowArgs.push("-f", `parent_issue=${options.parentIssue}`);
   if (options.blockedBy.length) workflowArgs.push("-f", `blocked_by=${options.blockedBy.join(",")}`);
   if (options.blocking.length) workflowArgs.push("-f", `blocking=${options.blocking.join(",")}`);
   run(workflowArgs);
-  return { issueNumber: issue.number, issueURL: issue.html_url, workflow: "sync-pr-metadata.yml" };
+  return { issueNumber: issue.number, issueURL: issue.html_url, workflow: metadataWorkflow };
 }
 
 if (process.argv[1]?.endsWith("create-github-story.mjs")) {
