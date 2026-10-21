@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import { ToggleGroup } from "tamagui";
 import { TableContext } from "./context";
 import type {
   TableActionsProps,
@@ -165,24 +166,29 @@ function Metadata({ children }: { children?: ReactNode }) {
   return <dl className="table-kit-metadata">{children}</dl>;
 }
 
+/** Render the single-selection Tamagui ToggleGroup that scopes each view renderer. */
 function Views<Row>() {
   const { views, viewId, setViewId } = useTableContext<Row>();
   if (!views.length) return null;
   return (
-    <div className="table-kit-views" role="tablist" aria-label="Table views">
+    <ToggleGroup
+      type="single"
+      value={viewId}
+      onValueChange={(next: string | string[]) => {
+        if (typeof next === "string" && next) setViewId(next);
+      }}
+      orientation="horizontal"
+      disableDeactivation
+      className="table-kit-views"
+      aria-label="Table views"
+    >
       {views.map((view) => (
-        <button
-          key={view.id}
-          type="button"
-          role="tab"
-          aria-selected={view.id === viewId}
-          onClick={() => setViewId(view.id)}
-        >
+        <ToggleGroup.Item key={view.id} value={view.id} aria-label={view.label}>
           {view.icon}
           <span>{view.label}</span>
-        </button>
+        </ToggleGroup.Item>
       ))}
-    </div>
+    </ToggleGroup>
   );
 }
 
@@ -293,6 +299,7 @@ function QueryControls({
   );
 }
 
+/** Render the compact plus utility while preserving consumer-owned create/import actions. */
 function Actions({
   onNew,
   onImport,
@@ -312,8 +319,12 @@ function Actions({
   const menuRef = useRef<HTMLDivElement>(null);
   const hasNewRecordMenu = newRecordOptions.length > 0;
   const hasImportMenu = Boolean(onImportFile || onPasteCsv || onPasteJson);
-  const hasMenu = hasNewRecordMenu || hasImportMenu;
-  const menuLabel = newOptionsLabel ?? (hasNewRecordMenu ? "New record options" : "Import options");
+  const hasMenu = hasNewRecordMenu || hasImportMenu || Boolean(onNew && (hasNewRecordMenu || hasImportMenu));
+  const menuLabel = newOptionsLabel ?? (onNew || hasNewRecordMenu ? "New record options" : "Import options");
+  const menuOptions: TableNewRecordOption[] = [
+    ...(onNew ? [{ id: "default-new", label: newLabel, onSelect: onNew }] : []),
+    ...newRecordOptions,
+  ];
   const closeMenu = useCallback(() => setMenuOpen(false), []);
 
   useEffect(() => {
@@ -354,9 +365,18 @@ function Actions({
 
   return (
     <div className="table-kit-actions" role="group" aria-busy={pending}>
-      {onNew && (
-        <button type="button" onClick={() => void onNew()} disabled={isDisabled} aria-busy={pending}>
-          {newLabel}
+      {onNew && !hasMenu && (
+        <button
+          type="button"
+          className="compact-icon-button"
+          onClick={() => void onNew()}
+          disabled={isDisabled}
+          aria-busy={pending}
+          aria-label={newLabel}
+          title={newLabel}
+        >
+          <span aria-hidden="true">＋</span>
+          <span className="sr-only">{newLabel}</span>
         </button>
       )}
       {onImport && (
@@ -374,12 +394,14 @@ function Actions({
             aria-label={menuLabel}
             onClick={() => setMenuOpen((open) => !open)}
             disabled={isDisabled}
+            className="compact-icon-button"
           >
-            {menuLabel}
+            <span aria-hidden="true">＋</span>
+            <span className="sr-only">{menuLabel}</span>
           </button>
           {menuOpen && (
             <div ref={menuRef} role="menu" tabIndex={-1} onKeyDown={handleMenuKeyDown} aria-label={menuLabel}>
-              {newRecordOptions.map((option) => (
+              {menuOptions.map((option) => (
                 <button
                   key={option.id}
                   type="button"

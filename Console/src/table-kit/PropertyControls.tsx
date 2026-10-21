@@ -49,12 +49,15 @@ export function TablePropertyControls({
       <button
         ref={triggerRef}
         type="button"
+        className="table-kit-property-button compact-icon-button"
         aria-controls={dialogId}
         aria-haspopup="dialog"
         aria-expanded={open}
+        title={label}
         onClick={() => setOpen((current) => !current)}
       >
-        {label}
+        <span aria-hidden="true">⚙</span>
+        <span className="sr-only">{label}</span>
       </button>
       {open && (
         <div

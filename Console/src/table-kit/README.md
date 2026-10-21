@@ -121,11 +121,13 @@ arrow-key navigation, and focus restoration to its trigger.
 
 ## Compact utility row
 
-The consumer shell can keep search and the primary view visible while placing
-sort, direction, filter, and reset controls behind the labeled `More
-utilities` action. `Table.PropertyControls` remains a separate labeled menu,
-and `Table.Selection` stays in the same toolbar context so selection counts and
-Select all actions remain discoverable without expanding the query controls.
+The consumer shell keeps the view ToggleGroup and utility header aligned across
+the table width. Search starts as a labeled icon button and expands into a
+focused search field. Sort and filter are separate keyboard-accessible icon
+menus; active choices remain exposed through `aria-checked` states and the
+matching summary. `Table.PropertyControls` remains an adjacent gear button,
+and `Table.Selection` stays below the header so selection counts and Select all
+actions remain discoverable without expanding query controls.
 
 ## Shared selection
 

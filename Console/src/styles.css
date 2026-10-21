@@ -1241,11 +1241,68 @@ dialog::backdrop {
   }
 }
 
-/* Keep compact query controls aligned while secondary options remain dismissible and keyboard reachable. */
-.record-utilities-compact {
-  position: relative;
+/* Keep the shared header full width while secondary options remain dismissible and keyboard reachable. */
+.table-kit-header {
+  width: 100%;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.table-kit-header-controls {
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  margin-bottom: 0;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.table-kit-views {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: stretch;
+  gap: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 0.55rem;
+  background: var(--panel);
+}
+
+.table-kit-views > button {
+  min-height: 2.75rem;
+  padding: 0.55rem 0.8rem;
+  border: 0;
+  border-right: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+  color: var(--ink);
+}
+
+.table-kit-views > button:last-child {
+  border-right: 0;
+}
+
+.table-kit-views > button[data-state="on"] {
+  background: var(--mint);
+  color: var(--canvas);
+}
+
+/* Keep query controls and the properties gear attached to the view group. */
+.table-kit-toolbar {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+}
+
+/* Keep compact query controls aligned while secondary options remain dismissible and keyboard reachable. */
+.record-utilities.record-utilities-compact {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
 }
 
 .record-utilities-compact > label {
@@ -1254,8 +1311,31 @@ dialog::backdrop {
   gap: 0.45rem;
 }
 
-.record-utilities-compact > label input {
-  min-width: min(18rem, 42vw);
+.record-utilities-search-field input {
+  width: min(18rem, 42vw);
+  min-width: 10rem;
+}
+
+.compact-icon-button {
+  display: inline-grid;
+  flex: 0 0 auto;
+  place-items: center;
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  padding: 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: 0.55rem;
+  background: var(--panel);
+  color: var(--ink);
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.compact-icon-button:hover,
+.compact-icon-button:focus-visible,
+.compact-icon-button[aria-expanded="true"] {
+  border-color: var(--mint);
+  background: var(--panel-light, var(--panel));
 }
 
 .record-utilities-menu {
@@ -1271,6 +1351,25 @@ dialog::backdrop {
   border-radius: 0.55rem;
   background: var(--panel);
   box-shadow: 0 0.7rem 1.8rem rgb(0 0 0 / 20%);
+}
+
+.record-utilities-menu-heading {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.record-utilities-menu > button {
+  width: 100%;
+  text-align: left;
+}
+
+.record-utilities-menu > button[aria-checked="true"] {
+  border-color: var(--mint);
+  color: var(--mint);
 }
 
 .record-utilities-menu label {
@@ -1301,6 +1400,7 @@ dialog::backdrop {
 
 .table-kit-property-controls {
   position: relative;
+  flex: 0 0 auto;
 }
 
 .table-kit-property-dialog {

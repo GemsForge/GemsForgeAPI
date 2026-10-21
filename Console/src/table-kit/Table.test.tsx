@@ -1,6 +1,8 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
+import { TamaguiProvider } from "tamagui";
+import { tamaguiConfig } from "../design-system/tamagui.config";
 import { Table, useTableContext } from "./index";
 
 interface Row {
@@ -102,6 +104,9 @@ describe("Table Kit", () => {
 
     const trigger = screen.getByRole("button", { name: "New record options" });
     fireEvent.click(trigger);
+    const defaultNew = screen.getByRole("menuitem", { name: "New" });
+    expect(defaultNew).toHaveFocus();
+    fireEvent.keyDown(screen.getByRole("menu"), { key: "ArrowDown" });
     const address = screen.getByRole("menuitem", { name: "New address" });
     expect(address).toHaveFocus();
     fireEvent.keyDown(screen.getByRole("menu"), { key: "ArrowDown" });
@@ -131,26 +136,28 @@ describe("Table Kit", () => {
     const onViewChange = vi.fn();
     const onPaginationChange = vi.fn();
     render(
-      <Table.Root<Row>
-        rows={rows}
-        columns={columns}
-        rowKey={(row) => row.id}
-        views={[
-          { id: "grid", label: "Grid" },
-          { id: "list", label: "List" },
-        ]}
-        viewId="grid"
-        onViewChange={onViewChange}
-        pagination={{ pageIndex: 0, pageSize: 1, total: 2 }}
-        onPaginationChange={onPaginationChange}
-      >
-        <Table.Views />
-        <Table.Pagination>
-          <PaginationHarness />
-        </Table.Pagination>
-      </Table.Root>,
+      <TamaguiProvider config={tamaguiConfig} defaultTheme="dark">
+        <Table.Root<Row>
+          rows={rows}
+          columns={columns}
+          rowKey={(row) => row.id}
+          views={[
+            { id: "grid", label: "Grid" },
+            { id: "list", label: "List" },
+          ]}
+          viewId="grid"
+          onViewChange={onViewChange}
+          pagination={{ pageIndex: 0, pageSize: 1, total: 2 }}
+          onPaginationChange={onPaginationChange}
+        >
+          <Table.Views />
+          <Table.Pagination>
+            <PaginationHarness />
+          </Table.Pagination>
+        </Table.Root>
+      </TamaguiProvider>,
     );
-    screen.getByRole("tab", { name: "List" }).click();
+    screen.getByRole("button", { name: "List" }).click();
     screen.getByRole("button", { name: "Advance page" }).click();
     expect(onViewChange).toHaveBeenCalledWith("list");
     expect(onPaginationChange).toHaveBeenCalledWith({ pageIndex: 1, pageSize: 1 });

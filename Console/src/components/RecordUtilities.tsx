@@ -1,5 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent, type MouseEvent } from "react";
 import type { RecordSortDirection } from "../hooks/useRecordUtilities";
+
+type CompactUtilityMenu = "sort" | "filter" | null;
 
 export function RecordUtilities({
   label,
@@ -33,95 +35,195 @@ export function RecordUtilities({
   /** Keep secondary query controls behind one labeled, focus-restoring menu. */
   compact?: boolean;
 }) {
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [compactMenu, setCompactMenu] = useState<CompactUtilityMenu>(null);
+  const [searchOpen, setSearchOpen] = useState(Boolean(search));
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    if (!menuOpen) triggerRef.current?.focus();
-  }, [menuOpen]);
+    if (searchOpen) searchRef.current?.focus();
+  }, [searchOpen]);
+
+  useEffect(() => {
+    if (compactMenu) {
+      menuRef.current?.querySelector<HTMLButtonElement>("[role^='menuitem']")?.focus();
+    } else if (triggerRef.current) {
+      triggerRef.current.focus();
+    }
+  }, [compactMenu]);
 
   if (compact) {
+    const menuId = `${label.toLowerCase().replace(/\s+/g, "-")}-query-menu`;
+    const closeCompactMenu = () => setCompactMenu(null);
+    const clearQuery = () => {
+      onSearch("");
+      onSort("");
+      onFilter("");
+      closeCompactMenu();
+    };
+    const openCompactMenu = (next: Exclude<CompactUtilityMenu, null>, event: MouseEvent<HTMLButtonElement>) => {
+      triggerRef.current = event.currentTarget;
+      setCompactMenu((current) => (current === next ? null : next));
+    };
+    const handleCompactMenuKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+      const items = [...(menuRef.current?.querySelectorAll<HTMLButtonElement>("[role^='menuitem']") ?? [])].filter(
+        (item) => !item.disabled,
+      );
+      if (!items.length) return;
+      const currentIndex = items.indexOf(document.activeElement as HTMLButtonElement);
+      if (event.key === "Escape") {
+        event.preventDefault();
+        closeCompactMenu();
+        return;
+      }
+      if (event.key === "ArrowDown" || event.key === "ArrowUp" || event.key === "Home" || event.key === "End") {
+        event.preventDefault();
+        const nextIndex =
+          event.key === "Home"
+            ? 0
+            : event.key === "End"
+              ? items.length - 1
+              : (currentIndex + (event.key === "ArrowDown" ? 1 : -1) + items.length) % items.length;
+        items[nextIndex]?.focus();
+      }
+    };
+
     return (
       <div className="record-utilities record-utilities-compact" aria-label={`${label} utilities`}>
-        <label>
-          Search {label.toLowerCase()}
-          <input
-            type="search"
-            value={search}
-            onChange={(event) => onSearch(event.target.value)}
-            placeholder={`Search ${label.toLowerCase()}…`}
-          />
-        </label>
+        {searchOpen && (
+          <label className="record-utilities-search-field">
+            <span className="sr-only">Search {label.toLowerCase()}</span>
+            <input
+              ref={searchRef}
+              type="search"
+              value={search}
+              onChange={(event) => onSearch(event.target.value)}
+              placeholder={`Search ${label.toLowerCase()}…`}
+            />
+          </label>
+        )}
         <button
-          ref={triggerRef}
           type="button"
-          aria-haspopup="dialog"
-          aria-expanded={menuOpen}
-          aria-controls={`${label.toLowerCase().replace(/\s+/g, "-")}-query-menu`}
-          onClick={() => setMenuOpen((open) => !open)}
+          className="compact-icon-button"
+          aria-label={searchOpen ? "Close search" : `Search ${label.toLowerCase()}`}
+          title={searchOpen ? "Close search" : `Search ${label.toLowerCase()}`}
+          onClick={() => setSearchOpen((open) => !open)}
         >
-          More utilities
+          <span aria-hidden="true">⌕</span>
         </button>
-        {menuOpen && (
+        <button
+          type="button"
+          className="compact-icon-button"
+          aria-haspopup="menu"
+          aria-expanded={compactMenu === "sort"}
+          aria-controls={menuId}
+          aria-label="Sort records"
+          title="Sort records"
+          onClick={(event) => openCompactMenu("sort", event)}
+        >
+          <span aria-hidden="true">↕</span>
+        </button>
+        {filterOptions.length > 0 && (
+          <button
+            type="button"
+            className="compact-icon-button"
+            aria-haspopup="menu"
+            aria-expanded={compactMenu === "filter"}
+            aria-controls={menuId}
+            aria-label="Filter records"
+            title="Filter records"
+            onClick={(event) => openCompactMenu("filter", event)}
+          >
+            <span aria-hidden="true">≡</span>
+          </button>
+        )}
+        {compactMenu && (
           <div
             ref={menuRef}
-            id={`${label.toLowerCase().replace(/\s+/g, "-")}-query-menu`}
+            id={menuId}
             className="record-utilities-menu"
-            role="dialog"
-            aria-label={`${label} query utilities`}
-            onKeyDown={(event) => {
-              if (event.key === "Escape") {
-                event.preventDefault();
-                setMenuOpen(false);
-              }
-            }}
+            role="menu"
+            tabIndex={-1}
+            aria-label={compactMenu === "sort" ? "Sort records" : "Filter records"}
+            onKeyDown={handleCompactMenuKeyDown}
           >
-            <label>
-              Sort by
-              <select value={sort} onChange={(event) => onSort(event.target.value)}>
-                <option value="">Default order</option>
+            {compactMenu === "sort" && (
+              <>
+                <p className="record-utilities-menu-heading">Sort by</p>
+                <button
+                  type="button"
+                  role="menuitemradio"
+                  aria-checked={!sort}
+                  onClick={() => {
+                    onSort("");
+                    closeCompactMenu();
+                  }}
+                >
+                  Default order
+                </button>
                 {sortOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
+                  <button
+                    key={option.value}
+                    type="button"
+                    role="menuitemradio"
+                    aria-checked={sort === option.value}
+                    onClick={() => {
+                      onSort(option.value);
+                      closeCompactMenu();
+                    }}
+                  >
                     {option.label}
-                  </option>
+                  </button>
                 ))}
-              </select>
-            </label>
-            <button
-              type="button"
-              className="secondary-button"
-              onClick={onDirection}
-              disabled={!sort}
-              aria-label={
-                sort ? `Sort ${direction === "asc" ? "descending" : "ascending"}` : "Select a sort field first"
-              }
-            >
-              {direction === "asc" ? "A–Z" : "Z–A"}
-            </button>
-            {filterOptions.length > 0 && (
-              <label>
-                Filter
-                <select value={filter} onChange={(event) => onFilter(event.target.value)}>
-                  <option value="">All</option>
-                  {filterOptions.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </select>
-              </label>
+                <button
+                  type="button"
+                  role="menuitem"
+                  className="secondary-button"
+                  onClick={() => {
+                    onDirection();
+                    closeCompactMenu();
+                  }}
+                  disabled={!sort}
+                  aria-label={
+                    sort ? `Sort ${direction === "asc" ? "descending" : "ascending"}` : "Select a sort field first"
+                  }
+                >
+                  {direction === "asc" ? "A–Z" : "Z–A"}
+                </button>
+              </>
+            )}
+            {compactMenu === "filter" && (
+              <>
+                <p className="record-utilities-menu-heading">Filter</p>
+                <button
+                  type="button"
+                  role="menuitemradio"
+                  aria-checked={!filter}
+                  onClick={() => {
+                    onFilter("");
+                    closeCompactMenu();
+                  }}
+                >
+                  All records
+                </button>
+                {filterOptions.map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    role="menuitemradio"
+                    aria-checked={filter === option}
+                    onClick={() => {
+                      onFilter(option);
+                      closeCompactMenu();
+                    }}
+                  >
+                    {option}
+                  </button>
+                ))}
+              </>
             )}
             {(search || sort || filter) && (
-              <button
-                type="button"
-                className="secondary-button"
-                onClick={() => {
-                  onSearch("");
-                  onSort("");
-                  onFilter("");
-                  setMenuOpen(false);
-                }}
-              >
+              <button type="button" role="menuitem" className="secondary-button" onClick={clearQuery}>
                 Clear filters
               </button>
             )}

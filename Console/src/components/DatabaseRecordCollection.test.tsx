@@ -54,6 +54,7 @@ describe("DatabaseRecordCollection", () => {
     );
 
     expect(screen.getAllByRole("listitem")).toHaveLength(2);
+    fireEvent.click(screen.getByRole("button", { name: "Search examples" }));
     fireEvent.change(screen.getByRole("searchbox", { name: "Search examples" }), { target: { value: "Beta" } });
     expect(screen.getAllByRole("listitem")).toHaveLength(1);
     expect(screen.getAllByRole("listitem")[0]).toHaveTextContent("Beta");
@@ -68,8 +69,8 @@ describe("DatabaseRecordCollection", () => {
 
     fireEvent.click(screen.getByRole("checkbox", { name: "Select all" }));
     expect(screen.getByRole("checkbox", { name: "Select all" })).toBeChecked();
-    fireEvent.click(screen.getByRole("tab", { name: "Table" }));
-    expect(screen.getByRole("tab", { name: "Table" })).toHaveAttribute("aria-selected", "true");
+    fireEvent.click(screen.getByRole("button", { name: "Table" }));
+    expect(screen.getByRole("button", { name: "Table" })).toHaveAttribute("data-state", "on");
   });
 
   it("keeps the property menu in the compact utility toolbar", () => {
@@ -84,18 +85,18 @@ describe("DatabaseRecordCollection", () => {
     expect(screen.getByRole("dialog", { name: "Properties" })).toBeInTheDocument();
   });
 
-  it("keeps secondary query controls behind the compact More utilities action", () => {
+  it("keeps secondary query controls behind compact icon menus", () => {
     render(
       <TamaguiProvider config={tamaguiConfig} defaultTheme="dark">
         <Harness />
       </TamaguiProvider>,
     );
 
-    expect(screen.queryByRole("dialog", { name: "Examples query utilities" })).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "More utilities" }));
-    expect(screen.getByRole("dialog", { name: "Examples query utilities" })).toBeInTheDocument();
-    fireEvent.keyDown(screen.getByRole("dialog", { name: "Examples query utilities" }), { key: "Escape" });
-    expect(screen.queryByRole("dialog", { name: "Examples query utilities" })).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "More utilities" })).toHaveFocus();
+    expect(screen.queryByRole("menu", { name: "Sort records" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Sort records" }));
+    expect(screen.getByRole("menu", { name: "Sort records" })).toBeInTheDocument();
+    fireEvent.keyDown(screen.getByRole("menu", { name: "Sort records" }), { key: "Escape" });
+    expect(screen.queryByRole("menu", { name: "Sort records" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Sort records" })).toHaveFocus();
   });
 });

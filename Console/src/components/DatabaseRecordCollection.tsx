@@ -13,6 +13,7 @@ import {
   type RecordPropertyDefinition,
   type TableRecord,
 } from "../table-kit";
+import type { TableActionsProps } from "../table-kit";
 import { usePagedRecords } from "../hooks/usePagedRecords";
 import type { ReactNode } from "react";
 
@@ -39,6 +40,8 @@ export interface DatabaseRecordCollectionProps<Record> {
   detailId: string | null;
   onDetailChange: (id: string | null) => void;
   detail?: ReactNode;
+  /** Optional consumer-owned create/import actions rendered by the compact header. */
+  actions?: TableActionsProps;
 }
 
 /**
@@ -56,6 +59,7 @@ export function DatabaseRecordCollection<Record>({
   detailId,
   onDetailChange,
   detail,
+  actions,
 }: DatabaseRecordCollectionProps<Record>) {
   const paging = usePagedRecords(utilities.records);
   const properties = useMemo(() => adapter.getPropertyDefinitions(), [adapter]);
@@ -84,9 +88,9 @@ export function DatabaseRecordCollection<Record>({
       rowKey={(record) => record.id}
       caption={`${label} records`}
       views={[
-        { id: "list", label: "List" },
-        { id: "gallery", label: "Gallery" },
-        { id: "table", label: "Table" },
+        { id: "list", label: "List", icon: "☷" },
+        { id: "gallery", label: "Gallery", icon: "▦" },
+        { id: "table", label: "Table", icon: "▤" },
       ]}
       defaultViewId="list"
       selection={{ matchingIds: matchingRecords.map((record) => record.id) }}
@@ -102,6 +106,7 @@ export function DatabaseRecordCollection<Record>({
         detailId={detailId}
         onDetailChange={onDetailChange}
         detail={detail}
+        actions={actions}
       />
     </Table.Root>
   );
@@ -119,6 +124,7 @@ function DatabaseRecordTableShell<Record>({
   detailId,
   onDetailChange,
   detail,
+  actions,
 }: {
   properties: readonly RecordPropertyDefinition<Record>[];
   label: string;
@@ -130,6 +136,7 @@ function DatabaseRecordTableShell<Record>({
   detailId: string | null;
   onDetailChange: (id: string | null) => void;
   detail?: ReactNode;
+  actions?: TableActionsProps;
 }) {
   const { viewId } = useTableContext<TableRecord<Record>>();
   const propertyOptions = useMemo(
@@ -145,19 +152,24 @@ function DatabaseRecordTableShell<Record>({
 
   return (
     <>
-      <Table.Views />
-      <Table.Toolbar>
-        <RecordUtilities
-          label={label}
-          {...utilities}
-          totalCount={records.length}
-          visibleCount={utilities.records.length}
-          sortOptions={sortOptions}
-          filterOptions={filterOptions}
-          compact
-        />
-        <Table.PropertyControls properties={propertyOptions} configuration={configuration} />
-      </Table.Toolbar>
+      <Table.Header>
+        <div className="table-kit-header-controls">
+          <Table.Views />
+          <Table.Toolbar>
+            <RecordUtilities
+              label={label}
+              {...utilities}
+              totalCount={records.length}
+              visibleCount={utilities.records.length}
+              sortOptions={sortOptions}
+              filterOptions={filterOptions}
+              compact
+            />
+            <Table.PropertyControls properties={propertyOptions} configuration={configuration} />
+            {actions && <Table.Actions {...actions} />}
+          </Table.Toolbar>
+        </div>
+      </Table.Header>
       <Table.Selection />
       <Table.Content>
         <DatabaseRecordRenderer
