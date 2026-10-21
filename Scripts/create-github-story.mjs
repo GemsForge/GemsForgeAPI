@@ -7,6 +7,7 @@ Options:
   --labels a,b             Additional labels to apply (type and scope are inferred)
   --assignees a,b          GitHub usernames to assign
   --milestone NUMBER       Milestone number
+  --project NAME            Project name or number (metadata workflow target)
   --parent-issue NUMBER    Native parent/sub-issue relationship
   --blocked-by a,b         Native prerequisite issue numbers
   --blocking a,b           Native dependent issue numbers
@@ -39,10 +40,8 @@ const typeLabels = new Map([
   ["chore", "chore"],
 ]);
 
-const scopeLabels = new Set([
-  "api", "ci", "database", "infrastructure", "model", "schema", "security",
-  "service", "swift", "testing", "ui", "vapor",
-]);
+const engineeringScopes = new Set(["api", "ui", "database", "infrastructure", "model", "schema", "security", "service"]);
+const choreScopes = new Set(["ci", "infrastructure", "testing"]);
 
 export function inferLabels(title, explicitLabels = []) {
   const match = /^(feat|fix|refactor|test|docs|chore)\(([a-z0-9-]+)\):\s+/.exec(title);
@@ -51,7 +50,10 @@ export function inferLabels(title, explicitLabels = []) {
   if (!typeLabels.has(type)) {
     throw new Error(`No active label is configured for story type '${type}'.`);
   }
-  if (!scopeLabels.has(scope)) {
+  const scopeIsValid = type === "docs"
+    ? /^[a-z0-9-]+$/.test(scope)
+    : type === "chore" ? choreScopes.has(scope) : engineeringScopes.has(scope);
+  if (!scopeIsValid) {
     throw new Error(`Unknown story scope '${scope}'. Use an existing scope label.`);
   }
   return [...new Set([typeLabels.get(type), scope, ...explicitLabels])];
@@ -76,6 +78,7 @@ const parseArgs = (args) => {
       options[option === "--milestone" ? "milestone" : "parentIssue"] = value;
     } else if (option === "--blocked-by") options.blockedBy = parseList(value, option);
     else if (option === "--blocking") options.blocking = parseList(value, option);
+    else if (option === "--project") options.project = value;
     else options.repo = value;
   }
   if (!options.title) throw new Error("--title is required.");
