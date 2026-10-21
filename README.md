@@ -167,6 +167,11 @@ current Notes-import boundary.
   the guarded local SQLite creation workflow and its migration profile.
 - [`docs/Live-Schema-Inspection.md`](docs/Live-Schema-Inspection.md) documents
   the read-only live schema endpoint and its safety boundary.
+- [`docs/Table-Views.md`](docs/Table-Views.md) documents the Hub-scoped Table
+  View metadata contracts, query grammar, schema-drift policy, and migration
+  order.
+- [`docs/Milestone-5-Implementation-Ledger.md`](docs/Milestone-5-Implementation-Ledger.md)
+  records the M5 issue, test, and pull-request ledger.
 
 The current operational workflow is documented in docs/Workflow-Operations.md.
 It covers local configuration, live migrations, attachment relationships,
