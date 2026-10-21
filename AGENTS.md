@@ -1,5 +1,7 @@
 # GemsForge project agent context
 
+This repository is the source of truth for GemsForgeAPI.
+
 Implementation feedback rule: when the user suggests or corrects a code, workflow, documentation, test, or policy behavior, treat it as an implementation request for the owning developer agent. Inspect the relevant files, prepare the smallest complete change, run focused verification, create a policy-compliant commit, and push it to the story branch. Do not respond with an explanation only when a repository change is expected.
 
 This repository is the source of truth for GemsForgeAPI.
