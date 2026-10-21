@@ -22,7 +22,8 @@ ModuleRegistry.registerModules([AllCommunityModule]);
 
 /** Shared props for all database renderers, backed by the canonical record contract. */
 export interface TableRendererProps<Record> {
-  records: readonly TableRecord<Record>[];
+  /** Omit records when the renderer should consume the nearest Table.Root rows. */
+  records?: readonly TableRecord<Record>[];
   properties: readonly RecordPropertyDefinition<Record>[];
   propertyIds?: readonly string[];
   selectedIds?: ReadonlySet<TableRecordId>;
@@ -50,6 +51,16 @@ function useRendererSelection(
     onRecordSelect: scopedSelection?.toggle ?? onRecordSelect,
     isSelectable: scopedSelection ? (id) => scopedSelection.currentPageIds.includes(id) : () => true,
   };
+}
+
+/** Resolve the effective result set from the scoped root when a renderer is composed as a view slot. */
+function useRendererRecords<Record>(
+  records: readonly TableRecord<Record>[] | undefined,
+): readonly TableRecord<Record>[] {
+  const context = useContext(TableContext);
+  if (records) return records;
+  if (!context) throw new Error("Table Kit record renderers need records or a Table.Root");
+  return context.rows as readonly TableRecord<Record>[];
 }
 
 function SelectionButton({
@@ -164,11 +175,12 @@ export function RecordList<Record>({
   onRecordSelect,
   onExpansionChange,
 }: TableRendererProps<Record>) {
+  const effectiveRecords = useRendererRecords(records);
   const selection = useRendererSelection(selectedIds, onRecordSelect);
   const visibleProperties = propertiesFor(properties, propertyIds).slice(0, 2);
   return (
     <YStack role="list" gap="$2">
-      {records.map((record) => {
+      {effectiveRecords.map((record) => {
         const selected = selection.selectedIds.has(record.id);
         return (
           <XStack
@@ -218,10 +230,11 @@ export function RecordGallery<Record>({
   expandedId,
   renderExpanded,
 }: TableRendererProps<Record>) {
+  const effectiveRecords = useRendererRecords(records);
   const selection = useRendererSelection(selectedIds, onRecordSelect);
   return (
     <XStack flexWrap="wrap" gap="$3" role="list">
-      {records.map((record) => {
+      {effectiveRecords.map((record) => {
         const selected = selection.selectedIds.has(record.id);
         const expanded = expandedId === record.id;
         const visibleProperties = propertiesFor(properties, propertyIds);
@@ -281,9 +294,10 @@ export function RecordTable<Record>({
   onRecordSelect,
   onExpansionChange,
 }: TableRendererProps<Record>) {
+  const effectiveRecords = useRendererRecords(records);
   const selection = useRendererSelection(selectedIds, onRecordSelect);
   const visibleProperties = propertiesFor(properties, propertyIds);
-  const hasStatus = records.some((record) => record.status !== undefined);
+  const hasStatus = effectiveRecords.some((record) => record.status !== undefined);
   const hasActions = Boolean(selection.onRecordSelect || onExpansionChange);
   const columnDefs = visibleProperties.map<ColDef<TableRecord<Record>>>((property) => ({
     colId: property.id,
@@ -332,7 +346,7 @@ export function RecordTable<Record>({
         containerStyle={{ width: "100%" }}
         theme={themeQuartz}
         columnDefs={columnDefs}
-        rowData={[...records]}
+        rowData={[...effectiveRecords]}
         getRowId={({ data }) => data.id}
         defaultColDef={{ flex: 1, minWidth: 140, resizable: true }}
         domLayout="autoHeight"

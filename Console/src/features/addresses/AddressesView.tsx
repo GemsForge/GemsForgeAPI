@@ -1,18 +1,16 @@
-import { usePagedRecords } from "../../hooks/usePagedRecords";
-import { PaginationControls } from "../../components/PaginationControls";
 import { useState } from "react";
-import { RecordUtilities } from "../../components/RecordUtilities";
-import { RecordCollection } from "../../components/RecordCollection--LEGACY";
 import { useRecordUtilities } from "../../hooks/useRecordUtilities";
 import { useAddressQuery, useAddressAttachmentMutation, useAddressPatchMutation } from "../../data/recordQueries";
 import { QueryFeedback } from "../../components/QueryFeedback";
 import type { Address } from "../../types";
 import { AttachmentControl } from "../../components/AttachmentControl";
-import { GemEmptyState, GemRecordCard, GemRecordList } from "../../components/ui";
+import { GemEmptyState } from "../../components/ui";
 import { EditableRecordFields, formatRecordDate, formatRecordTimestamp } from "../../components/EditableRecordFields";
 import { useCreateAddressMutation } from "../../data/recordQueries";
 import { AddressCreateForm } from "../create/RecordCreateForms";
 import { RecordImport } from "../../components/RecordImport";
+import { DatabaseRecordCollection } from "../../components/DatabaseRecordCollection";
+import { addressTableAdapter } from "../database/recordTableAdapters";
 
 interface AddressesViewProps {
   records: Address[];
@@ -31,7 +29,6 @@ export function AddressesView({ records }: AddressesViewProps) {
       id: (a, b) => a.id.localeCompare(b.id),
     },
   );
-  const paging = usePagedRecords(utilities.records);
   const [selectedID, setSelectedID] = useState<string | null>(null);
   const detail = useAddressQuery(selectedID);
   const attachment = useAddressAttachmentMutation();
@@ -42,7 +39,6 @@ export function AddressesView({ records }: AddressesViewProps) {
 
   return (
     <>
-      <PaginationControls {...paging} label="Addresses" />
       <div className="content-heading">
         <div>
           <p className="eyebrow">Life-area records</p>
@@ -63,24 +59,6 @@ export function AddressesView({ records }: AddressesViewProps) {
           />
         </div>
       </div>
-      <RecordCollection>
-        <RecordUtilities
-          label="Addresses"
-          {...utilities}
-          totalCount={records.length}
-          visibleCount={utilities.records.length}
-          sortOptions={[
-            { value: "city", label: "City" },
-            { value: "type", label: "Address type" },
-            { value: "state", label: "State" },
-            { value: "country", label: "Country" },
-            { value: "status", label: "Status" },
-            { value: "id", label: "Record ID" },
-          ]}
-          filterOptions={Array.from(new Set(records.map((record) => record.addressStatus))).sort()}
-        />
-      </RecordCollection>
-
       {creating && (
         <AddressCreateForm
           onCancel={() => setCreating(false)}
@@ -100,47 +78,41 @@ export function AddressesView({ records }: AddressesViewProps) {
         />
       ) : (
         <div className="address-layout">
-          <GemRecordList
-            className="address-list"
-            records={paging.items}
-            label="Address records"
-            onExpandedChange={setSelectedID}
-            getKey={(record) => record.id}
-            tableColumns={[
-              { key: "city", label: "City", icon: () => "⌂", render: (record) => record.city || "—" },
-              { key: "type", label: "Category", render: (record) => record.addressType },
-              { key: "id", label: "Item ID", render: (record) => record.id },
-              { key: "status", label: "Status", render: (record) => record.addressStatus },
+          <DatabaseRecordCollection
+            label="Addresses"
+            records={records}
+            utilities={utilities}
+            adapter={addressTableAdapter}
+            sortOptions={[
+              { value: "city", label: "City" },
+              { value: "type", label: "Address type" },
+              { value: "state", label: "State" },
+              { value: "country", label: "Country" },
+              { value: "status", label: "Status" },
+              { value: "id", label: "Record ID" },
             ]}
-            renderRecord={(record) => (
-              <GemRecordCard
-                className="address-card"
-                icon="⌂"
-                title={record.city || record.addressType}
-                subtitle={`${record.addressType} · ${record.id}`}
-                status={record.addressStatus}
-                selected={selectedID === record.id}
-                onSelect={() => setSelectedID((current) => (current === record.id ? null : record.id))}
-              />
-            )}
-            isExpanded={(record) => selectedID === record.id}
-            renderExpanded={() => (
-              <>
-                <QueryFeedback query={detail} />
-                {selectedAddress && (
-                  <AddressDetail
-                    key={selectedAddress.id}
-                    record={selectedAddress}
-                    onAttachment={async (metadata) => {
-                      await attachment.mutateAsync({ id: selectedAddress.id, fileID: metadata?.id ?? null });
-                    }}
-                    onPatch={async (values) => {
-                      await patch.mutateAsync({ id: selectedAddress.id, patch: values });
-                    }}
-                  />
-                )}
-              </>
-            )}
+            filterOptions={Array.from(new Set(records.map((record) => record.addressStatus))).sort()}
+            detailId={selectedID}
+            onDetailChange={setSelectedID}
+            detail={
+              selectedID ? (
+                <>
+                  <QueryFeedback query={detail} />
+                  {selectedAddress && (
+                    <AddressDetail
+                      key={selectedAddress.id}
+                      record={selectedAddress}
+                      onAttachment={async (metadata) => {
+                        await attachment.mutateAsync({ id: selectedAddress.id, fileID: metadata?.id ?? null });
+                      }}
+                      onPatch={async (values) => {
+                        await patch.mutateAsync({ id: selectedAddress.id, patch: values });
+                      }}
+                    />
+                  )}
+                </>
+              ) : null
+            }
           />
         </div>
       )}
