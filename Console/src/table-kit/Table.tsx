@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { TableContext } from "./context";
 import type {
   TableActionsProps,
   TableContextValue,
   TableHeaderProps,
+  TableNewRecordOption,
   TableQueryControlsProps,
   TableRootProps,
   TableSelectionProps,
@@ -295,17 +296,62 @@ function QueryControls({
 function Actions({
   onNew,
   onImport,
+  newRecordOptions = [],
   onImportFile,
   onPasteCsv,
   onPasteJson,
   newLabel = "New",
+  newOptionsLabel,
   importLabel = "Import",
   disabled = false,
   pending = false,
 }: TableActionsProps) {
   const isDisabled = disabled || pending;
   const [menuOpen, setMenuOpen] = useState(false);
+  const menuTriggerRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const hasNewRecordMenu = newRecordOptions.length > 0;
   const hasImportMenu = Boolean(onImportFile || onPasteCsv || onPasteJson);
+  const hasMenu = hasNewRecordMenu || hasImportMenu;
+  const menuLabel = newOptionsLabel ?? (hasNewRecordMenu ? "New record options" : "Import options");
+  const closeMenu = useCallback(() => setMenuOpen(false), []);
+
+  useEffect(() => {
+    if (menuOpen) {
+      menuRef.current?.querySelector<HTMLButtonElement>('[role="menuitem"]')?.focus();
+    } else {
+      menuTriggerRef.current?.focus();
+    }
+  }, [menuOpen]);
+
+  const activateMenuItem = async (action: TableNewRecordOption["onSelect"]) => {
+    closeMenu();
+    await action();
+  };
+
+  const handleMenuKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    const items = [...(menuRef.current?.querySelectorAll<HTMLButtonElement>('[role="menuitem"]') ?? [])].filter(
+      (item) => !item.disabled,
+    );
+    if (!items.length) return;
+    const currentIndex = items.indexOf(document.activeElement as HTMLButtonElement);
+    if (event.key === "Escape") {
+      event.preventDefault();
+      closeMenu();
+      return;
+    }
+    if (event.key === "ArrowDown" || event.key === "ArrowUp" || event.key === "Home" || event.key === "End") {
+      event.preventDefault();
+      const nextIndex =
+        event.key === "Home"
+          ? 0
+          : event.key === "End"
+            ? items.length - 1
+            : (currentIndex + (event.key === "ArrowDown" ? 1 : -1) + items.length) % items.length;
+      items[nextIndex]?.focus();
+    }
+  };
+
   return (
     <div className="table-kit-actions" role="group" aria-busy={pending}>
       {onNew && (
@@ -318,31 +364,44 @@ function Actions({
           {importLabel}
         </button>
       )}
-      {hasImportMenu && (
+      {hasMenu && (
         <div className="table-kit-import-menu">
           <button
+            ref={menuTriggerRef}
             type="button"
             aria-haspopup="menu"
             aria-expanded={menuOpen}
+            aria-label={menuLabel}
             onClick={() => setMenuOpen((open) => !open)}
             disabled={isDisabled}
           >
-            Import options
+            {menuLabel}
           </button>
           {menuOpen && (
-            <div role="menu">
+            <div ref={menuRef} role="menu" tabIndex={-1} onKeyDown={handleMenuKeyDown} aria-label={menuLabel}>
+              {newRecordOptions.map((option) => (
+                <button
+                  key={option.id}
+                  type="button"
+                  role="menuitem"
+                  onClick={() => void activateMenuItem(option.onSelect)}
+                >
+                  <span>{option.label}</span>
+                  {option.description && <small>{option.description}</small>}
+                </button>
+              ))}
               {onImportFile && (
-                <button type="button" role="menuitem" onClick={() => void onImportFile()}>
+                <button type="button" role="menuitem" onClick={() => void activateMenuItem(onImportFile)}>
                   Import file
                 </button>
               )}
               {onPasteCsv && (
-                <button type="button" role="menuitem" onClick={() => void onPasteCsv()}>
+                <button type="button" role="menuitem" onClick={() => void activateMenuItem(onPasteCsv)}>
                   Paste CSV
                 </button>
               )}
               {onPasteJson && (
-                <button type="button" role="menuitem" onClick={() => void onPasteJson()}>
+                <button type="button" role="menuitem" onClick={() => void activateMenuItem(onPasteJson)}>
                   Paste JSON
                 </button>
               )}

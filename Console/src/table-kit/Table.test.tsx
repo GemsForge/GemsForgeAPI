@@ -83,8 +83,34 @@ describe("Table Kit", () => {
     fireEvent.click(screen.getByRole("button", { name: "Import options" }));
     fireEvent.click(screen.getByRole("menuitem", { name: "Paste CSV" }));
     expect(onPasteCsv).toHaveBeenCalledOnce();
+    fireEvent.click(screen.getByRole("button", { name: "Import options" }));
     expect(screen.getByRole("menuitem", { name: "Import file" })).toBeInTheDocument();
     expect(screen.getByRole("menuitem", { name: "Paste JSON" })).toBeInTheDocument();
+  });
+
+  it("combines typed create and intake actions in a keyboard-navigable menu", () => {
+    const onNew = vi.fn();
+    const onAddress = vi.fn();
+    const onPaste = vi.fn();
+    render(
+      <Table.Actions
+        onNew={onNew}
+        newRecordOptions={[{ id: "address", label: "New address", onSelect: onAddress }]}
+        onPasteCsv={onPaste}
+      />,
+    );
+
+    const trigger = screen.getByRole("button", { name: "New record options" });
+    fireEvent.click(trigger);
+    const address = screen.getByRole("menuitem", { name: "New address" });
+    expect(address).toHaveFocus();
+    fireEvent.keyDown(screen.getByRole("menu"), { key: "ArrowDown" });
+    expect(screen.getByRole("menuitem", { name: "Paste CSV" })).toHaveFocus();
+    fireEvent.keyDown(screen.getByRole("menu"), { key: "Escape" });
+    expect(trigger).toHaveFocus();
+    fireEvent.click(trigger);
+    fireEvent.click(screen.getByRole("menuitem", { name: "New address" }));
+    expect(onAddress).toHaveBeenCalledOnce();
   });
 
   it("composes the scoped table primitives with typed rows", () => {
