@@ -85,6 +85,7 @@ function Root<Row>({
       allMatchingIds,
       isSelected: selectionState.isSelected,
       toggle: selectionState.toggle,
+      add: selectionState.add,
       selectAll,
       toggleAll,
       clear: selectionState.clear,

@@ -129,6 +129,19 @@ rows and `isSelectableId` when the adapter also needs to exclude disabled
 off-page IDs. The selection state is local to each root, preserves IDs across
 pagination and view changes, and never persists or mutates records by itself.
 
+## Gallery interaction contract
+
+`RecordGallery` renders the effective root rows as responsive cards. The entire
+card surface opens the consumer-owned detail callback on click, Enter, or Space;
+there is no separate View action. Selection remains a separate keyboard-focusable
+control so selecting a record does not open its detail surface. The renderer
+keeps the image region blank when neither the adapter image nor a configured
+image property has a valid source, renders visible property values without
+repeating labels, and exposes the full value through its accessible name and
+browser tooltip when the compact card truncates it. The labeled Card size
+control supports small, medium, and large card layouts, while the bounded
+property region can scroll without changing the gallery or toolbar width.
+
 ## Record contracts
 
 `recordContracts.ts` defines the domain-neutral boundary used by future record

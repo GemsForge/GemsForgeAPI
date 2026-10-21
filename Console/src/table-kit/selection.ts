@@ -23,6 +23,7 @@ export interface TableSelection<RowId extends string = string> {
   selectedIds: ReadonlySet<RowId>;
   isSelected: (id: RowId) => boolean;
   toggle: (id: RowId) => void;
+  add: (ids: readonly RowId[]) => void;
   selectAll: (ids: readonly RowId[]) => void;
   toggleAll: (ids: readonly RowId[]) => void;
   clear: () => void;
@@ -55,6 +56,14 @@ export function useTableSelection<RowId extends string = string>({
       const next = new Set(selectedIds);
       if (next.has(id)) next.delete(id);
       else next.add(id);
+      update(next);
+    },
+    [selectedIds, update],
+  );
+  const add = useCallback(
+    (ids: readonly RowId[]) => {
+      const next = new Set(selectedIds);
+      ids.forEach((id) => next.add(id));
       update(next);
     },
     [selectedIds, update],
@@ -95,12 +104,13 @@ export function useTableSelection<RowId extends string = string>({
       selectedIds,
       isSelected: (id: RowId) => selectedIds.has(id),
       toggle,
+      add,
       selectAll,
       toggleAll,
       clear,
       getSummary,
     }),
-    [clear, getSummary, selectAll, selectedIds, toggle, toggleAll],
+    [add, clear, getSummary, selectAll, selectedIds, toggle, toggleAll],
   );
 }
 
@@ -113,6 +123,7 @@ export interface TableSelectionContext<RowId extends string = string> {
   allMatchingIds: readonly RowId[];
   isSelected: (id: RowId) => boolean;
   toggle: (id: RowId) => void;
+  add: (ids: readonly RowId[]) => void;
   selectAll: (scope: TableSelectionScope) => void;
   toggleAll: (scope: TableSelectionScope) => void;
   clear: () => void;
