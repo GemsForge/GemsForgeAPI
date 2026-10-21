@@ -47,6 +47,7 @@ export function TransactionsView({ records }: TransactionsViewProps) {
   const selectedRecord = detail.data;
   const merchants = useMerchantsQuery(true);
   const [creating, setCreating] = useState(false);
+  const [importing, setImporting] = useState(false);
   const create = useCreateTransactionMutation();
 
   return (
@@ -61,17 +62,22 @@ export function TransactionsView({ records }: TransactionsViewProps) {
         </div>
         <div className="button-row">
           <span className="record-count">{records.length} records</span>
-          <button type="button" onClick={() => setCreating(true)}>
-            Add transaction
-          </button>
-          <RecordImport
-            label="transactions"
-            expectedColumns={["id", "item", "categoryID", "quantity"]}
-            onPublish={async (rows) => {
-              for (const row of rows) await create.mutateAsync(row as Parameters<typeof create.mutateAsync>[0]);
-            }}
-          />
+          {records.length === 0 && (
+            <button type="button" onClick={() => setCreating(true)}>
+              Add transaction
+            </button>
+          )}
         </div>
+        <RecordImport
+          label="transactions"
+          expectedColumns={["id", "item", "categoryID", "quantity"]}
+          open={importing}
+          onOpenChange={setImporting}
+          showTrigger={records.length === 0}
+          onPublish={async (rows) => {
+            for (const row of rows) await create.mutateAsync(row as Parameters<typeof create.mutateAsync>[0]);
+          }}
+        />
       </div>
       {creating && (
         <TransactionCreateForm
@@ -111,6 +117,13 @@ export function TransactionsView({ records }: TransactionsViewProps) {
             ).sort()}
             detailId={selectedID}
             onDetailChange={setSelectedID}
+            actions={{
+              newRecordOptions: [
+                { id: "new-transaction", label: "New transaction", onSelect: () => setCreating(true) },
+              ],
+              onImport: () => setImporting(true),
+              importLabel: "Import transactions",
+            }}
             detail={
               selectedID ? (
                 <>

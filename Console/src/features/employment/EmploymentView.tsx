@@ -54,6 +54,7 @@ export function EmploymentView({ records }: EmploymentViewProps) {
   const patch = useEmploymentPatchMutation();
   const selectedRecord = detail.data;
   const [creating, setCreating] = useState(false);
+  const [importing, setImporting] = useState(false);
   const create = useCreateEmploymentMutation();
   const addresses = useAddressesQuery(true);
 
@@ -69,24 +70,29 @@ export function EmploymentView({ records }: EmploymentViewProps) {
         </div>
         <div className="button-row">
           <span className="record-count">{records.length} records</span>
-          <button type="button" onClick={() => setCreating(true)}>
-            Add employment
-          </button>
-          <RecordImport
-            label="employment records"
-            expectedColumns={[
-              "id",
-              "employerName",
-              "employerType",
-              "positionTitle",
-              "employmentType",
-              "employmentStatus",
-            ]}
-            onPublish={async (rows) => {
-              for (const row of rows) await create.mutateAsync(row as Parameters<typeof create.mutateAsync>[0]);
-            }}
-          />
+          {records.length === 0 && (
+            <button type="button" onClick={() => setCreating(true)}>
+              Add employment
+            </button>
+          )}
         </div>
+        <RecordImport
+          label="employment records"
+          expectedColumns={[
+            "id",
+            "employerName",
+            "employerType",
+            "positionTitle",
+            "employmentType",
+            "employmentStatus",
+          ]}
+          open={importing}
+          onOpenChange={setImporting}
+          showTrigger={records.length === 0}
+          onPublish={async (rows) => {
+            for (const row of rows) await create.mutateAsync(row as Parameters<typeof create.mutateAsync>[0]);
+          }}
+        />
       </div>
       {creating && (
         <EmploymentCreateForm
@@ -125,6 +131,11 @@ export function EmploymentView({ records }: EmploymentViewProps) {
             filterOptions={Array.from(new Set(records.map((record) => record.employmentStatus))).sort()}
             detailId={selectedID}
             onDetailChange={setSelectedID}
+            actions={{
+              newRecordOptions: [{ id: "new-employment", label: "New employment", onSelect: () => setCreating(true) }],
+              onImport: () => setImporting(true),
+              importLabel: "Import employment records",
+            }}
             detail={
               selectedID ? (
                 <>

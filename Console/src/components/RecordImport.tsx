@@ -45,16 +45,30 @@ export function RecordImport({
   label,
   expectedColumns,
   onPublish,
+  open,
+  onOpenChange,
+  showTrigger = true,
 }: {
   label: string;
   expectedColumns: string[];
   onPublish: (rows: Row[]) => Promise<void>;
+  /** Optionally control the import utility from the shared Table Kit header. */
+  open?: boolean;
+  /** Notify the owning view when the import utility opens or closes. */
+  onOpenChange?: (open: boolean) => void;
+  /** Hide the legacy inline trigger when the compact header owns the action. */
+  showTrigger?: boolean;
 }) {
-  const [open, setOpen] = useState(false);
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
   const [text, setText] = useState("");
   const [rows, setRows] = useState<Row[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const isOpen = open ?? uncontrolledOpen;
+  const setOpen = (nextOpen: boolean) => {
+    setUncontrolledOpen(nextOpen);
+    onOpenChange?.(nextOpen);
+  };
   function parse() {
     setError(null);
     try {
@@ -80,12 +94,19 @@ export function RecordImport({
   }
   return (
     <>
-      <button type="button" onClick={() => setOpen((value) => !value)}>
-        {open ? "Close import" : `Import ${label}`}
-      </button>
-      {open && (
+      {showTrigger && (
+        <button type="button" onClick={() => setOpen(!isOpen)}>
+          {isOpen ? "Close import" : `Import ${label}`}
+        </button>
+      )}
+      {isOpen && (
         <section className="record-form">
-          <h3>Import {label}</h3>
+          <div className="detail-heading">
+            <h3>Import {label}</h3>
+            <button type="button" onClick={() => setOpen(false)} aria-label={`Close import ${label}`}>
+              Close
+            </button>
+          </div>
           <p className="muted">Paste a CSV with a header row or a JSON array using the table column names.</p>
           <label>
             Choose CSV or JSON file

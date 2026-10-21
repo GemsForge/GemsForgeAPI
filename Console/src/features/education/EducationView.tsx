@@ -35,6 +35,7 @@ export function EducationView({ records }: EducationViewProps) {
   const patch = useEducationPatchMutation();
   const selectedRecord = detail.data;
   const [creating, setCreating] = useState(false);
+  const [importing, setImporting] = useState(false);
   const create = useCreateEducationMutation();
   const addresses = useAddressesQuery(true);
   const programOptions = Array.from(
@@ -53,17 +54,22 @@ export function EducationView({ records }: EducationViewProps) {
         </div>
         <div className="button-row">
           <span className="record-count">{records.length} records</span>
-          <button type="button" onClick={() => setCreating(true)}>
-            Add education
-          </button>
-          <RecordImport
-            label="education records"
-            expectedColumns={["id", "educationType", "institutionName", "status"]}
-            onPublish={async (rows) => {
-              for (const row of rows) await create.mutateAsync(row as Parameters<typeof create.mutateAsync>[0]);
-            }}
-          />
+          {records.length === 0 && (
+            <button type="button" onClick={() => setCreating(true)}>
+              Add education
+            </button>
+          )}
         </div>
+        <RecordImport
+          label="education records"
+          expectedColumns={["id", "educationType", "institutionName", "status"]}
+          open={importing}
+          onOpenChange={setImporting}
+          showTrigger={records.length === 0}
+          onPublish={async (rows) => {
+            for (const row of rows) await create.mutateAsync(row as Parameters<typeof create.mutateAsync>[0]);
+          }}
+        />
       </div>
       {creating && (
         <EducationCreateForm
@@ -101,6 +107,11 @@ export function EducationView({ records }: EducationViewProps) {
             filterOptions={Array.from(new Set(records.map((record) => record.status))).sort()}
             detailId={selectedID}
             onDetailChange={setSelectedID}
+            actions={{
+              newRecordOptions: [{ id: "new-education", label: "New education", onSelect: () => setCreating(true) }],
+              onImport: () => setImporting(true),
+              importLabel: "Import education records",
+            }}
             detail={
               selectedRecord ? (
                 <>

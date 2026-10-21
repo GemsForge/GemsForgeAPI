@@ -68,13 +68,23 @@ describe("Table Kit", () => {
     expect(onStateChange).toHaveBeenLastCalledWith({ search: "", filters: {}, sort: [], pageIndex: 0, pageSize: 25 });
   });
 
-  it("injects accessible New and Import actions and disables them while pending", () => {
+  it("combines New and Import actions behind the compact trigger while pending", () => {
     const onNew = vi.fn();
     const onImport = vi.fn();
     render(<Table.Actions onNew={onNew} onImport={onImport} pending />);
-    expect(screen.getByRole("button", { name: "New" })).toBeDisabled();
-    expect(screen.getByRole("button", { name: "Import" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "New record options" })).toBeDisabled();
     expect(screen.getByRole("group")).toHaveAttribute("aria-busy", "true");
+  });
+
+  it("opens New and Import operations from the plus utility", () => {
+    const onNew = vi.fn();
+    const onImport = vi.fn();
+    render(<Table.Actions onNew={onNew} onImport={onImport} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "New record options" }));
+    expect(screen.getByRole("menuitem", { name: "New" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("menuitem", { name: "Import" }));
+    expect(onImport).toHaveBeenCalledOnce();
   });
 
   it("exposes separate file and paste import menu entry points", () => {

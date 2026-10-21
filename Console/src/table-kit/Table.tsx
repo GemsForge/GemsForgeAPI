@@ -299,7 +299,7 @@ function QueryControls({
   );
 }
 
-/** Render the compact plus utility while preserving consumer-owned create/import actions. */
+/** Render the compact plus utility while preserving consumer-owned create/import actions in one menu. */
 function Actions({
   onNew,
   onImport,
@@ -319,11 +319,12 @@ function Actions({
   const menuRef = useRef<HTMLDivElement>(null);
   const hasNewRecordMenu = newRecordOptions.length > 0;
   const hasImportMenu = Boolean(onImportFile || onPasteCsv || onPasteJson);
-  const hasMenu = hasNewRecordMenu || hasImportMenu || Boolean(onNew && (hasNewRecordMenu || hasImportMenu));
+  const hasMenu = hasNewRecordMenu || hasImportMenu || Boolean(onNew && onImport);
   const menuLabel = newOptionsLabel ?? (onNew || hasNewRecordMenu ? "New record options" : "Import options");
   const menuOptions: TableNewRecordOption[] = [
     ...(onNew ? [{ id: "default-new", label: newLabel, onSelect: onNew }] : []),
     ...newRecordOptions,
+    ...(onImport && hasMenu ? [{ id: "default-import", label: importLabel, onSelect: onImport }] : []),
   ];
   const closeMenu = useCallback(() => setMenuOpen(false), []);
 
@@ -379,7 +380,7 @@ function Actions({
           <span className="sr-only">{newLabel}</span>
         </button>
       )}
-      {onImport && (
+      {onImport && !hasMenu && (
         <button type="button" onClick={() => void onImport()} disabled={isDisabled} aria-busy={pending}>
           {importLabel}
         </button>
