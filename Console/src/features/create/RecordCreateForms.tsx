@@ -488,12 +488,10 @@ export function EmploymentCreateForm({
           <Text form={form} name="startDate" label="Start date" type="date" />
           <Text form={form} name="endDate" label="End date" type="date" />
           <Select form={form} name="employmentStatus" label="Status" options={statusOptions} required />
-          {fields(form, [
-            ["employerContact", "Contact"],
-            ["employerContactNumber", "Contact number"],
-            ["employerContactEmail", "Contact email"],
-            ["notes", "Notes"],
-          ])}
+          <Text form={form} name="employerContact" label="Contact" />
+          <Text form={form} name="employerContactNumber" label="Contact number" type="tel" />
+          <Text form={form} name="employerContactEmail" label="Contact email" type="email" />
+          <Text form={form} name="notes" label="Notes" multiline />
           <Select
             form={form}
             name="workAddressID"

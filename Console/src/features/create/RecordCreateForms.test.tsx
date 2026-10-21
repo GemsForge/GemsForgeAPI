@@ -127,5 +127,8 @@ describe("shared create form workflow", () => {
     expect(screen.getByLabelText("Website")).toHaveAttribute("type", "url");
     expect(screen.getByLabelText("Start date")).toHaveAttribute("type", "date");
     expect(screen.getByLabelText("End date")).toHaveAttribute("type", "date");
+    expect(screen.getByLabelText("Contact")).toHaveAttribute("type", "text");
+    expect(screen.getByLabelText("Contact number")).toHaveAttribute("type", "tel");
+    expect(screen.getByLabelText("Contact email")).toHaveAttribute("type", "email");
   });
 });
