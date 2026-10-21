@@ -26,6 +26,11 @@ function PaginationHarness() {
   );
 }
 
+function StateHarness() {
+  const { viewId, pagination } = useTableContext<Row>();
+  return <output>{`${viewId ?? "none"}:${pagination?.pageIndex ?? "none"}`}</output>;
+}
+
 describe("Table Kit", () => {
   it("composes the scoped table primitives with typed rows", () => {
     render(
@@ -72,5 +77,34 @@ describe("Table Kit", () => {
 
   it("throws when a compound component is outside Root", () => {
     expect(() => render(<Table.Content />)).toThrow("Table Kit components must be rendered inside Table.Root");
+  });
+
+  it("keeps uncontrolled state scoped to each Root", () => {
+    render(
+      <>
+        <Table.Root<Row>
+          rows={rows}
+          columns={columns}
+          rowKey={(row) => row.id}
+          views={[{ id: "first", label: "First" }]}
+          defaultViewId="first"
+          defaultPagination={{ pageIndex: 2, pageSize: 10 }}
+        >
+          <StateHarness />
+        </Table.Root>
+        <Table.Root<Row>
+          rows={rows}
+          columns={columns}
+          rowKey={(row) => row.id}
+          views={[{ id: "second", label: "Second" }]}
+          defaultViewId="second"
+        >
+          <StateHarness />
+        </Table.Root>
+      </>,
+    );
+
+    expect(screen.getAllByText("first:2")).toHaveLength(1);
+    expect(screen.getAllByText("second:0")).toHaveLength(1);
   });
 });
