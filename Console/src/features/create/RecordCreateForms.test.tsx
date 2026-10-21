@@ -4,6 +4,7 @@ import type { GeoapifySearchClient } from "../addresses/GeoapifyAddressSearch";
 import { AddressCreateForm, EmploymentCreateForm } from "./RecordCreateForms";
 import { TamaguiProvider } from "tamagui";
 import { tamaguiConfig } from "../../design-system";
+import type { Address } from "../../types";
 
 function render(ui: React.ReactElement) {
   return rtlRender(
@@ -110,9 +111,25 @@ describe("shared create form workflow", () => {
   });
 
   it("renders employment classifications as shared Tamagui selects", () => {
+    const workAddress: Address = {
+      id: "ADDR-1",
+      addressType: "Work",
+      addressLine1: null,
+      addressLine2: null,
+      city: "Boston",
+      state: "MA",
+      postalCode: null,
+      country: "US",
+      startDate: null,
+      endDate: null,
+      addressStatus: "Current",
+      notes: null,
+      imageFileMetadataID: null,
+    };
+
     render(
       <EmploymentCreateForm
-        addresses={[]}
+        addresses={[workAddress]}
         employerTypeOptions={[{ value: "Company", label: "Company" }]}
         industryOptions={[{ value: "Technology", label: "Technology" }]}
         statusOptions={[{ value: "Current", label: "Current" }]}
@@ -130,5 +147,7 @@ describe("shared create form workflow", () => {
     expect(screen.getByLabelText("Contact")).toHaveAttribute("type", "text");
     expect(screen.getByLabelText("Contact number")).toHaveAttribute("type", "tel");
     expect(screen.getByLabelText("Contact email")).toHaveAttribute("type", "email");
+    expect(screen.getByLabelText("Search Work address")).toHaveAttribute("placeholder", "Search existing addresses");
+    expect(screen.queryByLabelText("Stable employment ID *")).not.toBeInTheDocument();
   });
 });

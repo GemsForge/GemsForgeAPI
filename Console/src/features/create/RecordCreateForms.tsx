@@ -11,7 +11,12 @@ import {
   type UseFormReturn,
 } from "react-hook-form";
 import { z } from "zod";
-import { CreateFormFrame, CreateSelectField, CreateTextField } from "../../components/forms/CreateForm";
+import {
+  CreateFormFrame,
+  CreateSearchableSelectField,
+  CreateSelectField,
+  CreateTextField,
+} from "../../components/forms/CreateForm";
 import {
   GeoapifyAddressSearch,
   type AddressSearchValues,
@@ -198,30 +203,48 @@ function Select<T extends FieldValues>({
   label,
   options,
   required = false,
+  searchable = false,
+  searchPlaceholder,
 }: {
   form: UseFormReturn<T>;
   name: Path<T>;
   label: string;
   options: Array<{ value: string; label: string }>;
   required?: boolean;
+  searchable?: boolean;
+  searchPlaceholder?: string;
 }) {
   const message = form.formState.errors[name]?.message;
   return (
     <Controller
       control={form.control as Control<T>}
       name={name}
-      render={({ field }) => (
-        <CreateSelectField
-          label={label}
-          name={field.name}
-          value={String(field.value ?? "")}
-          onValueChange={field.onChange}
-          onBlur={field.onBlur}
-          options={options}
-          required={required}
-          error={typeof message === "string" ? message : undefined}
-        />
-      )}
+      render={({ field }) =>
+        searchable ? (
+          <CreateSearchableSelectField
+            label={label}
+            name={field.name}
+            value={String(field.value ?? "")}
+            onValueChange={field.onChange}
+            onBlur={field.onBlur}
+            options={options}
+            required={required}
+            searchPlaceholder={searchPlaceholder}
+            error={typeof message === "string" ? message : undefined}
+          />
+        ) : (
+          <CreateSelectField
+            label={label}
+            name={field.name}
+            value={String(field.value ?? "")}
+            onValueChange={field.onChange}
+            onBlur={field.onBlur}
+            options={options}
+            required={required}
+            error={typeof message === "string" ? message : undefined}
+          />
+        )
+      }
     />
   );
 }
@@ -229,6 +252,11 @@ function fields<T extends FieldValues>(form: UseFormReturn<T>, definitions: Arra
   return definitions.map(([name, label, requiredField]) => (
     <Text key={name} form={form} name={name} label={label} required={requiredField} />
   ));
+}
+
+/** Generate the stable EmploymentID required by the existing API without exposing it as form input. */
+function createEmploymentID(): string {
+  return `EMP-${crypto.randomUUID()}`;
 }
 
 export function DomainCreateForm({
@@ -434,12 +462,14 @@ export function EmploymentCreateForm({
   onCreate: (payload: EmploymentCreate) => Promise<void>;
   onCancel: () => void;
 }) {
+  const [generatedID] = useState(createEmploymentID);
+
   return (
     <FormShell
       title="Create employment record"
       schema={employmentSchema}
       defaultValues={{
-        id: "",
+        id: generatedID,
         employerName: "",
         employerType: "",
         industry: "",
@@ -474,10 +504,7 @@ export function EmploymentCreateForm({
     >
       {(form) => (
         <>
-          {fields(form, [
-            ["id", "Stable employment ID", true],
-            ["employerName", "Employer name", true],
-          ])}
+          {fields(form, [["employerName", "Employer name", true]])}
           <Select form={form} name="employerType" label="Employer type" options={employerTypeOptions} required />
           <Select form={form} name="industry" label="Industry" options={industryOptions} />
           <Text form={form} name="website" label="Website" type="url" />
@@ -496,6 +523,8 @@ export function EmploymentCreateForm({
             form={form}
             name="workAddressID"
             label="Work address"
+            searchable
+            searchPlaceholder="Search existing addresses"
             options={addresses.map((a) => ({
               value: a.id,
               label: [a.addressType, a.city, a.id].filter(Boolean).join(" · "),

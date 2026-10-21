@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import type { UseFormRegisterReturn } from "react-hook-form";
 import { Form, Input, Label, Select, SizableText, TextArea, YStack } from "tamagui";
 
@@ -118,6 +118,65 @@ export function CreateTextField({
   );
 }
 
+interface CreateSelectControlProps {
+  id: string;
+  name: string;
+  value: string;
+  onValueChange: (value: string) => void;
+  onBlur: () => void;
+  error?: string;
+  options: Array<{ value: string; label: string }>;
+  required: boolean;
+}
+
+/** Render the shared select control used by both regular and searchable selectors. */
+function CreateSelectControl({
+  id,
+  name,
+  value,
+  onValueChange,
+  onBlur,
+  error,
+  options,
+  required,
+}: CreateSelectControlProps) {
+  return (
+    <Select name={name} value={value || undefined} onValueChange={onValueChange}>
+      <Select.Trigger
+        id={id}
+        className="create-form-control"
+        {...controlStyle}
+        aria-invalid={Boolean(error)}
+        aria-describedby={error ? `${id}-error` : undefined}
+        aria-required={required}
+        onBlur={onBlur}
+      >
+        <Select.Value placeholder="Select…" />
+      </Select.Trigger>
+      <Select.Content>
+        <Select.Viewport minWidth={240}>
+          {options.map((option) => (
+            <Select.Item key={option.value} value={option.value}>
+              <Select.ItemText>{option.label}</Select.ItemText>
+            </Select.Item>
+          ))}
+        </Select.Viewport>
+      </Select.Content>
+    </Select>
+  );
+}
+
+interface CreateSelectFieldProps {
+  label: string;
+  name: string;
+  value: string;
+  onValueChange: (value: string) => void;
+  onBlur: () => void;
+  error?: string;
+  options: Array<{ value: string; label: string }>;
+  required?: boolean;
+}
+
 /** Render a keyboard-accessible Tamagui select while keeping React Hook Form as its value owner. */
 export function CreateSelectField({
   label,
@@ -128,41 +187,66 @@ export function CreateSelectField({
   error,
   options,
   required = false,
-}: {
-  label: string;
-  name: string;
-  value: string;
-  onValueChange: (value: string) => void;
-  onBlur: () => void;
-  error?: string;
-  options: Array<{ value: string; label: string }>;
-  required?: boolean;
-}) {
+}: CreateSelectFieldProps) {
   const id = name;
   return (
     <CreateFieldFrame id={id} label={label} required={required} error={error}>
-      <Select name={name} value={value || undefined} onValueChange={onValueChange}>
-        <Select.Trigger
-          id={id}
+      <CreateSelectControl
+        id={id}
+        name={name}
+        value={value}
+        onValueChange={onValueChange}
+        onBlur={onBlur}
+        error={error}
+        options={options}
+        required={required}
+      />
+    </CreateFieldFrame>
+  );
+}
+
+/** Render a searchable existing-record selector while preserving the selected record ID. */
+export function CreateSearchableSelectField({
+  label,
+  name,
+  value,
+  onValueChange,
+  onBlur,
+  error,
+  options,
+  required = false,
+  searchPlaceholder = "Search options…",
+}: CreateSelectFieldProps & { searchPlaceholder?: string }) {
+  const [query, setQuery] = useState("");
+  const normalizedQuery = query.trim().toLowerCase();
+  const filteredOptions = normalizedQuery
+    ? options.filter((option) => `${option.label} ${option.value}`.toLowerCase().includes(normalizedQuery))
+    : options;
+
+  return (
+    <CreateFieldFrame id={name} label={label} required={required} error={error}>
+      <YStack gap="$2">
+        <Input
+          type="search"
           className="create-form-control"
           {...controlStyle}
-          aria-invalid={Boolean(error)}
-          aria-describedby={error ? `${id}-error` : undefined}
-          aria-required={required}
+          aria-label={`Search ${label}`}
+          placeholder={searchPlaceholder}
+          autoComplete="off"
+          value={query}
+          onChange={(event) => setQuery(event.currentTarget.value)}
+        />
+        <CreateSelectControl
+          id={name}
+          name={name}
+          value={value}
+          onValueChange={onValueChange}
           onBlur={onBlur}
-        >
-          <Select.Value placeholder="Select…" />
-        </Select.Trigger>
-        <Select.Content>
-          <Select.Viewport minWidth={240}>
-            {options.map((option) => (
-              <Select.Item key={option.value} value={option.value}>
-                <Select.ItemText>{option.label}</Select.ItemText>
-              </Select.Item>
-            ))}
-          </Select.Viewport>
-        </Select.Content>
-      </Select>
+          error={error}
+          options={filteredOptions}
+          required={required}
+        />
+      </YStack>
     </CreateFieldFrame>
   );
 }
