@@ -184,8 +184,18 @@ function Views<Row>() {
     >
       {views.map((view) => (
         <ToggleGroup.Item key={view.id} value={view.id} aria-label={view.label}>
-          {view.icon}
-          <span>{view.label}</span>
+          <Tooltip placement="top" delay={300}>
+            <Tooltip.Trigger asChild>
+              <span className="table-kit-view-icon" aria-hidden="true">
+                {view.icon}
+              </span>
+            </Tooltip.Trigger>
+            <Tooltip.Content className="table-kit-tooltip">
+              <Tooltip.Arrow />
+              <span>{view.label}</span>
+            </Tooltip.Content>
+          </Tooltip>
+          <span className="sr-only">{view.label}</span>
         </ToggleGroup.Item>
       ))}
     </ToggleGroup>
