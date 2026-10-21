@@ -112,7 +112,7 @@ export function EducationView({ records }: EducationViewProps) {
                 options: [
                   {
                     id: "new-education",
-                    label: "New education",
+                    label: "Input Form",
                     description: "Open the education form.",
                     render: ({ close }) => (
                       <EducationCreateForm
@@ -128,7 +128,7 @@ export function EducationView({ records }: EducationViewProps) {
                   },
                   {
                     id: "import-education-file",
-                    label: "Import file",
+                    label: "Import File",
                     description: "Choose a CSV or JSON file.",
                     render: ({ close }) => (
                       <RecordImport

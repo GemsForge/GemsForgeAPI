@@ -140,7 +140,7 @@ export function EmploymentView({ records }: EmploymentViewProps) {
                 options: [
                   {
                     id: "new-employment",
-                    label: "New employment",
+                    label: "Input Form",
                     description: "Open the employment form.",
                     render: ({ close }) => (
                       <EmploymentCreateForm
@@ -160,7 +160,7 @@ export function EmploymentView({ records }: EmploymentViewProps) {
                   },
                   {
                     id: "import-employment-file",
-                    label: "Import file",
+                    label: "Import File",
                     description: "Choose a CSV or JSON file.",
                     render: ({ close }) => (
                       <RecordImport

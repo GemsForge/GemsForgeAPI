@@ -105,7 +105,7 @@ export function AddressesView({ records }: AddressesViewProps) {
                 options: [
                   {
                     id: "new-address",
-                    label: "New address",
+                    label: "Input Form",
                     description: "Open the address form.",
                     render: ({ close }) => (
                       <AddressCreateForm
@@ -120,7 +120,7 @@ export function AddressesView({ records }: AddressesViewProps) {
                   },
                   {
                     id: "import-address-file",
-                    label: "Import file",
+                    label: "Import File",
                     description: "Choose a CSV or JSON file.",
                     render: ({ close }) => (
                       <RecordImport

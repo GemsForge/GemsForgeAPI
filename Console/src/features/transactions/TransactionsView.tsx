@@ -122,7 +122,7 @@ export function TransactionsView({ records }: TransactionsViewProps) {
                 options: [
                   {
                     id: "new-transaction",
-                    label: "New transaction",
+                    label: "Input Form",
                     description: "Open the transaction form.",
                     render: ({ close }) => (
                       <TransactionCreateForm
@@ -137,7 +137,7 @@ export function TransactionsView({ records }: TransactionsViewProps) {
                   },
                   {
                     id: "import-transaction-file",
-                    label: "Import file",
+                    label: "Import File",
                     description: "Choose a CSV or JSON file.",
                     render: ({ close }) => (
                       <RecordImport

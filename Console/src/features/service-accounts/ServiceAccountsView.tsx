@@ -154,7 +154,7 @@ export function ServiceAccountsView({ records }: { records: ServiceAccount[] }) 
                 options: [
                   {
                     id: "new-service",
-                    label: "New service",
+                    label: "Input Form",
                     description: "Open the service account form.",
                     render: ({ close }) => (
                       <ServiceAccountCreateForm
@@ -169,7 +169,7 @@ export function ServiceAccountsView({ records }: { records: ServiceAccount[] }) 
                   },
                   {
                     id: "import-service-file",
-                    label: "Import file",
+                    label: "Import File",
                     description: "Choose a CSV or JSON file.",
                     render: ({ close }) => (
                       <RecordImport
