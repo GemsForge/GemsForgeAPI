@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 
+/** A typed column definition supplied by a consuming table. */
 export interface TableColumn<Row> {
   id: string;
   header: ReactNode;
@@ -7,22 +8,26 @@ export interface TableColumn<Row> {
   visible?: boolean;
 }
 
+/** A named presentation that can be selected by the table shell. */
 export interface TableView {
   id: string;
   label: string;
 }
 
+/** Server-facing pagination metadata returned with a result page. */
 export interface TablePagination {
   pageIndex: number;
   pageSize: number;
   total: number;
 }
 
+/** Client-owned pagination input used by controlled and uncontrolled roots. */
 export interface TablePaginationState {
   pageIndex: number;
   pageSize: number;
 }
 
+/** The complete, domain-neutral configuration for a Table.Root instance. */
 export interface TableRootProps<Row> {
   rows: readonly Row[];
   columns: readonly TableColumn<Row>[];
@@ -38,6 +43,7 @@ export interface TableRootProps<Row> {
   onPaginationChange?: (pagination: TablePaginationState) => void;
 }
 
+/** State and integration callbacks exposed to compound Table children. */
 export interface TableContextValue<Row> {
   rows: readonly Row[];
   columns: readonly TableColumn<Row>[];

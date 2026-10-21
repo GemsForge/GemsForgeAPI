@@ -1,5 +1,6 @@
 export type SortDirection = "ascending" | "descending";
 
+/** Normalized, serializable query state shared by every table presentation. */
 export interface TableQueryState {
   search: string;
   filters: Readonly<Record<string, string>>;
@@ -8,6 +9,7 @@ export interface TableQueryState {
   pageSize: number;
 }
 
+/** A page of results after query processing. */
 export interface TableQueryResult<Row> {
   rows: readonly Row[];
   total: number;
@@ -15,6 +17,7 @@ export interface TableQueryResult<Row> {
   pageSize: number;
 }
 
+/** Optional server-side execution boundary; transport and caching stay external. */
 export interface TableQueryAdapter<Row> {
   execute: (query: TableQueryState, signal?: AbortSignal) => Promise<TableQueryResult<Row>>;
 }
@@ -32,6 +35,7 @@ export interface UseTableQueryStateResult {
   reset: () => void;
 }
 
+/** Callbacks required to derive client-side results without domain coupling. */
 export interface ClientQueryOptions<Row> {
   rows: readonly Row[];
   searchText: (row: Row) => string;
@@ -39,6 +43,7 @@ export interface ClientQueryOptions<Row> {
   compare?: (left: Row, right: Row, columnId: string) => number;
 }
 
+/** Defaults used when a caller provides a partial query state. */
 export const defaultTableQueryState: TableQueryState = {
   search: "",
   filters: {},
@@ -47,6 +52,7 @@ export const defaultTableQueryState: TableQueryState = {
   pageSize: 25,
 };
 
+/** Normalize query input without mutating caller-owned state. */
 export function normalizeTableQueryState(state: Partial<TableQueryState> = {}): TableQueryState {
   return {
     search: state.search?.trim() ?? "",
@@ -57,6 +63,7 @@ export function normalizeTableQueryState(state: Partial<TableQueryState> = {}): 
   };
 }
 
+/** Manage query ownership and preserve independent state for each view ID. */
 export function useTableQueryState({
   viewId,
   defaultState,
@@ -91,6 +98,7 @@ export function useTableQueryState({
   return { state, setState, reset };
 }
 
+/** Derive filtered, sorted, paginated results for a client-owned data set. */
 export function deriveClientQuery<Row>(
   query: TableQueryState,
   { rows, searchText, filterValue, compare }: ClientQueryOptions<Row>,
