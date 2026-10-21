@@ -5,7 +5,7 @@ export type TableRecordId = string;
 
 /** Supported semantic hints for a record property renderer. */
 export type RecordPropertyKind =
-  "title" | "text" | "number" | "date" | "select" | "status" | "image" | "relation" | "formula" | "unknown";
+  "title" | "text" | "number" | "date" | "select" | "status" | "image" | "relation" | "formula";
 
 /** Image metadata that an adapter can provide without coupling the renderer to a domain. */
 export interface RecordImage {
