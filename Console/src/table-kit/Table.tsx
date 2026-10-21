@@ -1,6 +1,13 @@
 import { useCallback, useMemo, useState, type ReactNode } from "react";
 import { TableContext } from "./context";
-import type { TableContextValue, TableRootProps } from "./types";
+import type {
+  TableActionsProps,
+  TableContextValue,
+  TableHeaderProps,
+  TableQueryControlsProps,
+  TableRootProps,
+} from "./types";
+import type { TableQueryState } from "./query";
 import { useTableContext } from "./context";
 
 function Root<Row>({
@@ -66,8 +73,42 @@ function Root<Row>({
   );
 }
 
-function Header({ children }: { children?: ReactNode }) {
-  return <header className="table-kit-header">{children}</header>;
+function Header({
+  children,
+  title,
+  description,
+  metadata,
+  collapsibleDescription = false,
+}: TableHeaderProps & { children?: ReactNode }) {
+  return (
+    <header className="table-kit-header">
+      {children}
+      {title !== undefined && <div className="table-kit-title">{title}</div>}
+      {description !== undefined && <Description collapsible={collapsibleDescription}>{description}</Description>}
+      {metadata !== undefined && <div className="table-kit-metadata">{metadata}</div>}
+    </header>
+  );
+}
+
+function Description({ children, collapsible = false }: { children?: ReactNode; collapsible?: boolean }) {
+  const [open, setOpen] = useState(true);
+  if (!collapsible) return <p className="table-kit-description">{children}</p>;
+  return (
+    <div className="table-kit-description">
+      <button type="button" aria-expanded={open} onClick={() => setOpen((current) => !current)}>
+        {open ? "Hide description" : "Show description"}
+      </button>
+      {open && <p>{children}</p>}
+    </div>
+  );
+}
+
+function Title({ children }: { children?: ReactNode }) {
+  return <h2 className="table-kit-title">{children}</h2>;
+}
+
+function Metadata({ children }: { children?: ReactNode }) {
+  return <dl className="table-kit-metadata">{children}</dl>;
 }
 
 function Views<Row>() {
@@ -83,7 +124,8 @@ function Views<Row>() {
           aria-selected={view.id === viewId}
           onClick={() => setViewId(view.id)}
         >
-          {view.label}
+          {view.icon}
+          <span>{view.label}</span>
         </button>
       ))}
     </div>
@@ -94,6 +136,82 @@ function Toolbar({ children }: { children?: ReactNode }) {
   return (
     <div className="table-kit-toolbar" role="toolbar">
       {children}
+    </div>
+  );
+}
+
+function QueryControls({
+  state,
+  onStateChange,
+  filters = [],
+  searchLabel = "Search",
+  searchPlaceholder = "Search",
+  disabled = false,
+  pending = false,
+}: TableQueryControlsProps) {
+  const update = (patch: Partial<TableQueryState>) => onStateChange({ ...state, ...patch, pageIndex: 0 });
+  const isDisabled = disabled || pending;
+  return (
+    <div className="table-kit-query-controls" aria-busy={pending}>
+      <label>
+        {searchLabel}
+        <input
+          type="search"
+          value={state.search}
+          placeholder={searchPlaceholder}
+          disabled={isDisabled}
+          onChange={(event) => update({ search: event.target.value })}
+        />
+      </label>
+      {filters.map((filter) => (
+        <label key={filter.id}>
+          {filter.label}
+          <select
+            value={state.filters[filter.id] ?? ""}
+            disabled={isDisabled}
+            onChange={(event) => update({ filters: { ...state.filters, [filter.id]: event.target.value } })}
+          >
+            <option value="">All</option>
+            {filter.options.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+      ))}
+      <button
+        type="button"
+        onClick={() => onStateChange({ ...state, search: "", filters: {}, pageIndex: 0 })}
+        disabled={isDisabled}
+      >
+        Reset
+      </button>
+    </div>
+  );
+}
+
+function Actions({
+  onNew,
+  onImport,
+  newLabel = "New",
+  importLabel = "Import",
+  disabled = false,
+  pending = false,
+}: TableActionsProps) {
+  const isDisabled = disabled || pending;
+  return (
+    <div className="table-kit-actions" role="group" aria-busy={pending}>
+      {onNew && (
+        <button type="button" onClick={() => void onNew()} disabled={isDisabled} aria-busy={pending}>
+          {newLabel}
+        </button>
+      )}
+      {onImport && (
+        <button type="button" onClick={() => void onImport()} disabled={isDisabled} aria-busy={pending}>
+          {importLabel}
+        </button>
+      )}
     </div>
   );
 }
@@ -116,4 +234,17 @@ function Pagination<Row>({ children }: { children?: ReactNode }) {
   );
 }
 
-export const Table = { Root, Header, Views, Toolbar, Content, Pagination };
+export const Table = {
+  Root,
+  Header: Object.assign(Header, { Title, Description, Metadata }),
+  // Keep the flat exports as additive compatibility aliases.
+  Title,
+  Description,
+  Metadata,
+  Views,
+  Toolbar,
+  QueryControls,
+  Actions,
+  Content,
+  Pagination,
+};

@@ -24,9 +24,12 @@ export interface TableQueryAdapter<Row> {
 
 export interface UseTableQueryStateOptions {
   viewId?: string;
+  views?: ReadonlyArray<{ id: string; configuration?: Partial<TableQueryState> }>;
   defaultState?: Partial<TableQueryState>;
   state?: TableQueryState;
   onStateChange?: (state: TableQueryState) => void;
+  /** Initial query configurations keyed by named view ID. */
+  viewConfigurations?: Readonly<Record<string, Partial<TableQueryState>>>;
 }
 
 export interface UseTableQueryStateResult {
@@ -66,11 +69,22 @@ export function normalizeTableQueryState(state: Partial<TableQueryState> = {}): 
 /** Manage query ownership and preserve independent state for each view ID. */
 export function useTableQueryState({
   viewId,
+  views,
   defaultState,
   state: controlledState,
   onStateChange,
+  viewConfigurations = {},
 }: UseTableQueryStateOptions = {}): UseTableQueryStateResult {
-  const initialState = normalizeTableQueryState(defaultState);
+  const configuredViews = useMemo(
+    () => ({
+      ...Object.fromEntries(
+        (views ?? []).filter((view) => view.configuration).map((view) => [view.id, view.configuration]),
+      ),
+      ...viewConfigurations,
+    }),
+    [viewConfigurations, views],
+  );
+  const initialState = normalizeTableQueryState({ ...defaultState, ...(viewId ? configuredViews[viewId] : undefined) });
   const [uncontrolledState, setUncontrolledState] = useState(initialState);
   const viewStates = useRef(new Map<string, TableQueryState>());
   const previousViewId = useRef(viewId);
@@ -81,8 +95,13 @@ export function useTableQueryState({
     if (previousViewId.current) viewStates.current.set(previousViewId.current, state);
     previousViewId.current = viewId;
     const restored = viewId ? viewStates.current.get(viewId) : undefined;
-    if (controlledState === undefined) setUncontrolledState(restored ?? initialState);
-  }, [controlledState, initialState, state, viewId]);
+    const configured = viewId ? configuredViews[viewId] : undefined;
+    if (controlledState === undefined) {
+      setUncontrolledState(
+        restored ?? (configured ? normalizeTableQueryState({ ...initialState, ...configured }) : initialState),
+      );
+    }
+  }, [controlledState, configuredViews, initialState, state, viewId]);
 
   const setState = useCallback(
     (next: TableQueryState | ((current: TableQueryState) => TableQueryState)) => {
@@ -130,4 +149,4 @@ export function deriveClientQuery<Row>(
     pageSize: normalized.pageSize,
   };
 }
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
