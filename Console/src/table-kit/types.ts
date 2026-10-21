@@ -76,6 +76,9 @@ export interface TableQueryControlsProps {
 export interface TableActionsProps {
   onNew?: () => void | Promise<void>;
   onImport?: () => void | Promise<void>;
+  onImportFile?: () => void | Promise<void>;
+  onPasteCsv?: () => void | Promise<void>;
+  onPasteJson?: () => void | Promise<void>;
   newLabel?: string;
   importLabel?: string;
   disabled?: boolean;

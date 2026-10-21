@@ -56,6 +56,18 @@ describe("Table Kit", () => {
     expect(screen.getByRole("group")).toHaveAttribute("aria-busy", "true");
   });
 
+  it("exposes separate file and paste import menu entry points", () => {
+    const onImportFile = vi.fn();
+    const onPasteCsv = vi.fn();
+    const onPasteJson = vi.fn();
+    render(<Table.Actions onImportFile={onImportFile} onPasteCsv={onPasteCsv} onPasteJson={onPasteJson} />);
+    fireEvent.click(screen.getByRole("button", { name: "Import options" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Paste CSV" }));
+    expect(onPasteCsv).toHaveBeenCalledOnce();
+    expect(screen.getByRole("menuitem", { name: "Import file" })).toBeInTheDocument();
+    expect(screen.getByRole("menuitem", { name: "Paste JSON" })).toBeInTheDocument();
+  });
+
   it("composes the scoped table primitives with typed rows", () => {
     render(
       <Table.Root<Row> rows={rows} columns={columns} rowKey={(row) => row.id} caption="Records">

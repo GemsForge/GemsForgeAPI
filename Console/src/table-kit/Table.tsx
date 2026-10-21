@@ -194,12 +194,17 @@ function QueryControls({
 function Actions({
   onNew,
   onImport,
+  onImportFile,
+  onPasteCsv,
+  onPasteJson,
   newLabel = "New",
   importLabel = "Import",
   disabled = false,
   pending = false,
 }: TableActionsProps) {
   const isDisabled = disabled || pending;
+  const [menuOpen, setMenuOpen] = useState(false);
+  const hasImportMenu = Boolean(onImportFile || onPasteCsv || onPasteJson);
   return (
     <div className="table-kit-actions" role="group" aria-busy={pending}>
       {onNew && (
@@ -207,10 +212,20 @@ function Actions({
           {newLabel}
         </button>
       )}
-      {onImport && (
-        <button type="button" onClick={() => void onImport()} disabled={isDisabled} aria-busy={pending}>
-          {importLabel}
-        </button>
+      {onImport && <button type="button" onClick={() => void onImport()} disabled={isDisabled} aria-busy={pending}>{importLabel}</button>}
+      {hasImportMenu && (
+        <div className="table-kit-import-menu">
+          <button type="button" aria-haspopup="menu" aria-expanded={menuOpen} onClick={() => setMenuOpen((open) => !open)} disabled={isDisabled}>
+            Import options
+          </button>
+          {menuOpen && (
+            <div role="menu">
+              {onImportFile && <button type="button" role="menuitem" onClick={() => void onImportFile()}>Import file</button>}
+              {onPasteCsv && <button type="button" role="menuitem" onClick={() => void onPasteCsv()}>Paste CSV</button>}
+              {onPasteJson && <button type="button" role="menuitem" onClick={() => void onPasteJson()}>Paste JSON</button>}
+            </div>
+          )}
+        </div>
       )}
     </div>
   );
