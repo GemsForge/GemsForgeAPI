@@ -1,7 +1,9 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState, type ReactNode } from "react";
 import {
+  Controller,
   useForm,
+  type Control,
   type DefaultValues,
   type FieldValues,
   type Path,
@@ -203,11 +205,20 @@ function Select<T extends FieldValues>({
 }) {
   const message = form.formState.errors[name]?.message;
   return (
-    <CreateSelectField
-      label={label}
-      registration={form.register(name)}
-      options={options}
-      error={typeof message === "string" ? message : undefined}
+    <Controller
+      control={form.control as Control<T>}
+      name={name}
+      render={({ field }) => (
+        <CreateSelectField
+          label={label}
+          name={field.name}
+          value={String(field.value ?? "")}
+          onValueChange={field.onChange}
+          onBlur={field.onBlur}
+          options={options}
+          error={typeof message === "string" ? message : undefined}
+        />
+      )}
     />
   );
 }

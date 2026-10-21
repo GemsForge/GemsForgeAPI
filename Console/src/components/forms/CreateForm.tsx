@@ -1,7 +1,45 @@
 import type { ReactNode } from "react";
 import type { UseFormRegisterReturn } from "react-hook-form";
-import { Form } from "tamagui";
+import { Form, Input, Label, Select, SizableText, TextArea, YStack } from "tamagui";
 
+interface CreateFieldFrameProps {
+  id: string;
+  label: string;
+  required: boolean;
+  error?: string;
+  children: ReactNode;
+}
+
+/** Apply the shared label, control spacing, and validation message contract to every create field. */
+function CreateFieldFrame({ id, label, required, error, children }: CreateFieldFrameProps) {
+  const errorId = `${id}-error`;
+  return (
+    <YStack className="create-form-field" gap="$2">
+      <Label htmlFor={id} color="$gemMuted" fontSize="$2" fontWeight="700">
+        {label}
+        {required ? " *" : ""}
+      </Label>
+      {children}
+      {error && (
+        <SizableText id={errorId} role="alert" color="$gemDanger" fontSize="$1">
+          {error}
+        </SizableText>
+      )}
+    </YStack>
+  );
+}
+
+const controlStyle = {
+  width: "100%" as const,
+  minHeight: "$5" as const,
+  borderColor: "$gemPanelLight" as const,
+  borderWidth: 1,
+  borderRadius: "$gemControl" as const,
+  backgroundColor: "$gemCanvas" as const,
+  color: "$gemInk" as const,
+};
+
+/** Render the shared Tamagui form shell used by every record-creation workflow. */
 export function CreateFormFrame({
   title,
   submitting,
@@ -51,72 +89,80 @@ export function CreateTextField({
 }) {
   const id = registration.name;
   return (
-    <label htmlFor={id}>
-      {label}
-      {required ? " *" : ""}
+    <CreateFieldFrame id={id} label={label} required={required} error={error}>
       {multiline ? (
-        <textarea
+        <TextArea
           id={id}
+          className="create-form-control"
+          {...controlStyle}
           aria-invalid={Boolean(error)}
           aria-describedby={error ? `${id}-error` : undefined}
+          required={required}
           {...registration}
+          ref={(element) => registration.ref(element as HTMLTextAreaElement | null)}
         />
       ) : (
-        <input
+        <Input
           id={id}
+          className="create-form-control"
+          {...controlStyle}
           type={type}
           required={required}
           aria-invalid={Boolean(error)}
           aria-describedby={error ? `${id}-error` : undefined}
           {...registration}
+          ref={(element) => registration.ref(element as HTMLInputElement | null)}
         />
       )}
-      {error && (
-        <span id={`${id}-error`} className="field-error">
-          {error}
-        </span>
-      )}
-    </label>
+    </CreateFieldFrame>
   );
 }
 
+/** Render a keyboard-accessible Tamagui select while keeping React Hook Form as its value owner. */
 export function CreateSelectField({
   label,
-  registration,
+  name,
+  value,
+  onValueChange,
+  onBlur,
   error,
   options,
   required = false,
 }: {
   label: string;
-  registration: UseFormRegisterReturn;
+  name: string;
+  value: string;
+  onValueChange: (value: string) => void;
+  onBlur: () => void;
   error?: string;
   options: Array<{ value: string; label: string }>;
   required?: boolean;
 }) {
-  const id = registration.name;
+  const id = name;
   return (
-    <label htmlFor={id}>
-      {label}
-      {required ? " *" : ""}
-      <select
-        id={id}
-        required={required}
-        aria-invalid={Boolean(error)}
-        aria-describedby={error ? `${id}-error` : undefined}
-        {...registration}
-      >
-        <option value="">Select…</option>
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
-      {error && (
-        <span id={`${id}-error`} className="field-error">
-          {error}
-        </span>
-      )}
-    </label>
+    <CreateFieldFrame id={id} label={label} required={required} error={error}>
+      <Select name={name} value={value || undefined} onValueChange={onValueChange}>
+        <Select.Trigger
+          id={id}
+          className="create-form-control"
+          {...controlStyle}
+          aria-invalid={Boolean(error)}
+          aria-describedby={error ? `${id}-error` : undefined}
+          aria-required={required}
+          onBlur={onBlur}
+        >
+          <Select.Value placeholder="Select…" />
+        </Select.Trigger>
+        <Select.Content>
+          <Select.Viewport minWidth={240}>
+            {options.map((option) => (
+              <Select.Item key={option.value} value={option.value}>
+                <Select.ItemText>{option.label}</Select.ItemText>
+              </Select.Item>
+            ))}
+          </Select.Viewport>
+        </Select.Content>
+      </Select>
+    </CreateFieldFrame>
   );
 }

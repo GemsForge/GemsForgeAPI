@@ -608,6 +608,16 @@ dialog::backdrop {
   color: var(--danger);
   font-size: 0.75rem;
 }
+.create-form-field {
+  margin-bottom: 1rem;
+}
+.create-form-field > label {
+  margin: 0;
+}
+.create-form-control {
+  width: 100%;
+  min-height: 2.75rem;
+}
 .create-record-form [aria-invalid="true"] {
   border-color: var(--danger);
 }
