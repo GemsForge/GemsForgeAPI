@@ -135,8 +135,9 @@ or restoration according to the attachment lifecycle policy.
 ## GitHub workflow
 
 The working issue is the source of truth. A branch includes its issue number,
-for example fix/205-live-metadata-migration, and a pull request includes a
-closing reference such as Closes #205.
+for example fix/205-live-metadata-migration, and a pull request references the
+working issue, such as `#205`. Merging does not close the story; QA follows on
+the merged development branch.
 
 Before implementation, check out the dedicated issue branch, push it to the
 remote, and link that branch to the GitHub story. Keep the branch and commits
@@ -156,7 +157,7 @@ The issue workflow synchronizes:
   (#7), using the PROJECTS_TOKEN repository secret;
 - ProjectV2 status from lifecycle state;
 - native parent/sub-issue and blocked-by/blocking relationships when supplied;
-- issue closure when a closing pull request is merged into master.
+- Project status moves to QA after merged work; issue closure remains a separate human-approved action.
 
 The metadata workflow uses GITHUB_TOKEN for repository issue and pull-request
 operations and PROJECTS_TOKEN for user-owned ProjectV2 operations. Project
@@ -226,3 +227,10 @@ npm run build
 ~~~
 
 These checks are also run by the repository GitHub Actions where configured.
+
+
+## Post-merge QA gate
+
+Pull-request checks validate the proposed change before merge. After the PR is merged into the development branch (master for this repository), QA validates the merged branch against the story's acceptance criteria, regression risk, accessibility, responsive behavior, security/privacy expectations, and evidence from the merged branch.
+
+QA may set Project status to `QA` and recommend corrective work or release. QA does not merge PRs, release deployments, or close stories; issue closure and release remain separate human-approved actions.

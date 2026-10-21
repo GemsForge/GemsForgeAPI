@@ -7,6 +7,7 @@ Options:
   --labels a,b             Additional labels to apply (type and scope are inferred)
   --assignees a,b          GitHub usernames to assign
   --milestone NUMBER       Milestone number
+  --project NAME            Project name or number (metadata workflow target)
   --parent-issue NUMBER    Native parent/sub-issue relationship
   --blocked-by a,b         Native prerequisite issue numbers
   --blocking a,b           Native dependent issue numbers
@@ -37,22 +38,22 @@ const typeLabels = new Map([
   ["test", "testing"],
   ["docs", "documentation"],
   ["chore", "chore"],
-  ["ci", "ci"],
 ]);
 
-const scopeLabels = new Set([
-  "api", "ci", "database", "infrastructure", "model", "schema", "security",
-  "service", "swift", "testing", "ui", "vapor",
-]);
+const engineeringScopes = new Set(["api", "ui", "database", "infrastructure", "model", "schema", "security", "service"]);
+const choreScopes = new Set(["ci", "infrastructure", "testing"]);
 
 export function inferLabels(title, explicitLabels = []) {
-  const match = /^(feat|fix|refactor|test|docs|chore|ci)\(([a-z0-9-]+)\):\s+/.exec(title);
+  const match = /^(feat|fix|refactor|test|docs|chore)\(([a-z0-9-]+)\):\s+/.exec(title);
   if (!match) throw new Error("Title must use type(scope): short imperative description.");
   const [, type, scope] = match;
   if (!typeLabels.has(type)) {
     throw new Error(`No active label is configured for story type '${type}'.`);
   }
-  if (!scopeLabels.has(scope)) {
+  const scopeIsValid = type === "docs"
+    ? /^[a-z0-9-]+$/.test(scope)
+    : type === "chore" ? choreScopes.has(scope) : engineeringScopes.has(scope);
+  if (!scopeIsValid) {
     throw new Error(`Unknown story scope '${scope}'. Use an existing scope label.`);
   }
   return [...new Set([typeLabels.get(type), scope, ...explicitLabels])];
@@ -77,6 +78,7 @@ const parseArgs = (args) => {
       options[option === "--milestone" ? "milestone" : "parentIssue"] = value;
     } else if (option === "--blocked-by") options.blockedBy = parseList(value, option);
     else if (option === "--blocking") options.blocking = parseList(value, option);
+    else if (option === "--project") options.project = value;
     else options.repo = value;
   }
   if (!options.title) throw new Error("--title is required.");
@@ -97,13 +99,20 @@ export function createStory(options, run = runGh) {
   for (const assignee of options.assignees) issueArgs.push("-f", `assignees[]=${assignee}`);
   if (options.milestone) issueArgs.push("-f", `milestone=${options.milestone}`);
   const issue = run(issueArgs);
-  const workflowArgs = ["workflow", "run", "sync-pr-metadata.yml", "--repo", options.repo, "--ref", "master",
+  const numberedTitle = /^([^:]+):\s+#([1-9]\d*)\s+/.test(options.title)
+    ? options.title
+    : options.title.replace(/^([^:]+):\s+/, `$1: #${issue.number} `);
+  if (numberedTitle !== options.title) {
+    run(["api", `repos/${options.repo}/issues/${issue.number}`, "--method", "PATCH", "-f", `title=${numberedTitle}`]);
+  }
+  const metadataWorkflow = options.metadataWorkflow || process.env.GITHUB_METADATA_WORKFLOW || "sync-issue-metadata.yml";
+  const workflowArgs = ["workflow", "run", metadataWorkflow, "--repo", options.repo, "--ref", "master",
     "-f", `issue_number=${issue.number}`];
   if (options.parentIssue) workflowArgs.push("-f", `parent_issue=${options.parentIssue}`);
   if (options.blockedBy.length) workflowArgs.push("-f", `blocked_by=${options.blockedBy.join(",")}`);
   if (options.blocking.length) workflowArgs.push("-f", `blocking=${options.blocking.join(",")}`);
   run(workflowArgs);
-  return { issueNumber: issue.number, issueURL: issue.html_url, workflow: "sync-pr-metadata.yml" };
+  return { issueNumber: issue.number, issueURL: issue.html_url, workflow: metadataWorkflow };
 }
 
 if (process.argv[1]?.endsWith("create-github-story.mjs")) {
