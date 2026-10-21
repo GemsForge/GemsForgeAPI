@@ -53,12 +53,10 @@ export interface TableRecord<Record> {
 
 /** Adapter boundary for turning a domain record into shared Table Kit metadata. */
 export interface RecordAdapter<Record> {
-  getId: (record: Record, index: number) => TableRecordId;
-  getTitle?: (record: Record) => string | undefined;
-  getSubtitle?: (record: Record) => string | undefined;
-  getImage?: (record: Record) => RecordImage | undefined;
-  getStatus?: (record: Record) => RecordStatus | undefined;
-  getProperties: (record: Record) => readonly RecordPropertyDefinition<Record>[];
+  /** Normalize one domain record for all Table Kit renderers. */
+  toTableRecord: (record: Record, index: number) => TableRecord<Record>;
+  /** Return one stable property schema for the complete record collection. */
+  getPropertyDefinitions: () => readonly RecordPropertyDefinition<Record>[];
 }
 
 /** Controlled selection state shared by table, list, and gallery interactions. */
