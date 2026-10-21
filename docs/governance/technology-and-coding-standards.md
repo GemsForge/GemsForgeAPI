@@ -5,6 +5,8 @@ accessibility, responsive behavior, database practice, workflow policy, and
 Definition-of-Done guidance. Repository-local paths and stack rules remain
 authoritative.
 
+For the detailed UI checklist, read `docs/governance/accessibility-and-responsive-standards.md`.
+
 ## 1. Boundary-first development
 
 | Concern | React/TypeScript | SwiftUI/Swift/Vapor | C#/.NET/SQL |
