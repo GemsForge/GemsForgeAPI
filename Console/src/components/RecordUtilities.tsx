@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState, type KeyboardEvent, type MouseEvent } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Menu, Tooltip } from "tamagui";
 import type { RecordSortDirection } from "../hooks/useRecordUtilities";
 
 type CompactUtilityMenu = "sort" | "filter" | null;
@@ -37,59 +38,143 @@ export function RecordUtilities({
 }) {
   const [compactMenu, setCompactMenu] = useState<CompactUtilityMenu>(null);
   const [searchOpen, setSearchOpen] = useState(Boolean(search));
-  const triggerRef = useRef<HTMLButtonElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
+  const sortTriggerRef = useRef<HTMLButtonElement>(null);
+  const filterTriggerRef = useRef<HTMLButtonElement>(null);
+  const previousCompactMenu = useRef<CompactUtilityMenu>(null);
   useEffect(() => {
     if (searchOpen) searchRef.current?.focus();
   }, [searchOpen]);
-
   useEffect(() => {
-    if (compactMenu) {
-      menuRef.current?.querySelector<HTMLButtonElement>("[role^='menuitem']")?.focus();
-    } else if (triggerRef.current) {
-      triggerRef.current.focus();
+    if (previousCompactMenu.current && !compactMenu) {
+      (previousCompactMenu.current === "sort" ? sortTriggerRef : filterTriggerRef).current?.focus();
     }
+    previousCompactMenu.current = compactMenu;
   }, [compactMenu]);
 
   if (compact) {
-    const menuId = `${label.toLowerCase().replace(/\s+/g, "-")}-query-menu`;
-    const closeCompactMenu = () => setCompactMenu(null);
     const clearQuery = () => {
       onSearch("");
       onSort("");
       onFilter("");
-      closeCompactMenu();
-    };
-    const openCompactMenu = (next: Exclude<CompactUtilityMenu, null>, event: MouseEvent<HTMLButtonElement>) => {
-      triggerRef.current = event.currentTarget;
-      setCompactMenu((current) => (current === next ? null : next));
-    };
-    const handleCompactMenuKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-      const items = [...(menuRef.current?.querySelectorAll<HTMLButtonElement>("[role^='menuitem']") ?? [])].filter(
-        (item) => !item.disabled,
-      );
-      if (!items.length) return;
-      const currentIndex = items.indexOf(document.activeElement as HTMLButtonElement);
-      if (event.key === "Escape") {
-        event.preventDefault();
-        closeCompactMenu();
-        return;
-      }
-      if (event.key === "ArrowDown" || event.key === "ArrowUp" || event.key === "Home" || event.key === "End") {
-        event.preventDefault();
-        const nextIndex =
-          event.key === "Home"
-            ? 0
-            : event.key === "End"
-              ? items.length - 1
-              : (currentIndex + (event.key === "ArrowDown" ? 1 : -1) + items.length) % items.length;
-        items[nextIndex]?.focus();
-      }
     };
 
     return (
       <div className="record-utilities record-utilities-compact" aria-label={`${label} utilities`}>
+        <Menu
+          open={compactMenu === "sort"}
+          onOpenChange={(open) => setCompactMenu(open ? "sort" : null)}
+          placement="bottom-start"
+          modal={false}
+        >
+          <Tooltip placement="bottom" delay={300}>
+            <Tooltip.Trigger asChild>
+              <button
+                ref={sortTriggerRef}
+                type="button"
+                className="compact-icon-button"
+                aria-label="Sort records"
+                title="Sort records"
+                onClick={() => setCompactMenu((current) => (current === "sort" ? null : "sort"))}
+              >
+                <span aria-hidden="true">↕</span>
+              </button>
+            </Tooltip.Trigger>
+            <Tooltip.Content className="table-kit-tooltip">
+              <Tooltip.Arrow />
+              <span>Sort records</span>
+            </Tooltip.Content>
+          </Tooltip>
+          <Menu.Portal zIndex={20}>
+            <Menu.Content className="record-utilities-menu" aria-label="Sort records" loop>
+              <Menu.Label>Sort by</Menu.Label>
+              <Menu.RadioGroup
+                value={sort || "__default"}
+                onValueChange={(value) => {
+                  onSort(value === "__default" ? "" : value);
+                  setCompactMenu(null);
+                }}
+              >
+                <Menu.RadioItem value="__default" textValue="Default order">
+                  <Menu.ItemIndicator />
+                  <Menu.ItemTitle>Default order</Menu.ItemTitle>
+                </Menu.RadioItem>
+                {sortOptions.map((option) => (
+                  <Menu.RadioItem key={option.value} value={option.value} textValue={option.label}>
+                    <Menu.ItemIndicator />
+                    <Menu.ItemTitle>{option.label}</Menu.ItemTitle>
+                  </Menu.RadioItem>
+                ))}
+              </Menu.RadioGroup>
+              <Menu.Item disabled={!sort} onSelect={onDirection} textValue="Change sort direction">
+                <Menu.ItemTitle>{direction === "asc" ? "A–Z" : "Z–A"}</Menu.ItemTitle>
+              </Menu.Item>
+              {(search || sort || filter) && (
+                <Menu.Item onSelect={clearQuery} textValue="Clear filters">
+                  <Menu.ItemTitle>Clear filters</Menu.ItemTitle>
+                </Menu.Item>
+              )}
+            </Menu.Content>
+          </Menu.Portal>
+        </Menu>
+        {filterOptions.length > 0 && (
+          <Menu
+            open={compactMenu === "filter"}
+            onOpenChange={(open) => setCompactMenu(open ? "filter" : null)}
+            placement="bottom-start"
+            modal={false}
+          >
+            <Tooltip placement="bottom" delay={300}>
+              <Tooltip.Trigger asChild>
+                <button
+                  ref={filterTriggerRef}
+                  type="button"
+                  className="compact-icon-button"
+                  aria-label="Filter records"
+                  title="Filter records"
+                  onClick={() => setCompactMenu((current) => (current === "filter" ? null : "filter"))}
+                >
+                  <span aria-hidden="true">≡</span>
+                </button>
+              </Tooltip.Trigger>
+              <Tooltip.Content className="table-kit-tooltip">
+                <Tooltip.Arrow />
+                <span>Filter records</span>
+              </Tooltip.Content>
+            </Tooltip>
+            <Menu.Portal zIndex={20}>
+              <Menu.Content className="record-utilities-menu" aria-label="Filter records" loop>
+                <Menu.Label>Filter</Menu.Label>
+                <Menu.RadioGroup
+                  value={filter || "__all"}
+                  onValueChange={(value) => {
+                    onFilter(value === "__all" ? "" : value);
+                    setCompactMenu(null);
+                  }}
+                >
+                  <Menu.RadioItem value="__all" textValue="All records">
+                    <Menu.ItemIndicator />
+                    <Menu.ItemTitle>All records</Menu.ItemTitle>
+                  </Menu.RadioItem>
+                  {filterOptions.map((option) => (
+                    <Menu.RadioItem key={option} value={option} textValue={option}>
+                      <Menu.ItemIndicator />
+                      <Menu.ItemTitle>{option}</Menu.ItemTitle>
+                    </Menu.RadioItem>
+                  ))}
+                </Menu.RadioGroup>
+                {(search || sort || filter) && (
+                  <Menu.Item onSelect={clearQuery} textValue="Clear filters">
+                    <Menu.ItemTitle>Clear filters</Menu.ItemTitle>
+                  </Menu.Item>
+                )}
+              </Menu.Content>
+            </Menu.Portal>
+          </Menu>
+        )}
+        <span className="record-utility-summary" role="status">
+          {visibleCount ?? totalCount ?? 0} of {totalCount ?? visibleCount ?? 0} matching
+        </span>
         {searchOpen && (
           <label className="record-utilities-search-field">
             <span className="sr-only">Search {label.toLowerCase()}</span>
@@ -102,136 +187,23 @@ export function RecordUtilities({
             />
           </label>
         )}
-        <button
-          type="button"
-          className="compact-icon-button"
-          aria-label={searchOpen ? "Close search" : `Search ${label.toLowerCase()}`}
-          title={searchOpen ? "Close search" : `Search ${label.toLowerCase()}`}
-          onClick={() => setSearchOpen((open) => !open)}
-        >
-          <span aria-hidden="true">⌕</span>
-        </button>
-        <button
-          type="button"
-          className="compact-icon-button"
-          aria-haspopup="menu"
-          aria-expanded={compactMenu === "sort"}
-          aria-controls={menuId}
-          aria-label="Sort records"
-          title="Sort records"
-          onClick={(event) => openCompactMenu("sort", event)}
-        >
-          <span aria-hidden="true">↕</span>
-        </button>
-        {filterOptions.length > 0 && (
-          <button
-            type="button"
-            className="compact-icon-button"
-            aria-haspopup="menu"
-            aria-expanded={compactMenu === "filter"}
-            aria-controls={menuId}
-            aria-label="Filter records"
-            title="Filter records"
-            onClick={(event) => openCompactMenu("filter", event)}
-          >
-            <span aria-hidden="true">≡</span>
-          </button>
-        )}
-        {compactMenu && (
-          <div
-            ref={menuRef}
-            id={menuId}
-            className="record-utilities-menu"
-            role="menu"
-            tabIndex={-1}
-            aria-label={compactMenu === "sort" ? "Sort records" : "Filter records"}
-            onKeyDown={handleCompactMenuKeyDown}
-          >
-            {compactMenu === "sort" && (
-              <>
-                <p className="record-utilities-menu-heading">Sort by</p>
-                <button
-                  type="button"
-                  role="menuitemradio"
-                  aria-checked={!sort}
-                  onClick={() => {
-                    onSort("");
-                    closeCompactMenu();
-                  }}
-                >
-                  Default order
-                </button>
-                {sortOptions.map((option) => (
-                  <button
-                    key={option.value}
-                    type="button"
-                    role="menuitemradio"
-                    aria-checked={sort === option.value}
-                    onClick={() => {
-                      onSort(option.value);
-                      closeCompactMenu();
-                    }}
-                  >
-                    {option.label}
-                  </button>
-                ))}
-                <button
-                  type="button"
-                  role="menuitem"
-                  className="secondary-button"
-                  onClick={() => {
-                    onDirection();
-                    closeCompactMenu();
-                  }}
-                  disabled={!sort}
-                  aria-label={
-                    sort ? `Sort ${direction === "asc" ? "descending" : "ascending"}` : "Select a sort field first"
-                  }
-                >
-                  {direction === "asc" ? "A–Z" : "Z–A"}
-                </button>
-              </>
-            )}
-            {compactMenu === "filter" && (
-              <>
-                <p className="record-utilities-menu-heading">Filter</p>
-                <button
-                  type="button"
-                  role="menuitemradio"
-                  aria-checked={!filter}
-                  onClick={() => {
-                    onFilter("");
-                    closeCompactMenu();
-                  }}
-                >
-                  All records
-                </button>
-                {filterOptions.map((option) => (
-                  <button
-                    key={option}
-                    type="button"
-                    role="menuitemradio"
-                    aria-checked={filter === option}
-                    onClick={() => {
-                      onFilter(option);
-                      closeCompactMenu();
-                    }}
-                  >
-                    {option}
-                  </button>
-                ))}
-              </>
-            )}
-            {(search || sort || filter) && (
-              <button type="button" role="menuitem" className="secondary-button" onClick={clearQuery}>
-                Clear filters
-              </button>
-            )}
-          </div>
-        )}
-        <span className="record-utility-summary" role="status">
-          {visibleCount ?? totalCount ?? 0} of {totalCount ?? visibleCount ?? 0} matching
-        </span>
+        <Tooltip placement="bottom" delay={300}>
+          <Tooltip.Trigger asChild>
+            <button
+              type="button"
+              className="compact-icon-button"
+              aria-label={searchOpen ? "Close search" : `Search ${label.toLowerCase()}`}
+              title={searchOpen ? "Close search" : `Search ${label.toLowerCase()}`}
+              onClick={() => setSearchOpen((open) => !open)}
+            >
+              <span aria-hidden="true">⌕</span>
+            </button>
+          </Tooltip.Trigger>
+          <Tooltip.Content className="table-kit-tooltip">
+            <Tooltip.Arrow />
+            <span>{searchOpen ? "Close search" : `Search ${label.toLowerCase()}`}</span>
+          </Tooltip.Content>
+        </Tooltip>
       </div>
     );
   }

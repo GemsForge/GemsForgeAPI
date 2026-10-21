@@ -156,6 +156,7 @@ function DatabaseRecordTableShell<Record>({
         <div className="table-kit-header-controls">
           <Table.Views />
           <Table.Toolbar>
+            <Table.PropertyControls properties={propertyOptions} configuration={configuration} />
             <RecordUtilities
               label={label}
               {...utilities}
@@ -165,7 +166,6 @@ function DatabaseRecordTableShell<Record>({
               filterOptions={filterOptions}
               compact
             />
-            <Table.PropertyControls properties={propertyOptions} configuration={configuration} />
             {actions && <Table.Actions {...actions} />}
           </Table.Toolbar>
         </div>

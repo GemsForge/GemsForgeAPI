@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState } from "react";
+import { Tooltip } from "tamagui";
 import { filterTableProperties, type TablePropertyConfigurationState, type TablePropertyOption } from "./configuration";
 
 /** Accessible property menu backed by the consumer-owned configuration state. */
@@ -46,19 +47,27 @@ export function TablePropertyControls({
 
   return (
     <div className="table-kit-property-controls" role="group" aria-label="Property configuration">
-      <button
-        ref={triggerRef}
-        type="button"
-        className="table-kit-property-button compact-icon-button"
-        aria-controls={dialogId}
-        aria-haspopup="dialog"
-        aria-expanded={open}
-        title={label}
-        onClick={() => setOpen((current) => !current)}
-      >
-        <span aria-hidden="true">⚙</span>
-        <span className="sr-only">{label}</span>
-      </button>
+      <Tooltip placement="bottom" delay={300}>
+        <Tooltip.Trigger asChild>
+          <button
+            ref={triggerRef}
+            type="button"
+            className="table-kit-property-button compact-icon-button"
+            aria-controls={dialogId}
+            aria-haspopup="dialog"
+            aria-expanded={open}
+            title={label}
+            onClick={() => setOpen((current) => !current)}
+          >
+            <span aria-hidden="true">⚙</span>
+            <span className="sr-only">{label}</span>
+          </button>
+        </Tooltip.Trigger>
+        <Tooltip.Content className="table-kit-tooltip">
+          <Tooltip.Arrow />
+          <span>{label}</span>
+        </Tooltip.Content>
+      </Tooltip>
       {open && (
         <div
           ref={dialogRef}

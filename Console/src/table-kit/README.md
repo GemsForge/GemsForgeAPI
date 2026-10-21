@@ -116,17 +116,21 @@ and persistence callbacks:
 />
 ```
 
-The menu supports native button activation, visible focus, Escape dismissal,
-arrow-key navigation, and focus restoration to its trigger.
+The New Record menu is a compact popover surface: it supports native button
+activation, visible focus, Escape dismissal, arrow-key navigation, and focus
+restoration to its trigger. Selecting an operation invokes the consumer-owned
+form or intake view, so domain validation and persistence stay with the feature.
 
 ## Compact utility row
 
 The consumer shell keeps the view ToggleGroup and utility header aligned across
-the table width. Search starts as a labeled icon button and expands into a
-focused search field. Sort and filter are separate keyboard-accessible icon
-menus; active choices remain exposed through `aria-checked` states and the
-matching summary. `Table.PropertyControls` remains an adjacent gear button,
-and `Table.Selection` stays below the header so selection counts and Select all
+the table width. The properties gear is attached before the query controls;
+search sits at the trailing utility position, starts as a labeled icon button,
+and expands into a focused search field. Sort and filter are separate
+keyboard-accessible icon menus; active choices remain exposed through
+`aria-checked` states and the matching summary. All icon controls expose
+Tamagui Tooltip help while retaining accessible names and native title fallback.
+`Table.Selection` stays below the header so selection counts and Select all
 actions remain discoverable without expanding query controls.
 
 ## Shared selection

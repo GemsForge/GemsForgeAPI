@@ -1378,6 +1378,45 @@ dialog::backdrop {
   color: var(--mint);
 }
 
+/* Give Tamagui Menu content the same compact dark surface as the legacy utility menus. */
+.table-kit-menu-content {
+  min-width: 15rem;
+  padding: 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: 0.55rem;
+  background: var(--panel);
+  box-shadow: 0 0.7rem 1.8rem rgb(0 0 0 / 20%);
+}
+
+.record-utilities-menu [role^="menuitem"],
+.table-kit-menu-content [role^="menuitem"] {
+  min-height: 2.4rem;
+  padding: 0.55rem 0.7rem;
+  border-radius: 0.35rem;
+  color: var(--ink);
+}
+
+.record-utilities-menu [role^="menuitem"][data-highlighted],
+.table-kit-menu-content [role^="menuitem"][data-highlighted] {
+  background: var(--panel-light);
+}
+
+/* Keep icon-button help legible without changing the accessible name on the trigger. */
+.table-kit-tooltip {
+  z-index: 30;
+  padding: 0.35rem 0.55rem;
+  border: 1px solid var(--line);
+  border-radius: 0.35rem;
+  background: var(--canvas);
+  color: var(--ink);
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.table-kit-tooltip-target {
+  display: inline-flex;
+}
+
 .record-utilities-menu label {
   display: grid;
   gap: 0.25rem;

@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { TamaguiProvider } from "tamagui";
 import { tamaguiConfig } from "../design-system/tamagui.config";
@@ -14,6 +14,14 @@ const rows = [
   { id: "one", name: "One" },
   { id: "two", name: "Two" },
 ];
+
+function renderActions(actions: ReactNode) {
+  render(
+    <TamaguiProvider config={tamaguiConfig} defaultTheme="dark">
+      {actions}
+    </TamaguiProvider>,
+  );
+}
 
 function PaginationHarness() {
   const { pagination, setPagination } = useTableContext<Row>();
@@ -71,7 +79,7 @@ describe("Table Kit", () => {
   it("combines New and Import actions behind the compact trigger while pending", () => {
     const onNew = vi.fn();
     const onImport = vi.fn();
-    render(<Table.Actions onNew={onNew} onImport={onImport} pending />);
+    renderActions(<Table.Actions onNew={onNew} onImport={onImport} pending />);
     expect(screen.getByRole("button", { name: "New record options" })).toBeDisabled();
     expect(screen.getByRole("group")).toHaveAttribute("aria-busy", "true");
   });
@@ -79,7 +87,7 @@ describe("Table Kit", () => {
   it("opens New and Import operations from the plus utility", () => {
     const onNew = vi.fn();
     const onImport = vi.fn();
-    render(<Table.Actions onNew={onNew} onImport={onImport} />);
+    renderActions(<Table.Actions onNew={onNew} onImport={onImport} />);
 
     fireEvent.click(screen.getByRole("button", { name: "New record options" }));
     expect(screen.getByRole("menuitem", { name: "New" })).toBeInTheDocument();
@@ -91,7 +99,7 @@ describe("Table Kit", () => {
     const onImportFile = vi.fn();
     const onPasteCsv = vi.fn();
     const onPasteJson = vi.fn();
-    render(<Table.Actions onImportFile={onImportFile} onPasteCsv={onPasteCsv} onPasteJson={onPasteJson} />);
+    renderActions(<Table.Actions onImportFile={onImportFile} onPasteCsv={onPasteCsv} onPasteJson={onPasteJson} />);
     fireEvent.click(screen.getByRole("button", { name: "Import options" }));
     fireEvent.click(screen.getByRole("menuitem", { name: "Paste CSV" }));
     expect(onPasteCsv).toHaveBeenCalledOnce();
@@ -104,7 +112,7 @@ describe("Table Kit", () => {
     const onNew = vi.fn();
     const onAddress = vi.fn();
     const onPaste = vi.fn();
-    render(
+    renderActions(
       <Table.Actions
         onNew={onNew}
         newRecordOptions={[{ id: "address", label: "New address", onSelect: onAddress }]}
