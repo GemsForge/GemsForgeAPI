@@ -55,7 +55,9 @@ describe("GemRecordList views", () => {
     fireEvent.click(screen.getByRole("menuitemradio", { name: "Gallery" }));
     expect(screen.getByRole("button", { name: "One" })).toBeInTheDocument();
     expect(screen.queryByText("Details should stay in List view")).not.toBeInTheDocument();
-    expect(document.querySelector('[data-card-view="grid"]')).toBeTruthy();
+    const activeCard = document.querySelector('[data-card-view="grid"]');
+    expect(activeCard).toHaveClass("is-active");
+    expect(activeCard).not.toHaveStyle({ transform: "scale(1.03)" });
   });
 
   it("configures visible table properties from an accessible menu", () => {
