@@ -8,6 +8,21 @@ Use the shared GemsForge Scrum/PO operating model: GitHub is the system of recor
 
 Preserve this repository's existing stack, workflows, scripts, labels, and documentation. Before proposing work, read the relevant README and project documentation, then inspect the applicable files under `.github/workflows/` and `Scripts/`. Do not assume another repository's commands or paths apply here.
 
+Code documentation rule: every code change must include an appropriate
+documentation comment for the changed behavior or public contract. Use focused
+comments for implementation logic, JSDoc/TSDoc for JavaScript or TypeScript
+APIs and reusable components, and XML documentation comments for Swift or
+other XML-documentation-supported APIs. Keep comments accurate and explain
+intent, invariants, inputs, outputs, or constraints; do not add empty comments
+solely to satisfy this rule. Review and update nearby comments when a change
+makes them stale.
+
+Automation coordination: the active Scrum Master automation is the shared
+coordinator for Aura Logbook, GemsForgeAPI, and Professional Portfolio. It is
+attached to the shared SCRUM TEAM project and covers all three repository
+working directories. Do not create duplicate per-project automations that
+could work the same stories concurrently.
+
 For issue creation, use `Scripts/create-github-story.mjs` and its tests as the established implementation. Before creating a story, inspect this repository's current GitHub milestones and Project configuration through the GitHub integration or browser. Select and pass the matching milestone with `--milestone`; do not substitute a milestone from another repository. Add the issue to this repository's configured Project and verify the issue URL, milestone, labels, assignees, and Project membership after creation. Use `.github/ISSUE_WORKFLOW.md` and the repository's metadata workflow as the operational reference. Do not replace or bypass this working mechanism without explicit approval.
 
 QA gate: PR checks validate the proposed change before merge. After merge to `master`, QA validates the merged development branch against the story's acceptance criteria, regression, accessibility, responsive behavior, security/privacy expectations, and required evidence. QA may set Project status to `QA` and recommend release or corrective work; QA does not merge, release, or close the story.
