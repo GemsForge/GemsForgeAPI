@@ -1240,31 +1240,10 @@ dialog::backdrop {
     height: 14rem;
   }
 }
-@media (min-width: 901px) and (max-width: 1080px) {
+/* Keep intermediate gallery cards wide enough to preserve readable titles and properties. */
+@media (min-width: 641px) and (max-width: 1080px) {
   .gem-record-grid-rail {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-  .gem-record-grid-card > button > [class$="-copy"] strong {
-    font-size: 0.78rem;
-  }
-  .gem-record-grid-card > button > [class$="-copy"] small {
-    font-size: 0.64rem;
-  }
-}
-@media (min-width: 641px) and (max-width: 900px) {
-  .gem-record-grid-rail {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .gem-record-grid-card > button > [class$="-copy"] strong {
-    font-size: 0.78rem;
-  }
-  .gem-record-grid-card > button > [class$="-copy"] small {
-    font-size: 0.64rem;
-  }
-}
-@media (min-width: 641px) and (max-width: 900px) {
-  .gem-record-grid-rail {
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .gem-record-grid-card > button > [class$="-copy"] strong {
     font-size: 0.78rem;
