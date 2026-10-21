@@ -119,6 +119,14 @@ and persistence callbacks:
 The menu supports native button activation, visible focus, Escape dismissal,
 arrow-key navigation, and focus restoration to its trigger.
 
+## Compact utility row
+
+The consumer shell can keep search and the primary view visible while placing
+sort, direction, filter, and reset controls behind the labeled `More
+utilities` action. `Table.PropertyControls` remains a separate labeled menu,
+and `Table.Selection` stays in the same toolbar context so selection counts and
+Select all actions remain discoverable without expanding the query controls.
+
 ## Shared selection
 
 `Table.Root` owns one scoped selection context for its child components. Add

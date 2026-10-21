@@ -1240,6 +1240,88 @@ dialog::backdrop {
     height: 14rem;
   }
 }
+
+/* Keep compact query controls aligned while secondary options remain dismissible and keyboard reachable. */
+.record-utilities-compact {
+  position: relative;
+  align-items: center;
+  margin-bottom: 0;
+}
+
+.record-utilities-compact > label {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.record-utilities-compact > label input {
+  min-width: min(18rem, 42vw);
+}
+
+.record-utilities-menu {
+  position: absolute;
+  z-index: 4;
+  top: calc(100% + 0.35rem);
+  right: 0.75rem;
+  display: grid;
+  gap: 0.65rem;
+  min-width: 15rem;
+  padding: 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 0.55rem;
+  background: var(--panel);
+  box-shadow: 0 0.7rem 1.8rem rgb(0 0 0 / 20%);
+}
+
+.record-utilities-menu label {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.table-kit-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.table-kit-selection {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem;
+  margin: 0.5rem 0;
+}
+
+.table-kit-selection label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.table-kit-property-controls {
+  position: relative;
+}
+
+.table-kit-property-dialog {
+  position: absolute;
+  z-index: 5;
+  top: calc(100% + 0.35rem);
+  right: 0;
+  width: min(22rem, calc(100vw - 2rem));
+  padding: 0.85rem;
+  border: 1px solid var(--line);
+  border-radius: 0.55rem;
+  background: var(--panel);
+  box-shadow: 0 0.7rem 1.8rem rgb(0 0 0 / 20%);
+}
+
+.table-kit-property-dialog ul {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0;
+  list-style: none;
+}
 /* Keep intermediate gallery cards wide enough to preserve readable titles and properties. */
 @media (min-width: 641px) and (max-width: 1080px) {
   .gem-record-grid-rail {
