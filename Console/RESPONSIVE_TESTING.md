@@ -34,12 +34,12 @@ The current browser reports a 0.5 device scale factor, so the viewport tool's
 requested canvas width is not the effective CSS width. The gallery was checked
 at the following effective CSS widths after the intermediate breakpoint fix:
 
-| Effective CSS width | Gallery layout | Document overflow | Interaction result |
-| ------------------- | -------------- | ----------------- | ------------------ |
-| 480                 | 2 columns, 161px cards | None | Card opens details dialog; Escape returns focus to the card |
-| 768                 | 2 columns, 305px cards | None | Long titles remain contained and readable |
-| 1024                | 2 columns, 288px cards | None | No one-column or four-narrow-card regression |
-| 1440                | 2 columns, 475px cards | None | Toolbar and gallery remain within the content width |
+| Effective CSS width | Gallery layout         | Document overflow | Interaction result                                          |
+| ------------------- | ---------------------- | ----------------- | ----------------------------------------------------------- |
+| 480                 | 2 columns, 161px cards | None              | Card opens details dialog; Escape returns focus to the card |
+| 768                 | 2 columns, 305px cards | None              | Long titles remain contained and readable                   |
+| 1024                | 2 columns, 288px cards | None              | No one-column or four-narrow-card regression                |
+| 1440                | 2 columns, 475px cards | None              | Toolbar and gallery remain within the content width         |
 
 The wide table was also checked at the narrowest effective width: its region
 measured 342px wide with a 576px table, while the document remained 450px wide.
