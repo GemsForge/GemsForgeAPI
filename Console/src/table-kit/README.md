@@ -99,6 +99,26 @@ The query contract in `query.ts` provides normalized state, deterministic
 client-side derivation, and the adapter shape for server-side results. It does
 not own a transport, cache, or feature-specific filter vocabulary.
 
+## New Record utility
+
+`Table.Actions` keeps the consumer-owned default `New` action prominent and
+offers optional typed create actions alongside file and paste intake actions in
+one keyboard-accessible menu. Consumers own the forms, parsing, validation,
+and persistence callbacks:
+
+```tsx
+<Table.Actions
+  onNew={openDefaultCreate}
+  newRecordOptions={[{ id: "address", label: "New address", onSelect: openAddressCreate }]}
+  onImportFile={openFileImport}
+  onPasteCsv={openCsvPaste}
+  onPasteJson={openJsonPaste}
+/>
+```
+
+The menu supports native button activation, visible focus, Escape dismissal,
+arrow-key navigation, and focus restoration to its trigger.
+
 ## Shared selection
 
 `Table.Root` owns one scoped selection context for its child components. Add

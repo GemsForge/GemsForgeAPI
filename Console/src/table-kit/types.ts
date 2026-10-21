@@ -63,6 +63,14 @@ export interface TableSelectionProps {
   allMatchingLabel?: string;
 }
 
+/** A consumer-owned alternate create action exposed by the New Record menu. */
+export interface TableNewRecordOption {
+  id: string;
+  label: string;
+  description?: ReactNode;
+  onSelect: () => void | Promise<void>;
+}
+
 /** The complete, domain-neutral configuration for a Table.Root instance. */
 export interface TableRootProps<Row> {
   rows: readonly Row[];
@@ -101,10 +109,13 @@ export interface TableQueryControlsProps {
 export interface TableActionsProps {
   onNew?: () => void | Promise<void>;
   onImport?: () => void | Promise<void>;
+  /** Optional typed create actions shown beside file and paste intake actions. */
+  newRecordOptions?: readonly TableNewRecordOption[];
   onImportFile?: () => void | Promise<void>;
   onPasteCsv?: () => void | Promise<void>;
   onPasteJson?: () => void | Promise<void>;
   newLabel?: string;
+  newOptionsLabel?: string;
   importLabel?: string;
   disabled?: boolean;
   pending?: boolean;

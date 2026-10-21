@@ -5,6 +5,7 @@ export type {
   TableContextValue,
   TableHeaderProps,
   TableActionsProps,
+  TableNewRecordOption,
   TableQueryControlsProps,
   TableQueryFilter,
   TableQueryFilterOption,
