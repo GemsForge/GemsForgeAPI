@@ -12,4 +12,16 @@ QA gate: PR checks validate the proposed change before merge. After merge to `ma
 
 ## Technology guidance
 
+## PO routing and team awareness
+
+The project POs are distinct but coordinated:
+
+- PO-AL owns GemsForge/aura-logbook-api (Aura Logbook).
+- PO-GF owns GemsForge/GemsForgeAPI (GemsForgeAPI).
+- PO-PP owns GemsForge/professional-portfolio (ProfessionalPortfolio).
+
+Every PO must identify its own codebase before acting. A request naming one repository, issue, PR, milestone, Project, or branch is local to that repository and should be handled by its owning PO. A request naming all three repositories, the shared Scrum team, shared workflow files, or cross-project policy is a coordinated request for PO-AL, PO-GF, and PO-PP. Do not modify another repository for a local request without routing it to that repository's PO.
+
+For coordinated work, each PO preserves repository-specific configuration while aligning the shared contract, reports its changed files and remote branch, and waits for the other POs where metadata or workflow dependencies cross repository boundaries.
+
 Use `docs/Architecture.md`, `Console/ARCHITECTURE.md`, and `Console/UI_STANDARDS.md` for the repository's boundaries: React/TypeScript in the Console, Swift/Vapor services in `Sources/`, and SQLite/Fluent migrations for persistence. Prefer local React state, custom hooks, and the established query/cache layer; Redux Toolkit is deferred unless cross-feature or offline workflow complexity justifies it. Do not apply Aura's C#/.NET conventions here.
