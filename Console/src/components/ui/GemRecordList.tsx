@@ -177,20 +177,28 @@ export function GemRecordList<Record>({
               </tr>
             </thead>
             <tbody>
-              {records.map((record) => (
-                <tr key={getKey(record)}>
-                  {activeColumns.map((column) => (
-                    <td key={column.key}>
-                      {column.icon ? (
-                        <span className="gem-record-table-icon" aria-hidden="true">
-                          {column.icon(record)}
-                        </span>
-                      ) : null}
-                      {column.render(record)}
-                    </td>
-                  ))}
+              {activeColumns.length === 0 ? (
+                <tr>
+                  <td colSpan={1} className="gem-record-table-unconfigured">
+                    Unconfigured
+                  </td>
                 </tr>
-              ))}
+              ) : (
+                records.map((record) => (
+                  <tr key={getKey(record)}>
+                    {activeColumns.map((column) => (
+                      <td key={column.key}>
+                        {column.icon ? (
+                          <span className="gem-record-table-icon" aria-hidden="true">
+                            {column.icon(record)}
+                          </span>
+                        ) : null}
+                        {column.render(record)}
+                      </td>
+                    ))}
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

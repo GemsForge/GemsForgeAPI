@@ -120,4 +120,25 @@ describe("GemRecordList views", () => {
     expect(screen.getByRole("columnheader", { name: "Item ID" })).toBeInTheDocument();
     expect(screen.queryByRole("columnheader", { name: "Title" })).not.toBeInTheDocument();
   });
+
+  it("shows an unconfigured state when all table properties are hidden", () => {
+    const records = [{ id: "one", title: "One" }];
+    render(
+      <TamaguiProvider config={tamaguiConfig} defaultTheme="dark">
+        <GemRecordList
+          records={records}
+          label="Example"
+          getKey={(record) => record.id}
+          renderRecord={(record) => <button type="button">{record.title}</button>}
+          tableColumns={[{ key: "title", label: "Title", render: (record) => record.title }]}
+        />
+      </TamaguiProvider>,
+    );
+
+    fireEvent.click(screen.getByText("View: List"));
+    fireEvent.click(screen.getByRole("menuitemradio", { name: "Table" }));
+    fireEvent.click(screen.getByText("Properties"));
+    fireEvent.click(screen.getByRole("checkbox", { name: "Show Title property" }));
+    expect(screen.getByText("Unconfigured")).toBeInTheDocument();
+  });
 });

@@ -147,12 +147,16 @@ export function ServiceAccountsView({ records }: { records: ServiceAccount[] }) 
             getKey={(record) => String(record.id)}
             tableColumns={[
               {
+                key: "logo",
+                label: "Logo",
+                render: (record) => {
+                  const logo = logos.data?.find((item) => item.logoKey === record.logoKey);
+                  return logo ? <LegacyLogoPreview logo={logo} className="service-account-card-logo" /> : "—";
+                },
+              },
+              {
                 key: "service",
                 label: "Service",
-                icon: (record) => {
-                  const logo = logos.data?.find((item) => item.logoKey === record.logoKey);
-                  return logo ? <LegacyLogoPreview logo={logo} className="service-account-card-logo" /> : "◎";
-                },
                 render: (record) => record.service,
               },
               { key: "type", label: "Category", render: (record) => record.type || "Service" },
