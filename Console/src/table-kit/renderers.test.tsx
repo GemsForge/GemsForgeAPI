@@ -1,6 +1,6 @@
 import { TamaguiProvider } from "tamagui";
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import type { ReactNode } from "react";
 import {
   RecordGallery,
@@ -37,6 +37,41 @@ const renderWithTheme = (children: ReactNode) =>
     </TamaguiProvider>,
   );
 
+/** Give AG Grid a deterministic viewport because jsdom does not calculate layout geometry. */
+const originalGetBoundingClientRect = HTMLElement.prototype.getBoundingClientRect;
+const geometryProperties = ["clientHeight", "clientWidth", "offsetHeight", "offsetWidth"] as const;
+const originalGeometry = Object.fromEntries(
+  geometryProperties.map((property) => [property, Object.getOwnPropertyDescriptor(HTMLElement.prototype, property)]),
+);
+beforeAll(() => {
+  HTMLElement.prototype.getBoundingClientRect = () =>
+    ({
+      bottom: 480,
+      height: 480,
+      left: 0,
+      right: 1024,
+      top: 0,
+      width: 1024,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+    }) as DOMRect;
+  Object.defineProperties(HTMLElement.prototype, {
+    clientHeight: { configurable: true, get: () => 480 },
+    clientWidth: { configurable: true, get: () => 1024 },
+    offsetHeight: { configurable: true, get: () => 480 },
+    offsetWidth: { configurable: true, get: () => 1024 },
+  });
+});
+afterAll(() => {
+  HTMLElement.prototype.getBoundingClientRect = originalGetBoundingClientRect;
+  for (const property of geometryProperties) {
+    const descriptor = originalGeometry[property];
+    if (descriptor) Object.defineProperty(HTMLElement.prototype, property, descriptor);
+    else delete (HTMLElement.prototype as Partial<Record<(typeof geometryProperties)[number], unknown>>)[property];
+  }
+});
+
 function ViewRenderer() {
   const { viewId } = useTableContext<TableRecord<Service>>();
   if (viewId === "list") return <RecordList records={records} properties={properties} />;
@@ -60,21 +95,29 @@ describe("Table Kit record renderers", () => {
     expect(screen.getByText("unconfigured")).toBeInTheDocument();
   });
 
-  it("renders ordered properties as table columns and supports selection", () => {
+  it("renders ordered properties as table columns and supports selection", async () => {
     const onSelect = vi.fn();
     renderWithTheme(
       <RecordTable records={records} properties={properties} onRecordSelect={() => onSelect(records[0].source)} />,
     );
-    expect(screen.getByRole("columnheader", { name: "Kind" })).toBeInTheDocument();
-    screen.getByRole("button", { name: "Select Alpha" }).click();
+    expect(await screen.findByRole("columnheader", { name: "Kind" })).toBeInTheDocument();
+    (await screen.findByRole("button", { name: "Select Alpha" })).click();
     expect(onSelect).toHaveBeenCalledWith(records[0].source);
+  });
+
+  it("keeps expansion actions connected to the table renderer", async () => {
+    const onExpand = vi.fn();
+    renderWithTheme(<RecordTable records={records} properties={properties} onExpansionChange={onExpand} />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "Expand Alpha" }));
+    expect(onExpand).toHaveBeenCalledWith(records[0].id);
   });
 
   it.each([
     ["list", RecordList],
     ["gallery", RecordGallery],
     ["table", RecordTable],
-  ] as const)("shares scoped Root selection with the %s renderer", (_view, Renderer) => {
+  ] as const)("shares scoped Root selection with the %s renderer", async (_view, Renderer) => {
     renderWithTheme(
       <Table.Root
         rows={records}
@@ -88,13 +131,13 @@ describe("Table Kit record renderers", () => {
     );
 
     fireEvent.click(screen.getByRole("checkbox", { name: "Select all" }));
-    expect(screen.getByRole("button", { name: "Deselect Alpha" })).toHaveAttribute("aria-pressed", "true");
+    expect(await screen.findByRole("button", { name: "Deselect Alpha" })).toHaveAttribute("aria-pressed", "true");
 
     fireEvent.click(screen.getByRole("button", { name: "Deselect Alpha" }));
     expect(screen.getByRole("button", { name: "Select Alpha" })).toHaveAttribute("aria-pressed", "false");
   });
 
-  it("disables renderer selection for records excluded by the scoped policy", () => {
+  it("disables renderer selection for records excluded by the scoped policy", async () => {
     renderWithTheme(
       <Table.Root
         rows={records}
@@ -108,7 +151,7 @@ describe("Table Kit record renderers", () => {
     );
 
     expect(screen.getByRole("checkbox", { name: "Select all" })).toBeDisabled();
-    expect(screen.getByRole("button", { name: "Select Alpha" })).toBeDisabled();
+    expect(await screen.findByRole("button", { name: "Select Alpha" })).toBeDisabled();
   });
 
   it("preserves selection when switching between built-in view slots", () => {

@@ -37,6 +37,30 @@ Sign-in requires Supabase `VITE_SUPABASE_URL` and
 `SUPABASE_OWNER_SUBJECT`, and `GEM_LIFE_OPERATOR_ACCOUNT_ID`. Keep public
 signups disabled. See [`Console-Authentication-299.md`](Console-Authentication-299.md).
 
+## Table Kit development
+
+The reusable Table Kit lives under `Console/src/table-kit/`. Install its
+frontend dependencies from `Console/` before working on the React console:
+
+```bash
+cd Console
+npm install
+```
+
+The Table Kit's `RecordTable` renderer uses the free AG Grid Community React
+adapter. AG Grid remains an internal renderer detail; feature code continues
+to provide the engine-neutral Table Kit record, property, query, and selection
+contracts. Enterprise modules are not part of this personal project.
+
+Run the frontend checks from `Console/`:
+
+```bash
+npm run format:check
+npm run lint -- --max-warnings 0
+npm run test
+npm run build
+```
+
 ## Current capabilities
 
 ### React console
