@@ -48,9 +48,22 @@ function Root<Row>({
       pagination: effectivePagination ?? { ...uncontrolledPagination, total: rows.length },
       setPagination,
     }),
-    [caption, columns, effectivePagination, rowKey, rows, setPagination, setViewId, uncontrolledPagination, viewId, views],
+    [
+      caption,
+      columns,
+      effectivePagination,
+      rowKey,
+      rows,
+      setPagination,
+      setViewId,
+      uncontrolledPagination,
+      viewId,
+      views,
+    ],
   );
-  return <TableContext.Provider value={value as unknown as TableContextValue<unknown>}>{children}</TableContext.Provider>;
+  return (
+    <TableContext.Provider value={value as unknown as TableContextValue<unknown>}>{children}</TableContext.Provider>
+  );
 }
 
 function Header({ children }: { children?: ReactNode }) {
@@ -63,7 +76,13 @@ function Views<Row>() {
   return (
     <div className="table-kit-views" role="tablist" aria-label="Table views">
       {views.map((view) => (
-        <button key={view.id} type="button" role="tab" aria-selected={view.id === viewId} onClick={() => setViewId(view.id)}>
+        <button
+          key={view.id}
+          type="button"
+          role="tab"
+          aria-selected={view.id === viewId}
+          onClick={() => setViewId(view.id)}
+        >
           {view.label}
         </button>
       ))}
@@ -72,17 +91,29 @@ function Views<Row>() {
 }
 
 function Toolbar({ children }: { children?: ReactNode }) {
-  return <div className="table-kit-toolbar" role="toolbar">{children}</div>;
+  return (
+    <div className="table-kit-toolbar" role="toolbar">
+      {children}
+    </div>
+  );
 }
 
 function Content<Row>({ children }: { children?: ReactNode }) {
   useTableContext<Row>();
-  return <section className="table-kit-content" aria-label="Table content">{children}</section>;
+  return (
+    <section className="table-kit-content" aria-label="Table content">
+      {children}
+    </section>
+  );
 }
 
 function Pagination<Row>({ children }: { children?: ReactNode }) {
   useTableContext<Row>();
-  return <nav aria-label="Table pagination" className="table-kit-pagination">{children}</nav>;
+  return (
+    <nav aria-label="Table pagination" className="table-kit-pagination">
+      {children}
+    </nav>
+  );
 }
 
 export const Table = { Root, Header, Views, Toolbar, Content, Pagination };
