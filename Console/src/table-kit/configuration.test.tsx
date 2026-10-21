@@ -63,6 +63,39 @@ describe("Table Kit property configuration", () => {
     expect(hook.result.current.visibleIds).toEqual(["name", "status", "owner"]);
   });
 
+  it("hydrates a clean active view when persisted metadata arrives after mount", () => {
+    const hook = renderHook(
+      ({ viewConfigurations }) => useTablePropertyConfiguration({ properties, viewId: "grid", viewConfigurations }),
+      { initialProps: { viewConfigurations: {} } },
+    );
+
+    expect(hook.result.current.visibleIds).toEqual(["name", "status", "owner"]);
+    act(() =>
+      hook.rerender({
+        viewConfigurations: { grid: { order: ["owner", "name", "status"], hiddenIds: ["status"] } },
+      }),
+    );
+
+    expect(hook.result.current.configuration.order).toEqual(["owner", "name", "status"]);
+    expect(hook.result.current.visibleIds).toEqual(["owner", "name"]);
+  });
+
+  it("does not replace local view edits when persisted metadata refreshes", () => {
+    const hook = renderHook(
+      ({ viewConfigurations }) => useTablePropertyConfiguration({ properties, viewId: "grid", viewConfigurations }),
+      { initialProps: { viewConfigurations: {} } },
+    );
+
+    act(() => hook.result.current.setVisibility("status", false));
+    act(() =>
+      hook.rerender({
+        viewConfigurations: { grid: { order: ["owner", "name", "status"], hiddenIds: [] } },
+      }),
+    );
+
+    expect(hook.result.current.visibleIds).toEqual(["name", "owner"]);
+  });
+
   it("supports ordering, show all, hide all, and reset operations", () => {
     const hook = renderHook(() => useTablePropertyConfiguration({ properties }));
     act(() => hook.result.current.move("status", "up"));
@@ -81,10 +114,14 @@ describe("Table Kit property configuration", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Properties" }));
     expect(screen.getByRole("dialog", { name: "Properties" })).toBeInTheDocument();
+    expect(screen.getByRole("searchbox", { name: "Search properties" })).toHaveFocus();
     fireEvent.change(screen.getByRole("searchbox", { name: "Search properties" }), {
       target: { value: "owner" },
     });
     expect(screen.getByText("Owner")).toBeInTheDocument();
     expect(screen.queryByText("Status")).not.toBeInTheDocument();
+    fireEvent.keyDown(screen.getByRole("dialog", { name: "Properties" }), { key: "Escape" });
+    expect(screen.queryByRole("dialog", { name: "Properties" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Properties" })).toHaveFocus();
   });
 });

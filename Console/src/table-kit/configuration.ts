@@ -115,7 +115,10 @@ export function useTablePropertyConfiguration({
   );
   const viewStates = useRef(new Map<string, TablePropertyConfiguration>());
   const viewMissingPropertyIds = useRef(new Map<string, readonly string[]>());
+  const dirtyViewIds = useRef(new Set<string>());
   const previousViewId = useRef(viewId);
+  const configuredStateSignature = useMemo(() => JSON.stringify(configuredState), [configuredState]);
+  const previousConfiguredStateSignature = useRef(configuredStateSignature);
   const currentConfiguration = controlledConfiguration ?? uncontrolledConfiguration;
   const normalizedCurrent = useMemo(() => {
     const normalized = normalizeTablePropertyConfiguration(currentConfiguration, properties);
@@ -125,19 +128,38 @@ export function useTablePropertyConfiguration({
   }, [controlledConfiguration, currentConfiguration, properties, uncontrolledMissingPropertyIds]);
 
   useEffect(() => {
-    if (previousViewId.current === viewId) return;
-    if (previousViewId.current) {
+    const viewChanged = previousViewId.current !== viewId;
+    const viewKey = viewId ?? "";
+
+    // Rehydrate a clean active view when persisted metadata arrives after mount,
+    // while retaining local edits until the consumer persists or resets them.
+    if (!viewChanged) {
+      if (
+        controlledConfiguration === undefined &&
+        viewId &&
+        !dirtyViewIds.current.has(viewId) &&
+        configuredStateSignature !== previousConfiguredStateSignature.current
+      ) {
+        setUncontrolledConfiguration(configuredState.configuration);
+        setUncontrolledMissingPropertyIds(configuredState.missingPropertyIds);
+      }
+      previousConfiguredStateSignature.current = configuredStateSignature;
+      return;
+    }
+
+    if (previousViewId.current && dirtyViewIds.current.has(previousViewId.current)) {
       viewStates.current.set(previousViewId.current, normalizedCurrent.configuration);
       viewMissingPropertyIds.current.set(previousViewId.current, normalizedCurrent.missingPropertyIds);
     }
     previousViewId.current = viewId;
     if (controlledConfiguration === undefined) {
-      setUncontrolledConfiguration(viewStates.current.get(viewId ?? "") ?? configuredState.configuration);
+      setUncontrolledConfiguration(viewStates.current.get(viewKey) ?? configuredState.configuration);
       setUncontrolledMissingPropertyIds(
-        viewMissingPropertyIds.current.get(viewId ?? "") ?? configuredState.missingPropertyIds,
+        viewMissingPropertyIds.current.get(viewKey) ?? configuredState.missingPropertyIds,
       );
     }
-  }, [configuredState, controlledConfiguration, normalizedCurrent, viewId]);
+    previousConfiguredStateSignature.current = configuredStateSignature;
+  }, [configuredState, configuredStateSignature, controlledConfiguration, normalizedCurrent, viewId]);
 
   const update = useCallback(
     (next: TablePropertyConfigurationInput | TablePropertyConfiguration) => {
@@ -148,7 +170,10 @@ export function useTablePropertyConfiguration({
         },
         properties,
       );
-      if (viewId) viewStates.current.set(viewId, resolved.configuration);
+      if (viewId) {
+        dirtyViewIds.current.add(viewId);
+        viewStates.current.set(viewId, resolved.configuration);
+      }
       if (controlledConfiguration === undefined) {
         setUncontrolledConfiguration(resolved.configuration);
         setUncontrolledMissingPropertyIds(resolved.missingPropertyIds);
@@ -193,7 +218,11 @@ export function useTablePropertyConfiguration({
     [currentConfiguration.order, update],
   );
   const reset = useCallback(() => {
-    if (viewId) viewStates.current.delete(viewId);
+    if (viewId) {
+      dirtyViewIds.current.delete(viewId);
+      viewStates.current.delete(viewId);
+      viewMissingPropertyIds.current.delete(viewId);
+    }
     const resolved = defaultState.configuration;
     if (controlledConfiguration === undefined) {
       setUncontrolledConfiguration(resolved);
