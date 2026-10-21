@@ -60,6 +60,41 @@ provide deterministic jsdom layout metrics and await the accessible grid
 content. This keeps the contract tests focused on Table Kit behavior while the
 production build verifies the real AG Grid integration.
 
+## Persisted view and property configuration
+
+`useTablePropertyConfiguration` owns only serializable view metadata: property
+order and hidden property IDs. It supports controlled and uncontrolled use,
+restores state per `viewId`, and accepts consumer-owned `viewConfigurations` for
+approved persisted metadata. `onConfigurationChange` reports the normalized
+snapshot so a database consumer can save it; the Table Kit never writes to a
+backend and never mutates canonical records.
+
+```tsx
+const properties = [
+  { id: "name", label: "Name" },
+  { id: "status", label: "Status" },
+];
+const configuration = useTablePropertyConfiguration({
+  properties,
+  viewId: activeViewId,
+  viewConfigurations: savedConfigurations,
+  onConfigurationChange: (next, context) => saveViewMetadata(context.viewId, next),
+});
+
+return (
+  <>
+    <Table.PropertyControls properties={properties} configuration={configuration} />
+    <RecordTable records={records} properties={propertyDefinitions} propertyIds={configuration.visibleIds} />
+  </>
+);
+```
+
+The property menu uses native buttons, checkboxes, and search input for keyboard
+and screen-reader support. It provides show-all, hide-all, reorder, and reset
+actions. If a saved property no longer exists in the current schema, the hook
+filters it out, appends newly available properties, and exposes
+`missingPropertyIds`; the menu reports that recovery visibly.
+
 The query contract in `query.ts` provides normalized state, deterministic
 client-side derivation, and the adapter shape for server-side results. It does
 not own a transport, cache, or feature-specific filter vocabulary.

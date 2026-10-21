@@ -26,6 +26,21 @@ export type {
   UseTableQueryStateResult,
 } from "./query";
 export { useTableQueryState } from "./query";
+export {
+  filterTableProperties,
+  normalizeTablePropertyConfiguration,
+  useTablePropertyConfiguration,
+} from "./configuration";
+export type {
+  TableConfigurationChangeContext,
+  TablePropertyConfiguration,
+  TablePropertyConfigurationInput,
+  TablePropertyConfigurationState,
+  TablePropertyOption,
+  UseTablePropertyConfigurationOptions,
+} from "./configuration";
+export { TablePropertyControls } from "./PropertyControls";
+export type { TablePropertyControlsProps } from "./PropertyControls";
 export { TableImportWorkflow } from "./ImportWorkflow";
 export type { TableImportWorkflowProps } from "./ImportWorkflow";
 export { parseCsv, parseJson, previewCsv, previewJson } from "./import";
