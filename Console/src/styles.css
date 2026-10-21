@@ -618,6 +618,29 @@ dialog::backdrop {
   width: 100%;
   min-height: 2.75rem;
 }
+/* Keep related Employment fields readable in columns while preserving a single-column compact layout. */
+.create-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 1rem;
+  align-items: start;
+}
+.create-form-grid > .create-form-field {
+  min-width: 0;
+}
+.create-form-grid--compact {
+  grid-template-columns: repeat(3, minmax(9rem, 12rem));
+}
+.create-form-grid--contact {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+@media (max-width: 640px) {
+  .create-form-grid,
+  .create-form-grid--compact,
+  .create-form-grid--contact {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
 .create-record-form [aria-invalid="true"] {
   border-color: var(--danger);
 }

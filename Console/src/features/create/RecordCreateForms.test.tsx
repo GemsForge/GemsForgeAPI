@@ -149,5 +149,8 @@ describe("shared create form workflow", () => {
     expect(screen.getByLabelText("Contact email")).toHaveAttribute("type", "email");
     expect(screen.getByLabelText("Search Work address")).toHaveAttribute("placeholder", "Search existing addresses");
     expect(screen.queryByLabelText("Stable employment ID *")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Start date").closest(".create-form-grid--compact")).toBeInTheDocument();
+    expect(screen.getByLabelText("End date").closest(".create-form-grid--compact")).toBeInTheDocument();
+    expect(screen.getByLabelText("Status *").closest(".create-form-grid--compact")).toBeInTheDocument();
   });
 });

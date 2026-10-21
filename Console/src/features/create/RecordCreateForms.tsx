@@ -504,20 +504,30 @@ export function EmploymentCreateForm({
     >
       {(form) => (
         <>
-          {fields(form, [["employerName", "Employer name", true]])}
-          <Select form={form} name="employerType" label="Employer type" options={employerTypeOptions} required />
-          <Select form={form} name="industry" label="Industry" options={industryOptions} />
-          <Text form={form} name="website" label="Website" type="url" />
-          {fields(form, [
-            ["positionTitle", "Position title", true],
-            ["employmentType", "Employment type", true],
-          ])}
-          <Text form={form} name="startDate" label="Start date" type="date" />
-          <Text form={form} name="endDate" label="End date" type="date" />
-          <Select form={form} name="employmentStatus" label="Status" options={statusOptions} required />
-          <Text form={form} name="employerContact" label="Contact" />
-          <Text form={form} name="employerContactNumber" label="Contact number" type="tel" />
-          <Text form={form} name="employerContactEmail" label="Contact email" type="email" />
+          <div className="create-form-grid">
+            {fields(form, [["employerName", "Employer name", true]])}
+            <Select form={form} name="employerType" label="Employer type" options={employerTypeOptions} required />
+          </div>
+          <div className="create-form-grid">
+            <Select form={form} name="industry" label="Industry" options={industryOptions} />
+            <Text form={form} name="website" label="Website" type="url" />
+          </div>
+          <div className="create-form-grid">
+            {fields(form, [
+              ["positionTitle", "Position title", true],
+              ["employmentType", "Employment type", true],
+            ])}
+          </div>
+          <div className="create-form-grid create-form-grid--compact">
+            <Text form={form} name="startDate" label="Start date" type="date" />
+            <Text form={form} name="endDate" label="End date" type="date" />
+            <Select form={form} name="employmentStatus" label="Status" options={statusOptions} required />
+          </div>
+          <div className="create-form-grid create-form-grid--contact">
+            <Text form={form} name="employerContact" label="Contact" />
+            <Text form={form} name="employerContactNumber" label="Contact number" type="tel" />
+            <Text form={form} name="employerContactEmail" label="Contact email" type="email" />
+          </div>
           <Text form={form} name="notes" label="Notes" multiline />
           <Select
             form={form}
