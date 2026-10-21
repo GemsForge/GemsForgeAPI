@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { Table, useTableContext } from "./index";
 
@@ -32,6 +32,30 @@ function StateHarness() {
 }
 
 describe("Table Kit", () => {
+  it("exposes shared query controls with reset and filter semantics", () => {
+    const onStateChange = vi.fn();
+    render(
+      <Table.QueryControls
+        state={{ search: "old", filters: {}, sort: [], pageIndex: 2, pageSize: 25 }}
+        onStateChange={onStateChange}
+        filters={[{ id: "status", label: "Status", options: [{ value: "open", label: "Open" }] }]}
+      />,
+    );
+    fireEvent.change(screen.getByRole("searchbox"), { target: { value: "new" } });
+    expect(onStateChange).toHaveBeenLastCalledWith(expect.objectContaining({ search: "new", pageIndex: 0 }));
+    fireEvent.click(screen.getByRole("button", { name: "Reset" }));
+    expect(onStateChange).toHaveBeenLastCalledWith({ search: "", filters: {}, sort: [], pageIndex: 0, pageSize: 25 });
+  });
+
+  it("injects accessible New and Import actions and disables them while pending", () => {
+    const onNew = vi.fn();
+    const onImport = vi.fn();
+    render(<Table.Actions onNew={onNew} onImport={onImport} pending />);
+    expect(screen.getByRole("button", { name: "New" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Import" })).toBeDisabled();
+    expect(screen.getByRole("group")).toHaveAttribute("aria-busy", "true");
+  });
+
   it("composes the scoped table primitives with typed rows", () => {
     render(
       <Table.Root<Row> rows={rows} columns={columns} rowKey={(row) => row.id} caption="Records">
@@ -106,5 +130,37 @@ describe("Table Kit", () => {
 
     expect(screen.getAllByText("first:2")).toHaveLength(1);
     expect(screen.getAllByText("second:0")).toHaveLength(1);
+  });
+
+  it("supports a configurable collapsible header description", () => {
+    render(
+      <Table.Root<Row> rows={rows} columns={columns} rowKey={(row) => row.id}>
+        <Table.Header title="Records" description="Helpful context" collapsibleDescription />
+      </Table.Root>,
+    );
+    expect(screen.getByText("Helpful context")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Hide description" }));
+    expect(screen.queryByText("Helpful context")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Show description" }));
+    expect(screen.getByText("Helpful context")).toBeInTheDocument();
+  });
+
+  it("exposes semantic header subcomponents", () => {
+    render(
+      <Table.Root<Row> rows={rows} columns={columns} rowKey={(row) => row.id}>
+        <Table.Header>
+          <Table.Header.Title>Records</Table.Header.Title>
+          <Table.Header.Description>Helpful context</Table.Header.Description>
+          <Table.Header.Metadata>
+            <dt>Count</dt>
+            <dd>2</dd>
+          </Table.Header.Metadata>
+        </Table.Header>
+      </Table.Root>,
+    );
+
+    expect(screen.getByRole("heading", { name: "Records" })).toBeInTheDocument();
+    expect(screen.getByText("Helpful context")).toBeInTheDocument();
+    expect(screen.getByText("Count")).toBeInTheDocument();
   });
 });
