@@ -45,6 +45,25 @@ function Harness() {
   );
 }
 
+function ActionHarness() {
+  const utilities = useRecordUtilities(records, (record) => [record.id, record.name, record.status], {});
+  return (
+    <DatabaseRecordCollection
+      label="Examples"
+      records={records}
+      utilities={utilities}
+      adapter={adapter}
+      sortOptions={[]}
+      detailId={null}
+      onDetailChange={() => undefined}
+      actions={{
+        onNew: () => undefined,
+        newRecordOptions: [{ id: "address", label: "New address", onSelect: () => undefined }],
+      }}
+    />
+  );
+}
+
 describe("DatabaseRecordCollection", () => {
   it("uses the effective filtered result set for the shared Table.Root and detail action", () => {
     render(
@@ -97,5 +116,16 @@ describe("DatabaseRecordCollection", () => {
     fireEvent.keyDown(screen.getByRole("dialog", { name: "Examples query utilities" }), { key: "Escape" });
     expect(screen.queryByRole("dialog", { name: "Examples query utilities" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "More utilities" })).toHaveFocus();
+  });
+
+  it("passes consumer-owned New Record actions through the collection shell", () => {
+    render(
+      <TamaguiProvider config={tamaguiConfig} defaultTheme="dark">
+        <ActionHarness />
+      </TamaguiProvider>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "New record options" }));
+    expect(screen.getByRole("menuitem", { name: "New address" })).toBeInTheDocument();
   });
 });

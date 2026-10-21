@@ -11,6 +11,7 @@ import {
   useTablePropertyConfiguration,
   type RecordAdapter,
   type RecordPropertyDefinition,
+  type TableActionsProps,
   type TableRecord,
 } from "../table-kit";
 import { usePagedRecords } from "../hooks/usePagedRecords";
@@ -39,6 +40,8 @@ export interface DatabaseRecordCollectionProps<Record> {
   detailId: string | null;
   onDetailChange: (id: string | null) => void;
   detail?: ReactNode;
+  /** Optional consumer-owned create and intake actions rendered in the utility row. */
+  actions?: TableActionsProps;
 }
 
 /**
@@ -56,6 +59,7 @@ export function DatabaseRecordCollection<Record>({
   detailId,
   onDetailChange,
   detail,
+  actions,
 }: DatabaseRecordCollectionProps<Record>) {
   const paging = usePagedRecords(utilities.records);
   const properties = useMemo(() => adapter.getPropertyDefinitions(), [adapter]);
@@ -102,6 +106,7 @@ export function DatabaseRecordCollection<Record>({
         detailId={detailId}
         onDetailChange={onDetailChange}
         detail={detail}
+        actions={actions}
       />
     </Table.Root>
   );
@@ -119,6 +124,7 @@ function DatabaseRecordTableShell<Record>({
   detailId,
   onDetailChange,
   detail,
+  actions,
 }: {
   properties: readonly RecordPropertyDefinition<Record>[];
   label: string;
@@ -130,6 +136,7 @@ function DatabaseRecordTableShell<Record>({
   detailId: string | null;
   onDetailChange: (id: string | null) => void;
   detail?: ReactNode;
+  actions?: TableActionsProps;
 }) {
   const { viewId } = useTableContext<TableRecord<Record>>();
   const propertyOptions = useMemo(
@@ -156,6 +163,7 @@ function DatabaseRecordTableShell<Record>({
           filterOptions={filterOptions}
           compact
         />
+        {actions && <Table.Actions {...actions} />}
         <Table.PropertyControls properties={propertyOptions} configuration={configuration} />
       </Table.Toolbar>
       <Table.Selection />
