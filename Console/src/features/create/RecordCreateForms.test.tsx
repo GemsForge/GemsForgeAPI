@@ -132,6 +132,7 @@ describe("shared create form workflow", () => {
         addresses={[workAddress]}
         employerTypeOptions={[{ value: "Company", label: "Company" }]}
         industryOptions={[{ value: "Technology", label: "Technology" }]}
+        employmentTypeOptions={[{ value: "Full-time", label: "Full-time" }]}
         statusOptions={[{ value: "Current", label: "Current" }]}
         onCreate={vi.fn().mockResolvedValue(undefined)}
         onCancel={vi.fn()}
@@ -140,6 +141,7 @@ describe("shared create form workflow", () => {
 
     expect(screen.getByLabelText("Employer type *")).toHaveAttribute("aria-haspopup", "listbox");
     expect(screen.getByLabelText("Industry")).toHaveAttribute("aria-haspopup", "listbox");
+    expect(screen.getByLabelText("Employment type *")).toHaveAttribute("aria-haspopup", "listbox");
     expect(screen.getByLabelText("Status *")).toHaveAttribute("aria-haspopup", "listbox");
     expect(screen.getByLabelText("Website")).toHaveAttribute("type", "url");
     expect(screen.getByLabelText("Start date")).toHaveAttribute("type", "date");

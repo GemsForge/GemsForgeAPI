@@ -451,6 +451,7 @@ export function EmploymentCreateForm({
   addresses,
   employerTypeOptions,
   industryOptions,
+  employmentTypeOptions,
   statusOptions,
   onCreate,
   onCancel,
@@ -458,6 +459,7 @@ export function EmploymentCreateForm({
   addresses: Address[];
   employerTypeOptions: Array<{ value: string; label: string }>;
   industryOptions: Array<{ value: string; label: string }>;
+  employmentTypeOptions: Array<{ value: string; label: string }>;
   statusOptions: Array<{ value: string; label: string }>;
   onCreate: (payload: EmploymentCreate) => Promise<void>;
   onCancel: () => void;
@@ -513,10 +515,14 @@ export function EmploymentCreateForm({
             <Text form={form} name="website" label="Website" type="url" />
           </div>
           <div className="create-form-grid">
-            {fields(form, [
-              ["positionTitle", "Position title", true],
-              ["employmentType", "Employment type", true],
-            ])}
+            {fields(form, [["positionTitle", "Position title", true]])}
+            <Select
+              form={form}
+              name="employmentType"
+              label="Employment type"
+              options={employmentTypeOptions}
+              required
+            />
           </div>
           <div className="create-form-grid create-form-grid--compact">
             <Text form={form} name="startDate" label="Start date" type="date" />

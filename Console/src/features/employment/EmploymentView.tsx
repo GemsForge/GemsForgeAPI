@@ -99,6 +99,7 @@ export function EmploymentView({ records }: EmploymentViewProps) {
           addresses={addresses.data ?? []}
           employerTypeOptions={toOptions(employmentOptions.employerType)}
           industryOptions={toOptions(employmentOptions.industry)}
+          employmentTypeOptions={toOptions(employmentOptions.employmentType)}
           statusOptions={toOptions(employmentOptions.status)}
           onCancel={() => setCreating(false)}
           onCreate={async (payload) => {
@@ -146,6 +147,7 @@ export function EmploymentView({ records }: EmploymentViewProps) {
                         addresses={addresses.data ?? []}
                         employerTypeOptions={toOptions(employmentOptions.employerType)}
                         industryOptions={toOptions(employmentOptions.industry)}
+                        employmentTypeOptions={toOptions(employmentOptions.employmentType)}
                         statusOptions={toOptions(employmentOptions.status)}
                         onCancel={close}
                         onCreate={async (payload) => {
