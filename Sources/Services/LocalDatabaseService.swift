@@ -43,7 +43,10 @@ enum LocalDatabaseProfile: String, Codable, CaseIterable, Sendable {
             "AddHomeInventoryAttachmentReference",
             "AddFileMetadataForeignKeys",
             "AddHubOwnershipFields",
-            "MakeAuthenticationProviderAgnostic"
+            "MakeAuthenticationProviderAgnostic",
+            "CreateTableViews",
+            "CreateViewColumnConfigurations",
+            "CreateViewQueryConfigurations"
         ]
     }
 
@@ -84,6 +87,11 @@ enum LocalDatabaseProfile: String, Codable, CaseIterable, Sendable {
             app.migrations.add(AddFileMetadataForeignKeys())
             app.migrations.add(AddHubOwnershipFields())
             app.migrations.add(MakeAuthenticationProviderAgnostic())
+            // View metadata is additive and must follow the finalized Hub
+            // schema. Child configuration tables follow their parent view.
+            app.migrations.add(CreateTableViews())
+            app.migrations.add(CreateViewColumnConfigurations())
+            app.migrations.add(CreateViewQueryConfigurations())
         }
     }
 }
