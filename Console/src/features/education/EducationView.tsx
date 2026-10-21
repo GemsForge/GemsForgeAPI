@@ -1,19 +1,17 @@
-import { usePagedRecords } from "../../hooks/usePagedRecords";
-import { PaginationControls } from "../../components/PaginationControls";
 import { useState } from "react";
 import { useEducationPatchMutation, useEducationRecordQuery } from "../../data/recordQueries";
 import { QueryFeedback } from "../../components/QueryFeedback";
 import type { Education } from "../../types";
-import { GemEmptyState, GemRecordCard, GemRecordList } from "../../components/ui";
+import { GemEmptyState } from "../../components/ui";
 import { AttachmentControl } from "../../components/AttachmentControl";
 import { EditableRecordFields, formatRecordTimestamp } from "../../components/EditableRecordFields";
 import { useCreateEducationMutation } from "../../data/recordQueries";
 import { useAddressesQuery } from "../../data/lifeQueries";
 import { EducationCreateForm } from "../create/RecordCreateForms";
 import { RecordImport } from "../../components/RecordImport";
-import { RecordUtilities } from "../../components/RecordUtilities";
-import { RecordCollection } from "../../components/RecordCollection--LEGACY";
 import { useRecordUtilities } from "../../hooks/useRecordUtilities";
+import { DatabaseRecordCollection } from "../../components/DatabaseRecordCollection";
+import { educationTableAdapter } from "../database/recordTableAdapters";
 
 interface EducationViewProps {
   records: Education[];
@@ -32,7 +30,6 @@ export function EducationView({ records }: EducationViewProps) {
       end: (a, b) => (a.endDate ?? "").localeCompare(b.endDate ?? ""),
     },
   );
-  const paging = usePagedRecords(utilities.records);
   const [selectedID, setSelectedID] = useState<string | null>(null);
   const detail = useEducationRecordQuery(selectedID);
   const patch = useEducationPatchMutation();
@@ -46,7 +43,6 @@ export function EducationView({ records }: EducationViewProps) {
 
   return (
     <>
-      <PaginationControls {...paging} label="Education" />
       <div className="content-heading">
         <div>
           <p className="eyebrow">Life-area records</p>
@@ -69,24 +65,6 @@ export function EducationView({ records }: EducationViewProps) {
           />
         </div>
       </div>
-      <RecordCollection>
-        <RecordUtilities
-          label="Education"
-          {...utilities}
-          totalCount={records.length}
-          visibleCount={utilities.records.length}
-          sortOptions={[
-            { value: "institution", label: "Institution" },
-            { value: "status", label: "Status" },
-            { value: "type", label: "Education type" },
-            { value: "program", label: "Program" },
-            { value: "start", label: "Start date" },
-            { value: "end", label: "End date" },
-          ]}
-          filterOptions={Array.from(new Set(records.map((record) => record.status))).sort()}
-        />
-      </RecordCollection>
-
       {creating && (
         <EducationCreateForm
           addresses={addresses.data ?? []}
@@ -107,56 +85,51 @@ export function EducationView({ records }: EducationViewProps) {
         />
       ) : (
         <div className="education-layout">
-          <GemRecordList
-            className="education-list"
-            records={paging.items}
-            label="Education records"
-            onExpandedChange={setSelectedID}
-            getKey={(record) => record.id}
-            tableColumns={[
-              { key: "institution", label: "Institution", icon: () => "✦", render: (record) => record.institutionName },
-              { key: "type", label: "Category", render: (record) => record.educationType },
-              { key: "id", label: "Item ID", render: (record) => record.id },
-              { key: "status", label: "Status", render: (record) => record.status },
+          <DatabaseRecordCollection
+            label="Education"
+            records={records}
+            utilities={utilities}
+            adapter={educationTableAdapter}
+            sortOptions={[
+              { value: "institution", label: "Institution" },
+              { value: "status", label: "Status" },
+              { value: "type", label: "Education type" },
+              { value: "program", label: "Program" },
+              { value: "start", label: "Start date" },
+              { value: "end", label: "End date" },
             ]}
-            renderRecord={(record) => (
-              <GemRecordCard
-                className="education-card"
-                icon="✦"
-                title={record.institutionName}
-                subtitle={`${record.educationType} · ${record.id}`}
-                status={record.status}
-                selected={selectedRecord?.id === record.id}
-                onSelect={() => setSelectedID((current) => (current === record.id ? null : record.id))}
-              />
-            )}
-          />
-          <div>
-            <QueryFeedback query={detail} />
-            {selectedRecord ? (
-              <EducationDetail
-                key={selectedRecord.id}
-                record={selectedRecord}
-                programOptions={programOptions}
-                onPatch={async (values) => {
-                  await patch.mutateAsync({ id: selectedRecord.id, patch: values });
-                }}
-                onAttachment={async (metadata) => {
-                  await patch.mutateAsync({
-                    id: selectedRecord.id,
-                    patch: { documentFileMetadataID: metadata?.id ?? null },
-                  });
-                }}
-              />
-            ) : (
-              !selectedID && (
+            filterOptions={Array.from(new Set(records.map((record) => record.status))).sort()}
+            detailId={selectedID}
+            onDetailChange={setSelectedID}
+            detail={
+              selectedRecord ? (
+                <>
+                  <QueryFeedback query={detail} />
+                  <EducationDetail
+                    key={selectedRecord.id}
+                    record={selectedRecord}
+                    programOptions={programOptions}
+                    onPatch={async (values) => {
+                      await patch.mutateAsync({ id: selectedRecord.id, patch: values });
+                    }}
+                    onAttachment={async (metadata) => {
+                      await patch.mutateAsync({
+                        id: selectedRecord.id,
+                        patch: { documentFileMetadataID: metadata?.id ?? null },
+                      });
+                    }}
+                  />
+                </>
+              ) : selectedID ? (
+                <QueryFeedback query={detail} />
+              ) : (
                 <div className="detail-placeholder">
                   <span>✦</span>
                   <p>Select an education record to view its details.</p>
                 </div>
               )
-            )}
-          </div>
+            }
+          />
         </div>
       )}
     </>

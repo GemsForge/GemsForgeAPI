@@ -1,18 +1,16 @@
-import { usePagedRecords } from "../../hooks/usePagedRecords";
-import { PaginationControls } from "../../components/PaginationControls";
 import { useState } from "react";
 import { useEmploymentPatchMutation, useEmploymentRecordQuery } from "../../data/recordQueries";
 import { QueryFeedback } from "../../components/QueryFeedback";
 import type { Employment } from "../../types";
-import { GemEmptyState, GemRecordCard, GemRecordList } from "../../components/ui";
+import { GemEmptyState } from "../../components/ui";
 import { EditableRecordFields, formatRecordDate, formatRecordTimestamp } from "../../components/EditableRecordFields";
 import { useCreateEmploymentMutation } from "../../data/recordQueries";
 import { useAddressesQuery } from "../../data/lifeQueries";
 import { EmploymentCreateForm } from "../create/RecordCreateForms";
 import { RecordImport } from "../../components/RecordImport";
-import { RecordUtilities } from "../../components/RecordUtilities";
-import { RecordCollection } from "../../components/RecordCollection--LEGACY";
 import { useRecordUtilities } from "../../hooks/useRecordUtilities";
+import { DatabaseRecordCollection } from "../../components/DatabaseRecordCollection";
+import { employmentTableAdapter } from "../database/recordTableAdapters";
 
 const employmentOptions = {
   industry: [
@@ -51,7 +49,6 @@ export function EmploymentView({ records }: EmploymentViewProps) {
       end: (a, b) => (a.endDate ?? "").localeCompare(b.endDate ?? ""),
     },
   );
-  const paging = usePagedRecords(utilities.records);
   const [selectedID, setSelectedID] = useState<string | null>(null);
   const detail = useEmploymentRecordQuery(selectedID);
   const patch = useEmploymentPatchMutation();
@@ -62,7 +59,6 @@ export function EmploymentView({ records }: EmploymentViewProps) {
 
   return (
     <>
-      <PaginationControls {...paging} label="Employment" />
       <div className="content-heading">
         <div>
           <p className="eyebrow">Life-area records</p>
@@ -92,25 +88,6 @@ export function EmploymentView({ records }: EmploymentViewProps) {
           />
         </div>
       </div>
-      <RecordCollection>
-        <RecordUtilities
-          label="Employment"
-          {...utilities}
-          totalCount={records.length}
-          visibleCount={utilities.records.length}
-          sortOptions={[
-            { value: "employer", label: "Employer" },
-            { value: "start", label: "Start date" },
-            { value: "position", label: "Position" },
-            { value: "industry", label: "Industry" },
-            { value: "type", label: "Employment type" },
-            { value: "status", label: "Status" },
-            { value: "end", label: "End date" },
-          ]}
-          filterOptions={Array.from(new Set(records.map((record) => record.employmentStatus))).sort()}
-        />
-      </RecordCollection>
-
       {creating && (
         <EmploymentCreateForm
           addresses={addresses.data ?? []}
@@ -131,44 +108,39 @@ export function EmploymentView({ records }: EmploymentViewProps) {
         />
       ) : (
         <div className="employment-layout">
-          <GemRecordList
-            className="employment-list"
-            records={paging.items}
-            label="Employment records"
-            onExpandedChange={setSelectedID}
-            getKey={(record) => record.id}
-            tableColumns={[
-              { key: "employer", label: "Employer", icon: () => "◆", render: (record) => record.employerName },
-              { key: "position", label: "Category", render: (record) => record.positionTitle },
-              { key: "id", label: "Item ID", render: (record) => record.id },
-              { key: "status", label: "Status", render: (record) => record.employmentStatus },
+          <DatabaseRecordCollection
+            label="Employment"
+            records={records}
+            utilities={utilities}
+            adapter={employmentTableAdapter}
+            sortOptions={[
+              { value: "employer", label: "Employer" },
+              { value: "start", label: "Start date" },
+              { value: "position", label: "Position" },
+              { value: "industry", label: "Industry" },
+              { value: "type", label: "Employment type" },
+              { value: "status", label: "Status" },
+              { value: "end", label: "End date" },
             ]}
-            renderRecord={(record) => (
-              <GemRecordCard
-                className="employment-card"
-                icon="◆"
-                title={record.employerName}
-                subtitle={`${record.positionTitle} · ${record.id}`}
-                status={record.employmentStatus}
-                selected={selectedRecord?.id === record.id}
-                onSelect={() => setSelectedID((current) => (current === record.id ? null : record.id))}
-              />
-            )}
-            isExpanded={(record) => selectedID === record.id}
-            renderExpanded={() => (
-              <>
-                <QueryFeedback query={detail} />
-                {selectedRecord && (
-                  <EmploymentDetail
-                    key={selectedRecord.id}
-                    record={selectedRecord}
-                    onPatch={async (values) => {
-                      await patch.mutateAsync({ id: selectedRecord.id, patch: values });
-                    }}
-                  />
-                )}
-              </>
-            )}
+            filterOptions={Array.from(new Set(records.map((record) => record.employmentStatus))).sort()}
+            detailId={selectedID}
+            onDetailChange={setSelectedID}
+            detail={
+              selectedID ? (
+                <>
+                  <QueryFeedback query={detail} />
+                  {selectedRecord && (
+                    <EmploymentDetail
+                      key={selectedRecord.id}
+                      record={selectedRecord}
+                      onPatch={async (values) => {
+                        await patch.mutateAsync({ id: selectedRecord.id, patch: values });
+                      }}
+                    />
+                  )}
+                </>
+              ) : null
+            }
           />
         </div>
       )}
