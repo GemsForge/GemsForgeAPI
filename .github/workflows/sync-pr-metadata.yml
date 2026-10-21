@@ -5,7 +5,7 @@ name: Sync issue and pull request metadata
 # 1. The working issue is the source of truth for ownership and planning.
 # 2. Branches include the issue number, for example:
 #      feat/165-safe-launcher-defaults
-# 3. Pull requests should also include `Closes #165` (or equivalent) in the body.
+# 3. Pull requests should include `#165` (without a closing keyword) in the body.
 # 4. When a pull request opens or is reopened, copy the issue's assignee,
 #    labels, and milestone to the pull request.
 # 5. Add the linked issue and pull request to the user-owned GemsForgeAPI
@@ -18,8 +18,7 @@ name: Sync issue and pull request metadata
 # Lifecycle policy (uses the existing Status options in project #7)
 # - Development branch created: In progress; branch name identifies the issue.
 # - Open PR (including draft): In review; issue and PR receive that status.
-# - Closes #170 in a PR body closes #170 only on merge into the default branch.
-# - Closed issue / merged closing PR: Done. A mere #170 mention never closes it.
+# - A PR issue reference never closes the story. Merged PRs move the story to QA.
 # - PR closed without merge: In progress unless another related PR is open.
 # - Reconciliation checks live PRs/branches so late events do not regress review.
 # - Tags and branches without an issue number are ignored.
@@ -142,12 +141,11 @@ jobs:
               })
             ).data : null);
             const branchIssue = branchIssueNumber(pullRequest?.head.ref);
-            // Optional colon and word boundaries match GitHub's documented syntax.
-            // Only repository-local closing references are interpreted here.
-            const closingIssues = (body) => [...new Set([...((body ?? "").matchAll(
-              /\b(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?):?\s+#([1-9]\d*)\b/gi,
+            // PR references link work without closing the story. Closure is a
+            // separate human-controlled action after QA acceptance.
+            const bodyIssues = [...new Set([...((pullRequest?.body ?? "").matchAll(
+              /(?:^|\s)#([1-9]\d*)\b/g,
             ))].map((match) => Number(match[1])))];
-            const bodyIssues = closingIssues(pullRequest?.body);
             const linkedIssue = branchIssue ?? bodyIssues[0];
             const issueNumber = context.payload.issue?.number ?? explicitIssue ??
               createdBranchIssue ?? linkedIssue;
@@ -167,23 +165,6 @@ jobs:
               ...context.repo, issue_number: issueNumber,
             })).data;
             if (issue.pull_request) throw new Error("The working item must be an issue, not a PR.");
-
-            const defaultBranch = context.payload.repository?.default_branch;
-            const mergedClosingReference = Boolean(
-              pullRequest?.merged && defaultBranch &&
-              pullRequest.base?.ref === defaultBranch &&
-              bodyIssues.includes(issueNumber),
-            );
-            // GitHub normally closes these natively. Ensure repair/merge runs
-            // also reconcile closure if the issue event has not arrived yet.
-            if (mergedClosingReference && issue.state !== "closed") {
-              await github.rest.issues.update({
-                ...context.repo, issue_number: issueNumber,
-                state: "closed", state_reason: "completed",
-              });
-              issue.state = "closed";
-              core.notice("Closed issue #" + issueNumber + " after its closing PR merged.");
-            }
 
             // Validate all targets before writing any relationship.
             const targets = new Map();
@@ -448,7 +429,7 @@ jobs:
               });
               const matchesWorkingIssue = (pr) =>
                 branchIssueNumber(pr.head?.ref) === issueNumber ||
-                closingIssues(pr.body).includes(issueNumber);
+                [...new Set([...((pr.body ?? "").matchAll(/(?:^|\s)#([1-9]\d*)\b/g))].map((match) => Number(match[1])))].includes(issueNumber);
               const inReview = openPulls.some(matchesWorkingIssue) ||
                 (pullRequest?.state === "open" && matchesWorkingIssue(pullRequest));
               if (inReview) {
@@ -463,6 +444,7 @@ jobs:
                   Boolean(pullRequest) ? "In progress" : "Backlog";
               }
             }
+            if (pullRequest?.merged && issue.state !== "closed") desiredStatus = "QA";
             const fieldsQuery = `query($projectId: ID!) {
               node(id: $projectId) {
                 ... on ProjectV2 {
