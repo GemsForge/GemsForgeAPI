@@ -58,6 +58,7 @@ describe("ServiceAccountsView", () => {
 
   it("sends only the edited service property", async () => {
     renderView();
+    expect(screen.getByRole("region", { name: "Table content" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /Internet/ }));
     fireEvent.click(screen.getByRole("button", { name: "Edit service" }));
     fireEvent.change(screen.getByLabelText("Service"), { target: { value: "Fiber Internet" } });
