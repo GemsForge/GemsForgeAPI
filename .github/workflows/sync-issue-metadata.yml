@@ -17,9 +17,9 @@ name: Sync issue and pull request metadata
 #
 # Lifecycle policy (uses the existing Status options in the GemsForgeAPI (#7) project)
 # - Development branch created: In progress; branch name identifies the issue.
-# - Open PR (including draft): In review; issue and PR receive that status.
-# - Closes #170 in a PR body closes #170 only on merge into the default branch.
-# - A PR issue reference never closes the story. Merged PRs move the story to QA.
+# - Open PR (including draft): QA; issue and PR receive that status.
+# - Approved Codex Review: In review; human approval is still required to merge.
+# - A merged PR moves issue and PR to Merged; the closed story becomes Done.
 # - PR closed without merge: In progress unless another related PR is open.
 # - Reconciliation checks live PRs/branches so late events do not regress review.
 # - Tags and branches without an issue number are ignored.
@@ -56,6 +56,8 @@ on:
     types: [opened, reopened, closed]
   pull_request:
     types: [opened, reopened, edited, synchronize, ready_for_review, closed]
+  pull_request_review:
+    types: [submitted, edited, dismissed]
   workflow_dispatch:
     inputs:
       pr_number:
@@ -141,6 +143,8 @@ jobs:
                 pull_number: manualNumber,
               })
             ).data : null);
+            const reviewState = context.eventName === "pull_request_review"
+              ? (context.payload.review?.state ?? "").toLowerCase() : "";
             const branchIssue = branchIssueNumber(pullRequest?.head.ref);
             // PR references link work without closing the story. Closure is a
             // separate human-controlled action after QA acceptance.
@@ -165,6 +169,14 @@ jobs:
             const issue = (await github.rest.issues.get({
               ...context.repo, issue_number: issueNumber,
             })).data;
+            if (pullRequest?.merged && issue.state !== "closed") {
+              await github.rest.issues.update({
+                ...context.repo, issue_number: issueNumber,
+                state: "closed", state_reason: "completed",
+              });
+              issue.state = "closed";
+              core.notice("Closed issue #" + issueNumber + " after its PR merged.");
+            }
             if (issue.pull_request) throw new Error("The working item must be an issue, not a PR.");
 
             const defaultBranch = context.payload.repository?.default_branch;
@@ -472,7 +484,7 @@ jobs:
               const inReview = openPulls.some(matchesWorkingIssue) ||
                 (pullRequest?.state === "open" && matchesWorkingIssue(pullRequest));
               if (inReview) {
-                desiredStatus = "In review";
+                desiredStatus = reviewState === "approved" ? "In review" : "QA";
               } else {
                 const branches = await github.paginate(github.rest.repos.listBranches, {
                   ...context.repo, per_page: 100,
@@ -483,7 +495,7 @@ jobs:
                   Boolean(pullRequest) ? "In progress" : "Backlog";
               }
             }
-            if (pullRequest?.merged && issue.state !== "closed") desiredStatus = "QA";
+            if (pullRequest?.merged) desiredStatus = "Merged";
             const fieldsQuery = `query($projectId: ID!) {
               node(id: $projectId) {
                 ... on ProjectV2 {
