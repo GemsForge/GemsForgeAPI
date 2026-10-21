@@ -15,6 +15,13 @@ export type {
   TableRootSelectionProps,
   TableSelectionProps,
   TableView,
+  TableViewId,
+  TableViewSelection,
+  TableUtilityMenuId,
+  TableUtilityMenuState,
+  TableNewRecordOperationOption,
+  TableNewRecordOperations,
+  TableNewRecordOperationType,
 } from "./types";
 export { defaultTableQueryState, deriveClientQuery, normalizeTableQueryState } from "./query";
 export type {
