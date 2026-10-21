@@ -367,7 +367,7 @@ function Actions({
   return (
     <div className="table-kit-actions" role="group" aria-busy={pending}>
       {onNew && !hasMenu && (
-        <Tooltip placement="bottom" delay={300}>
+        <Tooltip placement="top" delay={300}>
           <Tooltip.Trigger asChild>
             <button
               type="button"
@@ -376,7 +376,6 @@ function Actions({
               disabled={isDisabled}
               aria-busy={pending}
               aria-label={newLabel}
-              title={newLabel}
             >
               <span aria-hidden="true">＋</span>
               <span className="sr-only">{newLabel}</span>
@@ -395,7 +394,7 @@ function Actions({
       )}
       {hasMenu && (
         <Menu open={menuOpen} onOpenChange={setMenuOpen} placement="bottom-end" modal={false}>
-          <Tooltip placement="bottom" delay={300}>
+          <Tooltip placement="top" delay={300}>
             <Tooltip.Trigger asChild>
               <button
                 ref={menuTriggerRef}
@@ -403,7 +402,6 @@ function Actions({
                 aria-label={menuLabel}
                 disabled={isDisabled}
                 className="compact-icon-button"
-                title={menuLabel}
                 onClick={() => setMenuOpen((current) => !current)}
               >
                 <span aria-hidden="true">＋</span>

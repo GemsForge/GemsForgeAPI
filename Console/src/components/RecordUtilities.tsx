@@ -67,14 +67,13 @@ export function RecordUtilities({
           placement="bottom-start"
           modal={false}
         >
-          <Tooltip placement="bottom" delay={300}>
+          <Tooltip placement="top" delay={300}>
             <Tooltip.Trigger asChild>
               <button
                 ref={sortTriggerRef}
                 type="button"
                 className="compact-icon-button"
                 aria-label="Sort records"
-                title="Sort records"
                 onClick={() => setCompactMenu((current) => (current === "sort" ? null : "sort"))}
               >
                 <span aria-hidden="true">↕</span>
@@ -124,14 +123,13 @@ export function RecordUtilities({
             placement="bottom-start"
             modal={false}
           >
-            <Tooltip placement="bottom" delay={300}>
+            <Tooltip placement="top" delay={300}>
               <Tooltip.Trigger asChild>
                 <button
                   ref={filterTriggerRef}
                   type="button"
                   className="compact-icon-button"
                   aria-label="Filter records"
-                  title="Filter records"
                   onClick={() => setCompactMenu((current) => (current === "filter" ? null : "filter"))}
                 >
                   <span aria-hidden="true">≡</span>
@@ -187,13 +185,12 @@ export function RecordUtilities({
             />
           </label>
         )}
-        <Tooltip placement="bottom" delay={300}>
+        <Tooltip placement="top" delay={300}>
           <Tooltip.Trigger asChild>
             <button
               type="button"
               className="compact-icon-button"
               aria-label={searchOpen ? "Close search" : `Search ${label.toLowerCase()}`}
-              title={searchOpen ? "Close search" : `Search ${label.toLowerCase()}`}
               onClick={() => setSearchOpen((open) => !open)}
             >
               <span aria-hidden="true">⌕</span>

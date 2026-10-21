@@ -47,7 +47,7 @@ export function TablePropertyControls({
 
   return (
     <div className="table-kit-property-controls" role="group" aria-label="Property configuration">
-      <Tooltip placement="bottom" delay={300}>
+      <Tooltip placement="top" delay={300}>
         <Tooltip.Trigger asChild>
           <button
             ref={triggerRef}
@@ -56,7 +56,6 @@ export function TablePropertyControls({
             aria-controls={dialogId}
             aria-haspopup="dialog"
             aria-expanded={open}
-            title={label}
             onClick={() => setOpen((current) => !current)}
           >
             <span aria-hidden="true">⚙</span>
