@@ -3,6 +3,11 @@ export { TableContext, useTableContext } from "./context";
 export type {
   TableColumn,
   TableContextValue,
+  TableHeaderProps,
+  TableActionsProps,
+  TableQueryControlsProps,
+  TableQueryFilter,
+  TableQueryFilterOption,
   TablePagination,
   TablePaginationState,
   TableRootProps,
