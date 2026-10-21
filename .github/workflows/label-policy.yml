@@ -20,9 +20,15 @@ jobs:
           script: |
             const pr = context.payload.pull_request;
             const title = pr.title || "";
-            const match = /^(feat|fix|refactor|test|docs|chore)\(([a-z0-9-]+)\): #[1-9][0-9]* [a-z][a-z0-9-]*(?:\s+\S.*)?$/.exec(title);
+            const match = /^(feat|fix|refactor|test|docs|chore)\(([a-z0-9-]+)\): #([1-9][0-9]*) ([a-z][a-z0-9-]*(?:\s+\S.*)?)$/.exec(title);
             if (!match) {
               core.setFailed("PR title must match type(scope): #issue short imperative description.");
+              return;
+            }
+            const { data: issue } = await github.rest.issues.get({ ...context.repo, issue_number: Number(match[3]) });
+            const expectedTitle = issue.title.replace(/^([^:]+):\s+/, "$1: #" + match[3] + " ");
+            if (title !== expectedTitle) {
+              core.setFailed("PR title must match issue #" + match[3] + " title: \"" + expectedTitle + "\".");
               return;
             }
             const required = {
