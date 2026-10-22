@@ -1,5 +1,17 @@
 import { useSchemaBuilder } from "../../hooks/useSchemaBuilder";
 import { LiveSchemaView } from "./LiveSchemaView";
+import { GemButton, GemField } from "../../components/ui";
+import { Input, Select, TextArea } from "tamagui";
+
+const schemaControlStyle = {
+  width: "100%" as const,
+  minHeight: "$5" as const,
+  borderColor: "$gemPanelLight" as const,
+  borderWidth: 1,
+  borderRadius: "$gemControl" as const,
+  backgroundColor: "$gemCanvas" as const,
+  color: "$gemInk" as const,
+};
 
 interface SchemaBuilderViewProps {
   onError: (error: unknown) => void;
@@ -91,50 +103,62 @@ export function SchemaBuilderView({ onError, onSuccess }: SchemaBuilderViewProps
             </div>
             <span className="life-mark database-icon">＋</span>
           </div>
-          <label className="database-field">
-            Table name
-            <input value={tableName} onChange={(event) => setTableName(event.target.value)} placeholder="NewTable" />
+          <div className="database-field">
+            <GemField
+              label="Table name"
+              value={tableName}
+              onChange={(event) => setTableName(event.currentTarget.value)}
+              placeholder="NewTable"
+              {...schemaControlStyle}
+            />
             {tableName && !tableNameIsValid ? (
               <small className="field-hint error-text">Use UpperCamelCase, such as NewTable.</small>
             ) : (
               <small className="field-hint">The API supplies the ID column automatically.</small>
             )}
-          </label>
+          </div>
           <div className="builder-columns">
             <div className="builder-column-heading">
               <div>
                 <strong>Column properties</strong>
                 <small className="field-hint">Add at least one property, then use + for more.</small>
               </div>
-              <button className="secondary-button" onClick={addColumn}>
+              <GemButton tone="secondary" onPress={addColumn}>
                 ＋ Add property
-              </button>
+              </GemButton>
             </div>
             {columns.map((column, index) => (
               <div className="builder-column" key={index}>
                 <div>
-                  <input
+                  <Input
                     aria-label="Column property"
                     value={column.name}
-                    onChange={(event) => updateColumn(index, { name: event.target.value })}
+                    onChange={(event) => updateColumn(index, { name: event.currentTarget.value })}
                     placeholder="Column property"
+                    {...schemaControlStyle}
                   />
                   <small className="field-hint">Names must be unique and use letters, numbers, or underscores.</small>
                 </div>
                 <div>
-                  <select
-                    aria-label="SQLite type"
+                  <Select
                     value={column.dataType}
-                    onChange={(event) =>
-                      updateColumn(index, { dataType: event.target.value as (typeof types)[number] })
-                    }
+                    onValueChange={(value) => updateColumn(index, { dataType: value as (typeof types)[number] })}
                   >
-                    {(guidance?.supportedTypes ?? types.map((value) => ({ value, label: value, description: "" }))).map(
-                      (type) => (
-                        <option key={type.value}>{type.value}</option>
-                      ),
-                    )}
-                  </select>
+                    <Select.Trigger aria-label="SQLite type" {...schemaControlStyle}>
+                      <Select.Value />
+                    </Select.Trigger>
+                    <Select.Content>
+                      <Select.Viewport minWidth={240}>
+                        {(
+                          guidance?.supportedTypes ?? types.map((value) => ({ value, label: value, description: "" }))
+                        ).map((type) => (
+                          <Select.Item key={type.value} value={type.value}>
+                            <Select.ItemText>{type.label}</Select.ItemText>
+                          </Select.Item>
+                        ))}
+                      </Select.Viewport>
+                    </Select.Content>
+                  </Select>
                   {guidance ? (
                     <small className="field-hint">
                       {guidance.supportedTypes.find((type) => type.value === column.dataType)?.description}
@@ -142,31 +166,28 @@ export function SchemaBuilderView({ onError, onSuccess }: SchemaBuilderViewProps
                   ) : null}
                 </div>
                 <div>
-                  <input
+                  <Input
                     aria-label="Default value"
                     placeholder="Default"
                     value={column.defaultValue ?? ""}
-                    onChange={(event) => updateColumn(index, { defaultValue: event.target.value || null })}
+                    onChange={(event) => updateColumn(index, { defaultValue: event.currentTarget.value || null })}
+                    {...schemaControlStyle}
                   />
                   <small className="field-hint">Use a number, quoted text, NULL, or a CURRENT_* value.</small>
                 </div>
                 {columns.length > 1 ? (
-                  <button className="icon-button" aria-label="Remove property" onClick={() => removeColumn(index)}>
+                  <GemButton tone="secondary" aria-label="Remove property" onPress={() => removeColumn(index)}>
                     ×
-                  </button>
+                  </GemButton>
                 ) : (
                   <span className="field-hint">Required property</span>
                 )}
               </div>
             ))}
           </div>
-          <button
-            className="primary-button"
-            disabled={busy || !tableNameIsValid || !columnsAreValid}
-            onClick={() => void previewTable()}
-          >
+          <GemButton disabled={busy || !tableNameIsValid || !columnsAreValid} onPress={() => void previewTable()}>
             {busy ? "Working…" : "Preview table"}
-          </button>
+          </GemButton>
           {preview ? (
             <div className="builder-preview">
               <h4>Ready for approval</h4>
@@ -176,9 +197,9 @@ export function SchemaBuilderView({ onError, onSuccess }: SchemaBuilderViewProps
               {preview.warnings.map((warning) => (
                 <p key={warning}>• {warning}</p>
               ))}
-              <button className="primary-button" disabled={busy} onClick={() => void createTable()}>
+              <GemButton disabled={busy} onPress={() => void createTable()}>
                 Create table with backup
-              </button>
+              </GemButton>
               {creationError ? (
                 <div className="builder-error">
                   <h4>Table was not created</h4>
@@ -211,26 +232,24 @@ export function SchemaBuilderView({ onError, onSuccess }: SchemaBuilderViewProps
               }}
             />
           </label>
-          <label className="database-field">
-            Or paste CSV
-            <textarea
+          <div className="database-field">
+            <label htmlFor="schema-csv">Or paste CSV</label>
+            <TextArea
+              id="schema-csv"
               rows={9}
               value={csv}
-              onChange={(event) => setCsv(event.target.value)}
+              onChange={(event) => setCsv(event.currentTarget.value)}
               placeholder="ItemName,Quantity\nDesk lamp,1"
+              {...schemaControlStyle}
             />
-          </label>
+          </div>
           <div className="button-row">
-            <button className="secondary-button" disabled={busy || !csv.trim()} onClick={() => void previewImport()}>
+            <GemButton tone="secondary" disabled={busy || !csv.trim()} onPress={() => void previewImport()}>
               Preview CSV
-            </button>
-            <button
-              className="primary-button"
-              disabled={busy || !csvPreview?.readyToImport}
-              onClick={() => void importCSV()}
-            >
+            </GemButton>
+            <GemButton disabled={busy || !csvPreview?.readyToImport} onPress={() => void importCSV()}>
               Import approved rows
-            </button>
+            </GemButton>
           </div>
           {csvPreview ? (
             <div className="builder-preview">
