@@ -241,7 +241,7 @@ final class ViewQueryConfigurationValidatorTests: XCTestCase {
             ViewQueryConfiguration(id: "root", viewID: "view-1", nodeType: .group, booleanOperator: .and),
             ViewQueryConfiguration(
                 id: "sort", viewID: "view-1", nodeType: .sort, columnName: "Name",
-                comparisonOperator: .equals, direction: .ascending, valueType: .text, value: "A"
+                comparisonOperator: .equals, valueType: .text, value: "A", direction: .ascending
             ),
         ]
         XCTAssertThrowsError(try validator.validateAgainstSchema(
