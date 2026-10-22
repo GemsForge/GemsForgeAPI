@@ -557,6 +557,8 @@ dialog {
 }
 .record-detail-dialog {
   width: min(58rem, calc(100% - 2rem));
+  max-height: calc(100dvh - 3rem);
+  margin: 1.5rem auto;
 }
 dialog::backdrop {
   background: rgba(3, 11, 14, 0.72);
