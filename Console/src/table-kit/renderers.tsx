@@ -257,7 +257,8 @@ export function RecordGallery<Record>({
 }: TableRendererProps<Record>) {
   const effectiveRecords = useRendererRecords(records);
   const selection = useRendererSelection(selectedIds, onRecordSelect);
-  const [cardSize, setCardSize] = useState<"small" | "medium" | "large">("medium");
+  // Start collections compact so more records fit in the initial gallery view.
+  const [cardSize, setCardSize] = useState<"small" | "medium" | "large">("small");
   const visibleProperties = propertiesFor(properties, propertyIds);
   const dragStartRef = useRef<{ index: number; x: number; y: number } | null>(null);
   const dragSelectedIdsRef = useRef<Set<TableRecordId>>(new Set());
