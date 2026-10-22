@@ -93,7 +93,8 @@ export function DatabaseRecordCollection<Record>({
         { id: "gallery", label: "Gallery", icon: "▦" },
         { id: "table", label: "Table", icon: "▤" },
       ]}
-      defaultViewId="list"
+      // Start record collections in the visual card view; users can still switch to list or table.
+      defaultViewId="gallery"
       selection={{ matchingIds: matchingRecords.map((record) => record.id) }}
     >
       <DatabaseRecordTableShell
