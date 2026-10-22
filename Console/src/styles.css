@@ -2350,12 +2350,21 @@ dialog::backdrop {
   margin: 0.35rem 0 0;
 }
 .schema-guidance {
+  max-height: min(32rem, 52vh);
   margin-bottom: 1rem;
+  padding: 0.95rem 1.1rem;
+  overflow: hidden;
 }
 .schema-guidance-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1rem;
+}
+.schema-guidance-rules {
+  max-height: 22rem;
+  overflow-y: auto;
+  padding-right: 0.65rem;
+  scrollbar-color: var(--mint-dark) transparent;
 }
 .guidance-item {
   margin: 0.45rem 0 0;

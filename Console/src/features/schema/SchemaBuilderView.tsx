@@ -62,7 +62,7 @@ export function SchemaBuilderView({ onError, onSuccess }: SchemaBuilderViewProps
         {!guidance && !guidanceError ? <p className="muted">Loading schema rules…</p> : null}
         {guidance ? (
           <div className="schema-guidance-grid">
-            <div>
+            <div className="schema-guidance-types">
               <strong>SQLite types</strong>
               {guidance.supportedTypes.map((type) => (
                 <p className="guidance-item" key={type.value}>
@@ -70,7 +70,7 @@ export function SchemaBuilderView({ onError, onSuccess }: SchemaBuilderViewProps
                 </p>
               ))}
             </div>
-            <div>
+            <div className="schema-guidance-rules">
               <strong>Rules & safety</strong>
               {guidance.rules.map((rule) => (
                 <p className={`guidance-item guidance-${rule.severity}`} key={rule.key}>
