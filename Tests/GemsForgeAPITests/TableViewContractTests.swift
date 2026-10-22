@@ -7,6 +7,41 @@ import XCTest
 @testable import GemsForgeAPI
 
 final class TableViewContractTests: XCTestCase {
+    /// Confirms column metadata is scoped to a View and never becomes a schema mutation.
+    func testColumnConfigurationsRemainPerViewAndLogical() async throws {
+        try await withApp(configure: { app in
+            app.databases.use(.sqlite(.memory), as: .sqlite)
+            app.migrations.add(CreateAuthenticationSchema())
+            app.migrations.add(CreateHubs())
+            app.migrations.add(CreateTableViews())
+            app.migrations.add(CreateViewColumnConfigurations())
+            try await app.autoMigrate()
+        }) { app in
+            let sql = try XCTUnwrap(app.db(.sqlite) as? SQLDatabase)
+            try await sql.raw(SQLQueryString(stringLiteral: "INSERT INTO AppleAccounts (AccountID, AppleSubject) VALUES ('account-1', 'subject-1')")).run()
+            try await sql.raw(SQLQueryString(stringLiteral: "INSERT INTO Hubs (HubID, AccountID, Name) VALUES ('hub-1', 'account-1', 'Gem Life')")).run()
+
+            let first = TableView(hubID: "hub-1", tableName: "Services", name: "Compact", viewType: .table)
+            let second = TableView(hubID: "hub-1", tableName: "Services", name: "Wide", viewType: .table)
+            try await first.create(on: app.db(.sqlite))
+            try await second.create(on: app.db(.sqlite))
+
+            let compact = ViewColumnConfiguration(viewID: first.id!, columnName: "Status", isVisible: false, sortOrder: 3)
+            let wide = ViewColumnConfiguration(viewID: second.id!, columnName: "Status", isVisible: true, sortOrder: 0, width: 120)
+            try await compact.create(on: app.db(.sqlite))
+            try await wide.create(on: app.db(.sqlite))
+
+            let configurations = try await ViewColumnConfiguration.query(on: app.db(.sqlite)).all()
+            XCTAssertEqual(configurations.count, 2)
+            XCTAssertEqual(configurations.first { $0.viewID == first.id }?.isVisible, false)
+            XCTAssertEqual(configurations.first { $0.viewID == second.id }?.width, 120)
+
+            let tables = try await LiveSchemaService(database: app.db(.sqlite)).inspect()
+            let services = tables.tables.first { $0.name == "Services" }
+            XCTAssertNil(services, "View metadata must not create or alter a canonical logical table")
+        }
+    }
+
     func testControlledVocabulariesAndValueEncodingAreCanonical() throws {
         XCTAssertEqual(TableViewType.allCases.map(\.rawValue), ["Table", "List", "Gallery", "Grid"])
         XCTAssertEqual(ViewQueryBooleanOperator.and.rawValue, "AND")
@@ -39,6 +74,15 @@ final class TableViewContractTests: XCTestCase {
         let queryResponse = try ViewQueryConfigurationResponse(model: query)
         XCTAssertEqual(queryResponse.nodeType, .condition)
         XCTAssertEqual(queryResponse.comparisonOperator, .equals)
+    }
+
+    func testTableViewDTORejectsUnsupportedPersistedViewType() throws {
+        let view = TableView(hubID: "hub-1", tableName: "Services", name: "Unsupported", viewType: .table)
+        view.viewType = "Kanban"
+
+        XCTAssertThrowsError(try TableViewResponse(model: view)) { error in
+            XCTAssertEqual(error as? TableViewModelMappingError, .invalidPersistedValue)
+        }
     }
 
     func testMetadataMigrationsCreateConstraintsIndexesAndCascadeOwnership() async throws {
