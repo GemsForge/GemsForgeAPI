@@ -39,6 +39,8 @@ export interface TableRendererProps<Record> {
   onRecordSelect?: (id: TableRecordId) => void;
   onExpansionChange?: (id: TableRecordId | undefined) => void;
   renderExpanded?: (record: Record) => ReactNode;
+  /** Hide the metadata status column when status is already a record property. */
+  showStatus?: boolean;
 }
 
 interface RendererSelection {
@@ -435,11 +437,12 @@ export function RecordTable<Record>({
   selectedIds,
   onRecordSelect,
   onExpansionChange,
+  showStatus = true,
 }: TableRendererProps<Record>) {
   const effectiveRecords = useRendererRecords(records);
   const selection = useRendererSelection(selectedIds, onRecordSelect);
   const visibleProperties = propertiesFor(properties, propertyIds);
-  const hasStatus = effectiveRecords.some((record) => record.status !== undefined);
+  const hasStatus = showStatus && effectiveRecords.some((record) => record.status !== undefined);
   const hasActions = Boolean(selection.onRecordSelect);
   const imageProperties = visibleProperties.filter((property) => property.kind === "image");
   const primaryProperty =

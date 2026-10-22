@@ -20,9 +20,17 @@ export const addressTableAdapter: RecordAdapter<Address> = {
   getPropertyDefinitions: () =>
     [
       { id: "city", label: "City", kind: "text", primary: true, getValue: (record) => display(record.city) },
+      { id: "addressLine1", label: "Address line 1", kind: "text", getValue: (record) => display(record.addressLine1) },
+      { id: "addressLine2", label: "Address line 2", kind: "text", getValue: (record) => display(record.addressLine2) },
       { id: "type", label: "Category", kind: "select", getValue: (record) => display(record.addressType) },
+      { id: "state", label: "State / region", kind: "text", getValue: (record) => display(record.state) },
+      { id: "postalCode", label: "Postal code", kind: "text", getValue: (record) => display(record.postalCode) },
+      { id: "country", label: "Country", kind: "text", getValue: (record) => display(record.country) },
+      { id: "startDate", label: "Start date", kind: "date", getValue: (record) => display(record.startDate) },
+      { id: "endDate", label: "End date", kind: "date", getValue: (record) => display(record.endDate) },
       { id: "id", label: "Item ID", kind: "text", getValue: (record) => display(record.id) },
       { id: "status", label: "Status", kind: "status", getValue: (record) => display(record.addressStatus) },
+      { id: "notes", label: "Notes", kind: "text", getValue: (record) => display(record.notes) },
     ] satisfies readonly RecordPropertyDefinition<Address>[],
 };
 

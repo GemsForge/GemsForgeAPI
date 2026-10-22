@@ -260,7 +260,12 @@ function DatabaseRecordRenderer<Record>({
         {viewId === "gallery" ? (
           <RecordGallery properties={properties} propertyIds={propertyIds} onExpansionChange={onExpansionChange} />
         ) : viewId === "table" ? (
-          <RecordTable properties={properties} propertyIds={propertyIds} onExpansionChange={onExpansionChange} />
+          <RecordTable
+            properties={properties}
+            propertyIds={propertyIds}
+            showStatus={false}
+            onExpansionChange={onExpansionChange}
+          />
         ) : (
           <RecordList properties={properties} propertyIds={propertyIds} onExpansionChange={onExpansionChange} />
         )}
