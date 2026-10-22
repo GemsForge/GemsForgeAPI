@@ -105,9 +105,10 @@ export function TablePropertyControls({
             </Button>
           </div>
           <label>
-            {searchLabel}
+            <span className="sr-only">{searchLabel}</span>
             <Input
               type="search"
+              aria-label={searchLabel}
               size="$3"
               borderColor="$gemPanelLight"
               backgroundColor="$gemCanvas"
