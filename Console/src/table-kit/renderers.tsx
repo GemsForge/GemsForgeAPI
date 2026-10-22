@@ -408,7 +408,7 @@ export function RecordGallery<Record>({
   );
 }
 
-/** Renders records with AG Grid while keeping the Table Kit contract engine-neutral. */
+/** Renders records with AG Grid and mirrors Table Kit selection in the row visual state. */
 export function RecordTable<Record>({
   records,
   properties,
@@ -472,6 +472,9 @@ export function RecordTable<Record>({
         rowData={[...effectiveRecords]}
         getRowId={({ data }) => data.id}
         defaultColDef={{ flex: 1, minWidth: 140, resizable: true }}
+        rowClassRules={{
+          "is-selected": ({ data }) => Boolean(data && selection.selectedIds.has(data.id)),
+        }}
         domLayout="autoHeight"
         animateRows={false}
         suppressCellFocus

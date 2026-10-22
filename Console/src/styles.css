@@ -2940,6 +2940,25 @@ dialog {
     border-color 160ms ease,
     box-shadow 160ms ease;
 }
+.table-kit-record-grid .ag-row.is-selected .ag-cell {
+  background: color-mix(in srgb, var(--gem-mint) 18%, var(--gem-canvas));
+  box-shadow:
+    inset 0 2px 0 var(--gem-mint),
+    inset 0 -2px 0 var(--gem-mint);
+}
+
+.table-kit-record-grid .ag-row.is-selected .ag-cell:first-child {
+  box-shadow:
+    inset 2px 2px 0 var(--gem-mint),
+    inset 0 -2px 0 var(--gem-mint);
+}
+
+.table-kit-record-grid .ag-row.is-selected .ag-cell:last-child {
+  box-shadow:
+    inset -2px 2px 0 var(--gem-mint),
+    inset 0 -2px 0 var(--gem-mint);
+}
+
 .table-kit-gallery-card.is-selected,
 .table-kit-gallery-card:focus-within {
   border-color: var(--mint);
