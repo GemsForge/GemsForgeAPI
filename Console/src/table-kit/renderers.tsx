@@ -322,13 +322,13 @@ export function RecordGallery<Record>({
               data-gallery-record-id={record.id}
             >
               {image && (
-                <Card.Background>
+                <Card.Background alignItems="center" justifyContent="center">
                   <Image
                     source={{ uri: image.src }}
                     accessibilityLabel={image.alt}
                     width="100%"
                     height="100%"
-                    objectFit="cover"
+                    objectFit="contain"
                     opacity={0.72}
                   />
                   <YStack
