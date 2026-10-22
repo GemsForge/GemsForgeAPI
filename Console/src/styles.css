@@ -2959,7 +2959,7 @@ dialog {
   place-items: center;
   min-height: 8rem;
   overflow: hidden;
-  background: rgba(7, 23, 28, 0.78);
+  background: rgba(7, 23, 28, 0.38);
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -2975,6 +2975,7 @@ dialog {
   min-width: 0;
   gap: 0.4rem;
   padding: 0.75rem;
+  background: rgba(18, 37, 43, 0.86);
 }
 .table-kit-gallery-title,
 .table-kit-gallery-subtitle,

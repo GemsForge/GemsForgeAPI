@@ -331,6 +331,15 @@ export function RecordGallery<Record>({
                     objectFit="cover"
                     opacity={0.72}
                   />
+                  <YStack
+                    position="absolute"
+                    top={0}
+                    right={0}
+                    bottom={0}
+                    left={0}
+                    backgroundColor="$gemCanvas"
+                    opacity={0.42}
+                  />
                 </Card.Background>
               )}
               <div
