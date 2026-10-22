@@ -13,6 +13,8 @@ import { api } from "../../api";
 import { useRecordUtilities } from "../../hooks/useRecordUtilities";
 import { DatabaseRecordCollection } from "../../components/DatabaseRecordCollection";
 import { gemHueTableAdapter } from "../database/recordTableAdapters";
+import { GemHueCreateForm } from "../create/RecordCreateForms";
+import { RecordImport } from "../../components/RecordImport";
 
 interface GemHuesViewProps {
   hues: GemHue[];
@@ -320,53 +322,55 @@ export function GemHuesView({ hues }: GemHuesViewProps) {
                 label: "New Gem Hue",
                 description: "Create a Gem Hue record.",
                 render: ({ close }) => (
-                  <form
-                    className="record-form"
-                    onSubmit={async (event) => {
-                      event.preventDefault();
-                      await createHue.mutateAsync(form);
-                      setForm({
-                        id: "",
-                        colorName: "",
-                        colorFamily: "",
-                        hexCode: "",
-                        mood: "",
-                        palette: "",
-                        description: "",
-                        createdDate: "",
-                        notes: "",
-                      });
+                  <GemHueCreateForm
+                    onCancel={close}
+                    onCreate={async (payload) => {
+                      await createHue.mutateAsync(payload);
                       close();
                     }}
-                  >
-                    <h3>New Gem Hue</h3>
-                    {(
-                      [
-                        "id",
-                        "colorName",
-                        "colorFamily",
-                        "hexCode",
-                        "mood",
-                        "palette",
-                        "description",
-                        "createdDate",
-                        "notes",
-                      ] as const
-                    ).map((key) => (
-                      <label key={key}>
-                        {key === "id" ? "Hue ID" : key}
-                        <input
-                          required={key === "id" || key === "colorName" || key === "hexCode"}
-                          value={form[key] ?? ""}
-                          onChange={(event) => setForm({ ...form, [key]: event.target.value })}
-                        />
-                      </label>
-                    ))}
-                    {createHue.error && <p role="alert">{createHue.error.message}</p>}
-                    <button type="submit" disabled={createHue.isPending}>
-                      {createHue.isPending ? "Adding…" : "Add Gem Hue"}
-                    </button>
-                  </form>
+                  />
+                ),
+              },
+              {
+                id: "import-gem-hue-file",
+                label: "Import File",
+                description: "Choose a CSV or JSON file.",
+                render: ({ close }) => (
+                  <RecordImport
+                    label="Gem Hues"
+                    expectedColumns={["id", "colorName", "hexCode"]}
+                    mode="file"
+                    open
+                    showTrigger={false}
+                    onOpenChange={(open) => {
+                      if (!open) close();
+                    }}
+                    onPublish={async (rows) => {
+                      await api.importGemHues(rows as GemHueCreate[]);
+                      close();
+                    }}
+                  />
+                ),
+              },
+              {
+                id: "paste-gem-hue-data",
+                label: "Paste data",
+                description: "Paste CSV or JSON records.",
+                render: ({ close }) => (
+                  <RecordImport
+                    label="Gem Hues"
+                    expectedColumns={["id", "colorName", "hexCode"]}
+                    mode="clipboard"
+                    open
+                    showTrigger={false}
+                    onOpenChange={(open) => {
+                      if (!open) close();
+                    }}
+                    onPublish={async (rows) => {
+                      await api.importGemHues(rows as GemHueCreate[]);
+                      close();
+                    }}
+                  />
                 ),
               },
             ],

@@ -30,6 +30,7 @@ import type {
   DomainCreate,
   EducationCreate,
   EmploymentCreate,
+  GemHueCreate,
   ServiceAccountCreate,
   TransactionCreate,
 } from "../../types";
@@ -173,6 +174,17 @@ const serviceSchema = z.object({
     (value) => !value.trim() || /^[A-Z0-9_]+$/.test(value.trim()),
     "Use uppercase letters, numbers, and underscores only.",
   ),
+});
+const gemHueSchema = z.object({
+  id: required("Hue ID"),
+  colorName: required("Color name"),
+  colorFamily: optional,
+  hexCode: required("Hex code"),
+  mood: optional,
+  palette: optional,
+  description: optional,
+  createdDate: optional,
+  notes: optional,
 });
 
 /** Keep service classifications consistent between create and edit workflows. */
@@ -700,6 +712,62 @@ export function EmploymentCreateForm({
               label: [a.addressType, a.city, a.id].filter(Boolean).join(" · "),
             }))}
           />
+        </>
+      )}
+    </FormShell>
+  );
+}
+
+/** Render the shared Gem Hue creation form used by input and utility workflows. */
+export function GemHueCreateForm({
+  onCreate,
+  onCancel,
+}: {
+  onCreate: (payload: GemHueCreate) => Promise<void>;
+  onCancel: () => void;
+}) {
+  return (
+    <FormShell
+      title="Create Gem Hue record"
+      schema={gemHueSchema}
+      defaultValues={{
+        id: "",
+        colorName: "",
+        colorFamily: "",
+        hexCode: "",
+        mood: "",
+        palette: "",
+        description: "",
+        createdDate: "",
+        notes: "",
+      }}
+      onCreate={async (values) =>
+        onCreate({
+          ...values,
+          id: values.id.trim(),
+          colorFamily: blank(values.colorFamily),
+          mood: blank(values.mood),
+          palette: blank(values.palette),
+          description: blank(values.description),
+          createdDate: blank(values.createdDate),
+          notes: blank(values.notes),
+        })
+      }
+      onCancel={onCancel}
+    >
+      {(form) => (
+        <>
+          <div className="create-form-grid">
+            <Text form={form} name="id" label="Hue ID" required width="medium" />
+            <Text form={form} name="colorName" label="Color name" required width="medium" />
+            <Text form={form} name="hexCode" label="Hex code" required width="short" />
+            <Text form={form} name="createdDate" label="Created date" type="date" width="short" />
+            <Text form={form} name="colorFamily" label="Color family" width="short" />
+            <Text form={form} name="mood" label="Mood" width="short" />
+            <Text form={form} name="palette" label="Palette" width="short" />
+          </div>
+          <Text form={form} name="description" label="Description" multiline />
+          <Text form={form} name="notes" label="Notes" multiline />
         </>
       )}
     </FormShell>
