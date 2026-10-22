@@ -262,8 +262,12 @@ final class TableViewContractTests: XCTestCase {
             XCTAssertEqual(try await TableView.query(on: database).filter(\.$id == "view-3").count(), 1)
             XCTAssertEqual(try await ViewColumnConfiguration.query(on: database).count(), 1)
             XCTAssertEqual(try await ViewQueryConfiguration.query(on: database).count(), 1)
-            XCTAssertEqual(try await sql.raw(SQLQueryString(stringLiteral: "SELECT COUNT(*) AS count FROM Services WHERE ServiceID = 'service-1'")).first(decoding: ScalarCount.self).count, 1)
-            XCTAssertEqual(try await sql.raw(SQLQueryString(stringLiteral: "SELECT COUNT(*) AS count FROM Transactions WHERE TransactionID = 'transaction-1'")).first(decoding: ScalarCount.self).count, 1)
+            // `first` is optional because an empty result set is valid SQL; unwrap
+            // it before checking the count so the test fails clearly if the row is absent.
+            let serviceCount = try await sql.raw(SQLQueryString(stringLiteral: "SELECT COUNT(*) AS count FROM Services WHERE ServiceID = 'service-1'")).first(decoding: ScalarCount.self)
+            XCTAssertEqual(try XCTUnwrap(serviceCount).count, 1)
+            let transactionCount = try await sql.raw(SQLQueryString(stringLiteral: "SELECT COUNT(*) AS count FROM Transactions WHERE TransactionID = 'transaction-1'")).first(decoding: ScalarCount.self)
+            XCTAssertEqual(try XCTUnwrap(transactionCount).count, 1)
 
             let foreignKeyCheck = try await sql.raw(SQLQueryString(stringLiteral: "PRAGMA foreign_key_check")).all()
             XCTAssertTrue(foreignKeyCheck.isEmpty)
