@@ -7,7 +7,7 @@ import { AttachmentControl } from "../../components/AttachmentControl";
 import { EditableRecordFields, formatRecordDate, formatRecordTimestamp } from "../../components/EditableRecordFields";
 import { useCreateAddressMutation } from "../../data/recordQueries";
 import { AddressCreateForm } from "../create/RecordCreateForms";
-import { RecordImport } from "../../components/RecordImport";
+import { createRecordCreationActions } from "../../components/RecordCreation";
 import { DatabaseRecordCollection } from "../../components/DatabaseRecordCollection";
 import { RecordPage } from "../../components/RecordPage";
 import { addressTableAdapter } from "../database/recordTableAdapters";
@@ -79,63 +79,22 @@ export function AddressesView({ records }: AddressesViewProps) {
           filterOptions={Array.from(new Set(records.map((record) => record.addressStatus))).sort()}
           detailId={selectedID}
           onDetailChange={setSelectedID}
-          actions={{
-            newRecordUtility: {
-              options: [
-                {
-                  id: "new-address",
-                  label: "Input Form",
-                  description: "Open the address form.",
-                  render: ({ close }) => (
-                    <AddressCreateForm
-                      onCancel={close}
-                      onCreate={async (payload) => {
-                        const created = await create.mutateAsync(payload);
-                        setSelectedID(created.id);
-                        close();
-                      }}
-                    />
-                  ),
-                },
-                {
-                  id: "import-address-file",
-                  label: "Import File",
-                  description: "Choose a CSV or JSON file.",
-                  render: ({ close }) => (
-                    <RecordImport
-                      label="addresses"
-                      expectedColumns={["id", "addressType", "country"]}
-                      mode="file"
-                      open
-                      onOpenChange={(open) => {
-                        if (!open) close();
-                      }}
-                      showTrigger={false}
-                      onPublish={handleImport}
-                    />
-                  ),
-                },
-                {
-                  id: "paste-address-data",
-                  label: "Paste data",
-                  description: "Paste CSV or JSON records.",
-                  render: ({ close }) => (
-                    <RecordImport
-                      label="addresses"
-                      expectedColumns={["id", "addressType", "country"]}
-                      mode="paste"
-                      open
-                      onOpenChange={(open) => {
-                        if (!open) close();
-                      }}
-                      showTrigger={false}
-                      onPublish={handleImport}
-                    />
-                  ),
-                },
-              ],
-            },
-          }}
+          actions={createRecordCreationActions({
+            recordType: "address",
+            importLabel: "addresses",
+            expectedColumns: ["id", "addressType", "country"],
+            onImport: handleImport,
+            renderForm: (close) => (
+              <AddressCreateForm
+                onCancel={close}
+                onCreate={async (payload) => {
+                  const created = await create.mutateAsync(payload);
+                  setSelectedID(created.id);
+                  close();
+                }}
+              />
+            ),
+          })}
           detail={
             selectedID ? (
               <>
