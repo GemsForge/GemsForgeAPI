@@ -81,7 +81,7 @@ export function RecordUtilities({
                 borderRadius="$gemControl"
                 className="compact-icon-button"
                 aria-label="Sort records"
-                onClick={() => setCompactMenu((current) => (current === "sort" ? null : "sort"))}
+                onPress={() => setCompactMenu((current) => (current === "sort" ? null : "sort"))}
               >
                 <span aria-hidden="true">↕</span>
               </Button>
@@ -143,7 +143,7 @@ export function RecordUtilities({
                   borderRadius="$gemControl"
                   className="compact-icon-button"
                   aria-label="Filter records"
-                  onClick={() => setCompactMenu((current) => (current === "filter" ? null : "filter"))}
+                  onPress={() => setCompactMenu((current) => (current === "filter" ? null : "filter"))}
                 >
                   <span aria-hidden="true">≡</span>
                 </Button>
@@ -212,7 +212,7 @@ export function RecordUtilities({
               borderRadius="$gemControl"
               className="compact-icon-button"
               aria-label={searchOpen ? "Close search" : `Search ${label.toLowerCase()}`}
-              onClick={() => setSearchOpen((open) => !open)}
+              onPress={() => setSearchOpen((open) => !open)}
             >
               <span aria-hidden="true">⌕</span>
             </Button>
@@ -257,7 +257,7 @@ export function RecordUtilities({
         borderWidth={1}
         borderRadius="$gemControl"
         className="secondary-button"
-        onClick={onDirection}
+        onPress={onDirection}
         disabled={!sort}
         aria-label={sort ? `Sort ${direction === "asc" ? "descending" : "ascending"}` : "Select a sort field first"}
       >
@@ -286,7 +286,7 @@ export function RecordUtilities({
           borderWidth={1}
           borderRadius="$gemControl"
           className="secondary-button"
-          onClick={() => {
+          onPress={() => {
             onSearch("");
             onSort("");
             onFilter("");
