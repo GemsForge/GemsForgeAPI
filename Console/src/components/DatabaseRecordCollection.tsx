@@ -243,7 +243,7 @@ function DatabaseRecordRenderer<Record>({
                 value={paging.pageSize}
                 onChange={(event) => paging.setPageSize(Number(event.target.value))}
               >
-                {[12, 24, 50].map((size) => (
+                {[8, 12, 24, 50].map((size) => (
                   <option key={size} value={size}>
                     {size}
                   </option>

@@ -3024,3 +3024,25 @@ dialog {
     flex-basis: min(100%, 18rem);
   }
 }
+@media (max-width: 1200px), (max-height: 900px) {
+  .content {
+    padding-top: 1.5rem;
+    padding-bottom: 1.5rem;
+  }
+  .content-heading {
+    margin-bottom: 1rem;
+  }
+  .table-kit-gallery {
+    gap: 0.5rem;
+  }
+  .table-kit-gallery-card .table-kit-gallery-image {
+    min-height: 6rem;
+  }
+  .table-kit-gallery-card .table-kit-gallery-copy {
+    gap: 0.25rem;
+    padding: 0.55rem;
+  }
+  .table-kit-gallery-card .table-kit-gallery-properties {
+    max-height: 4rem;
+  }
+}
