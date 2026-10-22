@@ -249,10 +249,8 @@ export function RecordGallery<Record>({
     [],
   );
 
-  /** Use the adapter image first, then allow an image property to supply the cover. */
-  const getImage = (record: TableRecord<Record>) =>
-    (record.image?.src?.trim() ? record.image : undefined) ??
-    visibleProperties.map((property) => propertyValue(property, record).image).find((image) => Boolean(image?.src));
+  /** Use only the record's dedicated image-file field for the gallery cover. */
+  const getImage = (record: TableRecord<Record>) => (record.image?.src?.trim() ? record.image : undefined);
 
   /** Make keyboard activation open the record, matching the primary card action. */
   const handleCardKeyDown = (event: KeyboardEvent<HTMLDivElement>, record: TableRecord<Record>) => {
