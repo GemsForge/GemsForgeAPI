@@ -38,6 +38,10 @@ final class TableView: Model, @unchecked Sendable {
         self.configurationVersion = configurationVersion
     }
 
+    /// Returns the closed-contract view type, or `nil` for unsupported stored values.
+    ///
+    /// Persisted metadata is rejected by DTO mapping rather than being silently
+    /// coerced into a supported renderer.
     var typedViewType: TableViewType? { TableViewType(rawValue: viewType) }
 }
 
@@ -53,4 +57,5 @@ extension TableViewResponse {
     }
 }
 
-enum TableViewModelMappingError: Error { case invalidPersistedValue }
+/// Indicates that persisted Table View metadata cannot satisfy the public DTO contract.
+enum TableViewModelMappingError: Error, Equatable { case invalidPersistedValue }
