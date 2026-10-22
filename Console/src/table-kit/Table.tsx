@@ -245,14 +245,33 @@ function Selection({
         <span>{currentPage.selectedCount > 0 ? `${currentPage.selectedCount} selected` : label}</span>
       </label>
       {hasAdditionalMatchingRecords && (
-        <button type="button" disabled={allMatching.allSelected} onClick={() => selection.selectAll("all-matching")}>
+        <Button
+          type="button"
+          size="xs"
+          color="$gemInk"
+          backgroundColor="$gemPanel"
+          borderColor="$gemPanelLight"
+          borderWidth={1}
+          borderRadius="$gemControl"
+          disabled={allMatching.allSelected}
+          onPress={() => selection.selectAll("all-matching")}
+        >
           {allMatching.allSelected ? `All ${allMatching.totalCount} matching selected` : allMatchingLabel}
-        </button>
+        </Button>
       )}
       {allMatching.selectedCount > 0 && (
-        <button type="button" onClick={selection.clear}>
+        <Button
+          type="button"
+          size="xs"
+          color="$gemInk"
+          backgroundColor="$gemPanel"
+          borderColor="$gemPanelLight"
+          borderWidth={1}
+          borderRadius="$gemControl"
+          onPress={selection.clear}
+        >
           {clearLabel}
-        </button>
+        </Button>
       )}
       <output aria-live="polite">{allMatching.selectedCount} selected</output>
     </div>
