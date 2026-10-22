@@ -2959,6 +2959,59 @@ dialog {
     inset 0 -2px 0 var(--mint);
 }
 
+.table-kit-record-list-row {
+  min-height: 4rem;
+  cursor: pointer;
+}
+
+.table-kit-record-list-row:focus-visible {
+  outline: 2px solid var(--mint);
+  outline-offset: 2px;
+}
+
+.table-kit-record-list-icon {
+  display: grid;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex: 0 0 2.25rem;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 0.45rem;
+  background: var(--canvas);
+}
+
+.table-kit-record-list-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.table-kit-record-list-status {
+  flex: 0 0 auto;
+  padding: 0.3rem 0.65rem;
+  border: 1px solid var(--mint-dark);
+  border-radius: 999px;
+  color: var(--mint);
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.table-kit-record-list-status.is-success {
+  border-color: var(--mint);
+  background: rgba(120, 209, 189, 0.14);
+}
+
+.table-kit-record-list-status.is-warning {
+  border-color: #e5b866;
+  color: #e5b866;
+}
+
+.table-kit-record-list-status.is-danger {
+  border-color: #ef8f8f;
+  color: #ef8f8f;
+}
+
 .table-kit-gallery-card.is-selected,
 .table-kit-gallery-card:focus-within {
   border-color: var(--mint);

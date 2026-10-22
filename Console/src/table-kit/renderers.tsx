@@ -187,7 +187,7 @@ export function RecordList<Record>({
 }: TableRendererProps<Record>) {
   const effectiveRecords = useRendererRecords(records);
   const selection = useRendererSelection(selectedIds, onRecordSelect);
-  const visibleProperties = propertiesFor(properties, propertyIds).slice(0, 2);
+  const visibleProperties = propertiesFor(properties, propertyIds).slice(0, 1);
   return (
     <YStack role="list" gap="$2">
       {effectiveRecords.map((record) => {
@@ -196,6 +196,7 @@ export function RecordList<Record>({
           <XStack
             key={record.id}
             role="listitem"
+            className="table-kit-record-list-row"
             gap="$3"
             padding="$3"
             borderWidth={1}
@@ -214,14 +215,25 @@ export function RecordList<Record>({
               if (event.key === "Enter") onExpansionChange?.(record.id);
             }}
           >
-            <RecordImage image={record.image} size={48} />
-            <YStack flex={1} gap="$1">
-              <SizableText fontWeight="700">{record.title ?? record.subtitle ?? record.id}</SizableText>
+            <div className="table-kit-record-list-icon">
+              <RecordImage image={record.image} size={36} />
+            </div>
+            <YStack flex={1} minWidth={0} gap="$1">
+              <SizableText className="table-kit-record-list-title" fontWeight="700">
+                {record.title ?? record.subtitle ?? record.id}
+              </SizableText>
               {visibleProperties.map((property) => (
                 <PropertyValue key={property.id} value={propertyValue(property, record)} />
               ))}
             </YStack>
-            {record.status && <SizableText aria-label={record.status.label}>{record.status.label}</SizableText>}
+            {record.status && (
+              <span
+                className={`table-kit-record-list-status is-${record.status.tone ?? "default"}`}
+                aria-label={record.status.label}
+              >
+                {record.status.label}
+              </span>
+            )}
           </XStack>
         );
       })}
