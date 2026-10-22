@@ -101,7 +101,14 @@ export function SchemaBuilderView({ onError, onSuccess }: SchemaBuilderViewProps
               <p className="eyebrow">Schema builder</p>
               <h3>New SQLite table</h3>
             </div>
-            <span className="life-mark database-icon">＋</span>
+            <GemButton
+              tone="secondary"
+              className="life-mark database-icon"
+              aria-label="Add property"
+              onPress={addColumn}
+            >
+              ＋
+            </GemButton>
           </div>
           <div className="database-field">
             <GemField
@@ -123,9 +130,6 @@ export function SchemaBuilderView({ onError, onSuccess }: SchemaBuilderViewProps
                 <strong>Column properties</strong>
                 <small className="field-hint">Add at least one property, then use + for more.</small>
               </div>
-              <GemButton tone="secondary" onPress={addColumn}>
-                ＋ Add property
-              </GemButton>
             </div>
             {columns.map((column, index) => (
               <div className="builder-column" key={index}>
