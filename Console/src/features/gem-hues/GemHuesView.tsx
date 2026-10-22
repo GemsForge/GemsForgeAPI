@@ -312,6 +312,66 @@ export function GemHuesView({ hues }: GemHuesViewProps) {
         filterOptions={Array.from(new Set(hues.map((hue) => hue.colorFamily).filter(Boolean))).sort() as string[]}
         detailId={selectedID}
         onDetailChange={setSelectedID}
+        actions={{
+          newRecordUtility: {
+            options: [
+              {
+                id: "new-gem-hue",
+                label: "New Gem Hue",
+                description: "Create a Gem Hue record.",
+                render: ({ close }) => (
+                  <form
+                    className="record-form"
+                    onSubmit={async (event) => {
+                      event.preventDefault();
+                      await createHue.mutateAsync(form);
+                      setForm({
+                        id: "",
+                        colorName: "",
+                        colorFamily: "",
+                        hexCode: "",
+                        mood: "",
+                        palette: "",
+                        description: "",
+                        createdDate: "",
+                        notes: "",
+                      });
+                      close();
+                    }}
+                  >
+                    <h3>New Gem Hue</h3>
+                    {(
+                      [
+                        "id",
+                        "colorName",
+                        "colorFamily",
+                        "hexCode",
+                        "mood",
+                        "palette",
+                        "description",
+                        "createdDate",
+                        "notes",
+                      ] as const
+                    ).map((key) => (
+                      <label key={key}>
+                        {key === "id" ? "Hue ID" : key}
+                        <input
+                          required={key === "id" || key === "colorName" || key === "hexCode"}
+                          value={form[key] ?? ""}
+                          onChange={(event) => setForm({ ...form, [key]: event.target.value })}
+                        />
+                      </label>
+                    ))}
+                    {createHue.error && <p role="alert">{createHue.error.message}</p>}
+                    <button type="submit" disabled={createHue.isPending}>
+                      {createHue.isPending ? "Adding…" : "Add Gem Hue"}
+                    </button>
+                  </form>
+                ),
+              },
+            ],
+          },
+        }}
         detail={
           selectedHue ? (
             <section className="hue-detail">
