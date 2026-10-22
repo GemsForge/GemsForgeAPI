@@ -2245,7 +2245,8 @@ dialog::backdrop {
   display: grid;
   grid-template-columns: minmax(18rem, 0.9fr) minmax(0, 1.1fr);
   gap: 1rem;
-  align-items: start;
+  /* Side-by-side builder panels share one visual height on wide screens. */
+  align-items: stretch;
 }
 .database-panel {
   padding: 1.3rem;
