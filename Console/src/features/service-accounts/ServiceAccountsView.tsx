@@ -44,10 +44,16 @@ export function ServiceAccountsView({ records }: { records: ServiceAccount[] }) 
   const logos = useServiceLogosQuery(true);
   const tableAdapter = useMemo(
     () =>
-      createServiceAccountTableAdapter((record) => {
-        const logo = logos.data?.find((item) => item.logoKey === record.logoKey);
-        return logo ? <LegacyLogoPreview logo={logo} className="service-account-card-logo" /> : "—";
-      }),
+      createServiceAccountTableAdapter(
+        (record) => {
+          const logo = logos.data?.find((item) => item.logoKey === record.logoKey);
+          return logo ? <LegacyLogoPreview logo={logo} className="service-account-card-logo" /> : "—";
+        },
+        (record) => {
+          const logo = logos.data?.find((item) => item.logoKey === record.logoKey);
+          return logo ? api.serviceLogoImageURL(logo.id) : undefined;
+        },
+      ),
     [logos.data],
   );
   return (

@@ -204,6 +204,8 @@ export const api = {
     const response = await checkedFetch(`/service-logos/${id}/image`, { signal });
     return response.blob();
   },
+  /** Return the authenticated image path used by shared service record renderers. */
+  serviceLogoImageURL: (id: number) => `/service-logos/${id}/image`,
   patchAddressAttachment: (addressID: string, fileMetadataID: string | null) =>
     request<Address>(`/addresses/${encodeURIComponent(addressID)}/attachment`, {
       method: "PATCH",

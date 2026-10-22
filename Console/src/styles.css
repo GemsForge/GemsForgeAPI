@@ -2960,7 +2960,7 @@ dialog {
 }
 
 .table-kit-record-list-row {
-  min-height: 4rem;
+  min-height: 3.25rem;
   cursor: pointer;
 }
 
@@ -2971,9 +2971,9 @@ dialog {
 
 .table-kit-record-list-icon {
   display: grid;
-  width: 2.25rem;
-  height: 2.25rem;
-  flex: 0 0 2.25rem;
+  width: 2rem;
+  height: 2rem;
+  flex: 0 0 2rem;
   place-items: center;
   overflow: hidden;
   border-radius: 0.45rem;
@@ -2981,6 +2981,7 @@ dialog {
 }
 
 .table-kit-record-list-title {
+  font-size: 0.9rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -2988,11 +2989,11 @@ dialog {
 
 .table-kit-record-list-status {
   flex: 0 0 auto;
-  padding: 0.3rem 0.65rem;
+  padding: 0.2rem 0.55rem;
   border: 1px solid var(--mint-dark);
   border-radius: 999px;
   color: var(--mint);
-  font-size: 0.78rem;
+  font-size: 0.7rem;
   font-weight: 700;
   white-space: nowrap;
 }

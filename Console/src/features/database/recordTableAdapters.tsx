@@ -126,6 +126,7 @@ export const gemHueTableAdapter: RecordAdapter<GemHue> = {
 /** Create the service adapter while retaining the existing logo lookup and preview behavior. */
 export function createServiceAccountTableAdapter(
   renderLogo: (record: ServiceAccount) => ReactNode,
+  getLogoImageURL?: (record: ServiceAccount) => string | undefined,
 ): RecordAdapter<ServiceAccount> {
   return {
     toTableRecord: (record) => ({
@@ -133,8 +134,10 @@ export function createServiceAccountTableAdapter(
       source: record,
       title: record.service,
       subtitle: `${record.type || "Service"} · ${record.id}`,
+      image: getLogoImageURL?.(record)
+        ? { src: getLogoImageURL(record)!, alt: `${record.service} logo`, fit: "contain" }
+        : recordImage(record.logoFileMetadataID, `${record.service} logo`),
       status: record.status ? { label: record.status } : undefined,
-      image: recordImage(record.logoFileMetadataID, `${record.service} logo`),
     }),
     getPropertyDefinitions: () =>
       [

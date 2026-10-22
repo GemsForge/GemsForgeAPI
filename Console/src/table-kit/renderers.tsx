@@ -197,8 +197,8 @@ export function RecordList<Record>({
             key={record.id}
             role="listitem"
             className="table-kit-record-list-row"
-            gap="$3"
-            padding="$3"
+            gap="$2"
+            padding="$2"
             borderWidth={1}
             borderColor={selected ? "$gemMint" : "$gemPanelLight"}
             borderRadius="$4"
@@ -219,7 +219,7 @@ export function RecordList<Record>({
               <RecordImage image={record.image} size={36} />
             </div>
             <YStack flex={1} minWidth={0} gap="$1">
-              <SizableText className="table-kit-record-list-title" fontWeight="700">
+              <SizableText className="table-kit-record-list-title" fontWeight="700" size="$2">
                 {record.title ?? record.subtitle ?? record.id}
               </SizableText>
               {visibleProperties.map((property) => (
