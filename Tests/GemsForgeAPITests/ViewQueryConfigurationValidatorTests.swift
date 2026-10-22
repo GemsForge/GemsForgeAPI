@@ -190,6 +190,86 @@ final class ViewQueryConfigurationValidatorTests: XCTestCase {
         }
     }
 
+    /// Covers node-shape, operand-cardinality, and closed-vocabulary rejection
+    /// before any validated node can be handed to a query translator.
+    func testRejectsMalformedExpressionsAndSQLFragments() throws {
+        let validator = ViewQueryConfigurationValidator(schema: schema)
+
+        let missingBooleanOperator = [
+            ViewQueryConfiguration(id: "root", viewID: "view-1", nodeType: .group),
+        ]
+        XCTAssertThrowsError(try validator.validateAgainstSchema(
+            missingBooleanOperator, schema: schema, viewID: "view-1", tableName: "Records"
+        )) { error in
+            guard case .invalidField(nodeID: "root", field: "BooleanOperator", _) = error as? ViewQueryConfigurationValidationError else {
+                return XCTFail("Expected a malformed-group error, got \(error)")
+            }
+        }
+
+        let invalidBetweenCardinality = [
+            ViewQueryConfiguration(id: "root", viewID: "view-1", nodeType: .group, booleanOperator: .and),
+            ViewQueryConfiguration(
+                id: "between", viewID: "view-1", parentQueryID: "root", nodeType: .condition,
+                columnName: "Amount", comparisonOperator: .between, valueType: .decimal,
+                value: "[\"20\"]"
+            ),
+        ]
+        XCTAssertThrowsError(try validator.validateAgainstSchema(
+            invalidBetweenCardinality, schema: schema, viewID: "view-1", tableName: "Records"
+        )) { error in
+            guard case .invalidValue(nodeID: "between", _) = error as? ViewQueryConfigurationValidationError else {
+                return XCTFail("Expected a cardinality error, got \(error)")
+            }
+        }
+
+        let invalidNullCardinality = [
+            ViewQueryConfiguration(id: "root", viewID: "view-1", nodeType: .group, booleanOperator: .and),
+            ViewQueryConfiguration(
+                id: "null", viewID: "view-1", parentQueryID: "root", nodeType: .condition,
+                columnName: "Amount", comparisonOperator: .isNull, valueType: .null, value: "null"
+            ),
+        ]
+        XCTAssertThrowsError(try validator.validateAgainstSchema(
+            invalidNullCardinality, schema: schema, viewID: "view-1", tableName: "Records"
+        )) { error in
+            guard case .invalidValue(nodeID: "null", _) = error as? ViewQueryConfigurationValidationError else {
+                return XCTFail("Expected a zero-operand error, got \(error)")
+            }
+        }
+
+        let malformedSort = [
+            ViewQueryConfiguration(id: "root", viewID: "view-1", nodeType: .group, booleanOperator: .and),
+            ViewQueryConfiguration(
+                id: "sort", viewID: "view-1", nodeType: .sort, columnName: "Name",
+                comparisonOperator: .equals, valueType: .text, value: "A", direction: .ascending
+            ),
+        ]
+        XCTAssertThrowsError(try validator.validateAgainstSchema(
+            malformedSort, schema: schema, viewID: "view-1", tableName: "Records"
+        )) { error in
+            guard case .invalidField(nodeID: "sort", field: "Operator", _) = error as? ViewQueryConfigurationValidationError else {
+                return XCTFail("Expected a malformed-sort error, got \(error)")
+            }
+        }
+
+        let sqlFragmentAttempt = [
+            ViewQueryConfiguration(id: "root", viewID: "view-1", nodeType: .group, booleanOperator: .and),
+            ViewQueryConfiguration(
+                id: "sql", viewID: "view-1", parentQueryID: "root", nodeType: .condition,
+                columnName: "Name); DROP TABLE Records;--", comparisonOperator: .equals,
+                valueType: .text, value: "A"
+            ),
+        ]
+        XCTAssertThrowsError(try validator.validateAgainstSchema(
+            sqlFragmentAttempt, schema: schema, viewID: "view-1", tableName: "Records"
+        )) { error in
+            guard case .schemaReference(.invalidIdentifier(kind: "column", value: let column, _)) = error as? ViewQueryConfigurationValidationError else {
+                return XCTFail("Expected an exact-column rejection, got \(error)")
+            }
+            XCTAssertEqual(column, "Name); DROP TABLE Records;--")
+        }
+    }
+
     private var schema: LiveSchemaResponse {
         LiveSchemaResponse(
             databaseName: "test",
