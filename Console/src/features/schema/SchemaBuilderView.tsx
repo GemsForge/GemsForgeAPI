@@ -1,3 +1,4 @@
+import { useRef, useState } from "react";
 import { useSchemaBuilder } from "../../hooks/useSchemaBuilder";
 import { LiveSchemaView } from "./LiveSchemaView";
 import { GemButton, GemField } from "../../components/ui";
@@ -43,6 +44,8 @@ export function SchemaBuilderView({ onError, onSuccess }: SchemaBuilderViewProps
     importCSV,
     readCSV,
   } = useSchemaBuilder({ onError, onSuccess });
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedFileName, setSelectedFileName] = useState("No file chosen");
 
   return (
     <>
@@ -227,17 +230,30 @@ export function SchemaBuilderView({ onError, onSuccess }: SchemaBuilderViewProps
             </div>
             <span className="record-count">Preview only</span>
           </div>
-          <label className="database-field">
-            Choose CSV file
+          <div className="database-field">
+            <span>Choose CSV file</span>
+            <div className="file-input-control">
+              <GemButton tone="secondary" onPress={() => fileInputRef.current?.click()}>
+                Choose file
+              </GemButton>
+              <span className="file-input-name" aria-live="polite">
+                {selectedFileName}
+              </span>
+            </div>
             <input
+              ref={fileInputRef}
+              className="sr-only"
               type="file"
               accept=".csv,text/csv"
               onChange={(event) => {
                 const file = event.target.files?.[0];
-                if (file) readCSV(file);
+                if (file) {
+                  setSelectedFileName(file.name);
+                  readCSV(file);
+                }
               }}
             />
-          </label>
+          </div>
           <div className="database-field">
             <label htmlFor="schema-csv">Or paste CSV</label>
             <TextArea

@@ -2294,6 +2294,17 @@ dialog::backdrop {
   font-size: 0.78rem;
   font-weight: 750;
 }
+.file-input-control {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+.file-input-name {
+  color: var(--ink);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
 .database-field input,
 .database-field select {
   width: 100%;
