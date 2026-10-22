@@ -3030,9 +3030,10 @@ dialog {
 
 .table-kit-record-list-icon {
   display: grid;
-  width: 2rem;
-  height: 2rem;
-  flex: 0 0 2rem;
+  /* Match the renderer's 36px image so the list slot does not crop it. */
+  width: 2.25rem;
+  height: 2.25rem;
+  flex: 0 0 2.25rem;
   place-items: center;
   overflow: hidden;
   border-radius: 0.45rem;
