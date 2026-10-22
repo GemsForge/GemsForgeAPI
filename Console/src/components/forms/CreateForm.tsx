@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from "react";
 import type { UseFormRegisterReturn } from "react-hook-form";
 import { Form, Input, Label, Select, SizableText, TextArea, YStack } from "tamagui";
+import { GemButton } from "../ui";
 
 interface CreateFieldFrameProps {
   id: string;
@@ -69,12 +70,12 @@ export function CreateFormFrame({
       {error && <p role="alert">{error}</p>}
       {children}
       <div className="button-row">
-        <button type="submit" disabled={submitting}>
+        <GemButton type="submit" disabled={submitting}>
           {submitting ? "Creating…" : "Create record"}
-        </button>
-        <button type="button" className="secondary-button" onClick={onCancel} disabled={submitting}>
+        </GemButton>
+        <GemButton tone="secondary" onPress={onCancel} disabled={submitting}>
           Cancel
-        </button>
+        </GemButton>
       </div>
     </Form>
   );

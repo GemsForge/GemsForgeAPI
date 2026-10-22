@@ -169,8 +169,40 @@ const serviceSchema = z.object({
   paymentMethod: optional,
   accountNumber: optional,
   associatedAddress: optional,
-  serviceKey: optional,
+  serviceKey: optional.refine(
+    (value) => !value.trim() || /^[A-Z0-9_]+$/.test(value.trim()),
+    "Use uppercase letters, numbers, and underscores only.",
+  ),
 });
+
+/** Keep service classifications consistent between create and edit workflows. */
+const serviceTypeOptions = [
+  { value: "Subscription", label: "Subscription" },
+  { value: "Utility", label: "Utility" },
+  { value: "Health", label: "Health" },
+  { value: "Credit", label: "Credit" },
+  { value: "Loan", label: "Loan" },
+  { value: "Insurance", label: "Insurance" },
+  { value: "Membership", label: "Membership" },
+  { value: "Other", label: "Other" },
+];
+
+/** Keep expense groups aligned with the existing service record editor. */
+const serviceExpenseGroupOptions = [
+  { value: "Fixed Bills (Obligations)", label: "Fixed Bills (Obligations)" },
+  { value: "Variable Bills", label: "Variable Bills" },
+  { value: "Home", label: "Home" },
+  { value: "Lifestyle", label: "Lifestyle" },
+  { value: "Other", label: "Other" },
+];
+
+/** Keep service status choices consistent across record creation and editing. */
+const serviceStatusOptions = [
+  { value: "Active", label: "Active" },
+  { value: "Closed", label: "Closed" },
+  { value: "Paused", label: "Paused" },
+  { value: "Other", label: "Other" },
+];
 const domainSchema = z.object({ id: optional, title: required("Title"), description: required("Description") });
 
 function FormShell<T extends FieldValues>({
@@ -727,24 +759,24 @@ export function ServiceAccountCreateForm({
     >
       {(form) => (
         <>
-          {fields(form, [
-            ["service", "Service name", true],
-            ["type", "Type"],
-            ["expenseGroup", "Expense group"],
-            ["monthlyAmount", "Monthly amount"],
-            ["interestRate", "Interest rate"],
-            ["apr", "APR"],
-            ["due", "Due date"],
-            ["occurrence", "Occurrence"],
-            ["status", "Status"],
-            ["since", "Since"],
-            ["website", "Website"],
-            ["paymentMethod", "Payment method"],
-            ["accountNumber", "Account number"],
-            ["associatedAddress", "Associated address"],
-            ["serviceKey", "Service key"],
-            ["notes", "Notes"],
-          ])}
+          <div className="create-form-grid">
+            <Text form={form} name="service" label="Service name" required width="medium" />
+            <Select form={form} name="type" label="Type" options={serviceTypeOptions} />
+            <Select form={form} name="expenseGroup" label="Expense group" options={serviceExpenseGroupOptions} />
+            <Text form={form} name="monthlyAmount" label="Monthly amount" type="number" width="medium" />
+            <Text form={form} name="apr" label="APR" type="number" width="short" />
+            <Text form={form} name="due" label="Due date" type="date" width="short" />
+            <Text form={form} name="since" label="Since" type="date" width="short" />
+            <Select form={form} name="status" label="Status" options={serviceStatusOptions} />
+            <Text form={form} name="serviceKey" label="Service key" width="medium" />
+            <Text form={form} name="website" label="Website" type="url" width="medium" />
+            <Text form={form} name="interestRate" label="Interest rate" type="number" width="short" />
+            <Text form={form} name="occurrence" label="Occurrence" width="short" />
+            <Text form={form} name="paymentMethod" label="Payment method" />
+            <Text form={form} name="accountNumber" label="Account number" />
+            <Text form={form} name="associatedAddress" label="Associated address" />
+          </div>
+          <Text form={form} name="notes" label="Notes" multiline width="long" />
         </>
       )}
     </FormShell>
