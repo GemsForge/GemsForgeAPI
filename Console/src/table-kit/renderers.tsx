@@ -203,6 +203,16 @@ export function RecordList<Record>({
             borderRadius="$4"
             backgroundColor="$gemPanel"
             alignItems="center"
+            tabIndex={onExpansionChange ? 0 : undefined}
+            onClick={() => onExpansionChange?.(record.id)}
+            onDoubleClick={() => {
+              if (selection.onRecordSelect && selection.isSelectable(record.id)) {
+                selection.onRecordSelect(record.id);
+              }
+            }}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") onExpansionChange?.(record.id);
+            }}
           >
             <RecordImage image={record.image} size={48} />
             <YStack flex={1} gap="$1">
@@ -212,16 +222,6 @@ export function RecordList<Record>({
               ))}
             </YStack>
             {record.status && <SizableText aria-label={record.status.label}>{record.status.label}</SizableText>}
-            <SelectionButton record={record} selection={selection} />
-            {onExpansionChange && (
-              <button
-                type="button"
-                aria-label={`Expand ${String(record.title ?? record.id)}`}
-                onClick={() => onExpansionChange(record.id)}
-              >
-                View
-              </button>
-            )}
           </XStack>
         );
       })}
