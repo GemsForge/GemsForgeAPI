@@ -275,7 +275,6 @@ function Selection({
           {clearLabel}
         </Button>
       )}
-      <output aria-live="polite">{allMatching.selectedCount} selected</output>
     </div>
   );
 }
