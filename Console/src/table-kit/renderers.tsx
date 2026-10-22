@@ -189,7 +189,8 @@ export function RecordList<Record>({
 }: TableRendererProps<Record>) {
   const effectiveRecords = useRendererRecords(records);
   const selection = useRendererSelection(selectedIds, onRecordSelect);
-  const visibleProperties = propertiesFor(properties, propertyIds).slice(0, 1);
+  // The primary property is already rendered as the list title; do not repeat it below.
+  const visibleProperties = propertiesFor(properties, propertyIds).filter((property) => !property.primary).slice(0, 1);
   return (
     <YStack role="list" gap="$2">
       {effectiveRecords.map((record) => {

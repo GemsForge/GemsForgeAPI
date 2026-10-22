@@ -153,6 +153,9 @@ function DatabaseRecordTableShell<Record>({
     [properties],
   );
   const configuration = useTablePropertyConfiguration({ properties: propertyOptions, viewId });
+  const renderedPropertyIds = configuration.visibleIds.filter(
+    (propertyId) => propertyId.toLowerCase() !== "name",
+  );
   const shell = useGemLifeShell();
   const utilityConfig = actions?.newRecordUtility;
   const [utilityOpen, setUtilityOpen] = useState(utilityConfig?.open ?? false);
@@ -199,7 +202,7 @@ function DatabaseRecordTableShell<Record>({
       <Table.Content>
         <DatabaseRecordRenderer
           properties={properties}
-          propertyIds={configuration.visibleIds}
+          propertyIds={renderedPropertyIds}
           label={label}
           detailId={detailId}
           onDetailChange={onDetailChange}
