@@ -1552,6 +1552,29 @@ dialog::backdrop {
   background: var(--panel);
   box-shadow: 0 0.7rem 1.8rem rgb(0 0 0 / 20%);
 }
+.table-kit-property-dialog-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+.table-kit-property-dialog-heading h2 {
+  margin: 0;
+}
+.table-kit-property-dialog-close {
+  flex: 0 0 auto;
+  min-width: 2rem;
+  min-height: 2rem;
+  padding: 0.25rem;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+.table-kit-property-dialog [role="toolbar"] {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0.35rem;
+  overflow-x: auto;
+}
 
 .table-kit-property-dialog ul {
   display: grid;

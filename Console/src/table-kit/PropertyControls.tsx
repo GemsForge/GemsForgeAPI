@@ -87,20 +87,23 @@ export function TablePropertyControls({
             }
           }}
         >
-          <h2 id={dialogTitleId}>{label}</h2>
-          <Button
-            size="xs"
-            color="$gemInk"
-            backgroundColor="$gemPanel"
-            borderColor="$gemPanelLight"
-            borderWidth={1}
-            borderRadius="$gemControl"
-            type="button"
-            aria-label={closeLabel}
-            onClick={() => setOpen(false)}
-          >
-            {closeLabel}
-          </Button>
+          <div className="table-kit-property-dialog-heading">
+            <h2 id={dialogTitleId}>{label}</h2>
+            <Button
+              size="xs"
+              color="$gemInk"
+              backgroundColor="$gemPanel"
+              borderColor="$gemPanelLight"
+              borderWidth={1}
+              borderRadius="$gemControl"
+              className="table-kit-property-dialog-close"
+              type="button"
+              aria-label={closeLabel}
+              onClick={() => setOpen(false)}
+            >
+              ×
+            </Button>
+          </div>
           <label>
             {searchLabel}
             <Input
