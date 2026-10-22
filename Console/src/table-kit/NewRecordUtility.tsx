@@ -146,20 +146,6 @@ export function NewRecordUtility({
                 <h2 id={titleId}>{title}</h2>
                 <p id={descriptionId}>{activeDescription}</p>
               </div>
-              <Button
-                type="button"
-                size="xs"
-                color="$gemInk"
-                backgroundColor="$gemPanel"
-                borderColor="$gemPanelLight"
-                borderWidth={1}
-                borderRadius="$gemControl"
-                className="secondary-button"
-                aria-label="Close new record utility"
-                onClick={() => setOpen(false)}
-              >
-                ×
-              </Button>
             </div>
             <div className="table-kit-new-record-options" role="tablist" aria-label="New record operations">
               {options.map((option, index) => (

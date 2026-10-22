@@ -183,10 +183,6 @@ describe("Table Kit", () => {
     fireEvent.keyDown(document, { key: "Escape" });
     expect(screen.queryByRole("dialog", { name: "New record" })).not.toBeInTheDocument();
     expect(trigger).toHaveFocus();
-
-    fireEvent.click(trigger);
-    fireEvent.click(screen.getByRole("button", { name: "Close new record utility" }));
-    expect(trigger).toHaveFocus();
   });
 
   it("composes the scoped table primitives with typed rows", () => {
