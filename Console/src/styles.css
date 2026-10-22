@@ -1590,6 +1590,7 @@ dialog::backdrop {
 
 .table-kit-property-dialog ul {
   display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.45rem;
   padding: 0;
   list-style: none;
@@ -1605,6 +1606,11 @@ dialog::backdrop {
 .table-kit-property-dialog > ul > li.is-dragging {
   opacity: 0.55;
   cursor: grabbing;
+}
+@media (max-width: 640px) {
+  .table-kit-property-dialog ul {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 .table-kit-property-dialog > ul > li > label {
