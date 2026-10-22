@@ -132,7 +132,11 @@ function RecordImage<Record>({ image, size }: { image?: TableRecord<Record>["ima
 }
 
 function PropertyValue({ value }: { value: RecordPropertyValue }) {
-  return <Paragraph color="$gemMuted">{displayValue(value)}</Paragraph>;
+  return (
+    <Paragraph className="table-kit-gallery-property-value" color="$gemMuted">
+      {displayValue(value)}
+    </Paragraph>
+  );
 }
 
 /** Render a property value through AG Grid without changing the record contract. */
