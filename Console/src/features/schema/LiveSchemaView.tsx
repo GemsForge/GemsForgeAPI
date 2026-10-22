@@ -4,7 +4,6 @@ import { QueryFeedback } from "../../components/QueryFeedback";
 import { PaginationControls } from "../../components/PaginationControls";
 import { usePagedRecords } from "../../hooks/usePagedRecords";
 import type { LiveSchemaTable } from "../../types";
-import { HubOwnershipAssignment } from "./HubOwnershipAssignment";
 
 interface LiveSchemaViewProps {
   onError: (error: unknown) => void;
@@ -40,9 +39,7 @@ export function LiveSchemaView({ onError }: LiveSchemaViewProps) {
       {!schema ? (
         <QueryFeedback query={query} />
       ) : (
-        <>
-          <HubOwnershipAssignment />
-          <div className="schema-layout">
+        <div className="schema-layout">
             <section className="schema-panel">
               <div className="database-panel-heading">
                 <div>
@@ -88,8 +85,7 @@ export function LiveSchemaView({ onError }: LiveSchemaViewProps) {
               </div>
             </section>
             <SchemaTableDetail table={selectedTable} />
-          </div>
-        </>
+        </div>
       )}
     </>
   );

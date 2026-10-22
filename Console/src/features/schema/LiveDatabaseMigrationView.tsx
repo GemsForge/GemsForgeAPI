@@ -5,6 +5,7 @@ import {
   useLiveSchemaQuery,
   usePreviewRepositoryMigrationsMutation,
 } from "../../data/workflowQueries";
+import { HubOwnershipAssignment } from "./HubOwnershipAssignment";
 
 interface LiveDatabaseMigrationViewProps {
   onError: (error: unknown) => void;
@@ -110,6 +111,7 @@ export function LiveDatabaseMigrationView({ onError, onSuccess }: LiveDatabaseMi
           </div>
         ) : null}
       </section>
+      <HubOwnershipAssignment />
     </>
   );
 }
