@@ -3098,7 +3098,8 @@ dialog {
 .table-kit-gallery-image {
   display: grid;
   place-items: center;
-  min-height: 8rem;
+  position: relative;
+  height: 8rem;
   overflow: hidden;
   background: rgba(7, 23, 28, 0.38);
   background-position: center;
@@ -3167,7 +3168,7 @@ dialog {
   flex-basis: 12rem;
 }
 .table-kit-gallery-card.is-small .table-kit-gallery-image {
-  min-height: 6rem;
+  height: 6rem;
 }
 .table-kit-gallery-card.is-small .table-kit-gallery-properties {
   max-height: 3.75rem;
@@ -3176,7 +3177,7 @@ dialog {
   flex-basis: 20rem;
 }
 .table-kit-gallery-card.is-large .table-kit-gallery-image {
-  min-height: 12rem;
+  height: 12rem;
 }
 .table-kit-gallery-card.is-large .table-kit-gallery-properties {
   max-height: 8rem;
