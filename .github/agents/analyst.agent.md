@@ -13,6 +13,7 @@ Read local product and architecture guidance before proposing implementation. Pr
 
 When the request is ambiguous, identify the smallest safe assumption and the exact decision needed. Keep the story independently reviewable and ready for a clear sprint delivery checkpoint.
 
+Delegate only independent research to subagents. You remain responsible for the story, scope, acceptance criteria, metadata, and issue update.
 
 ## Mandatory repository workflow
 

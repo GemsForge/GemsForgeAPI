@@ -49,6 +49,9 @@ workflow work:
   synchronization.
 - `.github/workflows/sync-pr-metadata.yml` for PR metadata synchronization.
 - `.github/agents/*.agent.md` for the PO, developer, Scrum Master, and QA
+- `.github/workflows/sync-issue-metadata.yml` for issue and PR metadata synchronization.
+- `.github/agents/*.agent.md` for the PO, UX, developer, Scrum Master, and QA
+- `docs/Subagent-Workflow.md` for safe delegation and subagent handoffs.
   operating instructions.
 - `docs/governance/gemsforge-ai-scrum-team.md`,
   `docs/governance/github-actions-standard.md`, and the technology,
