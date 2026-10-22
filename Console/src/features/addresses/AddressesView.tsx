@@ -111,6 +111,7 @@ export function AddressesView({ records }: AddressesViewProps) {
       </div>
       <dialog
         ref={detailDialogRef}
+        className="record-detail-dialog"
         aria-labelledby="address-detail-title"
         onCancel={(event) => {
           event.preventDefault();

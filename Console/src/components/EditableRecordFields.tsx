@@ -77,7 +77,12 @@ function EditableField({ field }: { field: EditableRecordField }) {
   };
 
   return (
-    <div className={field.className}>
+    <div
+      className={
+        [field.className, field.inputType === "date" ? "record-field-compact" : ""].filter(Boolean).join(" ") ||
+        undefined
+      }
+    >
       <dt className="editable-record-label" id={labelID}>
         {field.label}
         {field.onSave && !editor.editing && (

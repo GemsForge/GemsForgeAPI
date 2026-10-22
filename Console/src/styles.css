@@ -555,6 +555,9 @@ dialog {
   color: var(--ink);
   box-shadow: 0 2rem 8rem rgba(0, 0, 0, 0.5);
 }
+.record-detail-dialog {
+  width: min(58rem, calc(100% - 2rem));
+}
 dialog::backdrop {
   background: rgba(3, 11, 14, 0.72);
   backdrop-filter: blur(5px);
@@ -796,6 +799,9 @@ dialog::backdrop {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.65rem 0.9rem;
   margin: 0;
+}
+.record-fields .record-field-compact {
+  max-width: 14rem;
 }
 .record-fields > div {
   min-width: 0;
@@ -1944,6 +1950,9 @@ dialog::backdrop {
   }
   .record-fields {
     grid-template-columns: 1fr;
+  }
+  .record-fields .record-field-compact {
+    max-width: none;
   }
   .record-fields .record-notes {
     grid-column: auto;

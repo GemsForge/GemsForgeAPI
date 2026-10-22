@@ -65,6 +65,7 @@ export function getAddressDetailFields(
       label: "Start date",
       value: record.startDate,
       inputType: "date",
+      className: "record-field-compact",
       nullable: true,
       displayValue: formatRecordDate(record.startDate),
       onSave: async (value) => onPatch({ startDate: value as string | null }),
@@ -73,6 +74,7 @@ export function getAddressDetailFields(
       label: "End date",
       value: record.endDate,
       inputType: "date",
+      className: "record-field-compact",
       nullable: true,
       displayValue: formatRecordDate(record.endDate),
       onSave: async (value) => onPatch({ endDate: value as string | null }),
@@ -82,6 +84,7 @@ export function getAddressDetailFields(
       value: record.addressStatus,
       required: true,
       inputType: "select",
+      className: "record-field-compact",
       options: [
         { label: "Current", value: "Current" },
         { label: "Former", value: "Former" },
