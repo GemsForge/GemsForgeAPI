@@ -2417,6 +2417,11 @@ dialog::backdrop {
   display: grid;
   gap: 0.55rem;
 }
+.schema-table-pagination {
+  display: grid;
+  gap: 0.6rem;
+  margin-top: 1rem;
+}
 .schema-table-button {
   display: grid;
   grid-template-columns: 2.4rem 1fr auto;

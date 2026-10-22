@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useLiveSchemaQuery } from "../../data/workflowQueries";
 import { QueryFeedback } from "../../components/QueryFeedback";
+import { PaginationControls } from "../../components/PaginationControls";
+import { usePagedRecords } from "../../hooks/usePagedRecords";
 import type { LiveSchemaTable } from "../../types";
 
 interface LiveSchemaViewProps {
@@ -11,6 +13,8 @@ export function LiveSchemaView({ onError }: LiveSchemaViewProps) {
   const query = useLiveSchemaQuery();
   const schema = query.data;
   const [selectedTableName, setSelectedTableName] = useState<string | null>(null);
+  // Bound the database navigator to one page so large schemas do not expand the view indefinitely.
+  const paging = usePagedRecords(schema?.tables ?? []);
 
   useEffect(() => {
     if (query.error) onError(query.error);
@@ -45,7 +49,7 @@ export function LiveSchemaView({ onError }: LiveSchemaViewProps) {
               <span className="life-mark database-icon">⌘</span>
             </div>
             <div className="schema-table-list">
-              {schema.tables.map((table) => (
+              {paging.items.map((table) => (
                 <button
                   className={`schema-table-button ${table.name === selectedTableName ? "selected" : ""}`}
                   key={table.name}
@@ -61,6 +65,23 @@ export function LiveSchemaView({ onError }: LiveSchemaViewProps) {
                   <span className="arrow">›</span>
                 </button>
               ))}
+            </div>
+            <div className="schema-table-pagination">
+              <PaginationControls {...paging} label="database tables" />
+              <label className="table-kit-page-size">
+                Tables per page
+                <select
+                  aria-label="Tables per page"
+                  value={paging.pageSize}
+                  onChange={(event) => paging.setPageSize(Number(event.target.value))}
+                >
+                  {[8, 12, 24, 50].map((size) => (
+                    <option key={size} value={size}>
+                      {size}
+                    </option>
+                  ))}
+                </select>
+              </label>
             </div>
           </section>
           <SchemaTableDetail table={selectedTable} />
