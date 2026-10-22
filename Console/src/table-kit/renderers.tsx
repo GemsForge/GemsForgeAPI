@@ -1,5 +1,6 @@
 import {
   useContext,
+  useEffect,
   useRef,
   useState,
   type KeyboardEvent,
@@ -239,21 +240,25 @@ export function RecordGallery<Record>({
   const dragStartRef = useRef<{ index: number; x: number; y: number } | null>(null);
   const dragSelectedIdsRef = useRef<Set<TableRecordId>>(new Set());
   const suppressClickRef = useRef(false);
+  const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(
+    () => () => {
+      if (clickTimerRef.current) clearTimeout(clickTimerRef.current);
+    },
+    [],
+  );
 
   /** Use the adapter image first, then allow an image property to supply the cover. */
   const getImage = (record: TableRecord<Record>) =>
     (record.image?.src?.trim() ? record.image : undefined) ??
     visibleProperties.map((property) => propertyValue(property, record).image).find((image) => Boolean(image?.src));
 
-  /** Make keyboard activation mirror the card click for selection or expansion. */
+  /** Make keyboard activation open the record, matching the primary card action. */
   const handleCardKeyDown = (event: KeyboardEvent<HTMLDivElement>, record: TableRecord<Record>) => {
     if (event.key !== "Enter" && event.key !== " ") return;
     event.preventDefault();
-    if (selection.onRecordSelect) {
-      if (selection.isSelectable(record.id)) selection.onRecordSelect(record.id);
-    } else {
-      onExpansionChange?.(expandedId === record.id ? undefined : record.id);
-    }
+    onExpansionChange?.(expandedId === record.id ? undefined : record.id);
   };
 
   const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>, index: number) => {
@@ -322,19 +327,23 @@ export function RecordGallery<Record>({
                 className="table-kit-gallery-card-surface"
                 role={selection.onRecordSelect || onExpansionChange ? "button" : undefined}
                 tabIndex={selection.onRecordSelect || onExpansionChange ? 0 : undefined}
-                aria-label={selection.onRecordSelect ? `${selected ? "Deselect" : "Select"} ${title}` : `Open ${title}`}
-                aria-pressed={selection.onRecordSelect ? selected : undefined}
-                aria-disabled={selection.onRecordSelect && !selection.isSelectable(record.id) ? true : undefined}
+                aria-label={`Open ${title}`}
                 onClick={() => {
                   if (suppressClickRef.current) {
                     suppressClickRef.current = false;
                     return;
                   }
-                  if (selection.onRecordSelect) {
-                    if (selection.isSelectable(record.id)) selection.onRecordSelect(record.id);
-                  } else {
+                  if (clickTimerRef.current) clearTimeout(clickTimerRef.current);
+                  clickTimerRef.current = setTimeout(() => {
                     onExpansionChange?.(expanded ? undefined : record.id);
-                  }
+                    clickTimerRef.current = null;
+                  }, 220);
+                }}
+                onDoubleClick={() => {
+                  if (clickTimerRef.current) clearTimeout(clickTimerRef.current);
+                  clickTimerRef.current = null;
+                  if (selection.onRecordSelect && selection.isSelectable(record.id))
+                    selection.onRecordSelect(record.id);
                 }}
                 onKeyDown={(event) => handleCardKeyDown(event, record)}
                 onPointerDown={(event) => handlePointerDown(event, effectiveRecords.indexOf(record))}
