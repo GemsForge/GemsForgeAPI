@@ -108,7 +108,7 @@ final class TableViewContractTests: XCTestCase {
         let values: [(ViewQueryValue, String?)] = [
             (.text("hello"), "hello"),
             (.integer(-20), "-20"),
-            (.decimal("20.00"), "20"),
+            (.decimal("20"), "20"),
             (.boolean(true), "true"),
             (.date("2026-11-01"), "2026-11-01"),
             (.dateTime("2026-11-01T12:30:00Z"), "2026-11-01T12:30:00Z"),
@@ -120,6 +120,8 @@ final class TableViewContractTests: XCTestCase {
         }
 
         XCTAssertThrowsError(try ViewQueryValueCodec.decode("01", as: .integer))
+        XCTAssertThrowsError(try ViewQueryValueCodec.decode("+1", as: .integer))
+        XCTAssertThrowsError(try ViewQueryValueCodec.decode("-0", as: .integer))
         XCTAssertThrowsError(try ViewQueryValueCodec.decode("TRUE", as: .boolean))
         XCTAssertThrowsError(try ViewQueryValueCodec.decode("2026-11-01T12:30:00+00:00", as: .dateTime))
         XCTAssertThrowsError(try ViewQueryValueCodec.decode("2026-02-30", as: .date))

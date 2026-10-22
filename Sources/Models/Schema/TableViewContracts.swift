@@ -160,7 +160,9 @@ enum ViewQueryValueCodec {
         switch type {
         case .text: return .text(value)
         case .integer:
-            guard let result = Int64(value) else { throw ViewQueryValueCodecError.invalidValue(type, value) }
+            guard let result = Int64(value), String(result) == value else {
+                throw ViewQueryValueCodecError.invalidValue(type, value)
+            }
             return .integer(result)
         case .decimal:
             guard let result = canonicalDecimal(value) else { throw ViewQueryValueCodecError.invalidValue(type, value) }
