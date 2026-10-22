@@ -7,6 +7,36 @@ import XCTest
 @testable import GemsForgeAPI
 
 final class TableViewContractTests: XCTestCase {
+    /// Verifies the contract's per-View uniqueness and nullable width behavior.
+    func testColumnConfigurationRejectsDuplicateLogicalColumnWithinView() async throws {
+        try await withApp(configure: { app in
+            app.databases.use(.sqlite(.memory), as: .sqlite)
+            app.migrations.add(CreateAuthenticationSchema())
+            app.migrations.add(CreateHubs())
+            app.migrations.add(CreateTableViews())
+            app.migrations.add(CreateViewColumnConfigurations())
+            try await app.autoMigrate()
+        }) { app in
+            let sql = try XCTUnwrap(app.db(.sqlite) as? SQLDatabase)
+            try await sql.raw(SQLQueryString(stringLiteral: "INSERT INTO AppleAccounts (AccountID, AppleSubject) VALUES ('account-1', 'subject-1')")).run()
+            try await sql.raw(SQLQueryString(stringLiteral: "INSERT INTO Hubs (HubID, AccountID, Name) VALUES ('hub-1', 'account-1', 'Gem Life')")).run()
+
+            let view = TableView(hubID: "hub-1", tableName: "Services", name: "Default", viewType: .table)
+            try await view.create(on: app.db(.sqlite))
+            let first = ViewColumnConfiguration(viewID: view.id!, columnName: "InternalNotes", isVisible: false)
+            try await first.create(on: app.db(.sqlite))
+            XCTAssertNil(first.width)
+
+            let duplicate = ViewColumnConfiguration(viewID: view.id!, columnName: "InternalNotes", width: 240)
+            do {
+                try await duplicate.create(on: app.db(.sqlite))
+                XCTFail("Expected duplicate logical column configuration to be rejected")
+            } catch {
+                // The composite (ViewID, ColumnName) uniqueness constraint is authoritative.
+            }
+        }
+    }
+
     func testControlledVocabulariesAndValueEncodingAreCanonical() throws {
         XCTAssertEqual(TableViewType.allCases.map(\.rawValue), ["Table", "List", "Gallery", "Grid"])
         XCTAssertEqual(ViewQueryBooleanOperator.and.rawValue, "AND")
