@@ -42,3 +42,24 @@ These are responsibilities ChatGPT/Codex may perform, not separate accounts or p
 Require explicit approval for merge, deployment/publishing, issue closure, Project status or milestone changes, branch protection, Actions secrets/variables, credentials, destructive cleanup, or material new dependencies.
 
 Use the reusable templates in docs/governance/templates/.
+
+## Autonomous DEV and QA loop
+
+| Stage | Owner | Required action | Handoff condition |
+| --- | --- | --- | --- |
+| Ready for development | SM-GF | Confirm scope, metadata, branch, and dependencies | DEV-GF may begin |
+| Implementation | DEV-GF | Implement, verify, commit, push, and update the issue/PR | QA-GF receives the work |
+| QA review | QA-GF | Test acceptance criteria, runtime behavior, accessibility, and regression risk; record evidence and remarks | Approval or findings recorded |
+| Bug writing | PO-GF or SM-GF | Write and link a bug story with reproduction, expected/actual behavior, severity, owner, and evidence | DEV-GF receives a linked fix |
+| Fix cycle | DEV-GF | Address QA remarks, record the fix commit and verification, and return the work to QA-GF | QA-GF rechecks |
+| Merge eligibility | QA-GF | Record explicit approval after all criteria pass | Work is eligible for merge; no additional human merge approval is required for now |
+
+### Example
+
+QA-GF finds that the compact gallery cards lose keyboard focus after the filter
+changes. QA-GF records the failing interaction, expected focus behavior, browser
+and viewport, and evidence on the working PR. SM-GF writes `fix(ui): repair
+gallery card focus after filtering`, links it to the original story, and assigns
+DEV-GF. DEV-GF implements the fix, records commit and test evidence, and returns
+the PR to QA-GF. QA-GF re-runs the keyboard and responsive checks, records
+approval if they pass, and the PR becomes merge-eligible.
