@@ -1560,6 +1560,42 @@ dialog::backdrop {
   list-style: none;
 }
 
+.table-kit-property-dialog > ul > li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.table-kit-property-dialog > ul > li > label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 0;
+  color: var(--ink);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.table-kit-property-dialog > ul > li > label [role="checkbox"] {
+  display: inline-grid;
+  flex: 0 0 1.1rem;
+  place-items: center;
+  width: 1.1rem;
+  height: 1.1rem;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 0.25rem;
+  background: var(--canvas);
+  color: var(--ink);
+}
+
+.table-kit-property-dialog > ul > li > label [role="checkbox"][data-state="checked"] {
+  border-color: var(--mint);
+  background: var(--mint);
+  color: var(--canvas);
+}
+
 /* Keep the New Record workflow over the collection while preserving its width. */
 .table-kit-utility-backdrop {
   position: fixed;
