@@ -94,7 +94,7 @@ export function SchemaBuilderView({ onError, onSuccess }: SchemaBuilderViewProps
         ) : null}
       </section>
 
-      <div className="database-layout">
+      <div className="database-layout schema-builder-layout">
         <section className="database-panel">
           <div className="database-panel-heading">
             <div>

@@ -2252,6 +2252,10 @@ dialog::backdrop {
   /* Side-by-side builder panels share one visual height on wide screens. */
   align-items: stretch;
 }
+.schema-builder-layout {
+  /* Give the table builder room for its property controls on wide screens. */
+  grid-template-columns: minmax(0, 3fr) minmax(18rem, 1fr);
+}
 .database-panel {
   padding: 1.3rem;
   border: 1px solid rgba(120, 209, 189, 0.24);
