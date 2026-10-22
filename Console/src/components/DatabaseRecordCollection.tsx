@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { PaginationControls } from "./PaginationControls";
 import { RecordUtilities } from "./RecordUtilities";
 import { useGemLifeShell } from "./layout/GemLifeShell";
@@ -242,7 +242,15 @@ function DatabaseRecordRenderer<Record>({
   detail?: ReactNode;
 }) {
   const { viewId } = useTableContext<TableRecord<Record>>();
+  const detailDialogRef = useRef<HTMLDialogElement>(null);
   const onExpansionChange = (id: string | undefined) => onDetailChange(id === detailId ? null : (id ?? null));
+
+  useEffect(() => {
+    const dialog = detailDialogRef.current;
+    if (!dialog) return;
+    if (detail && !dialog.open) dialog.showModal();
+    if (!detail && dialog.open) dialog.close();
+  }, [detail]);
 
   return (
     <>
@@ -255,7 +263,24 @@ function DatabaseRecordRenderer<Record>({
           <RecordList properties={properties} propertyIds={propertyIds} onExpansionChange={onExpansionChange} />
         )}
       </div>
-      {detail ? <div className="database-record-detail">{detail}</div> : null}
+      <dialog
+        ref={detailDialogRef}
+        className="record-detail-dialog"
+        aria-labelledby="database-record-detail-title"
+        onCancel={(event) => {
+          event.preventDefault();
+          onDetailChange(null);
+        }}
+        onClose={() => onDetailChange(null)}
+      >
+        <div className="dialog-heading">
+          <h2 id="database-record-detail-title">{label} details</h2>
+          <button type="button" onClick={() => onDetailChange(null)} aria-label={`Close ${label} details`}>
+            ×
+          </button>
+        </div>
+        {detail ? <div className="database-record-detail">{detail}</div> : null}
+      </dialog>
     </>
   );
 }
