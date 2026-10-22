@@ -319,20 +319,6 @@ export function GemHuesView({ hues }: GemHuesViewProps) {
           newRecordUtility: {
             options: [
               {
-                id: "new-gem-hue",
-                label: "New Gem Hue",
-                description: "Create a Gem Hue record.",
-                render: ({ close }) => (
-                  <GemHueCreateForm
-                    onCancel={close}
-                    onCreate={async (payload) => {
-                      await createHue.mutateAsync(payload);
-                      close();
-                    }}
-                  />
-                ),
-              },
-              {
                 id: "import-gem-hue-file",
                 label: "Import File",
                 description: "Choose a CSV or JSON file.",
