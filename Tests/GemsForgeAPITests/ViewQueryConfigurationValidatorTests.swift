@@ -42,6 +42,54 @@ final class ViewQueryConfigurationValidatorTests: XCTestCase {
         }
     }
 
+    /// The validated result is the canonical serialized tree order, and sibling
+    /// positions are unique within each parent so clients cannot disagree.
+    func testSerializesNestedTreeInSiblingOrderAndRejectsDuplicatePositions() throws {
+        let validator = ViewQueryConfigurationValidator(schema: schema)
+        let nodes = [
+            ViewQueryConfiguration(id: "root", viewID: "view-1", nodeType: .group, booleanOperator: .and, sortOrder: 0),
+            ViewQueryConfiguration(id: "nested", viewID: "view-1", parentQueryID: "root", nodeType: .group, booleanOperator: .or, sortOrder: 2),
+            ViewQueryConfiguration(id: "first", viewID: "view-1", parentQueryID: "root", nodeType: .condition, columnName: "Name", comparisonOperator: .equals, valueType: .text, value: "A", sortOrder: 1),
+            ViewQueryConfiguration(id: "second", viewID: "view-1", parentQueryID: "nested", nodeType: .condition, columnName: "Amount", comparisonOperator: .greaterThan, valueType: .decimal, value: "20", sortOrder: 0)
+        ]
+
+        let result = try validator.validateAgainstSchema(nodes, schema: schema, viewID: "view-1", tableName: "Records")
+        XCTAssertEqual(result.nodes.map(\.id), ["root", "first", "nested", "second"])
+
+        let duplicate = nodes + [
+            ViewQueryConfiguration(id: "duplicate", viewID: "view-1", parentQueryID: "root", nodeType: .condition, columnName: "Name", comparisonOperator: .equals, valueType: .text, value: "B", sortOrder: 1)
+        ]
+        XCTAssertThrowsError(try validator.validateAgainstSchema(duplicate, schema: schema, viewID: "view-1", tableName: "Records")) { error in
+            guard case .duplicateSiblingSortOrder(parentID: "root", sortOrder: 1) = error as? ViewQueryConfigurationValidationError else {
+                return XCTFail("Expected a duplicate sibling order error, got \(error)")
+            }
+        }
+    }
+
+    func testRejectsMissingCrossViewAndSelfParents() throws {
+        let validator = ViewQueryConfigurationValidator(schema: schema)
+        let missing = [
+            ViewQueryConfiguration(id: "root", viewID: "view-1", nodeType: .group, booleanOperator: .and),
+            ViewQueryConfiguration(id: "child", viewID: "view-1", parentQueryID: "gone", nodeType: .condition, columnName: "Name", comparisonOperator: .equals, valueType: .text, value: "A")
+        ]
+        XCTAssertThrowsError(try validator.validateAgainstSchema(missing, schema: schema, viewID: "view-1", tableName: "Records")) { error in
+            guard case .missingParent(nodeID: "child", parentID: "gone") = error as? ViewQueryConfigurationValidationError else { XCTFail("Expected missing parent, got \(error)"); return }
+        }
+
+        let crossView = [
+            ViewQueryConfiguration(id: "root", viewID: "view-1", nodeType: .group, booleanOperator: .and),
+            ViewQueryConfiguration(id: "child", viewID: "view-2", parentQueryID: "root", nodeType: .condition, columnName: "Name", comparisonOperator: .equals, valueType: .text, value: "A")
+        ]
+        XCTAssertThrowsError(try validator.validateAgainstSchema(crossView, schema: schema, viewID: "view-1", tableName: "Records")) { error in
+            guard case .nodeBelongsToDifferentView(nodeID: "child", expected: "view-1", actual: "view-2") = error as? ViewQueryConfigurationValidationError else { XCTFail("Expected cross-view error, got \(error)"); return }
+        }
+
+        let selfParent = [ViewQueryConfiguration(id: "root", viewID: "view-1", parentQueryID: "root", nodeType: .group, booleanOperator: .and)]
+        XCTAssertThrowsError(try validator.validateAgainstSchema(selfParent, schema: schema, viewID: "view-1", tableName: "Records")) { error in
+            guard case .selfParent(nodeID: "root") = error as? ViewQueryConfigurationValidationError else { XCTFail("Expected self-parent error, got \(error)"); return }
+        }
+    }
+
     func testReportsMissingReferencesWithoutRepairingMetadata() throws {
         let validator = SQLiteSchemaReferenceValidator(schema: schema)
         XCTAssertThrowsError(try validator.validateColumn(

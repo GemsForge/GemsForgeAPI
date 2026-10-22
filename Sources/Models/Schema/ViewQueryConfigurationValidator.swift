@@ -55,6 +55,7 @@ enum ViewQueryConfigurationValidationError: Error, CustomStringConvertible, Equa
     case illegalParentChild(parentID: String, parentType: ViewQueryNodeType, childID: String, childType: ViewQueryNodeType)
     case independentNodeHasParent(nodeID: String, nodeType: ViewQueryNodeType, parentID: String)
     case invalidSortOrder(nodeID: String, value: Int)
+    case duplicateSiblingSortOrder(parentID: String?, sortOrder: Int)
     case invalidValue(nodeID: String, reason: String)
     case incompatibleOperator(nodeID: String, columnName: String, comparisonOperator: ViewQueryComparisonOperator, declaredType: String)
     case incompatibleValueType(nodeID: String, columnName: String, valueType: ViewQueryValueType, declaredType: String)
@@ -80,6 +81,9 @@ enum ViewQueryConfigurationValidationError: Error, CustomStringConvertible, Equa
         case .illegalParentChild(let parent, let parentType, let child, let childType): return "\(childType.rawValue) node \"\(child)\" cannot be a child of \(parentType.rawValue) node \"\(parent)\"."
         case .independentNodeHasParent(let id, let type, let parent): return "\(type.rawValue) node \"\(id)\" is independent and cannot have parent \"\(parent)\"."
         case .invalidSortOrder(let id, let value): return "Query node \"\(id)\" has invalid SortOrder \(value); SortOrder must be non-negative."
+        case .duplicateSiblingSortOrder(let parentID, let sortOrder):
+            let scope = parentID.map { "parent \($0)" } ?? "the View root"
+            return "Query nodes under \(scope) cannot share SortOrder \(sortOrder)."
         case .invalidValue(let id, let reason): return "Condition node \"\(id)\" has invalid typed value: \(reason)."
         case .incompatibleOperator(let id, let column, let op, let type): return "Condition node \"\(id)\" cannot apply \(op.rawValue) to column \"\(column)\" declared as \"\(type)\"."
         case .incompatibleValueType(let id, let column, let valueType, let type): return "Condition node \"\(id)\" cannot compare column \"\(column)\" declared as \"\(type)\" with \(valueType.rawValue) values."
@@ -202,6 +206,7 @@ struct ViewQueryConfigurationValidator: Sendable {
 
         let byID = Dictionary(uniqueKeysWithValues: parsed.map { ($0.id, $0) })
         var children: [String: [ParsedNode]] = [:]
+        var siblingSortOrders: [String?: Set<Int>] = [:]
         var filterRoots: [ParsedNode] = []
 
         for node in parsed {
@@ -232,7 +237,17 @@ struct ViewQueryConfigurationValidator: Sendable {
                     childType: node.nodeType
                 )
             }
+            var orders = siblingSortOrders[parentID] ?? []
+            guard orders.insert(node.sortOrder).inserted else {
+                throw ViewQueryConfigurationValidationError.duplicateSiblingSortOrder(parentID: parentID, sortOrder: node.sortOrder)
+            }
+            siblingSortOrders[parentID] = orders
             children[parentID, default: []].append(node)
+        }
+
+        let rootFilterSortOrders = filterRoots.map(\.sortOrder)
+        if let duplicate = duplicateValue(in: rootFilterSortOrders) {
+            throw ViewQueryConfigurationValidationError.duplicateSiblingSortOrder(parentID: nil, sortOrder: duplicate)
         }
 
         try validateNoCycles(parsed)
@@ -245,7 +260,12 @@ struct ViewQueryConfigurationValidator: Sendable {
             }
         }
 
-        let resultNodes = parsed.map { node in
+        // Serialize in deterministic pre-order: each group's children are emitted
+        // by SortOrder, while independent Sort and RecordGroup nodes follow the
+        // filter tree in their own persisted order.
+        let orderedNodes = serializedOrder(root: filterRoots[0], children: children)
+            + parsed.filter { $0.nodeType == .sort || $0.nodeType == .recordGroup }
+        let resultNodes = orderedNodes.map { node in
             ViewQueryValidationNode(
                 id: node.id,
                 viewID: node.viewID,
@@ -442,6 +462,19 @@ struct ViewQueryConfigurationValidator: Sendable {
             }
             completed.formUnion(path)
         }
+    }
+
+    private func serializedOrder(root: ParsedNode, children: [String: [ParsedNode]]) -> [ParsedNode] {
+        [root] + (children[root.id] ?? [])
+            .sorted { $0.sortOrder == $1.sortOrder ? $0.id < $1.id : $0.sortOrder < $1.sortOrder }
+            .flatMap { child in
+                child.nodeType == .group ? serializedOrder(root: child, children: children) : [child]
+            }
+    }
+
+    private func duplicateValue(in values: [Int]) -> Int? {
+        var seen = Set<Int>()
+        return values.first { !seen.insert($0).inserted }
     }
 
     private func requireNil<T>(_ value: T?, field: String, id: String) throws {
