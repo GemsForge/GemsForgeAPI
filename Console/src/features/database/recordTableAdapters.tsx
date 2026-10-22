@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { Address, Education, Employment, ExpenseTransaction, ServiceAccount } from "../../types";
+import type { Address, Education, Employment, ExpenseTransaction, GemHue, ServiceAccount } from "../../types";
 import type { RecordAdapter, RecordPropertyDefinition } from "../../table-kit";
 import { api } from "../../api";
 
@@ -91,6 +91,35 @@ export const transactionTableAdapter: RecordAdapter<ExpenseTransaction> = {
       { id: "id", label: "Item ID", kind: "text", getValue: (record) => display(record.id) },
       { id: "date", label: "Date", kind: "date", getValue: (record) => display(record.transactionDate) },
     ] satisfies readonly RecordPropertyDefinition<ExpenseTransaction>[],
+};
+
+/** Shared adapter for Gem Hue records so the foundation table uses every Table Kit view. */
+export const gemHueTableAdapter: RecordAdapter<GemHue> = {
+  toTableRecord: (record) => ({
+    id: record.id,
+    source: record,
+    title: record.colorName,
+    subtitle: `${record.hexCode} · ${record.id}`,
+    status: record.colorFamily ? { label: record.colorFamily } : undefined,
+  }),
+  getPropertyDefinitions: () =>
+    [
+      {
+        id: "colorName",
+        label: "Color name",
+        kind: "text",
+        primary: true,
+        getValue: (record) => display(record.colorName),
+      },
+      { id: "hexCode", label: "Hex code", kind: "text", getValue: (record) => display(record.hexCode) },
+      { id: "colorFamily", label: "Color family", kind: "select", getValue: (record) => display(record.colorFamily) },
+      { id: "mood", label: "Mood", kind: "select", getValue: (record) => display(record.mood) },
+      { id: "palette", label: "Palette", kind: "select", getValue: (record) => display(record.palette) },
+      { id: "description", label: "Description", kind: "text", getValue: (record) => display(record.description) },
+      { id: "createdDate", label: "Created date", kind: "date", getValue: (record) => display(record.createdDate) },
+      { id: "notes", label: "Notes", kind: "text", getValue: (record) => display(record.notes) },
+      { id: "id", label: "Item ID", kind: "text", getValue: (record) => display(record.id) },
+    ] satisfies readonly RecordPropertyDefinition<GemHue>[],
 };
 
 /** Create the service adapter while retaining the existing logo lookup and preview behavior. */
