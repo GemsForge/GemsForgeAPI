@@ -103,6 +103,37 @@ final class TableViewContractTests: XCTestCase {
         XCTAssertThrowsError(try ViewQueryValueCodec.decode("not-a-number", as: .integer))
     }
 
+    /// Verifies every persisted scalar has one stable representation and rejects malformed input.
+    func testQueryValueCodecRoundTripsAndRejectsMalformedValues() throws {
+        let values: [(ViewQueryValue, String?)] = [
+            (.text("hello"), "hello"),
+            (.integer(-20), "-20"),
+            (.decimal("20.00"), "20"),
+            (.boolean(true), "true"),
+            (.date("2026-11-01"), "2026-11-01"),
+            (.dateTime("2026-11-01T12:30:00Z"), "2026-11-01T12:30:00Z"),
+            (.null, nil)
+        ]
+        for (value, encoded) in values {
+            XCTAssertEqual(try ViewQueryValueCodec.encode(value), encoded)
+            XCTAssertEqual(try ViewQueryValueCodec.decode(encoded, as: value.type), value)
+        }
+
+        XCTAssertThrowsError(try ViewQueryValueCodec.decode("01", as: .integer))
+        XCTAssertThrowsError(try ViewQueryValueCodec.decode("TRUE", as: .boolean))
+        XCTAssertThrowsError(try ViewQueryValueCodec.decode("2026-11-01T12:30:00+00:00", as: .dateTime))
+        XCTAssertThrowsError(try ViewQueryValueCodec.decode("2026-02-30", as: .date))
+    }
+
+    /// Verifies operator cardinality and homogeneous operand typing before persistence.
+    func testQueryValueCodecEnforcesOperatorCardinalityAndOperandTypes() throws {
+        XCTAssertThrowsError(try ViewQueryValueCodec.encode([], for: .equals))
+        XCTAssertThrowsError(try ViewQueryValueCodec.encode([.integer(1)], for: .between))
+        XCTAssertThrowsError(try ViewQueryValueCodec.encode([.integer(1), .text("1")], for: .between))
+        XCTAssertNil(try ViewQueryValueCodec.encode([], for: .isNull))
+        XCTAssertThrowsError(try ViewQueryValueCodec.encode([.null], for: .isNull))
+    }
+
     func testDTOsMapPersistedMetadataWithoutExposingRawVocabularies() throws {
         let view = TableView(hubID: "hub-1", tableName: "Services", name: "Active", viewType: .gallery)
         let viewResponse = try TableViewResponse(model: view)
