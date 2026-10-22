@@ -824,6 +824,9 @@ dialog::backdrop {
   max-width: 14rem;
 }
 .record-fields > div {
+  display: grid;
+  align-content: start;
+  gap: 0.15rem;
   min-width: 0;
 }
 .record-fields dt {
