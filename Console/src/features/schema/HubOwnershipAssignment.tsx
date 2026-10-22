@@ -39,8 +39,14 @@ export function HubOwnershipAssignment() {
   };
 
   return (
-    <section className="record-form">
-      <h3>Assign existing records to my hub</h3>
+    <section className="database-panel">
+      <div className="database-panel-heading">
+        <div>
+          <p className="eyebrow">Ownership assignment</p>
+          <h3>Assign existing records to my hub</h3>
+        </div>
+        <span className="life-mark database-icon">⌘</span>
+      </div>
       <p className="muted">
         Use this only for legacy rows that already exist with no HubID. It does not create duplicates.
       </p>

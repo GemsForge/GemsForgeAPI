@@ -2267,6 +2267,9 @@ dialog::backdrop {
   border-radius: 1rem;
   background: rgba(23, 49, 56, 0.42);
 }
+.database-panel + .database-panel {
+  margin-top: 1rem;
+}
 .database-layout > .database-panel {
   height: 100%;
   box-sizing: border-box;
