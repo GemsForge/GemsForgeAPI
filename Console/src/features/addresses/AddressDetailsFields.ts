@@ -5,6 +5,7 @@ import {
   formatRecordTimestamp,
   type EditableRecordField,
 } from "../../components/EditableRecordFields";
+import { addressStatusOptions, addressTypeOptions } from "./AddressFieldDefinitions";
 
 export function getAddressDetailFields(
   record: Address,
@@ -16,13 +17,7 @@ export function getAddressDetailFields(
       value: record.addressType,
       required: true,
       inputType: "dropdown",
-      options: [
-        { label: "Residence", value: "Residence" },
-        { label: "Storage", value: "Storage" },
-        { label: "Work", value: "Work" },
-        { label: "School", value: "School" },
-        { label: "Other", value: "Other" },
-      ],
+      options: addressTypeOptions,
       onSave: async (value) => onPatch({ addressType: String(value) }),
     },
     {
@@ -85,12 +80,7 @@ export function getAddressDetailFields(
       required: true,
       inputType: "dropdown",
       className: "record-field-compact",
-      options: [
-        { label: "Current", value: "Current" },
-        { label: "Former", value: "Former" },
-        { label: "Seasonal", value: "Seasonal" },
-        { label: "Other", value: "Other" },
-      ],
+      options: addressStatusOptions,
       onSave: async (value) => onPatch({ addressStatus: String(value) }),
     },
     {

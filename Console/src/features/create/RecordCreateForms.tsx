@@ -33,6 +33,13 @@ import type {
   ServiceAccountCreate,
   TransactionCreate,
 } from "../../types";
+import {
+  addressStatusOptions,
+  addressTypeOptions,
+  isValidAddressDate,
+  isValidAddressLocation,
+  isValidAddressPostalCode,
+} from "../addresses/AddressFieldDefinitions";
 
 const required = (label: string) => z.string().trim().min(1, `${label} is required.`);
 const optional = z.string();
@@ -85,19 +92,10 @@ const optionalNumber = z
     "Enter a non-negative number.",
   );
 /** Accept international city and region names while rejecting punctuation-only values. */
-const optionalAddressLocation = optional.refine(
-  (value) => !value.trim() || /^[\p{L}\p{M}0-9 .,'’&()/-]+$/u.test(value.trim()),
-  "Enter a valid location.",
-);
+const optionalAddressLocation = optional.refine(isValidAddressLocation, "Enter a valid location.");
 /** Accept common domestic and international postal-code characters. */
-const optionalPostalCode = optional.refine(
-  (value) => !value.trim() || /^[\p{L}\p{N}][\p{L}\p{N} .-]*$/u.test(value.trim()),
-  "Enter a valid postal code.",
-);
-const optionalAddressDate = optional.refine(
-  (value) => !value.trim() || isValidDateInput(value.trim()),
-  "Enter a valid date.",
-);
+const optionalPostalCode = optional.refine(isValidAddressPostalCode, "Enter a valid postal code.");
+const optionalAddressDate = optional.refine(isValidAddressDate, "Enter a valid date.");
 const addressSchema = z
   .object({
     addressType: required("Address type"),
@@ -122,11 +120,6 @@ const addressSchema = z
     }
   });
 
-const addressTypeOptions = ["Residence", "Storage", "Work", "School", "Other"].map((value) => ({
-  value,
-  label: value,
-}));
-const addressStatusOptions = ["Current", "Former", "Seasonal", "Other"].map((value) => ({ value, label: value }));
 const educationSchema = z.object({
   id: required("Education ID"),
   educationType: required("Education type"),
