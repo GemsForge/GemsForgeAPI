@@ -457,6 +457,7 @@ export function RecordTable<Record>({
       width: 56,
       minWidth: 56,
       maxWidth: 56,
+      pinned: "left",
       sortable: false,
       resizable: false,
       cellRenderer: GridActionCell,
@@ -464,7 +465,18 @@ export function RecordTable<Record>({
     });
   }
 
-  const primaryColumn = propertyColumns.shift();
+  const imageColumnIds = new Set(imageProperties.map((property) => property.id));
+  const imageColumns = propertyColumns.filter((column) => imageColumnIds.has(String(column.colId)));
+  const primaryColumn = propertyColumns.find((column) => column.colId === primaryProperty?.id);
+  const remainingColumns = propertyColumns.filter(
+    (column) => !imageColumnIds.has(String(column.colId)) && column.colId !== primaryProperty?.id,
+  );
+
+  imageColumns.forEach((column) => {
+    column.pinned = "left";
+  });
+  if (primaryColumn) primaryColumn.pinned = "left";
+  columnDefs.push(...imageColumns);
   if (primaryColumn) columnDefs.push(primaryColumn);
 
   if (hasStatus) {
@@ -476,7 +488,7 @@ export function RecordTable<Record>({
       valueGetter: ({ data }) => data?.status?.label ?? "—",
     });
   }
-  columnDefs.push(...propertyColumns);
+  columnDefs.push(...remainingColumns);
 
   return (
     <YStack
