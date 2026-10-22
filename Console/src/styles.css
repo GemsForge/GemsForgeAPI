@@ -1345,27 +1345,28 @@ dialog::backdrop {
   flex: 0 0 auto;
   align-items: stretch;
   gap: 0;
-  min-width: 10rem;
+  min-width: 12rem;
   max-width: 100%;
   overflow: hidden;
-  border: 1px solid var(--line) !important;
+  border: 1px solid rgba(94, 157, 164, 0.34) !important;
   border-radius: 0.55rem;
   background: var(--panel);
 }
 
-.table-kit-views > button {
+.table-kit-views button {
   flex: 1 1 0;
+  min-width: 3.75rem;
   min-height: 2.75rem;
   padding: 0.55rem 0.8rem;
   border: 0 !important;
   outline: none;
-  border-right: 1px solid var(--line);
+  border-right: 1px solid rgba(94, 157, 164, 0.34);
   border-radius: 0;
   background: transparent;
   color: var(--ink);
   white-space: nowrap;
 }
-.table-kit-views > button:focus-visible {
+.table-kit-views button:focus-visible {
   position: relative;
   z-index: 1;
   outline: 2px solid var(--mint);
@@ -1382,11 +1383,11 @@ dialog::backdrop {
   font-size: 1.05rem;
 }
 
-.table-kit-views > button:last-child {
+.table-kit-views button:last-child {
   border-right: 0;
 }
 
-.table-kit-views > button[data-state="on"] {
+.table-kit-views button[data-state="on"] {
   background: var(--mint);
   color: var(--canvas);
 }
@@ -2869,6 +2870,21 @@ dialog {
   font-size: 0.78rem;
 }
 .table-kit-gallery-size select {
+  min-height: 2.25rem;
+  border: 1px solid var(--line);
+  border-radius: 0.45rem;
+  background: var(--canvas);
+  color: var(--ink);
+}
+.table-kit-gallery-page-size {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0 0 0.75rem auto;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+.table-kit-gallery-page-size select {
   min-height: 2.25rem;
   border: 1px solid var(--line);
   border-radius: 0.45rem;
