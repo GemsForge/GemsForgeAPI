@@ -98,6 +98,22 @@ function SelectionButton({
   );
 }
 
+/** Render the compact checkbox used by the table's leading selection column. */
+function SelectionCheckbox({ record, selection }: { record: TableRecord<unknown>; selection: RendererSelection }) {
+  if (!selection.onRecordSelect) return null;
+  const selected = selection.selectedIds.has(record.id);
+  const title = String(record.title ?? record.id);
+  return (
+    <input
+      type="checkbox"
+      aria-label={`${selected ? "Deselect" : "Select"} ${title}`}
+      checked={selected}
+      disabled={!selection.isSelectable(record.id)}
+      onChange={() => selection.onRecordSelect?.(record.id)}
+    />
+  );
+}
+
 function propertiesFor<Record>(
   properties: readonly RecordPropertyDefinition<Record>[],
   propertyIds?: readonly string[],
@@ -151,20 +167,11 @@ interface GridActionCellParams<Record> extends ICellRendererParams<TableRecord<R
 }
 
 /** Keep row actions connected to the scoped Table.Root selection context. */
-function GridActionCell<Record>({ data, selection, onExpansionChange }: GridActionCellParams<Record>) {
+function GridActionCell<Record>({ data, selection }: GridActionCellParams<Record>) {
   if (!data) return null;
   return (
-    <XStack gap="$2" alignItems="center">
-      <SelectionButton record={data} selection={selection} />
-      {onExpansionChange && (
-        <button
-          type="button"
-          aria-label={`Expand ${String(data.title ?? data.id)}`}
-          onClick={() => onExpansionChange(data.id)}
-        >
-          View
-        </button>
-      )}
+    <XStack justifyContent="center" alignItems="center">
+      <SelectionCheckbox record={data} selection={selection} />
     </XStack>
   );
 }
@@ -421,16 +428,44 @@ export function RecordTable<Record>({
   const selection = useRendererSelection(selectedIds, onRecordSelect);
   const visibleProperties = propertiesFor(properties, propertyIds);
   const hasStatus = effectiveRecords.some((record) => record.status !== undefined);
-  const hasActions = Boolean(selection.onRecordSelect || onExpansionChange);
-  const columnDefs = visibleProperties.map<ColDef<TableRecord<Record>>>((property) => ({
+  const hasActions = Boolean(selection.onRecordSelect);
+  const imageProperties = visibleProperties.filter((property) => property.kind === "image");
+  const primaryProperty =
+    visibleProperties.find((property) => property.primary) ??
+    visibleProperties.find((property) => property.kind !== "image");
+  const orderedProperties = [
+    ...imageProperties,
+    ...(primaryProperty ? [primaryProperty] : []),
+    ...visibleProperties.filter((property) => property.kind !== "image" && property.id !== primaryProperty?.id),
+  ];
+  const propertyColumns = orderedProperties.map<ColDef<TableRecord<Record>>>((property) => ({
     colId: property.id,
     headerName: property.label,
     flex: 1,
-    minWidth: 140,
+    minWidth: property.kind === "image" ? 72 : 140,
+    maxWidth: property.kind === "image" ? 96 : undefined,
     sortable: property.sortable ?? false,
     valueGetter: ({ data }) => (data ? displayValue(propertyValue(property, data)) : ""),
     cellRenderer: GridPropertyCell,
   }));
+
+  const columnDefs: ColDef<TableRecord<Record>>[] = [];
+  if (hasActions) {
+    columnDefs.push({
+      colId: "selection",
+      headerName: "",
+      width: 56,
+      minWidth: 56,
+      maxWidth: 56,
+      sortable: false,
+      resizable: false,
+      cellRenderer: GridActionCell,
+      cellRendererParams: { selection },
+    });
+  }
+
+  const primaryColumn = propertyColumns.shift();
+  if (primaryColumn) columnDefs.push(primaryColumn);
 
   if (hasStatus) {
     columnDefs.push({
@@ -441,18 +476,7 @@ export function RecordTable<Record>({
       valueGetter: ({ data }) => data?.status?.label ?? "—",
     });
   }
-
-  if (hasActions) {
-    columnDefs.push({
-      colId: "actions",
-      headerName: "Actions",
-      minWidth: onExpansionChange ? 180 : 150,
-      sortable: false,
-      resizable: false,
-      cellRenderer: GridActionCell,
-      cellRendererParams: { selection, onExpansionChange },
-    });
-  }
+  columnDefs.push(...propertyColumns);
 
   return (
     <YStack
@@ -474,6 +498,16 @@ export function RecordTable<Record>({
         defaultColDef={{ flex: 1, minWidth: 140, resizable: true }}
         rowClassRules={{
           "is-selected": ({ data }) => Boolean(data && selection.selectedIds.has(data.id)),
+        }}
+        onRowClicked={(event) => {
+          const target = event.event?.target;
+          if (target instanceof Element && target.closest("input,button")) return;
+          if (event.data && onExpansionChange) onExpansionChange(event.data.id);
+        }}
+        onRowDoubleClicked={(event) => {
+          if (event.data && selection.onRecordSelect && selection.isSelectable(event.data.id)) {
+            selection.onRecordSelect(event.data.id);
+          }
         }}
         domLayout="autoHeight"
         animateRows={false}
