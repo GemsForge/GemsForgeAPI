@@ -7,6 +7,56 @@ import XCTest
 @testable import GemsForgeAPI
 
 final class TableViewContractTests: XCTestCase {
+    /// Verifies defaults are unique within a Hub/Table scope but independent across Hubs.
+    func testTableViewServiceScopesDefaultConflictsPerHubAndTable() async throws {
+        try await withApp(configure: { app in
+            app.databases.use(.sqlite(.memory), as: .sqlite)
+            app.migrations.add(CreateAuthenticationSchema()); app.migrations.add(CreateHubs()); app.migrations.add(CreateTableViews())
+            try await app.autoMigrate()
+        }) { app in
+            let database = app.db(.sqlite); let sql = try XCTUnwrap(database as? SQLDatabase)
+            try await sql.raw(SQLQueryString(stringLiteral: "INSERT INTO AppleAccounts (AccountID, AppleSubject) VALUES ('a1', 's1'), ('a2', 's2')")).run()
+            try await sql.raw(SQLQueryString(stringLiteral: "INSERT INTO Hubs (HubID, AccountID, Name) VALUES ('h1', 'a1', 'One'), ('h2', 'a2', 'Two')")).run()
+            let service = TableViewService(database: database)
+            try await service.create(TableView(hubID: "h1", tableName: "Services", name: "All", viewType: .table, isDefault: true))
+            do {
+                try await service.create(TableView(hubID: "h1", tableName: "Services", name: "Active", viewType: .list, isDefault: true))
+                XCTFail("Expected a same-scope default conflict")
+            } catch { XCTAssertEqual(error as? TableViewPersistenceError, .defaultConflict) }
+            try await service.create(TableView(hubID: "h2", tableName: "Services", name: "All", viewType: .table, isDefault: true))
+            let defaults = try await TableView.query(on: database).filter(\.$isDefault == true).count()
+            XCTAssertEqual(defaults, 2)
+        }
+    }
+
+    /// Verifies promotion and deletion are atomic and choose the lowest SortOrder replacement.
+    func testTableViewServicePromotesLowestSortOrderOnPromotionAndDeletion() async throws {
+        try await withApp(configure: { app in
+            app.databases.use(.sqlite(.memory), as: .sqlite)
+            app.migrations.add(CreateAuthenticationSchema()); app.migrations.add(CreateHubs()); app.migrations.add(CreateTableViews())
+            try await app.autoMigrate()
+        }) { app in
+            let database = app.db(.sqlite); let sql = try XCTUnwrap(database as? SQLDatabase)
+            try await sql.raw(SQLQueryString(stringLiteral: "INSERT INTO AppleAccounts (AccountID, AppleSubject) VALUES ('a1', 's1')")).run()
+            try await sql.raw(SQLQueryString(stringLiteral: "INSERT INTO Hubs (HubID, AccountID, Name) VALUES ('h1', 'a1', 'One')")).run()
+            let current = TableView(hubID: "h1", tableName: "Services", name: "Current", viewType: .table, isDefault: true, sortOrder: 5)
+            let lowest = TableView(hubID: "h1", tableName: "Services", name: "Lowest", viewType: .list, sortOrder: 1)
+            let other = TableView(hubID: "h1", tableName: "Services", name: "Other", viewType: .gallery, sortOrder: 3)
+            let service = TableViewService(database: database)
+            try await service.create(current); try await service.create(lowest); try await service.create(other)
+            try await service.update(other, isDefault: true)
+            let promotedOptional = try await TableView.find(other.id!, on: database)
+            let promoted = try XCTUnwrap(promotedOptional)
+            XCTAssertTrue(promoted.isDefault)
+            try await service.delete(other)
+            let replacementOptional = try await TableView.find(lowest.id!, on: database)
+            let replacement = try XCTUnwrap(replacementOptional)
+            XCTAssertTrue(replacement.isDefault)
+            let remainingDefaults = try await TableView.query(on: database).filter(\.$isDefault == true).count()
+            XCTAssertEqual(remainingDefaults, 1)
+        }
+    }
+
     /// Confirms column metadata is scoped to a View and never becomes a schema mutation.
     func testColumnConfigurationsRemainPerViewAndLogical() async throws {
         try await withApp(configure: { app in
