@@ -146,7 +146,9 @@ function DatabaseRecordTableShell<Record>({
       properties.map((property) => ({
         id: property.id,
         label: property.label,
-        defaultVisible: property.visible !== false,
+        // Name is useful for search/detail context but should not occupy a table column by default.
+        defaultVisible:
+          property.visible !== false && property.id.toLowerCase() !== "name" && property.label.toLowerCase() !== "name",
       })),
     [properties],
   );
