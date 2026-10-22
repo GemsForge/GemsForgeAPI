@@ -3037,7 +3037,15 @@ dialog {
   place-items: center;
   overflow: hidden;
   border-radius: 0.45rem;
-  background: var(--canvas);
+  background: transparent;
+}
+.table-kit-record-list-icon img {
+  /* Keep Tamagui's image props from being overridden by global responsive image rules. */
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none;
+  object-fit: contain;
 }
 
 .table-kit-record-list-title {
@@ -3098,10 +3106,12 @@ dialog {
   background-size: cover;
 }
 .table-kit-gallery-image img {
+  display: block;
   width: 100%;
   height: 100%;
-  max-width: 100%;
-  max-height: 100%;
+  max-width: none;
+  max-height: none;
+  object-fit: contain;
 }
 .table-kit-gallery-copy {
   display: grid;

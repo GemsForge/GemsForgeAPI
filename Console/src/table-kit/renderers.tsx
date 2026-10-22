@@ -342,27 +342,6 @@ export function RecordGallery<Record>({
               role="listitem"
               data-gallery-record-id={record.id}
             >
-              {image && (
-                <Card.Background alignItems="center" justifyContent="center">
-                  <Image
-                    source={{ uri: image.src }}
-                    accessibilityLabel={image.alt}
-                    width="100%"
-                    height="100%"
-                    objectFit="contain"
-                    opacity={0.72}
-                  />
-                  <YStack
-                    position="absolute"
-                    top={0}
-                    right={0}
-                    bottom={0}
-                    left={0}
-                    backgroundColor="$gemCanvas"
-                    opacity={0.42}
-                  />
-                </Card.Background>
-              )}
               <div
                 className="table-kit-gallery-card-surface"
                 role={selection.onRecordSelect || onExpansionChange ? "button" : undefined}
@@ -391,7 +370,17 @@ export function RecordGallery<Record>({
                 onPointerUp={handlePointerEnd}
                 onPointerCancel={handlePointerEnd}
               >
-                <div className="table-kit-gallery-image" aria-label={`${title} image preview`} />
+                <div className="table-kit-gallery-image" aria-label={`${title} image preview`}>
+                  {image && (
+                    <Image
+                      source={{ uri: image.src }}
+                      accessibilityLabel={image.alt}
+                      width="100%"
+                      height="100%"
+                      objectFit="contain"
+                    />
+                  )}
+                </div>
                 <div className="table-kit-gallery-copy">
                   <div className="table-kit-gallery-title" title={title}>
                     {title}
