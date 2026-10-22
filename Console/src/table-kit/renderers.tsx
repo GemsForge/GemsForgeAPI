@@ -138,7 +138,9 @@ function displayValue(value: RecordPropertyValue): ReactNode {
 }
 
 function RecordImage<Record>({ image, size }: { image?: TableRecord<Record>["image"]; size: number }) {
-  if (!image?.src?.trim()) {
+  const [failed, setFailed] = useState(false);
+  useEffect(() => setFailed(false), [image?.src]);
+  if (!image?.src?.trim() || failed) {
     return (
       <span className="table-kit-record-image-fallback schema-table-icon" aria-hidden="true">
         ▦
@@ -152,6 +154,7 @@ function RecordImage<Record>({ image, size }: { image?: TableRecord<Record>["ima
       width={size}
       height={size}
       objectFit={image.fit ?? "cover"}
+      onError={() => setFailed(true)}
     />
   );
 }
@@ -379,16 +382,7 @@ export function RecordGallery<Record>({
                 onPointerCancel={handlePointerEnd}
               >
                 <div className="table-kit-gallery-image" aria-label={`${title} image preview`}>
-                  {image && (
-                    <Image
-                      source={{ uri: image.src }}
-                      accessibilityLabel={image.alt}
-                      width="100%"
-                      height="100%"
-                      objectFit="contain"
-                    />
-                  )}
-                  {!image && <span className="table-kit-record-image-fallback schema-table-icon">▦</span>}
+                  <RecordImage image={image} size={100} />
                 </div>
                 <div className="table-kit-gallery-copy">
                   <div className="table-kit-gallery-title" title={title}>
