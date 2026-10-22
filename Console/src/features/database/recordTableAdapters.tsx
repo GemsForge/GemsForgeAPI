@@ -95,9 +95,20 @@ export const transactionTableAdapter: RecordAdapter<ExpenseTransaction> = {
   getPropertyDefinitions: () =>
     [
       { id: "item", label: "Item", kind: "text", primary: true, getValue: (record) => display(record.item) },
+      { id: "receiptID", label: "Receipt ID", kind: "text", getValue: (record) => display(record.receiptID) },
+      { id: "firstReceiptItem", label: "First receipt item", kind: "select", getValue: (record) => display(record.firstReceiptItem) },
       { id: "category", label: "Category", kind: "number", getValue: (record) => display(record.categoryID) },
+      { id: "subcategory", label: "Subcategory", kind: "number", getValue: (record) => display(record.subcategoryID) },
+      { id: "merchantCode", label: "Merchant code", kind: "text", getValue: (record) => display(record.merchantCode) },
       { id: "id", label: "Item ID", kind: "text", getValue: (record) => display(record.id) },
       { id: "date", label: "Date", kind: "date", getValue: (record) => display(record.transactionDate) },
+      { id: "quantity", label: "Quantity", kind: "number", getValue: (record) => display(record.quantity) },
+      { id: "regularPrice", label: "Regular price", kind: "number", getValue: (record) => display(formatAmount(record.regularPrice)) },
+      { id: "paidPrice", label: "Paid price", kind: "number", getValue: (record) => display(formatAmount(record.paidPrice)) },
+      { id: "total", label: "Total", kind: "number", getValue: (record) => display(formatAmount(record.total)) },
+      { id: "discount", label: "Discount", kind: "number", getValue: (record) => display(formatAmount(record.discount)) },
+      { id: "notes", label: "Notes", kind: "text", getValue: (record) => display(record.notes) },
+      { id: "updatedAt", label: "Last updated", kind: "date", getValue: (record) => display(record.updatedAt) },
     ] satisfies readonly RecordPropertyDefinition<ExpenseTransaction>[],
 };
 
