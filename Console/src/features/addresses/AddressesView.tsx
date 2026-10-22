@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   useAddressAttachmentMutation,
   useAddressPatchMutation,
@@ -6,9 +6,7 @@ import {
   useCreateAddressMutation,
 } from "../../data/recordQueries";
 import { useRecordUtilities } from "../../hooks/useRecordUtilities";
-import { AttachmentControl } from "../../components/AttachmentControl";
 import { DatabaseRecordCollection } from "../../components/DatabaseRecordCollection";
-import { EditableRecordFields } from "../../components/EditableRecordFields";
 import { QueryFeedback } from "../../components/QueryFeedback";
 import { createRecordCreationActions } from "../../components/RecordCreation";
 import { RecordPage } from "../../components/RecordPage";
@@ -17,6 +15,7 @@ import { AddressCreateForm } from "../create/RecordCreateForms";
 import { addressTableAdapter } from "../database/recordTableAdapters";
 import { AddressRecordCreation, AddressFilterOptions, AddressSortOptions } from "./AddressRecordCreation";
 import { getAddressDetailFields } from "./AddressDetailsFields";
+import { RecordDetail } from "../create/RecordEditForm";
 
 interface AddressesViewProps {
   records: Address[];
@@ -37,6 +36,7 @@ export function AddressesView({ records }: AddressesViewProps) {
   );
 
   const [selectedID, setSelectedID] = useState<string | null>(null);
+  const detailDialogRef = useRef<HTMLDialogElement>(null);
 
   const detail = useAddressQuery(selectedID);
   const attachment = useAddressAttachmentMutation();
@@ -44,6 +44,14 @@ export function AddressesView({ records }: AddressesViewProps) {
   const create = useCreateAddressMutation();
 
   const selectedAddress = detail.data;
+
+  useEffect(() => {
+    if (selectedAddress) {
+      detailDialogRef.current?.showModal();
+    } else if (detailDialogRef.current?.open) {
+      detailDialogRef.current.close();
+    }
+  }, [selectedAddress]);
 
   const handleImport = async (rows: Record<string, unknown>[]) => {
     for (const row of rows) {
@@ -99,66 +107,45 @@ export function AddressesView({ records }: AddressesViewProps) {
               />
             ),
           })}
-          detail={
-            selectedID ? (
-              <>
-                <QueryFeedback query={detail} />
-
-                {selectedAddress && (
-                  <AddressDetail
-                    key={selectedAddress.id}
-                    record={selectedAddress}
-                    onAttachment={async (metadata) => {
-                      await attachment.mutateAsync({
-                        id: selectedAddress.id,
-                        fileID: metadata?.id ?? null,
-                      });
-                    }}
-                    onPatch={async (values) => {
-                      await patch.mutateAsync({
-                        id: selectedAddress.id,
-                        patch: values,
-                      });
-                    }}
-                  />
-                )}
-              </>
-            ) : null
-          }
         />
       </div>
+      <dialog
+        ref={detailDialogRef}
+        aria-labelledby="address-detail-title"
+        onCancel={(event) => {
+          event.preventDefault();
+          setSelectedID(null);
+        }}
+      >
+        {selectedAddress && (
+          <>
+            <div className="dialog-heading">
+              <h2 id="address-detail-title">Address details</h2>
+              <button type="button" onClick={() => setSelectedID(null)} aria-label="Close address details">
+                ×
+              </button>
+            </div>
+            <QueryFeedback query={detail} />
+            <RecordDetail
+              key={selectedAddress.id}
+              recordType="Address"
+              title={selectedAddress.addressType}
+              recordId={selectedAddress.id}
+              status={selectedAddress.addressStatus}
+              fields={getAddressDetailFields(selectedAddress, async (values) => {
+                await patch.mutateAsync({ id: selectedAddress.id, patch: values });
+              })}
+              fileMetadataID={selectedAddress.imageFileMetadataID}
+              onAttachment={async (metadata) => {
+                await attachment.mutateAsync({
+                  id: selectedAddress.id,
+                  fileID: metadata?.id ?? null,
+                });
+              }}
+            />
+          </>
+        )}
+      </dialog>
     </RecordPage>
-  );
-}
-
-/** Render the address-specific detail panel while shared field metadata stays in its getter. */
-function AddressDetail({
-  record,
-  onAttachment,
-  onPatch,
-}: {
-  record: Address;
-  onAttachment: (metadata: import("../../types").FileMetadata | null) => Promise<void>;
-  onPatch: (values: Partial<Address>) => Promise<void>;
-}) {
-  return (
-    <article className="address-detail">
-      <div className="detail-heading">
-        <div>
-          <p className="eyebrow">Address record</p>
-          <h3>{record.addressType}</h3>
-          <p className="address-code">{record.id}</p>
-        </div>
-        <span className="status-pill">{record.addressStatus}</span>
-      </div>
-      <EditableRecordFields className="address-fields" fields={getAddressDetailFields(record, onPatch)} />
-      <AttachmentControl
-        fileMetadataID={record.imageFileMetadataID}
-        ownerType="Address"
-        ownerID={record.id}
-        label="Address image"
-        onAttach={onAttachment}
-      />
-    </article>
   );
 }
