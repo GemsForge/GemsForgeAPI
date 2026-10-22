@@ -184,7 +184,9 @@ export function RecordUtilities({
           </Menu>
         )}
         <span className="record-utility-summary" role="status">
-          {visibleCount ?? totalCount ?? 0} of {totalCount ?? visibleCount ?? 0} matching
+          {search.trim()
+            ? `${visibleCount ?? totalCount ?? 0} of ${totalCount ?? visibleCount ?? 0} matching`
+            : `${visibleCount ?? totalCount ?? 0} records`}
         </span>
         {searchOpen && (
           <label className="record-utilities-search-field">
@@ -294,7 +296,9 @@ export function RecordUtilities({
         </Button>
       )}
       <span className="record-utility-summary" role="status">
-        {visibleCount ?? totalCount ?? 0} of {totalCount ?? visibleCount ?? 0} matching
+        {search.trim()
+          ? `${visibleCount ?? totalCount ?? 0} of ${totalCount ?? visibleCount ?? 0} matching`
+          : `${visibleCount ?? totalCount ?? 0} records`}
       </span>
     </div>
   );

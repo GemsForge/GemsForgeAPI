@@ -89,6 +89,8 @@ export interface TableSelectionProps {
   label?: string;
   clearLabel?: string;
   allMatchingLabel?: string;
+  /** Show the cross-page matching action when a search scope is active. */
+  showAllMatching?: boolean;
 }
 
 /** A consumer-owned alternate create action exposed by the New Record menu. */

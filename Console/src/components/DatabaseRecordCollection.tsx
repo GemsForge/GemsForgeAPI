@@ -192,7 +192,7 @@ function DatabaseRecordTableShell<Record>({
           </Table.Toolbar>
         </div>
       </Table.Header>
-      <Table.Selection />
+      <Table.Selection showAllMatching={utilities.search.trim().length > 0} />
       <Table.Content>
         <DatabaseRecordRenderer
           properties={properties}

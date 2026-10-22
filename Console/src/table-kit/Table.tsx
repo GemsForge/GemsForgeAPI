@@ -219,12 +219,14 @@ function Selection({
   label = "Select all",
   clearLabel = "Clear selection",
   allMatchingLabel = "Select all matching",
+  showAllMatching = true,
 }: TableSelectionProps) {
   const { selection } = useTableContext();
   const checkboxRef = useRef<HTMLInputElement>(null);
   const currentPage = selection.getSummary("current-page");
   const allMatching = selection.getSummary("all-matching");
-  const hasAdditionalMatchingRecords = selection.allMatchingIds.length > selection.currentPageIds.length;
+  const hasAdditionalMatchingRecords =
+    showAllMatching && selection.allMatchingIds.length > selection.currentPageIds.length;
 
   useEffect(() => {
     if (checkboxRef.current) checkboxRef.current.indeterminate = currentPage.indeterminate;
