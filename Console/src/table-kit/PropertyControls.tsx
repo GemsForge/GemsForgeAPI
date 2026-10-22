@@ -28,6 +28,7 @@ export function TablePropertyControls({
 }: TablePropertyControlsProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [draggedPropertyId, setDraggedPropertyId] = useState<string | null>(null);
   const triggerRef = useRef<TamaguiElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   const dialogId = useId();
@@ -62,7 +63,7 @@ export function TablePropertyControls({
             aria-controls={dialogId}
             aria-haspopup="dialog"
             aria-expanded={open}
-            onClick={() => setOpen((current) => !current)}
+            onPress={() => setOpen((current) => !current)}
           >
             <span aria-hidden="true">⚙</span>
             <span className="sr-only">{label}</span>
@@ -99,7 +100,7 @@ export function TablePropertyControls({
               className="table-kit-property-dialog-close"
               type="button"
               aria-label={closeLabel}
-              onClick={() => setOpen(false)}
+              onPress={() => setOpen(false)}
             >
               ×
             </Button>
@@ -127,7 +128,7 @@ export function TablePropertyControls({
               borderWidth={1}
               borderRadius="$gemControl"
               type="button"
-              onClick={configuration.showAll}
+              onPress={configuration.showAll}
             >
               {showAllLabel}
             </Button>
@@ -139,7 +140,7 @@ export function TablePropertyControls({
               borderWidth={1}
               borderRadius="$gemControl"
               type="button"
-              onClick={configuration.hideAll}
+              onPress={configuration.hideAll}
             >
               {hideAllLabel}
             </Button>
@@ -151,7 +152,7 @@ export function TablePropertyControls({
               borderWidth={1}
               borderRadius="$gemControl"
               type="button"
-              onClick={configuration.reset}
+              onPress={configuration.reset}
             >
               {resetLabel}
             </Button>
@@ -164,7 +165,22 @@ export function TablePropertyControls({
               const index = configuration.configuration.order.indexOf(property.id);
               const visible = configuration.visibleIds.includes(property.id);
               return (
-                <li key={property.id}>
+                <li
+                  key={property.id}
+                  draggable
+                  onDragStart={(event) => {
+                    event.dataTransfer.effectAllowed = "move";
+                    event.dataTransfer.setData("text/plain", property.id);
+                    setDraggedPropertyId(property.id);
+                  }}
+                  onDragEnd={() => setDraggedPropertyId(null)}
+                  onDragOver={(event) => event.preventDefault()}
+                  onDrop={() => {
+                    if (draggedPropertyId) configuration.moveTo(draggedPropertyId, property.id);
+                    setDraggedPropertyId(null);
+                  }}
+                  className={draggedPropertyId === property.id ? "is-dragging" : undefined}
+                >
                   <label>
                     <Checkbox
                       size="$2"
@@ -185,7 +201,7 @@ export function TablePropertyControls({
                     borderRadius="$gemControl"
                     aria-label={`Move ${property.label} up`}
                     disabled={index <= 0}
-                    onClick={() => configuration.move(property.id, "up")}
+                    onPress={() => configuration.move(property.id, "up")}
                   >
                     Move up
                   </Button>
@@ -199,7 +215,7 @@ export function TablePropertyControls({
                     borderRadius="$gemControl"
                     aria-label={`Move ${property.label} down`}
                     disabled={index < 0 || index >= configuration.configuration.order.length - 1}
-                    onClick={() => configuration.move(property.id, "down")}
+                    onPress={() => configuration.move(property.id, "down")}
                   >
                     Move down
                   </Button>

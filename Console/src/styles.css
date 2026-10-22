@@ -1600,6 +1600,11 @@ dialog::backdrop {
   grid-template-columns: minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 0.35rem;
+  cursor: grab;
+}
+.table-kit-property-dialog > ul > li.is-dragging {
+  opacity: 0.55;
+  cursor: grabbing;
 }
 
 .table-kit-property-dialog > ul > li > label {

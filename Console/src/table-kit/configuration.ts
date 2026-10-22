@@ -53,6 +53,7 @@ export interface TablePropertyConfigurationState {
   ) => void;
   setVisibility: (propertyId: string, visible: boolean) => void;
   move: (propertyId: string, direction: "up" | "down") => void;
+  moveTo: (propertyId: string, targetPropertyId: string) => void;
   showAll: () => void;
   hideAll: () => void;
   reset: () => void;
@@ -212,6 +213,18 @@ export function useTablePropertyConfiguration({
     },
     [currentConfiguration.order, update],
   );
+  const moveTo = useCallback(
+    (propertyId: string, targetPropertyId: string) => {
+      const order = [...currentConfiguration.order];
+      const fromIndex = order.indexOf(propertyId);
+      const targetIndex = order.indexOf(targetPropertyId);
+      if (fromIndex < 0 || targetIndex < 0 || fromIndex === targetIndex) return;
+      order.splice(fromIndex, 1);
+      order.splice(order.indexOf(targetPropertyId), 0, propertyId);
+      update({ order });
+    },
+    [currentConfiguration.order, update],
+  );
   const showAll = useCallback(() => update({ hiddenIds: [] }), [update]);
   const hideAll = useCallback(
     () => update({ hiddenIds: [...currentConfiguration.order] }),
@@ -241,6 +254,7 @@ export function useTablePropertyConfiguration({
       setConfiguration,
       setVisibility,
       move,
+      moveTo,
       showAll,
       hideAll,
       reset,
