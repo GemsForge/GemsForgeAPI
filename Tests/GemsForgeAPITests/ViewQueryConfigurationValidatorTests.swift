@@ -108,6 +108,30 @@ final class ViewQueryConfigurationValidatorTests: XCTestCase {
         }
     }
 
+    /// Confirms operators and persisted value types are checked against live SQLite column kinds.
+    func testRejectsIncompatibleOperatorAndValueType() throws {
+        let validator = ViewQueryConfigurationValidator(schema: schema)
+        let textNumeric = [
+            ViewQueryConfiguration(id: "root", viewID: "view-1", nodeType: .group, booleanOperator: .and),
+            ViewQueryConfiguration(id: "condition", viewID: "view-1", parentQueryID: "root", nodeType: .condition, columnName: "Name", comparisonOperator: .greaterThan, valueType: .text, value: "A")
+        ]
+        XCTAssertThrowsError(try validator.validateAgainstSchema(textNumeric, schema: schema, viewID: "view-1", tableName: "Records")) { error in
+            guard case .incompatibleOperator = error as? ViewQueryConfigurationValidationError else {
+                return XCTFail("Expected an incompatible-operator error, got \(error)")
+            }
+        }
+
+        let numericText = [
+            ViewQueryConfiguration(id: "root", viewID: "view-1", nodeType: .group, booleanOperator: .and),
+            ViewQueryConfiguration(id: "condition", viewID: "view-1", parentQueryID: "root", nodeType: .condition, columnName: "Amount", comparisonOperator: .equals, valueType: .text, value: "20")
+        ]
+        XCTAssertThrowsError(try validator.validateAgainstSchema(numericText, schema: schema, viewID: "view-1", tableName: "Records")) { error in
+            guard case .incompatibleValueType = error as? ViewQueryConfigurationValidationError else {
+                return XCTFail("Expected an incompatible-value-type error, got \(error)")
+            }
+        }
+    }
+
     private var schema: LiveSchemaResponse {
         LiveSchemaResponse(
             databaseName: "test",

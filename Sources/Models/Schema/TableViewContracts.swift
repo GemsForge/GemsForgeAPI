@@ -93,6 +93,7 @@ enum ViewQueryValueCodecError: Error, CustomStringConvertible, Equatable {
     case invalidValue(ViewQueryValueType, String)
     case invalidDate(String)
     case invalidOperandCount(expected: ClosedRange<Int>, actual: Int)
+    case incompatibleOperandTypes
 
     var description: String {
         switch self {
@@ -101,6 +102,8 @@ enum ViewQueryValueCodecError: Error, CustomStringConvertible, Equatable {
         case .invalidDate(let value): return "The query date is not in the canonical ISO-8601 form: \(value)."
         case .invalidOperandCount(let expected, let actual):
             return "The query operator requires \(expected.lowerBound)\(expected.lowerBound == expected.upperBound ? "" : "-\(expected.upperBound)") operands; received \(actual)."
+        case .incompatibleOperandTypes:
+            return "All query operands for an operator must have the same value type."
         }
     }
 }
@@ -112,16 +115,20 @@ enum ViewQueryValueCodec {
         switch value {
         case .text(let value): return value
         case .integer(let value): return String(value)
-        case .decimal(let value): return canonicalDecimal(value)
+        case .decimal(let value):
+            guard let canonical = canonicalDecimal(value) else {
+                throw ViewQueryValueCodecError.invalidValue(.decimal, value)
+            }
+            return canonical
         case .boolean(let value): return value ? "true" : "false"
         case .date(let value):
             guard isCanonicalDate(value) else { throw ViewQueryValueCodecError.invalidDate(value) }
             return value
         case .dateTime(let value):
-            guard let date = ISO8601DateFormatter().date(from: value) else {
+            guard let date = parseCanonicalDateTime(value) else {
                 throw ViewQueryValueCodecError.invalidDate(value)
             }
-            return ISO8601DateFormatter().string(from: date)
+            return canonicalDateTimeFormatter().string(from: date)
         case .null: return nil
         }
     }
@@ -131,6 +138,9 @@ enum ViewQueryValueCodec {
             throw ViewQueryValueCodecError.invalidOperandCount(expected: op.operandCount, actual: values.count)
         }
         guard !values.isEmpty else { return nil }
+        guard Set(values.map(\.type)).count == 1 else {
+            throw ViewQueryValueCodecError.incompatibleOperandTypes
+        }
         let encoded: [Any] = try values.map { value in
             if let encodedValue = try encode(value) {
                 return encodedValue
@@ -142,17 +152,23 @@ enum ViewQueryValueCodec {
     }
 
     static func decode(_ value: String?, as type: ViewQueryValueType) throws -> ViewQueryValue {
+        if type == .null {
+            guard value == nil else { throw ViewQueryValueCodecError.invalidValue(type, value!) }
+            return .null
+        }
         guard let value else { throw ViewQueryValueCodecError.missingValue(type) }
         switch type {
         case .text: return .text(value)
         case .integer:
-            guard let result = Int64(value) else { throw ViewQueryValueCodecError.invalidValue(type, value) }
+            guard let result = Int64(value), String(result) == value else {
+                throw ViewQueryValueCodecError.invalidValue(type, value)
+            }
             return .integer(result)
         case .decimal:
             guard let result = canonicalDecimal(value) else { throw ViewQueryValueCodecError.invalidValue(type, value) }
             return .decimal(result)
         case .boolean:
-            guard let result = ["true": true, "false": false][value.lowercased()] else {
+            guard let result = ["true": true, "false": false][value] else {
                 throw ViewQueryValueCodecError.invalidValue(type, value)
             }
             return .boolean(result)
@@ -160,13 +176,28 @@ enum ViewQueryValueCodec {
             guard isCanonicalDate(value) else { throw ViewQueryValueCodecError.invalidDate(value) }
             return .date(value)
         case .dateTime:
-            guard let date = ISO8601DateFormatter().date(from: value) else {
+            guard let date = parseCanonicalDateTime(value) else {
                 throw ViewQueryValueCodecError.invalidDate(value)
             }
-            return .dateTime(ISO8601DateFormatter().string(from: date))
+            return .dateTime(canonicalDateTimeFormatter().string(from: date))
         case .null:
             throw ViewQueryValueCodecError.invalidValue(type, value)
         }
+    }
+
+    private static func canonicalDateTimeFormatter() -> ISO8601DateFormatter {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withDashSeparatorInDate, .withColonSeparatorInTime]
+        formatter.timeZone = TimeZone(secondsFromGMT: 0)
+        return formatter
+    }
+
+    private static func parseCanonicalDateTime(_ value: String) -> Date? {
+        let formatter = canonicalDateTimeFormatter()
+        guard value.hasSuffix("Z"), value == formatter.string(from: formatter.date(from: value) ?? Date.distantPast) else {
+            return nil
+        }
+        return formatter.date(from: value)
     }
 
     private static func canonicalDecimal(_ value: String) -> String? {
