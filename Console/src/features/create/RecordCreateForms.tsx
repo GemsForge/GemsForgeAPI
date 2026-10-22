@@ -187,6 +187,37 @@ const gemHueSchema = z.object({
   notes: optional,
 });
 
+/** Generate the server-facing HueID without exposing implementation metadata in the form. */
+function createGemHueID(): string {
+  return `HUE-${Date.now().toString(36).toUpperCase()}`;
+}
+
+const gemHueColorFamilyOptions = [
+  "Red",
+  "Orange",
+  "Yellow",
+  "Green",
+  "Blue",
+  "Purple",
+  "Pink",
+  "Brown",
+  "Gray",
+  "Black",
+  "White",
+].map((value) => ({ value, label: value }));
+const gemHueMoodOptions = ["Calm", "Warm", "Cool", "Energizing", "Grounding", "Romantic", "Playful", "Focused"].map(
+  (value) => ({ value, label: value }),
+);
+const gemHuePaletteOptions = [
+  "Monochromatic",
+  "Analogous",
+  "Complementary",
+  "Triadic",
+  "Neutral",
+  "Pastel",
+  "Earth tones",
+].map((value) => ({ value, label: value }));
+
 /** Keep service classifications consistent between create and edit workflows. */
 const serviceTypeOptions = [
   { value: "Subscription", label: "Subscription" },
@@ -726,12 +757,14 @@ export function GemHueCreateForm({
   onCreate: (payload: GemHueCreate) => Promise<void>;
   onCancel: () => void;
 }) {
+  const [generatedID] = useState(createGemHueID);
+
   return (
     <FormShell
       title="Create Gem Hue record"
       schema={gemHueSchema}
       defaultValues={{
-        id: "",
+        id: generatedID,
         colorName: "",
         colorFamily: "",
         hexCode: "",
@@ -758,13 +791,12 @@ export function GemHueCreateForm({
       {(form) => (
         <>
           <div className="create-form-grid">
-            <Text form={form} name="id" label="Hue ID" required width="medium" />
             <Text form={form} name="colorName" label="Color name" required width="medium" />
             <Text form={form} name="hexCode" label="Hex code" required width="short" />
             <Text form={form} name="createdDate" label="Created date" type="date" width="short" />
-            <Text form={form} name="colorFamily" label="Color family" width="short" />
-            <Text form={form} name="mood" label="Mood" width="short" />
-            <Text form={form} name="palette" label="Palette" width="short" />
+            <Select form={form} name="colorFamily" label="Color family" options={gemHueColorFamilyOptions} />
+            <Select form={form} name="mood" label="Mood" options={gemHueMoodOptions} />
+            <Select form={form} name="palette" label="Palette" options={gemHuePaletteOptions} />
           </div>
           <Text form={form} name="description" label="Description" multiline />
           <Text form={form} name="notes" label="Notes" multiline />
