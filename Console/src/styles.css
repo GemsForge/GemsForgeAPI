@@ -1597,7 +1597,7 @@ dialog::backdrop {
 
 .table-kit-property-dialog > ul > li {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1fr);
   align-items: center;
   gap: 0.35rem;
   cursor: grab;

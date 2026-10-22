@@ -162,7 +162,6 @@ export function TablePropertyControls({
           )}
           <ul aria-label="Properties">
             {filteredProperties.map((property) => {
-              const index = configuration.configuration.order.indexOf(property.id);
               const visible = configuration.visibleIds.includes(property.id);
               return (
                 <li
@@ -191,34 +190,6 @@ export function TablePropertyControls({
                     </Checkbox>
                     <span>{property.label}</span>
                   </label>
-                  <Button
-                    type="button"
-                    size="xs"
-                    color="$gemInk"
-                    backgroundColor="$gemPanel"
-                    borderColor="$gemPanelLight"
-                    borderWidth={1}
-                    borderRadius="$gemControl"
-                    aria-label={`Move ${property.label} up`}
-                    disabled={index <= 0}
-                    onPress={() => configuration.move(property.id, "up")}
-                  >
-                    Move up
-                  </Button>
-                  <Button
-                    type="button"
-                    size="xs"
-                    color="$gemInk"
-                    backgroundColor="$gemPanel"
-                    borderColor="$gemPanelLight"
-                    borderWidth={1}
-                    borderRadius="$gemControl"
-                    aria-label={`Move ${property.label} down`}
-                    disabled={index < 0 || index >= configuration.configuration.order.length - 1}
-                    onPress={() => configuration.move(property.id, "down")}
-                  >
-                    Move down
-                  </Button>
                 </li>
               );
             })}
