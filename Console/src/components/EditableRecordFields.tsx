@@ -3,7 +3,20 @@ import { Checkbox, Form } from "tamagui";
 import { useRecordEditor } from "../hooks/useRecordEditor";
 
 export type EditableValue = string | number | boolean | null | undefined;
-export type RecordInputType = "text" | "date" | "email" | "url" | "tel" | "number" | "boolean" | "select" | "longText";
+/** Semantic control types shared by create and edit field definitions. */
+export type RecordInputType =
+  | "text"
+  | "date"
+  | "email"
+  | "url"
+  | "tel"
+  | "number"
+  | "checkbox"
+  | "dropdown"
+  | "longText"
+  /** Transitional aliases retained while feature definitions migrate. */
+  | "boolean"
+  | "select";
 
 export interface EditableRecordField {
   label: string;
@@ -102,7 +115,7 @@ function EditableField({ field }: { field: EditableRecordField }) {
       <dd>
         {!field.onSave || !editor.editing ? (
           <>
-            {field.inputType === "boolean" ? (
+            {field.inputType === "boolean" || field.inputType === "checkbox" ? (
               <input
                 type="checkbox"
                 className="field-checkbox field-checkbox-display"
@@ -120,7 +133,7 @@ function EditableField({ field }: { field: EditableRecordField }) {
           <Form className="edit-form editable-field-form" onSubmit={() => void editor.save()}>
             {field.inputType === "longText" ? (
               <textarea {...common} rows={3} />
-            ) : field.inputType === "select" ? (
+            ) : field.inputType === "select" || field.inputType === "dropdown" ? (
               <select {...common}>
                 {field.nullable && <option value="">—</option>}
                 {(field.options ?? []).map((option) => (
@@ -129,7 +142,7 @@ function EditableField({ field }: { field: EditableRecordField }) {
                   </option>
                 ))}
               </select>
-            ) : field.inputType === "boolean" ? (
+            ) : field.inputType === "boolean" || field.inputType === "checkbox" ? (
               <Checkbox
                 id={id}
                 aria-labelledby={labelID}
@@ -143,11 +156,15 @@ function EditableField({ field }: { field: EditableRecordField }) {
             ) : (
               <input type={field.inputType ?? "text"} step={field.step} {...common} />
             )}
-            {field.nullable && field.inputType !== "boolean" && field.inputType !== "select" && (
-              <button type="button" className="text-button" onClick={() => editor.setDraft("")}>
-                Clear value
-              </button>
-            )}
+            {field.nullable &&
+              field.inputType !== "boolean" &&
+              field.inputType !== "checkbox" &&
+              field.inputType !== "select" &&
+              field.inputType !== "dropdown" && (
+                <button type="button" className="text-button" onClick={() => editor.setDraft("")}>
+                  Clear value
+                </button>
+              )}
             {editor.error && <p role="alert">{editor.error}</p>}
             <div className="button-row">
               <button type="submit" disabled={editor.saving || !editor.dirty}>
@@ -165,7 +182,7 @@ function EditableField({ field }: { field: EditableRecordField }) {
 }
 
 function parseValue(value: string, field: EditableRecordField): EditableValue {
-  if (field.inputType === "boolean") return value === "true";
+  if (field.inputType === "boolean" || field.inputType === "checkbox") return value === "true";
   if (value === "" && field.nullable) return null;
   if (field.inputType === "number") return Number(value);
   return value;

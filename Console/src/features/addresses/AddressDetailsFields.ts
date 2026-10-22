@@ -15,7 +15,7 @@ export function getAddressDetailFields(
       label: "Address type",
       value: record.addressType,
       required: true,
-      inputType: "select",
+      inputType: "dropdown",
       options: [
         { label: "Residence", value: "Residence" },
         { label: "Storage", value: "Storage" },
@@ -83,7 +83,7 @@ export function getAddressDetailFields(
       label: "Address status",
       value: record.addressStatus,
       required: true,
-      inputType: "select",
+      inputType: "dropdown",
       className: "record-field-compact",
       options: [
         { label: "Current", value: "Current" },
