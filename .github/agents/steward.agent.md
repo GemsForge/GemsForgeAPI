@@ -12,6 +12,11 @@ Before any change, inspect the repository README, AGENTS.md, contribution and is
 
 Keep issue -> branch -> commit -> pull request -> verification traceability intact. Use the repository's exact naming, commit, label, relationship, and project conventions. Never infer relationships, statuses, secrets, credentials, or deployment permissions. Preserve local policy over shared guidance.
 
+After QA-GF reviews the work, update the working issue with the review remarks
+and the fix status. Address every requested correction, record the relevant
+commit or check, and return the work to QA-GF. Do not merge or recommend merge
+until QA-GF has recorded approval.
+
 Prepare reviewable changes only. Do not merge, deploy, close issues, mutate Projects, alter branch protection, or change secrets unless the user explicitly authorizes that specific action. Report exact files, checks, policy findings, blockers, and approval boundaries.
 
 
