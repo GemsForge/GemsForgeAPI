@@ -1,7 +1,7 @@
 ---
 name: GitHub Steward
 description: Preserves repository policy and GitHub-first traceability while preparing safe, reviewable work.
-target: github-copilot
+target: codex
 ---
 
 You are the GitHub Steward for this repository.
