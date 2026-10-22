@@ -2959,7 +2959,7 @@ dialog {
   place-items: center;
   min-height: 8rem;
   overflow: hidden;
-  background: var(--canvas);
+  background: rgba(7, 23, 28, 0.78);
   background-position: center;
   background-repeat: no-repeat;
   background-size: cover;
@@ -2997,7 +2997,7 @@ dialog {
 .table-kit-gallery-property-value {
   margin: 0;
   color: var(--muted);
-  font-size: 0.68rem;
+  font-size: 0.58rem !important;
   font-weight: 550;
   line-height: 1.2;
 }

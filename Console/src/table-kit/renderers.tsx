@@ -15,7 +15,7 @@ import {
   type ColDef,
   type ICellRendererParams,
 } from "ag-grid-community";
-import { Image, Paragraph, SizableText, XStack, YStack } from "tamagui";
+import { Card, Image, SizableText, XStack, YStack } from "tamagui";
 import { TableContext } from "./context";
 import {
   orderRecordProperties,
@@ -134,9 +134,9 @@ function RecordImage<Record>({ image, size }: { image?: TableRecord<Record>["ima
 
 function PropertyValue({ value }: { value: RecordPropertyValue }) {
   return (
-    <Paragraph className="table-kit-gallery-property-value" color="$gemMuted">
+    <SizableText className="table-kit-gallery-property-value" size="$1" color="$gemMuted">
       {displayValue(value)}
-    </Paragraph>
+    </SizableText>
   );
 }
 
@@ -315,12 +315,24 @@ export function RecordGallery<Record>({
           const title = String(record.title ?? record.id);
           const image = getImage(record);
           return (
-            <div
+            <Card
               key={record.id}
               className={`table-kit-gallery-card${selected ? " is-selected" : ""}${expanded ? " is-expanded" : ""}`}
               role="listitem"
               data-gallery-record-id={record.id}
             >
+              {image && (
+                <Card.Background>
+                  <Image
+                    source={{ uri: image.src }}
+                    accessibilityLabel={image.alt}
+                    width="100%"
+                    height="100%"
+                    objectFit="cover"
+                    opacity={0.72}
+                  />
+                </Card.Background>
+              )}
               <div
                 className="table-kit-gallery-card-surface"
                 role={selection.onRecordSelect || onExpansionChange ? "button" : undefined}
@@ -349,11 +361,7 @@ export function RecordGallery<Record>({
                 onPointerUp={handlePointerEnd}
                 onPointerCancel={handlePointerEnd}
               >
-                <div
-                  className="table-kit-gallery-image"
-                  aria-label={`${title} image preview`}
-                  style={image ? { backgroundImage: `url(${JSON.stringify(image.src)})` } : undefined}
-                ></div>
+                <div className="table-kit-gallery-image" aria-label={`${title} image preview`} />
                 <div className="table-kit-gallery-copy">
                   <div className="table-kit-gallery-title" title={title}>
                     {title}
@@ -383,7 +391,7 @@ export function RecordGallery<Record>({
                 </div>
               </div>
               {expanded && renderExpanded?.(record.source)}
-            </div>
+            </Card>
           );
         })}
       </XStack>
