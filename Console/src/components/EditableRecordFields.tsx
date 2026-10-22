@@ -1,5 +1,5 @@
 import { useId, type ReactNode } from "react";
-import { Checkbox, Form } from "tamagui";
+import { Checkbox, Form, Input, TextArea } from "tamagui";
 import { useRecordEditor } from "../hooks/useRecordEditor";
 
 export type EditableValue = string | number | boolean | null | undefined;
@@ -136,7 +136,7 @@ function EditableField({ field }: { field: EditableRecordField }) {
         ) : (
           <Form className="edit-form editable-field-form" onSubmit={() => void editor.save()}>
             {field.inputType === "longText" ? (
-              <textarea {...common} rows={3} />
+              <TextArea {...common} rows={3} />
             ) : field.inputType === "select" || field.inputType === "dropdown" ? (
               <select {...common}>
                 {field.nullable && <option value="">—</option>}
@@ -158,7 +158,7 @@ function EditableField({ field }: { field: EditableRecordField }) {
                 <Checkbox.Indicator />
               </Checkbox>
             ) : (
-              <input type={field.inputType ?? "text"} step={field.step} placeholder={field.placeholder} {...common} />
+              <Input type={field.inputType ?? "text"} step={field.step} placeholder={field.placeholder} {...common} />
             )}
             {field.nullable &&
               field.inputType !== "boolean" &&
