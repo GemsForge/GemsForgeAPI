@@ -130,4 +130,64 @@ final class TableViewContractTests: XCTestCase {
             XCTAssertEqual(viewCount, 0)
         }
     }
+
+    /// Verifies that explicit metadata deletion stays inside the selected View
+    /// or Hub and never deletes canonical records or another Hub's metadata.
+    func testMetadataDeletionPreservesCanonicalRecordsAndCrossHubIsolation() async throws {
+        try await withApp(configure: { app in
+            app.databases.use(.sqlite(.memory), as: .sqlite)
+            app.migrations.add(CreateAuthenticationSchema())
+            app.migrations.add(CreateHubs())
+            app.migrations.add(CreateTableViews())
+            app.migrations.add(CreateViewColumnConfigurations())
+            app.migrations.add(CreateViewQueryConfigurations())
+            try await app.autoMigrate()
+        }) { app in
+            let database = app.db(.sqlite)
+            let sql = try XCTUnwrap(database as? SQLDatabase)
+            try await sql.raw(SQLQueryString(stringLiteral: "INSERT INTO AppleAccounts (AccountID, AppleSubject) VALUES ('account-1', 'subject-1'), ('account-2', 'subject-2')")).run()
+            try await sql.raw(SQLQueryString(stringLiteral: "INSERT INTO Hubs (HubID, AccountID, Name) VALUES ('hub-1', 'account-1', 'First'), ('hub-2', 'account-2', 'Second')")).run()
+            try await sql.raw(SQLQueryString(stringLiteral: "CREATE TABLE Services (ServiceID TEXT PRIMARY KEY, Name TEXT)")).run()
+            try await sql.raw(SQLQueryString(stringLiteral: "CREATE TABLE Transactions (TransactionID TEXT PRIMARY KEY, Amount INTEGER)")).run()
+            try await sql.raw(SQLQueryString(stringLiteral: "INSERT INTO Services VALUES ('service-1', 'Keep me')")).run()
+            try await sql.raw(SQLQueryString(stringLiteral: "INSERT INTO Transactions VALUES ('transaction-1', 42)")).run()
+
+            let firstView = TableView(id: "view-1", hubID: "hub-1", tableName: "Services", name: "First", viewType: .table)
+            let secondView = TableView(id: "view-2", hubID: "hub-1", tableName: "Transactions", name: "Second", viewType: .list)
+            let otherHubView = TableView(id: "view-3", hubID: "hub-2", tableName: "Services", name: "Other Hub", viewType: .gallery)
+            try await firstView.create(on: database)
+            try await secondView.create(on: database)
+            try await otherHubView.create(on: database)
+
+            try await ViewColumnConfiguration(viewID: "view-1", columnName: "Name").create(on: database)
+            try await ViewQueryConfiguration(viewID: "view-1", nodeType: .group, booleanOperator: .and).create(on: database)
+            try await ViewColumnConfiguration(viewID: "view-2", columnName: "Amount").create(on: database)
+            try await ViewQueryConfiguration(viewID: "view-2", nodeType: .group, booleanOperator: .and).create(on: database)
+            try await ViewColumnConfiguration(viewID: "view-3", columnName: "Name").create(on: database)
+            try await ViewQueryConfiguration(viewID: "view-3", nodeType: .group, booleanOperator: .and).create(on: database)
+
+            // View deletion is narrower than Hub deletion.
+            try await sql.raw(SQLQueryString(stringLiteral: "DELETE FROM TableViews WHERE ViewID = 'view-1'")).run()
+            XCTAssertEqual(try await ViewColumnConfiguration.query(on: database).filter(\.$viewID == "view-1").count(), 0)
+            XCTAssertEqual(try await ViewQueryConfiguration.query(on: database).filter(\.$viewID == "view-1").count(), 0)
+            XCTAssertEqual(try await TableView.query(on: database).filter(\.$id == "view-2").count(), 1)
+            XCTAssertEqual(try await TableView.query(on: database).filter(\.$id == "view-3").count(), 1)
+
+            // Hub deletion affects only its metadata subtree.
+            try await sql.raw(SQLQueryString(stringLiteral: "DELETE FROM Hubs WHERE HubID = 'hub-1'")).run()
+            XCTAssertEqual(try await TableView.query(on: database).count(), 1)
+            XCTAssertEqual(try await TableView.query(on: database).filter(\.$id == "view-3").count(), 1)
+            XCTAssertEqual(try await ViewColumnConfiguration.query(on: database).count(), 1)
+            XCTAssertEqual(try await ViewQueryConfiguration.query(on: database).count(), 1)
+            XCTAssertEqual(try await sql.raw(SQLQueryString(stringLiteral: "SELECT COUNT(*) AS count FROM Services WHERE ServiceID = 'service-1'")).first(decoding: ScalarCount.self).count, 1)
+            XCTAssertEqual(try await sql.raw(SQLQueryString(stringLiteral: "SELECT COUNT(*) AS count FROM Transactions WHERE TransactionID = 'transaction-1'")).first(decoding: ScalarCount.self).count, 1)
+
+            let foreignKeyCheck = try await sql.raw(SQLQueryString(stringLiteral: "PRAGMA foreign_key_check")).all()
+            XCTAssertTrue(foreignKeyCheck.isEmpty)
+        }
+    }
+}
+
+private struct ScalarCount: Decodable {
+    let count: Int
 }

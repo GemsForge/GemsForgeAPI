@@ -33,6 +33,16 @@ The owning Hub cascades to its Table Views, and a View cascades to both child
 configuration tables. A partial unique index permits at most one default View
 for each `(HubID, TableName)` while allowing any number of non-default Views.
 
+## Metadata deletion policy
+
+Hub deletion is an explicit, authorized metadata operation. It may remove only
+the selected Hub's Table Views and those Views' column/query configurations.
+View deletion has the narrower boundary of removing only that View's
+configurations. Neither operation deletes or rewrites canonical records such as
+Services or Transactions, affects another Hub, or runs implicitly during an
+ordinary record operation. Foreign-key enforcement and a post-operation
+`PRAGMA foreign_key_check` are required verification for this boundary.
+
 ## Query tree grammar
 
 Each View has one non-empty filter root. A Group may contain Conditions or
