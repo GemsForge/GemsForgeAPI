@@ -35,6 +35,7 @@ import type {
 } from "../../types";
 import {
   addressStatusOptions,
+  addressFieldDefinitions,
   addressTypeOptions,
   isValidAddressDate,
   isValidAddressLocation,
@@ -426,22 +427,92 @@ export function AddressCreateForm({
           <>
             <GeoapifyAddressSearch onSelect={applyAddress} client={addressSearchClient} />
             <div className="create-form-grid">
-              <Select form={form} name="addressType" label="Address type" options={addressTypeOptions} required />
-              <Text form={form} name="addressLine1" label="Address line 1" width="long" />
-              <Text form={form} name="addressLine2" label="Address line 2" width="long" />
-              <Text form={form} name="country" label="Country" required width="medium" />
+              <Select
+                form={form}
+                name="addressType"
+                label={addressFieldDefinitions.addressType.label}
+                options={addressTypeOptions}
+                required
+              />
+              <Text
+                form={form}
+                name="addressLine1"
+                label={addressFieldDefinitions.addressLine1.label}
+                width={addressFieldDefinitions.addressLine1.width}
+                placeholder={addressFieldDefinitions.addressLine1.placeholder}
+              />
+              <Text
+                form={form}
+                name="addressLine2"
+                label={addressFieldDefinitions.addressLine2.label}
+                width={addressFieldDefinitions.addressLine2.width}
+                placeholder={addressFieldDefinitions.addressLine2.placeholder}
+              />
+              <Text
+                form={form}
+                name="country"
+                label={addressFieldDefinitions.country.label}
+                required
+                width={addressFieldDefinitions.country.width}
+                placeholder={addressFieldDefinitions.country.placeholder}
+              />
             </div>
             <div className="create-form-grid create-form-grid--address-location">
-              <Text form={form} name="city" label="City" width="short" />
-              <Text form={form} name="state" label="State / region" width="short" />
-              <Text form={form} name="postalCode" label="Postal code" width="short" />
+              <Text
+                form={form}
+                name="city"
+                label={addressFieldDefinitions.city.label}
+                width={addressFieldDefinitions.city.width}
+                placeholder={addressFieldDefinitions.city.placeholder}
+              />
+              <Text
+                form={form}
+                name="state"
+                label={addressFieldDefinitions.state.label}
+                width={addressFieldDefinitions.state.width}
+                placeholder={addressFieldDefinitions.state.placeholder}
+              />
+              <Text
+                form={form}
+                name="postalCode"
+                label={addressFieldDefinitions.postalCode.label}
+                width={addressFieldDefinitions.postalCode.width}
+                placeholder={addressFieldDefinitions.postalCode.placeholder}
+              />
             </div>
             <div className="create-form-grid create-form-grid--compact">
-              <Text form={form} name="startDate" label="Start date" type="date" width="short" />
-              <Text form={form} name="endDate" label="End date" type="date" width="short" />
-              <Select form={form} name="addressStatus" label="Status" options={addressStatusOptions} required />
+              <Text
+                form={form}
+                name="startDate"
+                label={addressFieldDefinitions.startDate.label}
+                type="date"
+                width={addressFieldDefinitions.startDate.width}
+                placeholder={addressFieldDefinitions.startDate.placeholder}
+              />
+              <Text
+                form={form}
+                name="endDate"
+                label={addressFieldDefinitions.endDate.label}
+                type="date"
+                width={addressFieldDefinitions.endDate.width}
+                placeholder={addressFieldDefinitions.endDate.placeholder}
+              />
+              <Select
+                form={form}
+                name="addressStatus"
+                label={addressFieldDefinitions.addressStatus.label}
+                options={addressStatusOptions}
+                required
+              />
             </div>
-            <Text form={form} name="notes" label="Notes" multiline width="long" />
+            <Text
+              form={form}
+              name="notes"
+              label={addressFieldDefinitions.notes.label}
+              multiline
+              width={addressFieldDefinitions.notes.width}
+              placeholder={addressFieldDefinitions.notes.placeholder}
+            />
           </>
         );
       }}

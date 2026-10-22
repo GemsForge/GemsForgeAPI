@@ -1,4 +1,22 @@
 /** Shared address field options and validation used by create and edit flows. */
+export type AddressFieldWidth = "short" | "medium" | "long";
+
+/** Presentation metadata shared by create and edit address controls. */
+export const addressFieldDefinitions = {
+  addressType: { label: "Address type", width: "medium" as AddressFieldWidth, placeholder: "Select…" },
+  addressLine1: { label: "Address line 1", width: "long" as AddressFieldWidth, placeholder: "Enter address line 1…" },
+  addressLine2: { label: "Address line 2", width: "long" as AddressFieldWidth, placeholder: "Enter address line 2…" },
+  country: { label: "Country", width: "medium" as AddressFieldWidth, placeholder: "Enter country…" },
+  city: { label: "City", width: "short" as AddressFieldWidth, placeholder: "Enter city…" },
+  state: { label: "State / region", width: "short" as AddressFieldWidth, placeholder: "Enter state / region…" },
+  postalCode: { label: "Postal code", width: "short" as AddressFieldWidth, placeholder: "Enter postal code…" },
+  startDate: { label: "Start date", width: "short" as AddressFieldWidth, placeholder: "YYYY-MM-DD" },
+  endDate: { label: "End date", width: "short" as AddressFieldWidth, placeholder: "YYYY-MM-DD" },
+  addressStatus: { label: "Status", width: "short" as AddressFieldWidth, placeholder: "Select…" },
+  notes: { label: "Notes", width: "long" as AddressFieldWidth, placeholder: "Enter notes…" },
+} as const;
+
+/** Dropdown values presented by address controls. */
 export const addressTypeOptions = ["Residence", "Storage", "Work", "School", "Other"].map((value) => ({
   value,
   label: value,

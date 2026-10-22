@@ -30,6 +30,7 @@ export interface EditableRecordField {
   displayValue?: ReactNode;
   readOnlyReason?: string;
   className?: string;
+  placeholder?: string;
 }
 
 export function formatRecordTimestamp(value?: string | null): string {
@@ -154,7 +155,7 @@ function EditableField({ field }: { field: EditableRecordField }) {
                 <Checkbox.Indicator />
               </Checkbox>
             ) : (
-              <input type={field.inputType ?? "text"} step={field.step} {...common} />
+              <input type={field.inputType ?? "text"} step={field.step} placeholder={field.placeholder} {...common} />
             )}
             {field.nullable &&
               field.inputType !== "boolean" &&
