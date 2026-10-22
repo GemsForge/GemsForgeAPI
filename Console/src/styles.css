@@ -398,6 +398,10 @@ h3 {
   gap: 1rem;
   margin-bottom: 2rem;
 }
+.live-schema-heading {
+  /* Separate read-only developer tools from the schema builder above. */
+  margin-top: 3rem;
+}
 .muted {
   max-width: 42rem;
   margin-bottom: 0;

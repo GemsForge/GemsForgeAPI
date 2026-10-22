@@ -24,7 +24,7 @@ export function LiveSchemaView({ onError }: LiveSchemaViewProps) {
 
   return (
     <>
-      <div className="content-heading">
+      <div className="content-heading live-schema-heading">
         <div>
           <p className="eyebrow">Developer tools · read only</p>
           <h2>Live Schema</h2>
