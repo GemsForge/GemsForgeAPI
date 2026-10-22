@@ -4,12 +4,12 @@ import { useAddressQuery, useAddressAttachmentMutation, useAddressPatchMutation 
 import { QueryFeedback } from "../../components/QueryFeedback";
 import type { Address } from "../../types";
 import { AttachmentControl } from "../../components/AttachmentControl";
-import { GemEmptyState } from "../../components/ui";
 import { EditableRecordFields, formatRecordDate, formatRecordTimestamp } from "../../components/EditableRecordFields";
 import { useCreateAddressMutation } from "../../data/recordQueries";
 import { AddressCreateForm } from "../create/RecordCreateForms";
 import { RecordImport } from "../../components/RecordImport";
 import { DatabaseRecordCollection } from "../../components/DatabaseRecordCollection";
+import { RecordPage } from "../../components/RecordPage";
 import { addressTableAdapter } from "../database/recordTableAdapters";
 
 interface AddressesViewProps {
@@ -34,158 +34,130 @@ export function AddressesView({ records }: AddressesViewProps) {
   const attachment = useAddressAttachmentMutation();
   const patch = useAddressPatchMutation();
   const selectedAddress = detail.data;
-  const [creating, setCreating] = useState(false);
-  const [importing, setImporting] = useState(false);
   const create = useCreateAddressMutation();
+  const handleImport = async (rows: Record<string, unknown>[]) => {
+    for (const row of rows) await create.mutateAsync(row as Parameters<typeof create.mutateAsync>[0]);
+  };
 
   return (
-    <>
-      <div className="content-heading">
-        <div>
-          <p className="eyebrow">Life-area records</p>
-          <h2>Addresses</h2>
-          <p className="muted">Read address records and inspect the locations referenced by other Life-area tables.</p>
-        </div>
-        <div className="button-row">
-          <span className="record-count">{records.length} records</span>
-          {records.length === 0 && (
-            <button type="button" onClick={() => setCreating(true)}>
-              Add address
-            </button>
-          )}
-        </div>
-        <RecordImport
-          label="addresses"
-          expectedColumns={["id", "addressType", "country"]}
-          open={importing}
-          onOpenChange={setImporting}
-          showTrigger={records.length === 0}
-          onPublish={async (rows) => {
-            for (const row of rows) await create.mutateAsync(row as Parameters<typeof create.mutateAsync>[0]);
-          }}
-        />
-      </div>
-      {creating && (
+    <RecordPage
+      title="Addresses"
+      description="Read address records and inspect the locations referenced by other Life-area tables."
+      recordCount={records.length}
+      recordLabel="address"
+      importLabel="addresses"
+      expectedColumns={["id", "addressType", "country"]}
+      onImport={handleImport}
+      emptyIcon="⌂"
+      emptyTitle="No address records"
+      emptyDescription="The Addresses table did not return any records."
+      renderCreateForm={(close) => (
         <AddressCreateForm
-          onCancel={() => setCreating(false)}
+          onCancel={close}
           onCreate={async (payload) => {
             const created = await create.mutateAsync(payload);
             setSelectedID(created.id);
-            setCreating(false);
+            close();
           }}
         />
       )}
-
-      {records.length === 0 ? (
-        <GemEmptyState
-          icon="⌂"
-          title="No address records"
-          description="The Addresses table did not return any records."
-        />
-      ) : (
-        <div className="address-layout">
-          <DatabaseRecordCollection
-            label="Addresses"
-            records={records}
-            utilities={utilities}
-            adapter={addressTableAdapter}
-            sortOptions={[
-              { value: "city", label: "City" },
-              { value: "type", label: "Address type" },
-              { value: "state", label: "State" },
-              { value: "country", label: "Country" },
-              { value: "status", label: "Status" },
-              { value: "id", label: "Record ID" },
-            ]}
-            filterOptions={Array.from(new Set(records.map((record) => record.addressStatus))).sort()}
-            detailId={selectedID}
-            onDetailChange={setSelectedID}
-            actions={{
-              newRecordUtility: {
-                options: [
-                  {
-                    id: "new-address",
-                    label: "Input Form",
-                    description: "Open the address form.",
-                    render: ({ close }) => (
-                      <AddressCreateForm
-                        onCancel={close}
-                        onCreate={async (payload) => {
-                          const created = await create.mutateAsync(payload);
-                          setSelectedID(created.id);
-                          close();
-                        }}
-                      />
-                    ),
-                  },
-                  {
-                    id: "import-address-file",
-                    label: "Import File",
-                    description: "Choose a CSV or JSON file.",
-                    render: ({ close }) => (
-                      <RecordImport
-                        label="addresses"
-                        expectedColumns={["id", "addressType", "country"]}
-                        mode="file"
-                        open
-                        onOpenChange={(open) => {
-                          if (!open) close();
-                        }}
-                        showTrigger={false}
-                        onPublish={async (rows) => {
-                          for (const row of rows)
-                            await create.mutateAsync(row as Parameters<typeof create.mutateAsync>[0]);
-                        }}
-                      />
-                    ),
-                  },
-                  {
-                    id: "paste-address-data",
-                    label: "Paste data",
-                    description: "Paste CSV or JSON records.",
-                    render: ({ close }) => (
-                      <RecordImport
-                        label="addresses"
-                        expectedColumns={["id", "addressType", "country"]}
-                        mode="paste"
-                        open
-                        onOpenChange={(open) => {
-                          if (!open) close();
-                        }}
-                        showTrigger={false}
-                        onPublish={async (rows) => {
-                          for (const row of rows)
-                            await create.mutateAsync(row as Parameters<typeof create.mutateAsync>[0]);
-                        }}
-                      />
-                    ),
-                  },
-                ],
-              },
-            }}
-            detail={
-              selectedID ? (
-                <>
-                  <QueryFeedback query={detail} />
-                  {selectedAddress && (
-                    <AddressDetail
-                      key={selectedAddress.id}
-                      record={selectedAddress}
-                      onAttachment={async (metadata) => {
-                        await attachment.mutateAsync({ id: selectedAddress.id, fileID: metadata?.id ?? null });
-                      }}
-                      onPatch={async (values) => {
-                        await patch.mutateAsync({ id: selectedAddress.id, patch: values });
+    >
+      <div className="address-layout">
+        <DatabaseRecordCollection
+          label="Addresses"
+          records={records}
+          utilities={utilities}
+          adapter={addressTableAdapter}
+          sortOptions={[
+            { value: "city", label: "City" },
+            { value: "type", label: "Address type" },
+            { value: "state", label: "State" },
+            { value: "country", label: "Country" },
+            { value: "status", label: "Status" },
+            { value: "id", label: "Record ID" },
+          ]}
+          filterOptions={Array.from(new Set(records.map((record) => record.addressStatus))).sort()}
+          detailId={selectedID}
+          onDetailChange={setSelectedID}
+          actions={{
+            newRecordUtility: {
+              options: [
+                {
+                  id: "new-address",
+                  label: "Input Form",
+                  description: "Open the address form.",
+                  render: ({ close }) => (
+                    <AddressCreateForm
+                      onCancel={close}
+                      onCreate={async (payload) => {
+                        const created = await create.mutateAsync(payload);
+                        setSelectedID(created.id);
+                        close();
                       }}
                     />
-                  )}
-                </>
-              ) : null
-            }
-          />
-        </div>
-      )}
-    </>
+                  ),
+                },
+                {
+                  id: "import-address-file",
+                  label: "Import File",
+                  description: "Choose a CSV or JSON file.",
+                  render: ({ close }) => (
+                    <RecordImport
+                      label="addresses"
+                      expectedColumns={["id", "addressType", "country"]}
+                      mode="file"
+                      open
+                      onOpenChange={(open) => {
+                        if (!open) close();
+                      }}
+                      showTrigger={false}
+                      onPublish={handleImport}
+                    />
+                  ),
+                },
+                {
+                  id: "paste-address-data",
+                  label: "Paste data",
+                  description: "Paste CSV or JSON records.",
+                  render: ({ close }) => (
+                    <RecordImport
+                      label="addresses"
+                      expectedColumns={["id", "addressType", "country"]}
+                      mode="paste"
+                      open
+                      onOpenChange={(open) => {
+                        if (!open) close();
+                      }}
+                      showTrigger={false}
+                      onPublish={handleImport}
+                    />
+                  ),
+                },
+              ],
+            },
+          }}
+          detail={
+            selectedID ? (
+              <>
+                <QueryFeedback query={detail} />
+                {selectedAddress && (
+                  <AddressDetail
+                    key={selectedAddress.id}
+                    record={selectedAddress}
+                    onAttachment={async (metadata) => {
+                      await attachment.mutateAsync({ id: selectedAddress.id, fileID: metadata?.id ?? null });
+                    }}
+                    onPatch={async (values) => {
+                      await patch.mutateAsync({ id: selectedAddress.id, patch: values });
+                    }}
+                  />
+                )}
+              </>
+            ) : null
+          }
+        />
+      </div>
+    </RecordPage>
   );
 }
 
