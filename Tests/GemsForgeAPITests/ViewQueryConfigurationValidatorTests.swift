@@ -263,7 +263,7 @@ final class ViewQueryConfigurationValidatorTests: XCTestCase {
         XCTAssertThrowsError(try validator.validateAgainstSchema(
             sqlFragmentAttempt, schema: schema, viewID: "view-1", tableName: "Records"
         )) { error in
-            guard case .schemaReference(.missingColumn(_, let column, _, _)) = error as? ViewQueryConfigurationValidationError else {
+            guard case .schemaReference(.invalidIdentifier(kind: "column", value: let column, _)) = error as? ViewQueryConfigurationValidationError else {
                 return XCTFail("Expected an exact-column rejection, got \(error)")
             }
             XCTAssertEqual(column, "Name); DROP TABLE Records;--")
