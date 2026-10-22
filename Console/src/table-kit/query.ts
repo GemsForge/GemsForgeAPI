@@ -52,7 +52,7 @@ export const defaultTableQueryState: TableQueryState = {
   filters: {},
   sort: [],
   pageIndex: 0,
-  pageSize: 25,
+  pageSize: 12,
 };
 
 /** Normalize query input without mutating caller-owned state. */

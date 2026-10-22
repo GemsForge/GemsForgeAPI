@@ -27,7 +27,8 @@ function Root<Row>({
   viewId: controlledViewId,
   onViewChange,
   pagination,
-  defaultPagination = { pageIndex: 0, pageSize: 25 },
+  // Keep the shared table default aligned with the database gallery pagination.
+  defaultPagination = { pageIndex: 0, pageSize: 12 },
   onPaginationChange,
   selection: selectionConfig,
 }: TableRootProps<Row>) {
