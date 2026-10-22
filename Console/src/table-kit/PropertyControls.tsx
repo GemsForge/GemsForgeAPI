@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState } from "react";
-import { Button, Tooltip, type TamaguiElement } from "tamagui";
+import { Button, Checkbox, Input, Tooltip, type TamaguiElement } from "tamagui";
 import { filterTableProperties, type TablePropertyConfigurationState, type TablePropertyOption } from "./configuration";
 
 /** Accessible property menu backed by the consumer-owned configuration state. */
@@ -103,8 +103,12 @@ export function TablePropertyControls({
           </Button>
           <label>
             {searchLabel}
-            <input
+            <Input
               type="search"
+              size="$3"
+              borderColor="$gemPanelLight"
+              backgroundColor="$gemCanvas"
+              color="$gemInk"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder={searchLabel}
@@ -158,11 +162,13 @@ export function TablePropertyControls({
               return (
                 <li key={property.id}>
                   <label>
-                    <input
-                      type="checkbox"
+                    <Checkbox
+                      size="$2"
                       checked={visible}
-                      onChange={(event) => configuration.setVisibility(property.id, event.target.checked)}
-                    />
+                      onCheckedChange={(checked) => configuration.setVisibility(property.id, checked === true)}
+                    >
+                      <Checkbox.Indicator />
+                    </Checkbox>
                     <span>{property.label}</span>
                   </label>
                   <Button
