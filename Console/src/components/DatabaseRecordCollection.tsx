@@ -249,9 +249,10 @@ function DatabaseRecordRenderer<Record>({
   useEffect(() => {
     const dialog = detailDialogRef.current;
     if (!dialog) return;
-    if (detail && !dialog.open) dialog.showModal();
-    if (!detail && dialog.open) dialog.close();
-  }, [detail]);
+    // The detail node may intentionally contain an idle placeholder; only a selected ID opens the modal.
+    if (detailId !== null && !dialog.open) dialog.showModal();
+    if (detailId === null && dialog.open) dialog.close();
+  }, [detailId]);
 
   return (
     <>
