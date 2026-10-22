@@ -131,6 +131,7 @@ export function SchemaBuilderView({ onError, onSuccess }: SchemaBuilderViewProps
               <div className="builder-column" key={index}>
                 <div>
                   <Input
+                    className="schema-builder-control"
                     aria-label="Column property"
                     value={column.name}
                     onChange={(event) => updateColumn(index, { name: event.currentTarget.value })}
@@ -144,7 +145,7 @@ export function SchemaBuilderView({ onError, onSuccess }: SchemaBuilderViewProps
                     value={column.dataType}
                     onValueChange={(value) => updateColumn(index, { dataType: value as (typeof types)[number] })}
                   >
-                    <Select.Trigger aria-label="SQLite type" {...schemaControlStyle}>
+                    <Select.Trigger className="schema-builder-control" aria-label="SQLite type" {...schemaControlStyle}>
                       <Select.Value />
                     </Select.Trigger>
                     <Select.Content>
@@ -167,6 +168,7 @@ export function SchemaBuilderView({ onError, onSuccess }: SchemaBuilderViewProps
                 </div>
                 <div>
                   <Input
+                    className="schema-builder-control"
                     aria-label="Default value"
                     placeholder="Default"
                     value={column.defaultValue ?? ""}

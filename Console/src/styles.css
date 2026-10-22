@@ -2558,12 +2558,26 @@ dialog::backdrop {
 }
 .builder-column {
   display: grid;
-  grid-template-columns: 1.2fr 0.9fr auto auto 1fr auto;
+  /* Tamagui controls live inside four grid slots; keep each slot wide enough for its content. */
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1.2fr) auto;
   gap: 8px;
-  align-items: center;
+  align-items: start;
+}
+.builder-column > div {
+  min-width: 0;
+}
+.builder-column .schema-builder-control {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+.builder-column > button {
+  align-self: start;
 }
 .builder-column input,
-.builder-column select {
+.builder-column select,
+.builder-column textarea {
   min-width: 0;
 }
 .inline-check {
@@ -2638,7 +2652,8 @@ textarea {
 }
 .database-field textarea,
 .builder-column input,
-.builder-column select {
+.builder-column select,
+.builder-column textarea {
   width: 100%;
 }
 img {
