@@ -245,11 +245,15 @@ export function RecordGallery<Record>({
     (record.image?.src?.trim() ? record.image : undefined) ??
     visibleProperties.map((property) => propertyValue(property, record).image).find((image) => Boolean(image?.src));
 
-  /** Keep the card surface keyboard-equivalent to a mouse click without nesting buttons. */
+  /** Make keyboard activation mirror the card click for selection or expansion. */
   const handleCardKeyDown = (event: KeyboardEvent<HTMLDivElement>, record: TableRecord<Record>) => {
-    if (!onExpansionChange || (event.key !== "Enter" && event.key !== " ")) return;
+    if (event.key !== "Enter" && event.key !== " ") return;
     event.preventDefault();
-    onExpansionChange(expandedId === record.id ? undefined : record.id);
+    if (selection.onRecordSelect) {
+      if (selection.isSelectable(record.id)) selection.onRecordSelect(record.id);
+    } else {
+      onExpansionChange?.(expandedId === record.id ? undefined : record.id);
+    }
   };
 
   const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>, index: number) => {
@@ -316,15 +320,21 @@ export function RecordGallery<Record>({
             >
               <div
                 className="table-kit-gallery-card-surface"
-                role={onExpansionChange ? "button" : undefined}
-                tabIndex={onExpansionChange ? 0 : undefined}
-                aria-label={onExpansionChange ? `Open ${title}` : undefined}
+                role={selection.onRecordSelect || onExpansionChange ? "button" : undefined}
+                tabIndex={selection.onRecordSelect || onExpansionChange ? 0 : undefined}
+                aria-label={selection.onRecordSelect ? `${selected ? "Deselect" : "Select"} ${title}` : `Open ${title}`}
+                aria-pressed={selection.onRecordSelect ? selected : undefined}
+                aria-disabled={selection.onRecordSelect && !selection.isSelectable(record.id) ? true : undefined}
                 onClick={() => {
                   if (suppressClickRef.current) {
                     suppressClickRef.current = false;
                     return;
                   }
-                  onExpansionChange?.(expanded ? undefined : record.id);
+                  if (selection.onRecordSelect) {
+                    if (selection.isSelectable(record.id)) selection.onRecordSelect(record.id);
+                  } else {
+                    onExpansionChange?.(expanded ? undefined : record.id);
+                  }
                 }}
                 onKeyDown={(event) => handleCardKeyDown(event, record)}
                 onPointerDown={(event) => handlePointerDown(event, effectiveRecords.indexOf(record))}
@@ -363,7 +373,6 @@ export function RecordGallery<Record>({
                   </div>
                 </div>
               </div>
-              {selection.onRecordSelect && <SelectionButton record={record} selection={selection} compact />}
               {expanded && renderExpanded?.(record.source)}
             </div>
           );

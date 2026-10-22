@@ -135,8 +135,8 @@ describe("Table Kit record renderers", () => {
       </Table.Root>,
     );
 
-    const firstCard = screen.getByRole("button", { name: "Open Alpha" });
-    const secondCard = screen.getByRole("button", { name: "Open Beta" });
+    const firstCard = screen.getByRole("button", { name: "Select Alpha" });
+    const secondCard = screen.getByRole("button", { name: "Select Beta" });
     document.elementFromPoint = () => secondCard.closest("[data-gallery-record-id]") as HTMLElement;
     fireEvent.pointerDown(firstCard, { button: 0, pointerId: 1, clientX: 0, clientY: 0 });
     fireEvent.pointerMove(firstCard, { pointerId: 1, clientX: 20, clientY: 0 });
