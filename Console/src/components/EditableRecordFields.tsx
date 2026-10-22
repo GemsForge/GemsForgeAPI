@@ -31,6 +31,7 @@ export interface EditableRecordField {
   readOnlyReason?: string;
   className?: string;
   placeholder?: string;
+  validate?: (value: string) => string | null;
 }
 
 export function formatRecordTimestamp(value?: string | null): string {
@@ -76,6 +77,8 @@ function EditableField({ field }: { field: EditableRecordField }) {
     value === null ? "" : field.inputType === "date" ? normalizeDateInput(String(value)) : String(value);
   const editor = useRecordEditor(initialValue, async (draft) => {
     if (!field.onSave) return;
+    const validationError = field.validate?.(draft);
+    if (validationError) throw new Error(validationError);
     await field.onSave(parseValue(draft, field));
   });
   const id = `edit-${instanceID}-${field.label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;

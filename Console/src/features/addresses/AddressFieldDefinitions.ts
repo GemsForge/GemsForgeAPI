@@ -69,3 +69,9 @@ export const addressSchema = z
     if (values.startDate && values.endDate && values.endDate < values.startDate)
       context.addIssue({ code: "custom", path: ["endDate"], message: "End date must be on or after start date." });
   });
+
+/** Validate one editable address value with the same Zod field schema used on create. */
+export function validateAddressField(field: keyof typeof addressSchema.shape, value: string): string | null {
+  const result = addressSchema.shape[field].safeParse(value);
+  return result.success ? null : (result.error.issues[0]?.message ?? "Enter a valid value.");
+}
