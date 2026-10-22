@@ -251,17 +251,27 @@ final class TableViewContractTests: XCTestCase {
 
             // View deletion is narrower than Hub deletion.
             try await sql.raw(SQLQueryString(stringLiteral: "DELETE FROM TableViews WHERE ViewID = 'view-1'")).run()
-            XCTAssertEqual(try await ViewColumnConfiguration.query(on: database).filter(\.$viewID == "view-1").count(), 0)
-            XCTAssertEqual(try await ViewQueryConfiguration.query(on: database).filter(\.$viewID == "view-1").count(), 0)
-            XCTAssertEqual(try await TableView.query(on: database).filter(\.$id == "view-2").count(), 1)
-            XCTAssertEqual(try await TableView.query(on: database).filter(\.$id == "view-3").count(), 1)
+            // Await database reads before asserting so XCTest receives values,
+            // rather than async work inside assertion autoclosures.
+            let deletedViewColumnCount = try await ViewColumnConfiguration.query(on: database).filter(\.$viewID == "view-1").count()
+            let deletedViewQueryCount = try await ViewQueryConfiguration.query(on: database).filter(\.$viewID == "view-1").count()
+            let remainingViewTwoCount = try await TableView.query(on: database).filter(\.$id == "view-2").count()
+            let remainingViewThreeCount = try await TableView.query(on: database).filter(\.$id == "view-3").count()
+            XCTAssertEqual(deletedViewColumnCount, 0)
+            XCTAssertEqual(deletedViewQueryCount, 0)
+            XCTAssertEqual(remainingViewTwoCount, 1)
+            XCTAssertEqual(remainingViewThreeCount, 1)
 
             // Hub deletion affects only its metadata subtree.
             try await sql.raw(SQLQueryString(stringLiteral: "DELETE FROM Hubs WHERE HubID = 'hub-1'")).run()
-            XCTAssertEqual(try await TableView.query(on: database).count(), 1)
-            XCTAssertEqual(try await TableView.query(on: database).filter(\.$id == "view-3").count(), 1)
-            XCTAssertEqual(try await ViewColumnConfiguration.query(on: database).count(), 1)
-            XCTAssertEqual(try await ViewQueryConfiguration.query(on: database).count(), 1)
+            let remainingTableViewCount = try await TableView.query(on: database).count()
+            let remainingViewThreeAfterHubDeletionCount = try await TableView.query(on: database).filter(\.$id == "view-3").count()
+            let remainingViewColumnCount = try await ViewColumnConfiguration.query(on: database).count()
+            let remainingViewQueryCount = try await ViewQueryConfiguration.query(on: database).count()
+            XCTAssertEqual(remainingTableViewCount, 1)
+            XCTAssertEqual(remainingViewThreeAfterHubDeletionCount, 1)
+            XCTAssertEqual(remainingViewColumnCount, 1)
+            XCTAssertEqual(remainingViewQueryCount, 1)
             // `first` is optional because an empty result set is valid SQL; unwrap
             // it before checking the count so the test fails clearly if the row is absent.
             let serviceCount = try await sql.raw(SQLQueryString(stringLiteral: "SELECT COUNT(*) AS count FROM Services WHERE ServiceID = 'service-1'")).first(decoding: ScalarCount.self)

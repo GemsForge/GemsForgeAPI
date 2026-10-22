@@ -524,7 +524,9 @@ private enum SQLiteLiveColumnKind: Sendable, Equatable {
         case .equals, .notEquals, .between, .in:
             return self != .blob
         case .greaterThan, .greaterThanOrEqual, .lessThan, .lessThanOrEqual:
-            return self != .blob && self != .boolean
+            // Ordering is meaningful only for numeric and temporal columns;
+            // categorical text values must not be compared as ordered data.
+            return self != .blob && self != .boolean && self != .text
         case .isNull, .isNotNull:
             return true
         }
