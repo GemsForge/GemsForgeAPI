@@ -164,7 +164,7 @@ export function TransactionsView({ records }: TransactionsViewProps) {
                       <RecordImport
                         label="transactions"
                         expectedColumns={["id", "item", "categoryID", "quantity"]}
-                        mode="paste"
+                        mode="clipboard"
                         open
                         onOpenChange={(open) => {
                           if (!open) close();

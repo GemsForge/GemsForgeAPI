@@ -247,7 +247,7 @@ export function ServiceAccountsView({ records }: { records: ServiceAccount[] }) 
                           "AssociatedAddress",
                           "ServiceKey",
                         ]}
-                        mode="paste"
+                        mode="clipboard"
                         open
                         onOpenChange={(open) => {
                           if (!open) close();

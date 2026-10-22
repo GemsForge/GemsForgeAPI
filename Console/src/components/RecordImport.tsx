@@ -59,8 +59,8 @@ export function RecordImport({
   onOpenChange?: (open: boolean) => void;
   /** Hide the legacy inline trigger when the compact header owns the action. */
   showTrigger?: boolean;
-  /** Limit the workflow to file selection, pasted data, or retain both inputs. */
-  mode?: "both" | "file" | "paste";
+  /** Limit the workflow to file selection, clipboard data, or retain both inputs. */
+  mode?: "both" | "file" | "clipboard";
 }) {
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
   const [text, setText] = useState("");
@@ -111,7 +111,7 @@ export function RecordImport({
             </button>
           </div>
           <p className="muted">Paste a CSV with a header row or a JSON array using the table column names.</p>
-          {mode !== "paste" && (
+          {mode !== "clipboard" && (
             <label>
               Choose CSV or JSON file
               <input

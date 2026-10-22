@@ -155,7 +155,7 @@ export function EducationView({ records }: EducationViewProps) {
                       <RecordImport
                         label="education records"
                         expectedColumns={["id", "educationType", "institutionName", "status"]}
-                        mode="paste"
+                        mode="clipboard"
                         open
                         onOpenChange={(open) => {
                           if (!open) close();

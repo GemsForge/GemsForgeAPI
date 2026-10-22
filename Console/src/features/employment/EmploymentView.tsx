@@ -201,7 +201,7 @@ export function EmploymentView({ records }: EmploymentViewProps) {
                           "employmentType",
                           "employmentStatus",
                         ]}
-                        mode="paste"
+                        mode="clipboard"
                         open
                         onOpenChange={(open) => {
                           if (!open) close();
