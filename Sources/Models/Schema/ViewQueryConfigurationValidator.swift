@@ -127,6 +127,9 @@ struct ViewQueryConfigurationValidator: Sendable {
         return try validateAgainstSchema(nodes, schema: schema, viewID: viewID, tableName: tableName, context: context)
     }
 
+    /// Validates the View's table and every persisted query column by exact
+    /// logical identifier. A stale reference fails validation before query-tree
+    /// translation; the persisted node is never rewritten or repaired.
     func validateAgainstSchema(
         _ nodes: [ViewQueryConfiguration],
         schema: LiveSchemaResponse,
