@@ -2960,6 +2960,9 @@ dialog {
   min-height: 8rem;
   overflow: hidden;
   background: var(--canvas);
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
 }
 .table-kit-gallery-image img {
   width: 100%;

@@ -349,9 +349,11 @@ export function RecordGallery<Record>({
                 onPointerUp={handlePointerEnd}
                 onPointerCancel={handlePointerEnd}
               >
-                <div className="table-kit-gallery-image" aria-label={`${title} image preview`}>
-                  <RecordImage image={image} size={180} />
-                </div>
+                <div
+                  className="table-kit-gallery-image"
+                  aria-label={`${title} image preview`}
+                  style={image ? { backgroundImage: `url(${JSON.stringify(image.src)})` } : undefined}
+                ></div>
                 <div className="table-kit-gallery-copy">
                   <div className="table-kit-gallery-title" title={title}>
                     {title}
