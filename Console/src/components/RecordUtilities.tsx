@@ -183,11 +183,11 @@ export function RecordUtilities({
             </Menu.Portal>
           </Menu>
         )}
-        <span className="record-utility-summary" role="status">
-          {search.trim()
-            ? `${visibleCount ?? totalCount ?? 0} of ${totalCount ?? visibleCount ?? 0} matching`
-            : `${visibleCount ?? totalCount ?? 0} records`}
-        </span>
+        {search.trim() ? (
+          <span className="record-utility-summary" role="status">
+            {`${visibleCount ?? totalCount ?? 0} of ${totalCount ?? visibleCount ?? 0} matching`}
+          </span>
+        ) : null}
         {searchOpen && (
           <label className="record-utilities-search-field">
             <span className="sr-only">Search {label.toLowerCase()}</span>
@@ -295,11 +295,12 @@ export function RecordUtilities({
           Clear filters
         </Button>
       )}
-      <span className="record-utility-summary" role="status">
-        {search.trim()
-          ? `${visibleCount ?? totalCount ?? 0} of ${totalCount ?? visibleCount ?? 0} matching`
-          : `${visibleCount ?? totalCount ?? 0} records`}
-      </span>
+      {/* Show a result summary only while searching; the heading badge owns the total count. */}
+      {search.trim() ? (
+        <span className="record-utility-summary" role="status">
+          {`${visibleCount ?? totalCount ?? 0} of ${totalCount ?? visibleCount ?? 0} matching`}
+        </span>
+      ) : null}
     </div>
   );
 }
