@@ -133,6 +133,8 @@ export const api = {
     request<GemHue>(`/gemhues/${encodeURIComponent(hueID)}`, { method: "PATCH", body: JSON.stringify(patch) }),
   getGemHueImage: (hueID: string, signal?: AbortSignal) =>
     checkedFetch(`/gemhues/${encodeURIComponent(hueID)}/image`, { signal }),
+  /** Return the authenticated image path used by shared record renderers. */
+  gemHueImageURL: (hueID: string) => `/gemhues/${encodeURIComponent(hueID)}/image`,
   listEducation: (signal?: AbortSignal) => request<Education[]>("/education", { signal }),
   createEducation: (payload: EducationCreate) =>
     request<Education>("/education", { method: "POST", body: JSON.stringify(payload) }),

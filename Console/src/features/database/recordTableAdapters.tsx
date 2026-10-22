@@ -100,6 +100,7 @@ export const gemHueTableAdapter: RecordAdapter<GemHue> = {
     source: record,
     title: record.colorName,
     subtitle: `${record.hexCode} · ${record.id}`,
+    image: { src: api.gemHueImageURL(record.id), alt: `${record.colorName} reference`, fit: "contain" },
     status: record.colorFamily ? { label: record.colorFamily } : undefined,
   }),
   getPropertyDefinitions: () =>
