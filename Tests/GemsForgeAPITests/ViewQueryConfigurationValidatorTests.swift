@@ -108,6 +108,64 @@ final class ViewQueryConfigurationValidatorTests: XCTestCase {
         }
     }
 
+    /// Confirms query validation reports stale table and column identifiers with View context.
+    func testQueryValidationReportsMissingReferencesWithViewContext() throws {
+        let validator = ViewQueryConfigurationValidator(schema: schema)
+        let nodes = [
+            ViewQueryConfiguration(id: "root", viewID: "view-1", nodeType: .group, booleanOperator: .and),
+            ViewQueryConfiguration(id: "condition", viewID: "view-1", parentQueryID: "root", nodeType: .condition, columnName: "RenamedAmount", comparisonOperator: .equals, valueType: .decimal, value: "20")
+        ]
+        let context = TableViewReferenceContext(viewID: "view-1", viewName: "Amounts")
+
+        XCTAssertThrowsError(try validator.validateAgainstSchema(
+            nodes, schema: schema, viewID: "view-1", tableName: "Records", context: context
+        )) { error in
+            guard case .schemaReference(.missingColumn(let table, let column, let referenceContext, let policy)) = error as? ViewQueryConfigurationValidationError else {
+                return XCTFail("Expected a stale query-column report, got \(error)")
+            }
+            XCTAssertEqual(table, "Records")
+            XCTAssertEqual(column, "RenamedAmount")
+            XCTAssertEqual(referenceContext?.viewID, "view-1")
+            XCTAssertEqual(referenceContext?.viewName, "Amounts")
+            XCTAssertEqual(policy, .preserveAndReport)
+        }
+
+        XCTAssertThrowsError(try validator.validateAgainstSchema(
+            nodes, schema: schema, viewID: "view-1", tableName: "RenamedRecords", context: context
+        )) { error in
+            guard case .schemaReference(.missingTable(let table, let referenceContext, let policy)) = error as? ViewQueryConfigurationValidationError else {
+                return XCTFail("Expected a stale query-table report, got \(error)")
+            }
+            XCTAssertEqual(table, "RenamedRecords")
+            XCTAssertEqual(referenceContext?.viewName, "Amounts")
+            XCTAssertEqual(policy, .preserveAndReport)
+        }
+    }
+
+    func testQueryValidationUsesExactColumnNamesAndPreservesRenamedIdentifiers() throws {
+        let validator = ViewQueryConfigurationValidator(schema: schema)
+        let renamedNode = ViewQueryConfiguration(
+            id: "condition", viewID: "view-1", nodeType: .condition,
+            columnName: "amount", comparisonOperator: .equals,
+            valueType: .decimal, value: "20"
+        )
+        let nodes = [
+            ViewQueryConfiguration(id: "root", viewID: "view-1", nodeType: .group, booleanOperator: .and),
+            renamedNode
+        ]
+
+        XCTAssertThrowsError(try validator.validateAgainstSchema(
+            nodes, schema: schema, viewID: "view-1", tableName: "Records"
+        )) { error in
+            guard case .schemaReference(.missingColumn(_, let column, _, let policy)) = error as? ViewQueryConfigurationValidationError else {
+                return XCTFail("Expected an exact stale query-column report, got \(error)")
+            }
+            XCTAssertEqual(column, "amount")
+            XCTAssertEqual(policy, .preserveAndReport)
+        }
+        XCTAssertEqual(renamedNode.columnName, "amount")
+    }
+
     /// Confirms operators and persisted value types are checked against live SQLite column kinds.
     func testRejectsIncompatibleOperatorAndValueType() throws {
         let validator = ViewQueryConfigurationValidator(schema: schema)
