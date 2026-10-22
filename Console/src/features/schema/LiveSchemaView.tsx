@@ -4,6 +4,7 @@ import { QueryFeedback } from "../../components/QueryFeedback";
 import { PaginationControls } from "../../components/PaginationControls";
 import { usePagedRecords } from "../../hooks/usePagedRecords";
 import type { LiveSchemaTable } from "../../types";
+import { HubOwnershipAssignment } from "./HubOwnershipAssignment";
 
 interface LiveSchemaViewProps {
   onError: (error: unknown) => void;
@@ -39,53 +40,56 @@ export function LiveSchemaView({ onError }: LiveSchemaViewProps) {
       {!schema ? (
         <QueryFeedback query={query} />
       ) : (
-        <div className="schema-layout">
-          <section className="schema-panel">
-            <div className="database-panel-heading">
-              <div>
-                <p className="eyebrow">Database</p>
-                <h3>{schema.databaseName}</h3>
+        <>
+          <HubOwnershipAssignment />
+          <div className="schema-layout">
+            <section className="schema-panel">
+              <div className="database-panel-heading">
+                <div>
+                  <p className="eyebrow">Database</p>
+                  <h3>{schema.databaseName}</h3>
+                </div>
+                <span className="life-mark database-icon">⌘</span>
               </div>
-              <span className="life-mark database-icon">⌘</span>
-            </div>
-            <div className="schema-table-list">
-              {paging.items.map((table) => (
-                <button
-                  className={`schema-table-button ${table.name === selectedTableName ? "selected" : ""}`}
-                  key={table.name}
-                  onClick={() => setSelectedTableName(table.name)}
-                >
-                  <span className="schema-table-icon">▦</span>
-                  <span>
-                    <strong>{table.name}</strong>
-                    <small>
-                      {table.columns.length} columns · {table.foreignKeys.length} foreign keys
-                    </small>
-                  </span>
-                  <span className="arrow">›</span>
-                </button>
-              ))}
-            </div>
-            <div className="schema-table-pagination">
-              <PaginationControls {...paging} label="database tables" />
-              <label className="table-kit-page-size">
-                Tables per page
-                <select
-                  aria-label="Tables per page"
-                  value={paging.pageSize}
-                  onChange={(event) => paging.setPageSize(Number(event.target.value))}
-                >
-                  {[8, 12, 24, 50].map((size) => (
-                    <option key={size} value={size}>
-                      {size}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
-          </section>
-          <SchemaTableDetail table={selectedTable} />
-        </div>
+              <div className="schema-table-list">
+                {paging.items.map((table) => (
+                  <button
+                    className={`schema-table-button ${table.name === selectedTableName ? "selected" : ""}`}
+                    key={table.name}
+                    onClick={() => setSelectedTableName(table.name)}
+                  >
+                    <span className="schema-table-icon">▦</span>
+                    <span>
+                      <strong>{table.name}</strong>
+                      <small>
+                        {table.columns.length} columns · {table.foreignKeys.length} foreign keys
+                      </small>
+                    </span>
+                    <span className="arrow">›</span>
+                  </button>
+                ))}
+              </div>
+              <div className="schema-table-pagination">
+                <PaginationControls {...paging} label="database tables" />
+                <label className="table-kit-page-size">
+                  Tables per page
+                  <select
+                    aria-label="Tables per page"
+                    value={paging.pageSize}
+                    onChange={(event) => paging.setPageSize(Number(event.target.value))}
+                  >
+                    {[8, 12, 24, 50].map((size) => (
+                      <option key={size} value={size}>
+                        {size}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+            </section>
+            <SchemaTableDetail table={selectedTable} />
+          </div>
+        </>
       )}
     </>
   );

@@ -57,9 +57,6 @@ export function GemHuesView({ hues }: GemHuesViewProps) {
   );
   const [importError, setImportError] = useFormState<string | null>(null);
   const [importing, setImporting] = useFormState(false);
-  const [ownership, setOwnership] = useFormState<{ counts: Record<string, number>; message?: string } | null>(null);
-  const [ownershipError, setOwnershipError] = useFormState<string | null>(null);
-  const [ownershipBusy, setOwnershipBusy] = useFormState(false);
 
   useEffect(() => {
     if (!image.data) {
@@ -99,63 +96,6 @@ export function GemHuesView({ hues }: GemHuesViewProps) {
           </button>
         </div>
       </div>
-      <section className="record-form">
-        <h3>Assign existing records to my hub</h3>
-        <p className="muted">
-          Use this only for legacy rows that already exist with no HubID. It does not create duplicates.
-        </p>
-        <GemButton
-          tone="secondary"
-          disabled={ownershipBusy}
-          onPress={async () => {
-            setOwnershipBusy(true);
-            setOwnershipError(null);
-            try {
-              const preview = await api.previewHubOwnership();
-              setOwnership({ counts: preview.unownedCounts });
-            } catch (error) {
-              setOwnershipError(error instanceof Error ? error.message : "Could not preview ownership assignment.");
-            } finally {
-              setOwnershipBusy(false);
-            }
-          }}
-        >
-          {ownershipBusy ? "Loading…" : "Preview ownership assignment"}
-        </GemButton>
-        {ownershipError && <p role="alert">{ownershipError}</p>}
-        {ownership && (
-          <>
-            <p>
-              {Object.entries(ownership.counts)
-                .filter(([, count]) => count > 0)
-                .map(([table, count]) => `${table}: ${count}`)
-                .join(" · ") || "No unowned records found."}
-            </p>
-            <GemButton
-              tone="secondary"
-              disabled={ownershipBusy || !Object.values(ownership.counts).some((count) => count > 0)}
-              onPress={async () => {
-                setOwnershipBusy(true);
-                setOwnershipError(null);
-                try {
-                  const result = await api.assignHubOwnership(ownership.counts);
-                  setOwnership({
-                    counts: {},
-                    message: `Assigned ${Object.values(result.assignedCounts).reduce((sum, count) => sum + count, 0)} records.`,
-                  });
-                } catch (error) {
-                  setOwnershipError(error instanceof Error ? error.message : "Could not assign ownership.");
-                } finally {
-                  setOwnershipBusy(false);
-                }
-              }}
-            >
-              Assign existing records
-            </GemButton>
-            {ownership.message && <p role="status">{ownership.message}</p>}
-          </>
-        )}
-      </section>
       <section className="record-form">
         <h3>Import Gem Hues</h3>
         <p className="muted">
