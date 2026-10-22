@@ -15,6 +15,7 @@ import { DatabaseRecordCollection } from "../../components/DatabaseRecordCollect
 import { gemHueTableAdapter } from "../database/recordTableAdapters";
 import { GemHueCreateForm } from "../create/RecordCreateForms";
 import { RecordImport } from "../../components/RecordImport";
+import { GemButton } from "../../components/ui";
 
 interface GemHuesViewProps {
   hues: GemHue[];
@@ -103,10 +104,10 @@ export function GemHuesView({ hues }: GemHuesViewProps) {
         <p className="muted">
           Use this only for legacy rows that already exist with no HubID. It does not create duplicates.
         </p>
-        <button
-          type="button"
+        <GemButton
+          tone="secondary"
           disabled={ownershipBusy}
-          onClick={async () => {
+          onPress={async () => {
             setOwnershipBusy(true);
             setOwnershipError(null);
             try {
@@ -120,7 +121,7 @@ export function GemHuesView({ hues }: GemHuesViewProps) {
           }}
         >
           {ownershipBusy ? "Loading…" : "Preview ownership assignment"}
-        </button>
+        </GemButton>
         {ownershipError && <p role="alert">{ownershipError}</p>}
         {ownership && (
           <>
@@ -130,10 +131,10 @@ export function GemHuesView({ hues }: GemHuesViewProps) {
                 .map(([table, count]) => `${table}: ${count}`)
                 .join(" · ") || "No unowned records found."}
             </p>
-            <button
-              type="button"
+            <GemButton
+              tone="secondary"
               disabled={ownershipBusy || !Object.values(ownership.counts).some((count) => count > 0)}
-              onClick={async () => {
+              onPress={async () => {
                 setOwnershipBusy(true);
                 setOwnershipError(null);
                 try {
@@ -150,7 +151,7 @@ export function GemHuesView({ hues }: GemHuesViewProps) {
               }}
             >
               Assign existing records
-            </button>
+            </GemButton>
             {ownership.message && <p role="status">{ownership.message}</p>}
           </>
         )}
