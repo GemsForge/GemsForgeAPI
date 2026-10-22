@@ -2894,6 +2894,19 @@ dialog {
 .table-kit-gallery > [role="list"] {
   min-width: 0;
 }
+/* Make the card-size choice control the number of columns as well as card proportions. */
+.table-kit-gallery.is-small > [role="list"] {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+}
+.table-kit-gallery.is-medium > [role="list"] {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+}
+.table-kit-gallery.is-large > [role="list"] {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr));
+}
 .table-kit-gallery-card {
   display: grid;
   min-width: 0;
