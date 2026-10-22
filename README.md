@@ -170,6 +170,10 @@ current Notes-import boundary.
 - [`docs/Table-Views.md`](docs/Table-Views.md) documents the Hub-scoped Table
   View metadata contracts, query grammar, schema-drift policy, and migration
   order.
+- [`docs/Table-View-Metadata-Architecture.md`](docs/Table-View-Metadata-Architecture.md)
+  is the canonical finalized architecture for the five logical contracts,
+  three normalized persistence tables, ownership boundary, responsibilities,
+  query tree, and migration decisions.
 - [`docs/Milestone-5-Implementation-Ledger.md`](docs/Milestone-5-Implementation-Ledger.md)
   records the M5 issue, test, and pull-request ledger.
 
