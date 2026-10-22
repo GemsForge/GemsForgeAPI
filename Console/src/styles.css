@@ -560,6 +560,24 @@ dialog {
   max-height: calc(100dvh - 3rem);
   margin: 1.5rem auto;
 }
+.record-detail-dialog .dialog-heading {
+  margin: 0;
+  padding: 0.9rem 1.2rem 0.65rem;
+}
+.record-detail-dialog .address-detail {
+  padding: 1rem 1.2rem;
+}
+.record-detail-dialog .record-fields {
+  gap: 0.45rem 0.8rem;
+}
+.record-detail-dialog .attachment-control {
+  gap: 0.5rem;
+  margin-top: 0.9rem;
+  padding-top: 0.8rem;
+}
+.record-detail-dialog .attachment-empty {
+  padding: 0.8rem;
+}
 dialog::backdrop {
   background: rgba(3, 11, 14, 0.72);
   backdrop-filter: blur(5px);
