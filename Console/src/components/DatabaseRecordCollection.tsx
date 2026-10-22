@@ -198,14 +198,29 @@ function DatabaseRecordTableShell<Record>({
           properties={properties}
           propertyIds={configuration.visibleIds}
           label={label}
-          paging={paging}
           detailId={detailId}
           onDetailChange={onDetailChange}
           detail={detail}
         />
       </Table.Content>
       <Table.Pagination>
-        <PaginationControls {...paging} label={label} />
+        <div className="table-kit-pagination-row">
+          <PaginationControls {...paging} label={label} />
+          <label className="table-kit-page-size">
+            Records per page
+            <select
+              aria-label="Records per page"
+              value={paging.pageSize}
+              onChange={(event) => paging.setPageSize(Number(event.target.value))}
+            >
+              {[8, 12, 24, 50].map((size) => (
+                <option key={size} value={size}>
+                  {size}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
       </Table.Pagination>
     </>
   );
@@ -215,7 +230,6 @@ function DatabaseRecordRenderer<Record>({
   properties,
   propertyIds,
   label,
-  paging,
   detailId,
   onDetailChange,
   detail,
@@ -223,7 +237,6 @@ function DatabaseRecordRenderer<Record>({
   properties: readonly RecordPropertyDefinition<Record>[];
   propertyIds: readonly string[];
   label: string;
-  paging: ReturnType<typeof usePagedRecords<Record>>;
   detailId: string | null;
   onDetailChange: (id: string | null) => void;
   detail?: ReactNode;
@@ -235,23 +248,7 @@ function DatabaseRecordRenderer<Record>({
     <>
       <div className="database-record-renderer" aria-label={`${label} view`}>
         {viewId === "gallery" ? (
-          <>
-            <label className="table-kit-gallery-page-size">
-              Records per page
-              <select
-                aria-label="Records per page"
-                value={paging.pageSize}
-                onChange={(event) => paging.setPageSize(Number(event.target.value))}
-              >
-                {[8, 12, 24, 50].map((size) => (
-                  <option key={size} value={size}>
-                    {size}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <RecordGallery properties={properties} propertyIds={propertyIds} onExpansionChange={onExpansionChange} />
-          </>
+          <RecordGallery properties={properties} propertyIds={propertyIds} onExpansionChange={onExpansionChange} />
         ) : viewId === "table" ? (
           <RecordTable properties={properties} propertyIds={propertyIds} onExpansionChange={onExpansionChange} />
         ) : (

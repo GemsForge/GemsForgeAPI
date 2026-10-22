@@ -2891,6 +2891,27 @@ dialog {
   background: var(--canvas);
   color: var(--ink);
 }
+.table-kit-pagination-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+.table-kit-page-size {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+.table-kit-page-size select {
+  min-height: 2.25rem;
+  border: 1px solid var(--line);
+  border-radius: 0.45rem;
+  background: var(--canvas);
+  color: var(--ink);
+}
 .table-kit-gallery > [role="list"] {
   min-width: 0;
 }
