@@ -1,8 +1,11 @@
 import type { ReactNode } from "react";
 import type { Address, Education, Employment, ExpenseTransaction, ServiceAccount } from "../../types";
 import type { RecordAdapter, RecordPropertyDefinition } from "../../table-kit";
+import { api } from "../../api";
 
 const display = (value: unknown) => ({ raw: value, display: value == null || value === "" ? "—" : String(value) });
+const recordImage = (fileMetadataID: string | null | undefined, alt: string) =>
+  fileMetadataID ? { src: api.fileContentURL(fileMetadataID), alt, fit: "cover" as const } : undefined;
 
 /** Shared adapter for address records; the detail surface remains feature-owned. */
 export const addressTableAdapter: RecordAdapter<Address> = {
@@ -12,6 +15,7 @@ export const addressTableAdapter: RecordAdapter<Address> = {
     title: record.city || record.addressType,
     subtitle: `${record.addressType} · ${record.id}`,
     status: { label: record.addressStatus },
+    image: recordImage(record.imageFileMetadataID, `${record.addressType} address`),
   }),
   getPropertyDefinitions: () =>
     [
@@ -78,6 +82,7 @@ export const transactionTableAdapter: RecordAdapter<ExpenseTransaction> = {
     title: record.item,
     subtitle: `${record.transactionDate || "Undated"} · ${record.id}`,
     status: { label: formatAmount(record.total ?? record.paidPrice) },
+    image: recordImage(record.image, `${record.item} receipt`),
   }),
   getPropertyDefinitions: () =>
     [
@@ -99,6 +104,7 @@ export function createServiceAccountTableAdapter(
       title: record.service,
       subtitle: `${record.type || "Service"} · ${record.id}`,
       status: record.status ? { label: record.status } : undefined,
+      image: recordImage(record.logoFileMetadataID, `${record.service} logo`),
     }),
     getPropertyDefinitions: () =>
       [
