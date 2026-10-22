@@ -1,4 +1,5 @@
-/** Shared address field options and validation used by create and edit flows. */
+import { z } from "zod";
+
 export type AddressFieldWidth = "short" | "medium" | "long";
 
 /** Presentation metadata shared by create and edit address controls. */
@@ -16,20 +17,18 @@ export const addressFieldDefinitions = {
   notes: { label: "Notes", width: "long" as AddressFieldWidth, placeholder: "Enter notes…" },
 } as const;
 
-/** Dropdown values presented by address controls. */
 export const addressTypeOptions = ["Residence", "Storage", "Work", "School", "Other"].map((value) => ({
   value,
   label: value,
 }));
-
-/** Address lifecycle values presented by both create and edit controls. */
 export const addressStatusOptions = ["Current", "Former", "Seasonal", "Other"].map((value) => ({
   value,
   label: value,
 }));
 
-/** Validate a browser date input without allowing JavaScript date normalization. */
-export function isValidAddressDate(value: string): boolean {
+const required = (label: string) => z.string().trim().min(1, `${label} is required.`);
+const optional = z.string();
+const addressDate = optional.refine((value) => {
   if (!value.trim()) return true;
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value.trim());
   if (!match) return false;
@@ -40,14 +39,33 @@ export function isValidAddressDate(value: string): boolean {
     date.getUTCMonth() + 1 === Number(match[2]) &&
     date.getUTCDate() === Number(match[3])
   );
-}
+}, "Enter a valid date.");
 
-/** Accept international city, state, and region names. */
-export function isValidAddressLocation(value: string): boolean {
-  return !value.trim() || /^[\p{L}\p{M}0-9 .,'’&()/-]+$/u.test(value.trim());
-}
-
-/** Accept common domestic and international postal-code characters. */
-export function isValidAddressPostalCode(value: string): boolean {
-  return !value.trim() || /^[\p{L}\p{N}][\p{L}\p{N} .-]*$/u.test(value.trim());
-}
+/** Shared Address create/edit validation schema. */
+export const addressSchema = z
+  .object({
+    addressType: required("Address type"),
+    addressLine1: optional,
+    addressLine2: optional,
+    city: optional.refine(
+      (value) => !value.trim() || /^[\p{L}\p{M}0-9 .,'’&()/-]+$/u.test(value.trim()),
+      "Enter a valid location.",
+    ),
+    state: optional.refine(
+      (value) => !value.trim() || /^[\p{L}\p{M}0-9 .,'’&()/-]+$/u.test(value.trim()),
+      "Enter a valid location.",
+    ),
+    postalCode: optional.refine(
+      (value) => !value.trim() || /^[\p{L}\p{N}][\p{L}\p{N} .-]*$/u.test(value.trim()),
+      "Enter a valid postal code.",
+    ),
+    country: required("Country"),
+    startDate: addressDate,
+    endDate: addressDate,
+    addressStatus: required("Status"),
+    notes: optional,
+  })
+  .superRefine((values, context) => {
+    if (values.startDate && values.endDate && values.endDate < values.startDate)
+      context.addIssue({ code: "custom", path: ["endDate"], message: "End date must be on or after start date." });
+  });

@@ -37,9 +37,7 @@ import {
   addressStatusOptions,
   addressFieldDefinitions,
   addressTypeOptions,
-  isValidAddressDate,
-  isValidAddressLocation,
-  isValidAddressPostalCode,
+  addressSchema,
 } from "../addresses/AddressFieldDefinitions";
 
 const required = (label: string) => z.string().trim().min(1, `${label} is required.`);
@@ -92,35 +90,6 @@ const optionalNumber = z
     (value) => value === "" || (/^\d+(\.\d+)?$/.test(value) && Number(value) >= 0),
     "Enter a non-negative number.",
   );
-/** Accept international city and region names while rejecting punctuation-only values. */
-const optionalAddressLocation = optional.refine(isValidAddressLocation, "Enter a valid location.");
-/** Accept common domestic and international postal-code characters. */
-const optionalPostalCode = optional.refine(isValidAddressPostalCode, "Enter a valid postal code.");
-const optionalAddressDate = optional.refine(isValidAddressDate, "Enter a valid date.");
-const addressSchema = z
-  .object({
-    addressType: required("Address type"),
-    addressLine1: optional,
-    addressLine2: optional,
-    city: optionalAddressLocation,
-    state: optionalAddressLocation,
-    postalCode: optionalPostalCode,
-    country: required("Country"),
-    startDate: optionalAddressDate,
-    endDate: optionalAddressDate,
-    addressStatus: required("Status"),
-    notes: optional,
-  })
-  .superRefine((values, context) => {
-    if (values.startDate && values.endDate && values.endDate < values.startDate) {
-      context.addIssue({
-        code: "custom",
-        path: ["endDate"],
-        message: "End date must be on or after start date.",
-      });
-    }
-  });
-
 const educationSchema = z.object({
   id: required("Education ID"),
   educationType: required("Education type"),
