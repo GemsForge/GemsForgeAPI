@@ -3056,6 +3056,10 @@ dialog {
   max-width: none;
   object-fit: contain;
 }
+.table-kit-record-image-fallback {
+  width: 100%;
+  height: 100%;
+}
 
 .table-kit-record-list-title {
   font-size: 0.9rem;

@@ -138,7 +138,13 @@ function displayValue(value: RecordPropertyValue): ReactNode {
 }
 
 function RecordImage<Record>({ image, size }: { image?: TableRecord<Record>["image"]; size: number }) {
-  if (!image?.src?.trim()) return null;
+  if (!image?.src?.trim()) {
+    return (
+      <span className="table-kit-record-image-fallback schema-table-icon" aria-hidden="true">
+        ▦
+      </span>
+    );
+  }
   return (
     <Image
       source={{ uri: image.src }}
@@ -382,6 +388,7 @@ export function RecordGallery<Record>({
                       objectFit="contain"
                     />
                   )}
+                  {!image && <span className="table-kit-record-image-fallback schema-table-icon">▦</span>}
                 </div>
                 <div className="table-kit-gallery-copy">
                   <div className="table-kit-gallery-title" title={title}>
