@@ -7,7 +7,7 @@ export type TransactionCreateFormValues = {
   merchantCode: string; transactionDate: string; quantity: string; regularPrice: string; paidPrice: string; total: string; discount: string; notes: string;
 };
 type Option = { value: string; label: string };
-export type TransactionFieldDefinition = { name: keyof TransactionCreateFormValues; label: string; schema: z.ZodTypeAny; required?: boolean; type?: "text" | "date"; width?: CreateFieldWidth; multiline?: boolean; options?: readonly Option[] };
+export type TransactionFieldDefinition = { name: keyof TransactionCreateFormValues; label: string; schema: z.ZodTypeAny; required?: boolean; type?: "text" | "date" | "number"; step?: string; width?: CreateFieldWidth; multiline?: boolean; options?: readonly Option[] };
 const required = (label: string) => z.string().trim().min(1, `${label} is required.`);
 const optional = z.string();
 const number = z.string().refine((value) => value === "" || (/^\d+(\.\d+)?$/.test(value) && Number(value) >= 0), "Enter a non-negative number.");
@@ -20,11 +20,11 @@ export function createTransactionFieldDefinitions(options: { categories: readonl
     { name: "item", label: "Item", schema: required("Item"), required: true },
     { name: "merchantCode", label: "Merchant code", schema: optional },
     { name: "transactionDate", label: "Transaction date", schema: optional, type: "date" },
-    { name: "quantity", label: "Quantity", schema: required("Quantity").regex(/^\d+(\.\d+)?$/, "Enter a positive number.").refine((value) => Number(value) > 0, "Quantity must be greater than zero."), required: true },
-    { name: "regularPrice", label: "Regular price", schema: number },
-    { name: "paidPrice", label: "Paid price", schema: number },
-    { name: "total", label: "Total", schema: number },
-    { name: "discount", label: "Discount", schema: number },
+    { name: "quantity", label: "Quantity", schema: required("Quantity").regex(/^\d+(\.\d+)?$/, "Enter a positive number.").refine((value) => Number(value) > 0, "Quantity must be greater than zero."), required: true, type: "number", step: "1" },
+    { name: "regularPrice", label: "Regular price", schema: number, type: "number", step: "0.01" },
+    { name: "paidPrice", label: "Paid price", schema: number, type: "number", step: "0.01" },
+    { name: "total", label: "Total", schema: number, type: "number", step: "0.01" },
+    { name: "discount", label: "Discount", schema: number, type: "number", step: "0.01" },
     { name: "notes", label: "Notes", schema: optional, multiline: true },
     { name: "categoryID", label: "Category", schema: required("Category ID").regex(/^\d+$/, "Select a category.").refine((value) => Number(value) > 0, "Select a category."), options: options.categories },
     { name: "subcategoryID", label: "Subcategory", schema: optional, options: options.subcategories },

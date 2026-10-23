@@ -26,6 +26,7 @@ export type AddressFieldDefinition =
       schema: schemaType;
       required?: boolean;
       type?: "text" | "date";
+  step?: string;
       multiline?: boolean;
       width?: CreateFieldWidth;
       placeholder?: string;

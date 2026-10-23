@@ -7,7 +7,7 @@ export type ServiceAccountCreateFormValues = {
   occurrence: string; status: string; since: string; website: string; notes: string; paymentMethod: string; accountNumber: string;
   associatedAddress: string; serviceKey: string;
 };
-export type ServiceAccountFieldDefinition = { name: keyof ServiceAccountCreateFormValues; label: string; schema: z.ZodTypeAny; required?: boolean; type?: "text" | "date" | "url"; width?: CreateFieldWidth; multiline?: boolean };
+export type ServiceAccountFieldDefinition = { name: keyof ServiceAccountCreateFormValues; label: string; schema: z.ZodTypeAny; required?: boolean; type?: "text" | "date" | "url" | "number"; step?: string; width?: CreateFieldWidth; multiline?: boolean };
 const required = (label: string) => z.string().trim().min(1, `${label} is required.`);
 const optional = z.string();
 const amount = z.string().refine((value) => value === "" || (/^\d+(\.\d+)?$/.test(value) && Number(value) >= 0), "Enter a non-negative number.");
@@ -17,9 +17,9 @@ export const serviceAccountFieldDefinitions: readonly ServiceAccountFieldDefinit
   { name: "service", label: "Service name", schema: required("Service name"), required: true },
   { name: "type", label: "Type", schema: optional },
   { name: "expenseGroup", label: "Expense group", schema: optional },
-  { name: "monthlyAmount", label: "Monthly amount", schema: amount },
-  { name: "interestRate", label: "Interest rate", schema: amount },
-  { name: "apr", label: "APR", schema: amount },
+  { name: "monthlyAmount", label: "Monthly amount", schema: amount, type: "number", step: "0.01" },
+  { name: "interestRate", label: "Interest rate", schema: amount, type: "number", step: "0.01" },
+  { name: "apr", label: "APR", schema: amount, type: "number", step: "0.01" },
   { name: "due", label: "Due date", schema: optional, type: "date" },
   { name: "occurrence", label: "Occurrence", schema: optional },
   { name: "status", label: "Status", schema: optional },

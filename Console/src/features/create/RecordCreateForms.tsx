@@ -118,6 +118,7 @@ function renderAddressField(form: UseFormReturn<AddressCreateFormValues>, field:
       label={field.label}
       required={field.required}
       type={field.type}
+      step={field.step}
       multiline={field.multiline}
       width={field.width}
       placeholder={field.placeholder}
@@ -161,7 +162,7 @@ function renderEmploymentField(form: UseFormReturn<EmploymentCreateFormValues>, 
       searchPlaceholder={field.name === "workAddressID" ? "Search existing addresses" : undefined}
     />
   ) : (
-    <Text key={field.name} form={form} name={field.name} label={field.label} required={field.required} type={field.type} multiline={field.multiline} width={field.width} />
+    <Text key={field.name} form={form} name={field.name} label={field.label} required={field.required} type={field.type} step={field.step} multiline={field.multiline} width={field.width} />
   );
 }
 
@@ -175,12 +176,12 @@ function renderTransactionField(form: UseFormReturn<TransactionCreateFormValues>
   return field.options ? (
     <Select key={field.name} form={form} name={field.name} label={field.label} options={[...field.options]} required={field.required} />
   ) : (
-    <Text key={field.name} form={form} name={field.name} label={field.label} required={field.required} type={field.type} multiline={field.multiline} width={field.width} />
+    <Text key={field.name} form={form} name={field.name} label={field.label} required={field.required} type={field.type} step={field.step} multiline={field.multiline} width={field.width} />
   );
 }
 
 function renderServiceAccountField(form: UseFormReturn<ServiceAccountCreateFormValues>, field: ServiceAccountFieldDefinition) {
-  return <Text key={field.name} form={form} name={field.name} label={field.label} required={field.required} type={field.type} multiline={field.multiline} width={field.width} />;
+  return <Text key={field.name} form={form} name={field.name} label={field.label} required={field.required} type={field.type} step={field.step} multiline={field.multiline} width={field.width} />;
 }
 
 function renderDomainField(form: UseFormReturn<DomainCreateFormValues>, field: DomainFieldDefinition) {

@@ -15,6 +15,7 @@ export function CreateFormText<T extends FieldValues>({
   label,
   required = false,
   type = "text",
+  step,
   multiline = false,
   placeholder,
   width = "long",
@@ -24,6 +25,7 @@ export function CreateFormText<T extends FieldValues>({
   label: string;
   required?: boolean;
   type?: string;
+  step?: string;
   multiline?: boolean;
   placeholder?: string;
   width?: "short" | "medium" | "long";
@@ -35,6 +37,7 @@ export function CreateFormText<T extends FieldValues>({
       registration={form.register(name)}
       required={required}
       type={type}
+      step={step}
       multiline={multiline}
       placeholder={placeholder}
       width={width}

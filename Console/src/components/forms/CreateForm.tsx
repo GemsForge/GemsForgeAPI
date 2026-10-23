@@ -77,6 +77,7 @@ export function CreateTextField({
   error,
   required = false,
   type = "text",
+  step,
   multiline = false,
   placeholder,
   width = "long",
@@ -86,6 +87,7 @@ export function CreateTextField({
   error?: string;
   required?: boolean;
   type?: string;
+  step?: string;
   multiline?: boolean;
   placeholder?: string;
   width?: CreateFieldWidth;
@@ -101,6 +103,7 @@ export function CreateTextField({
       error={error}
       required={required}
       type={type}
+      step={step}
       multiline={multiline}
       placeholder={inputPlaceholder}
       width={width}

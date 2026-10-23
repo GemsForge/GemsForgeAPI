@@ -27,6 +27,7 @@ export type EmploymentFieldDefinition = {
   schema: z.ZodTypeAny;
   required?: boolean;
   type?: "text" | "date" | "url" | "tel" | "email";
+  step?: string;
   width?: CreateFieldWidth;
   multiline?: boolean;
   options?: readonly Option[];
