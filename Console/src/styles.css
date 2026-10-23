@@ -1332,37 +1332,7 @@ dialog::backdrop {
   width: 100%;
 }
 
-.table-kit-views {
-  display: inline-flex;
-  flex-direction: row;
-  flex-wrap: nowrap;
-  flex: 0 0 auto;
-  align-items: stretch;
-  gap: 0;
-  width: 13rem;
-  min-width: 13rem;
-  max-width: 100%;
-  overflow: hidden;
-  border: 0;
-  border-radius: 0.55rem;
-  background: var(--panel);
-}
-
-.table-kit-views > button {
-  flex: 1 1 0;
-  width: 0;
-  min-height: 2.75rem;
-  min-width: 4.25rem;
-  padding: 0.55rem 1rem;
-  border: 0;
-  border-right: 1px solid var(--line);
-  border-radius: 0;
-  background: transparent;
-  color: var(--ink);
-  white-space: nowrap;
-}
-
-/* Keep view switching compact while retaining the full label for AT and Tooltip. */
+/* Keep view icons legible within Tamagui's equal-width XGroup items. */
 .table-kit-view-icon {
   display: inline-grid;
   pointer-events: auto;
@@ -1370,15 +1340,6 @@ dialog::backdrop {
   min-width: 1.25rem;
   min-height: 1.25rem;
   font-size: 1.05rem;
-}
-
-.table-kit-views > button:last-child {
-  border-right: 0;
-}
-
-.table-kit-views > button[data-state="on"] {
-  background: var(--mint);
-  color: var(--canvas);
 }
 
 /* Keep query controls and the properties gear attached to the view group. */
