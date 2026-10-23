@@ -19,7 +19,7 @@ import { useRecordUtilities } from "../../hooks/useRecordUtilities";
 import { api } from "../../api";
 import { DatabaseRecordCollection } from "../../components/DatabaseRecordCollection";
 import { createServiceAccountTableAdapter } from "../database/recordTableAdapters";
-import { serviceAccountImportColumns } from "./serviceAccountImportAdapter";
+import { serviceAccountImportColumns, toServiceAccountCreatePayload } from "./serviceAccountImportAdapter";
 
 /** Render service-account records through the shared Table Kit consumer adapter. */
 export function ServiceAccountsView({ records }: { records: ServiceAccount[] }) {
@@ -42,6 +42,9 @@ export function ServiceAccountsView({ records }: { records: ServiceAccount[] }) 
   const [creating, setCreating] = useState(false);
   const [importing, setImporting] = useState(false);
   const create = useCreateServiceAccountMutation();
+  const publishImportedRows = async (rows: Record<string, unknown>[]) => {
+    for (const row of rows) await create.mutateAsync(toServiceAccountCreatePayload(row));
+  };
   const logos = useServiceLogosQuery(true);
   const tableAdapter = useMemo(
     () =>
@@ -73,27 +76,7 @@ export function ServiceAccountsView({ records }: { records: ServiceAccount[] }) 
           open={importing}
           onOpenChange={setImporting}
           showTrigger={records.length === 0}
-          onPublish={async (rows) => {
-            for (const row of rows)
-              await create.mutateAsync({
-                service: String(row.Service ?? row.service ?? ""),
-                type: String(row.Type ?? row.type ?? "") || null,
-                expenseGroup: String(row.ExpenseGroup ?? "") || null,
-                monthlyAmount: row.MonthlyAmount ? Number(row.MonthlyAmount) : null,
-                interestRate: row.InterestRate ? Number(row.InterestRate) : null,
-                apr: row.APR ? Number(row.APR) : null,
-                due: String(row.Due ?? "") || null,
-                occurrence: String(row.Occurrence ?? "") || null,
-                status: String(row.Status ?? "") || null,
-                since: String(row.Since ?? "") || null,
-                website: String(row.Website ?? "") || null,
-                notes: String(row.Notes ?? "") || null,
-                paymentMethod: String(row.PaymentMethod ?? "") || null,
-                accountNumber: String(row.AccountNumber ?? "") || null,
-                associatedAddress: String(row.AssociatedAddress ?? "") || null,
-                serviceKey: String(row.ServiceKey ?? "") || null,
-              });
-          }}
+          onPublish={publishImportedRows}
         />
       </div>
       {creating && (
