@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import type { Address, Education, Employment, ExpenseTransaction, ServiceAccount } from "../../types";
-import type { RecordAdapter, RecordPropertyDefinition } from "../../table-kit";
+import type { RecordAdapter, RecordImage, RecordPropertyDefinition } from "../../table-kit";
 
 const display = (value: unknown) => ({ raw: value, display: value == null || value === "" ? "—" : String(value) });
 
@@ -91,6 +91,7 @@ export const transactionTableAdapter: RecordAdapter<ExpenseTransaction> = {
 /** Create the service adapter while retaining the existing logo lookup and preview behavior. */
 export function createServiceAccountTableAdapter(
   renderLogo: (record: ServiceAccount) => ReactNode,
+  getLogoImage?: (record: ServiceAccount) => RecordImage | undefined,
 ): RecordAdapter<ServiceAccount> {
   return {
     toTableRecord: (record) => ({
@@ -98,6 +99,7 @@ export function createServiceAccountTableAdapter(
       source: record,
       title: record.service,
       subtitle: `${record.type || "Service"} · ${record.id}`,
+      image: getLogoImage?.(record),
       status: record.status ? { label: record.status } : undefined,
     }),
     getPropertyDefinitions: () =>
