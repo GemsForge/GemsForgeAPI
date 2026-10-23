@@ -1,7 +1,6 @@
 import { forwardRef, useId, type ComponentProps, type Ref } from "react";
 import { Input, Label, SizableText, TextArea, YStack } from "tamagui";
 
-/** Standard reusable field widths shared by generic and feature forms. */
 export type GemFieldWidth = "short" | "medium" | "long";
 
 export interface GemFieldProps extends ComponentProps<typeof Input> {
@@ -12,7 +11,7 @@ export interface GemFieldProps extends ComponentProps<typeof Input> {
   width?: GemFieldWidth;
 }
 
-/** Shared labelled text field with standard prompt, type, and validation properties. */
+/** Shared labelled text field for forms and editors. */
 export const GemField = forwardRef<HTMLInputElement | HTMLTextAreaElement, GemFieldProps>(function GemField(
   { label, id, error, required = false, multiline = false, width = "long", className, ...props },
   ref,
@@ -27,31 +26,11 @@ export const GemField = forwardRef<HTMLInputElement | HTMLTextAreaElement, GemFi
         {label}{required ? " *" : ""}
       </Label>
       {multiline ? (
-        <TextArea
-          {...props}
-          id={inputID}
-          ref={ref as Ref<HTMLTextAreaElement>}
-          className={controlClassName}
-          aria-invalid={Boolean(error)}
-          aria-describedby={error ? errorID : undefined}
-          required={required}
-        />
+        <TextArea {...props} id={inputID} ref={ref as Ref<HTMLTextAreaElement>} className={controlClassName} aria-invalid={Boolean(error)} aria-describedby={error ? errorID : undefined} required={required} />
       ) : (
-        <Input
-          {...props}
-          id={inputID}
-          ref={ref as Ref<HTMLInputElement>}
-          className={controlClassName}
-          aria-invalid={Boolean(error)}
-          aria-describedby={error ? errorID : undefined}
-          required={required}
-        />
+        <Input {...props} id={inputID} ref={ref as Ref<HTMLInputElement>} className={controlClassName} aria-invalid={Boolean(error)} aria-describedby={error ? errorID : undefined} required={required} />
       )}
-      {error && (
-        <SizableText id={errorID} role="alert" color="$gemDanger" fontSize="$1">
-          {error}
-        </SizableText>
-      )}
+      {error && <SizableText id={errorID} role="alert" color="$gemDanger" fontSize="$1">{error}</SizableText>}
     </YStack>
   );
 });
