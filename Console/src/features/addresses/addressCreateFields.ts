@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { CreateFieldWidth } from "../../components/forms/CreateForm";
 
+/** Raw Address values owned by React Hook Form before API normalization. */
 export type AddressCreateFormValues = {
   addressType: string;
   addressLine1: string;

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { CreateFieldWidth } from "../../components/forms/CreateForm";
 
+/** Raw Domain values owned by React Hook Form before API normalization. */
 export type DomainCreateFormValues = { id: string; title: string; description: string };
 export type DomainFieldDefinition = { name: keyof DomainCreateFormValues; label: string; schema: z.ZodTypeAny; required?: boolean; width?: CreateFieldWidth; multiline?: boolean };
 

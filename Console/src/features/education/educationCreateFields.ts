@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { CreateFieldWidth } from "../../components/forms/CreateForm";
 
+/** Raw Education values owned by React Hook Form before API normalization. */
 export type EducationCreateFormValues = {
   id: string;
   educationType: string;

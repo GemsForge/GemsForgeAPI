@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { CreateFieldWidth } from "../../components/forms/CreateForm";
 
+/** Raw Transaction values owned by React Hook Form before API normalization. */
 export type TransactionCreateFormValues = {
   id: string; receiptID: string; item: string; firstReceiptItem: string; categoryID: string; subcategoryID: string;
   merchantCode: string; transactionDate: string; quantity: string; regularPrice: string; paidPrice: string; total: string; discount: string; notes: string;

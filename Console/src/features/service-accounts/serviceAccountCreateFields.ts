@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { CreateFieldWidth } from "../../components/forms/CreateForm";
 
+/** Raw Service Account values owned by React Hook Form before API normalization. */
 export type ServiceAccountCreateFormValues = {
   service: string; type: string; expenseGroup: string; monthlyAmount: string; interestRate: string; apr: string; due: string;
   occurrence: string; status: string; since: string; website: string; notes: string; paymentMethod: string; accountNumber: string;
