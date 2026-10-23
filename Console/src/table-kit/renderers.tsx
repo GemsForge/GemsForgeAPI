@@ -96,6 +96,10 @@ function SelectionButton({
       checked={selected}
       disabled={!selection.isSelectable(record.id)}
       aria-label={`${selected ? "Deselect" : "Select"} ${title}`}
+      aria-checked={selected}
+      data-selected={selected}
+      onPointerDown={(event) => event.stopPropagation()}
+      onMouseDown={(event) => event.stopPropagation()}
       onClick={(event) => event.stopPropagation()}
       onCheckedChange={() => selection.onRecordSelect?.(record.id)}
     >
@@ -495,6 +499,9 @@ export function RecordTable<Record>({
         columnDefs={columnDefs}
         rowData={[...effectiveRecords]}
         getRowId={({ data }) => data.id}
+        rowClassRules={{
+          "table-kit-record-row-selected": ({ data }) => Boolean(data && selection.selectedIds.has(data.id)),
+        }}
         defaultColDef={{ flex: 1, minWidth: 140, resizable: true }}
         onRowClicked={({ data }) => {
           if (data && onExpansionChange) onExpansionChange(data.id);
