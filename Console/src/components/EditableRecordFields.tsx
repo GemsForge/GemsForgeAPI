@@ -75,15 +75,17 @@ function EditableField({ field }: { field: EditableRecordField }) {
 
   return (
     <div className={field.className}>
-      <dt className="editable-record-label" id={labelID}>
-        {field.onSave ? (
-          <button type="button" className="editable-record-label-button" onClick={editor.begin}>
-            {field.label}
-          </button>
-        ) : (
-          field.label
-        )}
-      </dt>
+      {!editor.editing && (
+        <dt className="editable-record-label" id={labelID}>
+          {field.onSave ? (
+            <button type="button" className="editable-record-label-button" onClick={editor.begin}>
+              {field.label}
+            </button>
+          ) : (
+            field.label
+          )}
+        </dt>
+      )}
       <dd>
         {!field.onSave || !editor.editing ? (
           <>
@@ -157,7 +159,8 @@ function EditableField({ field }: { field: EditableRecordField }) {
                   <Tooltip.Trigger asChild>
                     <GemButton
                       type="submit"
-                      size="$3"
+                      variant="quiet"
+                      size="$2"
                       aria-label={`Save ${field.label.toLowerCase()}`}
                       disabled={editor.saving || !editor.dirty}
                     >
@@ -174,7 +177,8 @@ function EditableField({ field }: { field: EditableRecordField }) {
                     <GemButton
                       tone="secondary"
                       type="button"
-                      size="$3"
+                      variant="quiet"
+                      size="$2"
                       aria-label={`Cancel editing ${field.label.toLowerCase()}`}
                       disabled={editor.saving}
                       onClick={editor.cancel}
