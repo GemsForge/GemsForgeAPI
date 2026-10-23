@@ -878,12 +878,9 @@ dialog::backdrop {
 /* Keeps the shared edit control and its actions aligned without sacrificing narrow-screen wrapping. */
 .editable-field-control-row {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   flex-wrap: wrap;
   gap: 0.55rem;
-}
-.editable-field-form .button-row {
-  margin-top: 0.15rem;
 }
 .editable-field-actions {
   display: inline-flex;
