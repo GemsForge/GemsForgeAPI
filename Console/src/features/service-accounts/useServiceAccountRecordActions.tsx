@@ -21,7 +21,9 @@ interface ServiceAccountRecordActionsResult {
 /** Compose Service Account create/import behavior for the shared Table Kit. */
 export function useServiceAccountRecordActions({
   onCreated,
-}: { onCreated: (id: number) => void }): ServiceAccountRecordActionsResult {
+}: {
+  onCreated: (id: number) => void;
+}): ServiceAccountRecordActionsResult {
   const create = useCreateServiceAccountMutation();
   const publish = async (rows: Record<string, unknown>[]) => {
     for (const row of rows) await create.mutateAsync(toServiceAccountCreatePayload(row));

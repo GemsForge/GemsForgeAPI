@@ -28,9 +28,26 @@ describe("feature form field contracts", () => {
 
   it("keeps required validation attached to the rendered contract", () => {
     expect(addressSchema.safeParse({ addressType: "", country: "", addressStatus: "" }).success).toBe(false);
-    expect(educationSchema.safeParse({ id: "", educationType: "", institutionName: "", status: "" }).success).toBe(false);
-    expect(createEmploymentSchema(createEmploymentFieldDefinitions(employmentOptions)).safeParse({ employerName: "", employerType: "", positionTitle: "", employmentType: "", employmentStatus: "" }).success).toBe(false);
-    expect(createTransactionSchema(createTransactionFieldDefinitions(emptyOptions)).safeParse({ id: "", item: "", categoryID: "", quantity: "" }).success).toBe(false);
+    expect(educationSchema.safeParse({ id: "", educationType: "", institutionName: "", status: "" }).success).toBe(
+      false,
+    );
+    expect(
+      createEmploymentSchema(createEmploymentFieldDefinitions(employmentOptions)).safeParse({
+        employerName: "",
+        employerType: "",
+        positionTitle: "",
+        employmentType: "",
+        employmentStatus: "",
+      }).success,
+    ).toBe(false);
+    expect(
+      createTransactionSchema(createTransactionFieldDefinitions(emptyOptions)).safeParse({
+        id: "",
+        item: "",
+        categoryID: "",
+        quantity: "",
+      }).success,
+    ).toBe(false);
     expect(serviceAccountSchema.safeParse({ service: "" }).success).toBe(false);
     expect(domainSchema.safeParse({ title: "", description: "" }).success).toBe(false);
   });

@@ -33,15 +33,27 @@ export type EducationFieldDefinition = {
 
 const required = (label: string) => z.string().trim().min(1, `${label} is required.`);
 const optional = z.string();
-const educationTypeOptions = ["High school", "Associate", "Bachelor", "Master", "Doctorate", "Certificate", "Other"].map(
-  (value) => ({ value, label: value }),
-);
+const educationTypeOptions = [
+  "High school",
+  "Associate",
+  "Bachelor",
+  "Master",
+  "Doctorate",
+  "Certificate",
+  "Other",
+].map((value) => ({ value, label: value }));
 const statusOptions = ["In progress", "Completed", "Paused", "Other"].map((value) => ({ value, label: value }));
 
 /** Canonical Education form field metadata and validation contract. */
 export const educationFieldDefinitions: readonly EducationFieldDefinition[] = [
   { name: "id", label: "Stable education ID", schema: required("Education ID"), required: true },
-  { name: "educationType", label: "Education type", schema: required("Education type"), required: true, options: educationTypeOptions },
+  {
+    name: "educationType",
+    label: "Education type",
+    schema: required("Education type"),
+    required: true,
+    options: educationTypeOptions,
+  },
   { name: "institutionName", label: "Institution name", schema: required("Institution name"), required: true },
   { name: "program", label: "Program", schema: optional },
   { name: "fieldOfStudy", label: "Field of study", schema: optional },
