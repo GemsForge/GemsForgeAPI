@@ -17,7 +17,7 @@ export interface GDateProps extends Omit<ComponentProps<typeof Input>, "value" |
   onChange?: (value: string) => void;
 }
 
-/** Render a reusable date field with Day.js normalization and a configurable format. */
+/** Render a reusable native calendar picker with Day.js normalization and a configurable date format. */
 export const GDate = forwardRef<HTMLInputElement, GDateProps>(function GDate(
   { label, value = "", format = "YYYY-MM-DD", error, required = false, width = "long", onChange, ...props },
   ref,
