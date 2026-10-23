@@ -62,7 +62,8 @@ describe("ServiceAccountsView", () => {
     expect(screen.getByRole("region", { name: "Table content" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Expand Internet" }));
     fireEvent.click(screen.getByRole("button", { name: "Edit service" }));
-    fireEvent.change(screen.getByLabelText("Service"), { target: { value: "Fiber Internet" } });
+    // Required-field labels include a visible asterisk in the shared field component.
+    fireEvent.change(screen.getByLabelText(/^Service \*/), { target: { value: "Fiber Internet" } });
     fireEvent.click(screen.getByRole("button", { name: "Save service" }));
     await waitFor(() => expect(mocks.patch).toHaveBeenCalledWith({ id: 7, patch: { service: "Fiber Internet" } }));
   });

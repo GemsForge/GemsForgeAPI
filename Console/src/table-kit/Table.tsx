@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
-import { Button, Menu, ToggleGroup, Tooltip, type TamaguiElement } from "tamagui";
+import { Button, Menu, ToggleGroup, Tooltip, XGroup, type TamaguiElement } from "tamagui";
 import { TableContext } from "./context";
 import type {
   TableActionsProps,
@@ -180,25 +180,36 @@ function Views<Row>() {
       }}
       orientation="horizontal"
       disableDeactivation
-      className="table-kit-views"
       aria-label="Table views"
     >
-      {views.map((view) => (
-        <ToggleGroup.Item key={view.id} value={view.id} size="xs" color="$gemInk" aria-label={view.label}>
-          <Tooltip placement="top" delay={300}>
-            <Tooltip.Trigger asChild>
-              <span className="table-kit-view-icon" aria-hidden="true">
-                {view.icon}
-              </span>
-            </Tooltip.Trigger>
-            <Tooltip.Content className="table-kit-tooltip">
-              <Tooltip.Arrow />
-              <span>{view.label}</span>
-            </Tooltip.Content>
-          </Tooltip>
-          <span className="sr-only">{view.label}</span>
-        </ToggleGroup.Item>
-      ))}
+      <XGroup width={208} borderRadius="$gemControl" overflow="hidden" aria-label="Table views">
+        {views.map((view) => (
+          <XGroup.Item key={view.id} flex={1}>
+            <ToggleGroup.Item
+              value={view.id}
+              size="xs"
+              width="100%"
+              color="$gemInk"
+              backgroundColor="$gemPanel"
+              activeStyle={{ backgroundColor: "$gemMint", color: "$gemCanvas" }}
+              aria-label={view.label}
+            >
+              <Tooltip placement="top" delay={300}>
+                <Tooltip.Trigger asChild>
+                  <span className="table-kit-view-icon" aria-hidden="true">
+                    {view.icon}
+                  </span>
+                </Tooltip.Trigger>
+                <Tooltip.Content className="table-kit-tooltip">
+                  <Tooltip.Arrow />
+                  <span>{view.label}</span>
+                </Tooltip.Content>
+              </Tooltip>
+              <span className="sr-only">{view.label}</span>
+            </ToggleGroup.Item>
+          </XGroup.Item>
+        ))}
+      </XGroup>
     </ToggleGroup>
   );
 }

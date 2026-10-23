@@ -1,6 +1,20 @@
 export const serviceAccountImportColumns = [
-  "Service", "Type", "ExpenseGroup", "MonthlyAmount", "InterestRate", "APR", "Due", "Occurrence", "Status",
-  "Since", "Website", "Notes", "PaymentMethod", "AccountNumber", "AssociatedAddress", "ServiceKey",
+  "Service",
+  "Type",
+  "ExpenseGroup",
+  "MonthlyAmount",
+  "InterestRate",
+  "APR",
+  "Due",
+  "Occurrence",
+  "Status",
+  "Since",
+  "Website",
+  "Notes",
+  "PaymentMethod",
+  "AccountNumber",
+  "AssociatedAddress",
+  "ServiceKey",
 ];
 
 /** Map external import columns into the Service Account create contract. */

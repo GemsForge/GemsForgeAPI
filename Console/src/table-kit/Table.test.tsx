@@ -1,8 +1,9 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { useState, type ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { TamaguiProvider } from "tamagui";
 import { tamaguiConfig } from "../design-system/tamagui.config";
+import { CreateFormFrame } from "../components/forms/CreateForm";
 import { Table, useTableContext } from "./index";
 
 interface Row {
@@ -170,23 +171,56 @@ describe("Table Kit", () => {
 
     const trigger = screen.getByRole("button", { name: "New record" });
     fireEvent.click(trigger);
-    expect(screen.getByRole("dialog", { name: "New record" })).toBeInTheDocument();
+    // JSDOM treats content inside Tamagui's native dialog portal as hidden.
+    expect(screen.getByRole("dialog", { name: "New record", hidden: true })).toBeInTheDocument();
     expect(screen.getByText("Create workflow")).toBeInTheDocument();
-    expect(screen.getByRole("dialog")).toHaveTextContent("Open the create form.");
+    expect(screen.getByRole("dialog", { name: "New record", hidden: true })).toHaveTextContent("Open the create form.");
     expect(screen.queryByText("Choose an operation.")).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("tab", { name: /Import file/ }));
+    fireEvent.click(screen.getByRole("tab", { name: /Import file/, hidden: true }));
     expect(screen.getByText("Import workflow")).toBeInTheDocument();
     expect(screen.queryByText("Create workflow")).not.toBeInTheDocument();
-    expect(screen.getByRole("dialog")).toHaveTextContent("Choose a file.");
+    expect(screen.getByRole("dialog", { name: "New record", hidden: true })).toHaveTextContent("Choose a file.");
 
     fireEvent.keyDown(document, { key: "Escape" });
-    expect(screen.queryByRole("dialog", { name: "New record" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("dialog", { name: "New record", hidden: true })).not.toBeInTheDocument();
     expect(trigger).toHaveFocus();
 
     fireEvent.click(trigger);
-    fireEvent.click(screen.getByRole("button", { name: "Close new record utility" }));
+    fireEvent.click(screen.getByRole("button", { name: "Close new record utility", hidden: true }));
     expect(trigger).toHaveFocus();
+  });
+
+  it("keeps the create form submit button inside the New Record dialog", () => {
+    const onSubmit = vi.fn();
+    renderActions(
+      <Table.Actions
+        newRecordUtility={{
+          options: [
+            {
+              id: "create",
+              label: "Input Form",
+              render: ({ close }) => (
+                <CreateFormFrame
+                  title="Create address"
+                  submitting={false}
+                  error={null}
+                  onCancel={close}
+                  onSubmit={onSubmit}
+                >
+                  <input aria-label="Street" />
+                </CreateFormFrame>
+              ),
+            },
+          ],
+        }}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "New record" }));
+    const dialog = screen.getByRole("dialog", { name: "New record", hidden: true });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Create record", hidden: true }));
+    expect(onSubmit).toHaveBeenCalledOnce();
   });
 
   it("composes the scoped table primitives with typed rows", () => {

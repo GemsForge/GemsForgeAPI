@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { GSearchField } from "../../components/ui/GSearchField";
 
 export interface GeoapifyAddress {
   address_line1?: string;
@@ -162,33 +163,23 @@ export function GeoapifyAddressSearch({
           can still enter the address manually.
         </p>
       )}
-      <label htmlFor="geoapify-address-search">
-        Search places or addresses
-        <input
-          id="geoapify-address-search"
-          type="search"
-          autoComplete="off"
-          value={query}
-          onChange={(event) => changeQuery(event.currentTarget.value)}
-          placeholder="Start typing an address or place"
-          disabled={!enabled}
-        />
-      </label>
-      {loading && <p role="status">Searching addresses…</p>}
-      {suggestions.length > 0 && (
-        <ul className="address-search-results" aria-label="Address suggestions">
-          {suggestions.map((suggestion, index) => {
-            const label = suggestionLabel(suggestion);
-            return (
-              <li key={`${label}-${index}`}>
-                <button type="button" className="secondary-button" onClick={() => choose(suggestion)}>
-                  {label}
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      )}
+      <GSearchField
+        label="Search places or addresses"
+        variant="address"
+        value={query}
+        onChange={changeQuery}
+        disabled={!enabled}
+        loading={loading}
+        suggestions={suggestions.map((suggestion, index) => ({
+          value: `${suggestionLabel(suggestion)}-${index}`,
+          label: suggestionLabel(suggestion),
+        }))}
+        onSelectSuggestion={(selected) => {
+          const index = Number(selected.value.slice(selected.value.lastIndexOf("-") + 1));
+          const suggestion = suggestions[index];
+          if (suggestion) choose(suggestion);
+        }}
+      />
       {error && <p role="alert">{error}</p>}
       {hasSearched && !loading && !error && suggestions.length === 0 && (
         <p role="status">No address matches found. You can enter the address manually.</p>

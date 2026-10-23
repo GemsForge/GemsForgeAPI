@@ -618,6 +618,16 @@ dialog::backdrop {
 .create-form-control {
   width: 100%;
   min-height: 2.75rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 0.55rem;
+  outline: 0;
+  background: #0c1b20;
+  color: var(--ink);
+}
+.create-form-control:focus,
+.create-form-control:focus-visible {
+  border-color: var(--mint);
 }
 /* Map semantic field widths to compact controls without changing the shared field shell. */
 .create-form-control--short {
@@ -628,6 +638,19 @@ dialog::backdrop {
 }
 .create-form-control--long {
   max-width: 100%;
+}
+.field-checkbox {
+  width: 1.25rem;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  min-height: 1.25rem;
+  padding: 0;
+}
+.table-kit-property-dialog [role="toolbar"] {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
 }
 /* Keep related form fields readable in columns while preserving a single-column compact layout. */
 .create-form-grid {
@@ -1309,34 +1332,7 @@ dialog::backdrop {
   width: 100%;
 }
 
-.table-kit-views {
-  display: inline-flex;
-  flex-direction: row;
-  flex-wrap: nowrap;
-  flex: 0 0 auto;
-  align-items: stretch;
-  gap: 0;
-  min-width: max-content;
-  max-width: 100%;
-  overflow: hidden;
-  border: 1px solid var(--line);
-  border-radius: 0.55rem;
-  background: var(--panel);
-}
-
-.table-kit-views > button {
-  flex: 0 0 auto;
-  min-height: 2.75rem;
-  padding: 0.55rem 0.8rem;
-  border: 0;
-  border-right: 1px solid var(--line);
-  border-radius: 0;
-  background: transparent;
-  color: var(--ink);
-  white-space: nowrap;
-}
-
-/* Keep view switching compact while retaining the full label for AT and Tooltip. */
+/* Keep view icons legible within Tamagui's equal-width XGroup items. */
 .table-kit-view-icon {
   display: inline-grid;
   pointer-events: auto;
@@ -1344,15 +1340,6 @@ dialog::backdrop {
   min-width: 1.25rem;
   min-height: 1.25rem;
   font-size: 1.05rem;
-}
-
-.table-kit-views > button:last-child {
-  border-right: 0;
-}
-
-.table-kit-views > button[data-state="on"] {
-  background: var(--mint);
-  color: var(--canvas);
 }
 
 /* Keep query controls and the properties gear attached to the view group. */
@@ -1515,8 +1502,14 @@ dialog::backdrop {
   position: absolute;
   z-index: 5;
   top: calc(100% + 0.35rem);
-  right: 0;
-  width: min(22rem, calc(100vw - 2rem));
+  left: 50%;
+  right: auto;
+  box-sizing: border-box;
+  width: min(24rem, calc(100vw - 2rem));
+  max-width: calc(100vw - 2rem);
+  max-height: min(42rem, calc(100vh - 2rem));
+  overflow: auto;
+  transform: translateX(-50%);
   padding: 0.85rem;
   border: 1px solid var(--line);
   border-radius: 0.55rem;
@@ -1524,28 +1517,56 @@ dialog::backdrop {
   box-shadow: 0 0.7rem 1.8rem rgb(0 0 0 / 20%);
 }
 
+.table-kit-popover-frame {
+  border: 1px solid var(--line);
+  border-radius: 0.55rem;
+  background: var(--panel);
+  box-shadow: 0 0.7rem 1.8rem rgb(0 0 0 / 20%);
+}
+
+.table-kit-popover-frame > h2,
+.table-kit-popover-frame > [role="heading"],
+.table-kit-popover-frame > [data-radix-menu-label] {
+  margin: 0 0 0.75rem;
+  color: var(--ink);
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+.table-kit-property-close {
+  position: absolute;
+  top: 0.65rem;
+  right: 0.65rem;
+  display: inline-grid;
+  width: 2rem;
+  min-width: 2rem;
+  height: 2rem;
+  min-height: 2rem;
+  padding: 0;
+  place-items: center;
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
 .table-kit-property-dialog ul {
   display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.45rem;
   padding: 0;
   list-style: none;
 }
 
-/* Keep the New Record workflow over the collection while preserving its width. */
+/* Tamagui's full-screen portal centers its content and owns modal positioning. */
 .table-kit-utility-backdrop {
   position: fixed;
   z-index: 40;
   inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  padding: 1rem clamp(1rem, 3vw, 2rem);
   background: rgb(3 11 14 / 72%);
   backdrop-filter: blur(4px);
 }
 
 .table-kit-new-record-utility {
-  width: min(36rem, 100%);
+  width: min(36rem, calc(100vw - 2rem));
   max-height: min(48rem, calc(100vh - 2rem));
   overflow: auto;
   padding: 1.25rem;
@@ -1567,7 +1588,8 @@ dialog::backdrop {
   margin: 0;
 }
 
-.table-kit-new-record-heading p {
+/* Keep the operation description below the title/close row rather than in its flex line. */
+.table-kit-new-record-description p {
   margin: 0.35rem 0 0;
   color: var(--muted);
 }
