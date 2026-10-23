@@ -2898,6 +2898,9 @@ dialog {
   justify-self: start;
   margin: 0 0.75rem 0.75rem;
 }
+.table-kit-record-grid .table-kit-record-row-selected {
+  background: color-mix(in srgb, var(--mint) 12%, transparent);
+}
 .table-kit-gallery-card.is-small {
   flex-basis: 12rem;
 }
