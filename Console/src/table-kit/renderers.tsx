@@ -15,7 +15,7 @@ import {
   type ColDef,
   type ICellRendererParams,
 } from "ag-grid-community";
-import { Avatar, Image, ListItem, Paragraph, SizableText, XStack, YGroup, YStack } from "tamagui";
+import { Avatar, Checkbox, Image, ListItem, Paragraph, SizableText, XStack, YGroup, YStack } from "tamagui";
 import { TableContext } from "./context";
 import {
   orderRecordProperties,
@@ -76,7 +76,6 @@ function useRendererRecords<Record>(
 function SelectionButton({
   record,
   selection,
-  compact = false,
 }: {
   record: TableRecord<unknown>;
   selection: RendererSelection;
@@ -86,15 +85,16 @@ function SelectionButton({
   const selected = selection.selectedIds.has(record.id);
   const title = String(record.title ?? record.id);
   return (
-    <button
-      type="button"
-      aria-label={`${selected ? "Deselect" : "Select"} ${title}`}
-      aria-pressed={selected}
+    <Checkbox
+      size="$2"
+      checked={selected}
       disabled={!selection.isSelectable(record.id)}
-      onClick={() => selection.onRecordSelect?.(record.id)}
+      aria-label={`${selected ? "Deselect" : "Select"} ${title}`}
+      onClick={(event) => event.stopPropagation()}
+      onCheckedChange={() => selection.onRecordSelect?.(record.id)}
     >
-      {compact ? (selected ? "Deselect" : "Select") : selected ? `Deselect ${title}` : `Select ${title}`}
-    </button>
+      <Checkbox.Indicator />
+    </Checkbox>
   );
 }
 
@@ -182,30 +182,6 @@ function PropertyValue({ value }: { value: RecordPropertyValue }) {
 /** Render a property value through AG Grid without changing the record contract. */
 function GridPropertyCell({ value }: ICellRendererParams<TableRecord<unknown>>) {
   return <span>{value ?? "unconfigured"}</span>;
-}
-
-interface GridActionCellParams<Record> extends ICellRendererParams<TableRecord<Record>> {
-  selection: RendererSelection;
-  onExpansionChange?: (id: TableRecordId) => void;
-}
-
-/** Keep row actions connected to the scoped Table.Root selection context. */
-function GridActionCell<Record>({ data, selection, onExpansionChange }: GridActionCellParams<Record>) {
-  if (!data) return null;
-  return (
-    <XStack gap="$2" alignItems="center">
-      <SelectionButton record={data} selection={selection} />
-      {onExpansionChange && (
-        <button
-          type="button"
-          aria-label={`Expand ${String(data.title ?? data.id)}`}
-          onClick={() => onExpansionChange(data.id)}
-        >
-          View
-        </button>
-      )}
-    </XStack>
-  );
 }
 
 /** Render Tamagui list items with distinct open and multi-select gestures. */
@@ -428,7 +404,7 @@ export function RecordGallery<Record>({
                   </div>
                 </div>
               </div>
-              {selection.onRecordSelect && <SelectionButton record={record} selection={selection} compact />}
+              {selection.onRecordSelect && <SelectionButton record={record} selection={selection} />}
               {expanded && renderExpanded?.(record.source)}
             </div>
           );
@@ -451,16 +427,40 @@ export function RecordTable<Record>({
   const selection = useRendererSelection(selectedIds, onRecordSelect);
   const visibleProperties = propertiesFor(properties, propertyIds);
   const hasStatus = effectiveRecords.some((record) => record.status !== undefined);
-  const hasActions = Boolean(selection.onRecordSelect || onExpansionChange);
-  const columnDefs = visibleProperties.map<ColDef<TableRecord<Record>>>((property) => ({
-    colId: property.id,
-    headerName: property.label,
-    flex: 1,
-    minWidth: 140,
-    sortable: property.sortable ?? false,
-    valueGetter: ({ data }) => (data ? displayValue(propertyValue(property, data)) : ""),
-    cellRenderer: GridPropertyCell,
-  }));
+  const primaryProperty = properties.find((property) => property.primary) ?? visibleProperties[0];
+  const hasLogo = visibleProperties.some((property) => property.kind === "image" || property.id === "logo");
+  const columnDefs: ColDef<TableRecord<Record>>[] = [];
+
+  if (selection.onRecordSelect) {
+    columnDefs.push({
+      colId: "selection",
+      headerName: "",
+      width: 52,
+      minWidth: 52,
+      maxWidth: 52,
+      pinned: "left",
+      sortable: false,
+      resizable: false,
+      cellRenderer: ({ data }: ICellRendererParams<TableRecord<Record>>) =>
+        data ? <SelectionButton record={data} selection={selection} /> : null,
+    });
+  }
+
+  columnDefs.push(
+    ...visibleProperties.map<ColDef<TableRecord<Record>>>((property) => ({
+      colId: property.id,
+      headerName: property.label,
+      flex: 1,
+      minWidth: 140,
+      pinned:
+        property === primaryProperty || (hasLogo && (property.kind === "image" || property.id === "logo"))
+          ? "left"
+          : undefined,
+      sortable: property.sortable ?? false,
+      valueGetter: ({ data }) => (data ? displayValue(propertyValue(property, data)) : ""),
+      cellRenderer: GridPropertyCell,
+    })),
+  );
 
   if (hasStatus) {
     columnDefs.push({
@@ -469,18 +469,6 @@ export function RecordTable<Record>({
       flex: 1,
       minWidth: 120,
       valueGetter: ({ data }) => data?.status?.label ?? "—",
-    });
-  }
-
-  if (hasActions) {
-    columnDefs.push({
-      colId: "actions",
-      headerName: "Actions",
-      minWidth: onExpansionChange ? 180 : 150,
-      sortable: false,
-      resizable: false,
-      cellRenderer: GridActionCell,
-      cellRendererParams: { selection, onExpansionChange },
     });
   }
 
@@ -502,6 +490,9 @@ export function RecordTable<Record>({
         rowData={[...effectiveRecords]}
         getRowId={({ data }) => data.id}
         defaultColDef={{ flex: 1, minWidth: 140, resizable: true }}
+        onRowClicked={({ data }) => {
+          if (data && onExpansionChange) onExpansionChange(data.id);
+        }}
         domLayout="autoHeight"
         animateRows={false}
         suppressCellFocus
