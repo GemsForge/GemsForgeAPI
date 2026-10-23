@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { Button, Tooltip, type TamaguiElement } from "tamagui";
+import { GCheckboxField, GSearchField } from "../components/ui";
 import { filterTableProperties, type TablePropertyConfigurationState, type TablePropertyOption } from "./configuration";
 
 /** Accessible property menu backed by the consumer-owned configuration state. */
@@ -101,15 +102,7 @@ export function TablePropertyControls({
           >
             {closeLabel}
           </Button>
-          <label>
-            {searchLabel}
-            <input
-              type="search"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder={searchLabel}
-            />
-          </label>
+          <GSearchField label={searchLabel} value={search} onChange={setSearch} placeholder={searchLabel} />
           <div role="toolbar" aria-label="Property actions">
             <Button
               size="xs"
@@ -157,14 +150,12 @@ export function TablePropertyControls({
               const visible = configuration.visibleIds.includes(property.id);
               return (
                 <li key={property.id}>
-                  <label>
-                    <input
-                      type="checkbox"
-                      checked={visible}
-                      onChange={(event) => configuration.setVisibility(property.id, event.target.checked)}
-                    />
-                    <span>{property.label}</span>
-                  </label>
+                  <GCheckboxField
+                    label={property.label}
+                    value={visible}
+                    onChange={(checked) => configuration.setVisibility(property.id, checked)}
+                    width="long"
+                  />
                   <Button
                     type="button"
                     size="xs"

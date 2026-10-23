@@ -45,7 +45,7 @@ export function GDateField({
   }, [visibleMonth]);
 
   return (
-    <YStack className={`create-form-control create-form-control--${width}`} gap="$1">
+    <YStack className="create-form-field" gap="$1">
       <Label htmlFor={id} color="$gemMuted" fontSize="$2" fontWeight="700">
         {label}
         {required ? " *" : ""}
@@ -54,6 +54,7 @@ export function GDateField({
         <Popover.Trigger asChild>
           <Button
             id={id}
+            className={`create-form-control create-form-control--${width}`}
             aria-invalid={Boolean(error)}
             aria-describedby={error ? errorID : undefined}
             aria-required={required}

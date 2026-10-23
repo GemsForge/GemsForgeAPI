@@ -26,11 +26,12 @@ export function GCheckboxField({
   const errorID = `${id}-error`;
 
   return (
-    <YStack className={`create-form-control create-form-control--${width}`} gap="$1">
+    <YStack className="create-form-field" gap="$1">
       <XStack alignItems="center" gap="$2">
         <Checkbox
           id={id}
           {...checkboxProps}
+          className={`field-checkbox create-form-control--${width}`}
           checked={value}
           onCheckedChange={(checked) => onChange?.(checked === true)}
           aria-invalid={Boolean(error)}

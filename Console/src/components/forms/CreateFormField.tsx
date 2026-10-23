@@ -1,5 +1,6 @@
 import { Controller, type Control, type FieldValues, type Path, type UseFormReturn } from "react-hook-form";
 import { Checkbox, Label, XStack, YStack } from "tamagui";
+import { GCheckboxField } from "../ui";
 import {
   CreateFieldFrame,
   CreateSearchableSelectField,
@@ -109,19 +110,14 @@ export function CreateFormCheckbox<T extends FieldValues>({
 }) {
   const message = form.formState.errors[name]?.message;
   const checked = Boolean(form.watch(name));
-  const id = String(name);
   return (
-    <CreateFieldFrame id={id} label={label} required={required} error={typeof message === "string" ? message : undefined}>
-      <Checkbox
-        id={id}
-        checked={checked}
-        onCheckedChange={(checked) => form.setValue(name, (checked === true) as never, { shouldValidate: true, shouldDirty: true })}
-        aria-invalid={Boolean(message)}
-        aria-required={required}
-      >
-        <Checkbox.Indicator />
-      </Checkbox>
-    </CreateFieldFrame>
+    <GCheckboxField
+      label={label}
+      value={checked}
+      onChange={(nextChecked) => form.setValue(name, nextChecked as never, { shouldValidate: true, shouldDirty: true })}
+      required={required}
+      error={typeof message === "string" ? message : undefined}
+    />
   );
 }
 

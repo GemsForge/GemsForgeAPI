@@ -45,13 +45,14 @@ export function GSearchField({
   const defaultPlaceholder = variant === "address" ? "Search for an address…" : `Search ${label.toLowerCase()}…`;
 
   return (
-    <YStack className={`create-form-control create-form-control--${width}`} gap="$1">
+    <YStack className="create-form-field" gap="$1">
       <Label htmlFor={id} color="$gemMuted" fontSize="$2" fontWeight="700">
         {label}{required ? " *" : ""}
       </Label>
       <Input
         {...inputProps}
         id={id}
+        className={`create-form-control create-form-control--${width}`}
         type="search"
         value={value}
         placeholder={placeholder ?? defaultPlaceholder}
