@@ -1,8 +1,31 @@
 import type { ReactNode } from "react";
-import type { Address, Education, Employment, ExpenseTransaction, ServiceAccount } from "../../types";
+import type { Address, Education, Employment, ExpenseTransaction, GemHue, ServiceAccount } from "../../types";
 import type { RecordAdapter, RecordImage, RecordPropertyDefinition } from "../../table-kit";
 
 const display = (value: unknown) => ({ raw: value, display: value == null || value === "" ? "—" : String(value) });
+
+/** Adapt Gem Hue records to the shared Table Kit record/property contract. */
+export const gemHueTableAdapter: RecordAdapter<GemHue> = {
+  toTableRecord: (record) => ({
+    id: record.id,
+    source: record,
+    title: record.colorName,
+    subtitle: `${record.hexCode} · ${record.colorFamily || "Unclassified"}`,
+    icon: "✦",
+  }),
+  getPropertyDefinitions: () =>
+    [
+      { id: "colorName", label: "Color name", kind: "text", primary: true, getValue: (record) => display(record.colorName) },
+      { id: "colorFamily", label: "Color family", kind: "select", getValue: (record) => display(record.colorFamily) },
+      { id: "hexCode", label: "Hex code", kind: "text", getValue: (record) => display(record.hexCode) },
+      { id: "mood", label: "Mood", kind: "select", getValue: (record) => display(record.mood) },
+      { id: "palette", label: "Palette", kind: "select", getValue: (record) => display(record.palette) },
+      { id: "description", label: "Description", kind: "text", getValue: (record) => display(record.description) },
+      { id: "createdDate", label: "Created date", kind: "date", getValue: (record) => display(record.createdDate) },
+      { id: "notes", label: "Notes", kind: "text", getValue: (record) => display(record.notes) },
+      { id: "id", label: "Item ID", kind: "text", getValue: (record) => display(record.id) },
+    ] satisfies readonly RecordPropertyDefinition<GemHue>[],
+};
 
 /** Shared adapter for address records; the detail surface remains feature-owned. */
 export const addressTableAdapter: RecordAdapter<Address> = {
