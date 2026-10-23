@@ -1,5 +1,3 @@
-import { usePagedRecords } from "../../hooks/usePagedRecords";
-import { PaginationControls } from "../../components/PaginationControls";
 import { useEffect, useState } from "react";
 import { useGemHueQuery, useGemHueImageQuery, useGemHuePatchMutation } from "../../data/recordQueries";
 import { QueryFeedback } from "../../components/QueryFeedback";
@@ -11,14 +9,24 @@ import { useCreateGemHueMutation } from "../../data/recordQueries";
 import { useState as useFormState } from "react";
 import type { GemHueCreate } from "../../types";
 import { api } from "../../api";
-import { Avatar, ListItem, SizableText, YGroup } from "tamagui";
+import { DatabaseRecordCollection } from "../../components/DatabaseRecordCollection";
+import { useRecordUtilities } from "../../hooks/useRecordUtilities";
+import { gemHueTableAdapter } from "../database/recordTableAdapters";
 
 interface GemHuesViewProps {
   hues: GemHue[];
 }
 
 export function GemHuesView({ hues }: GemHuesViewProps) {
-  const paging = usePagedRecords(hues);
+  const utilities = useRecordUtilities(
+    hues,
+    (record) => [record.id, record.colorName, record.colorFamily, record.hexCode, record.mood, record.palette],
+    {
+      name: (a, b) => a.colorName.localeCompare(b.colorName),
+      family: (a, b) => (a.colorFamily ?? "").localeCompare(b.colorFamily ?? ""),
+      created: (a, b) => (a.createdDate ?? "").localeCompare(b.createdDate ?? ""),
+    },
+  );
   const [selectedID, setSelectedID] = useState<string | null>(null);
   const detail = useGemHueQuery(selectedID);
   const image = useGemHueImageQuery(selectedID);
@@ -70,7 +78,6 @@ export function GemHuesView({ hues }: GemHuesViewProps) {
 
   return (
     <>
-      <PaginationControls {...paging} label="Gem Hues" />
       <div className="hue-heading">
         <div>
           <p className="eyebrow">Foundation reference data</p>
@@ -290,21 +297,20 @@ export function GemHuesView({ hues }: GemHuesViewProps) {
           </button>
         </form>
       )}
-      <YGroup className="hue-list" role="list" gap="$2">
-        {paging.items.map((hue) => (
-          <YGroup.Item key={hue.id}>
-            <ListItem
-              role="listitem"
-              aria-label={`Open ${hue.colorName}`}
-              className={`hue-card ${selectedHue?.id === hue.id ? "selected" : ""}`}
-              title={hue.colorName}
-              subTitle={`${hue.hexCode} · ${hue.colorFamily || "Unclassified"}`}
-              icon={() => <GemHueListIcon hue={hue} />}
-              onClick={() => void openHue(hue.id)}
-            >
-              <SizableText color="$gemMuted">{hue.id}</SizableText>
-            </ListItem>
-            {selectedID === hue.id && (
+      <DatabaseRecordCollection
+        label="Gem Hues"
+        records={hues}
+        utilities={utilities}
+        adapter={gemHueTableAdapter}
+        sortOptions={[{ value: "name", label: "Color name" }, { value: "family", label: "Color family" }, { value: "created", label: "Created date" }]}
+        filterOptions={Array.from(new Set(hues.map((hue) => hue.colorFamily).filter((value): value is string => Boolean(value)))).sort()}
+        detailId={selectedID}
+        onDetailChange={(id) => {
+          if (id === null) setSelectedID(null);
+          else openHue(id);
+        }}
+        detail={
+          selectedID && selectedHue ? (
               <div className="gem-record-expansion">
                 <QueryFeedback query={detail} />
                 <QueryFeedback query={image} />
@@ -425,10 +431,9 @@ export function GemHuesView({ hues }: GemHuesViewProps) {
                   </section>
                 )}
               </div>
-            )}
-          </YGroup.Item>
-        ))}
-      </YGroup>
+          ) : null
+        }
+      />
     </>
   );
 }
