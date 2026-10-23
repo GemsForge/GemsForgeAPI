@@ -4,32 +4,13 @@ import { QueryFeedback } from "../../components/QueryFeedback";
 import type { Employment } from "../../types";
 import { GemEmptyState } from "../../components/ui";
 import { EditableRecordFields, formatRecordDate, formatRecordTimestamp } from "../../components/EditableRecordFields";
-import { useCreateEmploymentMutation } from "../../data/recordQueries";
 import { useAddressesQuery } from "../../data/lifeQueries";
 import { EmploymentCreateForm } from "../create/RecordCreateForms";
 import { RecordImport } from "../../components/RecordImport";
 import { useRecordUtilities } from "../../hooks/useRecordUtilities";
 import { DatabaseRecordCollection } from "../../components/DatabaseRecordCollection";
 import { employmentTableAdapter } from "../database/recordTableAdapters";
-
-const employmentOptions = {
-  industry: [
-    "Technology",
-    "Healthcare",
-    "Education",
-    "Finance",
-    "Government",
-    "Retail",
-    "Hospitality",
-    "Manufacturing",
-    "Other",
-  ],
-  employerType: ["Company", "Nonprofit", "Government", "Self-employed", "Other"],
-  employmentType: ["Full-time", "Part-time", "Contract", "Temporary", "Internship", "Self-employed", "Other"],
-  status: ["Current", "Former", "On leave", "Seasonal"],
-};
-
-const toOptions = (values: string[]) => values.map((value) => ({ value, label: value }));
+import { employmentOptions, toOptions, useEmploymentRecordActions } from "./useEmploymentRecordActions";
 
 interface EmploymentViewProps {
   records: Employment[];
@@ -55,8 +36,11 @@ export function EmploymentView({ records }: EmploymentViewProps) {
   const selectedRecord = detail.data;
   const [creating, setCreating] = useState(false);
   const [importing, setImporting] = useState(false);
-  const create = useCreateEmploymentMutation();
   const addresses = useAddressesQuery(true);
+  const { create, actions } = useEmploymentRecordActions({
+    addresses: addresses.data ?? [],
+    onCreated: setSelectedID,
+  });
 
   return (
     <>
@@ -135,88 +119,7 @@ export function EmploymentView({ records }: EmploymentViewProps) {
             filterOptions={Array.from(new Set(records.map((record) => record.employmentStatus))).sort()}
             detailId={selectedID}
             onDetailChange={setSelectedID}
-            actions={{
-              newRecordUtility: {
-                options: [
-                  {
-                    id: "new-employment",
-                    label: "Input Form",
-                    description: "Open the employment form.",
-                    render: ({ close }) => (
-                      <EmploymentCreateForm
-                        addresses={addresses.data ?? []}
-                        employerTypeOptions={toOptions(employmentOptions.employerType)}
-                        industryOptions={toOptions(employmentOptions.industry)}
-                        employmentTypeOptions={toOptions(employmentOptions.employmentType)}
-                        statusOptions={toOptions(employmentOptions.status)}
-                        onCancel={close}
-                        onCreate={async (payload) => {
-                          const created = await create.mutateAsync(payload);
-                          setSelectedID(created.id);
-                          close();
-                        }}
-                      />
-                    ),
-                  },
-                  {
-                    id: "import-employment-file",
-                    label: "Import File",
-                    description: "Choose a CSV or JSON file.",
-                    render: ({ close }) => (
-                      <RecordImport
-                        label="employment records"
-                        expectedColumns={[
-                          "id",
-                          "employerName",
-                          "employerType",
-                          "positionTitle",
-                          "employmentType",
-                          "employmentStatus",
-                        ]}
-                        mode="file"
-                        open
-                        onOpenChange={(open) => {
-                          if (!open) close();
-                        }}
-                        showTrigger={false}
-                        onPublish={async (rows) => {
-                          for (const row of rows)
-                            await create.mutateAsync(row as Parameters<typeof create.mutateAsync>[0]);
-                        }}
-                      />
-                    ),
-                  },
-                  {
-                    id: "paste-employment-data",
-                    label: "Paste data",
-                    description: "Paste CSV or JSON records.",
-                    render: ({ close }) => (
-                      <RecordImport
-                        label="employment records"
-                        expectedColumns={[
-                          "id",
-                          "employerName",
-                          "employerType",
-                          "positionTitle",
-                          "employmentType",
-                          "employmentStatus",
-                        ]}
-                        mode="paste"
-                        open
-                        onOpenChange={(open) => {
-                          if (!open) close();
-                        }}
-                        showTrigger={false}
-                        onPublish={async (rows) => {
-                          for (const row of rows)
-                            await create.mutateAsync(row as Parameters<typeof create.mutateAsync>[0]);
-                        }}
-                      />
-                    ),
-                  },
-                ],
-              },
-            }}
+            actions={actions}
             detail={
               selectedID ? (
                 <>
