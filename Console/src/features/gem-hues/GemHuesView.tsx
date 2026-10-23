@@ -12,7 +12,6 @@ import { useState as useFormState } from "react";
 import type { GemHueCreate } from "../../types";
 import { api } from "../../api";
 import { ListItem, SizableText, XStack, YGroup } from "tamagui";
-import { ChevronRight } from "@tamagui/local-icons";
 
 interface GemHuesViewProps {
   hues: GemHue[];
@@ -310,7 +309,6 @@ export function GemHuesView({ hues }: GemHuesViewProps) {
                   borderColor="$gemPanelLight"
                 />
               )}
-              iconAfter={ChevronRight}
               onClick={() => void openHue(hue.id)}
             >
               <SizableText color="$gemMuted">{hue.id}</SizableText>
