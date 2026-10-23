@@ -11,7 +11,7 @@ interface CreateFieldFrameProps {
 }
 
 /** Apply the shared label, control spacing, and validation message contract to every create field. */
-function CreateFieldFrame({ id, label, required, error, children }: CreateFieldFrameProps) {
+export function CreateFieldFrame({ id, label, required, error, children }: CreateFieldFrameProps) {
   const errorId = `${id}-error`;
   return (
     <YStack className="create-form-field" gap="$1">
