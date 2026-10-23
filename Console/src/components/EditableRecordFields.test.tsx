@@ -47,18 +47,16 @@ describe("EditableRecordFields", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Edit monthly amount" }));
     fireEvent.change(screen.getByLabelText("Monthly amount"), { target: { value: "95.5" } });
-    fireEvent.submit(screen.getByLabelText("Monthly amount").closest("form")!);
+    fireEvent.click(screen.getByRole("button", { name: "Save monthly amount" }));
     await waitFor(() => expect(saveNumber).toHaveBeenCalledWith(95.5));
 
     fireEvent.click(screen.getByRole("button", { name: "Edit notes" }));
     fireEvent.change(screen.getByLabelText("Notes"), { target: { value: "Corrected note" } });
-    fireEvent.submit(screen.getByLabelText("Notes").closest("form")!);
-    expect(
-      await screen.findByText("Some information is invalid. Review the fields and try again."),
-    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Save notes" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Some information is invalid");
     expect(screen.getByLabelText("Notes")).toHaveValue("Corrected note");
-    fireEvent.click(screen.getByText("Clear value"));
-    fireEvent.submit(screen.getByLabelText("Notes").closest("form")!);
+    fireEvent.click(screen.getByRole("button", { name: "Clear value" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save notes" }));
     await waitFor(() => expect(saveNullable).toHaveBeenLastCalledWith(null));
   });
 
@@ -81,15 +79,14 @@ describe("EditableRecordFields", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Edit first receipt item" }));
     fireEvent.click(screen.getByLabelText("First receipt item"));
-    fireEvent.submit(screen.getByLabelText("First receipt item").closest("form")!);
+    fireEvent.click(screen.getByRole("button", { name: "Save first receipt item" }));
     await waitFor(() => expect(saveBoolean).toHaveBeenCalledWith(true));
 
     fireEvent.click(screen.getByRole("button", { name: "Edit status" }));
     // Tamagui's select is a combobox; changing its button value does not select an item.
-    const statusSelect = document.querySelector('[role="combobox"]') as HTMLElement;
-    fireEvent.click(statusSelect);
+    fireEvent.click(screen.getByRole("combobox", { name: "Status" }));
     fireEvent.keyDown(screen.getByRole("option", { name: "Former" }), { key: "Enter" });
-    fireEvent.submit(statusSelect.closest("form")!);
+    fireEvent.click(screen.getByRole("button", { name: "Save status" }));
     await waitFor(() => expect(saveStatus).toHaveBeenCalledWith("Former"));
   });
 });

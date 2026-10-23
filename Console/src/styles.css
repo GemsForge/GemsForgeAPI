@@ -923,39 +923,6 @@ dialog::backdrop {
   display: block;
   color: var(--muted);
 }
-.editable-record-dialog {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  z-index: 41;
-  width: min(36rem, calc(100vw - 2rem));
-  max-height: min(42rem, calc(100vh - 2rem));
-  margin: 0;
-  overflow: auto;
-  padding: 1.25rem;
-  border: 1px solid var(--line);
-  border-radius: 1rem;
-  background: var(--panel);
-  color: var(--ink);
-  box-shadow: 0 2rem 8rem rgb(0 0 0 / 45%);
-  transform: translate(-50%, -50%);
-}
-.editable-record-dialog-heading {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
-}
-.editable-record-dialog-heading h2 {
-  margin: 0;
-}
-.editable-record-dialog-description p {
-  margin: 0.35rem 0 0;
-  color: var(--muted);
-}
-.editable-record-dialog .editable-field-form {
-  padding: 1.25rem 0 0;
-}
 .hue-fields {
   gap: 0.85rem 1.2rem;
 }
@@ -1684,8 +1651,7 @@ dialog::backdrop {
 }
 
 @media (max-width: 640px) {
-  .table-kit-new-record-utility,
-  .editable-record-dialog {
+  .table-kit-new-record-utility {
     max-height: calc(100vh - 1rem);
     padding: 1rem;
   }
