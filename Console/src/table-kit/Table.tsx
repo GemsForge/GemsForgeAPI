@@ -15,6 +15,7 @@ import { useTableContext } from "./context";
 import { useTableSelection, type TableSelectionScope } from "./selection";
 import { TablePropertyControls } from "./PropertyControls";
 import { NewRecordUtility } from "./NewRecordUtility";
+import { GemButton } from "../components/ui";
 
 function Root<Row>({
   rows,
@@ -223,10 +224,7 @@ function Toolbar({ children }: { children?: ReactNode }) {
 }
 
 /** Render the shared page-selection control for the current page. */
-function Selection({
-  label = "Select all",
-  clearLabel = "Clear selection",
-}: TableSelectionProps) {
+function Selection({ label = "Select all", clearLabel = "Clear selection" }: TableSelectionProps) {
   const { selection } = useTableContext();
   const checkboxRef = useRef<HTMLInputElement>(null);
   const currentPage = selection.getSummary("current-page");
@@ -251,9 +249,9 @@ function Selection({
         <span>{allMatching.selectedCount > 0 ? `${allMatching.selectedCount} selected` : label}</span>
       </label>
       {allMatching.selectedCount > 0 && (
-        <button type="button" onClick={selection.clear}>
+        <GemButton type="button" variant="quiet" size="$3" onPress={selection.clear}>
           {clearLabel}
-        </button>
+        </GemButton>
       )}
     </div>
   );
