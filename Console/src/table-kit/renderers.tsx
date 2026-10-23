@@ -108,13 +108,24 @@ function propertiesFor<Record>(
   );
 }
 
-/** Keep list metadata below the header; title and image properties are rendered structurally. */
+/** Keep title and image metadata in the list header instead of repeating it as rows. */
 function listPropertiesFor<Record>(
   properties: readonly RecordPropertyDefinition<Record>[],
   propertyIds?: readonly string[],
 ) {
   return propertiesFor(properties, propertyIds)
-    .filter((property) => property.kind !== "title" && property.kind !== "image")
+    .filter((property) => {
+      const label = property.label.trim().toLowerCase();
+      const id = property.id.trim().toLowerCase();
+      return (
+        property.kind !== "title" &&
+        property.kind !== "image" &&
+        label !== "name" &&
+        label !== "image" &&
+        id !== "name" &&
+        id !== "image"
+      );
+    })
     .slice(0, 2);
 }
 
@@ -227,7 +238,7 @@ export function RecordList<Record>({
               else if (!event.shiftKey) onExpansionChange?.(record.id);
             }}
           >
-            <XStack alignItems="center" gap="$3" flex={1}>
+            <XStack alignItems="center" flexDirection="row" gap="$3" flex={1}>
               <RecordImage image={record.image} size={48} />
               <SizableText fontWeight="700">{record.title ?? record.subtitle ?? record.id}</SizableText>
             </XStack>

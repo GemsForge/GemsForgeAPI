@@ -26,7 +26,7 @@ const records: TableRecord<Service>[] = [
   },
 ];
 const properties: RecordPropertyDefinition<Service>[] = [
-  { id: "title", label: "Name", order: 0, kind: "title", getValue: (record) => ({ display: record.name }) },
+  { id: "name", label: "Name", order: 0, getValue: (record) => ({ display: record.name }) },
   { id: "image", label: "Image", order: 0.5, kind: "image", getValue: () => ({ display: "logo" }) },
   { id: "kind", label: "Kind", order: 1, getValue: (record) => ({ display: record.kind }) },
   { id: "empty", label: "Empty", order: 2, getValue: () => ({ display: "" }) },
