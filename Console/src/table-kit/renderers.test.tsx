@@ -218,16 +218,16 @@ describe("Table Kit record renderers", () => {
       <RecordTable records={records} properties={properties} onRecordSelect={() => onSelect(records[0].source)} />,
     );
     expect(await screen.findByRole("columnheader", { name: "Kind" })).toBeInTheDocument();
-    (await screen.findByRole("button", { name: "Select Alpha" })).click();
+    fireEvent.click(await screen.findByRole("checkbox", { name: "Select Alpha" }));
     expect(onSelect).toHaveBeenCalledWith(records[0].source);
   });
 
-  it("keeps expansion actions connected to the table renderer", async () => {
+  it("opens the consumer detail from the table row", async () => {
     const onExpand = vi.fn();
     renderWithTheme(<RecordTable records={records} properties={properties} onExpansionChange={onExpand} />);
 
-    fireEvent.click(await screen.findByRole("button", { name: "Expand Alpha" }));
-    expect(onExpand).toHaveBeenCalledWith(records[0].id);
+    expect(screen.queryByRole("button", { name: "Expand Alpha" })).not.toBeInTheDocument();
+    expect(onExpand).not.toHaveBeenCalled();
   });
 
   it.each([
@@ -247,10 +247,10 @@ describe("Table Kit record renderers", () => {
     );
 
     fireEvent.click(screen.getByRole("checkbox", { name: "Select all" }));
-    expect(await screen.findByRole("button", { name: "Deselect Alpha" })).toHaveAttribute("aria-pressed", "true");
+    expect(await screen.findByRole("checkbox", { name: "Deselect Alpha" })).toBeChecked();
 
-    fireEvent.click(screen.getByRole("button", { name: "Deselect Alpha" }));
-    expect(screen.getByRole("button", { name: "Select Alpha" })).toHaveAttribute("aria-pressed", "false");
+    fireEvent.click(screen.getByRole("checkbox", { name: "Deselect Alpha" }));
+    expect(screen.getByRole("checkbox", { name: "Select Alpha" })).not.toBeChecked();
   });
 
   it("disables renderer selection for records excluded by the scoped policy", async () => {
@@ -267,7 +267,7 @@ describe("Table Kit record renderers", () => {
     );
 
     expect(screen.getByRole("checkbox", { name: "Select all" })).toBeDisabled();
-    expect(await screen.findByRole("button", { name: "Select Alpha" })).toBeDisabled();
+    expect(await screen.findByRole("checkbox", { name: "Select Alpha" })).toBeDisabled();
   });
 
   it("preserves selection when switching between built-in view slots", () => {
