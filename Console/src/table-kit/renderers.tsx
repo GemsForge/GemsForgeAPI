@@ -108,6 +108,16 @@ function propertiesFor<Record>(
   );
 }
 
+/** Keep list metadata below the header; title and image properties are rendered structurally. */
+function listPropertiesFor<Record>(
+  properties: readonly RecordPropertyDefinition<Record>[],
+  propertyIds?: readonly string[],
+) {
+  return propertiesFor(properties, propertyIds)
+    .filter((property) => property.kind !== "title" && property.kind !== "image")
+    .slice(0, 2);
+}
+
 function propertyValue<Record>(
   property: RecordPropertyDefinition<Record>,
   record: TableRecord<Record>,
@@ -176,7 +186,7 @@ export function RecordList<Record>({
 }: TableRendererProps<Record>) {
   const effectiveRecords = useRendererRecords(records);
   const selection = useRendererSelection(selectedIds, onRecordSelect);
-  const visibleProperties = propertiesFor(properties, propertyIds).slice(0, 2);
+  const visibleProperties = listPropertiesFor(properties, propertyIds);
   const openTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(
     () => () => {
@@ -217,9 +227,11 @@ export function RecordList<Record>({
               else if (!event.shiftKey) onExpansionChange?.(record.id);
             }}
           >
-            <RecordImage image={record.image} size={48} />
-            <YStack flex={1} gap="$1">
+            <XStack alignItems="center" gap="$3" flex={1}>
+              <RecordImage image={record.image} size={48} />
               <SizableText fontWeight="700">{record.title ?? record.subtitle ?? record.id}</SizableText>
+            </XStack>
+            <YStack gap="$1">
               {visibleProperties.map((property) => (
                 <PropertyValue key={property.id} value={propertyValue(property, record)} />
               ))}
