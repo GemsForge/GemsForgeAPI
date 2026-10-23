@@ -5,13 +5,13 @@ import type { Education } from "../../types";
 import { GemEmptyState } from "../../components/ui";
 import { AttachmentControl } from "../../components/AttachmentControl";
 import { EditableRecordFields, formatRecordTimestamp } from "../../components/EditableRecordFields";
-import { useCreateEducationMutation } from "../../data/recordQueries";
 import { useAddressesQuery } from "../../data/lifeQueries";
 import { EducationCreateForm } from "../create/RecordCreateForms";
 import { RecordImport } from "../../components/RecordImport";
 import { useRecordUtilities } from "../../hooks/useRecordUtilities";
 import { DatabaseRecordCollection } from "../../components/DatabaseRecordCollection";
 import { educationTableAdapter } from "../database/recordTableAdapters";
+import { useEducationRecordActions } from "./useEducationRecordActions";
 
 interface EducationViewProps {
   records: Education[];
@@ -36,8 +36,11 @@ export function EducationView({ records }: EducationViewProps) {
   const selectedRecord = detail.data;
   const [creating, setCreating] = useState(false);
   const [importing, setImporting] = useState(false);
-  const create = useCreateEducationMutation();
   const addresses = useAddressesQuery(true);
+  const { create, actions } = useEducationRecordActions({
+    addresses: addresses.data ?? [],
+    onCreated: setSelectedID,
+  });
   const programOptions = Array.from(
     new Set(records.map((record) => record.program).filter((program): program is string => Boolean(program))),
   ).sort();
@@ -107,70 +110,7 @@ export function EducationView({ records }: EducationViewProps) {
             filterOptions={Array.from(new Set(records.map((record) => record.status))).sort()}
             detailId={selectedID}
             onDetailChange={setSelectedID}
-            actions={{
-              newRecordUtility: {
-                options: [
-                  {
-                    id: "new-education",
-                    label: "Input Form",
-                    description: "Open the education form.",
-                    render: ({ close }) => (
-                      <EducationCreateForm
-                        addresses={addresses.data ?? []}
-                        onCancel={close}
-                        onCreate={async (payload) => {
-                          const created = await create.mutateAsync(payload);
-                          setSelectedID(created.id);
-                          close();
-                        }}
-                      />
-                    ),
-                  },
-                  {
-                    id: "import-education-file",
-                    label: "Import File",
-                    description: "Choose a CSV or JSON file.",
-                    render: ({ close }) => (
-                      <RecordImport
-                        label="education records"
-                        expectedColumns={["id", "educationType", "institutionName", "status"]}
-                        mode="file"
-                        open
-                        onOpenChange={(open) => {
-                          if (!open) close();
-                        }}
-                        showTrigger={false}
-                        onPublish={async (rows) => {
-                          for (const row of rows)
-                            await create.mutateAsync(row as Parameters<typeof create.mutateAsync>[0]);
-                        }}
-                      />
-                    ),
-                  },
-                  {
-                    id: "paste-education-data",
-                    label: "Paste data",
-                    description: "Paste CSV or JSON records.",
-                    render: ({ close }) => (
-                      <RecordImport
-                        label="education records"
-                        expectedColumns={["id", "educationType", "institutionName", "status"]}
-                        mode="paste"
-                        open
-                        onOpenChange={(open) => {
-                          if (!open) close();
-                        }}
-                        showTrigger={false}
-                        onPublish={async (rows) => {
-                          for (const row of rows)
-                            await create.mutateAsync(row as Parameters<typeof create.mutateAsync>[0]);
-                        }}
-                      />
-                    ),
-                  },
-                ],
-              },
-            }}
+            actions={actions}
             detail={
               selectedRecord ? (
                 <>
