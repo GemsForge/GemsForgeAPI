@@ -2923,7 +2923,7 @@ dialog {
   min-height: 6rem;
 }
 .table-kit-gallery.is-small .table-kit-gallery-properties {
-  max-height: 3.75rem;
+  max-height: calc(4 * 1.25rem + 0.9rem);
 }
 .table-kit-gallery.is-large .table-kit-gallery-card {
 }
