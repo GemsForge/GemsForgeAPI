@@ -7,7 +7,7 @@ interface RecordImportActionsOptions {
   /** Human-readable resource label passed to the import workflow. */
   label: string;
   /** External column contract for the resource being imported. */
-  expectedColumns: string[];
+  expectedColumns: readonly string[];
   /** Feature-owned publish behavior for normalized import rows. */
   onPublish: (rows: Record<string, unknown>[]) => Promise<void>;
 }

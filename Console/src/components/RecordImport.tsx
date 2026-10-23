@@ -4,7 +4,7 @@ type Row = Record<string, unknown>;
 
 export interface RecordImportConfig {
   label: string;
-  expectedColumns: string[];
+  expectedColumns: readonly string[];
 }
 
 function parseCSV(input: string): Row[] {
