@@ -1,6 +1,7 @@
 import { useId, type ChangeEvent, type ReactNode } from "react";
 import { Form } from "tamagui";
 import { GCheckboxField, GDate, GemTextField, GSelectField } from "./ui";
+import type { GemTextFieldWidth } from "./ui/GemTextField";
 import { useRecordEditor } from "../hooks/useRecordEditor";
 
 export type EditableValue = string | number | boolean | null | undefined;
@@ -15,6 +16,8 @@ export interface EditableRecordField {
   nullable?: boolean;
   options?: Array<{ label: string; value: string }>;
   step?: string;
+  placeholder?: string;
+  width?: GemTextFieldWidth;
   displayValue?: ReactNode;
   readOnlyReason?: string;
   className?: string;
@@ -112,6 +115,7 @@ function EditableField({ field }: { field: EditableRecordField }) {
                 value={editor.draft}
                 onChange={editor.setDraft}
                 required={field.required}
+                width={field.width ?? "long"}
                 error={editor.error ?? undefined}
               />
             ) : field.inputType === "select" ? (
@@ -121,6 +125,7 @@ function EditableField({ field }: { field: EditableRecordField }) {
                 options={(field.options ?? []).concat(field.nullable ? [{ value: "", label: "—" }] : [])}
                 onChange={editor.setDraft}
                 required={field.required}
+                width={field.width ?? "long"}
                 error={editor.error ?? undefined}
               />
             ) : field.inputType === "boolean" ? (
@@ -129,6 +134,7 @@ function EditableField({ field }: { field: EditableRecordField }) {
                 value={editor.draft === "true"}
                 onChange={(checked) => editor.setDraft(String(checked))}
                 required={field.required}
+                width={field.width ?? "long"}
                 error={editor.error ?? undefined}
               />
             ) : (
@@ -139,7 +145,9 @@ function EditableField({ field }: { field: EditableRecordField }) {
                 onBlur={() => undefined}
                 type={field.inputType === "longText" ? undefined : field.inputType ?? "text"}
                 step={field.step}
+                placeholder={field.placeholder}
                 multiline={field.inputType === "longText"}
+                width={field.width ?? "long"}
                 required={field.required}
                 error={editor.error ?? undefined}
               />
