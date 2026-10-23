@@ -11,6 +11,8 @@ import { useCreateGemHueMutation } from "../../data/recordQueries";
 import { useState as useFormState } from "react";
 import type { GemHueCreate } from "../../types";
 import { api } from "../../api";
+import { ListItem, SizableText, XStack, YGroup } from "tamagui";
+import { ChevronRight } from "@tamagui/local-icons";
 
 interface GemHuesViewProps {
   hues: GemHue[];
@@ -289,22 +291,30 @@ export function GemHuesView({ hues }: GemHuesViewProps) {
           </button>
         </form>
       )}
-      <div className="hue-list">
+      <YGroup className="hue-list" role="list" gap="$2">
         {paging.items.map((hue) => (
-          <div key={hue.id} className="hue-list-item">
-            <button
+          <YGroup.Item key={hue.id}>
+            <ListItem
+              role="listitem"
+              aria-label={`Open ${hue.colorName}`}
               className={`hue-card ${selectedHue?.id === hue.id ? "selected" : ""}`}
+              title={hue.colorName}
+              subTitle={`${hue.hexCode} · ${hue.colorFamily || "Unclassified"}`}
+              icon={() => (
+                <XStack
+                  width={48}
+                  height={48}
+                  borderRadius="$2"
+                  backgroundColor={hue.hexCode || "$gemPanelLight"}
+                  borderWidth={1}
+                  borderColor="$gemPanelLight"
+                />
+              )}
+              iconAfter={ChevronRight}
               onClick={() => void openHue(hue.id)}
             >
-              <span className="hue-swatch" style={{ "--hue-color": hue.hexCode } as React.CSSProperties} />
-              <span className="hue-card-copy">
-                <strong>{hue.colorName}</strong>
-                <small>
-                  {hue.hexCode} · {hue.colorFamily || "Unclassified"}
-                </small>
-              </span>
-              <span className="arrow">›</span>
-            </button>
+              <SizableText color="$gemMuted">{hue.id}</SizableText>
+            </ListItem>
             {selectedID === hue.id && (
               <div className="gem-record-expansion">
                 <QueryFeedback query={detail} />
@@ -427,9 +437,9 @@ export function GemHuesView({ hues }: GemHuesViewProps) {
                 )}
               </div>
             )}
-          </div>
+          </YGroup.Item>
         ))}
-      </div>
+      </YGroup>
     </>
   );
 }
