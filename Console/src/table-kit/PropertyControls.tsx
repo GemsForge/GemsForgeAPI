@@ -97,10 +97,12 @@ export function TablePropertyControls({
             borderWidth={1}
             borderRadius="$gemControl"
             type="button"
+            className="table-kit-property-close"
             aria-label={closeLabel}
             onClick={() => setOpen(false)}
           >
-            {closeLabel}
+            <span aria-hidden="true">×</span>
+            <span className="sr-only">{closeLabel}</span>
           </Button>
           <GSearchField label={searchLabel} value={search} onChange={setSearch} placeholder={searchLabel} />
           <div role="toolbar" aria-label="Property actions">

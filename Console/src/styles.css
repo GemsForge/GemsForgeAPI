@@ -1553,6 +1553,21 @@ dialog::backdrop {
   box-shadow: 0 0.7rem 1.8rem rgb(0 0 0 / 20%);
 }
 
+.table-kit-property-close {
+  position: absolute;
+  top: 0.65rem;
+  right: 0.65rem;
+  display: inline-grid;
+  width: 2rem;
+  min-width: 2rem;
+  height: 2rem;
+  min-height: 2rem;
+  padding: 0;
+  place-items: center;
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
 .table-kit-property-dialog ul {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
