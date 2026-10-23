@@ -646,6 +646,11 @@ dialog::backdrop {
   min-height: 1.25rem;
   padding: 0;
 }
+.table-kit-property-dialog .field-checkbox[data-state="checked"] {
+  border-color: var(--mint);
+  background: var(--mint);
+  color: var(--canvas);
+}
 .table-kit-property-dialog [role="toolbar"] {
   display: flex;
   flex-wrap: wrap;
