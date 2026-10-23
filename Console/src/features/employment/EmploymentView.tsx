@@ -5,7 +5,6 @@ import type { Employment } from "../../types";
 import { GemEmptyState } from "../../components/ui";
 import { EditableRecordFields, formatRecordDate, formatRecordTimestamp } from "../../components/EditableRecordFields";
 import { useAddressesQuery } from "../../data/lifeQueries";
-import { EmploymentCreateForm } from "../create/RecordCreateForms";
 import { RecordImport } from "../../components/RecordImport";
 import { useRecordUtilities } from "../../hooks/useRecordUtilities";
 import { DatabaseRecordCollection } from "../../components/DatabaseRecordCollection";
@@ -37,7 +36,7 @@ export function EmploymentView({ records }: EmploymentViewProps) {
   const [creating, setCreating] = useState(false);
   const [importing, setImporting] = useState(false);
   const addresses = useAddressesQuery(true);
-  const { create, actions } = useEmploymentRecordActions({
+  const { create, actions, createForm } = useEmploymentRecordActions({
     addresses: addresses.data ?? [],
     onCreated: setSelectedID,
   });
@@ -78,21 +77,7 @@ export function EmploymentView({ records }: EmploymentViewProps) {
           }}
         />
       </div>
-      {creating && (
-        <EmploymentCreateForm
-          addresses={addresses.data ?? []}
-          employerTypeOptions={toOptions(employmentOptions.employerType)}
-          industryOptions={toOptions(employmentOptions.industry)}
-          employmentTypeOptions={toOptions(employmentOptions.employmentType)}
-          statusOptions={toOptions(employmentOptions.status)}
-          onCancel={() => setCreating(false)}
-          onCreate={async (payload) => {
-            const created = await create.mutateAsync(payload);
-            setSelectedID(created.id);
-            setCreating(false);
-          }}
-        />
-      )}
+      {creating && createForm(() => setCreating(false))}
 
       {records.length === 0 ? (
         <GemEmptyState

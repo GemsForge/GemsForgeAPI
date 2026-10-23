@@ -1,4 +1,5 @@
 import type { TableActionsProps } from "../../table-kit";
+import type { ReactNode } from "react";
 import { createRecordImportActions } from "../../components/createRecordImportActions";
 import { EmploymentCreateForm } from "../create/RecordCreateForms";
 import { useCreateEmploymentMutation } from "../../data/recordQueries";
@@ -22,6 +23,7 @@ interface EmploymentRecordActionsOptions {
 interface EmploymentRecordActionsResult {
   create: ReturnType<typeof useCreateEmploymentMutation>;
   actions: TableActionsProps;
+  createForm: (onCancel: () => void) => ReactNode;
 }
 
 /**
@@ -43,9 +45,21 @@ export function useEmploymentRecordActions({
     employmentTypeOptions: toOptions(employmentOptions.employmentType),
     statusOptions: toOptions(employmentOptions.status),
   };
+  const createForm = (onCancel: () => void) => (
+    <EmploymentCreateForm
+      {...formProps}
+      onCancel={onCancel}
+      onCreate={async (payload) => {
+        const created = await create.mutateAsync(payload);
+        onCreated(created.id);
+        onCancel();
+      }}
+    />
+  );
 
   return {
     create,
+    createForm,
     actions: {
       newRecordUtility: {
         options: [
@@ -53,17 +67,7 @@ export function useEmploymentRecordActions({
             id: "new-employment",
             label: "Input Form",
             description: "Open the employment form.",
-            render: ({ close }) => (
-              <EmploymentCreateForm
-                {...formProps}
-                onCancel={close}
-                onCreate={async (payload) => {
-                  const created = await create.mutateAsync(payload);
-                  onCreated(created.id);
-                  close();
-                }}
-              />
-            ),
+            render: ({ close }) => createForm(close),
           },
           ...createRecordImportActions({
             idPrefix: "employment",
