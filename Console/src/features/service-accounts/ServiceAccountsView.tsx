@@ -43,21 +43,56 @@ export function ServiceAccountsView({ records }: { records: ServiceAccount[] }) 
     onCreated: setSelectedID,
   });
   const logos = useServiceLogosQuery(true);
+  const [logoImageURLs, setLogoImageURLs] = useState<Record<number, string>>({});
+  useEffect(() => {
+    let active = true;
+    const controller = new AbortController();
+    const objectURLs: string[] = [];
+    void Promise.all(
+      (logos.data ?? []).map(async (logo) => {
+        try {
+          const blob = await api.getServiceLogoImage(logo.id, controller.signal);
+          const url = URL.createObjectURL(blob);
+          objectURLs.push(url);
+          return [logo.id, url] as const;
+        } catch {
+          return null;
+        }
+      }),
+    ).then((entries) => {
+      if (!active) {
+        objectURLs.forEach((url) => URL.revokeObjectURL(url));
+        return;
+      }
+      setLogoImageURLs(
+        Object.fromEntries(entries.filter((entry): entry is readonly [number, string] => entry !== null)),
+      );
+    });
+    return () => {
+      active = false;
+      controller.abort();
+      objectURLs.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [logos.data]);
   const tableAdapter = useMemo(
     () =>
       createServiceAccountTableAdapter(
         (record) => {
           const logo = logos.data?.find((item) => item.logoKey === record.logoKey);
-          return logo ? <LegacyLogoPreview logo={logo} className="service-account-card-logo" /> : "—";
+          return logo && logoImageURLs[logo.id] ? (
+            <img className="service-account-card-logo" src={logoImageURLs[logo.id]} alt={`${record.service} logo`} />
+          ) : (
+            "—"
+          );
         },
         (record) => {
           const logo = logos.data?.find((item) => item.logoKey === record.logoKey);
           return logo
-            ? { src: `/service-logos/${logo.id}/image`, alt: `${record.service} logo`, fit: "contain" }
+            ? { src: logoImageURLs[logo.id] ?? "", alt: `${record.service} logo`, fit: "contain" }
             : undefined;
         },
       ),
-    [logos.data],
+    [logoImageURLs, logos.data],
   );
   return (
     <>
