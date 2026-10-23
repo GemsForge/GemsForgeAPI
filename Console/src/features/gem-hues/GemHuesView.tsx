@@ -136,12 +136,22 @@ export function GemHuesView({ hues }: GemHuesViewProps) {
           </button>
         </div>
       </div>
-      <section className="record-form">
-        <h3>Assign existing records to my hub</h3>
+      {/* Keep the legacy ownership action in the same safety-panel presentation as Live Database. */}
+      <section className="database-panel">
+        <div className="database-panel-heading">
+          <div>
+            <p className="eyebrow">Migration safety</p>
+            <h3>Assign existing records to my hub</h3>
+          </div>
+          <span className="life-mark database-icon" aria-hidden="true">
+            ⇄
+          </span>
+        </div>
         <p className="muted">
           Use this only for legacy rows that already exist with no HubID. It does not create duplicates.
         </p>
         <button
+          className="primary-button"
           type="button"
           disabled={ownershipBusy}
           onClick={async () => {
