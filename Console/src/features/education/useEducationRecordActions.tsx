@@ -13,7 +13,6 @@ interface EducationRecordActionsOptions {
 }
 
 interface EducationRecordActionsResult {
-  create: ReturnType<typeof useCreateEducationMutation>;
   publish: (rows: Record<string, unknown>[]) => Promise<void>;
   actions: TableActionsProps;
   createForm: (onCancel: () => void) => ReactNode;
@@ -46,7 +45,6 @@ export function useEducationRecordActions({
   );
 
   return {
-    create,
     publish,
     createForm,
     actions: {

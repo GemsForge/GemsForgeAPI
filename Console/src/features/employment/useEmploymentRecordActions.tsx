@@ -21,7 +21,6 @@ interface EmploymentRecordActionsOptions {
 }
 
 interface EmploymentRecordActionsResult {
-  create: ReturnType<typeof useCreateEmploymentMutation>;
   publish: (rows: Record<string, unknown>[]) => Promise<void>;
   actions: TableActionsProps;
   createForm: (onCancel: () => void) => ReactNode;
@@ -59,7 +58,6 @@ export function useEmploymentRecordActions({
   );
 
   return {
-    create,
     publish,
     createForm,
     actions: {

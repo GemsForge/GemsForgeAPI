@@ -10,7 +10,6 @@ interface AddressRecordActionsOptions {
 }
 
 interface AddressRecordActionsResult {
-  create: ReturnType<typeof useCreateAddressMutation>;
   publish: (rows: Record<string, unknown>[]) => Promise<void>;
   actions: TableActionsProps;
   createForm: (onCancel: () => void) => ReactNode;
@@ -41,7 +40,6 @@ export function useAddressRecordActions({
   );
 
   return {
-    create,
     publish,
     createForm,
     actions: {

@@ -6,7 +6,6 @@ import { useCreateServiceAccountMutation } from "../../data/recordQueries";
 import { serviceAccountImportColumns, toServiceAccountCreatePayload } from "./serviceAccountImportAdapter";
 
 interface ServiceAccountRecordActionsResult {
-  create: ReturnType<typeof useCreateServiceAccountMutation>;
   publish: (rows: Record<string, unknown>[]) => Promise<void>;
   actions: TableActionsProps;
   createForm: (onCancel: () => void) => ReactNode;
@@ -32,7 +31,6 @@ export function useServiceAccountRecordActions({
   );
 
   return {
-    create,
     publish,
     createForm,
     actions: {
