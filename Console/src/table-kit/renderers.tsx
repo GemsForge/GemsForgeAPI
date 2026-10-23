@@ -87,6 +87,12 @@ function SelectionButton({
   return (
     <Checkbox
       size="$2"
+      width="$2"
+      height="$2"
+      minWidth="$2"
+      minHeight="$2"
+      alignSelf="center"
+      flexShrink={0}
       checked={selected}
       disabled={!selection.isSelectable(record.id)}
       aria-label={`${selected ? "Deselect" : "Select"} ${title}`}
