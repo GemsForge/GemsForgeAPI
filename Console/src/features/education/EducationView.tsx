@@ -36,7 +36,7 @@ export function EducationView({ records }: EducationViewProps) {
   const [creating, setCreating] = useState(false);
   const [importing, setImporting] = useState(false);
   const addresses = useAddressesQuery(true);
-  const { publish, actions, createForm } = useEducationRecordActions({
+  const { publish, importConfig, actions, createForm } = useEducationRecordActions({
     addresses: addresses.data ?? [],
     onCreated: setSelectedID,
   });
@@ -63,8 +63,7 @@ export function EducationView({ records }: EducationViewProps) {
           )}
         </div>
         <RecordImport
-          label="education records"
-          expectedColumns={["id", "educationType", "institutionName", "status"]}
+          {...importConfig}
           open={importing}
           onOpenChange={setImporting}
           showTrigger={records.length === 0}

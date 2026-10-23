@@ -3,6 +3,12 @@ import type { ReactNode } from "react";
 import { createRecordImportActions } from "../../components/createRecordImportActions";
 import { TransactionCreateForm } from "../create/RecordCreateForms";
 import { useCreateTransactionMutation } from "../../data/recordQueries";
+import type { RecordImportConfig } from "../../components/RecordImport";
+
+const transactionImportConfig: RecordImportConfig = {
+  label: "transactions",
+  expectedColumns: ["id", "item", "categoryID", "quantity"],
+};
 
 interface TransactionRecordActionsOptions {
   /** Selects a newly created transaction in the owning feature view. */
@@ -11,6 +17,7 @@ interface TransactionRecordActionsOptions {
 
 interface TransactionRecordActionsResult {
   publish: (rows: Record<string, unknown>[]) => Promise<void>;
+  importConfig: RecordImportConfig;
   actions: TableActionsProps;
   createForm: (onCancel: () => void) => ReactNode;
 }
@@ -39,6 +46,7 @@ export function useTransactionRecordActions({
 
   return {
     publish,
+    importConfig: transactionImportConfig,
     createForm,
     actions: {
       newRecordUtility: {
@@ -51,8 +59,7 @@ export function useTransactionRecordActions({
           },
           ...createRecordImportActions({
             idPrefix: "transaction",
-            label: "transactions",
-            expectedColumns: ["id", "item", "categoryID", "quantity"],
+            ...transactionImportConfig,
             onPublish: publish,
           }),
         ],

@@ -2,6 +2,11 @@ import { useState } from "react";
 
 type Row = Record<string, unknown>;
 
+export interface RecordImportConfig {
+  label: string;
+  expectedColumns: string[];
+}
+
 function parseCSV(input: string): Row[] {
   const rows: string[][] = [];
   let row: string[] = [],
@@ -49,9 +54,7 @@ export function RecordImport({
   onOpenChange,
   showTrigger = true,
   mode = "both",
-}: {
-  label: string;
-  expectedColumns: string[];
+}: RecordImportConfig & {
   onPublish: (rows: Row[]) => Promise<void>;
   /** Optionally control the import utility from the shared Table Kit header. */
   open?: boolean;

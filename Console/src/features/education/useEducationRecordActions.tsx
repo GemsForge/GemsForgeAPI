@@ -4,6 +4,12 @@ import { createRecordImportActions } from "../../components/createRecordImportAc
 import { EducationCreateForm } from "../create/RecordCreateForms";
 import { useCreateEducationMutation } from "../../data/recordQueries";
 import type { Address } from "../../types";
+import type { RecordImportConfig } from "../../components/RecordImport";
+
+const educationImportConfig: RecordImportConfig = {
+  label: "education records",
+  expectedColumns: ["id", "educationType", "institutionName", "status"],
+};
 
 interface EducationRecordActionsOptions {
   /** Addresses available to the education form. */
@@ -14,6 +20,7 @@ interface EducationRecordActionsOptions {
 
 interface EducationRecordActionsResult {
   publish: (rows: Record<string, unknown>[]) => Promise<void>;
+  importConfig: RecordImportConfig;
   actions: TableActionsProps;
   createForm: (onCancel: () => void) => ReactNode;
 }
@@ -46,6 +53,7 @@ export function useEducationRecordActions({
 
   return {
     publish,
+    importConfig: educationImportConfig,
     createForm,
     actions: {
       newRecordUtility: {
@@ -58,8 +66,7 @@ export function useEducationRecordActions({
           },
           ...createRecordImportActions({
             idPrefix: "education",
-            label: "education records",
-            expectedColumns: ["id", "educationType", "institutionName", "status"],
+            ...educationImportConfig,
             onPublish: publish,
           }),
         ],

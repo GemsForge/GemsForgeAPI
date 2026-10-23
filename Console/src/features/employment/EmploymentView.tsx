@@ -36,7 +36,7 @@ export function EmploymentView({ records }: EmploymentViewProps) {
   const [creating, setCreating] = useState(false);
   const [importing, setImporting] = useState(false);
   const addresses = useAddressesQuery(true);
-  const { publish, actions, createForm } = useEmploymentRecordActions({
+  const { publish, importConfig, actions, createForm } = useEmploymentRecordActions({
     addresses: addresses.data ?? [],
     onCreated: setSelectedID,
   });
@@ -60,15 +60,7 @@ export function EmploymentView({ records }: EmploymentViewProps) {
           )}
         </div>
         <RecordImport
-          label="employment records"
-          expectedColumns={[
-            "id",
-            "employerName",
-            "employerType",
-            "positionTitle",
-            "employmentType",
-            "employmentStatus",
-          ]}
+          {...importConfig}
           open={importing}
           onOpenChange={setImporting}
           showTrigger={records.length === 0}

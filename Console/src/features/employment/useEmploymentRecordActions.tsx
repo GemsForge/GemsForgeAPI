@@ -3,6 +3,12 @@ import type { ReactNode } from "react";
 import { createRecordImportActions } from "../../components/createRecordImportActions";
 import { EmploymentCreateForm } from "../create/RecordCreateForms";
 import { useCreateEmploymentMutation } from "../../data/recordQueries";
+import type { RecordImportConfig } from "../../components/RecordImport";
+
+const employmentImportConfig: RecordImportConfig = {
+  label: "employment records",
+  expectedColumns: ["id", "employerName", "employerType", "positionTitle", "employmentType", "employmentStatus"],
+};
 
 export const employmentOptions = {
   industry: ["Technology", "Healthcare", "Education", "Finance", "Government", "Retail", "Hospitality", "Manufacturing", "Other"],
@@ -22,6 +28,7 @@ interface EmploymentRecordActionsOptions {
 
 interface EmploymentRecordActionsResult {
   publish: (rows: Record<string, unknown>[]) => Promise<void>;
+  importConfig: RecordImportConfig;
   actions: TableActionsProps;
   createForm: (onCancel: () => void) => ReactNode;
 }
@@ -59,6 +66,7 @@ export function useEmploymentRecordActions({
 
   return {
     publish,
+    importConfig: employmentImportConfig,
     createForm,
     actions: {
       newRecordUtility: {
@@ -71,8 +79,7 @@ export function useEmploymentRecordActions({
           },
           ...createRecordImportActions({
             idPrefix: "employment",
-            label: "employment records",
-            expectedColumns: ["id", "employerName", "employerType", "positionTitle", "employmentType", "employmentStatus"],
+            ...employmentImportConfig,
             onPublish: publish,
           }),
         ],

@@ -3,6 +3,12 @@ import type { ReactNode } from "react";
 import { AddressCreateForm } from "../create/RecordCreateForms";
 import { useCreateAddressMutation } from "../../data/recordQueries";
 import { createRecordImportActions } from "../../components/createRecordImportActions";
+import type { RecordImportConfig } from "../../components/RecordImport";
+
+const addressImportConfig: RecordImportConfig = {
+  label: "addresses",
+  expectedColumns: ["id", "addressType", "country"],
+};
 
 interface AddressRecordActionsOptions {
   /** Selects a newly created address in the owning feature view. */
@@ -11,6 +17,7 @@ interface AddressRecordActionsOptions {
 
 interface AddressRecordActionsResult {
   publish: (rows: Record<string, unknown>[]) => Promise<void>;
+  importConfig: RecordImportConfig;
   actions: TableActionsProps;
   createForm: (onCancel: () => void) => ReactNode;
 }
@@ -41,6 +48,7 @@ export function useAddressRecordActions({
 
   return {
     publish,
+    importConfig: addressImportConfig,
     createForm,
     actions: {
       newRecordUtility: {
@@ -53,8 +61,7 @@ export function useAddressRecordActions({
           },
           ...createRecordImportActions({
             idPrefix: "address",
-            label: "addresses",
-            expectedColumns: ["id", "addressType", "country"],
+            ...addressImportConfig,
             onPublish: publish,
           }),
         ],

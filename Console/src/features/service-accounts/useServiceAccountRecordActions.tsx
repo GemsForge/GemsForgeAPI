@@ -4,9 +4,16 @@ import { createRecordImportActions } from "../../components/createRecordImportAc
 import { ServiceAccountCreateForm } from "../create/RecordCreateForms";
 import { useCreateServiceAccountMutation } from "../../data/recordQueries";
 import { serviceAccountImportColumns, toServiceAccountCreatePayload } from "./serviceAccountImportAdapter";
+import type { RecordImportConfig } from "../../components/RecordImport";
+
+const serviceAccountImportConfig: RecordImportConfig = {
+  label: "services",
+  expectedColumns: serviceAccountImportColumns,
+};
 
 interface ServiceAccountRecordActionsResult {
   publish: (rows: Record<string, unknown>[]) => Promise<void>;
+  importConfig: RecordImportConfig;
   actions: TableActionsProps;
   createForm: (onCancel: () => void) => ReactNode;
 }
@@ -32,6 +39,7 @@ export function useServiceAccountRecordActions({
 
   return {
     publish,
+    importConfig: serviceAccountImportConfig,
     createForm,
     actions: {
       newRecordUtility: {
@@ -44,8 +52,7 @@ export function useServiceAccountRecordActions({
           },
           ...createRecordImportActions({
             idPrefix: "service",
-            label: "services",
-            expectedColumns: serviceAccountImportColumns,
+            ...serviceAccountImportConfig,
             onPublish: publish,
           }),
         ],

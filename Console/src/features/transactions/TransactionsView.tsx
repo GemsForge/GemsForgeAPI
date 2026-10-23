@@ -47,7 +47,7 @@ export function TransactionsView({ records }: TransactionsViewProps) {
   const merchants = useMerchantsQuery(true);
   const [creating, setCreating] = useState(false);
   const [importing, setImporting] = useState(false);
-  const { publish, actions, createForm } = useTransactionRecordActions({
+  const { publish, importConfig, actions, createForm } = useTransactionRecordActions({
     onCreated: setSelectedID,
   });
 
@@ -70,8 +70,7 @@ export function TransactionsView({ records }: TransactionsViewProps) {
           )}
         </div>
         <RecordImport
-          label="transactions"
-          expectedColumns={["id", "item", "categoryID", "quantity"]}
+          {...importConfig}
           open={importing}
           onOpenChange={setImporting}
           showTrigger={records.length === 0}

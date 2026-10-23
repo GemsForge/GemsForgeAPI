@@ -35,7 +35,7 @@ export function AddressesView({ records }: AddressesViewProps) {
   const selectedAddress = detail.data;
   const [creating, setCreating] = useState(false);
   const [importing, setImporting] = useState(false);
-  const { publish, actions, createForm } = useAddressRecordActions({
+  const { publish, importConfig, actions, createForm } = useAddressRecordActions({
     onCreated: setSelectedID,
   });
 
@@ -56,8 +56,7 @@ export function AddressesView({ records }: AddressesViewProps) {
           )}
         </div>
         <RecordImport
-          label="addresses"
-          expectedColumns={["id", "addressType", "country"]}
+          {...importConfig}
           open={importing}
           onOpenChange={setImporting}
           showTrigger={records.length === 0}

@@ -17,7 +17,6 @@ import { useRecordUtilities } from "../../hooks/useRecordUtilities";
 import { api } from "../../api";
 import { DatabaseRecordCollection } from "../../components/DatabaseRecordCollection";
 import { createServiceAccountTableAdapter } from "../database/recordTableAdapters";
-import { serviceAccountImportColumns } from "./serviceAccountImportAdapter";
 import { useServiceAccountRecordActions } from "./useServiceAccountRecordActions";
 
 /** Render service-account records through the shared Table Kit consumer adapter. */
@@ -40,7 +39,7 @@ export function ServiceAccountsView({ records }: { records: ServiceAccount[] }) 
   const patch = useServiceAccountPatchMutation();
   const [creating, setCreating] = useState(false);
   const [importing, setImporting] = useState(false);
-  const { publish, actions, createForm } = useServiceAccountRecordActions({
+  const { publish, importConfig, actions, createForm } = useServiceAccountRecordActions({
     onCreated: setSelectedID,
   });
   const logos = useServiceLogosQuery(true);
@@ -69,8 +68,7 @@ export function ServiceAccountsView({ records }: { records: ServiceAccount[] }) 
           )}
         </div>
         <RecordImport
-          label="services"
-          expectedColumns={serviceAccountImportColumns}
+          {...importConfig}
           open={importing}
           onOpenChange={setImporting}
           showTrigger={records.length === 0}
