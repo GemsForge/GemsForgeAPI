@@ -1556,7 +1556,7 @@ dialog::backdrop {
   list-style: none;
 }
 
-/* Let Tamagui's portal manage modal behavior while retaining the table utility's placement. */
+/* Tamagui's full-screen portal centers its content and owns modal positioning. */
 .table-kit-utility-backdrop {
   position: fixed;
   z-index: 40;
@@ -1566,11 +1566,6 @@ dialog::backdrop {
 }
 
 .table-kit-new-record-utility {
-  position: fixed;
-  z-index: 41;
-  top: 50%;
-  right: clamp(1rem, 3vw, 2rem);
-  transform: translateY(-50%);
   width: min(36rem, calc(100vw - 2rem));
   max-height: min(48rem, calc(100vh - 2rem));
   overflow: auto;
