@@ -11,7 +11,6 @@ import {
   formatRecordPercentage,
   formatRecordTimestamp,
 } from "../../components/EditableRecordFields";
-import { ServiceAccountCreateForm } from "../create/RecordCreateForms";
 import { RecordImport } from "../../components/RecordImport";
 import { useServiceLogosQuery } from "../../data/lifeQueries";
 import { useRecordUtilities } from "../../hooks/useRecordUtilities";
@@ -41,7 +40,7 @@ export function ServiceAccountsView({ records }: { records: ServiceAccount[] }) 
   const patch = useServiceAccountPatchMutation();
   const [creating, setCreating] = useState(false);
   const [importing, setImporting] = useState(false);
-  const { create, publish, actions } = useServiceAccountRecordActions({
+  const { publish, actions, createForm } = useServiceAccountRecordActions({
     onCreated: setSelectedID,
   });
   const logos = useServiceLogosQuery(true);
@@ -78,16 +77,7 @@ export function ServiceAccountsView({ records }: { records: ServiceAccount[] }) 
           onPublish={publish}
         />
       </div>
-      {creating && (
-        <ServiceAccountCreateForm
-          onCancel={() => setCreating(false)}
-          onCreate={async (payload) => {
-            const created = await create.mutateAsync(payload);
-            setSelectedID(created.id);
-            setCreating(false);
-          }}
-        />
-      )}
+      {creating && createForm(() => setCreating(false))}
       {records.length === 0 ? (
         <GemEmptyState
           icon="◎"
