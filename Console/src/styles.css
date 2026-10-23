@@ -2881,12 +2881,15 @@ dialog {
   color: var(--ink);
   font-weight: 750;
 }
+.table-kit-gallery-property-label {
+  color: var(--ink);
+  font-weight: 650;
+}
 .table-kit-gallery-subtitle,
 .table-kit-gallery-status,
 .table-kit-gallery-property {
   color: var(--muted);
-  font-size: 0.72rem;
-  line-height: 1.25;
+  font-size: 0.78rem;
 }
 .table-kit-gallery-status {
   justify-self: start;
@@ -2897,9 +2900,8 @@ dialog {
 }
 .table-kit-gallery-properties {
   display: grid;
-  min-height: 0;
   gap: 0.3rem;
-  max-height: 5.5rem;
+  max-height: calc(4 * 1.25rem + 0.9rem);
   overflow-y: auto;
   overscroll-behavior: contain;
 }

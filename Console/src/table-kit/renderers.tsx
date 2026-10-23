@@ -415,6 +415,7 @@ export function RecordGallery<Record>({
                             aria-label={`${property.label}: ${text}`}
                             title={text}
                           >
+                            <span className="table-kit-gallery-property-label">{property.label}: </span>
                             <PropertyValue value={value} />
                           </div>
                         );
