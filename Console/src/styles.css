@@ -924,8 +924,13 @@ dialog::backdrop {
   color: var(--muted);
 }
 .editable-record-dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 41;
   width: min(36rem, calc(100vw - 2rem));
   max-height: min(42rem, calc(100vh - 2rem));
+  margin: 0;
   overflow: auto;
   padding: 1.25rem;
   border: 1px solid var(--line);
@@ -933,6 +938,7 @@ dialog::backdrop {
   background: var(--panel);
   color: var(--ink);
   box-shadow: 0 2rem 8rem rgb(0 0 0 / 45%);
+  transform: translate(-50%, -50%);
 }
 .editable-record-dialog-heading {
   display: flex;
