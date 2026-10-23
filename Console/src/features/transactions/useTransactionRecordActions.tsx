@@ -11,6 +11,7 @@ interface TransactionRecordActionsOptions {
 
 interface TransactionRecordActionsResult {
   create: ReturnType<typeof useCreateTransactionMutation>;
+  publish: (rows: Record<string, unknown>[]) => Promise<void>;
   actions: TableActionsProps;
   createForm: (onCancel: () => void) => ReactNode;
 }
@@ -39,6 +40,7 @@ export function useTransactionRecordActions({
 
   return {
     create,
+    publish,
     createForm,
     actions: {
       newRecordUtility: {

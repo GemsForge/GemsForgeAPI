@@ -35,7 +35,7 @@ export function AddressesView({ records }: AddressesViewProps) {
   const selectedAddress = detail.data;
   const [creating, setCreating] = useState(false);
   const [importing, setImporting] = useState(false);
-  const { create, actions, createForm } = useAddressRecordActions({
+  const { publish, actions, createForm } = useAddressRecordActions({
     onCreated: setSelectedID,
   });
 
@@ -61,9 +61,7 @@ export function AddressesView({ records }: AddressesViewProps) {
           open={importing}
           onOpenChange={setImporting}
           showTrigger={records.length === 0}
-          onPublish={async (rows) => {
-            for (const row of rows) await create.mutateAsync(row as Parameters<typeof create.mutateAsync>[0]);
-          }}
+          onPublish={publish}
         />
       </div>
       {creating && createForm(() => setCreating(false))}

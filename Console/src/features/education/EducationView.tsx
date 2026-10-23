@@ -36,7 +36,7 @@ export function EducationView({ records }: EducationViewProps) {
   const [creating, setCreating] = useState(false);
   const [importing, setImporting] = useState(false);
   const addresses = useAddressesQuery(true);
-  const { create, actions, createForm } = useEducationRecordActions({
+  const { publish, actions, createForm } = useEducationRecordActions({
     addresses: addresses.data ?? [],
     onCreated: setSelectedID,
   });
@@ -68,9 +68,7 @@ export function EducationView({ records }: EducationViewProps) {
           open={importing}
           onOpenChange={setImporting}
           showTrigger={records.length === 0}
-          onPublish={async (rows) => {
-            for (const row of rows) await create.mutateAsync(row as Parameters<typeof create.mutateAsync>[0]);
-          }}
+          onPublish={publish}
         />
       </div>
       {creating && createForm(() => setCreating(false))}

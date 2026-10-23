@@ -47,7 +47,7 @@ export function TransactionsView({ records }: TransactionsViewProps) {
   const merchants = useMerchantsQuery(true);
   const [creating, setCreating] = useState(false);
   const [importing, setImporting] = useState(false);
-  const { create, actions, createForm } = useTransactionRecordActions({
+  const { publish, actions, createForm } = useTransactionRecordActions({
     onCreated: setSelectedID,
   });
 
@@ -75,9 +75,7 @@ export function TransactionsView({ records }: TransactionsViewProps) {
           open={importing}
           onOpenChange={setImporting}
           showTrigger={records.length === 0}
-          onPublish={async (rows) => {
-            for (const row of rows) await create.mutateAsync(row as Parameters<typeof create.mutateAsync>[0]);
-          }}
+          onPublish={publish}
         />
       </div>
       {creating && createForm(() => setCreating(false))}
