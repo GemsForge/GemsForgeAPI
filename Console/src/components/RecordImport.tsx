@@ -78,10 +78,6 @@ export function RecordImport({
   function parse() {
     setError(null);
     try {
-      if (text.trim().startsWith("[")) setRows(JSON.parse(text));
-      else {
-        setRows(parseCSV(text));
-      }
       const parsedRows = text.trim().startsWith("[") ? (JSON.parse(text) as Row[]) : parseCSV(text);
       const expected = new Set(expectedColumns);
       for (const [index, row] of parsedRows.entries()) {
