@@ -404,7 +404,7 @@ export function RecordGallery<Record>({
                   {record.status && <span className="table-kit-gallery-status">{record.status.label}</span>}
                   <div className="table-kit-gallery-properties" aria-label="Visible properties">
                     {visibleProperties
-                      .filter((property) => property.kind !== "image" && property.id !== "logo")
+                      .filter((property) => !property.primary && property.kind !== "image" && property.id !== "logo")
                       .map((property) => {
                         const value = propertyValue(property, record);
                         const text = String(value.display || "unconfigured");

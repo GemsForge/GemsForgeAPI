@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useGemHueQuery, useGemHueImageQuery, useGemHuePatchMutation } from "../../data/recordQueries";
 import { QueryFeedback } from "../../components/QueryFeedback";
 import type { GemHue } from "../../types";
@@ -11,12 +11,11 @@ import type { GemHueCreate } from "../../types";
 import { api } from "../../api";
 import { DatabaseRecordCollection } from "../../components/DatabaseRecordCollection";
 import { useRecordUtilities } from "../../hooks/useRecordUtilities";
-import { gemHueTableAdapter } from "../database/recordTableAdapters";
+import { createGemHueTableAdapter } from "../database/recordTableAdapters";
 
 interface GemHuesViewProps {
   hues: GemHue[];
 }
-
 export function GemHuesView({ hues }: GemHuesViewProps) {
   const utilities = useRecordUtilities(
     hues,
@@ -33,7 +32,9 @@ export function GemHuesView({ hues }: GemHuesViewProps) {
   const patch = useGemHuePatchMutation();
   const selectedHue = detail.data;
   const [imageURL, setImageURL] = useState<string | null>(null);
+  const [galleryImages, setGalleryImages] = useState<Record<string, string>>({});
   const [showAdd, setShowAdd] = useFormState(false);
+  const [showImport, setShowImport] = useFormState(false);
   const createHue = useCreateGemHueMutation();
   const [form, setForm] = useFormState<GemHueCreate>({
     id: "",
@@ -55,6 +56,47 @@ export function GemHuesView({ hues }: GemHuesViewProps) {
   const [ownership, setOwnership] = useFormState<{ counts: Record<string, number>; message?: string } | null>(null);
   const [ownershipError, setOwnershipError] = useFormState<string | null>(null);
   const [ownershipBusy, setOwnershipBusy] = useFormState(false);
+
+  // Load stored logo files for the gallery and release their object URLs when the collection changes.
+  useEffect(() => {
+    let active = true;
+    const controller = new AbortController();
+    const objectURLs: string[] = [];
+
+    void Promise.all(
+      hues.map(async (hue) => {
+        try {
+          const response = await api.getGemHueImage(hue.id, controller.signal);
+          const blob = await response.blob();
+          if (!blob.type.startsWith("image/") || blob.size === 0) return null;
+          const url = URL.createObjectURL(blob);
+          objectURLs.push(url);
+          return [hue.id, url] as const;
+        } catch {
+          return null;
+        }
+      }),
+    ).then((entries) => {
+      if (active) {
+        setGalleryImages(Object.fromEntries(entries.filter((entry): entry is readonly [string, string] => entry !== null)));
+      }
+    });
+
+    return () => {
+      active = false;
+      controller.abort();
+      objectURLs.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [hues]);
+
+  const tableAdapter = useMemo(
+    () =>
+      createGemHueTableAdapter((hue) => {
+        const src = galleryImages[hue.id];
+        return src ? { src, alt: `${hue.colorName} logo`, fit: "contain" } : undefined;
+      }),
+    [galleryImages],
+  );
 
   useEffect(() => {
     if (!image.data) {
@@ -89,8 +131,8 @@ export function GemHuesView({ hues }: GemHuesViewProps) {
           <button type="button" onClick={() => setShowAdd((value) => !value)}>
             {showAdd ? "Close" : "Add Gem Hue"}
           </button>
-          <button type="button" onClick={() => setShowAdd(false)}>
-            Import CSV / JSON
+          <button type="button" onClick={() => setShowImport((value) => !value)}>
+            {showImport ? "Close import" : "Import CSV / JSON"}
           </button>
         </div>
       </div>
@@ -151,7 +193,7 @@ export function GemHuesView({ hues }: GemHuesViewProps) {
           </>
         )}
       </section>
-      <section className="record-form">
+      {showImport && <section className="record-form">
         <h3>Import Gem Hues</h3>
         <p className="muted">
           Paste a CSV export with headers such as HueID, ColorName, and HexCode, or a JSON array using those same names.
@@ -247,7 +289,7 @@ export function GemHuesView({ hues }: GemHuesViewProps) {
             </button>
           </>
         )}
-      </section>
+      </section>}
       {showAdd && (
         <form
           className="record-form"
@@ -301,7 +343,7 @@ export function GemHuesView({ hues }: GemHuesViewProps) {
         label="Gem Hues"
         records={hues}
         utilities={utilities}
-        adapter={gemHueTableAdapter}
+        adapter={tableAdapter}
         sortOptions={[{ value: "name", label: "Color name" }, { value: "family", label: "Color family" }, { value: "created", label: "Created date" }]}
         filterOptions={Array.from(new Set(hues.map((hue) => hue.colorFamily).filter((value): value is string => Boolean(value)))).sort()}
         detailId={selectedID}
@@ -435,30 +477,5 @@ export function GemHuesView({ hues }: GemHuesViewProps) {
         }
       />
     </>
-  );
-}
-
-/** Renders the record's stored logo, falling back to its color swatch when absent. */
-function GemHueListIcon({ hue }: { hue: GemHue }) {
-  const image = useGemHueImageQuery(hue.id);
-  const [imageURL, setImageURL] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!image.data) {
-      setImageURL(null);
-      return;
-    }
-    const url = URL.createObjectURL(image.data);
-    setImageURL(url);
-    return () => URL.revokeObjectURL(url);
-  }, [image.data]);
-
-  return (
-    <Avatar size={48} backgroundColor={hue.hexCode || "$gemPanelLight"}>
-      {imageURL && <Avatar.Image src={imageURL} accessibilityLabel={`${hue.colorName} logo`} />}
-      <Avatar.Fallback backgroundColor={hue.hexCode || "$gemPanelLight"}>
-        <SizableText fontWeight="700">{hue.colorName.charAt(0).toUpperCase() || "?"}</SizableText>
-      </Avatar.Fallback>
-    </Avatar>
   );
 }
