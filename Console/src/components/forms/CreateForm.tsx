@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from "react";
 import type { UseFormRegisterReturn } from "react-hook-form";
-import { Form, Input, Label, Select, SizableText, TextArea, YStack } from "tamagui";
+import { Form, Input, Label, Select, SizableText, YStack } from "tamagui";
+import { GemField } from "../ui/GemField";
 
 interface CreateFieldFrameProps {
   id: string;
@@ -103,34 +104,20 @@ export function CreateTextField({
   const inputPlaceholder = placeholder ?? defaultTextPlaceholder(label);
   const controlClassName = `create-form-control create-form-control--${width}`;
   return (
-    <CreateFieldFrame id={id} label={label} required={required} error={error}>
-      {multiline ? (
-        <TextArea
-          id={id}
-          className={controlClassName}
-          {...controlStyle}
-          aria-invalid={Boolean(error)}
-          aria-describedby={error ? `${id}-error` : undefined}
-          required={required}
-          placeholder={inputPlaceholder}
-          {...registration}
-          ref={(element) => registration.ref(element as HTMLTextAreaElement | null)}
-        />
-      ) : (
-        <Input
-          id={id}
-          className={controlClassName}
-          {...controlStyle}
-          type={type}
-          required={required}
-          aria-invalid={Boolean(error)}
-          aria-describedby={error ? `${id}-error` : undefined}
-          placeholder={inputPlaceholder}
-          {...registration}
-          ref={(element) => registration.ref(element as HTMLInputElement | null)}
-        />
-      )}
-    </CreateFieldFrame>
+    <GemField
+      {...registration}
+      ref={(element) => registration.ref(element)}
+      id={id}
+      label={label}
+      error={error}
+      required={required}
+      type={type}
+      multiline={multiline}
+      placeholder={inputPlaceholder}
+      width={width}
+      className={controlClassName}
+      {...controlStyle}
+    />
   );
 }
 
