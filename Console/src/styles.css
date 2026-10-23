@@ -2901,22 +2901,22 @@ dialog {
 .table-kit-record-grid .table-kit-record-row-selected {
   background: color-mix(in srgb, var(--mint) 12%, transparent);
 }
-.table-kit-gallery-card.is-small {
+.table-kit-gallery.is-small .table-kit-gallery-card {
   flex-basis: 12rem;
 }
-.table-kit-gallery-card.is-small .table-kit-gallery-image {
+.table-kit-gallery.is-small .table-kit-gallery-image {
   min-height: 6rem;
 }
-.table-kit-gallery-card.is-small .table-kit-gallery-properties {
+.table-kit-gallery.is-small .table-kit-gallery-properties {
   max-height: 3.75rem;
 }
-.table-kit-gallery-card.is-large {
+.table-kit-gallery.is-large .table-kit-gallery-card {
   flex-basis: 20rem;
 }
-.table-kit-gallery-card.is-large .table-kit-gallery-image {
+.table-kit-gallery.is-large .table-kit-gallery-image {
   min-height: 12rem;
 }
-.table-kit-gallery-card.is-large .table-kit-gallery-properties {
+.table-kit-gallery.is-large .table-kit-gallery-properties {
   max-height: 8rem;
 }
 @media (max-width: 640px) {
