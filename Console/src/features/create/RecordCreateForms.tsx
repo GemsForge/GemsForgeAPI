@@ -61,12 +61,10 @@ import {
   type ServiceAccountCreateFormValues,
   type ServiceAccountFieldDefinition,
 } from "../service-accounts/serviceAccountCreateFields";
+import { domainFieldDefinitions, domainSchema, type DomainCreateFormValues, type DomainFieldDefinition } from "../domains/domainCreateFields";
 
-const required = (label: string) => z.string().trim().min(1, `${label} is required.`);
-const optional = z.string();
 const transactionFieldDefinitions = createTransactionFieldDefinitions({ categories: [], subcategories: [] });
 const transactionSchema = createTransactionSchema(transactionFieldDefinitions);
-const domainSchema = z.object({ id: optional, title: required("Title"), description: required("Description") });
 
 function FormShell<T extends FieldValues>({
   title,
@@ -281,10 +279,8 @@ function renderServiceAccountField(form: UseFormReturn<ServiceAccountCreateFormV
   return <Text key={field.name} form={form} name={field.name} label={field.label} required={field.required} type={field.type} multiline={field.multiline} width={field.width} />;
 }
 
-function fields<T extends FieldValues>(form: UseFormReturn<T>, definitions: Array<[Path<T>, string, boolean?]>) {
-  return definitions.map(([name, label, requiredField]) => (
-    <Text key={name} form={form} name={name} label={label} required={requiredField} />
-  ));
+function renderDomainField(form: UseFormReturn<DomainCreateFormValues>, field: DomainFieldDefinition) {
+  return <Text key={field.name} form={form} name={field.name} label={field.label} required={field.required} multiline={field.multiline} width={field.width} />;
 }
 
 /** Generate the stable EmploymentID required by the existing API without exposing it as form input. */
@@ -311,11 +307,7 @@ export function DomainCreateForm({
     >
       {(form) => (
         <>
-          {fields(form, [
-            ["id", "Stable ID (optional)"],
-            ["title", "Title", true],
-            ["description", "Description", true],
-          ])}
+          {domainFieldDefinitions.map((field) => renderDomainField(form, field))}
         </>
       )}
     </FormShell>
