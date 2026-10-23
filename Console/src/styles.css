@@ -646,6 +646,12 @@ dialog::backdrop {
   min-height: 1.25rem;
   padding: 0;
 }
+.table-kit-property-dialog [role="toolbar"] {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
 /* Keep related form fields readable in columns while preserving a single-column compact layout. */
 .create-form-grid {
   display: grid;
