@@ -1,23 +1,11 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState, type ReactNode } from "react";
-import {
-  Controller,
-  useForm,
-  type Control,
-  type DefaultValues,
-  type FieldValues,
-  type Path,
-  type Resolver,
-  type UseFormReturn,
-} from "react-hook-form";
+import { useForm, type DefaultValues, type FieldValues, type Resolver, type UseFormReturn } from "react-hook-form";
 import { z } from "zod";
 import {
   CreateFormFrame,
-  CreateSearchableSelectField,
-  CreateSelectField,
-  CreateTextField,
-  type CreateFieldWidth,
 } from "../../components/forms/CreateForm";
+import { CreateFormSelect as Select, CreateFormText as Text } from "../../components/forms/CreateFormField";
 import {
   GeoapifyAddressSearch,
   type AddressSearchValues,
@@ -105,91 +93,6 @@ function FormShell<T extends FieldValues>({
     >
       {children(form)}
     </CreateFormFrame>
-  );
-}
-
-function Text<T extends FieldValues>({
-  form,
-  name,
-  label,
-  required: isRequired = false,
-  type = "text",
-  multiline = false,
-  placeholder,
-  width = "long",
-}: {
-  form: UseFormReturn<T>;
-  name: Path<T>;
-  label: string;
-  required?: boolean;
-  type?: string;
-  multiline?: boolean;
-  placeholder?: string;
-  width?: CreateFieldWidth;
-}) {
-  const message = form.formState.errors[name]?.message;
-  return (
-    <CreateTextField
-      label={label}
-      registration={form.register(name)}
-      required={isRequired}
-      type={type}
-      multiline={multiline}
-      placeholder={placeholder}
-      width={width}
-      error={typeof message === "string" ? message : undefined}
-    />
-  );
-}
-function Select<T extends FieldValues>({
-  form,
-  name,
-  label,
-  options,
-  required = false,
-  searchable = false,
-  searchPlaceholder,
-}: {
-  form: UseFormReturn<T>;
-  name: Path<T>;
-  label: string;
-  options: Array<{ value: string; label: string }>;
-  required?: boolean;
-  searchable?: boolean;
-  searchPlaceholder?: string;
-}) {
-  const message = form.formState.errors[name]?.message;
-  return (
-    <Controller
-      control={form.control as Control<T>}
-      name={name}
-      render={({ field }) =>
-        searchable ? (
-          <CreateSearchableSelectField
-            label={label}
-            name={field.name}
-            value={String(field.value ?? "")}
-            onValueChange={field.onChange}
-            onBlur={field.onBlur}
-            options={options}
-            required={required}
-            searchPlaceholder={searchPlaceholder}
-            error={typeof message === "string" ? message : undefined}
-          />
-        ) : (
-          <CreateSelectField
-            label={label}
-            name={field.name}
-            value={String(field.value ?? "")}
-            onValueChange={field.onChange}
-            onBlur={field.onBlur}
-            options={options}
-            required={required}
-            error={typeof message === "string" ? message : undefined}
-          />
-        )
-      }
-    />
   );
 }
 
