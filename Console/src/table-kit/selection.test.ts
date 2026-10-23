@@ -21,14 +21,6 @@ describe("Table Kit selection", () => {
     expect(hook.result.current.selectedIds).toEqual(new Set(["one", "two", "three"]));
   });
 
-  it("replaces a prior record choice when a different list item is opened", () => {
-    const hook = renderHook(() => useTableSelection<string>({ defaultSelectedIds: ["one", "off-page"] }));
-
-    act(() => hook.result.current.replace(["two"]));
-
-    expect(hook.result.current.selectedIds).toEqual(new Set(["two"]));
-  });
-
   it("preserves selections outside a bulk-action scope and reports partial selection", () => {
     const hook = renderHook(() => useTableSelection<string>({ defaultSelectedIds: ["off-page", "one"] }));
 

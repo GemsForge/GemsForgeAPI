@@ -1,5 +1,6 @@
 import {
   useContext,
+  useEffect,
   useRef,
   useState,
   type KeyboardEvent,
@@ -43,7 +44,6 @@ export interface TableRendererProps<Record> {
 interface RendererSelection {
   selectedIds: ReadonlySet<TableRecordId>;
   onRecordSelect?: (id: TableRecordId) => void;
-  replace?: (ids: readonly TableRecordId[]) => void;
   addRecords?: (ids: readonly TableRecordId[]) => void;
   isSelectable: (id: TableRecordId) => boolean;
 }
@@ -58,7 +58,6 @@ function useRendererSelection(
   return {
     selectedIds: scopedSelection?.selectedIds ?? selectedIds ?? new Set<TableRecordId>(),
     onRecordSelect: scopedSelection?.toggle ?? onRecordSelect,
-    replace: scopedSelection?.replace,
     addRecords: scopedSelection?.add,
     isSelectable: scopedSelection ? (id) => scopedSelection.currentPageIds.includes(id) : () => true,
   };
@@ -166,7 +165,7 @@ function GridActionCell<Record>({ data, selection, onExpansionChange }: GridActi
   );
 }
 
-/** Render actual Tamagui list items; one click opens one record, while a double click adds to selection. */
+/** Render Tamagui list items with distinct open and multi-select gestures. */
 export function RecordList<Record>({
   records,
   properties,
@@ -178,7 +177,13 @@ export function RecordList<Record>({
   const effectiveRecords = useRendererRecords(records);
   const selection = useRendererSelection(selectedIds, onRecordSelect);
   const visibleProperties = propertiesFor(properties, propertyIds).slice(0, 2);
-  const priorSelection = useRef<ReadonlySet<TableRecordId>>(new Set());
+  const openTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(
+    () => () => {
+      if (openTimer.current) clearTimeout(openTimer.current);
+    },
+    [],
+  );
   return (
     <ul className="table-kit-record-list">
       {effectiveRecords.map((record) => {
@@ -197,28 +202,19 @@ export function RecordList<Record>({
             backgroundColor="$gemPanel"
             onClick={(event) => {
               if (event.detail > 1) return;
-              priorSelection.current = new Set(selection.selectedIds);
-              if (selection.isSelectable(record.id)) {
-                if (selection.replace) selection.replace([record.id]);
-                else selection.onRecordSelect?.(record.id);
-              }
-              onExpansionChange?.(record.id);
+              if (openTimer.current) clearTimeout(openTimer.current);
+              // Defer opening until the double-click window closes so selection does not also open the view.
+              openTimer.current = setTimeout(() => onExpansionChange?.(record.id), 250);
             }}
             onDoubleClick={() => {
-              if (selection.isSelectable(record.id)) {
-                if (selection.replace) selection.replace([...priorSelection.current, record.id]);
-                else selection.onRecordSelect?.(record.id);
-              }
+              if (openTimer.current) clearTimeout(openTimer.current);
+              if (selection.isSelectable(record.id)) selection.onRecordSelect?.(record.id);
             }}
             onKeyDown={(event) => {
               if (event.key !== "Enter" && event.key !== " ") return;
               event.preventDefault();
-              if (selection.isSelectable(record.id)) {
-                if (event.shiftKey) selection.addRecords?.([record.id]);
-                else if (selection.replace) selection.replace([record.id]);
-                else selection.onRecordSelect?.(record.id);
-              }
-              if (!event.shiftKey) onExpansionChange?.(record.id);
+              if (event.shiftKey && selection.isSelectable(record.id)) selection.onRecordSelect?.(record.id);
+              else if (!event.shiftKey) onExpansionChange?.(record.id);
             }}
           >
             <RecordImage image={record.image} size={48} />

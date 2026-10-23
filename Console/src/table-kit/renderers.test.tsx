@@ -1,5 +1,5 @@
 import { TamaguiProvider } from "tamagui";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import type { ReactNode } from "react";
 import {
@@ -85,7 +85,7 @@ describe("Table Kit record renderers", () => {
     expect(screen.getByText("Service")).toBeInTheDocument();
   });
 
-  it("opens and single-selects a Tamagui list item, then replaces selection on the next record", () => {
+  it("opens a Tamagui list item on single click without selecting it", async () => {
     const onExpand = vi.fn();
     const twoRecords = [records[0], { id: "2", source: { name: "Beta", kind: "Service" }, title: "Beta" }];
     renderWithTheme(
@@ -105,16 +105,17 @@ describe("Table Kit record renderers", () => {
     expect(alpha.closest("li")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "View" })).not.toBeInTheDocument();
     fireEvent.click(alpha, { detail: 1 });
-    expect(alpha).toHaveAttribute("data-selected", "true");
-    expect(onExpand).toHaveBeenLastCalledWith("1");
+    expect(alpha).toHaveAttribute("data-selected", "false");
+    await waitFor(() => expect(onExpand).toHaveBeenLastCalledWith("1"));
     fireEvent.click(beta, { detail: 1 });
     expect(alpha).toHaveAttribute("data-selected", "false");
-    expect(beta).toHaveAttribute("data-selected", "true");
-    expect(screen.getByRole("group", { name: "Selection controls" })).toHaveTextContent("1 selected");
-    expect(onExpand).toHaveBeenLastCalledWith("2");
+    expect(beta).toHaveAttribute("data-selected", "false");
+    expect(screen.getByRole("group", { name: "Selection controls" })).toHaveTextContent("0 selected");
+    await waitFor(() => expect(onExpand).toHaveBeenLastCalledWith("2"));
   });
 
-  it("adds to multiple selection on a double-click and supports Shift+Enter", () => {
+  it("toggles multiple selection on a double-click without opening the detail", async () => {
+    const onExpand = vi.fn();
     const twoRecords = [records[0], { id: "2", source: { name: "Beta", kind: "Service" }, title: "Beta" }];
     renderWithTheme(
       <Table.Root
@@ -124,24 +125,28 @@ describe("Table Kit record renderers", () => {
         selection={{ matchingIds: ["1", "2"] }}
       >
         <Table.Selection />
-        <RecordList properties={properties} />
+        <RecordList properties={properties} onExpansionChange={onExpand} />
       </Table.Root>,
     );
 
     const alpha = screen.getByRole("listitem", { name: "Open Alpha" });
     const beta = screen.getByRole("listitem", { name: "Open Beta" });
     fireEvent.click(alpha, { detail: 1 });
-    fireEvent.click(beta, { detail: 1 });
+    fireEvent.click(alpha, { detail: 2 });
+    fireEvent.doubleClick(alpha);
     fireEvent.click(beta, { detail: 2 });
     fireEvent.doubleClick(beta);
     expect(alpha).toHaveAttribute("data-selected", "true");
     expect(beta).toHaveAttribute("data-selected", "true");
     expect(screen.getByRole("group", { name: "Selection controls" })).toHaveTextContent("2 selected");
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    expect(onExpand).not.toHaveBeenCalled();
 
     fireEvent.keyDown(beta, { key: "Enter" });
-    expect(screen.getByRole("group", { name: "Selection controls" })).toHaveTextContent("1 selected");
-    fireEvent.keyDown(alpha, { key: "Enter", shiftKey: true });
     expect(screen.getByRole("group", { name: "Selection controls" })).toHaveTextContent("2 selected");
+    expect(onExpand).toHaveBeenCalledWith("2");
+    fireEvent.keyDown(alpha, { key: "Enter", shiftKey: true });
+    expect(screen.getByRole("group", { name: "Selection controls" })).toHaveTextContent("1 selected");
   });
 
   it("opens the consumer detail from the whole gallery card without a View button", () => {
