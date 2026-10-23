@@ -29,6 +29,6 @@ jobs:
               return;
             }
             const issue = pr.head.ref.match(/^[^/]+\/(\d+)-/)[1];
-            if (!new RegExp(\`#\${issue}\\b\`).test(pr.body || "")) {
-              core.setFailed(\`PR body must reference #\${issue}; merging does not close the story.\`);
+            if (!new RegExp(`#${issue}\\b`).test(pr.body || "")) {
+              core.setFailed(`PR body must reference #${issue}; merging does not close the story.`);
             }
