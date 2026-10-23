@@ -126,6 +126,7 @@ export function TablePropertyControls({
             value={search}
             onChange={setSearch}
             placeholder={searchLabel}
+            width="short"
           />
           <div role="toolbar" aria-label="Property actions">
             <Button
@@ -136,10 +137,10 @@ export function TablePropertyControls({
               borderWidth={1}
               borderRadius="$gemControl"
               type="button"
-              aria-label={`${showAllLabel} (${configuration.visibleIds.length} selected)`}
+              aria-label={showAllLabel}
               onClick={configuration.showAll}
             >
-              <span aria-hidden="true">{configuration.visibleIds.length}</span>
+              {showAllLabel}
             </Button>
             <Button
               size="xs"
