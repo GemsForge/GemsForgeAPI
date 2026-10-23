@@ -618,6 +618,16 @@ dialog::backdrop {
 .create-form-control {
   width: 100%;
   min-height: 2.75rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 0.55rem;
+  outline: 0;
+  background: #0c1b20;
+  color: var(--ink);
+}
+.create-form-control:focus,
+.create-form-control:focus-visible {
+  border-color: var(--mint);
 }
 /* Map semantic field widths to compact controls without changing the shared field shell. */
 .create-form-control--short {
