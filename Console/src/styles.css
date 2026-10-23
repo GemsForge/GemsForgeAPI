@@ -1539,7 +1539,9 @@ dialog::backdrop {
   z-index: 5;
   top: calc(100% + 0.35rem);
   right: 0;
-  width: min(42rem, calc(100vw - 2rem));
+  box-sizing: border-box;
+  width: min(32rem, calc(100vw - 2rem));
+  max-width: calc(100vw - 2rem);
   max-height: min(42rem, calc(100vh - 2rem));
   overflow: auto;
   padding: 0.85rem;
