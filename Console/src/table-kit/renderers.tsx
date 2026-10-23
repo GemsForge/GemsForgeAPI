@@ -164,7 +164,13 @@ function RecordAvatar<Record>({ record }: { record: TableRecord<Record> }) {
       borderRadius="$4"
     >
       {image && <Avatar.Image src={image.src} accessibilityLabel={image.alt} objectFit={image.fit ?? "cover"} />}
-      {!image && <Avatar.Fallback backgroundColor="$gemPanelLight">{record.icon}</Avatar.Fallback>}
+      {!image && (
+        <Avatar.Fallback backgroundColor="$gemPanelLight" alignItems="center" justifyContent="center">
+          <SizableText fontSize="$9" lineHeight={1} color="$gemMint">
+            {record.icon}
+          </SizableText>
+        </Avatar.Fallback>
+      )}
     </Avatar>
   );
 }
