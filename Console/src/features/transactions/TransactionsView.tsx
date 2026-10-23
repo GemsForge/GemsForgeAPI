@@ -14,7 +14,6 @@ import {
   formatRecordDate,
   formatRecordTimestamp,
 } from "../../components/EditableRecordFields";
-import { TransactionCreateForm } from "../create/RecordCreateForms";
 import { useExpenseCategoriesQuery, useExpenseSubcategoriesQuery, useMerchantsQuery } from "../../data/lifeQueries";
 import { RecordImport } from "../../components/RecordImport";
 import { useRecordUtilities } from "../../hooks/useRecordUtilities";
@@ -48,7 +47,7 @@ export function TransactionsView({ records }: TransactionsViewProps) {
   const merchants = useMerchantsQuery(true);
   const [creating, setCreating] = useState(false);
   const [importing, setImporting] = useState(false);
-  const { create, actions } = useTransactionRecordActions({
+  const { create, actions, createForm } = useTransactionRecordActions({
     onCreated: setSelectedID,
   });
 
@@ -81,16 +80,7 @@ export function TransactionsView({ records }: TransactionsViewProps) {
           }}
         />
       </div>
-      {creating && (
-        <TransactionCreateForm
-          onCancel={() => setCreating(false)}
-          onCreate={async (payload) => {
-            const created = await create.mutateAsync(payload);
-            setSelectedID(created.id);
-            setCreating(false);
-          }}
-        />
-      )}
+      {creating && createForm(() => setCreating(false))}
 
       {records.length === 0 ? (
         <GemEmptyState
