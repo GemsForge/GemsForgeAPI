@@ -377,6 +377,7 @@ export function RecordGallery<Record>({
                   }
                   onExpansionChange?.(expanded ? undefined : record.id);
                 }}
+                onDoubleClick={() => selection.onRecordSelect?.(record.id)}
                 onKeyDown={(event) => handleCardKeyDown(event, record)}
                 onPointerDown={(event) => handlePointerDown(event, effectiveRecords.indexOf(record))}
                 onPointerMove={handlePointerMove}
@@ -416,7 +417,6 @@ export function RecordGallery<Record>({
                   </div>
                 </div>
               </div>
-              {selection.onRecordSelect && <SelectionButton record={record} selection={selection} />}
               {expanded && renderExpanded?.(record.source)}
             </div>
           );
