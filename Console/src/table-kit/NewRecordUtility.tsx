@@ -99,7 +99,6 @@ export function NewRecordUtility({
           <div className="table-kit-new-record-heading">
             <div>
               <Dialog.Title>{title}</Dialog.Title>
-              <Dialog.Description>{activeDescription}</Dialog.Description>
             </div>
             <Dialog.Close asChild>
               <Button
@@ -116,6 +115,9 @@ export function NewRecordUtility({
                 ×
               </Button>
             </Dialog.Close>
+          </div>
+          <div className="table-kit-new-record-description">
+            <Dialog.Description>{activeDescription}</Dialog.Description>
           </div>
           <div className="table-kit-new-record-options" role="tablist" aria-label="New record operations">
             {options.map((option, index) => (

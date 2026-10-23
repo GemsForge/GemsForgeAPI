@@ -1593,7 +1593,8 @@ dialog::backdrop {
   margin: 0;
 }
 
-.table-kit-new-record-heading p {
+/* Keep the operation description below the title/close row rather than in its flex line. */
+.table-kit-new-record-description p {
   margin: 0.35rem 0 0;
   color: var(--muted);
 }
