@@ -1,3 +1,5 @@
+import { Select } from "tamagui";
+
 interface Props {
   page: number;
   pageCount: number;
@@ -25,13 +27,20 @@ export function PaginationControls({ page, pageCount, total, pageSize, previous,
       </span>
       <label>
         Records per page
-        <select value={pageSize} onChange={(event) => setPageSize(Number(event.target.value))}>
-          {[6, 12, 18, 24, 30].map((size) => (
-            <option key={size} value={size}>
-              {size}
-            </option>
-          ))}
-        </select>
+        <Select value={String(pageSize)} onValueChange={(value) => setPageSize(Number(value))}>
+          <Select.Trigger aria-label="Records per page" size="$3" width={82}>
+            <Select.Value />
+          </Select.Trigger>
+          <Select.Content>
+            <Select.Viewport minWidth={82}>
+              {[6, 12, 18, 24, 30].map((size) => (
+                <Select.Item key={size} value={String(size)}>
+                  <Select.ItemText>{size}</Select.ItemText>
+                </Select.Item>
+              ))}
+            </Select.Viewport>
+          </Select.Content>
+        </Select>
       </label>
       <button
         className="secondary-button"
