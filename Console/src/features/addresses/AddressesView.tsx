@@ -6,11 +6,11 @@ import type { Address } from "../../types";
 import { AttachmentControl } from "../../components/AttachmentControl";
 import { GemEmptyState } from "../../components/ui";
 import { EditableRecordFields, formatRecordDate, formatRecordTimestamp } from "../../components/EditableRecordFields";
-import { useCreateAddressMutation } from "../../data/recordQueries";
 import { AddressCreateForm } from "../create/RecordCreateForms";
 import { RecordImport } from "../../components/RecordImport";
 import { DatabaseRecordCollection } from "../../components/DatabaseRecordCollection";
 import { addressTableAdapter } from "../database/recordTableAdapters";
+import { useAddressRecordActions } from "./useAddressRecordActions";
 
 interface AddressesViewProps {
   records: Address[];
@@ -36,7 +36,9 @@ export function AddressesView({ records }: AddressesViewProps) {
   const selectedAddress = detail.data;
   const [creating, setCreating] = useState(false);
   const [importing, setImporting] = useState(false);
-  const create = useCreateAddressMutation();
+  const { create, actions } = useAddressRecordActions({
+    onCreated: setSelectedID,
+  });
 
   return (
     <>
@@ -100,69 +102,7 @@ export function AddressesView({ records }: AddressesViewProps) {
             filterOptions={Array.from(new Set(records.map((record) => record.addressStatus))).sort()}
             detailId={selectedID}
             onDetailChange={setSelectedID}
-            actions={{
-              newRecordUtility: {
-                options: [
-                  {
-                    id: "new-address",
-                    label: "Input Form",
-                    description: "Open the address form.",
-                    render: ({ close }) => (
-                      <AddressCreateForm
-                        onCancel={close}
-                        onCreate={async (payload) => {
-                          const created = await create.mutateAsync(payload);
-                          setSelectedID(created.id);
-                          close();
-                        }}
-                      />
-                    ),
-                  },
-                  {
-                    id: "import-address-file",
-                    label: "Import File",
-                    description: "Choose a CSV or JSON file.",
-                    render: ({ close }) => (
-                      <RecordImport
-                        label="addresses"
-                        expectedColumns={["id", "addressType", "country"]}
-                        mode="file"
-                        open
-                        onOpenChange={(open) => {
-                          if (!open) close();
-                        }}
-                        showTrigger={false}
-                        onPublish={async (rows) => {
-                          for (const row of rows)
-                            await create.mutateAsync(row as Parameters<typeof create.mutateAsync>[0]);
-                        }}
-                      />
-                    ),
-                  },
-                  {
-                    id: "paste-address-data",
-                    label: "Paste data",
-                    description: "Paste CSV or JSON records.",
-                    render: ({ close }) => (
-                      <RecordImport
-                        label="addresses"
-                        expectedColumns={["id", "addressType", "country"]}
-                        mode="paste"
-                        open
-                        onOpenChange={(open) => {
-                          if (!open) close();
-                        }}
-                        showTrigger={false}
-                        onPublish={async (rows) => {
-                          for (const row of rows)
-                            await create.mutateAsync(row as Parameters<typeof create.mutateAsync>[0]);
-                        }}
-                      />
-                    ),
-                  },
-                ],
-              },
-            }}
+            actions={actions}
             detail={
               selectedID ? (
                 <>
