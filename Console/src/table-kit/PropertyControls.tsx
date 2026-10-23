@@ -46,6 +46,22 @@ export function TablePropertyControls({
     previousOpen.current = open;
   }, [open]);
 
+  /** Close the transient popover when focus moves to another feature or the page. */
+  useEffect(() => {
+    if (!open) return;
+
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target;
+      const triggerElement = triggerRef.current as unknown as HTMLElement | null;
+      if (target instanceof Node && !dialogRef.current?.contains(target) && !triggerElement?.contains(target)) {
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [open]);
+
   return (
     <div className="table-kit-property-controls" role="group" aria-label="Property configuration">
       <Tooltip placement="top" delay={300}>
@@ -104,7 +120,13 @@ export function TablePropertyControls({
             <span aria-hidden="true">×</span>
             <span className="sr-only">{closeLabel}</span>
           </Button>
-          <GSearchField label={searchLabel} value={search} onChange={setSearch} placeholder={searchLabel} />
+          <GSearchField
+            label={undefined}
+            aria-label={searchLabel}
+            value={search}
+            onChange={setSearch}
+            placeholder={searchLabel}
+          />
           <div role="toolbar" aria-label="Property actions">
             <Button
               size="xs"
@@ -114,9 +136,10 @@ export function TablePropertyControls({
               borderWidth={1}
               borderRadius="$gemControl"
               type="button"
+              aria-label={`${showAllLabel} (${configuration.visibleIds.length} selected)`}
               onClick={configuration.showAll}
             >
-              {showAllLabel}
+              <span aria-hidden="true">{configuration.visibleIds.length}</span>
             </Button>
             <Button
               size="xs"

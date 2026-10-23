@@ -13,7 +13,7 @@ export interface GSearchSuggestion {
 
 /** Props for the standard GemsForge search field. */
 export interface GSearchFieldProps extends Omit<ComponentProps<typeof Input>, "value" | "defaultValue" | "onChange"> {
-  label: string;
+  label?: string;
   value?: string;
   variant?: GSearchFieldVariant;
   error?: string;
@@ -40,15 +40,19 @@ export function GSearchField({
   onSelectSuggestion,
   ...inputProps
 }: GSearchFieldProps) {
-  const id = `g-search-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+  const fieldLabel = label ?? "Search";
+  const id = `g-search-${fieldLabel.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
   const errorID = `${id}-error`;
-  const defaultPlaceholder = variant === "address" ? "Search for an address…" : `Search ${label.toLowerCase()}…`;
+  const defaultPlaceholder = variant === "address" ? "Search for an address…" : `Search ${fieldLabel.toLowerCase()}…`;
 
   return (
     <YStack className="create-form-field" gap="$1">
-      <Label htmlFor={id} color="$gemMuted" fontSize="$2" fontWeight="700">
-        {label}{required ? " *" : ""}
-      </Label>
+      {label && (
+        <Label htmlFor={id} color="$gemMuted" fontSize="$2" fontWeight="700">
+          {label}
+          {required ? " *" : ""}
+        </Label>
+      )}
       <Input
         {...inputProps}
         id={id}
@@ -61,15 +65,23 @@ export function GSearchField({
         aria-required={required}
         onChange={(event) => onChange?.(event.currentTarget.value)}
       />
-      {loading && <SizableText role="status">{variant === "address" ? "Searching addresses…" : "Searching…"}</SizableText>}
+      {loading && (
+        <SizableText role="status">{variant === "address" ? "Searching addresses…" : "Searching…"}</SizableText>
+      )}
       {suggestions.length > 0 && (
         <YStack aria-label={`${label} suggestions`} gap="$1">
           {suggestions.map((suggestion) => (
-            <Button key={suggestion.value} onPress={() => onSelectSuggestion?.(suggestion)}>{suggestion.label}</Button>
+            <Button key={suggestion.value} onPress={() => onSelectSuggestion?.(suggestion)}>
+              {suggestion.label}
+            </Button>
           ))}
         </YStack>
       )}
-      {error && <SizableText id={errorID} role="alert" color="$gemDanger" fontSize="$1">{error}</SizableText>}
+      {error && (
+        <SizableText id={errorID} role="alert" color="$gemDanger" fontSize="$1">
+          {error}
+        </SizableText>
+      )}
     </YStack>
   );
 }
