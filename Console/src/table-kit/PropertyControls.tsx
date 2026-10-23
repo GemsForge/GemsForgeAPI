@@ -75,23 +75,35 @@ export function TablePropertyControls({
         </Tooltip.Content>
       </Tooltip>
       {open && (
-        <div className="table-kit-property-backdrop" onClick={() => setOpen(false)}>
-          <div
-            ref={dialogRef}
-            id={dialogId}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby={dialogTitleId}
-            className="table-kit-property-dialog"
-            onClick={(event) => event.stopPropagation()}
-            onKeyDown={(event) => {
-              if (event.key === "Escape") {
-                event.stopPropagation();
-                setOpen(false);
-              }
-            }}
+        <div
+          ref={dialogRef}
+          id={dialogId}
+          role="dialog"
+          aria-labelledby={dialogTitleId}
+          className="table-kit-property-dialog"
+          onKeyDown={(event) => {
+            if (event.key === "Escape") {
+              event.stopPropagation();
+              setOpen(false);
+            }
+          }}
+        >
+          <h2 id={dialogTitleId}>{label}</h2>
+          <Button
+            size="xs"
+            color="$gemInk"
+            backgroundColor="$gemPanel"
+            borderColor="$gemPanelLight"
+            borderWidth={1}
+            borderRadius="$gemControl"
+            type="button"
+            aria-label={closeLabel}
+            onClick={() => setOpen(false)}
           >
-            <h2 id={dialogTitleId}>{label}</h2>
+            {closeLabel}
+          </Button>
+          <GSearchField label={searchLabel} value={search} onChange={setSearch} placeholder={searchLabel} />
+          <div role="toolbar" aria-label="Property actions">
             <Button
               size="xs"
               color="$gemInk"
@@ -100,76 +112,60 @@ export function TablePropertyControls({
               borderWidth={1}
               borderRadius="$gemControl"
               type="button"
-              aria-label={closeLabel}
-              onClick={() => setOpen(false)}
+              onClick={configuration.showAll}
             >
-              {closeLabel}
+              {showAllLabel}
             </Button>
-            <GSearchField label={searchLabel} value={search} onChange={setSearch} placeholder={searchLabel} />
-            <div role="toolbar" aria-label="Property actions">
-              <Button
-                size="xs"
-                color="$gemInk"
-                backgroundColor="$gemPanel"
-                borderColor="$gemPanelLight"
-                borderWidth={1}
-                borderRadius="$gemControl"
-                type="button"
-                onClick={configuration.showAll}
-              >
-                {showAllLabel}
-              </Button>
-              <Button
-                size="xs"
-                color="$gemInk"
-                backgroundColor="$gemPanel"
-                borderColor="$gemPanelLight"
-                borderWidth={1}
-                borderRadius="$gemControl"
-                type="button"
-                onClick={configuration.hideAll}
-              >
-                {hideAllLabel}
-              </Button>
-              <Button
-                size="xs"
-                color="$gemInk"
-                backgroundColor="$gemPanel"
-                borderColor="$gemPanelLight"
-                borderWidth={1}
-                borderRadius="$gemControl"
-                type="button"
-                onClick={configuration.reset}
-              >
-                {resetLabel}
-              </Button>
-            </div>
-            {configuration.missingPropertyIds.length > 0 && (
-              <p role="status">Some saved properties are unavailable and were reset.</p>
-            )}
-            <ul aria-label="Properties">
-              {filteredProperties.map((property) => {
-                const visible = configuration.visibleIds.includes(property.id);
-                return (
-                  <li key={property.id}>
-                    <GCheckboxField
-                      label={property.label}
-                      value={visible}
-                      onChange={(checked) => configuration.setVisibility(property.id, checked)}
-                      width="long"
-                    />
-                  </li>
-                );
-              })}
-            </ul>
-            {[...configuration.configuration.order]
-              .filter((propertyId) => !propertyById.has(propertyId))
-              .map((propertyId) => (
-                <p key={propertyId} role="status">
-                  Property unavailable: {propertyId}
-                </p>
-              ))}
+            <Button
+              size="xs"
+              color="$gemInk"
+              backgroundColor="$gemPanel"
+              borderColor="$gemPanelLight"
+              borderWidth={1}
+              borderRadius="$gemControl"
+              type="button"
+              onClick={configuration.hideAll}
+            >
+              {hideAllLabel}
+            </Button>
+            <Button
+              size="xs"
+              color="$gemInk"
+              backgroundColor="$gemPanel"
+              borderColor="$gemPanelLight"
+              borderWidth={1}
+              borderRadius="$gemControl"
+              type="button"
+              onClick={configuration.reset}
+            >
+              {resetLabel}
+            </Button>
           </div>
+          {configuration.missingPropertyIds.length > 0 && (
+            <p role="status">Some saved properties are unavailable and were reset.</p>
+          )}
+          <ul aria-label="Properties">
+            {filteredProperties.map((property) => {
+              const visible = configuration.visibleIds.includes(property.id);
+              return (
+                <li key={property.id}>
+                  <GCheckboxField
+                    label={property.label}
+                    value={visible}
+                    onChange={(checked) => configuration.setVisibility(property.id, checked)}
+                    width="long"
+                  />
+                </li>
+              );
+            })}
+          </ul>
+          {[...configuration.configuration.order]
+            .filter((propertyId) => !propertyById.has(propertyId))
+            .map((propertyId) => (
+              <p key={propertyId} role="status">
+                Property unavailable: {propertyId}
+              </p>
+            ))}
         </div>
       )}
     </div>

@@ -1535,6 +1535,10 @@ dialog::backdrop {
 }
 
 .table-kit-property-dialog {
+  position: absolute;
+  z-index: 5;
+  top: calc(100% + 0.35rem);
+  right: 0;
   width: min(42rem, calc(100vw - 2rem));
   max-height: min(42rem, calc(100vh - 2rem));
   overflow: auto;
@@ -1543,17 +1547,6 @@ dialog::backdrop {
   border-radius: 0.55rem;
   background: var(--panel);
   box-shadow: 0 0.7rem 1.8rem rgb(0 0 0 / 20%);
-}
-
-.table-kit-property-backdrop {
-  position: fixed;
-  z-index: 50;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  padding: 1rem;
-  background: rgb(3 11 14 / 72%);
-  backdrop-filter: blur(4px);
 }
 
 .table-kit-property-dialog ul {
