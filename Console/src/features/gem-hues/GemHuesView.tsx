@@ -11,7 +11,7 @@ import { useCreateGemHueMutation } from "../../data/recordQueries";
 import { useState as useFormState } from "react";
 import type { GemHueCreate } from "../../types";
 import { api } from "../../api";
-import { ListItem, SizableText, XStack, YGroup } from "tamagui";
+import { Avatar, ListItem, SizableText, YGroup } from "tamagui";
 
 interface GemHuesViewProps {
   hues: GemHue[];
@@ -449,18 +449,11 @@ function GemHueListIcon({ hue }: { hue: GemHue }) {
   }, [image.data]);
 
   return (
-    <XStack
-      width={48}
-      height={48}
-      borderRadius="$2"
-      backgroundColor={hue.hexCode || "$gemPanelLight"}
-      borderWidth={1}
-      borderColor="$gemPanelLight"
-      overflow="hidden"
-      alignItems="center"
-      justifyContent="center"
-    >
-      {imageURL && <img className="gem-hue-list-icon-image" src={imageURL} alt="" aria-hidden="true" />}
-    </XStack>
+    <Avatar size={48} backgroundColor={hue.hexCode || "$gemPanelLight"}>
+      {imageURL && <Avatar.Image src={imageURL} accessibilityLabel={`${hue.colorName} logo`} />}
+      <Avatar.Fallback backgroundColor={hue.hexCode || "$gemPanelLight"}>
+        <SizableText fontWeight="700">{hue.colorName.charAt(0).toUpperCase() || "?"}</SizableText>
+      </Avatar.Fallback>
+    </Avatar>
   );
 }

@@ -15,7 +15,7 @@ import {
   type ColDef,
   type ICellRendererParams,
 } from "ag-grid-community";
-import { Image, ListItem, Paragraph, SizableText, XStack, YGroup, YStack } from "tamagui";
+import { Avatar, Image, ListItem, Paragraph, SizableText, XStack, YGroup, YStack } from "tamagui";
 import { TableContext } from "./context";
 import {
   orderRecordProperties,
@@ -153,6 +153,20 @@ function RecordImage<Record>({ image, size }: { image?: TableRecord<Record>["ima
   );
 }
 
+/** Render the shared list icon slot as media when available, with a stable symbol fallback. */
+function RecordAvatar<Record>({ record }: { record: TableRecord<Record> }) {
+  const title = String(record.title ?? record.subtitle ?? record.id);
+  const image = record.image?.src?.trim() ? record.image : undefined;
+  return (
+    <Avatar size={48} accessibilityLabel={`${title} icon`} backgroundColor="$gemPanelLight">
+      {image && <Avatar.Image src={image.src} accessibilityLabel={image.alt} objectFit={image.fit ?? "cover"} />}
+      <Avatar.Fallback backgroundColor="$gemPanelLight">
+        <SizableText fontWeight="700">{title.charAt(0).toUpperCase() || "?"}</SizableText>
+      </Avatar.Fallback>
+    </Avatar>
+  );
+}
+
 function PropertyValue({ value }: { value: RecordPropertyValue }) {
   return <Paragraph color="$gemMuted">{displayValue(value)}</Paragraph>;
 }
@@ -229,7 +243,7 @@ export function RecordList<Record>({
                   ))}
                 </YStack>
               }
-              icon={() => <RecordImage image={record.image} size={48} />}
+              icon={() => <RecordAvatar record={record} />}
               onClick={(event) => {
                 if (event.detail > 1) return;
                 if (openTimer.current) clearTimeout(openTimer.current);
