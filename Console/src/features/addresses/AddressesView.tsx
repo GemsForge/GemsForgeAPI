@@ -6,7 +6,6 @@ import type { Address } from "../../types";
 import { AttachmentControl } from "../../components/AttachmentControl";
 import { GemEmptyState } from "../../components/ui";
 import { EditableRecordFields, formatRecordDate, formatRecordTimestamp } from "../../components/EditableRecordFields";
-import { AddressCreateForm } from "../create/RecordCreateForms";
 import { RecordImport } from "../../components/RecordImport";
 import { DatabaseRecordCollection } from "../../components/DatabaseRecordCollection";
 import { addressTableAdapter } from "../database/recordTableAdapters";
@@ -36,7 +35,7 @@ export function AddressesView({ records }: AddressesViewProps) {
   const selectedAddress = detail.data;
   const [creating, setCreating] = useState(false);
   const [importing, setImporting] = useState(false);
-  const { create, actions } = useAddressRecordActions({
+  const { create, actions, createForm } = useAddressRecordActions({
     onCreated: setSelectedID,
   });
 
@@ -67,16 +66,7 @@ export function AddressesView({ records }: AddressesViewProps) {
           }}
         />
       </div>
-      {creating && (
-        <AddressCreateForm
-          onCancel={() => setCreating(false)}
-          onCreate={async (payload) => {
-            const created = await create.mutateAsync(payload);
-            setSelectedID(created.id);
-            setCreating(false);
-          }}
-        />
-      )}
+      {creating && createForm(() => setCreating(false))}
 
       {records.length === 0 ? (
         <GemEmptyState

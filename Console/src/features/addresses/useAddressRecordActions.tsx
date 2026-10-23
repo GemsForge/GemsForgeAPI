@@ -1,4 +1,5 @@
 import type { TableActionsProps } from "../../table-kit";
+import type { ReactNode } from "react";
 import { AddressCreateForm } from "../create/RecordCreateForms";
 import { useCreateAddressMutation } from "../../data/recordQueries";
 import { createRecordImportActions } from "../../components/createRecordImportActions";
@@ -11,6 +12,7 @@ interface AddressRecordActionsOptions {
 interface AddressRecordActionsResult {
   create: ReturnType<typeof useCreateAddressMutation>;
   actions: TableActionsProps;
+  createForm: (onCancel: () => void) => ReactNode;
 }
 
 /**
@@ -26,9 +28,20 @@ export function useAddressRecordActions({
       await create.mutateAsync(row as Parameters<typeof create.mutateAsync>[0]);
     }
   };
+  const createForm = (onCancel: () => void) => (
+    <AddressCreateForm
+      onCancel={onCancel}
+      onCreate={async (payload) => {
+        const created = await create.mutateAsync(payload);
+        onCreated(created.id);
+        onCancel();
+      }}
+    />
+  );
 
   return {
     create,
+    createForm,
     actions: {
       newRecordUtility: {
         options: [
@@ -36,16 +49,7 @@ export function useAddressRecordActions({
             id: "new-address",
             label: "Input Form",
             description: "Open the address form.",
-            render: ({ close }) => (
-              <AddressCreateForm
-                onCancel={close}
-                onCreate={async (payload) => {
-                  const created = await create.mutateAsync(payload);
-                  onCreated(created.id);
-                  close();
-                }}
-              />
-            ),
+            render: ({ close }) => createForm(close),
           },
           ...createRecordImportActions({
             idPrefix: "address",
