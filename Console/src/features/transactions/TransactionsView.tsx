@@ -14,13 +14,13 @@ import {
   formatRecordDate,
   formatRecordTimestamp,
 } from "../../components/EditableRecordFields";
-import { useCreateTransactionMutation } from "../../data/recordQueries";
 import { TransactionCreateForm } from "../create/RecordCreateForms";
 import { useExpenseCategoriesQuery, useExpenseSubcategoriesQuery, useMerchantsQuery } from "../../data/lifeQueries";
 import { RecordImport } from "../../components/RecordImport";
 import { useRecordUtilities } from "../../hooks/useRecordUtilities";
 import { DatabaseRecordCollection } from "../../components/DatabaseRecordCollection";
 import { transactionTableAdapter } from "../database/recordTableAdapters";
+import { useTransactionRecordActions } from "./useTransactionRecordActions";
 
 interface TransactionsViewProps {
   records: ExpenseTransaction[];
@@ -48,7 +48,9 @@ export function TransactionsView({ records }: TransactionsViewProps) {
   const merchants = useMerchantsQuery(true);
   const [creating, setCreating] = useState(false);
   const [importing, setImporting] = useState(false);
-  const create = useCreateTransactionMutation();
+  const { create, actions } = useTransactionRecordActions({
+    onCreated: setSelectedID,
+  });
 
   return (
     <>
@@ -117,69 +119,7 @@ export function TransactionsView({ records }: TransactionsViewProps) {
             ).sort()}
             detailId={selectedID}
             onDetailChange={setSelectedID}
-            actions={{
-              newRecordUtility: {
-                options: [
-                  {
-                    id: "new-transaction",
-                    label: "Input Form",
-                    description: "Open the transaction form.",
-                    render: ({ close }) => (
-                      <TransactionCreateForm
-                        onCancel={close}
-                        onCreate={async (payload) => {
-                          const created = await create.mutateAsync(payload);
-                          setSelectedID(created.id);
-                          close();
-                        }}
-                      />
-                    ),
-                  },
-                  {
-                    id: "import-transaction-file",
-                    label: "Import File",
-                    description: "Choose a CSV or JSON file.",
-                    render: ({ close }) => (
-                      <RecordImport
-                        label="transactions"
-                        expectedColumns={["id", "item", "categoryID", "quantity"]}
-                        mode="file"
-                        open
-                        onOpenChange={(open) => {
-                          if (!open) close();
-                        }}
-                        showTrigger={false}
-                        onPublish={async (rows) => {
-                          for (const row of rows)
-                            await create.mutateAsync(row as Parameters<typeof create.mutateAsync>[0]);
-                        }}
-                      />
-                    ),
-                  },
-                  {
-                    id: "paste-transaction-data",
-                    label: "Paste data",
-                    description: "Paste CSV or JSON records.",
-                    render: ({ close }) => (
-                      <RecordImport
-                        label="transactions"
-                        expectedColumns={["id", "item", "categoryID", "quantity"]}
-                        mode="paste"
-                        open
-                        onOpenChange={(open) => {
-                          if (!open) close();
-                        }}
-                        showTrigger={false}
-                        onPublish={async (rows) => {
-                          for (const row of rows)
-                            await create.mutateAsync(row as Parameters<typeof create.mutateAsync>[0]);
-                        }}
-                      />
-                    ),
-                  },
-                ],
-              },
-            }}
+            actions={actions}
             detail={
               selectedID ? (
                 <>
