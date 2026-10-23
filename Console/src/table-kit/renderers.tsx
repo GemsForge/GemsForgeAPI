@@ -158,7 +158,7 @@ function RecordAvatar<Record>({ record }: { record: TableRecord<Record> }) {
   const title = String(record.title ?? record.subtitle ?? record.id);
   const image = record.image?.src?.trim() ? record.image : undefined;
   return (
-    <Avatar size={48} accessibilityLabel={`${title} icon`} backgroundColor="$gemPanelLight">
+    <Avatar size={64} accessibilityLabel={`${title} icon`} backgroundColor="$gemPanelLight" borderRadius="$4">
       {image && <Avatar.Image src={image.src} accessibilityLabel={image.alt} objectFit={image.fit ?? "cover"} />}
       <Avatar.Fallback backgroundColor="$gemPanelLight">
         <SizableText fontWeight="700">{title.charAt(0).toUpperCase() || "?"}</SizableText>
@@ -230,20 +230,28 @@ export function RecordList<Record>({
               data-selected={selected}
               tabIndex={0}
               gap="$3"
-              padding="$3"
+              padding="$4"
+              minHeight={104}
               borderWidth={1}
               borderColor={selected ? "$gemMint" : "$gemPanelLight"}
               borderRadius="$4"
               backgroundColor="$gemPanel"
               title={record.title ?? record.subtitle ?? record.id}
               subTitle={
-                <YStack gap="$1">
-                  {visibleProperties.map((property) => (
-                    <PropertyValue key={property.id} value={propertyValue(property, record)} />
-                  ))}
-                </YStack>
+                record.subtitle ?? (
+                  <YStack gap="$1">
+                    {visibleProperties.slice(0, 2).map((property) => (
+                      <PropertyValue key={property.id} value={propertyValue(property, record)} />
+                    ))}
+                  </YStack>
+                )
               }
               icon={() => <RecordAvatar record={record} />}
+              iconAfter={
+                <SizableText className="table-kit-list-chevron" aria-hidden="true">
+                  ›
+                </SizableText>
+              }
               onClick={(event) => {
                 if (event.detail > 1) return;
                 if (openTimer.current) clearTimeout(openTimer.current);
