@@ -2,7 +2,7 @@ import { useRef } from "react";
 import { useAttachmentWorkflow } from "../hooks/useAttachmentWorkflow";
 import type { FileMetadata } from "../types";
 import { FilePresentation } from "./FilePresentation";
-import { hasNativeFilePicker, pickNativeFile } from "../bridge/filePicker";
+import { hasNativeFilePicker, IMAGE_FILE_ACCEPT, pickNativeFile } from "../bridge/filePicker";
 
 interface AttachmentControlProps {
   fileMetadataID: string | null | undefined;
@@ -56,7 +56,7 @@ export function AttachmentControl({
       <input
         ref={inputRef}
         type="file"
-        accept="image/*"
+        accept={IMAGE_FILE_ACCEPT}
         aria-label={`Choose ${label.toLowerCase()}`}
         hidden
         onChange={(event) => {

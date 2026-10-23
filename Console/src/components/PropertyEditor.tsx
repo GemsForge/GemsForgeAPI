@@ -1,5 +1,6 @@
 import { Form } from "tamagui";
 import { useRecordEditor } from "../hooks/useRecordEditor";
+import { GemTextField } from "./ui";
 
 /**
  * Renders the compact edit affordance for a scalar record property and swaps
@@ -35,16 +36,13 @@ export function PropertyEditor({
 
   return (
     <Form className="edit-form" onSubmit={() => void editor.save()}>
-      <label>
-        {label}
-        <input
-          value={editor.draft}
-          onChange={(event) => editor.setDraft(event.target.value)}
-          required={required}
-          aria-invalid={Boolean(editor.error)}
-        />
-      </label>
-      {editor.error && <p role="alert">{editor.error}</p>}
+      <GemTextField
+        label={label}
+        value={editor.draft}
+        onChange={(event) => editor.setDraft(event.currentTarget.value)}
+        required={required}
+        error={editor.error ?? undefined}
+      />
       <button type="submit" disabled={editor.saving || !editor.dirty}>
         {editor.saving ? "Saving…" : saveLabel}
       </button>

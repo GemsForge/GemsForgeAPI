@@ -37,6 +37,30 @@ Sign-in requires Supabase `VITE_SUPABASE_URL` and
 `SUPABASE_OWNER_SUBJECT`, and `GEM_LIFE_OPERATOR_ACCOUNT_ID`. Keep public
 signups disabled. See [`Console-Authentication-299.md`](Console-Authentication-299.md).
 
+## Table Kit development
+
+The reusable Table Kit lives under `Console/src/table-kit/`. Install its
+frontend dependencies from `Console/` before working on the React console:
+
+```bash
+cd Console
+npm install
+```
+
+The Table Kit's `RecordTable` renderer uses the free AG Grid Community React
+adapter. AG Grid remains an internal renderer detail; feature code continues
+to provide the engine-neutral Table Kit record, property, query, and selection
+contracts. Enterprise modules are not part of this personal project.
+
+Run the frontend checks from `Console/`:
+
+```bash
+npm run format:check
+npm run lint -- --max-warnings 0
+npm run test
+npm run build
+```
+
 ## Current capabilities
 
 ### React console
@@ -75,12 +99,21 @@ Open `http://127.0.0.1:4173/`.
   `GET /transactions/:transactionID`, with a reusable receipt-image control for
   upload, preview, replacement, and removal.
 
-### Record collection utilities
+### Table Kit database consumers
 
-The Education, Employment, Addresses, Transactions, and Services views use a
-shared `RecordCollection` boundary with the `RecordUtilities` controls. The
-controls are scoped to the active collection and update the visible records
-without reloading the page.
+The Education, Employment, Addresses, Transactions, and Services views use the
+shared `DatabaseRecordCollection` consumer adapter. Each page keeps its domain
+query, import, mutation, and detail behavior, while `Table.Root` owns the
+scoped presentation context. The built-in List, Gallery, and AG Grid-backed
+Table views consume the same effective filtered/sorted result set.
+
+Every migrated consumer exposes the shared selection controls, including
+current-page select all, indeterminate state, and all-matching selection when
+the result set spans multiple pages. Selection is scoped to that database
+collection and only exposes IDs; bulk actions remain feature-owned.
+
+The `RecordUtilities` controls are scoped to the active collection and update
+the visible records without reloading the page.
 
 - Search matches the record ID and the main display fields for the active
   table. Search is case-insensitive and can be cleared with **Clear filters**.
@@ -95,9 +128,10 @@ without reloading the page.
 
 The controls use labelled search inputs, native selects, visible sort direction,
 status announcements for result summaries, and a single clear action for the
-active query state. When adding a new record collection, keep its form and
-empty/error states inside the same collection boundary and add its searchable
-fields, sort comparators, and categorical filter options explicitly.
+active query state. When adding a new database consumer, provide a
+domain-specific `RecordAdapter`, keep its form and empty/error states inside the
+same collection boundary, and add its searchable fields, sort comparators, and
+categorical filter options explicitly.
 
 The React project keeps the API client and UI features separate:
 

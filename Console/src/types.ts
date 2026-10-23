@@ -8,7 +8,6 @@ export interface Domain {
 export type DomainCreate = Pick<Domain, "title" | "description"> & { id?: string };
 export type AddressCreate = Pick<
   Address,
-  | "id"
   | "addressType"
   | "addressLine1"
   | "addressLine2"
@@ -20,7 +19,7 @@ export type AddressCreate = Pick<
   | "endDate"
   | "addressStatus"
   | "notes"
->;
+> & { id?: string };
 export type EducationCreate = Pick<
   Education,
   | "id"

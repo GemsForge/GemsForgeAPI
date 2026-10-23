@@ -1,15 +1,9 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState, type ReactNode } from "react";
-import {
-  useForm,
-  type DefaultValues,
-  type FieldValues,
-  type Path,
-  type Resolver,
-  type UseFormReturn,
-} from "react-hook-form";
+import { useForm, type DefaultValues, type FieldValues, type Resolver, type UseFormReturn } from "react-hook-form";
 import { z } from "zod";
-import { CreateFormFrame, CreateSelectField, CreateTextField } from "../../components/forms/CreateForm";
+import { CreateFormFrame } from "../../components/forms/CreateForm";
+import { CreateFormSelect as Select, CreateFormText as Text } from "../../components/forms/CreateFormField";
 import {
   GeoapifyAddressSearch,
   type AddressSearchValues,
@@ -25,101 +19,44 @@ import type {
   ServiceAccountCreate,
   TransactionCreate,
 } from "../../types";
+import {
+  addressFieldDefinitions,
+  addressSchema,
+  type AddressFieldDefinition,
+  type AddressCreateFormValues,
+} from "../addresses/addressCreateFields";
+import {
+  educationFieldDefinitions,
+  educationSchema,
+  type EducationCreateFormValues,
+  type EducationFieldDefinition,
+} from "../education/educationCreateFields";
+import {
+  createEmploymentFieldDefinitions,
+  createEmploymentSchema,
+  type EmploymentCreateFormValues,
+  type EmploymentFieldDefinition,
+} from "../employment/employmentCreateFields";
+import {
+  createTransactionFieldDefinitions,
+  createTransactionSchema,
+  type TransactionCreateFormValues,
+} from "../transactions/transactionCreateFields";
+import {
+  serviceAccountFieldDefinitions,
+  serviceAccountSchema,
+  type ServiceAccountCreateFormValues,
+  type ServiceAccountFieldDefinition,
+} from "../service-accounts/serviceAccountCreateFields";
+import {
+  domainFieldDefinitions,
+  domainSchema,
+  type DomainCreateFormValues,
+  type DomainFieldDefinition,
+} from "../domains/domainCreateFields";
 
-const required = (label: string) => z.string().trim().min(1, `${label} is required.`);
-const optional = z.string();
-const optionalNumber = z
-  .string()
-  .refine(
-    (value) => value === "" || (/^\d+(\.\d+)?$/.test(value) && Number(value) >= 0),
-    "Enter a non-negative number.",
-  );
-const addressSchema = z.object({
-  id: required("Address ID"),
-  addressType: required("Address type"),
-  addressLine1: optional,
-  addressLine2: optional,
-  city: optional,
-  state: optional,
-  postalCode: optional,
-  country: required("Country"),
-  startDate: optional,
-  endDate: optional,
-  addressStatus: required("Status"),
-  notes: optional,
-});
-const educationSchema = z.object({
-  id: required("Education ID"),
-  educationType: required("Education type"),
-  institutionName: required("Institution name"),
-  program: optional,
-  fieldOfStudy: optional,
-  credential: optional,
-  credentialID: optional,
-  startDate: optional,
-  endDate: optional,
-  awardedDate: optional,
-  status: required("Status"),
-  locationAddressID: optional,
-  website: optional,
-  notes: optional,
-});
-const employmentSchema = z.object({
-  id: required("Employment ID"),
-  employerName: required("Employer name"),
-  employerType: required("Employer type"),
-  industry: optional,
-  website: optional,
-  positionTitle: required("Position title"),
-  employmentType: required("Employment type"),
-  startDate: optional,
-  endDate: optional,
-  employmentStatus: required("Status"),
-  workAddressID: optional,
-  employerContact: optional,
-  employerContactNumber: optional,
-  employerContactEmail: optional,
-  notes: optional,
-});
-const transactionSchema = z.object({
-  id: required("Transaction ID"),
-  receiptID: optional,
-  item: required("Item"),
-  firstReceiptItem: optional,
-  categoryID: required("Category ID")
-    .regex(/^\d+$/, "Select a category.")
-    .refine((value) => Number(value) > 0, "Select a category."),
-  subcategoryID: optional,
-  merchantCode: optional,
-  transactionDate: optional,
-  quantity: required("Quantity")
-    .regex(/^\d+(\.\d+)?$/, "Enter a positive number.")
-    .refine((value) => Number(value) > 0, "Quantity must be greater than zero."),
-  regularPrice: optionalNumber,
-  paidPrice: optionalNumber,
-  total: optionalNumber,
-  discount: optionalNumber,
-  notes: optional,
-});
-const serviceSchema = z.object({
-  service: required("Service name"),
-  type: optional,
-  expenseGroup: optional,
-  monthlyAmount: optionalNumber,
-  interestRate: optionalNumber,
-  apr: optionalNumber,
-  due: optional,
-  occurrence: optional,
-  status: optional,
-  since: optional,
-  website: optional,
-  notes: optional,
-  paymentMethod: optional,
-  accountNumber: optional,
-  associatedAddress: optional,
-  serviceKey: optional,
-});
-const domainSchema = z.object({ id: optional, title: required("Title"), description: required("Description") });
+const transactionFieldDefinitions = createTransactionFieldDefinitions({ categories: [], subcategories: [] });
+const transactionSchema = createTransactionSchema(transactionFieldDefinitions);
 
 function FormShell<T extends FieldValues>({
   title,
@@ -130,7 +67,7 @@ function FormShell<T extends FieldValues>({
   children,
 }: {
   title: string;
-  schema: z.ZodType<T>;
+  schema: z.ZodTypeAny;
   defaultValues: T;
   onCreate: (values: T) => Promise<void>;
   onCancel: () => void;
@@ -163,58 +100,162 @@ function FormShell<T extends FieldValues>({
   );
 }
 
-function Text<T extends FieldValues>({
-  form,
-  name,
-  label,
-  required: isRequired = false,
-  type = "text",
-  multiline = false,
-}: {
-  form: UseFormReturn<T>;
-  name: Path<T>;
-  label: string;
-  required?: boolean;
-  type?: string;
-  multiline?: boolean;
-}) {
-  const message = form.formState.errors[name]?.message;
+function renderAddressField(form: UseFormReturn<AddressCreateFormValues>, field: AddressFieldDefinition) {
+  if (field.kind === "select") {
+    return (
+      <Select
+        key={field.name}
+        form={form}
+        name={field.name}
+        label={field.label}
+        options={[...field.options]}
+        required={field.required}
+      />
+    );
+  }
   return (
-    <CreateTextField
-      label={label}
-      registration={form.register(name)}
-      required={isRequired}
-      type={type}
-      multiline={multiline}
-      error={typeof message === "string" ? message : undefined}
+    <Text
+      key={field.name}
+      form={form}
+      name={field.name}
+      label={field.label}
+      required={field.required}
+      type={field.type}
+      step={field.step}
+      multiline={field.multiline}
+      width={field.width}
+      placeholder={field.placeholder}
     />
   );
 }
-function Select<T extends FieldValues>({
-  form,
-  name,
-  label,
-  options,
-}: {
-  form: UseFormReturn<T>;
-  name: Path<T>;
-  label: string;
-  options: Array<{ value: string; label: string }>;
-}) {
-  const message = form.formState.errors[name]?.message;
-  return (
-    <CreateSelectField
-      label={label}
-      registration={form.register(name)}
-      options={options}
-      error={typeof message === "string" ? message : undefined}
+
+function addressField(name: keyof AddressCreateFormValues): AddressFieldDefinition {
+  const definition = addressFieldDefinitions.find((field) => field.name === name);
+  if (!definition) throw new Error(`Missing Address field definition: ${name}`);
+  return definition;
+}
+
+function renderEducationField(form: UseFormReturn<EducationCreateFormValues>, field: EducationFieldDefinition) {
+  return field.options ? (
+    <Select
+      key={field.name}
+      form={form}
+      name={field.name}
+      label={field.label}
+      options={[...field.options]}
+      required={field.required}
+    />
+  ) : (
+    <Text
+      key={field.name}
+      form={form}
+      name={field.name}
+      label={field.label}
+      required={field.required}
+      type={field.type}
+      multiline={field.multiline}
+      width={field.width}
     />
   );
 }
-function fields<T extends FieldValues>(form: UseFormReturn<T>, definitions: Array<[Path<T>, string, boolean?]>) {
-  return definitions.map(([name, label, requiredField]) => (
-    <Text key={name} form={form} name={name} label={label} required={requiredField} />
-  ));
+
+function renderEmploymentField(form: UseFormReturn<EmploymentCreateFormValues>, field: EmploymentFieldDefinition) {
+  return field.options ? (
+    <Select
+      key={field.name}
+      form={form}
+      name={field.name}
+      label={field.label}
+      options={[...field.options]}
+      required={field.required}
+      searchable={field.name === "workAddressID"}
+      searchPlaceholder={field.name === "workAddressID" ? "Search existing addresses" : undefined}
+    />
+  ) : (
+    <Text
+      key={field.name}
+      form={form}
+      name={field.name}
+      label={field.label}
+      required={field.required}
+      type={field.type}
+      step={field.step}
+      multiline={field.multiline}
+      width={field.width}
+    />
+  );
+}
+
+function employmentField(fields: readonly EmploymentFieldDefinition[], name: keyof EmploymentCreateFormValues) {
+  const definition = fields.find((field) => field.name === name);
+  if (!definition) throw new Error(`Missing Employment field definition: ${name}`);
+  return definition;
+}
+
+function renderTransactionField(
+  form: UseFormReturn<TransactionCreateFormValues>,
+  field: import("../transactions/transactionCreateFields").TransactionFieldDefinition,
+) {
+  return field.options ? (
+    <Select
+      key={field.name}
+      form={form}
+      name={field.name}
+      label={field.label}
+      options={[...field.options]}
+      required={field.required}
+    />
+  ) : (
+    <Text
+      key={field.name}
+      form={form}
+      name={field.name}
+      label={field.label}
+      required={field.required}
+      type={field.type}
+      step={field.step}
+      multiline={field.multiline}
+      width={field.width}
+    />
+  );
+}
+
+function renderServiceAccountField(
+  form: UseFormReturn<ServiceAccountCreateFormValues>,
+  field: ServiceAccountFieldDefinition,
+) {
+  return (
+    <Text
+      key={field.name}
+      form={form}
+      name={field.name}
+      label={field.label}
+      required={field.required}
+      type={field.type}
+      step={field.step}
+      multiline={field.multiline}
+      width={field.width}
+    />
+  );
+}
+
+function renderDomainField(form: UseFormReturn<DomainCreateFormValues>, field: DomainFieldDefinition) {
+  return (
+    <Text
+      key={field.name}
+      form={form}
+      name={field.name}
+      label={field.label}
+      required={field.required}
+      multiline={field.multiline}
+      width={field.width}
+    />
+  );
+}
+
+/** Generate the stable EmploymentID required by the existing API without exposing it as form input. */
+function createEmploymentID(): string {
+  return `EMP-${crypto.randomUUID()}`;
 }
 
 export function DomainCreateForm({
@@ -225,7 +266,7 @@ export function DomainCreateForm({
   onCancel: () => void;
 }) {
   return (
-    <FormShell
+    <FormShell<DomainCreateFormValues>
       title="Create domain"
       schema={domainSchema}
       defaultValues={{ id: "", title: "", description: "" }}
@@ -234,15 +275,7 @@ export function DomainCreateForm({
       }
       onCancel={onCancel}
     >
-      {(form) => (
-        <>
-          {fields(form, [
-            ["id", "Stable ID (optional)"],
-            ["title", "Title", true],
-            ["description", "Description", true],
-          ])}
-        </>
-      )}
+      {(form) => <>{domainFieldDefinitions.map((field) => renderDomainField(form, field))}</>}
     </FormShell>
   );
 }
@@ -257,11 +290,10 @@ export function AddressCreateForm({
   addressSearchClient?: GeoapifySearchClient;
 }) {
   return (
-    <FormShell
+    <FormShell<AddressCreateFormValues>
       title="Create address"
       schema={addressSchema}
       defaultValues={{
-        id: "",
         addressType: "Residence",
         addressLine1: "",
         addressLine2: "",
@@ -276,7 +308,6 @@ export function AddressCreateForm({
       }}
       onCreate={async (v) =>
         onCreate({
-          id: v.id.trim(),
           addressType: v.addressType,
           addressLine1: blank(v.addressLine1),
           addressLine2: blank(v.addressLine2),
@@ -304,20 +335,23 @@ export function AddressCreateForm({
         return (
           <>
             <GeoapifyAddressSearch onSelect={applyAddress} client={addressSearchClient} />
-            {fields(form, [
-              ["id", "Stable address ID", true],
-              ["addressType", "Address type", true],
-              ["addressLine1", "Address line 1"],
-              ["addressLine2", "Address line 2"],
-              ["city", "City"],
-              ["state", "State / region"],
-              ["postalCode", "Postal code"],
-              ["country", "Country", true],
-              ["startDate", "Start date"],
-              ["endDate", "End date"],
-              ["addressStatus", "Status", true],
-              ["notes", "Notes"],
-            ])}
+            <div className="create-form-grid">
+              {renderAddressField(form, addressField("addressType"))}
+              {renderAddressField(form, addressField("addressLine1"))}
+              {renderAddressField(form, addressField("addressLine2"))}
+              {renderAddressField(form, addressField("country"))}
+            </div>
+            <div className="create-form-grid create-form-grid--address-location">
+              {renderAddressField(form, addressField("city"))}
+              {renderAddressField(form, addressField("state"))}
+              {renderAddressField(form, addressField("postalCode"))}
+            </div>
+            <div className="create-form-grid create-form-grid--compact">
+              {renderAddressField(form, addressField("startDate"))}
+              {renderAddressField(form, addressField("endDate"))}
+              {renderAddressField(form, addressField("addressStatus"))}
+            </div>
+            {renderAddressField(form, addressField("notes"))}
           </>
         );
       }}
@@ -335,7 +369,7 @@ export function EducationCreateForm({
   onCancel: () => void;
 }) {
   return (
-    <FormShell
+    <FormShell<EducationCreateFormValues>
       title="Create education record"
       schema={educationSchema}
       defaultValues={{
@@ -374,21 +408,7 @@ export function EducationCreateForm({
     >
       {(form) => (
         <>
-          {fields(form, [
-            ["id", "Stable education ID", true],
-            ["educationType", "Education type", true],
-            ["institutionName", "Institution name", true],
-            ["program", "Program"],
-            ["fieldOfStudy", "Field of study"],
-            ["credential", "Credential"],
-            ["credentialID", "Credential ID"],
-            ["startDate", "Start date"],
-            ["endDate", "End date"],
-            ["awardedDate", "Awarded date"],
-            ["status", "Status", true],
-            ["website", "Website"],
-            ["notes", "Notes"],
-          ])}
+          {educationFieldDefinitions.map((field) => renderEducationField(form, field))}
           <Select
             form={form}
             name="locationAddressID"
@@ -404,21 +424,43 @@ export function EducationCreateForm({
   );
 }
 
+/** Render an employment create form with parent-supplied classification options. */
 export function EmploymentCreateForm({
   addresses,
+  employerTypeOptions,
+  industryOptions,
+  employmentTypeOptions,
+  statusOptions,
   onCreate,
   onCancel,
 }: {
   addresses: Address[];
+  employerTypeOptions: Array<{ value: string; label: string }>;
+  industryOptions: Array<{ value: string; label: string }>;
+  employmentTypeOptions: Array<{ value: string; label: string }>;
+  statusOptions: Array<{ value: string; label: string }>;
   onCreate: (payload: EmploymentCreate) => Promise<void>;
   onCancel: () => void;
 }) {
+  const [generatedID] = useState(createEmploymentID);
+  const employmentFields = createEmploymentFieldDefinitions({
+    employerType: employerTypeOptions,
+    industry: industryOptions,
+    employmentType: employmentTypeOptions,
+    status: statusOptions,
+    workAddress: addresses.map((a) => ({
+      value: a.id,
+      label: [a.addressType, a.city, a.id].filter(Boolean).join(" · "),
+    })),
+  });
+  const schema = createEmploymentSchema(employmentFields);
+
   return (
-    <FormShell
+    <FormShell<EmploymentCreateFormValues>
       title="Create employment record"
-      schema={employmentSchema}
+      schema={schema}
       defaultValues={{
-        id: "",
+        id: generatedID,
         employerName: "",
         employerType: "",
         industry: "",
@@ -453,31 +495,30 @@ export function EmploymentCreateForm({
     >
       {(form) => (
         <>
-          {fields(form, [
-            ["id", "Stable employment ID", true],
-            ["employerName", "Employer name", true],
-            ["employerType", "Employer type", true],
-            ["industry", "Industry"],
-            ["website", "Website"],
-            ["positionTitle", "Position title", true],
-            ["employmentType", "Employment type", true],
-            ["startDate", "Start date"],
-            ["endDate", "End date"],
-            ["employmentStatus", "Status", true],
-            ["employerContact", "Contact"],
-            ["employerContactNumber", "Contact number"],
-            ["employerContactEmail", "Contact email"],
-            ["notes", "Notes"],
-          ])}
-          <Select
-            form={form}
-            name="workAddressID"
-            label="Work address"
-            options={addresses.map((a) => ({
-              value: a.id,
-              label: [a.addressType, a.city, a.id].filter(Boolean).join(" · "),
-            }))}
-          />
+          <div className="create-form-grid">
+            {renderEmploymentField(form, employmentField(employmentFields, "employerName"))}
+            {renderEmploymentField(form, employmentField(employmentFields, "employerType"))}
+          </div>
+          <div className="create-form-grid">
+            {renderEmploymentField(form, employmentField(employmentFields, "industry"))}
+            {renderEmploymentField(form, employmentField(employmentFields, "website"))}
+          </div>
+          <div className="create-form-grid">
+            {renderEmploymentField(form, employmentField(employmentFields, "positionTitle"))}
+            {renderEmploymentField(form, employmentField(employmentFields, "employmentType"))}
+          </div>
+          <div className="create-form-grid create-form-grid--compact">
+            {renderEmploymentField(form, employmentField(employmentFields, "startDate"))}
+            {renderEmploymentField(form, employmentField(employmentFields, "endDate"))}
+            {renderEmploymentField(form, employmentField(employmentFields, "employmentStatus"))}
+          </div>
+          <div className="create-form-grid create-form-grid--contact">
+            {renderEmploymentField(form, employmentField(employmentFields, "employerContact"))}
+            {renderEmploymentField(form, employmentField(employmentFields, "employerContactNumber"))}
+            {renderEmploymentField(form, employmentField(employmentFields, "employerContactEmail"))}
+          </div>
+          {renderEmploymentField(form, employmentField(employmentFields, "notes"))}
+          {renderEmploymentField(form, employmentField(employmentFields, "workAddressID"))}
         </>
       )}
     </FormShell>
@@ -492,9 +533,9 @@ export function ServiceAccountCreateForm({
   onCancel: () => void;
 }) {
   return (
-    <FormShell
+    <FormShell<ServiceAccountCreateFormValues>
       title="Create service account"
-      schema={serviceSchema}
+      schema={serviceAccountSchema}
       defaultValues={{
         service: "",
         type: "",
@@ -535,28 +576,7 @@ export function ServiceAccountCreateForm({
       }
       onCancel={onCancel}
     >
-      {(form) => (
-        <>
-          {fields(form, [
-            ["service", "Service name", true],
-            ["type", "Type"],
-            ["expenseGroup", "Expense group"],
-            ["monthlyAmount", "Monthly amount"],
-            ["interestRate", "Interest rate"],
-            ["apr", "APR"],
-            ["due", "Due date"],
-            ["occurrence", "Occurrence"],
-            ["status", "Status"],
-            ["since", "Since"],
-            ["website", "Website"],
-            ["paymentMethod", "Payment method"],
-            ["accountNumber", "Account number"],
-            ["associatedAddress", "Associated address"],
-            ["serviceKey", "Service key"],
-            ["notes", "Notes"],
-          ])}
-        </>
-      )}
+      {(form) => <>{serviceAccountFieldDefinitions.map((field) => renderServiceAccountField(form, field))}</>}
     </FormShell>
   );
 }
@@ -569,7 +589,7 @@ export function TransactionCreateForm({
   onCancel: () => void;
 }) {
   return (
-    <FormShell
+    <FormShell<TransactionCreateFormValues>
       title="Create transaction"
       schema={transactionSchema}
       defaultValues={{
@@ -613,53 +633,19 @@ export function TransactionCreateForm({
   );
 }
 
-type TransactionFormValues = z.infer<typeof transactionSchema>;
-function TransactionFields({ form }: { form: UseFormReturn<TransactionFormValues> }) {
+function TransactionFields({ form }: { form: UseFormReturn<TransactionCreateFormValues> }) {
   const selectedCategory = form.watch("categoryID");
   const categoryID = /^\d+$/.test(selectedCategory) ? Number(selectedCategory) : null;
   const categories = useExpenseCategoriesQuery(true);
   const subcategories = useExpenseSubcategoriesQuery(categoryID, categoryID !== null);
+  const fieldDefinitions = createTransactionFieldDefinitions({
+    categories: (categories.data ?? []).map((item) => ({ value: String(item.id), label: item.name })),
+    subcategories: (subcategories.data ?? []).map((item) => ({ value: String(item.id), label: item.name })),
+  });
   useEffect(() => {
     form.setValue("subcategoryID", "");
   }, [categoryID, form]);
-  return (
-    <>
-      {fields(form, [
-        ["id", "Stable transaction ID", true],
-        ["receiptID", "Receipt ID"],
-        ["item", "Item", true],
-        ["merchantCode", "Merchant code"],
-        ["transactionDate", "Transaction date"],
-        ["quantity", "Quantity", true],
-        ["regularPrice", "Regular price"],
-        ["paidPrice", "Paid price"],
-        ["total", "Total"],
-        ["discount", "Discount"],
-        ["notes", "Notes"],
-      ])}
-      <Select
-        form={form}
-        name="categoryID"
-        label="Category"
-        options={(categories.data ?? []).map((item) => ({ value: String(item.id), label: item.name }))}
-      />
-      <Select
-        form={form}
-        name="subcategoryID"
-        label="Subcategory"
-        options={(subcategories.data ?? []).map((item) => ({ value: String(item.id), label: item.name }))}
-      />
-      <Select
-        form={form}
-        name="firstReceiptItem"
-        label="First item on receipt"
-        options={[
-          { value: "false", label: "No" },
-          { value: "true", label: "Yes" },
-        ]}
-      />
-    </>
-  );
+  return <>{fieldDefinitions.map((field) => renderTransactionField(form, field))}</>;
 }
 
 function blank(value: string): string | null {

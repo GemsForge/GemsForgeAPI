@@ -17,7 +17,7 @@ struct AddressRequest: Content {
     var imageFileMetadataID: String? = nil
 }
 
-/// Create-only address contract; response representations remain separate.
+/// Create-only address contract; the API generates AddressID when it is omitted.
 struct AddressCreateRequest: Content {
     let value: AddressRequest
 
