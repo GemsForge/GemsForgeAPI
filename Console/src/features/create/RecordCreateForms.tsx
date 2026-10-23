@@ -33,6 +33,12 @@ import type {
   ServiceAccountCreate,
   TransactionCreate,
 } from "../../types";
+import {
+  addressFieldDefinitions,
+  addressSchema,
+  type AddressFieldDefinition,
+  type AddressCreateFormValues,
+} from "../addresses/addressCreateFields";
 
 const required = (label: string) => z.string().trim().min(1, `${label} is required.`);
 const optional = z.string();
@@ -84,49 +90,6 @@ const optionalNumber = z
     (value) => value === "" || (/^\d+(\.\d+)?$/.test(value) && Number(value) >= 0),
     "Enter a non-negative number.",
   );
-/** Accept international city and region names while rejecting punctuation-only values. */
-const optionalAddressLocation = optional.refine(
-  (value) => !value.trim() || /^[\p{L}\p{M}0-9 .,'’&()/-]+$/u.test(value.trim()),
-  "Enter a valid location.",
-);
-/** Accept common domestic and international postal-code characters. */
-const optionalPostalCode = optional.refine(
-  (value) => !value.trim() || /^[\p{L}\p{N}][\p{L}\p{N} .-]*$/u.test(value.trim()),
-  "Enter a valid postal code.",
-);
-const optionalAddressDate = optional.refine(
-  (value) => !value.trim() || isValidDateInput(value.trim()),
-  "Enter a valid date.",
-);
-const addressSchema = z
-  .object({
-    addressType: required("Address type"),
-    addressLine1: optional,
-    addressLine2: optional,
-    city: optionalAddressLocation,
-    state: optionalAddressLocation,
-    postalCode: optionalPostalCode,
-    country: required("Country"),
-    startDate: optionalAddressDate,
-    endDate: optionalAddressDate,
-    addressStatus: required("Status"),
-    notes: optional,
-  })
-  .superRefine((values, context) => {
-    if (values.startDate && values.endDate && values.endDate < values.startDate) {
-      context.addIssue({
-        code: "custom",
-        path: ["endDate"],
-        message: "End date must be on or after start date.",
-      });
-    }
-  });
-
-const addressTypeOptions = ["Residence", "Storage", "Work", "School", "Other"].map((value) => ({
-  value,
-  label: value,
-}));
-const addressStatusOptions = ["Current", "Former", "Seasonal", "Other"].map((value) => ({ value, label: value }));
 const educationSchema = z.object({
   id: required("Education ID"),
   educationType: required("Education type"),
@@ -336,6 +299,40 @@ function Select<T extends FieldValues>({
     />
   );
 }
+
+function renderAddressField(form: UseFormReturn<AddressCreateFormValues>, field: AddressFieldDefinition) {
+  if (field.kind === "select") {
+    return (
+      <Select
+        key={field.name}
+        form={form}
+        name={field.name}
+        label={field.label}
+        options={[...field.options]}
+        required={field.required}
+      />
+    );
+  }
+  return (
+    <Text
+      key={field.name}
+      form={form}
+      name={field.name}
+      label={field.label}
+      required={field.required}
+      type={field.type}
+      multiline={field.multiline}
+      width={field.width}
+      placeholder={field.placeholder}
+    />
+  );
+}
+
+function addressField(name: keyof AddressCreateFormValues): AddressFieldDefinition {
+  const definition = addressFieldDefinitions.find((field) => field.name === name);
+  if (!definition) throw new Error(`Missing Address field definition: ${name}`);
+  return definition;
+}
 function fields<T extends FieldValues>(form: UseFormReturn<T>, definitions: Array<[Path<T>, string, boolean?]>) {
   return definitions.map(([name, label, requiredField]) => (
     <Text key={name} form={form} name={name} label={label} required={requiredField} />
@@ -433,22 +430,22 @@ export function AddressCreateForm({
           <>
             <GeoapifyAddressSearch onSelect={applyAddress} client={addressSearchClient} />
             <div className="create-form-grid">
-              <Select form={form} name="addressType" label="Address type" options={addressTypeOptions} required />
-              <Text form={form} name="addressLine1" label="Address line 1" width="long" />
-              <Text form={form} name="addressLine2" label="Address line 2" width="long" />
-              <Text form={form} name="country" label="Country" required width="medium" />
+              {renderAddressField(form, addressField("addressType"))}
+              {renderAddressField(form, addressField("addressLine1"))}
+              {renderAddressField(form, addressField("addressLine2"))}
+              {renderAddressField(form, addressField("country"))}
             </div>
             <div className="create-form-grid create-form-grid--address-location">
-              <Text form={form} name="city" label="City" width="short" />
-              <Text form={form} name="state" label="State / region" width="short" />
-              <Text form={form} name="postalCode" label="Postal code" width="short" />
+              {renderAddressField(form, addressField("city"))}
+              {renderAddressField(form, addressField("state"))}
+              {renderAddressField(form, addressField("postalCode"))}
             </div>
             <div className="create-form-grid create-form-grid--compact">
-              <Text form={form} name="startDate" label="Start date" type="date" width="short" />
-              <Text form={form} name="endDate" label="End date" type="date" width="short" />
-              <Select form={form} name="addressStatus" label="Status" options={addressStatusOptions} required />
+              {renderAddressField(form, addressField("startDate"))}
+              {renderAddressField(form, addressField("endDate"))}
+              {renderAddressField(form, addressField("addressStatus"))}
             </div>
-            <Text form={form} name="notes" label="Notes" multiline width="long" />
+            {renderAddressField(form, addressField("notes"))}
           </>
         );
       }}
