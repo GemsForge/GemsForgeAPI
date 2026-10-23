@@ -7,6 +7,7 @@ describe("bounded large-list rendering", () => {
   it("only selects one page from 10,000 records and clamps shrinking data", () => {
     const records = Array.from({ length: 10_000 }, (_, index) => index);
     const hook = renderHook(({ rows }) => usePagedRecords(rows), { initialProps: { rows: records } });
+    expect(hook.result.current.pageSize).toBe(12);
     expect(hook.result.current.items).toHaveLength(50);
     expect(hook.result.current.pageCount).toBe(200);
     act(() => hook.result.current.next());
