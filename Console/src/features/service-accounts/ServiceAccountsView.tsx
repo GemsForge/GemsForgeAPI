@@ -19,6 +19,7 @@ import { useRecordUtilities } from "../../hooks/useRecordUtilities";
 import { api } from "../../api";
 import { DatabaseRecordCollection } from "../../components/DatabaseRecordCollection";
 import { createServiceAccountTableAdapter } from "../database/recordTableAdapters";
+import { serviceAccountImportColumns } from "./serviceAccountImportAdapter";
 
 /** Render service-account records through the shared Table Kit consumer adapter. */
 export function ServiceAccountsView({ records }: { records: ServiceAccount[] }) {
@@ -68,24 +69,7 @@ export function ServiceAccountsView({ records }: { records: ServiceAccount[] }) 
         </div>
         <RecordImport
           label="services"
-          expectedColumns={[
-            "Service",
-            "Type",
-            "ExpenseGroup",
-            "MonthlyAmount",
-            "InterestRate",
-            "APR",
-            "Due",
-            "Occurrence",
-            "Status",
-            "Since",
-            "Website",
-            "Notes",
-            "PaymentMethod",
-            "AccountNumber",
-            "AssociatedAddress",
-            "ServiceKey",
-          ]}
+          expectedColumns={serviceAccountImportColumns}
           open={importing}
           onOpenChange={setImporting}
           showTrigger={records.length === 0}
