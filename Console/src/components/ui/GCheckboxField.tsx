@@ -32,6 +32,11 @@ export function GCheckboxField({
           id={id}
           {...checkboxProps}
           className={`field-checkbox create-form-control--${width}`}
+          size="$2"
+          width="$2"
+          height="$2"
+          minWidth="$2"
+          minHeight="$2"
           checked={value}
           onCheckedChange={(checked) => onChange?.(checked === true)}
           aria-invalid={Boolean(error)}

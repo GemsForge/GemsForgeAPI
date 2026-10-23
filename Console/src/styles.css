@@ -639,6 +639,13 @@ dialog::backdrop {
 .create-form-control--long {
   max-width: 100%;
 }
+.field-checkbox {
+  width: 1.25rem;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  min-height: 1.25rem;
+  padding: 0;
+}
 /* Keep related form fields readable in columns while preserving a single-column compact layout. */
 .create-form-grid {
   display: grid;
