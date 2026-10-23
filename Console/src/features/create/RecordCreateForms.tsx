@@ -55,35 +55,17 @@ import {
   createTransactionSchema,
   type TransactionCreateFormValues,
 } from "../transactions/transactionCreateFields";
+import {
+  serviceAccountFieldDefinitions,
+  serviceAccountSchema,
+  type ServiceAccountCreateFormValues,
+  type ServiceAccountFieldDefinition,
+} from "../service-accounts/serviceAccountCreateFields";
 
 const required = (label: string) => z.string().trim().min(1, `${label} is required.`);
 const optional = z.string();
-const optionalNumber = z
-  .string()
-  .refine(
-    (value) => value === "" || (/^\d+(\.\d+)?$/.test(value) && Number(value) >= 0),
-    "Enter a non-negative number.",
-  );
 const transactionFieldDefinitions = createTransactionFieldDefinitions({ categories: [], subcategories: [] });
 const transactionSchema = createTransactionSchema(transactionFieldDefinitions);
-const serviceSchema = z.object({
-  service: required("Service name"),
-  type: optional,
-  expenseGroup: optional,
-  monthlyAmount: optionalNumber,
-  interestRate: optionalNumber,
-  apr: optionalNumber,
-  due: optional,
-  occurrence: optional,
-  status: optional,
-  since: optional,
-  website: optional,
-  notes: optional,
-  paymentMethod: optional,
-  accountNumber: optional,
-  associatedAddress: optional,
-  serviceKey: optional,
-});
 const domainSchema = z.object({ id: optional, title: required("Title"), description: required("Description") });
 
 function FormShell<T extends FieldValues>({
@@ -293,6 +275,10 @@ function renderTransactionField(form: UseFormReturn<TransactionCreateFormValues>
   ) : (
     <Text key={field.name} form={form} name={field.name} label={field.label} required={field.required} type={field.type} multiline={field.multiline} width={field.width} />
   );
+}
+
+function renderServiceAccountField(form: UseFormReturn<ServiceAccountCreateFormValues>, field: ServiceAccountFieldDefinition) {
+  return <Text key={field.name} form={form} name={field.name} label={field.label} required={field.required} type={field.type} multiline={field.multiline} width={field.width} />;
 }
 
 function fields<T extends FieldValues>(form: UseFormReturn<T>, definitions: Array<[Path<T>, string, boolean?]>) {
@@ -588,7 +574,7 @@ export function ServiceAccountCreateForm({
   return (
     <FormShell
       title="Create service account"
-      schema={serviceSchema}
+      schema={serviceAccountSchema}
       defaultValues={{
         service: "",
         type: "",
@@ -631,24 +617,7 @@ export function ServiceAccountCreateForm({
     >
       {(form) => (
         <>
-          {fields(form, [
-            ["service", "Service name", true],
-            ["type", "Type"],
-            ["expenseGroup", "Expense group"],
-            ["monthlyAmount", "Monthly amount"],
-            ["interestRate", "Interest rate"],
-            ["apr", "APR"],
-            ["due", "Due date"],
-            ["occurrence", "Occurrence"],
-            ["status", "Status"],
-            ["since", "Since"],
-            ["website", "Website"],
-            ["paymentMethod", "Payment method"],
-            ["accountNumber", "Account number"],
-            ["associatedAddress", "Associated address"],
-            ["serviceKey", "Service key"],
-            ["notes", "Notes"],
-          ])}
+          {serviceAccountFieldDefinitions.map((field) => renderServiceAccountField(form, field))}
         </>
       )}
     </FormShell>
