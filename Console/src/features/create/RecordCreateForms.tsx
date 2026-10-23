@@ -50,6 +50,11 @@ import {
   type EmploymentCreateFormValues,
   type EmploymentFieldDefinition,
 } from "../employment/employmentCreateFields";
+import {
+  createTransactionFieldDefinitions,
+  createTransactionSchema,
+  type TransactionCreateFormValues,
+} from "../transactions/transactionCreateFields";
 
 const required = (label: string) => z.string().trim().min(1, `${label} is required.`);
 const optional = z.string();
@@ -59,26 +64,8 @@ const optionalNumber = z
     (value) => value === "" || (/^\d+(\.\d+)?$/.test(value) && Number(value) >= 0),
     "Enter a non-negative number.",
   );
-const transactionSchema = z.object({
-  id: required("Transaction ID"),
-  receiptID: optional,
-  item: required("Item"),
-  firstReceiptItem: optional,
-  categoryID: required("Category ID")
-    .regex(/^\d+$/, "Select a category.")
-    .refine((value) => Number(value) > 0, "Select a category."),
-  subcategoryID: optional,
-  merchantCode: optional,
-  transactionDate: optional,
-  quantity: required("Quantity")
-    .regex(/^\d+(\.\d+)?$/, "Enter a positive number.")
-    .refine((value) => Number(value) > 0, "Quantity must be greater than zero."),
-  regularPrice: optionalNumber,
-  paidPrice: optionalNumber,
-  total: optionalNumber,
-  discount: optionalNumber,
-  notes: optional,
-});
+const transactionFieldDefinitions = createTransactionFieldDefinitions({ categories: [], subcategories: [] });
+const transactionSchema = createTransactionSchema(transactionFieldDefinitions);
 const serviceSchema = z.object({
   service: required("Service name"),
   type: optional,
@@ -298,6 +285,14 @@ function employmentField(fields: readonly EmploymentFieldDefinition[], name: key
   const definition = fields.find((field) => field.name === name);
   if (!definition) throw new Error(`Missing Employment field definition: ${name}`);
   return definition;
+}
+
+function renderTransactionField(form: UseFormReturn<TransactionCreateFormValues>, field: import("../transactions/transactionCreateFields").TransactionFieldDefinition) {
+  return field.options ? (
+    <Select key={field.name} form={form} name={field.name} label={field.label} options={[...field.options]} required={field.required} />
+  ) : (
+    <Text key={field.name} form={form} name={field.name} label={field.label} required={field.required} type={field.type} multiline={field.multiline} width={field.width} />
+  );
 }
 
 function fields<T extends FieldValues>(form: UseFormReturn<T>, definitions: Array<[Path<T>, string, boolean?]>) {
@@ -712,52 +707,20 @@ export function TransactionCreateForm({
   );
 }
 
-type TransactionFormValues = z.infer<typeof transactionSchema>;
-function TransactionFields({ form }: { form: UseFormReturn<TransactionFormValues> }) {
+function TransactionFields({ form }: { form: UseFormReturn<TransactionCreateFormValues> }) {
   const selectedCategory = form.watch("categoryID");
   const categoryID = /^\d+$/.test(selectedCategory) ? Number(selectedCategory) : null;
   const categories = useExpenseCategoriesQuery(true);
   const subcategories = useExpenseSubcategoriesQuery(categoryID, categoryID !== null);
+  const fieldDefinitions = createTransactionFieldDefinitions({
+    categories: (categories.data ?? []).map((item) => ({ value: String(item.id), label: item.name })),
+    subcategories: (subcategories.data ?? []).map((item) => ({ value: String(item.id), label: item.name })),
+  });
   useEffect(() => {
     form.setValue("subcategoryID", "");
   }, [categoryID, form]);
   return (
-    <>
-      {fields(form, [
-        ["id", "Stable transaction ID", true],
-        ["receiptID", "Receipt ID"],
-        ["item", "Item", true],
-        ["merchantCode", "Merchant code"],
-        ["transactionDate", "Transaction date"],
-        ["quantity", "Quantity", true],
-        ["regularPrice", "Regular price"],
-        ["paidPrice", "Paid price"],
-        ["total", "Total"],
-        ["discount", "Discount"],
-        ["notes", "Notes"],
-      ])}
-      <Select
-        form={form}
-        name="categoryID"
-        label="Category"
-        options={(categories.data ?? []).map((item) => ({ value: String(item.id), label: item.name }))}
-      />
-      <Select
-        form={form}
-        name="subcategoryID"
-        label="Subcategory"
-        options={(subcategories.data ?? []).map((item) => ({ value: String(item.id), label: item.name }))}
-      />
-      <Select
-        form={form}
-        name="firstReceiptItem"
-        label="First item on receipt"
-        options={[
-          { value: "false", label: "No" },
-          { value: "true", label: "Yes" },
-        ]}
-      />
-    </>
+    <>{fieldDefinitions.map((field) => renderTransactionField(form, field))}</>
   );
 }
 
