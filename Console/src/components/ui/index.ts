@@ -3,6 +3,7 @@ export { GemCard } from "./GemCard";
 export { GemField } from "./GemTextField";
 export { GDate } from "./GDateField";
 export { GSelectField } from "./GSelectField";
+export { GCheckboxField } from "./GCheckboxField";
 export { GemDataTable } from "./GemDataTable--LEGACY";
 export { GemEmptyState } from "./GemEmptyState";
 export { GemLoadingState } from "./GemLoadingState";
