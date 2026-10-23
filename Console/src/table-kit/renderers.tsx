@@ -155,14 +155,16 @@ function RecordImage<Record>({ image, size }: { image?: TableRecord<Record>["ima
 
 /** Render the shared list icon slot as media when available, with a stable symbol fallback. */
 function RecordAvatar<Record>({ record }: { record: TableRecord<Record> }) {
-  const title = String(record.title ?? record.subtitle ?? record.id);
   const image = record.image?.src?.trim() ? record.image : undefined;
   return (
-    <Avatar size={64} accessibilityLabel={`${title} icon`} backgroundColor="$gemPanelLight" borderRadius="$4">
+    <Avatar
+      size={64}
+      accessibilityLabel={`${String(record.title ?? record.id)} icon`}
+      backgroundColor="$gemPanelLight"
+      borderRadius="$4"
+    >
       {image && <Avatar.Image src={image.src} accessibilityLabel={image.alt} objectFit={image.fit ?? "cover"} />}
-      <Avatar.Fallback backgroundColor="$gemPanelLight">
-        <SizableText fontWeight="700">{title.charAt(0).toUpperCase() || "?"}</SizableText>
-      </Avatar.Fallback>
+      {!image && <Avatar.Fallback backgroundColor="$gemPanelLight">{record.icon}</Avatar.Fallback>}
     </Avatar>
   );
 }
@@ -248,7 +250,7 @@ export function RecordList<Record>({
               }
               icon={() => <RecordAvatar record={record} />}
               iconAfter={
-                <SizableText className="table-kit-list-chevron" aria-hidden="true">
+                <SizableText color="$gemMuted" fontSize="$8" aria-hidden="true">
                   ›
                 </SizableText>
               }

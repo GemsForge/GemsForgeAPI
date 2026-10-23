@@ -11,6 +11,7 @@ export const addressTableAdapter: RecordAdapter<Address> = {
     source: record,
     title: record.city || record.addressType,
     subtitle: `${record.addressType} · ${record.id}`,
+    icon: "⌂",
     status: { label: record.addressStatus },
   }),
   getPropertyDefinitions: () =>
@@ -29,6 +30,7 @@ export const educationTableAdapter: RecordAdapter<Education> = {
     source: record,
     title: record.institutionName,
     subtitle: `${record.educationType} · ${record.id}`,
+    icon: "✦",
     status: { label: record.status },
   }),
   getPropertyDefinitions: () =>
@@ -53,6 +55,7 @@ export const employmentTableAdapter: RecordAdapter<Employment> = {
     source: record,
     title: record.employerName,
     subtitle: `${record.positionTitle} · ${record.id}`,
+    icon: "✦",
     status: { label: record.employmentStatus },
   }),
   getPropertyDefinitions: () =>
@@ -77,6 +80,7 @@ export const transactionTableAdapter: RecordAdapter<ExpenseTransaction> = {
     source: record,
     title: record.item,
     subtitle: `${record.transactionDate || "Undated"} · ${record.id}`,
+    icon: "$",
     status: { label: formatAmount(record.total ?? record.paidPrice) },
   }),
   getPropertyDefinitions: () =>
@@ -99,6 +103,7 @@ export function createServiceAccountTableAdapter(
       source: record,
       title: record.service,
       subtitle: `${record.type || "Service"} · ${record.id}`,
+      icon: "◎",
       image: getLogoImage?.(record),
       status: record.status ? { label: record.status } : undefined,
     }),
