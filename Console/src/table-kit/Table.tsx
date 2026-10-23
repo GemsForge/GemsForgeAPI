@@ -249,7 +249,7 @@ function Selection({ label = "Select all", clearLabel = "Clear selection" }: Tab
         <span>{allMatching.selectedCount > 0 ? `${allMatching.selectedCount} selected` : label}</span>
       </label>
       {allMatching.selectedCount > 0 && (
-        <GemButton type="button" variant="quiet" size="$3" onPress={selection.clear}>
+        <GemButton type="button" variant="outlined" size="$3" onPress={selection.clear}>
           {clearLabel}
         </GemButton>
       )}
