@@ -299,16 +299,7 @@ export function GemHuesView({ hues }: GemHuesViewProps) {
               className={`hue-card ${selectedHue?.id === hue.id ? "selected" : ""}`}
               title={hue.colorName}
               subTitle={`${hue.hexCode} · ${hue.colorFamily || "Unclassified"}`}
-              icon={() => (
-                <XStack
-                  width={48}
-                  height={48}
-                  borderRadius="$2"
-                  backgroundColor={hue.hexCode || "$gemPanelLight"}
-                  borderWidth={1}
-                  borderColor="$gemPanelLight"
-                />
-              )}
+              icon={() => <GemHueListIcon hue={hue} />}
               onClick={() => void openHue(hue.id)}
             >
               <SizableText color="$gemMuted">{hue.id}</SizableText>
@@ -439,5 +430,37 @@ export function GemHuesView({ hues }: GemHuesViewProps) {
         ))}
       </YGroup>
     </>
+  );
+}
+
+/** Renders the record's stored logo, falling back to its color swatch when absent. */
+function GemHueListIcon({ hue }: { hue: GemHue }) {
+  const image = useGemHueImageQuery(hue.id);
+  const [imageURL, setImageURL] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!image.data) {
+      setImageURL(null);
+      return;
+    }
+    const url = URL.createObjectURL(image.data);
+    setImageURL(url);
+    return () => URL.revokeObjectURL(url);
+  }, [image.data]);
+
+  return (
+    <XStack
+      width={48}
+      height={48}
+      borderRadius="$2"
+      backgroundColor={hue.hexCode || "$gemPanelLight"}
+      borderWidth={1}
+      borderColor="$gemPanelLight"
+      overflow="hidden"
+      alignItems="center"
+      justifyContent="center"
+    >
+      {imageURL && <img className="gem-hue-list-icon-image" src={imageURL} alt="" aria-hidden="true" />}
+    </XStack>
   );
 }
