@@ -1,10 +1,16 @@
 import { sendToNative, subscribeToNative } from "./index";
 
 export type NativeFileKind = "image" | "csv";
+export const IMAGE_FILE_ACCEPT = "image/*";
 
 const MAX_BASE64_LENGTH = 14 * 1024 * 1024;
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
 const PICKER_TIMEOUT_MS = 120_000;
+
+/** Validate the browser/native image boundary before an attachment upload. */
+export function validateImageFile(file: File): void {
+  if (!file.type.toLowerCase().startsWith("image/") || !file.size) throw new Error("Choose a non-empty image file.");
+}
 
 /** Selected bytes only: no native path or arbitrary-path request crosses the bridge. */
 export function hasNativeFilePicker() {
