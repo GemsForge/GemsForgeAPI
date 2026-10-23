@@ -11,7 +11,6 @@ import {
   formatRecordPercentage,
   formatRecordTimestamp,
 } from "../../components/EditableRecordFields";
-import { useCreateServiceAccountMutation } from "../../data/recordQueries";
 import { ServiceAccountCreateForm } from "../create/RecordCreateForms";
 import { RecordImport } from "../../components/RecordImport";
 import { useServiceLogosQuery } from "../../data/lifeQueries";
@@ -19,8 +18,8 @@ import { useRecordUtilities } from "../../hooks/useRecordUtilities";
 import { api } from "../../api";
 import { DatabaseRecordCollection } from "../../components/DatabaseRecordCollection";
 import { createServiceAccountTableAdapter } from "../database/recordTableAdapters";
-import { serviceAccountImportColumns, toServiceAccountCreatePayload } from "./serviceAccountImportAdapter";
-import { createRecordImportActions } from "../../components/createRecordImportActions";
+import { serviceAccountImportColumns } from "./serviceAccountImportAdapter";
+import { useServiceAccountRecordActions } from "./useServiceAccountRecordActions";
 
 /** Render service-account records through the shared Table Kit consumer adapter. */
 export function ServiceAccountsView({ records }: { records: ServiceAccount[] }) {
@@ -42,10 +41,9 @@ export function ServiceAccountsView({ records }: { records: ServiceAccount[] }) 
   const patch = useServiceAccountPatchMutation();
   const [creating, setCreating] = useState(false);
   const [importing, setImporting] = useState(false);
-  const create = useCreateServiceAccountMutation();
-  const publishImportedRows = async (rows: Record<string, unknown>[]) => {
-    for (const row of rows) await create.mutateAsync(toServiceAccountCreatePayload(row));
-  };
+  const { create, publish, actions } = useServiceAccountRecordActions({
+    onCreated: setSelectedID,
+  });
   const logos = useServiceLogosQuery(true);
   const tableAdapter = useMemo(
     () =>
@@ -77,7 +75,7 @@ export function ServiceAccountsView({ records }: { records: ServiceAccount[] }) 
           open={importing}
           onOpenChange={setImporting}
           showTrigger={records.length === 0}
-          onPublish={publishImportedRows}
+          onPublish={publish}
         />
       </div>
       {creating && (
@@ -117,33 +115,7 @@ export function ServiceAccountsView({ records }: { records: ServiceAccount[] }) 
             ).sort()}
             detailId={selectedID == null ? null : String(selectedID)}
             onDetailChange={(id) => setSelectedID(id == null ? null : Number(id))}
-            actions={{
-              newRecordUtility: {
-                options: [
-                  {
-                    id: "new-service",
-                    label: "Input Form",
-                    description: "Open the service account form.",
-                    render: ({ close }) => (
-                      <ServiceAccountCreateForm
-                        onCancel={close}
-                        onCreate={async (payload) => {
-                          const created = await create.mutateAsync(payload);
-                          setSelectedID(created.id);
-                          close();
-                        }}
-                      />
-                    ),
-                  },
-                  ...createRecordImportActions({
-                    idPrefix: "service",
-                    label: "services",
-                    expectedColumns: serviceAccountImportColumns,
-                    onPublish: publishImportedRows,
-                  }),
-                ],
-              },
-            }}
+            actions={actions}
             detail={
               selectedID == null ? null : (
                 <>
