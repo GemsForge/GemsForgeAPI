@@ -17,6 +17,7 @@ import {
 import { TransactionCreateForm } from "../create/RecordCreateForms";
 import { useExpenseCategoriesQuery, useExpenseSubcategoriesQuery, useMerchantsQuery } from "../../data/lifeQueries";
 import { RecordImport } from "../../components/RecordImport";
+import { RecordCreateButton } from "../../components/RecordCreateButton";
 import { useRecordUtilities } from "../../hooks/useRecordUtilities";
 import { DatabaseRecordCollection } from "../../components/DatabaseRecordCollection";
 import { transactionTableAdapter } from "../database/recordTableAdapters";
@@ -64,11 +65,7 @@ export function TransactionsView({ records }: TransactionsViewProps) {
         </div>
         <div className="button-row">
           <span className="record-count">{records.length} records</span>
-          {records.length === 0 && (
-            <button type="button" onClick={() => setCreating(true)}>
-              Add transaction
-            </button>
-          )}
+          {records.length === 0 && <RecordCreateButton label="transaction" onCreate={() => setCreating(true)} />}
         </div>
         <RecordImport
           label="transactions"
