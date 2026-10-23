@@ -397,20 +397,22 @@ export function RecordGallery<Record>({
                   )}
                   {record.status && <span className="table-kit-gallery-status">{record.status.label}</span>}
                   <div className="table-kit-gallery-properties" aria-label="Visible properties">
-                    {visibleProperties.map((property) => {
-                      const value = propertyValue(property, record);
-                      const text = String(value.display || "unconfigured");
-                      return (
-                        <div
-                          key={property.id}
-                          className="table-kit-gallery-property"
-                          aria-label={`${property.label}: ${text}`}
-                          title={text}
-                        >
-                          <PropertyValue value={value} />
-                        </div>
-                      );
-                    })}
+                    {visibleProperties
+                      .filter((property) => property.kind !== "image" && property.id !== "logo")
+                      .map((property) => {
+                        const value = propertyValue(property, record);
+                        const text = String(value.display || "unconfigured");
+                        return (
+                          <div
+                            key={property.id}
+                            className="table-kit-gallery-property"
+                            aria-label={`${property.label}: ${text}`}
+                            title={text}
+                          >
+                            <PropertyValue value={value} />
+                          </div>
+                        );
+                      })}
                   </div>
                 </div>
               </div>
