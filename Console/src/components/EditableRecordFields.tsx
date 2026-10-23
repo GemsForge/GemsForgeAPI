@@ -1,6 +1,6 @@
 import { useId, type ChangeEvent, type ReactNode } from "react";
-import { Form } from "tamagui";
-import { GCheckboxField, GDate, GemTextField, GSelectField } from "./ui";
+import { Form, Tooltip } from "tamagui";
+import { GCheckboxField, GDate, GemButton, GemTextField, GSelectField } from "./ui";
 import type { GemTextFieldWidth } from "./ui/GemTextField";
 import { useRecordEditor } from "../hooks/useRecordEditor";
 
@@ -70,24 +70,18 @@ function EditableField({ field }: { field: EditableRecordField }) {
   });
   const id = `edit-${instanceID}-${field.label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
   const labelID = `${id}-label`;
-  const onTextChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => editor.setDraft(event.currentTarget.value);
+  const onTextChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+    editor.setDraft(event.currentTarget.value);
 
   return (
     <div className={field.className}>
       <dt className="editable-record-label" id={labelID}>
-        {!field.onSave || !editor.editing ? field.label : null}
-        {field.onSave && !editor.editing && (
-          <button
-            type="button"
-            className="field-edit-button"
-            aria-label={`Edit ${field.label.toLowerCase()}`}
-            onClick={editor.begin}
-          >
-            <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false">
-              <path d="M13.7 3.3a2 2 0 0 1 2.8 2.8L7.2 15.4l-3.7 1 1-3.7 9.2-9.4Z" />
-              <path d="m12.3 4.7 3 3" />
-            </svg>
+        {field.onSave ? (
+          <button type="button" className="editable-record-label-button" onClick={editor.begin}>
+            {field.label}
           </button>
+        ) : (
+          field.label
         )}
       </dt>
       <dd>
@@ -143,7 +137,7 @@ function EditableField({ field }: { field: EditableRecordField }) {
                 value={editor.draft}
                 onChange={onTextChange}
                 onBlur={() => undefined}
-                type={field.inputType === "longText" ? undefined : field.inputType ?? "text"}
+                type={field.inputType === "longText" ? undefined : (field.inputType ?? "text")}
                 step={field.step}
                 placeholder={field.placeholder}
                 multiline={field.inputType === "longText"}
@@ -157,13 +151,41 @@ function EditableField({ field }: { field: EditableRecordField }) {
                 Clear value
               </button>
             )}
-            <div className="button-row">
-              <button type="submit" disabled={editor.saving || !editor.dirty}>
-                {editor.saving ? "Saving…" : `Save ${field.label.toLowerCase()}`}
-              </button>
-              <button type="button" className="secondary-button" disabled={editor.saving} onClick={editor.cancel}>
-                Cancel
-              </button>
+            <div className="button-row editable-field-actions">
+              <Tooltip placement="top" delay={300}>
+                <Tooltip.Trigger asChild>
+                  <GemButton
+                    type="submit"
+                    size="$3"
+                    aria-label={`Save ${field.label.toLowerCase()}`}
+                    disabled={editor.saving || !editor.dirty}
+                  >
+                    <span aria-hidden="true">✎</span>
+                  </GemButton>
+                </Tooltip.Trigger>
+                <Tooltip.Content className="table-kit-tooltip">
+                  <Tooltip.Arrow />
+                  <span>{editor.saving ? "Saving…" : `Save ${field.label.toLowerCase()}`}</span>
+                </Tooltip.Content>
+              </Tooltip>
+              <Tooltip placement="top" delay={300}>
+                <Tooltip.Trigger asChild>
+                  <GemButton
+                    tone="secondary"
+                    type="button"
+                    size="$3"
+                    aria-label={`Cancel editing ${field.label.toLowerCase()}`}
+                    disabled={editor.saving}
+                    onClick={editor.cancel}
+                  >
+                    <span aria-hidden="true">×</span>
+                  </GemButton>
+                </Tooltip.Trigger>
+                <Tooltip.Content className="table-kit-tooltip">
+                  <Tooltip.Arrow />
+                  <span>Cancel editing</span>
+                </Tooltip.Content>
+              </Tooltip>
             </div>
           </Form>
         )}
