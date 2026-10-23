@@ -6,7 +6,6 @@ import { GemEmptyState } from "../../components/ui";
 import { AttachmentControl } from "../../components/AttachmentControl";
 import { EditableRecordFields, formatRecordTimestamp } from "../../components/EditableRecordFields";
 import { useAddressesQuery } from "../../data/lifeQueries";
-import { EducationCreateForm } from "../create/RecordCreateForms";
 import { RecordImport } from "../../components/RecordImport";
 import { useRecordUtilities } from "../../hooks/useRecordUtilities";
 import { DatabaseRecordCollection } from "../../components/DatabaseRecordCollection";
@@ -37,7 +36,7 @@ export function EducationView({ records }: EducationViewProps) {
   const [creating, setCreating] = useState(false);
   const [importing, setImporting] = useState(false);
   const addresses = useAddressesQuery(true);
-  const { create, actions } = useEducationRecordActions({
+  const { create, actions, createForm } = useEducationRecordActions({
     addresses: addresses.data ?? [],
     onCreated: setSelectedID,
   });
@@ -74,17 +73,7 @@ export function EducationView({ records }: EducationViewProps) {
           }}
         />
       </div>
-      {creating && (
-        <EducationCreateForm
-          addresses={addresses.data ?? []}
-          onCancel={() => setCreating(false)}
-          onCreate={async (payload) => {
-            const created = await create.mutateAsync(payload);
-            setSelectedID(created.id);
-            setCreating(false);
-          }}
-        />
-      )}
+      {creating && createForm(() => setCreating(false))}
 
       {records.length === 0 ? (
         <GemEmptyState

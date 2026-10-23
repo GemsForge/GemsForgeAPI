@@ -1,4 +1,5 @@
 import type { TableActionsProps } from "../../table-kit";
+import type { ReactNode } from "react";
 import { createRecordImportActions } from "../../components/createRecordImportActions";
 import { EducationCreateForm } from "../create/RecordCreateForms";
 import { useCreateEducationMutation } from "../../data/recordQueries";
@@ -14,6 +15,7 @@ interface EducationRecordActionsOptions {
 interface EducationRecordActionsResult {
   create: ReturnType<typeof useCreateEducationMutation>;
   actions: TableActionsProps;
+  createForm: (onCancel: () => void) => ReactNode;
 }
 
 /**
@@ -30,9 +32,21 @@ export function useEducationRecordActions({
       await create.mutateAsync(row as Parameters<typeof create.mutateAsync>[0]);
     }
   };
+  const createForm = (onCancel: () => void) => (
+    <EducationCreateForm
+      addresses={addresses}
+      onCancel={onCancel}
+      onCreate={async (payload) => {
+        const created = await create.mutateAsync(payload);
+        onCreated(created.id);
+        onCancel();
+      }}
+    />
+  );
 
   return {
     create,
+    createForm,
     actions: {
       newRecordUtility: {
         options: [
@@ -40,17 +54,7 @@ export function useEducationRecordActions({
             id: "new-education",
             label: "Input Form",
             description: "Open the education form.",
-            render: ({ close }) => (
-              <EducationCreateForm
-                addresses={addresses}
-                onCancel={close}
-                onCreate={async (payload) => {
-                  const created = await create.mutateAsync(payload);
-                  onCreated(created.id);
-                  close();
-                }}
-              />
-            ),
+            render: ({ close }) => createForm(close),
           },
           ...createRecordImportActions({
             idPrefix: "education",
