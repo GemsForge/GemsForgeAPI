@@ -1,14 +1,20 @@
-import { useCallback, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import { Button, Menu, ToggleGroup, Tooltip, XGroup, type TamaguiElement } from "tamagui";
 import { TableContext } from "./context";
 import type {
   TableActionsProps,
   TableContextValue,
   TableHeaderProps,
+  TableNewRecordOption,
   TableQueryControlsProps,
   TableRootProps,
+  TableSelectionProps,
 } from "./types";
 import type { TableQueryState } from "./query";
 import { useTableContext } from "./context";
+import { useTableSelection, type TableSelectionScope } from "./selection";
+import { TablePropertyControls } from "./PropertyControls";
+import { NewRecordUtility } from "./NewRecordUtility";
 
 function Root<Row>({
   rows,
@@ -23,11 +29,32 @@ function Root<Row>({
   pagination,
   defaultPagination = { pageIndex: 0, pageSize: 25 },
   onPaginationChange,
+  selection: selectionConfig,
 }: TableRootProps<Row>) {
   const [uncontrolledViewId, setUncontrolledViewId] = useState(defaultViewId ?? views[0]?.id);
   const [uncontrolledPagination, setUncontrolledPagination] = useState(defaultPagination);
   const viewId = controlledViewId ?? uncontrolledViewId;
   const effectivePagination = pagination;
+  const isSelectable = selectionConfig?.isSelectable;
+  const isSelectableId = selectionConfig?.isSelectableId;
+  const configuredMatchingIds = selectionConfig?.matchingIds;
+  const currentPageSelectableIds = useMemo(
+    () =>
+      rows.reduce<string[]>((ids, row, index) => {
+        if (isSelectable?.(row, index) ?? true) ids.push(rowKey(row, index));
+        return ids;
+      }, []),
+    [isSelectable, rowKey, rows],
+  );
+  const allMatchingIds = useMemo(
+    () => (configuredMatchingIds ?? currentPageSelectableIds).filter((id) => isSelectableId?.(id) ?? true),
+    [configuredMatchingIds, currentPageSelectableIds, isSelectableId],
+  );
+  const selectionState = useTableSelection({
+    defaultSelectedIds: selectionConfig?.defaultSelectedIds,
+    selectedIds: selectionConfig?.selectedIds,
+    onSelectionChange: selectionConfig?.onSelectionChange,
+  });
 
   const setViewId = useCallback(
     (next: string) => {
@@ -43,6 +70,33 @@ function Root<Row>({
     },
     [onPaginationChange, pagination],
   );
+  const selectAll = useCallback(
+    (scope: TableSelectionScope) =>
+      selectionState.selectAll(scope === "all-matching" ? allMatchingIds : currentPageSelectableIds),
+    [allMatchingIds, currentPageSelectableIds, selectionState],
+  );
+  const toggleAll = useCallback(
+    (scope: TableSelectionScope) =>
+      selectionState.toggleAll(scope === "all-matching" ? allMatchingIds : currentPageSelectableIds),
+    [allMatchingIds, currentPageSelectableIds, selectionState],
+  );
+  const selection = useMemo(
+    () => ({
+      enabled: selectionConfig !== undefined,
+      selectedIds: selectionState.selectedIds,
+      currentPageIds: currentPageSelectableIds,
+      allMatchingIds,
+      isSelected: selectionState.isSelected,
+      toggle: selectionState.toggle,
+      add: selectionState.add,
+      selectAll,
+      toggleAll,
+      clear: selectionState.clear,
+      getSummary: (scope: TableSelectionScope) =>
+        selectionState.getSummary(scope === "all-matching" ? allMatchingIds : currentPageSelectableIds),
+    }),
+    [allMatchingIds, currentPageSelectableIds, selectAll, selectionConfig, selectionState, toggleAll],
+  );
   const value = useMemo(
     () => ({
       rows,
@@ -54,6 +108,7 @@ function Root<Row>({
       setViewId,
       pagination: effectivePagination ?? { ...uncontrolledPagination, total: rows.length },
       setPagination,
+      selection,
     }),
     [
       caption,
@@ -63,6 +118,7 @@ function Root<Row>({
       rows,
       setPagination,
       setViewId,
+      selection,
       uncontrolledPagination,
       viewId,
       views,
@@ -111,24 +167,50 @@ function Metadata({ children }: { children?: ReactNode }) {
   return <dl className="table-kit-metadata">{children}</dl>;
 }
 
+/** Render the single-selection xs Tamagui ToggleGroup that scopes each view renderer. */
 function Views<Row>() {
   const { views, viewId, setViewId } = useTableContext<Row>();
   if (!views.length) return null;
   return (
-    <div className="table-kit-views" role="tablist" aria-label="Table views">
-      {views.map((view) => (
-        <button
-          key={view.id}
-          type="button"
-          role="tab"
-          aria-selected={view.id === viewId}
-          onClick={() => setViewId(view.id)}
-        >
-          {view.icon}
-          <span>{view.label}</span>
-        </button>
-      ))}
-    </div>
+    <ToggleGroup
+      type="single"
+      value={viewId}
+      onValueChange={(next: string | string[]) => {
+        if (typeof next === "string" && next) setViewId(next);
+      }}
+      orientation="horizontal"
+      disableDeactivation
+      aria-label="Table views"
+    >
+      <XGroup width={208} borderRadius="$gemControl" overflow="hidden" aria-label="Table views">
+        {views.map((view) => (
+          <XGroup.Item key={view.id} flex={1}>
+            <ToggleGroup.Item
+              value={view.id}
+              size="xs"
+              width="100%"
+              color="$gemInk"
+              backgroundColor="$gemPanel"
+              activeStyle={{ backgroundColor: "$gemMint", color: "$gemCanvas" }}
+              aria-label={view.label}
+            >
+              <Tooltip placement="top" delay={300}>
+                <Tooltip.Trigger asChild>
+                  <span className="table-kit-view-icon" aria-hidden="true">
+                    {view.icon}
+                  </span>
+                </Tooltip.Trigger>
+                <Tooltip.Content className="table-kit-tooltip">
+                  <Tooltip.Arrow />
+                  <span>{view.label}</span>
+                </Tooltip.Content>
+              </Tooltip>
+              <span className="sr-only">{view.label}</span>
+            </ToggleGroup.Item>
+          </XGroup.Item>
+        ))}
+      </XGroup>
+    </ToggleGroup>
   );
 }
 
@@ -136,6 +218,54 @@ function Toolbar({ children }: { children?: ReactNode }) {
   return (
     <div className="table-kit-toolbar" role="toolbar">
       {children}
+    </div>
+  );
+}
+
+/**
+ * Render the shared page-selection control. The optional matching scope is
+ * shown only when the adapter supplies IDs beyond the current page.
+ */
+function Selection({
+  label = "Select all",
+  clearLabel = "Clear selection",
+  allMatchingLabel = "Select all matching",
+}: TableSelectionProps) {
+  const { selection } = useTableContext();
+  const checkboxRef = useRef<HTMLInputElement>(null);
+  const currentPage = selection.getSummary("current-page");
+  const allMatching = selection.getSummary("all-matching");
+  const hasAdditionalMatchingRecords = selection.allMatchingIds.length > selection.currentPageIds.length;
+
+  useEffect(() => {
+    if (checkboxRef.current) checkboxRef.current.indeterminate = currentPage.indeterminate;
+  }, [currentPage.indeterminate]);
+
+  return (
+    <div className="table-kit-selection" role="group" aria-label="Selection controls">
+      <label>
+        <input
+          ref={checkboxRef}
+          type="checkbox"
+          checked={currentPage.allSelected}
+          disabled={currentPage.totalCount === 0}
+          aria-label={label}
+          aria-checked={currentPage.indeterminate ? "mixed" : currentPage.allSelected}
+          onChange={() => selection.toggleAll("current-page")}
+        />
+        <span>{currentPage.selectedCount > 0 ? `${currentPage.selectedCount} selected` : label}</span>
+      </label>
+      {hasAdditionalMatchingRecords && (
+        <button type="button" disabled={allMatching.allSelected} onClick={() => selection.selectAll("all-matching")}>
+          {allMatching.allSelected ? `All ${allMatching.totalCount} matching selected` : allMatchingLabel}
+        </button>
+      )}
+      {allMatching.selectedCount > 0 && (
+        <button type="button" onClick={selection.clear}>
+          {clearLabel}
+        </button>
+      )}
+      <output aria-live="polite">{allMatching.selectedCount} selected</output>
     </div>
   );
 }
@@ -191,63 +321,169 @@ function QueryControls({
   );
 }
 
+/** Render the compact xs plus utility while preserving consumer-owned create/import actions in one menu. */
 function Actions({
   onNew,
   onImport,
+  newRecordOptions = [],
   onImportFile,
   onPasteCsv,
   onPasteJson,
   newLabel = "New",
+  newOptionsLabel,
+  newRecordUtility,
   importLabel = "Import",
   disabled = false,
   pending = false,
 }: TableActionsProps) {
   const isDisabled = disabled || pending;
   const [menuOpen, setMenuOpen] = useState(false);
+  const menuTriggerRef = useRef<TamaguiElement>(null);
+  const menuContentRef = useRef<TamaguiElement>(null);
+  const previousMenuOpen = useRef(menuOpen);
+  const hasNewRecordMenu = newRecordOptions.length > 0;
   const hasImportMenu = Boolean(onImportFile || onPasteCsv || onPasteJson);
+  const hasMenu = hasNewRecordMenu || hasImportMenu || Boolean(onNew && onImport);
+  const menuLabel = newOptionsLabel ?? (onNew || hasNewRecordMenu ? "New record options" : "Import options");
+  const menuOptions: TableNewRecordOption[] = [
+    ...(onNew ? [{ id: "default-new", label: newLabel, onSelect: onNew }] : []),
+    ...newRecordOptions,
+    ...(onImport && hasMenu ? [{ id: "default-import", label: importLabel, onSelect: onImport }] : []),
+  ];
+  useEffect(() => {
+    if (previousMenuOpen.current && !menuOpen) menuTriggerRef.current?.focus();
+    if (!previousMenuOpen.current && menuOpen) {
+      (menuContentRef.current as unknown as HTMLElement | null)
+        ?.querySelector<HTMLElement>('[role="menuitem"]')
+        ?.focus();
+    }
+    previousMenuOpen.current = menuOpen;
+  }, [menuOpen]);
+  /** Keep controlled-menu keyboard movement predictable when no trigger owns focus. */
+  const handleMenuKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (!["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) return;
+    const items = Array.from(
+      (menuContentRef.current as unknown as HTMLElement | null)?.querySelectorAll<HTMLElement>('[role^="menuitem"]') ??
+        [],
+    ).filter((item) => !item.hasAttribute("aria-disabled"));
+    if (!items.length) return;
+    event.preventDefault();
+    const currentIndex = items.indexOf(document.activeElement as HTMLElement);
+    const nextIndex =
+      event.key === "Home"
+        ? 0
+        : event.key === "End"
+          ? items.length - 1
+          : (currentIndex + (event.key === "ArrowUp" ? -1 : 1) + items.length) % items.length;
+    items[nextIndex]?.focus();
+  };
   return (
     <div className="table-kit-actions" role="group" aria-busy={pending}>
-      {onNew && (
-        <button type="button" onClick={() => void onNew()} disabled={isDisabled} aria-busy={pending}>
-          {newLabel}
-        </button>
+      {newRecordUtility && (
+        <NewRecordUtility {...newRecordUtility} triggerRef={menuTriggerRef} disabled={disabled} pending={pending} />
       )}
-      {onImport && (
-        <button type="button" onClick={() => void onImport()} disabled={isDisabled} aria-busy={pending}>
+      {!newRecordUtility && onNew && !hasMenu && (
+        <Tooltip placement="top" delay={300}>
+          <Tooltip.Trigger asChild>
+            <Button
+              type="button"
+              size="xs"
+              color="$gemInk"
+              backgroundColor="$gemPanel"
+              borderColor="$gemPanelLight"
+              borderWidth={1}
+              borderRadius="$gemControl"
+              className="compact-icon-button"
+              onClick={() => void onNew()}
+              disabled={isDisabled}
+              aria-busy={pending}
+              aria-label={newLabel}
+            >
+              <span aria-hidden="true">＋</span>
+              <span className="sr-only">{newLabel}</span>
+            </Button>
+          </Tooltip.Trigger>
+          <Tooltip.Content className="table-kit-tooltip">
+            <Tooltip.Arrow />
+            <span>{newLabel}</span>
+          </Tooltip.Content>
+        </Tooltip>
+      )}
+      {!newRecordUtility && onImport && !hasMenu && (
+        <Button
+          size="xs"
+          color="$gemInk"
+          backgroundColor="$gemPanel"
+          borderColor="$gemPanelLight"
+          borderWidth={1}
+          borderRadius="$gemControl"
+          type="button"
+          onClick={() => void onImport()}
+          disabled={isDisabled}
+          aria-busy={pending}
+        >
           {importLabel}
-        </button>
+        </Button>
       )}
-      {hasImportMenu && (
-        <div className="table-kit-import-menu">
-          <button
-            type="button"
-            aria-haspopup="menu"
-            aria-expanded={menuOpen}
-            onClick={() => setMenuOpen((open) => !open)}
-            disabled={isDisabled}
-          >
-            Import options
-          </button>
-          {menuOpen && (
-            <div role="menu">
+      {!newRecordUtility && hasMenu && (
+        <Menu open={menuOpen} onOpenChange={setMenuOpen} placement="bottom-end" modal={false}>
+          <Tooltip placement="top" delay={300}>
+            <Tooltip.Trigger asChild>
+              <Button
+                ref={menuTriggerRef}
+                type="button"
+                size="xs"
+                color="$gemInk"
+                backgroundColor="$gemPanel"
+                borderColor="$gemPanelLight"
+                borderWidth={1}
+                borderRadius="$gemControl"
+                aria-label={menuLabel}
+                disabled={isDisabled}
+                className="compact-icon-button"
+                onClick={() => setMenuOpen((current) => !current)}
+              >
+                <span aria-hidden="true">＋</span>
+                <span className="sr-only">{menuLabel}</span>
+              </Button>
+            </Tooltip.Trigger>
+            <Tooltip.Content className="table-kit-tooltip">
+              <Tooltip.Arrow />
+              <span>{menuLabel}</span>
+            </Tooltip.Content>
+          </Tooltip>
+          <Menu.Portal zIndex={20}>
+            <Menu.Content
+              ref={menuContentRef}
+              className="table-kit-menu-content"
+              aria-label={menuLabel}
+              loop
+              onKeyDown={handleMenuKeyDown}
+            >
+              {menuOptions.map((option) => (
+                <Menu.Item key={option.id} onSelect={() => void option.onSelect()} textValue={option.label}>
+                  <Menu.ItemTitle>{option.label}</Menu.ItemTitle>
+                  {option.description && <Menu.ItemSubtitle>{option.description}</Menu.ItemSubtitle>}
+                </Menu.Item>
+              ))}
               {onImportFile && (
-                <button type="button" role="menuitem" onClick={() => void onImportFile()}>
-                  Import file
-                </button>
+                <Menu.Item onSelect={() => void onImportFile()} textValue="Import file">
+                  <Menu.ItemTitle>Import file</Menu.ItemTitle>
+                </Menu.Item>
               )}
               {onPasteCsv && (
-                <button type="button" role="menuitem" onClick={() => void onPasteCsv()}>
-                  Paste CSV
-                </button>
+                <Menu.Item onSelect={() => void onPasteCsv()} textValue="Paste CSV">
+                  <Menu.ItemTitle>Paste CSV</Menu.ItemTitle>
+                </Menu.Item>
               )}
               {onPasteJson && (
-                <button type="button" role="menuitem" onClick={() => void onPasteJson()}>
-                  Paste JSON
-                </button>
+                <Menu.Item onSelect={() => void onPasteJson()} textValue="Paste JSON">
+                  <Menu.ItemTitle>Paste JSON</Menu.ItemTitle>
+                </Menu.Item>
               )}
-            </div>
-          )}
-        </div>
+            </Menu.Content>
+          </Menu.Portal>
+        </Menu>
       )}
     </div>
   );
@@ -280,8 +516,10 @@ export const Table = {
   Metadata,
   Views,
   Toolbar,
+  Selection,
   QueryControls,
   Actions,
+  PropertyControls: TablePropertyControls,
   Content,
   Pagination,
 };

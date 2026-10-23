@@ -266,12 +266,20 @@ jobs:
               );
 
               if (newAssignees.length > 0) {
-                await github.rest.issues.addAssignees({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  issue_number: pullRequest.number,
-                  assignees: newAssignees,
-                });
+                try {
+                  await github.rest.issues.addAssignees({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: pullRequest.number,
+                    assignees: newAssignees,
+                  });
+                } catch (error) {
+                  // GitHub can report an already-assigned user during concurrent retries.
+                  if (error.status !== 422 || !String(error.message).includes("already been taken")) {
+                    throw error;
+                  }
+                  core.notice("PR assignees were already synchronized by a concurrent run.");
+                }
               }
 
               await github.rest.issues.update({
@@ -307,7 +315,21 @@ jobs:
                   },
                   body: JSON.stringify({ query, variables }),
                 });
-                const payload = await response.json();
+                const responseText = await response.text();
+                let payload;
+                try {
+                  payload = responseText ? JSON.parse(responseText) : null;
+                } catch (parseError) {
+                  throw new Error(
+                    `GitHub GraphQL returned non-JSON data (HTTP ${response.status} ${response.statusText}): ` +
+                    (responseText.slice(0, 500) || "<empty response body>"),
+                  );
+                }
+                if (!payload || typeof payload !== "object") {
+                  throw new Error(
+                    `GitHub GraphQL returned an empty or invalid response (HTTP ${response.status} ${response.statusText}).`,
+                  );
+                }
                 if (!response.ok) {
                   throw new Error(
                     `GitHub GraphQL HTTP ${response.status}: ${JSON.stringify(payload)}`,
@@ -401,9 +423,16 @@ jobs:
               }
             }`;
 
-            const projectItems = (
+            let projectItems = (
               await projectApi(itemQuery, { projectId: project.id })
             ).node?.items?.nodes ?? [];
+            // Project webhook retries can race while adding the same content.
+            // Re-read after GitHub reports a duplicate so synchronization stays idempotent.
+            const refreshProjectItems = async () => {
+              projectItems = (await projectApi(itemQuery, { projectId: project.id }))
+                .node?.items?.nodes ?? [];
+              return projectItems;
+            };
             let issueItem = projectItems.find(
               (item) =>
                 item.content?.__typename === "Issue" &&
@@ -417,17 +446,30 @@ jobs:
                   item { id }
                 }
               }`;
-              const addedIssue = await projectApi(addIssueMutation, {
-                projectId: project.id,
-                contentId: issue.node_id,
-              });
-              issueItem = {
-                id: addedIssue.addProjectV2ItemById.item.id,
-                fieldValues: { nodes: [] },
-              };
-              core.notice(
-                `Added issue #${issueNumber} to the GemsForgeAPI (#7) project.`,
-              );
+              try {
+                const addedIssue = await projectApi(addIssueMutation, {
+                  projectId: project.id,
+                  contentId: issue.node_id,
+                });
+                issueItem = {
+                  id: addedIssue.addProjectV2ItemById.item.id,
+                  fieldValues: { nodes: [] },
+                };
+                core.notice(
+                  `Added issue #${issueNumber} to the GemsForgeAPI (#7) project.`,
+                );
+              } catch (error) {
+                if (!String(error?.message ?? error).includes("Content already exists")) {
+                  throw error;
+                }
+                issueItem = (await refreshProjectItems()).find(
+                  (item) => item.content?.__typename === "Issue" &&
+                    item.content.number === issueNumber &&
+                    item.content.repository?.nameWithOwner === context.repo.owner + "/" + context.repo.repo,
+                );
+                if (!issueItem) throw error;
+                core.notice(`Issue #${issueNumber} was added by a concurrent sync.`);
+              }
             }
 
             // Reconcile from current repository state rather than event order.
@@ -515,11 +557,24 @@ jobs:
                     item { id }
                   }
                 }`;
-                const added = await projectApi(addItemMutation, {
-                  projectId: project.id,
-                  contentId: pullRequest.node_id,
-                });
-                pullRequestItem = { id: added.addProjectV2ItemById.item.id };
+                try {
+                  const added = await projectApi(addItemMutation, {
+                    projectId: project.id,
+                    contentId: pullRequest.node_id,
+                  });
+                  pullRequestItem = { id: added.addProjectV2ItemById.item.id };
+                } catch (error) {
+                  if (!String(error?.message ?? error).includes("Content already exists")) {
+                    throw error;
+                  }
+                  pullRequestItem = (await refreshProjectItems()).find(
+                    (item) => item.content?.__typename === "PullRequest" &&
+                      item.content.number === pullRequest.number &&
+                      item.content.repository?.nameWithOwner === context.repo.owner + "/" + context.repo.repo,
+                  );
+                  if (!pullRequestItem) throw error;
+                  core.notice(`PR #${pullRequest.number} was added by a concurrent sync.`);
+                }
               }
 
               await setStatus(pullRequestItem,

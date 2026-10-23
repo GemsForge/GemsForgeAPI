@@ -83,7 +83,9 @@ describe("EditableRecordFields", () => {
     await waitFor(() => expect(saveBoolean).toHaveBeenCalledWith(true));
 
     fireEvent.click(screen.getByRole("button", { name: "Edit status" }));
-    fireEvent.change(screen.getByLabelText("Status"), { target: { value: "Former" } });
+    // Tamagui's select is a combobox; changing its button value does not select an item.
+    fireEvent.click(screen.getByRole("combobox", { name: "Status" }));
+    fireEvent.keyDown(screen.getByRole("option", { name: "Former" }), { key: "Enter" });
     fireEvent.click(screen.getByRole("button", { name: "Save status" }));
     await waitFor(() => expect(saveStatus).toHaveBeenCalledWith("Former"));
   });

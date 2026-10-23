@@ -1,5 +1,9 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
+import { useState, type ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
+import { TamaguiProvider } from "tamagui";
+import { tamaguiConfig } from "../design-system/tamagui.config";
+import { CreateFormFrame } from "../components/forms/CreateForm";
 import { Table, useTableContext } from "./index";
 
 interface Row {
@@ -11,6 +15,14 @@ const rows = [
   { id: "one", name: "One" },
   { id: "two", name: "Two" },
 ];
+
+function renderActions(actions: ReactNode) {
+  render(
+    <TamaguiProvider config={tamaguiConfig} defaultTheme="dark">
+      {actions}
+    </TamaguiProvider>,
+  );
+}
 
 function PaginationHarness() {
   const { pagination, setPagination } = useTableContext<Row>();
@@ -31,6 +43,24 @@ function StateHarness() {
   return <output>{`${viewId ?? "none"}:${pagination?.pageIndex ?? "none"}`}</output>;
 }
 
+function SelectionPagingHarness() {
+  const [pageIndex, setPageIndex] = useState(0);
+  const pageRows = [rows[pageIndex]];
+  return (
+    <Table.Root<Row>
+      rows={pageRows}
+      columns={columns}
+      rowKey={(row) => row.id}
+      selection={{ matchingIds: rows.map((row) => row.id) }}
+    >
+      <Table.Selection />
+      <button type="button" onClick={() => setPageIndex(1)}>
+        Next page
+      </button>
+    </Table.Root>
+  );
+}
+
 describe("Table Kit", () => {
   it("exposes shared query controls with reset and filter semantics", () => {
     const onStateChange = vi.fn();
@@ -47,25 +77,150 @@ describe("Table Kit", () => {
     expect(onStateChange).toHaveBeenLastCalledWith({ search: "", filters: {}, sort: [], pageIndex: 0, pageSize: 25 });
   });
 
-  it("injects accessible New and Import actions and disables them while pending", () => {
+  it("combines New and Import actions behind the compact trigger while pending", () => {
     const onNew = vi.fn();
     const onImport = vi.fn();
-    render(<Table.Actions onNew={onNew} onImport={onImport} pending />);
-    expect(screen.getByRole("button", { name: "New" })).toBeDisabled();
-    expect(screen.getByRole("button", { name: "Import" })).toBeDisabled();
+    renderActions(<Table.Actions onNew={onNew} onImport={onImport} pending />);
+    expect(screen.getByRole("button", { name: "New record options" })).toBeDisabled();
     expect(screen.getByRole("group")).toHaveAttribute("aria-busy", "true");
+  });
+
+  it("opens New and Import operations from the plus utility", () => {
+    const onNew = vi.fn();
+    const onImport = vi.fn();
+    renderActions(<Table.Actions onNew={onNew} onImport={onImport} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "New record options" }));
+    expect(screen.getByRole("menuitem", { name: "New" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("menuitem", { name: "Import" }));
+    expect(onImport).toHaveBeenCalledOnce();
   });
 
   it("exposes separate file and paste import menu entry points", () => {
     const onImportFile = vi.fn();
     const onPasteCsv = vi.fn();
     const onPasteJson = vi.fn();
-    render(<Table.Actions onImportFile={onImportFile} onPasteCsv={onPasteCsv} onPasteJson={onPasteJson} />);
+    renderActions(<Table.Actions onImportFile={onImportFile} onPasteCsv={onPasteCsv} onPasteJson={onPasteJson} />);
     fireEvent.click(screen.getByRole("button", { name: "Import options" }));
     fireEvent.click(screen.getByRole("menuitem", { name: "Paste CSV" }));
     expect(onPasteCsv).toHaveBeenCalledOnce();
+    fireEvent.click(screen.getByRole("button", { name: "Import options" }));
     expect(screen.getByRole("menuitem", { name: "Import file" })).toBeInTheDocument();
     expect(screen.getByRole("menuitem", { name: "Paste JSON" })).toBeInTheDocument();
+  });
+
+  it("combines typed create and intake actions in a keyboard-navigable menu", () => {
+    const onNew = vi.fn();
+    const onAddress = vi.fn();
+    const onPaste = vi.fn();
+    renderActions(
+      <Table.Actions
+        onNew={onNew}
+        newRecordOptions={[{ id: "address", label: "New address", onSelect: onAddress }]}
+        onPasteCsv={onPaste}
+      />,
+    );
+
+    const trigger = screen.getByRole("button", { name: "New record options" });
+    fireEvent.click(trigger);
+    const defaultNew = screen.getByRole("menuitem", { name: "New" });
+    expect(defaultNew).toHaveFocus();
+    fireEvent.keyDown(screen.getByRole("menu"), { key: "ArrowDown" });
+    const address = screen.getByRole("menuitem", { name: "New address" });
+    expect(address).toHaveFocus();
+    fireEvent.keyDown(screen.getByRole("menu"), { key: "ArrowDown" });
+    expect(screen.getByRole("menuitem", { name: "Paste CSV" })).toHaveFocus();
+    fireEvent.keyDown(screen.getByRole("menu"), { key: "Escape" });
+    expect(trigger).toHaveFocus();
+    fireEvent.click(trigger);
+    fireEvent.click(screen.getByRole("menuitem", { name: "New address" }));
+    expect(onAddress).toHaveBeenCalledOnce();
+  });
+
+  it("opens the New Record utility, switches workflows, and restores focus on close", () => {
+    renderActions(
+      <Table.Actions
+        newRecordUtility={{
+          options: [
+            {
+              id: "create",
+              label: "New record",
+              description: "Open the create form.",
+              render: ({ close }) => (
+                <button type="button" onClick={close}>
+                  Create workflow
+                </button>
+              ),
+            },
+            {
+              id: "import",
+              label: "Import file",
+              description: "Choose a file.",
+              render: () => <p>Import workflow</p>,
+            },
+            {
+              id: "paste",
+              label: "Paste data",
+              description: "Paste records.",
+              render: () => <p>Paste workflow</p>,
+            },
+          ],
+        }}
+      />,
+    );
+
+    const trigger = screen.getByRole("button", { name: "New record" });
+    fireEvent.click(trigger);
+    // JSDOM treats content inside Tamagui's native dialog portal as hidden.
+    expect(screen.getByRole("dialog", { name: "New record", hidden: true })).toBeInTheDocument();
+    expect(screen.getByText("Create workflow")).toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: "New record", hidden: true })).toHaveTextContent("Open the create form.");
+    expect(screen.queryByText("Choose an operation.")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("tab", { name: /Import file/, hidden: true }));
+    expect(screen.getByText("Import workflow")).toBeInTheDocument();
+    expect(screen.queryByText("Create workflow")).not.toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: "New record", hidden: true })).toHaveTextContent("Choose a file.");
+
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(screen.queryByRole("dialog", { name: "New record", hidden: true })).not.toBeInTheDocument();
+    expect(trigger).toHaveFocus();
+
+    fireEvent.click(trigger);
+    fireEvent.click(screen.getByRole("button", { name: "Close new record utility", hidden: true }));
+    expect(trigger).toHaveFocus();
+  });
+
+  it("keeps the create form submit button inside the New Record dialog", () => {
+    const onSubmit = vi.fn();
+    renderActions(
+      <Table.Actions
+        newRecordUtility={{
+          options: [
+            {
+              id: "create",
+              label: "Input Form",
+              render: ({ close }) => (
+                <CreateFormFrame
+                  title="Create address"
+                  submitting={false}
+                  error={null}
+                  onCancel={close}
+                  onSubmit={onSubmit}
+                >
+                  <input aria-label="Street" />
+                </CreateFormFrame>
+              ),
+            },
+          ],
+        }}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "New record" }));
+    const dialog = screen.getByRole("dialog", { name: "New record", hidden: true });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Create record", hidden: true }));
+    expect(onSubmit).toHaveBeenCalledOnce();
   });
 
   it("composes the scoped table primitives with typed rows", () => {
@@ -86,29 +241,139 @@ describe("Table Kit", () => {
     const onViewChange = vi.fn();
     const onPaginationChange = vi.fn();
     render(
+      <TamaguiProvider config={tamaguiConfig} defaultTheme="dark">
+        <Table.Root<Row>
+          rows={rows}
+          columns={columns}
+          rowKey={(row) => row.id}
+          views={[
+            { id: "grid", label: "Grid" },
+            { id: "list", label: "List" },
+          ]}
+          viewId="grid"
+          onViewChange={onViewChange}
+          pagination={{ pageIndex: 0, pageSize: 1, total: 2 }}
+          onPaginationChange={onPaginationChange}
+        >
+          <Table.Views />
+          <Table.Pagination>
+            <PaginationHarness />
+          </Table.Pagination>
+        </Table.Root>
+      </TamaguiProvider>,
+    );
+    screen.getByRole("button", { name: "List" }).click();
+    screen.getByRole("button", { name: "Advance page" }).click();
+    expect(onViewChange).toHaveBeenCalledWith("list");
+    expect(onPaginationChange).toHaveBeenCalledWith({ pageIndex: 1, pageSize: 1 });
+  });
+
+  it("coordinates current-page, all-matching, and clear selection in the scoped context", () => {
+    const onSelectionChange = vi.fn();
+    render(
       <Table.Root<Row>
         rows={rows}
         columns={columns}
         rowKey={(row) => row.id}
-        views={[
-          { id: "grid", label: "Grid" },
-          { id: "list", label: "List" },
-        ]}
-        viewId="grid"
-        onViewChange={onViewChange}
-        pagination={{ pageIndex: 0, pageSize: 1, total: 2 }}
-        onPaginationChange={onPaginationChange}
+        selection={{ matchingIds: ["one", "two", "three"], onSelectionChange }}
       >
-        <Table.Views />
-        <Table.Pagination>
-          <PaginationHarness />
-        </Table.Pagination>
+        <Table.Selection />
       </Table.Root>,
     );
-    screen.getByRole("tab", { name: "List" }).click();
-    screen.getByRole("button", { name: "Advance page" }).click();
-    expect(onViewChange).toHaveBeenCalledWith("list");
-    expect(onPaginationChange).toHaveBeenCalledWith({ pageIndex: 1, pageSize: 1 });
+
+    fireEvent.click(screen.getByRole("checkbox", { name: "Select all" }));
+    expect(onSelectionChange).toHaveBeenLastCalledWith(new Set(["one", "two"]));
+    fireEvent.click(screen.getByRole("button", { name: "Select all matching" }));
+    expect(onSelectionChange).toHaveBeenLastCalledWith(new Set(["one", "two", "three"]));
+    expect(screen.getByText("3 selected")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Clear selection" }));
+    expect(onSelectionChange).toHaveBeenLastCalledWith(new Set());
+  });
+
+  it("exposes an indeterminate state for partial current-page selection", () => {
+    render(
+      <Table.Root<Row>
+        rows={rows}
+        columns={columns}
+        rowKey={(row) => row.id}
+        selection={{ defaultSelectedIds: ["one"], matchingIds: ["one", "two", "three"] }}
+      >
+        <Table.Selection />
+      </Table.Root>,
+    );
+
+    const checkbox = screen.getByRole("checkbox", { name: "Select all" });
+    expect(checkbox).not.toBeChecked();
+    expect((checkbox as HTMLInputElement).indeterminate).toBe(true);
+    expect(checkbox).toHaveAttribute("aria-checked", "mixed");
+    expect(screen.getByRole("button", { name: "Select all matching" })).toBeInTheDocument();
+  });
+
+  it("preserves selected IDs across page updates while applying current-page toggles", () => {
+    render(<SelectionPagingHarness />);
+
+    fireEvent.click(screen.getByRole("checkbox", { name: "Select all" }));
+    fireEvent.click(screen.getByRole("button", { name: "Next page" }));
+
+    expect(screen.getByRole("status")).toHaveTextContent("1 selected");
+    fireEvent.click(screen.getByRole("checkbox", { name: "Select all" }));
+    expect(screen.getByRole("status")).toHaveTextContent("2 selected");
+  });
+
+  it("excludes disabled current-page records from bulk selection", () => {
+    const onSelectionChange = vi.fn();
+    render(
+      <Table.Root<Row>
+        rows={rows}
+        columns={columns}
+        rowKey={(row) => row.id}
+        selection={{ isSelectable: (row) => row.id === "one", onSelectionChange }}
+      >
+        <Table.Selection />
+      </Table.Root>,
+    );
+
+    fireEvent.click(screen.getByRole("checkbox", { name: "Select all" }));
+    expect(onSelectionChange).toHaveBeenCalledWith(new Set(["one"]));
+  });
+
+  it("excludes disabled off-page IDs from all-matching selection", () => {
+    const onSelectionChange = vi.fn();
+    render(
+      <Table.Root<Row>
+        rows={[rows[0]]}
+        columns={columns}
+        rowKey={(row) => row.id}
+        selection={{
+          matchingIds: ["one", "two", "disabled"],
+          isSelectableId: (id) => id !== "disabled",
+          onSelectionChange,
+        }}
+      >
+        <Table.Selection />
+      </Table.Root>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Select all matching" }));
+    expect(onSelectionChange).toHaveBeenCalledWith(new Set(["one", "two"]));
+  });
+
+  it("keeps selection isolated between Table.Root instances", () => {
+    render(
+      <>
+        <Table.Root<Row> rows={rows} columns={columns} rowKey={(row) => row.id}>
+          <Table.Selection />
+        </Table.Root>
+        <Table.Root<Row> rows={rows} columns={columns} rowKey={(row) => row.id}>
+          <Table.Selection />
+        </Table.Root>
+      </>,
+    );
+
+    const checkboxes = screen.getAllByRole("checkbox", { name: "Select all" });
+    fireEvent.click(checkboxes[0]);
+
+    expect(screen.getAllByRole("status").map((status) => status.textContent)).toEqual(["2 selected", "0 selected"]);
   });
 
   it("throws when a compound component is outside Root", () => {

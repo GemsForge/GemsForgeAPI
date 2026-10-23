@@ -608,6 +608,82 @@ dialog::backdrop {
   color: var(--danger);
   font-size: 0.75rem;
 }
+/* Keep labels and controls compact so multi-field forms remain scannable. */
+.create-form-field {
+  margin-bottom: 0.75rem;
+}
+.create-form-field > label {
+  margin: 0;
+}
+.create-form-control {
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 0.55rem;
+  outline: 0;
+  background: #0c1b20;
+  color: var(--ink);
+}
+.create-form-control:focus,
+.create-form-control:focus-visible {
+  border-color: var(--mint);
+}
+/* Map semantic field widths to compact controls without changing the shared field shell. */
+.create-form-control--short {
+  max-width: 12rem;
+}
+.create-form-control--medium {
+  max-width: 20rem;
+}
+.create-form-control--long {
+  max-width: 100%;
+}
+.field-checkbox {
+  width: 1.25rem;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  min-height: 1.25rem;
+  padding: 0;
+}
+.table-kit-property-dialog [role="toolbar"] {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+/* Keep related form fields readable in columns while preserving a single-column compact layout. */
+.create-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 1rem;
+  align-items: start;
+}
+.create-form-grid > .create-form-field {
+  min-width: 0;
+}
+.create-form-grid--compact {
+  grid-template-columns: repeat(3, minmax(9rem, 12rem));
+}
+.create-form-grid--contact {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.create-form-grid--address-location {
+  grid-template-columns: repeat(4, minmax(7rem, 1fr));
+}
+@media (max-width: 640px) {
+  .create-form-grid,
+  .create-form-grid--compact,
+  .create-form-grid--contact,
+  .create-form-grid--address-location {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 900px) {
+  .create-form-grid--address-location {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
 .create-record-form [aria-invalid="true"] {
   border-color: var(--danger);
 }
@@ -1240,31 +1316,334 @@ dialog::backdrop {
     height: 14rem;
   }
 }
-@media (min-width: 901px) and (max-width: 1080px) {
-  .gem-record-grid-rail {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+
+/* Keep the shared header full width and view choices horizontal while secondary options remain dismissible and keyboard reachable. */
+.table-kit-header {
+  width: 100%;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.table-kit-header-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+/* Keep view icons legible within Tamagui's equal-width XGroup items. */
+.table-kit-view-icon {
+  display: inline-grid;
+  pointer-events: auto;
+  place-items: center;
+  min-width: 1.25rem;
+  min-height: 1.25rem;
+  font-size: 1.05rem;
+}
+
+/* Keep query controls and the properties gear attached to the view group. */
+.table-kit-toolbar {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+}
+
+/* Keep compact query controls aligned while secondary options remain dismissible and keyboard reachable. */
+.record-utilities.record-utilities-compact {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.record-utilities-compact > label {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.record-utilities-search-field input {
+  width: min(18rem, 42vw);
+  min-width: 10rem;
+}
+
+.compact-icon-button {
+  display: inline-grid;
+  flex: 0 0 auto;
+  place-items: center;
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  padding: 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: 0.55rem;
+  background: var(--panel);
+  color: var(--ink);
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.compact-icon-button:hover,
+.compact-icon-button:focus-visible,
+.compact-icon-button[aria-expanded="true"] {
+  border-color: var(--mint);
+  background: var(--panel-light, var(--panel));
+}
+
+.record-utilities-menu {
+  position: absolute;
+  z-index: 4;
+  top: calc(100% + 0.35rem);
+  right: 0.75rem;
+  display: grid;
+  gap: 0.65rem;
+  min-width: 15rem;
+  padding: 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 0.55rem;
+  background: var(--panel);
+  box-shadow: 0 0.7rem 1.8rem rgb(0 0 0 / 20%);
+}
+
+.record-utilities-menu-heading {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.record-utilities-menu > button {
+  width: 100%;
+  text-align: left;
+}
+
+.record-utilities-menu > button[aria-checked="true"] {
+  border-color: var(--mint);
+  color: var(--mint);
+}
+
+/* Give Tamagui Menu content the same compact dark surface as the legacy utility menus. */
+.table-kit-menu-content {
+  min-width: 15rem;
+  padding: 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: 0.55rem;
+  background: var(--panel);
+  box-shadow: 0 0.7rem 1.8rem rgb(0 0 0 / 20%);
+}
+
+.record-utilities-menu [role^="menuitem"],
+.table-kit-menu-content [role^="menuitem"] {
+  min-height: 2.4rem;
+  padding: 0.55rem 0.7rem;
+  border-radius: 0.35rem;
+  color: var(--ink);
+}
+
+.record-utilities-menu [role^="menuitem"][data-highlighted],
+.table-kit-menu-content [role^="menuitem"][data-highlighted] {
+  background: var(--panel-light);
+}
+
+/* Keep icon-button help legible without changing the accessible name on the trigger. */
+.table-kit-tooltip {
+  z-index: 30;
+  padding: 0.35rem 0.55rem;
+  border: 1px solid var(--line);
+  border-radius: 0.35rem;
+  background: var(--canvas);
+  color: var(--ink);
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.table-kit-tooltip-target {
+  display: inline-flex;
+}
+
+.record-utilities-menu label {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.table-kit-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.table-kit-selection {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem;
+  margin: 0.5rem 0;
+}
+
+.table-kit-selection label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.table-kit-property-controls {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.table-kit-property-dialog {
+  position: absolute;
+  z-index: 5;
+  top: calc(100% + 0.35rem);
+  left: 50%;
+  right: auto;
+  box-sizing: border-box;
+  width: min(24rem, calc(100vw - 2rem));
+  max-width: calc(100vw - 2rem);
+  max-height: min(42rem, calc(100vh - 2rem));
+  overflow: auto;
+  transform: translateX(-50%);
+  padding: 0.85rem;
+  border: 1px solid var(--line);
+  border-radius: 0.55rem;
+  background: var(--panel);
+  box-shadow: 0 0.7rem 1.8rem rgb(0 0 0 / 20%);
+}
+
+.table-kit-popover-frame {
+  border: 1px solid var(--line);
+  border-radius: 0.55rem;
+  background: var(--panel);
+  box-shadow: 0 0.7rem 1.8rem rgb(0 0 0 / 20%);
+}
+
+.table-kit-popover-frame > h2,
+.table-kit-popover-frame > [role="heading"],
+.table-kit-popover-frame > [data-radix-menu-label] {
+  margin: 0 0 0.75rem;
+  color: var(--ink);
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+.table-kit-property-close {
+  position: absolute;
+  top: 0.65rem;
+  right: 0.65rem;
+  display: inline-grid;
+  width: 2rem;
+  min-width: 2rem;
+  height: 2rem;
+  min-height: 2rem;
+  padding: 0;
+  place-items: center;
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.table-kit-property-dialog ul {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem;
+  padding: 0;
+  list-style: none;
+}
+
+/* Tamagui's full-screen portal centers its content and owns modal positioning. */
+.table-kit-utility-backdrop {
+  position: fixed;
+  z-index: 40;
+  inset: 0;
+  background: rgb(3 11 14 / 72%);
+  backdrop-filter: blur(4px);
+}
+
+.table-kit-new-record-utility {
+  width: min(36rem, calc(100vw - 2rem));
+  max-height: min(48rem, calc(100vh - 2rem));
+  overflow: auto;
+  padding: 1.25rem;
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  background: var(--panel);
+  color: var(--ink);
+  box-shadow: 0 2rem 8rem rgb(0 0 0 / 45%);
+}
+
+.table-kit-new-record-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.table-kit-new-record-heading h2 {
+  margin: 0;
+}
+
+/* Keep the operation description below the title/close row rather than in its flex line. */
+.table-kit-new-record-description p {
+  margin: 0.35rem 0 0;
+  color: var(--muted);
+}
+
+.table-kit-new-record-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin: 1.25rem 0;
+}
+
+/* Keep each operation as one scan-friendly action while allowing its statement to wrap. */
+.table-kit-new-record-options > button {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  flex: 1 1 10rem;
+  min-height: 2.75rem;
+  padding: 0.65rem 0.85rem;
+  text-align: left;
+}
+
+.table-kit-new-record-options > button[aria-selected="true"],
+.table-kit-new-record-options > button:hover,
+.table-kit-new-record-options > button:focus-visible {
+  border-color: var(--mint);
+  outline: 0;
+  box-shadow: 0 0 0 2px rgb(120 209 189 / 22%);
+}
+
+.table-kit-new-record-content {
+  min-width: 0;
+}
+
+.table-kit-new-record-content .create-record-form,
+.table-kit-new-record-content .record-form {
+  max-width: none;
+  margin: 0;
+}
+
+@media (max-width: 640px) {
+  .table-kit-new-record-utility {
+    max-height: calc(100vh - 1rem);
+    padding: 1rem;
   }
-  .gem-record-grid-card > button > [class$="-copy"] strong {
-    font-size: 0.78rem;
-  }
-  .gem-record-grid-card > button > [class$="-copy"] small {
-    font-size: 0.64rem;
+
+  .table-kit-new-record-options > button {
+    flex-basis: 100%;
   }
 }
-@media (min-width: 641px) and (max-width: 900px) {
+/* Keep intermediate gallery cards wide enough to preserve readable titles and properties. */
+@media (min-width: 641px) and (max-width: 1080px) {
   .gem-record-grid-rail {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .gem-record-grid-card > button > [class$="-copy"] strong {
-    font-size: 0.78rem;
-  }
-  .gem-record-grid-card > button > [class$="-copy"] small {
-    font-size: 0.64rem;
-  }
-}
-@media (min-width: 641px) and (max-width: 900px) {
-  .gem-record-grid-rail {
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .gem-record-grid-card > button > [class$="-copy"] strong {
     font-size: 0.78rem;
@@ -2396,4 +2775,136 @@ dialog {
   align-self: center;
   color: var(--muted, #6f6a61);
   font-size: 0.85rem;
+}
+.table-kit-gallery {
+  display: grid;
+  gap: 0.75rem;
+  min-width: 0;
+}
+.table-kit-gallery-size {
+  display: inline-grid;
+  justify-self: end;
+  gap: 0.25rem;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+.table-kit-gallery-size select {
+  min-height: 2.25rem;
+  border: 1px solid var(--line);
+  border-radius: 0.45rem;
+  background: var(--canvas);
+  color: var(--ink);
+}
+.table-kit-gallery > [role="list"] {
+  min-width: 0;
+}
+.table-kit-gallery-card {
+  display: grid;
+  min-width: 0;
+  flex: 1 1 15rem;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 0.9rem;
+  background: var(--panel);
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+.table-kit-gallery-card.is-selected,
+.table-kit-gallery-card:focus-within {
+  border-color: var(--mint);
+  box-shadow: 0 0 0 0.15rem rgba(120, 209, 189, 0.16);
+}
+.table-kit-gallery-card-surface {
+  display: grid;
+  min-width: 0;
+  cursor: pointer;
+  outline: none;
+}
+.table-kit-gallery-card-surface:focus-visible {
+  box-shadow: inset 0 0 0 0.18rem var(--mint);
+}
+.table-kit-gallery-image {
+  display: grid;
+  place-items: center;
+  min-height: 8rem;
+  overflow: hidden;
+  background: var(--canvas);
+}
+.table-kit-gallery-image img {
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+}
+.table-kit-gallery-copy {
+  display: grid;
+  min-width: 0;
+  gap: 0.4rem;
+  padding: 0.75rem;
+}
+.table-kit-gallery-title,
+.table-kit-gallery-subtitle,
+.table-kit-gallery-property {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.table-kit-gallery-title {
+  color: var(--ink);
+  font-weight: 750;
+}
+.table-kit-gallery-subtitle,
+.table-kit-gallery-status,
+.table-kit-gallery-property {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+.table-kit-gallery-status {
+  justify-self: start;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.table-kit-gallery-properties {
+  display: grid;
+  gap: 0.3rem;
+  max-height: 5.5rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.table-kit-gallery-card > button {
+  justify-self: start;
+  margin: 0 0.75rem 0.75rem;
+}
+.table-kit-gallery-card.is-small {
+  flex-basis: 12rem;
+}
+.table-kit-gallery-card.is-small .table-kit-gallery-image {
+  min-height: 6rem;
+}
+.table-kit-gallery-card.is-small .table-kit-gallery-properties {
+  max-height: 3.75rem;
+}
+.table-kit-gallery-card.is-large {
+  flex-basis: 20rem;
+}
+.table-kit-gallery-card.is-large .table-kit-gallery-image {
+  min-height: 12rem;
+}
+.table-kit-gallery-card.is-large .table-kit-gallery-properties {
+  max-height: 8rem;
+}
+@media (max-width: 640px) {
+  .table-kit-gallery-size {
+    justify-self: stretch;
+  }
+  .table-kit-gallery-size select {
+    width: 100%;
+  }
+  .table-kit-gallery-card {
+    flex-basis: min(100%, 18rem);
+  }
 }

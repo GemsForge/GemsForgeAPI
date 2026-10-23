@@ -1,5 +1,3 @@
-import { usePagedRecords } from "../../hooks/usePagedRecords";
-import { PaginationControls } from "../../components/PaginationControls";
 import { useState } from "react";
 import {
   useTransactionPatchMutation,
@@ -9,20 +7,19 @@ import {
 import { QueryFeedback } from "../../components/QueryFeedback";
 import type { ExpenseTransaction } from "../../types";
 import { AttachmentControl } from "../../components/AttachmentControl";
-import { GemEmptyState, GemRecordCard, GemRecordList } from "../../components/ui";
+import { GemEmptyState } from "../../components/ui";
 import {
   EditableRecordFields,
   formatRecordCurrency,
   formatRecordDate,
   formatRecordTimestamp,
 } from "../../components/EditableRecordFields";
-import { useCreateTransactionMutation } from "../../data/recordQueries";
-import { TransactionCreateForm } from "../create/RecordCreateForms";
 import { useExpenseCategoriesQuery, useExpenseSubcategoriesQuery, useMerchantsQuery } from "../../data/lifeQueries";
 import { RecordImport } from "../../components/RecordImport";
-import { RecordUtilities } from "../../components/RecordUtilities";
-import { RecordCollection } from "../../components/RecordCollection--LEGACY";
 import { useRecordUtilities } from "../../hooks/useRecordUtilities";
+import { DatabaseRecordCollection } from "../../components/DatabaseRecordCollection";
+import { transactionTableAdapter } from "../database/recordTableAdapters";
+import { useTransactionRecordActions } from "./useTransactionRecordActions";
 
 interface TransactionsViewProps {
   records: ExpenseTransaction[];
@@ -42,7 +39,6 @@ export function TransactionsView({ records }: TransactionsViewProps) {
       subcategory: (a, b) => (a.subcategoryID ?? 0) - (b.subcategoryID ?? 0),
     },
   );
-  const paging = usePagedRecords(utilities.records);
   const [selectedID, setSelectedID] = useState<string | null>(null);
   const detail = useTransactionQuery(selectedID);
   const attachment = useTransactionImageMutation();
@@ -50,11 +46,13 @@ export function TransactionsView({ records }: TransactionsViewProps) {
   const selectedRecord = detail.data;
   const merchants = useMerchantsQuery(true);
   const [creating, setCreating] = useState(false);
-  const create = useCreateTransactionMutation();
+  const [importing, setImporting] = useState(false);
+  const { publish, importConfig, actions, createForm } = useTransactionRecordActions({
+    onCreated: setSelectedID,
+  });
 
   return (
     <>
-      <PaginationControls {...paging} label="Transactions" />
       <div className="content-heading">
         <div>
           <p className="eyebrow">Life-area records</p>
@@ -65,49 +63,21 @@ export function TransactionsView({ records }: TransactionsViewProps) {
         </div>
         <div className="button-row">
           <span className="record-count">{records.length} records</span>
-          <button type="button" onClick={() => setCreating(true)}>
-            Add transaction
-          </button>
-          <RecordImport
-            label="transactions"
-            expectedColumns={["id", "item", "categoryID", "quantity"]}
-            onPublish={async (rows) => {
-              for (const row of rows) await create.mutateAsync(row as Parameters<typeof create.mutateAsync>[0]);
-            }}
-          />
+          {records.length === 0 && (
+            <button type="button" onClick={() => setCreating(true)}>
+              Add transaction
+            </button>
+          )}
         </div>
+        <RecordImport
+          {...importConfig}
+          open={importing}
+          onOpenChange={setImporting}
+          showTrigger={records.length === 0}
+          onPublish={publish}
+        />
       </div>
-      <RecordCollection>
-        <RecordUtilities
-          label="Transactions"
-          {...utilities}
-          totalCount={records.length}
-          visibleCount={utilities.records.length}
-          sortOptions={[
-            { value: "date", label: "Transaction date" },
-            { value: "item", label: "Item" },
-            { value: "merchant", label: "Merchant" },
-            { value: "total", label: "Total" },
-            { value: "paid", label: "Paid price" },
-            { value: "category", label: "Category" },
-            { value: "subcategory", label: "Subcategory" },
-          ]}
-          filterOptions={Array.from(
-            new Set(records.map((record) => record.merchantCode).filter((value): value is string => Boolean(value))),
-          ).sort()}
-        />
-      </RecordCollection>
-
-      {creating && (
-        <TransactionCreateForm
-          onCancel={() => setCreating(false)}
-          onCreate={async (payload) => {
-            const created = await create.mutateAsync(payload);
-            setSelectedID(created.id);
-            setCreating(false);
-          }}
-        />
-      )}
+      {creating && createForm(() => setCreating(false))}
 
       {records.length === 0 ? (
         <GemEmptyState
@@ -117,48 +87,46 @@ export function TransactionsView({ records }: TransactionsViewProps) {
         />
       ) : (
         <div className="transaction-layout">
-          <GemRecordList
-            className="transaction-list"
-            records={paging.items}
-            label="Expense transactions"
-            onExpandedChange={setSelectedID}
-            getKey={(record) => record.id}
-            tableColumns={[
-              { key: "item", label: "Item", icon: () => "$", render: (record) => record.item },
-              { key: "category", label: "Category", render: (record) => record.categoryID },
-              { key: "id", label: "Item ID", render: (record) => record.id },
-              { key: "date", label: "Date", render: (record) => record.transactionDate || "—" },
+          <DatabaseRecordCollection
+            label="Transactions"
+            records={records}
+            utilities={utilities}
+            adapter={transactionTableAdapter}
+            sortOptions={[
+              { value: "date", label: "Transaction date" },
+              { value: "item", label: "Item" },
+              { value: "merchant", label: "Merchant" },
+              { value: "total", label: "Total" },
+              { value: "paid", label: "Paid price" },
+              { value: "category", label: "Category" },
+              { value: "subcategory", label: "Subcategory" },
             ]}
-            renderRecord={(record) => (
-              <GemRecordCard
-                className="transaction-card"
-                icon="$"
-                title={record.item}
-                subtitle={`${record.transactionDate || "Undated"} · ${record.id}`}
-                status={formatAmount(record.total ?? record.paidPrice)}
-                selected={selectedID === record.id}
-                onSelect={() => setSelectedID((current) => (current === record.id ? null : record.id))}
-              />
-            )}
-            isExpanded={(record) => selectedID === record.id}
-            renderExpanded={() => (
-              <>
-                <QueryFeedback query={detail} />
-                {selectedRecord && (
-                  <TransactionDetail
-                    key={selectedRecord.id}
-                    record={selectedRecord}
-                    merchants={merchants.data ?? []}
-                    onAttachment={async (metadata) => {
-                      await attachment.mutateAsync({ id: selectedRecord.id, fileID: metadata?.id ?? null });
-                    }}
-                    onPatch={async (values) => {
-                      await patch.mutateAsync({ id: selectedRecord.id, patch: values });
-                    }}
-                  />
-                )}
-              </>
-            )}
+            filterOptions={Array.from(
+              new Set(records.map((record) => record.merchantCode).filter((value): value is string => Boolean(value))),
+            ).sort()}
+            detailId={selectedID}
+            onDetailChange={setSelectedID}
+            actions={actions}
+            detail={
+              selectedID ? (
+                <>
+                  <QueryFeedback query={detail} />
+                  {selectedRecord && (
+                    <TransactionDetail
+                      key={selectedRecord.id}
+                      record={selectedRecord}
+                      merchants={merchants.data ?? []}
+                      onAttachment={async (metadata) => {
+                        await attachment.mutateAsync({ id: selectedRecord.id, fileID: metadata?.id ?? null });
+                      }}
+                      onPatch={async (values) => {
+                        await patch.mutateAsync({ id: selectedRecord.id, patch: values });
+                      }}
+                    />
+                  )}
+                </>
+              ) : null
+            }
           />
         </div>
       )}
@@ -324,8 +292,4 @@ function TransactionDetail({
 function merchantDisplayName(name?: string) {
   if (!name) return "—";
   return name.replace(/^[\p{Extended_Pictographic}\p{Emoji_Presentation}\p{So}\p{Sk}\s]+/u, "").trim() || name;
-}
-
-function formatAmount(value: number | null) {
-  return value === null ? "—" : new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value);
 }

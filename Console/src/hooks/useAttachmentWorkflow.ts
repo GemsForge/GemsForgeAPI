@@ -1,6 +1,7 @@
 import { useEffect, useReducer, useRef } from "react";
 import { useUploadImageMutation } from "../data/workflowQueries";
 import type { FileMetadata } from "../types";
+import { validateImageFile } from "../bridge/filePicker";
 
 interface State {
   busy: boolean;
@@ -46,7 +47,7 @@ export function useAttachmentWorkflow({ label, ownerType, ownerID, onAttach }: O
   }
   async function attach(file: File) {
     if (!mounted.current) return;
-    if (!file.type.toLowerCase().startsWith("image/") || !file.size) throw new Error("Choose a non-empty image file.");
+    validateImageFile(file);
     const metadata = await upload.mutateAsync({
       file,
       kind: label.toLowerCase().replaceAll(" ", "-"),

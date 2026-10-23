@@ -58,16 +58,19 @@ describe("ServiceAccountsView", () => {
 
   it("sends only the edited service property", async () => {
     renderView();
-    fireEvent.click(screen.getByRole("button", { name: /Internet/ }));
+    // Keep a regression guard for the first consumer migrated to Table Kit.
+    expect(screen.getByRole("region", { name: "Table content" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Expand Internet" }));
     fireEvent.click(screen.getByRole("button", { name: "Edit service" }));
-    fireEvent.change(screen.getByLabelText("Service"), { target: { value: "Fiber Internet" } });
+    // Required-field labels include a visible asterisk in the shared field component.
+    fireEvent.change(screen.getByLabelText(/^Service \*/), { target: { value: "Fiber Internet" } });
     fireEvent.click(screen.getByRole("button", { name: "Save service" }));
     await waitFor(() => expect(mocks.patch).toHaveBeenCalledWith({ id: 7, patch: { service: "Fiber Internet" } }));
   });
 
   it("cancels a status edit without sending a PATCH", () => {
     renderView();
-    fireEvent.click(screen.getByRole("button", { name: /Internet/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Expand Internet" }));
     fireEvent.click(screen.getByRole("button", { name: "Edit status" }));
     fireEvent.change(screen.getByLabelText("Status"), { target: { value: "Paused" } });
     fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
@@ -77,7 +80,7 @@ describe("ServiceAccountsView", () => {
 
   it("edits the service key through a changed-only PATCH", async () => {
     renderView();
-    fireEvent.click(screen.getByRole("button", { name: /Internet/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Expand Internet" }));
     fireEvent.click(screen.getByRole("button", { name: "Edit service key" }));
     fireEvent.change(screen.getByLabelText("Service key"), { target: { value: "INTERNET_SERVICE" } });
     fireEvent.click(screen.getByRole("button", { name: "Save service key" }));
@@ -87,7 +90,7 @@ describe("ServiceAccountsView", () => {
   it("edits Email Updated with a checkbox", async () => {
     mocks.account.emailUpdated = false;
     renderView();
-    fireEvent.click(screen.getByRole("button", { name: /Internet/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Expand Internet" }));
     fireEvent.click(screen.getByRole("button", { name: "Edit email updated" }));
     fireEvent.click(screen.getByLabelText("Email updated"));
     fireEvent.click(screen.getByRole("button", { name: "Save email updated" }));
@@ -97,7 +100,7 @@ describe("ServiceAccountsView", () => {
 
   it("explains why legacy logo and address relationship values stay read-only", () => {
     renderView();
-    fireEvent.click(screen.getByRole("button", { name: /Internet/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Expand Internet" }));
     expect(
       screen.getByText("Legacy logo lookup relationship; no validated selector is available."),
     ).toBeInTheDocument();

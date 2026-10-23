@@ -2,6 +2,14 @@ import { useState } from "react";
 
 type Row = Record<string, unknown>;
 
+/** Describe the feature-owned schema used by both import entry points. */
+export interface RecordImportConfig {
+  /** Human-readable resource name shown in the import workflow. */
+  label: string;
+  /** Columns accepted by the imported rows. */
+  expectedColumns: readonly string[];
+}
+
 function parseCSV(input: string): Row[] {
   const rows: string[][] = [];
   let row: string[] = [],
@@ -45,23 +53,34 @@ export function RecordImport({
   label,
   expectedColumns,
   onPublish,
-}: {
-  label: string;
-  expectedColumns: string[];
+  open,
+  onOpenChange,
+  showTrigger = true,
+  mode = "both",
+}: RecordImportConfig & {
   onPublish: (rows: Row[]) => Promise<void>;
+  /** Optionally control the import utility from the shared Table Kit header. */
+  open?: boolean;
+  /** Notify the owning view when the import utility opens or closes. */
+  onOpenChange?: (open: boolean) => void;
+  /** Hide the legacy inline trigger when the compact header owns the action. */
+  showTrigger?: boolean;
+  /** Limit the workflow to file selection, pasted data, or retain both inputs. */
+  mode?: "both" | "file" | "paste";
 }) {
-  const [open, setOpen] = useState(false);
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
   const [text, setText] = useState("");
   const [rows, setRows] = useState<Row[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const isOpen = open ?? uncontrolledOpen;
+  const setOpen = (nextOpen: boolean) => {
+    setUncontrolledOpen(nextOpen);
+    onOpenChange?.(nextOpen);
+  };
   function parse() {
     setError(null);
     try {
-      if (text.trim().startsWith("[")) setRows(JSON.parse(text));
-      else {
-        setRows(parseCSV(text));
-      }
       const parsedRows = text.trim().startsWith("[") ? (JSON.parse(text) as Row[]) : parseCSV(text);
       const expected = new Set(expectedColumns);
       for (const [index, row] of parsedRows.entries()) {
@@ -80,33 +99,41 @@ export function RecordImport({
   }
   return (
     <>
-      <button type="button" onClick={() => setOpen((value) => !value)}>
-        {open ? "Close import" : `Import ${label}`}
-      </button>
-      {open && (
+      {showTrigger && (
+        <button type="button" onClick={() => setOpen(!isOpen)}>
+          {isOpen ? "Close import" : `Import ${label}`}
+        </button>
+      )}
+      {isOpen && (
         <section className="record-form">
-          <h3>Import {label}</h3>
+          <div className="detail-heading">
+            <h3>Import {label}</h3>
+            <button type="button" onClick={parse}>
+              Preview import
+            </button>
+          </div>
           <p className="muted">Paste a CSV with a header row or a JSON array using the table column names.</p>
-          <label>
-            Choose CSV or JSON file
-            <input
-              type="file"
-              accept=".csv,.json,application/json,text/csv"
-              onChange={async (event) => {
-                const file = event.target.files?.[0];
-                if (file) setText(await file.text());
-              }}
+          {mode !== "paste" && (
+            <label>
+              Choose CSV or JSON file
+              <input
+                type="file"
+                accept=".csv,.json,application/json,text/csv"
+                onChange={async (event) => {
+                  const file = event.target.files?.[0];
+                  if (file) setText(await file.text());
+                }}
+              />
+            </label>
+          )}
+          {mode !== "file" && (
+            <textarea
+              aria-label={`${label} CSV or JSON`}
+              rows={7}
+              value={text}
+              onChange={(e) => setText(e.target.value)}
             />
-          </label>
-          <textarea
-            aria-label={`${label} CSV or JSON`}
-            rows={7}
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-          />
-          <button type="button" onClick={parse}>
-            Preview import
-          </button>
+          )}
           {error && <p role="alert">{error}</p>}
           {rows && (
             <>

@@ -49,9 +49,170 @@ return (
 ```
 
 The toolkit does not import feature routes, API clients, persistence models, or
-the legacy table components. Later stories may supply those adapters and
-renderers without changing the existing table implementation.
+the legacy table components. `RecordTable` uses AG Grid Community behind a
+small renderer adapter; AG Grid types and configuration do not cross the
+domain-neutral Table Kit contracts. `RecordList` and `RecordGallery` remain
+Tamagui-based renderers. Enterprise-only AG Grid modules are intentionally out
+of scope for this toolkit.
+
+AG Grid initializes its row and column model after mount, so renderer tests
+provide deterministic jsdom layout metrics and await the accessible grid
+content. This keeps the contract tests focused on Table Kit behavior while the
+production build verifies the real AG Grid integration.
+
+## Persisted view and property configuration
+
+`useTablePropertyConfiguration` owns only serializable view metadata: property
+order and hidden property IDs. It supports controlled and uncontrolled use,
+restores state per `viewId`, and accepts consumer-owned `viewConfigurations` for
+approved persisted metadata. `onConfigurationChange` reports the normalized
+snapshot so a database consumer can save it; the Table Kit never writes to a
+backend and never mutates canonical records.
+
+```tsx
+const properties = [
+  { id: "name", label: "Name" },
+  { id: "status", label: "Status" },
+];
+const configuration = useTablePropertyConfiguration({
+  properties,
+  viewId: activeViewId,
+  viewConfigurations: savedConfigurations,
+  onConfigurationChange: (next, context) => saveViewMetadata(context.viewId, next),
+});
+
+return (
+  <>
+    <Table.PropertyControls properties={properties} configuration={configuration} />
+    <RecordTable records={records} properties={propertyDefinitions} propertyIds={configuration.visibleIds} />
+  </>
+);
+```
+
+The property menu uses Tamagui `Button` controls at `size="xs"`, native
+checkboxes, and a search input for keyboard and screen-reader support. It
+provides show-all, hide-all, reorder, and reset actions. If a saved property no
+longer exists in the current schema, the hook filters it out, appends newly
+available properties, and exposes `missingPropertyIds`; the menu reports that
+recovery visibly.
 
 The query contract in `query.ts` provides normalized state, deterministic
 client-side derivation, and the adapter shape for server-side results. It does
 not own a transport, cache, or feature-specific filter vocabulary.
+
+## New Record utility
+
+`Table.Actions` keeps the consumer-owned default `New` action prominent and
+offers optional typed create actions alongside file and paste intake actions in
+one keyboard-accessible menu. Consumers own the forms, parsing, validation,
+and persistence callbacks:
+
+```tsx
+<Table.Actions
+  onNew={openDefaultCreate}
+  newRecordOptions={[{ id: "address", label: "New address", onSelect: openAddressCreate }]}
+  onImportFile={openFileImport}
+  onPasteCsv={openCsvPaste}
+  onPasteJson={openJsonPaste}
+/>
+```
+
+The New Record menu is a right-aligned hybrid utility surface: its trigger and
+dismissal action use compact Tamagui `Button` controls at `size="xs"`, while
+vertically stacked operation cards use a readable button size. It supports
+native button activation, visible focus, Escape dismissal, arrow-key navigation,
+and focus restoration to its trigger. Selecting an operation invokes the
+consumer-owned form or intake view, so domain validation and persistence stay
+with the feature.
+
+## Compact utility row
+
+The consumer shell keeps the view ToggleGroup and utility header aligned across
+the table width. View items and utility actions use Tamagui's `size="xs"`
+controls with the shared `$gemInk` color token. The properties gear is attached
+before the query controls; search sits at the trailing utility position, starts
+as a labeled icon button, and expands into a focused search field. Sort and
+filter are separate keyboard-accessible icon menus; active choices remain
+exposed through `aria-checked` states and the matching summary. All icon
+controls expose Tamagui Tooltip help while retaining accessible names and
+native title fallback.
+`Table.Selection` stays below the header so selection counts and Select all
+actions remain discoverable without expanding query controls.
+
+## Shared selection
+
+`Table.Root` owns one scoped selection context for its child components. Add
+`<Table.Selection />` inside the root to provide the accessible current-page
+Select All control, an explicit all-matching action when the adapter supplies
+IDs beyond the current page, selected-count feedback, and clear selection.
+
+```tsx
+<Table.Root
+  rows={pageRows}
+  columns={columns}
+  rowKey={(row) => row.id}
+  selection={{
+    matchingIds: queryResult.matchingIds,
+    isSelectable: (row) => !row.archived,
+    isSelectableId: (id) => !queryResult.nonSelectableIds.has(id),
+    onSelectionChange: setSelectedIds,
+  }}
+>
+  <Table.Selection />
+  <Table.Content />
+</Table.Root>
+```
+
+`matchingIds` represents the complete effective filtered/sorted result set and
+must already represent the effective result set. Use `isSelectable` for loaded
+rows and `isSelectableId` when the adapter also needs to exclude disabled
+off-page IDs. The selection state is local to each root, preserves IDs across
+pagination and view changes, and never persists or mutates records by itself.
+
+## Gallery interaction contract
+
+`RecordGallery` renders the effective root rows as responsive cards. The entire
+card surface opens the consumer-owned detail callback on click, Enter, or Space;
+there is no separate View action. Selection remains a separate keyboard-focusable
+control so selecting a record does not open its detail surface. The renderer
+keeps the image region blank when neither the adapter image nor a configured
+image property has a valid source, renders visible property values without
+repeating labels, and exposes the full value through its accessible name and
+browser tooltip when the compact card truncates it. The labeled Card size
+control supports small, medium, and large card layouts, while the bounded
+property region can scroll without changing the gallery or toolbar width.
+
+## Record contracts
+
+`recordContracts.ts` defines the domain-neutral boundary used by future record
+renderers. A feature adapter normalizes each record through `toTableRecord`,
+which supplies a stable string ID, optional title, subtitle, image, and status
+metadata. It separately supplies one collection-level property schema through
+`getPropertyDefinitions`; each definition resolves its value for a record while
+keeping semantic kind, visibility, ordering, primary-property, sorting, and
+filtering hints stable across every row. Property values keep both a display
+payload and optional raw value so a view can render the same record without
+reimplementing domain mapping.
+
+Selection and expansion are controlled integration contracts: the Table Kit
+renderer receives the current state and reports changes through callbacks. The
+contracts intentionally do not store selection, expansion, query, or server
+state. A feature may provide uncontrolled defaults in its own adapter, while a
+persisted or collaborative consumer remains the owner of controlled state.
+
+```tsx
+const adapter: RecordAdapter<Service> = {
+  toTableRecord: (service) => ({
+    id: String(service.id),
+    source: service,
+    title: service.name,
+  }),
+  getPropertyDefinitions: () => [
+    { id: "name", label: "Name", primary: true, getValue: (service) => ({ display: service.name }) },
+  ],
+};
+```
+
+Use `orderRecordProperties` before rendering and
+`getPrimaryRecordProperty` when a view needs one canonical title/property.
+Adapters remain responsible for domain-specific formatting and validation.

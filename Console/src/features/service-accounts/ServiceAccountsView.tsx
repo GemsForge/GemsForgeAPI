@@ -1,9 +1,7 @@
-import { useEffect, useState } from "react";
-import { usePagedRecords } from "../../hooks/usePagedRecords";
-import { PaginationControls } from "../../components/PaginationControls";
+import { useEffect, useMemo, useState } from "react";
 import { QueryFeedback } from "../../components/QueryFeedback";
 import { AttachmentControl } from "../../components/AttachmentControl";
-import { GemEmptyState, GemRecordCard, GemRecordList } from "../../components/ui";
+import { GemEmptyState } from "../../components/ui";
 import { useServiceAccountPatchMutation, useServiceAccountQuery } from "../../data/recordQueries";
 import type { ServiceAccount } from "../../types";
 import {
@@ -13,15 +11,15 @@ import {
   formatRecordPercentage,
   formatRecordTimestamp,
 } from "../../components/EditableRecordFields";
-import { useCreateServiceAccountMutation } from "../../data/recordQueries";
-import { ServiceAccountCreateForm } from "../create/RecordCreateForms";
 import { RecordImport } from "../../components/RecordImport";
 import { useServiceLogosQuery } from "../../data/lifeQueries";
-import { RecordUtilities } from "../../components/RecordUtilities";
-import { RecordCollection } from "../../components/RecordCollection--LEGACY";
 import { useRecordUtilities } from "../../hooks/useRecordUtilities";
 import { api } from "../../api";
+import { DatabaseRecordCollection } from "../../components/DatabaseRecordCollection";
+import { createServiceAccountTableAdapter } from "../database/recordTableAdapters";
+import { useServiceAccountRecordActions } from "./useServiceAccountRecordActions";
 
+/** Render service-account records through the shared Table Kit consumer adapter. */
 export function ServiceAccountsView({ records }: { records: ServiceAccount[] }) {
   const utilities = useRecordUtilities(
     records,
@@ -36,16 +34,25 @@ export function ServiceAccountsView({ records }: { records: ServiceAccount[] }) 
       occurrence: (a, b) => (a.occurrence ?? "").localeCompare(b.occurrence ?? ""),
     },
   );
-  const paging = usePagedRecords(utilities.records);
   const [selectedID, setSelectedID] = useState<number | null>(null);
   const detail = useServiceAccountQuery(selectedID);
   const patch = useServiceAccountPatchMutation();
   const [creating, setCreating] = useState(false);
-  const create = useCreateServiceAccountMutation();
+  const [importing, setImporting] = useState(false);
+  const { publish, importConfig, actions, createForm } = useServiceAccountRecordActions({
+    onCreated: setSelectedID,
+  });
   const logos = useServiceLogosQuery(true);
+  const tableAdapter = useMemo(
+    () =>
+      createServiceAccountTableAdapter((record) => {
+        const logo = logos.data?.find((item) => item.logoKey === record.logoKey);
+        return logo ? <LegacyLogoPreview logo={logo} className="service-account-card-logo" /> : "—";
+      }),
+    [logos.data],
+  );
   return (
     <>
-      <PaginationControls {...paging} label="Services" />
       <div className="content-heading">
         <div>
           <p className="eyebrow">Life-area records</p>
@@ -54,83 +61,21 @@ export function ServiceAccountsView({ records }: { records: ServiceAccount[] }) 
         </div>
         <div className="button-row">
           <span className="record-count">{records.length} records</span>
-          <button type="button" onClick={() => setCreating(true)}>
-            Add service
-          </button>
-          <RecordImport
-            label="services"
-            expectedColumns={[
-              "Service",
-              "Type",
-              "ExpenseGroup",
-              "MonthlyAmount",
-              "InterestRate",
-              "APR",
-              "Due",
-              "Occurrence",
-              "Status",
-              "Since",
-              "Website",
-              "Notes",
-              "PaymentMethod",
-              "AccountNumber",
-              "AssociatedAddress",
-              "ServiceKey",
-            ]}
-            onPublish={async (rows) => {
-              for (const row of rows)
-                await create.mutateAsync({
-                  service: String(row.Service ?? row.service ?? ""),
-                  type: String(row.Type ?? row.type ?? "") || null,
-                  expenseGroup: String(row.ExpenseGroup ?? "") || null,
-                  monthlyAmount: row.MonthlyAmount ? Number(row.MonthlyAmount) : null,
-                  interestRate: row.InterestRate ? Number(row.InterestRate) : null,
-                  apr: row.APR ? Number(row.APR) : null,
-                  due: String(row.Due ?? "") || null,
-                  occurrence: String(row.Occurrence ?? "") || null,
-                  status: String(row.Status ?? "") || null,
-                  since: String(row.Since ?? "") || null,
-                  website: String(row.Website ?? "") || null,
-                  notes: String(row.Notes ?? "") || null,
-                  paymentMethod: String(row.PaymentMethod ?? "") || null,
-                  accountNumber: String(row.AccountNumber ?? "") || null,
-                  associatedAddress: String(row.AssociatedAddress ?? "") || null,
-                  serviceKey: String(row.ServiceKey ?? "") || null,
-                });
-            }}
-          />
+          {records.length === 0 && (
+            <button type="button" onClick={() => setCreating(true)}>
+              Add service
+            </button>
+          )}
         </div>
+        <RecordImport
+          {...importConfig}
+          open={importing}
+          onOpenChange={setImporting}
+          showTrigger={records.length === 0}
+          onPublish={publish}
+        />
       </div>
-      <RecordCollection>
-        <RecordUtilities
-          label="Services"
-          {...utilities}
-          totalCount={records.length}
-          visibleCount={utilities.records.length}
-          sortOptions={[
-            { value: "service", label: "Service" },
-            { value: "amount", label: "Monthly amount" },
-            { value: "type", label: "Type" },
-            { value: "group", label: "Expense group" },
-            { value: "status", label: "Status" },
-            { value: "due", label: "Due date" },
-            { value: "occurrence", label: "Occurrence" },
-          ]}
-          filterOptions={Array.from(
-            new Set(records.map((record) => record.status).filter((value): value is string => Boolean(value))),
-          ).sort()}
-        />
-      </RecordCollection>
-      {creating && (
-        <ServiceAccountCreateForm
-          onCancel={() => setCreating(false)}
-          onCreate={async (payload) => {
-            const created = await create.mutateAsync(payload);
-            setSelectedID(created.id);
-            setCreating(false);
-          }}
-        />
-      )}
+      {creating && createForm(() => setCreating(false))}
       {records.length === 0 ? (
         <GemEmptyState
           icon="◎"
@@ -139,65 +84,48 @@ export function ServiceAccountsView({ records }: { records: ServiceAccount[] }) 
         />
       ) : (
         <div className="address-layout">
-          <GemRecordList
-            className="address-list"
-            records={paging.items}
-            label="Service account records"
-            onExpandedChange={(key) => setSelectedID(key ? Number(key) : null)}
-            getKey={(record) => String(record.id)}
-            tableColumns={[
-              {
-                key: "logo",
-                label: "Logo",
-                render: (record) => {
-                  const logo = logos.data?.find((item) => item.logoKey === record.logoKey);
-                  return logo ? <LegacyLogoPreview logo={logo} className="service-account-card-logo" /> : "—";
-                },
-              },
-              {
-                key: "service",
-                label: "Service",
-                render: (record) => record.service,
-              },
-              { key: "type", label: "Category", render: (record) => record.type || "Service" },
-              { key: "id", label: "Item ID", render: (record) => record.id },
-              { key: "group", label: "Group", render: (record) => record.expenseGroup || "—" },
+          <DatabaseRecordCollection
+            label="Services"
+            records={records}
+            utilities={utilities}
+            adapter={tableAdapter}
+            sortOptions={[
+              { value: "service", label: "Service" },
+              { value: "amount", label: "Monthly amount" },
+              { value: "type", label: "Type" },
+              { value: "group", label: "Expense group" },
+              { value: "status", label: "Status" },
+              { value: "due", label: "Due date" },
+              { value: "occurrence", label: "Occurrence" },
             ]}
-            renderRecord={(record) => (
-              <GemRecordCard
-                className="address-card"
-                icon={(() => {
-                  const logo = logos.data?.find((item) => item.logoKey === record.logoKey);
-                  return logo ? <LegacyLogoPreview logo={logo} className="service-account-card-logo" /> : "◎";
-                })()}
-                title={record.service}
-                subtitle={`${record.type || "Service"} · ${record.id}`}
-                status={record.status || undefined}
-                selected={selectedID === record.id}
-                onSelect={() => setSelectedID((current) => (current === record.id ? null : record.id))}
-              />
-            )}
-            isExpanded={(record) => selectedID === record.id}
-            renderExpanded={() => (
-              <>
-                <QueryFeedback query={detail} />
-                {detail.data && (
-                  <ServiceAccountDetail
-                    key={detail.data.id}
-                    record={detail.data}
-                    onAttachment={async (metadata) => {
-                      await patch.mutateAsync({
-                        id: detail.data!.id,
-                        patch: { logoFileMetadataID: metadata?.id ?? null },
-                      });
-                    }}
-                    onPatch={async (values) => {
-                      await patch.mutateAsync({ id: detail.data!.id, patch: values });
-                    }}
-                  />
-                )}
-              </>
-            )}
+            filterOptions={Array.from(
+              new Set(records.map((record) => record.status).filter((value): value is string => Boolean(value))),
+            ).sort()}
+            detailId={selectedID == null ? null : String(selectedID)}
+            onDetailChange={(id) => setSelectedID(id == null ? null : Number(id))}
+            actions={actions}
+            detail={
+              selectedID == null ? null : (
+                <>
+                  <QueryFeedback query={detail} />
+                  {detail.data && (
+                    <ServiceAccountDetail
+                      key={detail.data.id}
+                      record={detail.data}
+                      onAttachment={async (metadata) => {
+                        await patch.mutateAsync({
+                          id: detail.data!.id,
+                          patch: { logoFileMetadataID: metadata?.id ?? null },
+                        });
+                      }}
+                      onPatch={async (values) => {
+                        await patch.mutateAsync({ id: detail.data!.id, patch: values });
+                      }}
+                    />
+                  )}
+                </>
+              )
+            }
           />
         </div>
       )}
