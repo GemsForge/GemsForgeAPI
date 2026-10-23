@@ -1538,12 +1538,14 @@ dialog::backdrop {
   position: absolute;
   z-index: 5;
   top: calc(100% + 0.35rem);
-  right: 0;
+  left: 50%;
+  right: auto;
   box-sizing: border-box;
   width: min(32rem, calc(100vw - 2rem));
   max-width: calc(100vw - 2rem);
   max-height: min(42rem, calc(100vh - 2rem));
   overflow: auto;
+  transform: translateX(-50%);
   padding: 0.85rem;
   border: 1px solid var(--line);
   border-radius: 0.55rem;
