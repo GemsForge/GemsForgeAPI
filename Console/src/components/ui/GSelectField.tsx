@@ -1,3 +1,4 @@
+import type { ComponentProps } from "react";
 import { Select, Label, SizableText, YStack } from "tamagui";
 import type { GemTextFieldWidth } from "./GemTextField";
 
@@ -8,7 +9,7 @@ export interface GSelectOption {
 }
 
 /** Props for the standard GemsForge single-select field. */
-export interface GSelectFieldProps {
+export interface GSelectFieldProps extends Omit<ComponentProps<typeof Select.Trigger>, "value" | "onValueChange" | "onChange"> {
   label: string;
   value?: string;
   options: GSelectOption[];
@@ -27,6 +28,7 @@ export function GSelectField({
   required = false,
   width = "long",
   onChange,
+  ...triggerProps
 }: GSelectFieldProps) {
   const id = `g-select-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
   const errorID = `${id}-error`;
@@ -37,7 +39,7 @@ export function GSelectField({
         {label}{required ? " *" : ""}
       </Label>
       <Select value={value || undefined} onValueChange={onChange}>
-        <Select.Trigger id={id} width="100%" aria-invalid={Boolean(error)} aria-describedby={error ? errorID : undefined} aria-required={required}>
+        <Select.Trigger {...triggerProps} id={id} width="100%" aria-invalid={Boolean(error)} aria-describedby={error ? errorID : undefined} aria-required={required}>
           <Select.Value placeholder={`Select ${label.toLowerCase()}…`} />
         </Select.Trigger>
         <Select.Content>

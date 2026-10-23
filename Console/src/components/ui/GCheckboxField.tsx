@@ -1,8 +1,9 @@
+import type { ComponentProps } from "react";
 import { Checkbox, Label, SizableText, XStack, YStack } from "tamagui";
 import type { GemTextFieldWidth } from "./GemTextField";
 
 /** Props for the standard GemsForge boolean checkbox field. */
-export interface GCheckboxFieldProps {
+export interface GCheckboxFieldProps extends Omit<ComponentProps<typeof Checkbox>, "checked" | "value" | "onCheckedChange" | "onChange"> {
   label: string;
   value?: boolean;
   error?: string;
@@ -19,6 +20,7 @@ export function GCheckboxField({
   required = false,
   width = "long",
   onChange,
+  ...checkboxProps
 }: GCheckboxFieldProps) {
   const id = `g-checkbox-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
   const errorID = `${id}-error`;
@@ -28,6 +30,7 @@ export function GCheckboxField({
       <XStack alignItems="center" gap="$2">
         <Checkbox
           id={id}
+          {...checkboxProps}
           checked={value}
           onCheckedChange={(checked) => onChange?.(checked === true)}
           aria-invalid={Boolean(error)}
