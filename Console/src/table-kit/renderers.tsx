@@ -15,7 +15,7 @@ import {
   type ColDef,
   type ICellRendererParams,
 } from "ag-grid-community";
-import { Avatar, Checkbox, Image, ListItem, Paragraph, SizableText, XStack, YGroup, YStack } from "tamagui";
+import { Avatar, Checkbox, ListItem, Paragraph, SizableText, XStack, YGroup, YStack } from "tamagui";
 import { TableContext } from "./context";
 import {
   orderRecordProperties,
@@ -153,12 +153,12 @@ function displayValue(value: RecordPropertyValue): ReactNode {
 function RecordImage<Record>({ image, size }: { image?: TableRecord<Record>["image"]; size: number }) {
   if (!image?.src?.trim()) return null;
   return (
-    <Image
-      source={{ uri: image.src }}
-      accessibilityLabel={image.alt}
+    <img
+      src={image.src}
+      alt={image.alt}
       width={size}
       height={size}
-      objectFit={image.fit ?? "cover"}
+      style={{ objectFit: image.fit ?? "cover", display: "block" }}
     />
   );
 }
