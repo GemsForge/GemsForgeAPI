@@ -2885,7 +2885,8 @@ dialog {
 .table-kit-gallery-status,
 .table-kit-gallery-property {
   color: var(--muted);
-  font-size: 0.78rem;
+  font-size: 0.72rem;
+  line-height: 1.25;
 }
 .table-kit-gallery-status {
   justify-self: start;
@@ -2896,6 +2897,7 @@ dialog {
 }
 .table-kit-gallery-properties {
   display: grid;
+  min-height: 0;
   gap: 0.3rem;
   max-height: 5.5rem;
   overflow-y: auto;
