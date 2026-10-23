@@ -60,9 +60,10 @@ export function NewRecordUtility({
           : (index + (event.key === "ArrowDown" ? 1 : -1) + options.length) % options.length;
     const next = options[nextIndex];
     setSelectedId(next.id);
-    document
-      .querySelectorAll<HTMLButtonElement>(".table-kit-new-record-utility [data-new-record-option]")
-      [nextIndex]?.focus();
+    const optionButtons = document.querySelectorAll<HTMLButtonElement>(
+      ".table-kit-new-record-utility [data-new-record-option]",
+    );
+    optionButtons[nextIndex]?.focus();
   };
 
   return (
