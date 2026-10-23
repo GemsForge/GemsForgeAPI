@@ -308,6 +308,11 @@ export function RecordGallery<Record>({
     event.currentTarget.setPointerCapture?.(event.pointerId);
     dragStartRef.current = { index, x: event.clientX, y: event.clientY };
     dragSelectedIdsRef.current = new Set(selection.selectedIds);
+    const record = effectiveRecords[index];
+    if (record && !dragSelectedIdsRef.current.has(record.id)) {
+      selection.onRecordSelect(record.id);
+      dragSelectedIdsRef.current.add(record.id);
+    }
     suppressClickRef.current = false;
   };
 
