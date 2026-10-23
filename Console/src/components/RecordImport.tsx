@@ -2,8 +2,11 @@ import { useState } from "react";
 
 type Row = Record<string, unknown>;
 
+/** Describe the feature-owned schema used by both import entry points. */
 export interface RecordImportConfig {
+  /** Human-readable resource name shown in the import workflow. */
   label: string;
+  /** Columns accepted by the imported rows. */
   expectedColumns: readonly string[];
 }
 
