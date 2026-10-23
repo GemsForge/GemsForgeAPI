@@ -1,5 +1,5 @@
 import { useId, type ChangeEvent, type ReactNode } from "react";
-import { Form } from "tamagui";
+import { Dialog, Form } from "tamagui";
 import { GCheckboxField, GDate, GemTextField, GSelectField } from "./ui";
 import type { GemTextFieldWidth } from "./ui/GemTextField";
 import { useRecordEditor } from "../hooks/useRecordEditor";
@@ -70,7 +70,8 @@ function EditableField({ field }: { field: EditableRecordField }) {
   });
   const id = `edit-${instanceID}-${field.label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
   const labelID = `${id}-label`;
-  const onTextChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => editor.setDraft(event.currentTarget.value);
+  const onTextChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+    editor.setDraft(event.currentTarget.value);
 
   return (
     <div className={field.className}>
@@ -91,84 +92,120 @@ function EditableField({ field }: { field: EditableRecordField }) {
         )}
       </dt>
       <dd>
-        {!field.onSave || !editor.editing ? (
-          <>
-            {field.inputType === "boolean" ? (
-              <input
-                type="checkbox"
-                className="field-checkbox field-checkbox-display"
-                checked={String(value).toLowerCase() === "true"}
-                disabled
-                aria-label={`${field.label}: ${String(value).toLowerCase() === "true" ? "checked" : "unchecked"}`}
-                readOnly
-              />
-            ) : (
-              (field.displayValue ?? presentValue(value))
-            )}
-            {field.readOnlyReason && <small className="field-readonly-reason">{field.readOnlyReason}</small>}
-          </>
+        {field.inputType === "boolean" ? (
+          <input
+            type="checkbox"
+            className="field-checkbox field-checkbox-display"
+            checked={String(value).toLowerCase() === "true"}
+            disabled
+            aria-label={`${field.label}: ${String(value).toLowerCase() === "true" ? "checked" : "unchecked"}`}
+            readOnly
+          />
         ) : (
-          <Form className="edit-form editable-field-form" onSubmit={() => void editor.save()}>
-            {field.inputType === "date" ? (
-              <GDate
-                label={field.label}
-                value={editor.draft}
-                onChange={editor.setDraft}
-                required={field.required}
-                width={field.width ?? "long"}
-                error={editor.error ?? undefined}
-              />
-            ) : field.inputType === "select" ? (
-              <GSelectField
-                label={field.label}
-                value={editor.draft}
-                options={(field.options ?? []).concat(field.nullable ? [{ value: "", label: "—" }] : [])}
-                onChange={editor.setDraft}
-                required={field.required}
-                width={field.width ?? "long"}
-                error={editor.error ?? undefined}
-              />
-            ) : field.inputType === "boolean" ? (
-              <GCheckboxField
-                label={field.label}
-                value={editor.draft === "true"}
-                onChange={(checked) => editor.setDraft(String(checked))}
-                required={field.required}
-                width={field.width ?? "long"}
-                error={editor.error ?? undefined}
-              />
-            ) : (
-              <GemTextField
-                label={field.label}
-                value={editor.draft}
-                onChange={onTextChange}
-                onBlur={() => undefined}
-                type={field.inputType === "longText" ? undefined : field.inputType ?? "text"}
-                step={field.step}
-                placeholder={field.placeholder}
-                multiline={field.inputType === "longText"}
-                width={field.width ?? "long"}
-                required={field.required}
-                error={editor.error ?? undefined}
-              />
-            )}
-            {field.nullable && field.inputType !== "boolean" && field.inputType !== "select" && (
-              <button type="button" className="text-button" onClick={() => editor.setDraft("")}>
-                Clear value
-              </button>
-            )}
-            <div className="button-row">
-              <button type="submit" disabled={editor.saving || !editor.dirty}>
-                {editor.saving ? "Saving…" : `Save ${field.label.toLowerCase()}`}
-              </button>
-              <button type="button" className="secondary-button" disabled={editor.saving} onClick={editor.cancel}>
-                Cancel
-              </button>
-            </div>
-          </Form>
+          (field.displayValue ?? presentValue(value))
         )}
+        {field.readOnlyReason && <small className="field-readonly-reason">{field.readOnlyReason}</small>}
       </dd>
+      {field.onSave && (
+        <Dialog open={editor.editing} onOpenChange={(open) => !open && editor.cancel()} modal>
+          <Dialog.Portal>
+            <Dialog.Overlay className="table-kit-utility-backdrop" />
+            <Dialog.Content className="editable-record-dialog">
+              <div className="editable-record-dialog-heading">
+                <div>
+                  <Dialog.Title>Edit {field.label}</Dialog.Title>
+                </div>
+                <Dialog.Close asChild>
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    aria-label={`Close edit ${field.label.toLowerCase()}`}
+                  >
+                    ×
+                  </button>
+                </Dialog.Close>
+              </div>
+              <div className="editable-record-dialog-description">
+                <Dialog.Description>Update the {field.label.toLowerCase()} for this record.</Dialog.Description>
+              </div>
+              <EditableFieldForm field={field} editor={editor} onTextChange={onTextChange} />
+            </Dialog.Content>
+          </Dialog.Portal>
+        </Dialog>
+      )}
     </div>
+  );
+}
+
+/** Renders the shared field control and persistence actions inside an edit dialog. */
+function EditableFieldForm({
+  field,
+  editor,
+  onTextChange,
+}: {
+  field: EditableRecordField;
+  editor: ReturnType<typeof useRecordEditor>;
+  onTextChange: (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+}) {
+  return (
+    <Form className="edit-form editable-field-form" onSubmit={() => void editor.save()}>
+      {field.inputType === "date" ? (
+        <GDate
+          label={field.label}
+          value={editor.draft}
+          onChange={editor.setDraft}
+          required={field.required}
+          width={field.width ?? "long"}
+          error={editor.error ?? undefined}
+        />
+      ) : field.inputType === "select" ? (
+        <GSelectField
+          label={field.label}
+          value={editor.draft}
+          options={(field.options ?? []).concat(field.nullable ? [{ value: "", label: "—" }] : [])}
+          onChange={editor.setDraft}
+          required={field.required}
+          width={field.width ?? "long"}
+          error={editor.error ?? undefined}
+        />
+      ) : field.inputType === "boolean" ? (
+        <GCheckboxField
+          label={field.label}
+          value={editor.draft === "true"}
+          onChange={(checked) => editor.setDraft(String(checked))}
+          required={field.required}
+          width={field.width ?? "long"}
+          error={editor.error ?? undefined}
+        />
+      ) : (
+        <GemTextField
+          label={field.label}
+          value={editor.draft}
+          onChange={onTextChange}
+          onBlur={() => undefined}
+          type={field.inputType === "longText" ? undefined : (field.inputType ?? "text")}
+          step={field.step}
+          placeholder={field.placeholder}
+          multiline={field.inputType === "longText"}
+          width={field.width ?? "long"}
+          required={field.required}
+          error={editor.error ?? undefined}
+        />
+      )}
+      {field.nullable && field.inputType !== "boolean" && field.inputType !== "select" && (
+        <button type="button" className="text-button" onClick={() => editor.setDraft("")}>
+          Clear value
+        </button>
+      )}
+      <div className="button-row">
+        <button type="submit" disabled={editor.saving || !editor.dirty}>
+          {editor.saving ? "Saving…" : `Save ${field.label.toLowerCase()}`}
+        </button>
+        <button type="button" className="secondary-button" disabled={editor.saving} onClick={editor.cancel}>
+          Cancel
+        </button>
+      </div>
+    </Form>
   );
 }
 
