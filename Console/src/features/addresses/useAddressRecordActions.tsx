@@ -1,7 +1,7 @@
 import type { TableActionsProps } from "../../table-kit";
-import { RecordImport } from "../../components/RecordImport";
 import { AddressCreateForm } from "../create/RecordCreateForms";
 import { useCreateAddressMutation } from "../../data/recordQueries";
+import { createRecordImportActions } from "../../components/createRecordImportActions";
 
 interface AddressRecordActionsOptions {
   /** Selects a newly created address in the owning feature view. */
@@ -47,42 +47,12 @@ export function useAddressRecordActions({
               />
             ),
           },
-          {
-            id: "import-address-file",
-            label: "Import File",
-            description: "Choose a CSV or JSON file.",
-            render: ({ close }) => (
-              <RecordImport
-                label="addresses"
-                expectedColumns={["id", "addressType", "country"]}
-                mode="file"
-                open
-                onOpenChange={(open) => {
-                  if (!open) close();
-                }}
-                showTrigger={false}
-                onPublish={publish}
-              />
-            ),
-          },
-          {
-            id: "paste-address-data",
-            label: "Paste data",
-            description: "Paste CSV or JSON records.",
-            render: ({ close }) => (
-              <RecordImport
-                label="addresses"
-                expectedColumns={["id", "addressType", "country"]}
-                mode="paste"
-                open
-                onOpenChange={(open) => {
-                  if (!open) close();
-                }}
-                showTrigger={false}
-                onPublish={publish}
-              />
-            ),
-          },
+          ...createRecordImportActions({
+            idPrefix: "address",
+            label: "addresses",
+            expectedColumns: ["id", "addressType", "country"],
+            onPublish: publish,
+          }),
         ],
       },
     },

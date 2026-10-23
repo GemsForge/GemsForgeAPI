@@ -1,5 +1,5 @@
 import type { TableActionsProps } from "../../table-kit";
-import { RecordImport } from "../../components/RecordImport";
+import { createRecordImportActions } from "../../components/createRecordImportActions";
 import { EducationCreateForm } from "../create/RecordCreateForms";
 import { useCreateEducationMutation } from "../../data/recordQueries";
 import type { Address } from "../../types";
@@ -52,42 +52,12 @@ export function useEducationRecordActions({
               />
             ),
           },
-          {
-            id: "import-education-file",
-            label: "Import File",
-            description: "Choose a CSV or JSON file.",
-            render: ({ close }) => (
-              <RecordImport
-                label="education records"
-                expectedColumns={["id", "educationType", "institutionName", "status"]}
-                mode="file"
-                open
-                onOpenChange={(open) => {
-                  if (!open) close();
-                }}
-                showTrigger={false}
-                onPublish={publish}
-              />
-            ),
-          },
-          {
-            id: "paste-education-data",
-            label: "Paste data",
-            description: "Paste CSV or JSON records.",
-            render: ({ close }) => (
-              <RecordImport
-                label="education records"
-                expectedColumns={["id", "educationType", "institutionName", "status"]}
-                mode="paste"
-                open
-                onOpenChange={(open) => {
-                  if (!open) close();
-                }}
-                showTrigger={false}
-                onPublish={publish}
-              />
-            ),
-          },
+          ...createRecordImportActions({
+            idPrefix: "education",
+            label: "education records",
+            expectedColumns: ["id", "educationType", "institutionName", "status"],
+            onPublish: publish,
+          }),
         ],
       },
     },

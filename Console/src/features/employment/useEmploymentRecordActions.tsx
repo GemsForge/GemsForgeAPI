@@ -1,5 +1,5 @@
 import type { TableActionsProps } from "../../table-kit";
-import { RecordImport } from "../../components/RecordImport";
+import { createRecordImportActions } from "../../components/createRecordImportActions";
 import { EmploymentCreateForm } from "../create/RecordCreateForms";
 import { useCreateEmploymentMutation } from "../../data/recordQueries";
 
@@ -65,38 +65,12 @@ export function useEmploymentRecordActions({
               />
             ),
           },
-          {
-            id: "import-employment-file",
-            label: "Import File",
-            description: "Choose a CSV or JSON file.",
-            render: ({ close }) => (
-              <RecordImport
-                label="employment records"
-                expectedColumns={["id", "employerName", "employerType", "positionTitle", "employmentType", "employmentStatus"]}
-                mode="file"
-                open
-                onOpenChange={(open) => !open && close()}
-                showTrigger={false}
-                onPublish={publish}
-              />
-            ),
-          },
-          {
-            id: "paste-employment-data",
-            label: "Paste data",
-            description: "Paste CSV or JSON records.",
-            render: ({ close }) => (
-              <RecordImport
-                label="employment records"
-                expectedColumns={["id", "employerName", "employerType", "positionTitle", "employmentType", "employmentStatus"]}
-                mode="paste"
-                open
-                onOpenChange={(open) => !open && close()}
-                showTrigger={false}
-                onPublish={publish}
-              />
-            ),
-          },
+          ...createRecordImportActions({
+            idPrefix: "employment",
+            label: "employment records",
+            expectedColumns: ["id", "employerName", "employerType", "positionTitle", "employmentType", "employmentStatus"],
+            onPublish: publish,
+          }),
         ],
       },
     },

@@ -1,5 +1,5 @@
 import type { TableActionsProps } from "../../table-kit";
-import { RecordImport } from "../../components/RecordImport";
+import { createRecordImportActions } from "../../components/createRecordImportActions";
 import { TransactionCreateForm } from "../create/RecordCreateForms";
 import { useCreateTransactionMutation } from "../../data/recordQueries";
 
@@ -24,7 +24,6 @@ export function useTransactionRecordActions({
   const publish = async (rows: Record<string, unknown>[]) => {
     for (const row of rows) await create.mutateAsync(row as Parameters<typeof create.mutateAsync>[0]);
   };
-  const importProps = { label: "transactions", expectedColumns: ["id", "item", "categoryID", "quantity"] };
 
   return {
     create,
@@ -46,21 +45,12 @@ export function useTransactionRecordActions({
               />
             ),
           },
-          ...(["file", "paste"] as const).map((mode) => ({
-            id: `import-transaction-${mode}`,
-            label: mode === "file" ? "Import File" : "Paste data",
-            description: mode === "file" ? "Choose a CSV or JSON file." : "Paste CSV or JSON records.",
-            render: ({ close }: { close: () => void }) => (
-              <RecordImport
-                {...importProps}
-                mode={mode}
-                open
-                onOpenChange={(open) => !open && close()}
-                showTrigger={false}
-                onPublish={publish}
-              />
-            ),
-          })),
+          ...createRecordImportActions({
+            idPrefix: "transaction",
+            label: "transactions",
+            expectedColumns: ["id", "item", "categoryID", "quantity"],
+            onPublish: publish,
+          }),
         ],
       },
     },
