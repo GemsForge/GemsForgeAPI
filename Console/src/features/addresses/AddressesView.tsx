@@ -8,7 +8,6 @@ import { GemEmptyState } from "../../components/ui";
 import { EditableRecordFields, formatRecordDate, formatRecordTimestamp } from "../../components/EditableRecordFields";
 import { AddressCreateForm } from "../create/RecordCreateForms";
 import { RecordImport } from "../../components/RecordImport";
-import { RecordCreateButton } from "../../components/RecordCreateButton";
 import { DatabaseRecordCollection } from "../../components/DatabaseRecordCollection";
 import { addressTableAdapter } from "../database/recordTableAdapters";
 import { useAddressRecordActions } from "./useAddressRecordActions";
@@ -51,7 +50,11 @@ export function AddressesView({ records }: AddressesViewProps) {
         </div>
         <div className="button-row">
           <span className="record-count">{records.length} records</span>
-          {records.length === 0 && <RecordCreateButton label="address" onCreate={() => setCreating(true)} />}
+          {records.length === 0 && (
+            <button type="button" onClick={() => setCreating(true)}>
+              Add address
+            </button>
+          )}
         </div>
         <RecordImport
           label="addresses"

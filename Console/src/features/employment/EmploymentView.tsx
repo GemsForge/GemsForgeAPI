@@ -7,7 +7,6 @@ import { EditableRecordFields, formatRecordDate, formatRecordTimestamp } from ".
 import { useAddressesQuery } from "../../data/lifeQueries";
 import { EmploymentCreateForm } from "../create/RecordCreateForms";
 import { RecordImport } from "../../components/RecordImport";
-import { RecordCreateButton } from "../../components/RecordCreateButton";
 import { useRecordUtilities } from "../../hooks/useRecordUtilities";
 import { DatabaseRecordCollection } from "../../components/DatabaseRecordCollection";
 import { employmentTableAdapter } from "../database/recordTableAdapters";
@@ -55,7 +54,11 @@ export function EmploymentView({ records }: EmploymentViewProps) {
         </div>
         <div className="button-row">
           <span className="record-count">{records.length} records</span>
-          {records.length === 0 && <RecordCreateButton label="employment" onCreate={() => setCreating(true)} />}
+          {records.length === 0 && (
+            <button type="button" onClick={() => setCreating(true)}>
+              Add employment
+            </button>
+          )}
         </div>
         <RecordImport
           label="employment records"
