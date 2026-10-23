@@ -1553,6 +1553,22 @@ dialog::backdrop {
   box-shadow: 0 0.7rem 1.8rem rgb(0 0 0 / 20%);
 }
 
+.table-kit-popover-frame {
+  border: 1px solid var(--line);
+  border-radius: 0.55rem;
+  background: var(--panel);
+  box-shadow: 0 0.7rem 1.8rem rgb(0 0 0 / 20%);
+}
+
+.table-kit-popover-frame > h2,
+.table-kit-popover-frame > [role="heading"],
+.table-kit-popover-frame > [data-radix-menu-label] {
+  margin: 0 0 0.75rem;
+  color: var(--ink);
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
 .table-kit-property-close {
   position: absolute;
   top: 0.65rem;

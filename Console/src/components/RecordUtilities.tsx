@@ -92,7 +92,7 @@ export function RecordUtilities({
             </Tooltip.Content>
           </Tooltip>
           <Menu.Portal zIndex={20}>
-            <Menu.Content className="record-utilities-menu" aria-label="Sort records" loop>
+            <Menu.Content className="record-utilities-menu table-kit-popover-frame" aria-label="Sort records" loop>
               <Menu.Label>Sort by</Menu.Label>
               <Menu.RadioGroup
                 value={sort || "__default"}
@@ -154,7 +154,7 @@ export function RecordUtilities({
               </Tooltip.Content>
             </Tooltip>
             <Menu.Portal zIndex={20}>
-              <Menu.Content className="record-utilities-menu" aria-label="Filter records" loop>
+              <Menu.Content className="record-utilities-menu table-kit-popover-frame" aria-label="Filter records" loop>
                 <Menu.Label>Filter</Menu.Label>
                 <Menu.RadioGroup
                   value={filter || "__all"}
@@ -183,9 +183,11 @@ export function RecordUtilities({
             </Menu.Portal>
           </Menu>
         )}
-        <span className="record-utility-summary" role="status">
-          {visibleCount ?? totalCount ?? 0} of {totalCount ?? visibleCount ?? 0} matching
-        </span>
+        {search && (
+          <span className="record-utility-summary" role="status">
+            {visibleCount ?? totalCount ?? 0} of {totalCount ?? visibleCount ?? 0} matching
+          </span>
+        )}
         {searchOpen && (
           <label className="record-utilities-search-field">
             <span className="sr-only">Search {label.toLowerCase()}</span>
@@ -293,9 +295,11 @@ export function RecordUtilities({
           Clear filters
         </Button>
       )}
-      <span className="record-utility-summary" role="status">
-        {visibleCount ?? totalCount ?? 0} of {totalCount ?? visibleCount ?? 0} matching
-      </span>
+      {search && (
+        <span className="record-utility-summary" role="status">
+          {visibleCount ?? totalCount ?? 0} of {totalCount ?? visibleCount ?? 0} matching
+        </span>
+      )}
     </div>
   );
 }

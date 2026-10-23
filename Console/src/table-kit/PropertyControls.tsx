@@ -12,8 +12,6 @@ export interface TablePropertyControlsProps {
   showAllLabel?: string;
   hideAllLabel?: string;
   resetLabel?: string;
-  /** Accessible name for the dialog close action. */
-  closeLabel?: string;
 }
 
 /** Render searchable, reorderable xs property controls without changing record data. */
@@ -25,7 +23,6 @@ export function TablePropertyControls({
   showAllLabel = "Show all",
   hideAllLabel = "Hide all",
   resetLabel = "Reset properties",
-  closeLabel = "Close properties",
 }: TablePropertyControlsProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -96,7 +93,7 @@ export function TablePropertyControls({
           id={dialogId}
           role="dialog"
           aria-labelledby={dialogTitleId}
-          className="table-kit-property-dialog"
+          className="table-kit-property-dialog table-kit-popover-frame"
           onKeyDown={(event) => {
             if (event.key === "Escape") {
               event.stopPropagation();
@@ -105,21 +102,6 @@ export function TablePropertyControls({
           }}
         >
           <h2 id={dialogTitleId}>{label}</h2>
-          <Button
-            size="xs"
-            color="$gemInk"
-            backgroundColor="$gemPanel"
-            borderColor="$gemPanelLight"
-            borderWidth={1}
-            borderRadius="$gemControl"
-            type="button"
-            className="table-kit-property-close"
-            aria-label={closeLabel}
-            onClick={() => setOpen(false)}
-          >
-            <span aria-hidden="true">×</span>
-            <span className="sr-only">{closeLabel}</span>
-          </Button>
           <GSearchField
             label={undefined}
             aria-label={searchLabel}
