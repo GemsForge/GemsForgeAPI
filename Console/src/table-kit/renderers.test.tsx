@@ -218,7 +218,7 @@ describe("Table Kit record renderers", () => {
       <RecordTable records={records} properties={properties} onRecordSelect={() => onSelect(records[0].source)} />,
     );
     expect(await screen.findByRole("columnheader", { name: "Kind" })).toBeInTheDocument();
-    fireEvent.click(await screen.findByRole("checkbox", { name: "Select Alpha" }));
+    fireEvent.doubleClick(screen.getByRole("button", { name: "Open Alpha" }));
     expect(onSelect).toHaveBeenCalledWith(records[0].source);
   });
 
@@ -267,7 +267,7 @@ describe("Table Kit record renderers", () => {
     );
 
     expect(screen.getByRole("checkbox", { name: "Select all" })).toBeDisabled();
-    expect(await screen.findByRole("checkbox", { name: "Select Alpha" })).toBeDisabled();
+    expect(screen.queryByRole("checkbox", { name: "Select Alpha" })).not.toBeInTheDocument();
   });
 
   it("preserves selection when switching between built-in view slots", () => {
