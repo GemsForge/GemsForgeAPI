@@ -1,7 +1,8 @@
 export { GemButton } from "./GemButton";
 export { GemCard } from "./GemCard";
-export { GemField } from "./GemField";
-export { GDate } from "./GDate";
+export { GemField } from "./GemTextField";
+export { GDate } from "./GDateField";
+export { GSelectField } from "./GSelectField";
 export { GemDataTable } from "./GemDataTable--LEGACY";
 export { GemEmptyState } from "./GemEmptyState";
 export { GemLoadingState } from "./GemLoadingState";
