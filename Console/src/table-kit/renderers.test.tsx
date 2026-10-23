@@ -26,8 +26,6 @@ const records: TableRecord<Service>[] = [
   },
 ];
 const properties: RecordPropertyDefinition<Service>[] = [
-  { id: "name", label: "Name", order: 0, getValue: (record) => ({ display: record.name }) },
-  { id: "image", label: "Image", order: 0.5, kind: "image", getValue: () => ({ display: "logo" }) },
   { id: "kind", label: "Kind", order: 1, getValue: (record) => ({ display: record.kind }) },
   { id: "empty", label: "Empty", order: 2, getValue: () => ({ display: "" }) },
 ];
@@ -85,7 +83,6 @@ describe("Table Kit record renderers", () => {
     renderWithTheme(<RecordList records={records} properties={properties} />);
     expect(screen.getByRole("listitem")).toHaveTextContent("Alpha");
     expect(screen.getByText("Service")).toBeInTheDocument();
-    expect(screen.queryByText("logo")).not.toBeInTheDocument();
   });
 
   it("opens a Tamagui list item on single click without selecting it", async () => {

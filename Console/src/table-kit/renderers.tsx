@@ -15,7 +15,7 @@ import {
   type ColDef,
   type ICellRendererParams,
 } from "ag-grid-community";
-import { Image, ListItem, Paragraph, SizableText, XStack, YStack } from "tamagui";
+import { Image, ListItem, Paragraph, SizableText, XStack, YGroup, YStack } from "tamagui";
 import { TableContext } from "./context";
 import {
   orderRecordProperties,
@@ -206,52 +206,53 @@ export function RecordList<Record>({
     [],
   );
   return (
-    <ul className="table-kit-record-list">
+    <YGroup className="table-kit-record-list" role="list" gap="$2">
       {effectiveRecords.map((record) => {
         const selected = selection.selectedIds.has(record.id);
         return (
-          <ListItem
-            key={record.id}
-            aria-label={`Open ${String(record.title ?? record.id)}${selected ? ", selected" : ""}`}
-            data-selected={selected}
-            tabIndex={0}
-            gap="$3"
-            padding="$3"
-            borderWidth={1}
-            borderColor={selected ? "$gemMint" : "$gemPanelLight"}
-            borderRadius="$4"
-            backgroundColor="$gemPanel"
-            onClick={(event) => {
-              if (event.detail > 1) return;
-              if (openTimer.current) clearTimeout(openTimer.current);
-              // Defer opening until the double-click window closes so selection does not also open the view.
-              openTimer.current = setTimeout(() => onExpansionChange?.(record.id), 250);
-            }}
-            onDoubleClick={() => {
-              if (openTimer.current) clearTimeout(openTimer.current);
-              if (selection.isSelectable(record.id)) selection.onRecordSelect?.(record.id);
-            }}
-            onKeyDown={(event) => {
-              if (event.key !== "Enter" && event.key !== " ") return;
-              event.preventDefault();
-              if (event.shiftKey && selection.isSelectable(record.id)) selection.onRecordSelect?.(record.id);
-              else if (!event.shiftKey) onExpansionChange?.(record.id);
-            }}
-          >
-            <XStack alignItems="center" flexDirection="row" gap="$3" flex={1}>
-              <RecordImage image={record.image} size={48} />
-              <SizableText fontWeight="700">{record.title ?? record.subtitle ?? record.id}</SizableText>
-            </XStack>
-            <YStack gap="$1">
-              {visibleProperties.map((property) => (
-                <PropertyValue key={property.id} value={propertyValue(property, record)} />
-              ))}
-            </YStack>
-            {record.status && <SizableText aria-label={record.status.label}>{record.status.label}</SizableText>}
-          </ListItem>
+          <YGroup.Item key={record.id}>
+            <ListItem
+              aria-label={`Open ${String(record.title ?? record.id)}${selected ? ", selected" : ""}`}
+              data-selected={selected}
+              tabIndex={0}
+              gap="$3"
+              padding="$3"
+              borderWidth={1}
+              borderColor={selected ? "$gemMint" : "$gemPanelLight"}
+              borderRadius="$4"
+              backgroundColor="$gemPanel"
+              title={record.title ?? record.subtitle ?? record.id}
+              subTitle={
+                <YStack gap="$1">
+                  {visibleProperties.map((property) => (
+                    <PropertyValue key={property.id} value={propertyValue(property, record)} />
+                  ))}
+                </YStack>
+              }
+              icon={() => <RecordImage image={record.image} size={48} />}
+              onClick={(event) => {
+                if (event.detail > 1) return;
+                if (openTimer.current) clearTimeout(openTimer.current);
+                // Defer opening until the double-click window closes so selection does not also open the view.
+                openTimer.current = setTimeout(() => onExpansionChange?.(record.id), 250);
+              }}
+              onDoubleClick={() => {
+                if (openTimer.current) clearTimeout(openTimer.current);
+                if (selection.isSelectable(record.id)) selection.onRecordSelect?.(record.id);
+              }}
+              onKeyDown={(event) => {
+                if (event.key !== "Enter" && event.key !== " ") return;
+                event.preventDefault();
+                if (event.shiftKey && selection.isSelectable(record.id)) selection.onRecordSelect?.(record.id);
+                else if (!event.shiftKey) onExpansionChange?.(record.id);
+              }}
+            >
+              {record.status && <SizableText aria-label={record.status.label}>{record.status.label}</SizableText>}
+            </ListItem>
+          </YGroup.Item>
         );
       })}
-    </ul>
+    </YGroup>
   );
 }
 
