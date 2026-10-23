@@ -1556,21 +1556,22 @@ dialog::backdrop {
   list-style: none;
 }
 
-/* Keep the New Record workflow over the collection while preserving its width. */
+/* Let Tamagui's portal manage modal behavior while retaining the table utility's placement. */
 .table-kit-utility-backdrop {
   position: fixed;
   z-index: 40;
   inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  padding: 1rem clamp(1rem, 3vw, 2rem);
   background: rgb(3 11 14 / 72%);
   backdrop-filter: blur(4px);
 }
 
 .table-kit-new-record-utility {
-  width: min(36rem, 100%);
+  position: fixed;
+  z-index: 41;
+  top: 50%;
+  right: clamp(1rem, 3vw, 2rem);
+  transform: translateY(-50%);
+  width: min(36rem, calc(100vw - 2rem));
   max-height: min(48rem, calc(100vh - 2rem));
   overflow: auto;
   padding: 1.25rem;
