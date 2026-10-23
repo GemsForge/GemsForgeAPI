@@ -31,7 +31,6 @@ export function CreateFieldFrame({ id, label, required, error, children }: Creat
 }
 
 const controlStyle = {
-  width: "100%" as const,
   minHeight: "$5" as const,
   borderColor: "$gemPanelLight" as const,
   borderWidth: 1,

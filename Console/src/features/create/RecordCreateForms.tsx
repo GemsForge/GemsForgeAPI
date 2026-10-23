@@ -31,6 +31,7 @@ import {
   educationFieldDefinitions,
   educationSchema,
   type EducationCreateFormValues,
+  type EducationFieldDefinition,
 } from "../education/educationCreateFields";
 import {
   createEmploymentFieldDefinitions,
@@ -63,7 +64,7 @@ function FormShell<T extends FieldValues>({
   children,
 }: {
   title: string;
-  schema: z.ZodType<T>;
+  schema: z.ZodTypeAny;
   defaultValues: T;
   onCreate: (values: T) => Promise<void>;
   onCancel: () => void;
@@ -199,7 +200,7 @@ export function DomainCreateForm({
   onCancel: () => void;
 }) {
   return (
-    <FormShell
+    <FormShell<DomainCreateFormValues>
       title="Create domain"
       schema={domainSchema}
       defaultValues={{ id: "", title: "", description: "" }}
@@ -227,7 +228,7 @@ export function AddressCreateForm({
   addressSearchClient?: GeoapifySearchClient;
 }) {
   return (
-    <FormShell
+    <FormShell<AddressCreateFormValues>
       title="Create address"
       schema={addressSchema}
       defaultValues={{
@@ -306,7 +307,7 @@ export function EducationCreateForm({
   onCancel: () => void;
 }) {
   return (
-    <FormShell
+    <FormShell<EducationCreateFormValues>
       title="Create education record"
       schema={educationSchema}
       defaultValues={{
@@ -390,7 +391,7 @@ export function EmploymentCreateForm({
   const schema = createEmploymentSchema(employmentFields);
 
   return (
-    <FormShell
+    <FormShell<EmploymentCreateFormValues>
       title="Create employment record"
       schema={schema}
       defaultValues={{
@@ -467,7 +468,7 @@ export function ServiceAccountCreateForm({
   onCancel: () => void;
 }) {
   return (
-    <FormShell
+    <FormShell<ServiceAccountCreateFormValues>
       title="Create service account"
       schema={serviceAccountSchema}
       defaultValues={{
@@ -527,7 +528,7 @@ export function TransactionCreateForm({
   onCancel: () => void;
 }) {
   return (
-    <FormShell
+    <FormShell<TransactionCreateFormValues>
       title="Create transaction"
       schema={transactionSchema}
       defaultValues={{

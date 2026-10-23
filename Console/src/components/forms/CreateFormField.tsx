@@ -115,7 +115,7 @@ export function CreateFormCheckbox<T extends FieldValues>({
       <Checkbox
         id={id}
         checked={checked}
-        onCheckedChange={(checked) => form.setValue(name, checked === true, { shouldValidate: true, shouldDirty: true })}
+        onCheckedChange={(checked) => form.setValue(name, (checked === true) as never, { shouldValidate: true, shouldDirty: true })}
         aria-invalid={Boolean(message)}
         aria-required={required}
       >
@@ -158,7 +158,7 @@ export function CreateFormMultiSelect<T extends FieldValues>({
                   const nextValues = nextChecked === true
                     ? [...selected.filter((value) => value !== option.value), option.value]
                     : selected.filter((value) => value !== option.value);
-                  form.setValue(name, nextValues as T[Path<T>], { shouldValidate: true, shouldDirty: true });
+                  form.setValue(name, nextValues as never, { shouldValidate: true, shouldDirty: true });
                 }}
               >
                 <Checkbox.Indicator />
