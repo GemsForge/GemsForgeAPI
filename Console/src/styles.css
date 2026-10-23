@@ -1342,13 +1342,13 @@ dialog::backdrop {
   min-width: 13rem;
   max-width: 100%;
   overflow: hidden;
-  border: 1px solid var(--line);
+  border: 0;
   border-radius: 0.55rem;
   background: var(--panel);
 }
 
 .table-kit-views > button {
-  flex: 0 0 auto;
+  flex: 1 1 0;
   min-height: 2.75rem;
   min-width: 4.25rem;
   padding: 0.55rem 1rem;
@@ -1358,11 +1358,6 @@ dialog::backdrop {
   background: transparent;
   color: var(--ink);
   white-space: nowrap;
-}
-
-.table-kit-views > button:focus-visible {
-  outline: 0 !important;
-  box-shadow: inset 0 0 0 2px var(--mint-dark);
 }
 
 /* Keep view switching compact while retaining the full label for AT and Tooltip. */
