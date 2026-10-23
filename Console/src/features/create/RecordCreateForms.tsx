@@ -44,84 +44,21 @@ import {
   educationSchema,
   type EducationCreateFormValues,
 } from "../education/educationCreateFields";
+import {
+  createEmploymentFieldDefinitions,
+  createEmploymentSchema,
+  type EmploymentCreateFormValues,
+  type EmploymentFieldDefinition,
+} from "../employment/employmentCreateFields";
 
 const required = (label: string) => z.string().trim().min(1, `${label} is required.`);
 const optional = z.string();
-/** Keep browser date inputs strict so JavaScript cannot normalize invalid calendar dates. */
-function isValidDateInput(value: string): boolean {
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
-  if (!match) return false;
-
-  const [, year, month, day] = match;
-  const date = new Date(`${value}T00:00:00Z`);
-  return (
-    !Number.isNaN(date.getTime()) &&
-    date.getUTCFullYear() === Number(year) &&
-    date.getUTCMonth() + 1 === Number(month) &&
-    date.getUTCDate() === Number(day)
-  );
-}
-
-/** Validate optional Employment contact values without rejecting intentionally blank fields. */
-const optionalEmploymentDate = optional.refine(
-  (value) => !value.trim() || isValidDateInput(value.trim()),
-  "Enter a valid date.",
-);
-const optionalEmploymentURL = optional.refine((value) => {
-  const normalized = value.trim();
-  if (!normalized) return true;
-  try {
-    const url = new URL(normalized);
-    return url.protocol === "http:" || url.protocol === "https:";
-  } catch {
-    return false;
-  }
-}, "Enter a valid URL starting with http:// or https://.");
-const optionalEmploymentEmail = optional.refine(
-  (value) => !value.trim() || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim()),
-  "Enter a valid email address.",
-);
-/** Accept international numbers with country codes, common separators, and optional extensions. */
-const employmentPhonePattern = /^\+?[0-9().\-\s]+(?:\s*(?:x|ext\.?)\s*[0-9]+)?$/i;
-const optionalEmploymentPhone = optional.refine((value) => {
-  const normalized = value.trim();
-  if (!normalized) return true;
-  const digitCount = (normalized.match(/\d/g) ?? []).length;
-  return employmentPhonePattern.test(normalized) && digitCount >= 7;
-}, "Enter a valid phone number.");
 const optionalNumber = z
   .string()
   .refine(
     (value) => value === "" || (/^\d+(\.\d+)?$/.test(value) && Number(value) >= 0),
     "Enter a non-negative number.",
   );
-const employmentSchema = z
-  .object({
-    id: required("Employment ID"),
-    employerName: required("Employer name"),
-    employerType: required("Employer type"),
-    industry: optional,
-    website: optionalEmploymentURL,
-    positionTitle: required("Position title"),
-    employmentType: required("Employment type"),
-    startDate: optionalEmploymentDate,
-    endDate: optionalEmploymentDate,
-    employmentStatus: required("Status"),
-    workAddressID: optional,
-    employerContact: optional,
-    employerContactNumber: optionalEmploymentPhone,
-    employerContactEmail: optionalEmploymentEmail,
-    notes: optional,
-  })
-  .superRefine((values, context) => {
-    if (values.startDate && values.endDate && values.endDate < values.startDate) {
-      context.addIssue({
-        code: "custom",
-        path: ["endDate"],
-        message: "End date must be on or after start date.",
-      });
-    }
-  });
 const transactionSchema = z.object({
   id: required("Transaction ID"),
   receiptID: optional,
@@ -340,6 +277,29 @@ function renderEducationField(form: UseFormReturn<EducationCreateFormValues>, fi
   );
 }
 
+function renderEmploymentField(form: UseFormReturn<EmploymentCreateFormValues>, field: EmploymentFieldDefinition) {
+  return field.options ? (
+    <Select
+      key={field.name}
+      form={form}
+      name={field.name}
+      label={field.label}
+      options={[...field.options]}
+      required={field.required}
+      searchable={field.name === "workAddressID"}
+      searchPlaceholder={field.name === "workAddressID" ? "Search existing addresses" : undefined}
+    />
+  ) : (
+    <Text key={field.name} form={form} name={field.name} label={field.label} required={field.required} type={field.type} multiline={field.multiline} width={field.width} />
+  );
+}
+
+function employmentField(fields: readonly EmploymentFieldDefinition[], name: keyof EmploymentCreateFormValues) {
+  const definition = fields.find((field) => field.name === name);
+  if (!definition) throw new Error(`Missing Employment field definition: ${name}`);
+  return definition;
+}
+
 function fields<T extends FieldValues>(form: UseFormReturn<T>, definitions: Array<[Path<T>, string, boolean?]>) {
   return definitions.map(([name, label, requiredField]) => (
     <Text key={name} form={form} name={name} label={label} required={requiredField} />
@@ -544,11 +504,19 @@ export function EmploymentCreateForm({
   onCancel: () => void;
 }) {
   const [generatedID] = useState(createEmploymentID);
+  const employmentFields = createEmploymentFieldDefinitions({
+    employerType: employerTypeOptions,
+    industry: industryOptions,
+    employmentType: employmentTypeOptions,
+    status: statusOptions,
+    workAddress: addresses.map((a) => ({ value: a.id, label: [a.addressType, a.city, a.id].filter(Boolean).join(" · ") })),
+  });
+  const schema = createEmploymentSchema(employmentFields);
 
   return (
     <FormShell
       title="Create employment record"
-      schema={employmentSchema}
+      schema={schema}
       defaultValues={{
         id: generatedID,
         employerName: "",
@@ -586,45 +554,29 @@ export function EmploymentCreateForm({
       {(form) => (
         <>
           <div className="create-form-grid">
-            {fields(form, [["employerName", "Employer name", true]])}
-            <Select form={form} name="employerType" label="Employer type" options={employerTypeOptions} required />
+            {renderEmploymentField(form, employmentField(employmentFields, "employerName"))}
+            {renderEmploymentField(form, employmentField(employmentFields, "employerType"))}
           </div>
           <div className="create-form-grid">
-            <Select form={form} name="industry" label="Industry" options={industryOptions} />
-            <Text form={form} name="website" label="Website" type="url" width="medium" />
+            {renderEmploymentField(form, employmentField(employmentFields, "industry"))}
+            {renderEmploymentField(form, employmentField(employmentFields, "website"))}
           </div>
           <div className="create-form-grid">
-            {fields(form, [["positionTitle", "Position title", true]])}
-            <Select
-              form={form}
-              name="employmentType"
-              label="Employment type"
-              options={employmentTypeOptions}
-              required
-            />
+            {renderEmploymentField(form, employmentField(employmentFields, "positionTitle"))}
+            {renderEmploymentField(form, employmentField(employmentFields, "employmentType"))}
           </div>
           <div className="create-form-grid create-form-grid--compact">
-            <Text form={form} name="startDate" label="Start date" type="date" width="short" />
-            <Text form={form} name="endDate" label="End date" type="date" width="short" />
-            <Select form={form} name="employmentStatus" label="Status" options={statusOptions} required />
+            {renderEmploymentField(form, employmentField(employmentFields, "startDate"))}
+            {renderEmploymentField(form, employmentField(employmentFields, "endDate"))}
+            {renderEmploymentField(form, employmentField(employmentFields, "employmentStatus"))}
           </div>
           <div className="create-form-grid create-form-grid--contact">
-            <Text form={form} name="employerContact" label="Contact" />
-            <Text form={form} name="employerContactNumber" label="Contact number" type="tel" width="short" />
-            <Text form={form} name="employerContactEmail" label="Contact email" type="email" width="medium" />
+            {renderEmploymentField(form, employmentField(employmentFields, "employerContact"))}
+            {renderEmploymentField(form, employmentField(employmentFields, "employerContactNumber"))}
+            {renderEmploymentField(form, employmentField(employmentFields, "employerContactEmail"))}
           </div>
-          <Text form={form} name="notes" label="Notes" multiline />
-          <Select
-            form={form}
-            name="workAddressID"
-            label="Work address"
-            searchable
-            searchPlaceholder="Search existing addresses"
-            options={addresses.map((a) => ({
-              value: a.id,
-              label: [a.addressType, a.city, a.id].filter(Boolean).join(" · "),
-            }))}
-          />
+          {renderEmploymentField(form, employmentField(employmentFields, "notes"))}
+          {renderEmploymentField(form, employmentField(employmentFields, "workAddressID"))}
         </>
       )}
     </FormShell>
