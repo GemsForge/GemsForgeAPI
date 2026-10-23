@@ -953,6 +953,21 @@ dialog::backdrop {
 .gem-record-list-row {
   min-width: 0;
 }
+/* Keep native list semantics without browser bullets or default indentation. */
+.table-kit-record-list {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.table-kit-record-list li {
+  min-width: 0;
+}
+.table-kit-record-list li[tabindex] {
+  width: 100%;
+  cursor: pointer;
+}
 .gem-record-view-toggle {
   display: flex;
   align-items: center;
