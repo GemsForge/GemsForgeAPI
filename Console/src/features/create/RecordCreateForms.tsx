@@ -39,6 +39,11 @@ import {
   type AddressFieldDefinition,
   type AddressCreateFormValues,
 } from "../addresses/addressCreateFields";
+import {
+  educationFieldDefinitions,
+  educationSchema,
+  type EducationCreateFormValues,
+} from "../education/educationCreateFields";
 
 const required = (label: string) => z.string().trim().min(1, `${label} is required.`);
 const optional = z.string();
@@ -90,22 +95,6 @@ const optionalNumber = z
     (value) => value === "" || (/^\d+(\.\d+)?$/.test(value) && Number(value) >= 0),
     "Enter a non-negative number.",
   );
-const educationSchema = z.object({
-  id: required("Education ID"),
-  educationType: required("Education type"),
-  institutionName: required("Institution name"),
-  program: optional,
-  fieldOfStudy: optional,
-  credential: optional,
-  credentialID: optional,
-  startDate: optional,
-  endDate: optional,
-  awardedDate: optional,
-  status: required("Status"),
-  locationAddressID: optional,
-  website: optional,
-  notes: optional,
-});
 const employmentSchema = z
   .object({
     id: required("Employment ID"),
@@ -333,6 +322,24 @@ function addressField(name: keyof AddressCreateFormValues): AddressFieldDefiniti
   if (!definition) throw new Error(`Missing Address field definition: ${name}`);
   return definition;
 }
+
+function renderEducationField(form: UseFormReturn<EducationCreateFormValues>, field: EducationFieldDefinition) {
+  return field.options ? (
+    <Select key={field.name} form={form} name={field.name} label={field.label} options={[...field.options]} required={field.required} />
+  ) : (
+    <Text
+      key={field.name}
+      form={form}
+      name={field.name}
+      label={field.label}
+      required={field.required}
+      type={field.type}
+      multiline={field.multiline}
+      width={field.width}
+    />
+  );
+}
+
 function fields<T extends FieldValues>(form: UseFormReturn<T>, definitions: Array<[Path<T>, string, boolean?]>) {
   return definitions.map(([name, label, requiredField]) => (
     <Text key={name} form={form} name={name} label={label} required={requiredField} />
@@ -502,21 +509,7 @@ export function EducationCreateForm({
     >
       {(form) => (
         <>
-          {fields(form, [
-            ["id", "Stable education ID", true],
-            ["educationType", "Education type", true],
-            ["institutionName", "Institution name", true],
-            ["program", "Program"],
-            ["fieldOfStudy", "Field of study"],
-            ["credential", "Credential"],
-            ["credentialID", "Credential ID"],
-            ["startDate", "Start date"],
-            ["endDate", "End date"],
-            ["awardedDate", "Awarded date"],
-            ["status", "Status", true],
-            ["website", "Website"],
-            ["notes", "Notes"],
-          ])}
+          {educationFieldDefinitions.map((field) => renderEducationField(form, field))}
           <Select
             form={form}
             name="locationAddressID"
