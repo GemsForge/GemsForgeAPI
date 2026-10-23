@@ -222,20 +222,15 @@ function Toolbar({ children }: { children?: ReactNode }) {
   );
 }
 
-/**
- * Render the shared page-selection control. The optional matching scope is
- * shown only when the adapter supplies IDs beyond the current page.
- */
+/** Render the shared page-selection control for the current page. */
 function Selection({
   label = "Select all",
   clearLabel = "Clear selection",
-  allMatchingLabel = "Select all matching",
 }: TableSelectionProps) {
   const { selection } = useTableContext();
   const checkboxRef = useRef<HTMLInputElement>(null);
   const currentPage = selection.getSummary("current-page");
   const allMatching = selection.getSummary("all-matching");
-  const hasAdditionalMatchingRecords = selection.allMatchingIds.length > selection.currentPageIds.length;
 
   useEffect(() => {
     if (checkboxRef.current) checkboxRef.current.indeterminate = currentPage.indeterminate;
@@ -253,19 +248,13 @@ function Selection({
           aria-checked={currentPage.indeterminate ? "mixed" : currentPage.allSelected}
           onChange={() => selection.toggleAll("current-page")}
         />
-        <span>{currentPage.selectedCount > 0 ? `${currentPage.selectedCount} selected` : label}</span>
+        <span>{allMatching.selectedCount > 0 ? `${allMatching.selectedCount} selected` : label}</span>
       </label>
-      {hasAdditionalMatchingRecords && (
-        <button type="button" disabled={allMatching.allSelected} onClick={() => selection.selectAll("all-matching")}>
-          {allMatching.allSelected ? `All ${allMatching.totalCount} matching selected` : allMatchingLabel}
-        </button>
-      )}
       {allMatching.selectedCount > 0 && (
         <button type="button" onClick={selection.clear}>
           {clearLabel}
         </button>
       )}
-      <output aria-live="polite">{allMatching.selectedCount} selected</output>
     </div>
   );
 }

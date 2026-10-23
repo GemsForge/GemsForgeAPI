@@ -268,7 +268,7 @@ describe("Table Kit", () => {
     expect(onPaginationChange).toHaveBeenCalledWith({ pageIndex: 1, pageSize: 1 });
   });
 
-  it("coordinates current-page, all-matching, and clear selection in the scoped context", () => {
+  it("coordinates current-page and clear selection in the scoped context", () => {
     const onSelectionChange = vi.fn();
     render(
       <Table.Root<Row>
@@ -283,9 +283,8 @@ describe("Table Kit", () => {
 
     fireEvent.click(screen.getByRole("checkbox", { name: "Select all" }));
     expect(onSelectionChange).toHaveBeenLastCalledWith(new Set(["one", "two"]));
-    fireEvent.click(screen.getByRole("button", { name: "Select all matching" }));
-    expect(onSelectionChange).toHaveBeenLastCalledWith(new Set(["one", "two", "three"]));
-    expect(screen.getByText("3 selected")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Select all matching" })).not.toBeInTheDocument();
+    expect(screen.getByText("2 selected")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Clear selection" }));
     expect(onSelectionChange).toHaveBeenLastCalledWith(new Set());
   });
@@ -306,7 +305,7 @@ describe("Table Kit", () => {
     expect(checkbox).not.toBeChecked();
     expect((checkbox as HTMLInputElement).indeterminate).toBe(true);
     expect(checkbox).toHaveAttribute("aria-checked", "mixed");
-    expect(screen.getByRole("button", { name: "Select all matching" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Select all matching" })).not.toBeInTheDocument();
   });
 
   it("preserves selected IDs across page updates while applying current-page toggles", () => {
@@ -335,27 +334,6 @@ describe("Table Kit", () => {
 
     fireEvent.click(screen.getByRole("checkbox", { name: "Select all" }));
     expect(onSelectionChange).toHaveBeenCalledWith(new Set(["one"]));
-  });
-
-  it("excludes disabled off-page IDs from all-matching selection", () => {
-    const onSelectionChange = vi.fn();
-    render(
-      <Table.Root<Row>
-        rows={[rows[0]]}
-        columns={columns}
-        rowKey={(row) => row.id}
-        selection={{
-          matchingIds: ["one", "two", "disabled"],
-          isSelectableId: (id) => id !== "disabled",
-          onSelectionChange,
-        }}
-      >
-        <Table.Selection />
-      </Table.Root>,
-    );
-
-    fireEvent.click(screen.getByRole("button", { name: "Select all matching" }));
-    expect(onSelectionChange).toHaveBeenCalledWith(new Set(["one", "two"]));
   });
 
   it("keeps selection isolated between Table.Root instances", () => {
