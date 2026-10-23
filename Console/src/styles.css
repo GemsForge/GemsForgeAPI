@@ -873,6 +873,7 @@ dialog::backdrop {
 }
 .editable-field-form label {
   margin: 0;
+  color: var(--gold);
 }
 /* Keeps the shared edit control and its actions aligned without sacrificing narrow-screen wrapping. */
 .editable-field-control-row {
@@ -888,12 +889,6 @@ dialog::backdrop {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
-}
-.editable-field-actions > * {
-  width: 2rem;
-  min-width: 2rem;
-  height: 2rem;
-  padding: 0;
 }
 .editable-field-form [type="checkbox"] {
   width: 1.15rem;
