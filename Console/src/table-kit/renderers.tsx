@@ -14,7 +14,7 @@ import {
   type ColDef,
   type ICellRendererParams,
 } from "ag-grid-community";
-import { Image, Paragraph, SizableText, XStack, YStack } from "tamagui";
+import { Image, ListItem, Paragraph, SizableText, XStack, YStack } from "tamagui";
 import { TableContext } from "./context";
 import {
   orderRecordProperties,
@@ -43,6 +43,7 @@ export interface TableRendererProps<Record> {
 interface RendererSelection {
   selectedIds: ReadonlySet<TableRecordId>;
   onRecordSelect?: (id: TableRecordId) => void;
+  replace?: (ids: readonly TableRecordId[]) => void;
   addRecords?: (ids: readonly TableRecordId[]) => void;
   isSelectable: (id: TableRecordId) => boolean;
 }
@@ -57,6 +58,7 @@ function useRendererSelection(
   return {
     selectedIds: scopedSelection?.selectedIds ?? selectedIds ?? new Set<TableRecordId>(),
     onRecordSelect: scopedSelection?.toggle ?? onRecordSelect,
+    replace: scopedSelection?.replace,
     addRecords: scopedSelection?.add,
     isSelectable: scopedSelection ? (id) => scopedSelection.currentPageIds.includes(id) : () => true,
   };
@@ -164,7 +166,7 @@ function GridActionCell<Record>({ data, selection, onExpansionChange }: GridActi
   );
 }
 
-/** Renders records as a compact, accessible list using Tamagui layout primitives. */
+/** Render actual Tamagui list items; one click opens one record, while a double click adds to selection. */
 export function RecordList<Record>({
   records,
   properties,
@@ -176,21 +178,48 @@ export function RecordList<Record>({
   const effectiveRecords = useRendererRecords(records);
   const selection = useRendererSelection(selectedIds, onRecordSelect);
   const visibleProperties = propertiesFor(properties, propertyIds).slice(0, 2);
+  const priorSelection = useRef<ReadonlySet<TableRecordId>>(new Set());
   return (
-    <YStack role="list" gap="$2">
+    <ul className="table-kit-record-list">
       {effectiveRecords.map((record) => {
         const selected = selection.selectedIds.has(record.id);
         return (
-          <XStack
+          <ListItem
             key={record.id}
-            role="listitem"
+            aria-label={`Open ${String(record.title ?? record.id)}${selected ? ", selected" : ""}`}
+            data-selected={selected}
+            tabIndex={0}
             gap="$3"
             padding="$3"
             borderWidth={1}
             borderColor={selected ? "$gemMint" : "$gemPanelLight"}
             borderRadius="$4"
             backgroundColor="$gemPanel"
-            alignItems="center"
+            onClick={(event) => {
+              if (event.detail > 1) return;
+              priorSelection.current = new Set(selection.selectedIds);
+              if (selection.isSelectable(record.id)) {
+                if (selection.replace) selection.replace([record.id]);
+                else selection.onRecordSelect?.(record.id);
+              }
+              onExpansionChange?.(record.id);
+            }}
+            onDoubleClick={() => {
+              if (selection.isSelectable(record.id)) {
+                if (selection.replace) selection.replace([...priorSelection.current, record.id]);
+                else selection.onRecordSelect?.(record.id);
+              }
+            }}
+            onKeyDown={(event) => {
+              if (event.key !== "Enter" && event.key !== " ") return;
+              event.preventDefault();
+              if (selection.isSelectable(record.id)) {
+                if (event.shiftKey) selection.addRecords?.([record.id]);
+                else if (selection.replace) selection.replace([record.id]);
+                else selection.onRecordSelect?.(record.id);
+              }
+              if (!event.shiftKey) onExpansionChange?.(record.id);
+            }}
           >
             <RecordImage image={record.image} size={48} />
             <YStack flex={1} gap="$1">
@@ -200,20 +229,10 @@ export function RecordList<Record>({
               ))}
             </YStack>
             {record.status && <SizableText aria-label={record.status.label}>{record.status.label}</SizableText>}
-            <SelectionButton record={record} selection={selection} />
-            {onExpansionChange && (
-              <button
-                type="button"
-                aria-label={`Expand ${String(record.title ?? record.id)}`}
-                onClick={() => onExpansionChange(record.id)}
-              >
-                View
-              </button>
-            )}
-          </XStack>
+          </ListItem>
         );
       })}
-    </YStack>
+    </ul>
   );
 }
 

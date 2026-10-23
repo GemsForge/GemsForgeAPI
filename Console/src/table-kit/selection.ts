@@ -22,6 +22,7 @@ export interface UseTableSelectionOptions<RowId extends string = string> {
 export interface TableSelection<RowId extends string = string> {
   selectedIds: ReadonlySet<RowId>;
   isSelected: (id: RowId) => boolean;
+  replace: (ids: readonly RowId[]) => void;
   toggle: (id: RowId) => void;
   add: (ids: readonly RowId[]) => void;
   selectAll: (ids: readonly RowId[]) => void;
@@ -60,6 +61,8 @@ export function useTableSelection<RowId extends string = string>({
     },
     [selectedIds, update],
   );
+  /** Replace a prior single-record choice atomically so a new click cannot retain it. */
+  const replace = useCallback((ids: readonly RowId[]) => update(new Set(ids)), [update]);
   const add = useCallback(
     (ids: readonly RowId[]) => {
       const next = new Set(selectedIds);
@@ -103,6 +106,7 @@ export function useTableSelection<RowId extends string = string>({
     () => ({
       selectedIds,
       isSelected: (id: RowId) => selectedIds.has(id),
+      replace,
       toggle,
       add,
       selectAll,
@@ -110,7 +114,7 @@ export function useTableSelection<RowId extends string = string>({
       clear,
       getSummary,
     }),
-    [add, clear, getSummary, selectAll, selectedIds, toggle, toggleAll],
+    [add, clear, getSummary, replace, selectAll, selectedIds, toggle, toggleAll],
   );
 }
 
@@ -123,6 +127,7 @@ export interface TableSelectionContext<RowId extends string = string> {
   allMatchingIds: readonly RowId[];
   isSelected: (id: RowId) => boolean;
   toggle: (id: RowId) => void;
+  replace: (ids: readonly RowId[]) => void;
   add: (ids: readonly RowId[]) => void;
   selectAll: (scope: TableSelectionScope) => void;
   toggleAll: (scope: TableSelectionScope) => void;
