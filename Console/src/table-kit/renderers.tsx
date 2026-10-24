@@ -405,6 +405,7 @@ export function RecordGallery<Record>({
                   <div className="table-kit-gallery-properties" aria-label="Visible properties">
                     {visibleProperties
                       .filter((property) => !property.primary && property.kind !== "image" && property.id !== "logo")
+                      .slice(0, 6)
                       .map((property) => {
                         const value = propertyValue(property, record);
                         const text = String(value.display || "unconfigured");
