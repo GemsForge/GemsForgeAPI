@@ -178,7 +178,7 @@ function RecordImage<Record>({
   );
 }
 
-type GalleryCardOptions = { fillCard: boolean; dragToReposition: boolean };
+type GalleryCardOptions = { dragToReposition: boolean };
 
 /** Render the shared list icon slot as media when available, with a stable symbol fallback. */
 function RecordAvatar<Record>({ record }: { record: TableRecord<Record> }) {
@@ -303,6 +303,7 @@ export function RecordGallery<Record>({
   const effectiveRecords = useRendererRecords(records);
   const selection = useRendererSelection(selectedIds, onRecordSelect);
   const [cardSize, setCardSize] = useState<GalleryCardSize>("medium");
+  const [fillMedia, setFillMedia] = useState(true);
   const [openMenuId, setOpenMenuId] = useState<TableRecordId | null>(null);
   const [cardOptions, setCardOptions] = useState<{ [id: string]: GalleryCardOptions }>({});
   const [imagePositions, setImagePositions] = useState<{ [id: string]: { x: number; y: number } }>({});
@@ -420,7 +421,7 @@ export function RecordGallery<Record>({
     checked: boolean,
   ) => {
     setCardOptions((current) => {
-      const options = current[id] ?? { fillCard: true, dragToReposition: false };
+      const options = current[id] ?? { dragToReposition: false };
       return {
         ...current,
         [id]: {
@@ -435,7 +436,9 @@ export function RecordGallery<Record>({
     <div className={`table-kit-gallery is-${cardSize}`}>
       <GalleryViewControls
         cardSize={cardSize}
+        fillMedia={fillMedia}
         onCardSizeChange={setCardSize}
+        onFillMediaChange={setFillMedia}
       />
       <XStack flexWrap="wrap" gap="$3" role="list" aria-label="Gallery records">
         {effectiveRecords.map((record) => {
@@ -443,7 +446,7 @@ export function RecordGallery<Record>({
           const expanded = expandedId === record.id;
           const title = String(record.title ?? record.id);
           const image = getImage(record);
-          const options = cardOptions[record.id] ?? { fillCard: true, dragToReposition: false };
+          const options = cardOptions[record.id] ?? { dragToReposition: false };
           return (
             <div
               key={record.id}
@@ -478,14 +481,14 @@ export function RecordGallery<Record>({
                     role="menu"
                     onPointerDown={(event) => event.stopPropagation()}
                   >
-                    {(["fillCard", "dragToReposition"] as const).map((option) => (
+                    {(["dragToReposition"] as const).map((option) => (
                       <label key={option}>
                         <input
                           type="checkbox"
                           checked={options[option]}
                           onChange={(event) => updateCardOption(record.id, option, event.target.checked)}
                         />
-                        {option === "fillCard" ? "Fill media" : "Drag to reposition"}
+                        Drag to reposition
                       </label>
                     ))}
                   </div>
@@ -519,7 +522,7 @@ export function RecordGallery<Record>({
                   <RecordImage
                     image={image}
                     size={180}
-                    fitMedia={!options.fillCard}
+                    fitMedia={!fillMedia}
                     objectPosition={
                       imagePositions[record.id]
                         ? `${imagePositions[record.id].x}% ${imagePositions[record.id].y}%`
