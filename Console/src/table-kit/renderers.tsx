@@ -17,6 +17,7 @@ import {
 } from "ag-grid-community";
 import { Avatar, Checkbox, ListItem, Paragraph, SizableText, XStack, YGroup, YStack } from "tamagui";
 import { TableContext } from "./context";
+import { GalleryViewControls, type GalleryCardSize } from "./GalleryViewControls";
 import {
   orderRecordProperties,
   type RecordPropertyDefinition,
@@ -150,7 +151,7 @@ function displayValue(value: RecordPropertyValue): ReactNode {
   return value.display || "unconfigured";
 }
 
-function RecordImage<Record>({ image, size }: { image?: TableRecord<Record>["image"]; size: number }) {
+function RecordImage<Record>({ image, size, fitMedia }: { image?: TableRecord<Record>["image"]; size: number; fitMedia?: boolean }) {
   if (!image?.src?.trim()) return null;
   return (
     <img
@@ -158,7 +159,7 @@ function RecordImage<Record>({ image, size }: { image?: TableRecord<Record>["ima
       alt={image.alt}
       width={size}
       height={size}
-      style={{ objectFit: image.fit ?? "cover", display: "block" }}
+      style={{ objectFit: fitMedia ? "contain" : (image.fit ?? "cover"), display: "block" }}
     />
   );
 }
@@ -285,7 +286,8 @@ export function RecordGallery<Record>({
 }: TableRendererProps<Record>) {
   const effectiveRecords = useRendererRecords(records);
   const selection = useRendererSelection(selectedIds, onRecordSelect);
-  const [cardSize, setCardSize] = useState<"small" | "medium" | "large">("medium");
+  const [cardSize, setCardSize] = useState<GalleryCardSize>("medium");
+  const [fitMedia, setFitMedia] = useState(false);
   const visibleProperties = propertiesFor(properties, propertyIds);
   const dragStartRef = useRef<{ index: number; x: number; y: number } | null>(null);
   const dragSelectedIdsRef = useRef<Set<TableRecordId>>(new Set());
@@ -349,14 +351,12 @@ export function RecordGallery<Record>({
 
   return (
     <div className={`table-kit-gallery is-${cardSize}`}>
-      <label className="table-kit-gallery-size">
-        Card size
-        <select value={cardSize} onChange={(event) => setCardSize(event.target.value as typeof cardSize)}>
-          <option value="small">Small</option>
-          <option value="medium">Medium</option>
-          <option value="large">Large</option>
-        </select>
-      </label>
+      <GalleryViewControls
+        cardSize={cardSize}
+        fitMedia={fitMedia}
+        onCardSizeChange={setCardSize}
+        onFitMediaChange={setFitMedia}
+      />
       <XStack flexWrap="wrap" gap="$3" role="list" aria-label="Gallery records">
         {effectiveRecords.map((record) => {
           const selected = selection.selectedIds.has(record.id);
@@ -390,7 +390,7 @@ export function RecordGallery<Record>({
                 onPointerCancel={handlePointerEnd}
               >
                 <div className="table-kit-gallery-image" aria-label={`${title} image preview`}>
-                  <RecordImage image={image} size={180} />
+                  <RecordImage image={image} size={180} fitMedia={fitMedia} />
                 </div>
                 <div className="table-kit-gallery-copy">
                   <div className="table-kit-gallery-title" title={title}>
