@@ -2853,7 +2853,8 @@ dialog {
 .table-kit-gallery-image {
   display: grid;
   place-items: center;
-  min-height: 8rem;
+  width: 100%;
+  height: 8rem;
   overflow: hidden;
   background: var(--canvas);
 }
@@ -2920,7 +2921,7 @@ dialog {
   grid-template-columns: repeat(5, minmax(0, 1fr));
 }
 .table-kit-gallery.is-small .table-kit-gallery-image {
-  min-height: 6rem;
+  height: 6rem;
 }
 .table-kit-gallery.is-small .table-kit-gallery-properties {
   max-height: calc(4 * 1.25rem + 0.9rem);
@@ -2931,7 +2932,7 @@ dialog {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 .table-kit-gallery.is-large .table-kit-gallery-image {
-  min-height: 12rem;
+  height: 12rem;
 }
 .table-kit-gallery.is-large .table-kit-gallery-properties {
   max-height: 8rem;
