@@ -312,9 +312,12 @@ export function RecordGallery<Record>({
   const dragSelectedIdsRef = useRef<Set<TableRecordId>>(new Set());
   const suppressClickRef = useRef(false);
   const detailClickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const menuCardWasSelectedRef = useRef(false);
 
   useEffect(() => {
-    if (openMenuId !== null && !selection.selectedIds.has(openMenuId)) setOpenMenuId(null);
+    if (openMenuId !== null && menuCardWasSelectedRef.current && !selection.selectedIds.has(openMenuId)) {
+      setOpenMenuId(null);
+    }
   }, [openMenuId, selection.selectedIds]);
 
   /** Use the adapter image first, then allow an image property to supply the cover. */
@@ -457,7 +460,14 @@ export function RecordGallery<Record>({
                   onPointerDown={(event) => event.stopPropagation()}
                   onClick={(event) => {
                     event.stopPropagation();
-                    setOpenMenuId((current) => (current === record.id ? null : record.id));
+                    setOpenMenuId((current) => {
+                      if (current === record.id) {
+                        menuCardWasSelectedRef.current = false;
+                        return null;
+                      }
+                      menuCardWasSelectedRef.current = selection.selectedIds.has(record.id);
+                      return record.id;
+                    });
                   }}
                 >
                   ⋮
