@@ -169,6 +169,20 @@ describe("Table Kit record renderers", () => {
     expect(screen.getByLabelText("Alpha image preview")).toBeInTheDocument();
   });
 
+  it("limits gallery cards to six visible property values", () => {
+    const galleryProperties = Array.from({ length: 8 }, (_, index) => ({
+      id: `property-${index}`,
+      label: `Property ${index}`,
+      getValue: () => ({ display: `value-${index}` }),
+    }));
+    renderWithTheme(<RecordGallery records={records} properties={galleryProperties} />);
+
+    expect(screen.getByText("value-0")).toBeInTheDocument();
+    expect(screen.getByText("value-5")).toBeInTheDocument();
+    expect(screen.queryByText("value-6")).not.toBeInTheDocument();
+    expect(screen.queryByText("value-7")).not.toBeInTheDocument();
+  });
+
   it("supports a labeled card size control and keyboard card activation", () => {
     const onExpand = vi.fn();
     renderWithTheme(

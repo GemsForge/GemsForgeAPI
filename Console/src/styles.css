@@ -2904,7 +2904,7 @@ dialog {
 .table-kit-gallery-properties {
   display: grid;
   gap: 0.3rem;
-  max-height: calc(4 * 1.25rem + 0.9rem);
+  max-height: calc(6 * 1.25rem + 1.5rem);
   overflow-y: auto;
   overscroll-behavior: contain;
 }
@@ -2924,7 +2924,7 @@ dialog {
   height: 6rem;
 }
 .table-kit-gallery.is-small .table-kit-gallery-properties {
-  max-height: calc(4 * 1.25rem + 0.9rem);
+  max-height: calc(6 * 1.25rem + 1.5rem);
 }
 .table-kit-gallery.is-large .table-kit-gallery-card {
 }
@@ -2935,7 +2935,7 @@ dialog {
   height: 12rem;
 }
 .table-kit-gallery.is-large .table-kit-gallery-properties {
-  max-height: 8rem;
+  max-height: calc(6 * 1.25rem + 1.5rem);
 }
 @media (max-width: 640px) {
   .table-kit-gallery-size {
