@@ -1,5 +1,5 @@
 import { useId, type ChangeEvent, type ReactNode } from "react";
-import { Form, Tooltip } from "tamagui";
+import { Dialog, Form, Tooltip } from "tamagui";
 import { GCheckboxField, GDate, GemButton, GemTextField, GSelectField } from "./ui";
 import type { GemTextFieldWidth } from "./ui/GemTextField";
 import { useRecordEditor } from "../hooks/useRecordEditor";
@@ -74,13 +74,16 @@ function EditableField({ field }: { field: EditableRecordField }) {
     editor.setDraft(event.currentTarget.value);
 
   return (
-    <div className={field.className}>
+    <Dialog open={editor.editing} onOpenChange={(open) => !open && editor.cancel()} modal>
+      <div className={field.className}>
       {!editor.editing && (
         <dt className="editable-record-label" id={labelID}>
           {field.onSave ? (
-            <button type="button" className="editable-record-label-button" onClick={editor.begin}>
-              {field.label}
-            </button>
+            <Dialog.Trigger asChild>
+              <button type="button" className="editable-record-label-button" onClick={editor.begin}>
+                {field.label}
+              </button>
+            </Dialog.Trigger>
           ) : (
             field.label
           )}
@@ -104,7 +107,31 @@ function EditableField({ field }: { field: EditableRecordField }) {
             {field.readOnlyReason && <small className="field-readonly-reason">{field.readOnlyReason}</small>}
           </>
         ) : (
-          <Form className="edit-form editable-field-form" onSubmit={() => void editor.save()}>
+          <Dialog.Portal>
+            <Dialog.Overlay className="table-kit-utility-backdrop" />
+            <Dialog.Content className="table-kit-new-record-utility editable-record-dialog">
+              <div className="table-kit-new-record-heading">
+                <div>
+                  <Dialog.Title>Edit {field.label}</Dialog.Title>
+                  <div className="table-kit-new-record-description">
+                    <Dialog.Description>Make changes to this field, then save when you’re done.</Dialog.Description>
+                  </div>
+                </div>
+                <Dialog.Close asChild>
+                  <GemButton
+                    tone="secondary"
+                    type="button"
+                    variant="quiet"
+                    size="sm"
+                    aria-label={`Close edit ${field.label.toLowerCase()}`}
+                    disabled={editor.saving}
+                    onClick={editor.cancel}
+                  >
+                    ×
+                  </GemButton>
+                </Dialog.Close>
+              </div>
+              <Form className="edit-form editable-field-form" onSubmit={() => void editor.save()}>
             <div className="editable-field-control-row">
               {field.inputType === "date" ? (
                 <GDate
@@ -160,7 +187,7 @@ function EditableField({ field }: { field: EditableRecordField }) {
                     <GemButton
                       type="submit"
                       variant="quiet"
-                      size="$2"
+                      size="sm"
                       aria-label={`Save ${field.label.toLowerCase()}`}
                       disabled={editor.saving || !editor.dirty}
                     >
@@ -178,7 +205,7 @@ function EditableField({ field }: { field: EditableRecordField }) {
                       tone="secondary"
                       type="button"
                       variant="quiet"
-                      size="$2"
+                      size="sm"
                       aria-label={`Cancel editing ${field.label.toLowerCase()}`}
                       disabled={editor.saving}
                       onClick={editor.cancel}
@@ -193,10 +220,13 @@ function EditableField({ field }: { field: EditableRecordField }) {
                 </Tooltip>
               </div>
             </div>
-          </Form>
+              </Form>
+            </Dialog.Content>
+          </Dialog.Portal>
         )}
       </dd>
-    </div>
+      </div>
+    </Dialog>
   );
 }
 
