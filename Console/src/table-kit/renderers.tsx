@@ -178,7 +178,7 @@ function RecordImage<Record>({
   );
 }
 
-type GalleryCardOptions = { fitMedia: boolean; fillCard: boolean; dragToReposition: boolean };
+type GalleryCardOptions = { fillCard: boolean; dragToReposition: boolean };
 
 /** Render the shared list icon slot as media when available, with a stable symbol fallback. */
 function RecordAvatar<Record>({ record }: { record: TableRecord<Record> }) {
@@ -313,6 +313,10 @@ export function RecordGallery<Record>({
   const suppressClickRef = useRef(false);
   const detailClickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  useEffect(() => {
+    if (openMenuId !== null && !selection.selectedIds.has(openMenuId)) setOpenMenuId(null);
+  }, [openMenuId, selection.selectedIds]);
+
   /** Use the adapter image first, then allow an image property to supply the cover. */
   const getImage = (record: TableRecord<Record>) =>
     (record.image?.src?.trim() ? record.image : undefined) ??
@@ -413,14 +417,12 @@ export function RecordGallery<Record>({
     checked: boolean,
   ) => {
     setCardOptions((current) => {
-      const options = current[id] ?? { fitMedia: false, fillCard: false, dragToReposition: false };
+      const options = current[id] ?? { fillCard: true, dragToReposition: false };
       return {
         ...current,
         [id]: {
           ...options,
           [option]: checked,
-          ...(option === "fitMedia" && checked ? { fillCard: false } : {}),
-          ...(option === "fillCard" && checked ? { fitMedia: false } : {}),
         },
       };
     });
@@ -438,7 +440,7 @@ export function RecordGallery<Record>({
           const expanded = expandedId === record.id;
           const title = String(record.title ?? record.id);
           const image = getImage(record);
-          const options = cardOptions[record.id] ?? { fitMedia: false, fillCard: false, dragToReposition: false };
+          const options = cardOptions[record.id] ?? { fillCard: true, dragToReposition: false };
           return (
             <div
               key={record.id}
@@ -466,14 +468,14 @@ export function RecordGallery<Record>({
                     role="menu"
                     onPointerDown={(event) => event.stopPropagation()}
                   >
-                    {(["fitMedia", "fillCard", "dragToReposition"] as const).map((option) => (
+                    {(["fillCard", "dragToReposition"] as const).map((option) => (
                       <label key={option}>
                         <input
                           type="checkbox"
                           checked={options[option]}
                           onChange={(event) => updateCardOption(record.id, option, event.target.checked)}
                         />
-                        {option === "fitMedia" ? "Fit media" : option === "fillCard" ? "Fill card" : "Drag to reposition"}
+                        {option === "fillCard" ? "Fill media" : "Drag to reposition"}
                       </label>
                     ))}
                   </div>
@@ -507,7 +509,7 @@ export function RecordGallery<Record>({
                   <RecordImage
                     image={image}
                     size={180}
-                    fitMedia={options.fillCard ? false : options.fitMedia}
+                    fitMedia={!options.fillCard}
                     objectPosition={
                       imagePositions[record.id]
                         ? `${imagePositions[record.id].x}% ${imagePositions[record.id].y}%`
