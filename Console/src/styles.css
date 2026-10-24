@@ -1579,6 +1579,12 @@ dialog::backdrop {
   padding: 0;
   list-style: none;
 }
+.table-kit-property-limit {
+  margin: -0.35rem 0 0.75rem;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
 
 /* Tamagui's full-screen portal centers its content and owns modal positioning. */
 .table-kit-utility-backdrop {

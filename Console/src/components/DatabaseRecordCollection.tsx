@@ -149,7 +149,22 @@ function DatabaseRecordTableShell<Record>({
       })),
     [properties],
   );
-  const configuration = useTablePropertyConfiguration({ properties: propertyOptions, viewId });
+  const galleryPropertyIds = useMemo(
+    () =>
+      properties
+        .filter((property) => !property.primary && property.kind !== "image" && property.id !== "logo")
+        .map((property) => property.id),
+    [properties],
+  );
+  const galleryDefaultConfiguration = useMemo(
+    () => ({ hiddenIds: galleryPropertyIds.slice(5) }),
+    [galleryPropertyIds],
+  );
+  const configuration = useTablePropertyConfiguration({
+    properties: propertyOptions,
+    viewId,
+    defaultConfiguration: viewId === "gallery" ? galleryDefaultConfiguration : undefined,
+  });
   const galleryConfiguration = useMemo(() => {
     if (viewId !== "gallery") return configuration;
     const galleryVisibleIds = configuration.visibleIds
@@ -158,7 +173,14 @@ function DatabaseRecordTableShell<Record>({
         return property && !property.primary && property.kind !== "image" && property.id !== "logo";
       })
       .slice(0, 6);
-    return { ...configuration, visibleIds: galleryVisibleIds };
+    return {
+      ...configuration,
+      visibleIds: galleryVisibleIds,
+      setVisibility: (propertyId: string, visible: boolean) => {
+        if (visible && galleryVisibleIds.length >= 6) return;
+        configuration.setVisibility(propertyId, visible);
+      },
+    };
   }, [configuration, properties, viewId]);
   const shell = useGemLifeShell();
   const utilityConfig = actions?.newRecordUtility;
@@ -191,6 +213,7 @@ function DatabaseRecordTableShell<Record>({
             <Table.PropertyControls
               properties={propertyOptions}
               configuration={galleryConfiguration}
+              maxVisibleProperties={viewId === "gallery" ? 6 : undefined}
             />
             <RecordUtilities
               label={label}
