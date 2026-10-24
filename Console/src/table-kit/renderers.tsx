@@ -151,7 +151,17 @@ function displayValue(value: RecordPropertyValue): ReactNode {
   return value.display || "unconfigured";
 }
 
-function RecordImage<Record>({ image, size, fitMedia }: { image?: TableRecord<Record>["image"]; size: number; fitMedia?: boolean }) {
+function RecordImage<Record>({
+  image,
+  size,
+  fitMedia,
+  objectPosition,
+}: {
+  image?: TableRecord<Record>["image"];
+  size: number;
+  fitMedia?: boolean;
+  objectPosition?: string;
+}) {
   if (!image?.src?.trim()) return null;
   return (
     <img
@@ -159,7 +169,11 @@ function RecordImage<Record>({ image, size, fitMedia }: { image?: TableRecord<Re
       alt={image.alt}
       width={size}
       height={size}
-      style={{ objectFit: fitMedia ? "contain" : (image.fit ?? "cover"), display: "block" }}
+      style={{
+        objectFit: fitMedia ? "contain" : (image.fit ?? "cover"),
+        objectPosition,
+        display: "block",
+      }}
     />
   );
 }
@@ -288,6 +302,10 @@ export function RecordGallery<Record>({
   const selection = useRendererSelection(selectedIds, onRecordSelect);
   const [cardSize, setCardSize] = useState<GalleryCardSize>("medium");
   const [fitMedia, setFitMedia] = useState(false);
+  const [dragToReposition, setDragToReposition] = useState(false);
+  const [fillCard, setFillCard] = useState(false);
+  const [imagePositions, setImagePositions] = useState<{ [id: string]: { x: number; y: number } }>({});
+  const imageDragRef = useRef<{ id: TableRecordId; x: number; y: number; startX: number; startY: number } | null>(null);
   const visibleProperties = propertiesFor(properties, propertyIds);
   const dragStartRef = useRef<{ index: number; x: number; y: number } | null>(null);
   const dragSelectedIdsRef = useRef<Set<TableRecordId>>(new Set());
@@ -349,13 +367,43 @@ export function RecordGallery<Record>({
     dragStartRef.current = null;
   };
 
+  const handleImagePointerDown = (event: ReactPointerEvent<HTMLDivElement>, id: TableRecordId) => {
+    if (!dragToReposition || event.button !== 0) return;
+    event.stopPropagation();
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+    const position = imagePositions[id] ?? { x: 50, y: 50 };
+    imageDragRef.current = { id, x: position.x, y: position.y, startX: event.clientX, startY: event.clientY };
+  };
+
+  const handleImagePointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const drag = imageDragRef.current;
+    if (!drag) return;
+    event.stopPropagation();
+    setImagePositions((current) => ({
+      ...current,
+      [drag.id]: {
+        x: Math.max(0, Math.min(100, drag.x - (event.clientX - drag.startX) / 3)),
+        y: Math.max(0, Math.min(100, drag.y - (event.clientY - drag.startY) / 3)),
+      },
+    }));
+  };
+
+  const handleImagePointerUp = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (imageDragRef.current) event.stopPropagation();
+    imageDragRef.current = null;
+  };
+
   return (
     <div className={`table-kit-gallery is-${cardSize}`}>
       <GalleryViewControls
         cardSize={cardSize}
         fitMedia={fitMedia}
+        dragToReposition={dragToReposition}
+        fillCard={fillCard}
         onCardSizeChange={setCardSize}
         onFitMediaChange={setFitMedia}
+        onDragToRepositionChange={setDragToReposition}
+        onFillCardChange={setFillCard}
       />
       <XStack flexWrap="wrap" gap="$3" role="list" aria-label="Gallery records">
         {effectiveRecords.map((record) => {
@@ -389,8 +437,24 @@ export function RecordGallery<Record>({
                 onPointerUp={handlePointerEnd}
                 onPointerCancel={handlePointerEnd}
               >
-                <div className="table-kit-gallery-image" aria-label={`${title} image preview`}>
-                  <RecordImage image={image} size={180} fitMedia={fitMedia} />
+                <div
+                  className={`table-kit-gallery-image${dragToReposition ? " is-draggable" : ""}`}
+                  aria-label={`${title} image preview`}
+                  onPointerDown={(event) => handleImagePointerDown(event, record.id)}
+                  onPointerMove={handleImagePointerMove}
+                  onPointerUp={handleImagePointerUp}
+                  onPointerCancel={handleImagePointerUp}
+                >
+                  <RecordImage
+                    image={image}
+                    size={180}
+                    fitMedia={fillCard ? false : fitMedia}
+                    objectPosition={
+                      imagePositions[record.id]
+                        ? `${imagePositions[record.id].x}% ${imagePositions[record.id].y}%`
+                        : undefined
+                    }
+                  />
                 </div>
                 <div className="table-kit-gallery-copy">
                   <div className="table-kit-gallery-title" title={title}>
