@@ -4,25 +4,13 @@ export type GalleryCardSize = "small" | "medium" | "large";
 
 export interface GalleryViewControlsProps {
   cardSize: GalleryCardSize;
-  fitMedia: boolean;
-  dragToReposition: boolean;
-  fillCard: boolean;
   onCardSizeChange: (size: GalleryCardSize) => void;
-  onFitMediaChange: (fit: boolean) => void;
-  onDragToRepositionChange: (enabled: boolean) => void;
-  onFillCardChange: (enabled: boolean) => void;
 }
 
 /** Shared gallery presentation controls kept separate from record rendering. */
 export function GalleryViewControls({
   cardSize,
-  fitMedia,
-  dragToReposition,
-  fillCard,
   onCardSizeChange,
-  onFitMediaChange,
-  onDragToRepositionChange,
-  onFillCardChange,
 }: GalleryViewControlsProps) {
   const handleSizeChange = (event: ChangeEvent<HTMLSelectElement>) => {
     onCardSizeChange(event.target.value as GalleryCardSize);
@@ -37,22 +25,6 @@ export function GalleryViewControls({
           <option value="medium">Medium</option>
           <option value="large">Large</option>
         </select>
-      </label>
-      <label className="table-kit-gallery-fit-media">
-        <input type="checkbox" checked={fitMedia} onChange={(event) => onFitMediaChange(event.target.checked)} />
-        Fit media
-      </label>
-      <label className="table-kit-gallery-fit-media">
-        <input
-          type="checkbox"
-          checked={dragToReposition}
-          onChange={(event) => onDragToRepositionChange(event.target.checked)}
-        />
-        Drag to reposition
-      </label>
-      <label className="table-kit-gallery-fit-media">
-        <input type="checkbox" checked={fillCard} onChange={(event) => onFillCardChange(event.target.checked)} />
-        Fill card
       </label>
     </div>
   );

@@ -178,6 +178,8 @@ function RecordImage<Record>({
   );
 }
 
+type GalleryCardOptions = { fitMedia: boolean; fillCard: boolean; dragToReposition: boolean };
+
 /** Render the shared list icon slot as media when available, with a stable symbol fallback. */
 function RecordAvatar<Record>({ record }: { record: TableRecord<Record> }) {
   const image = record.image?.src?.trim() ? record.image : undefined;
@@ -301,15 +303,15 @@ export function RecordGallery<Record>({
   const effectiveRecords = useRendererRecords(records);
   const selection = useRendererSelection(selectedIds, onRecordSelect);
   const [cardSize, setCardSize] = useState<GalleryCardSize>("medium");
-  const [fitMedia, setFitMedia] = useState(false);
-  const [dragToReposition, setDragToReposition] = useState(false);
-  const [fillCard, setFillCard] = useState(false);
+  const [openMenuId, setOpenMenuId] = useState<TableRecordId | null>(null);
+  const [cardOptions, setCardOptions] = useState<{ [id: string]: GalleryCardOptions }>({});
   const [imagePositions, setImagePositions] = useState<{ [id: string]: { x: number; y: number } }>({});
   const imageDragRef = useRef<{ id: TableRecordId; x: number; y: number; startX: number; startY: number } | null>(null);
   const visibleProperties = propertiesFor(properties, propertyIds);
   const dragStartRef = useRef<{ index: number; x: number; y: number } | null>(null);
   const dragSelectedIdsRef = useRef<Set<TableRecordId>>(new Set());
   const suppressClickRef = useRef(false);
+  const detailClickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   /** Use the adapter image first, then allow an image property to supply the cover. */
   const getImage = (record: TableRecord<Record>) =>
@@ -328,11 +330,6 @@ export function RecordGallery<Record>({
     event.currentTarget.setPointerCapture?.(event.pointerId);
     dragStartRef.current = { index, x: event.clientX, y: event.clientY };
     dragSelectedIdsRef.current = new Set(selection.selectedIds);
-    const record = effectiveRecords[index];
-    if (record && !dragSelectedIdsRef.current.has(record.id)) {
-      selection.onRecordSelect(record.id);
-      dragSelectedIdsRef.current.add(record.id);
-    }
     suppressClickRef.current = false;
   };
 
@@ -341,6 +338,11 @@ export function RecordGallery<Record>({
     if (!start || !selection.onRecordSelect) return;
     if (Math.hypot(event.clientX - start.x, event.clientY - start.y) < 8) return;
     suppressClickRef.current = true;
+    const startRecord = effectiveRecords[start.index];
+    if (startRecord && !dragSelectedIdsRef.current.has(startRecord.id)) {
+      selection.onRecordSelect(startRecord.id);
+      dragSelectedIdsRef.current.add(startRecord.id);
+    }
     const target = document
       .elementFromPoint(event.clientX, event.clientY)
       ?.closest<HTMLElement>("[data-gallery-record-id]");
@@ -368,7 +370,7 @@ export function RecordGallery<Record>({
   };
 
   const handleImagePointerDown = (event: ReactPointerEvent<HTMLDivElement>, id: TableRecordId) => {
-    if (!dragToReposition || event.button !== 0) return;
+    if (!cardOptions[id]?.dragToReposition || event.button !== 0) return;
     event.stopPropagation();
     event.currentTarget.setPointerCapture?.(event.pointerId);
     const position = imagePositions[id] ?? { x: 50, y: 50 };
@@ -393,17 +395,42 @@ export function RecordGallery<Record>({
     imageDragRef.current = null;
   };
 
+  const handleCardClick = (record: TableRecord<Record>, expanded: boolean) => {
+    if (suppressClickRef.current) {
+      suppressClickRef.current = false;
+      return;
+    }
+    if (detailClickTimerRef.current) clearTimeout(detailClickTimerRef.current);
+    detailClickTimerRef.current = setTimeout(() => {
+      onExpansionChange?.(expanded ? undefined : record.id);
+      detailClickTimerRef.current = null;
+    }, 250);
+  };
+
+  const updateCardOption = (
+    id: TableRecordId,
+    option: keyof GalleryCardOptions,
+    checked: boolean,
+  ) => {
+    setCardOptions((current) => {
+      const options = current[id] ?? { fitMedia: false, fillCard: false, dragToReposition: false };
+      return {
+        ...current,
+        [id]: {
+          ...options,
+          [option]: checked,
+          ...(option === "fitMedia" && checked ? { fillCard: false } : {}),
+          ...(option === "fillCard" && checked ? { fitMedia: false } : {}),
+        },
+      };
+    });
+  };
+
   return (
     <div className={`table-kit-gallery is-${cardSize}`}>
       <GalleryViewControls
         cardSize={cardSize}
-        fitMedia={fitMedia}
-        dragToReposition={dragToReposition}
-        fillCard={fillCard}
         onCardSizeChange={setCardSize}
-        onFitMediaChange={setFitMedia}
-        onDragToRepositionChange={setDragToReposition}
-        onFillCardChange={setFillCard}
       />
       <XStack flexWrap="wrap" gap="$3" role="list" aria-label="Gallery records">
         {effectiveRecords.map((record) => {
@@ -411,6 +438,7 @@ export function RecordGallery<Record>({
           const expanded = expandedId === record.id;
           const title = String(record.title ?? record.id);
           const image = getImage(record);
+          const options = cardOptions[record.id] ?? { fitMedia: false, fillCard: false, dragToReposition: false };
           return (
             <div
               key={record.id}
@@ -418,19 +446,50 @@ export function RecordGallery<Record>({
               role="listitem"
               data-gallery-record-id={record.id}
             >
+              <div className="table-kit-gallery-card-menu">
+                <button
+                  type="button"
+                  className="table-kit-gallery-card-menu-trigger"
+                  aria-label={`Card options for ${title}`}
+                  aria-expanded={openMenuId === record.id}
+                  onPointerDown={(event) => event.stopPropagation()}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setOpenMenuId((current) => (current === record.id ? null : record.id));
+                  }}
+                >
+                  ⋮
+                </button>
+                {openMenuId === record.id && (
+                  <div
+                    className="table-kit-gallery-card-menu-panel"
+                    role="menu"
+                    onPointerDown={(event) => event.stopPropagation()}
+                  >
+                    {(["fitMedia", "fillCard", "dragToReposition"] as const).map((option) => (
+                      <label key={option}>
+                        <input
+                          type="checkbox"
+                          checked={options[option]}
+                          onChange={(event) => updateCardOption(record.id, option, event.target.checked)}
+                        />
+                        {option === "fitMedia" ? "Fit media" : option === "fillCard" ? "Fill card" : "Drag to reposition"}
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
               <div
                 className="table-kit-gallery-card-surface"
                 role={onExpansionChange ? "button" : undefined}
                 tabIndex={onExpansionChange ? 0 : undefined}
                 aria-label={onExpansionChange ? `Open ${title}` : undefined}
-                onClick={() => {
-                  if (suppressClickRef.current) {
-                    suppressClickRef.current = false;
-                    return;
-                  }
-                  onExpansionChange?.(expanded ? undefined : record.id);
+                onClick={() => handleCardClick(record, expanded)}
+                onDoubleClick={() => {
+                  if (detailClickTimerRef.current) clearTimeout(detailClickTimerRef.current);
+                  detailClickTimerRef.current = null;
+                  selection.onRecordSelect?.(record.id);
                 }}
-                onDoubleClick={() => selection.onRecordSelect?.(record.id)}
                 onKeyDown={(event) => handleCardKeyDown(event, record)}
                 onPointerDown={(event) => handlePointerDown(event, effectiveRecords.indexOf(record))}
                 onPointerMove={handlePointerMove}
@@ -438,7 +497,7 @@ export function RecordGallery<Record>({
                 onPointerCancel={handlePointerEnd}
               >
                 <div
-                  className={`table-kit-gallery-image${dragToReposition ? " is-draggable" : ""}`}
+                  className={`table-kit-gallery-image${options.dragToReposition ? " is-draggable" : ""}`}
                   aria-label={`${title} image preview`}
                   onPointerDown={(event) => handleImagePointerDown(event, record.id)}
                   onPointerMove={handleImagePointerMove}
@@ -448,7 +507,7 @@ export function RecordGallery<Record>({
                   <RecordImage
                     image={image}
                     size={180}
-                    fitMedia={fillCard ? false : fitMedia}
+                    fitMedia={options.fillCard ? false : options.fitMedia}
                     objectPosition={
                       imagePositions[record.id]
                         ? `${imagePositions[record.id].x}% ${imagePositions[record.id].y}%`
