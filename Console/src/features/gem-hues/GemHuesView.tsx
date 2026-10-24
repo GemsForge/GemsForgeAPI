@@ -30,9 +30,6 @@ export function GemHuesView({ hues }: GemHuesViewProps) {
   const selectedHue = detail.data;
   const [imageURL, setImageURL] = useState<string | null>(null);
   const [galleryImages, setGalleryImages] = useState<Record<string, string>>({});
-  const [ownership, setOwnership] = useState<{ counts: Record<string, number>; message?: string } | null>(null);
-  const [ownershipError, setOwnershipError] = useState<string | null>(null);
-  const [ownershipBusy, setOwnershipBusy] = useState(false);
 
   // Load stored logo files for the gallery and release their object URLs when the collection changes.
   useEffect(() => {
@@ -107,73 +104,6 @@ export function GemHuesView({ hues }: GemHuesViewProps) {
           <span className="record-count">{hues.length} records</span>
         </div>
       </div>
-      {/* Keep the legacy ownership action in the same safety-panel presentation as Live Database. */}
-      <section className="database-panel">
-        <div className="database-panel-heading">
-          <div>
-            <p className="eyebrow">Migration safety</p>
-            <h3>Assign existing records to my hub</h3>
-          </div>
-          <span className="life-mark database-icon" aria-hidden="true">
-            ⇄
-          </span>
-        </div>
-        <p className="muted">
-          Use this only for legacy rows that already exist with no HubID. It does not create duplicates.
-        </p>
-        <button
-          className="primary-button"
-          type="button"
-          disabled={ownershipBusy}
-          onClick={async () => {
-            setOwnershipBusy(true);
-            setOwnershipError(null);
-            try {
-              const preview = await api.previewHubOwnership();
-              setOwnership({ counts: preview.unownedCounts });
-            } catch (error) {
-              setOwnershipError(error instanceof Error ? error.message : "Could not preview ownership assignment.");
-            } finally {
-              setOwnershipBusy(false);
-            }
-          }}
-        >
-          {ownershipBusy ? "Loading…" : "Preview ownership assignment"}
-        </button>
-        {ownershipError && <p role="alert">{ownershipError}</p>}
-        {ownership && (
-          <>
-            <p>
-              {Object.entries(ownership.counts)
-                .filter(([, count]) => count > 0)
-                .map(([table, count]) => `${table}: ${count}`)
-                .join(" · ") || "No unowned records found."}
-            </p>
-            <button
-              type="button"
-              disabled={ownershipBusy || !Object.values(ownership.counts).some((count) => count > 0)}
-              onClick={async () => {
-                setOwnershipBusy(true);
-                setOwnershipError(null);
-                try {
-                  const result = await api.assignHubOwnership(ownership.counts);
-                  setOwnership({
-                    counts: {},
-                    message: `Assigned ${Object.values(result.assignedCounts).reduce((sum, count) => sum + count, 0)} records.`,
-                  });
-                } catch (error) {
-                  setOwnershipError(error instanceof Error ? error.message : "Could not assign ownership.");
-                } finally {
-                  setOwnershipBusy(false);
-                }
-              }}
-            >
-              Assign existing records
-            </button>
-            {ownership.message && <p role="status">{ownership.message}</p>}
-          </>
-        )}
-      </section>
       <DatabaseRecordCollection
         label="Gem Hues"
         records={hues}
