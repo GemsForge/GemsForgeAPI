@@ -15,7 +15,7 @@ import {
   type ColDef,
   type ICellRendererParams,
 } from "ag-grid-community";
-import { Avatar, ListItem, Paragraph, SizableText, XStack, YGroup, YStack } from "tamagui";
+import { Avatar, H3, ListItem, Paragraph, SizableText, Text, XStack, YGroup, YStack } from "tamagui";
 import { GCheckboxField, GemButton } from "../components/ui";
 import { TableContext } from "./context";
 import { GalleryViewControls, type GalleryCardSize } from "./GalleryViewControls";
@@ -471,7 +471,9 @@ export function RecordGallery<Record>({
                     });
                   }}
                 >
-                  ⋮
+                  <Text color="$gemInk" fontSize="$6" lineHeight={1} aria-hidden>
+                    ⋮
+                  </Text>
                 </GemButton>
                 {openMenuId === record.id && (
                   <div
@@ -525,9 +527,9 @@ export function RecordGallery<Record>({
                   />
                 </div>
                 <div className="table-kit-gallery-copy">
-                  <div className="table-kit-gallery-title" title={title}>
+                  <H3 className="table-kit-gallery-title" title={title}>
                     {title}
-                  </div>
+                  </H3>
                   {record.subtitle && (
                     <div className="table-kit-gallery-subtitle" title={record.subtitle}>
                       {record.subtitle}
