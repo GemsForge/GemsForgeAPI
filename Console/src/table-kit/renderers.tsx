@@ -531,9 +531,9 @@ export function RecordGallery<Record>({
                     {title}
                   </H3>
                   {record.subtitle && (
-                    <div className="table-kit-gallery-subtitle" title={record.subtitle}>
+                    <Text className="table-kit-gallery-subtitle" title={record.subtitle}>
                       {record.subtitle}
-                    </div>
+                    </Text>
                   )}
                   {record.status && <span className="table-kit-gallery-status">{record.status.label}</span>}
                   <div className="table-kit-gallery-properties" aria-label="Visible properties">
