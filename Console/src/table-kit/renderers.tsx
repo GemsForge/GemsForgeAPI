@@ -298,7 +298,7 @@ export function RecordGallery<Record>({
 }: TableRendererProps<Record>) {
   const effectiveRecords = useRendererRecords(records);
   const selection = useRendererSelection(selectedIds, onRecordSelect);
-  const [cardSize, setCardSize] = useState<GalleryCardSize>("medium");
+  const [cardSize, setCardSize] = useState<GalleryCardSize>("small");
   const [fillMedia, setFillMedia] = useState(true);
   const [openMenuId, setOpenMenuId] = useState<TableRecordId | null>(null);
   const [cardOptions, setCardOptions] = useState<{ [id: string]: GalleryCardOptions }>({});
