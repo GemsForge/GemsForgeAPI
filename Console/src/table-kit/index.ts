@@ -58,6 +58,8 @@ export { parseCsv, parseJson, previewCsv, previewJson } from "./import";
 export type { ImportColumn, ImportFieldError, ImportPreview } from "./import";
 export { RecordGallery, RecordList, RecordTable } from "./renderers";
 export type { TableRendererProps } from "./renderers";
+export { GalleryViewControls } from "./GalleryViewControls";
+export type { GalleryCardSize, GalleryViewControlsProps } from "./GalleryViewControls";
 export { useTableSelection } from "./selection";
 export type {
   TableSelection,

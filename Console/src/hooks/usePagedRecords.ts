@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 
 /** Bound DOM work while preserving the API's existing list contract. */
-export function usePagedRecords<T>(records: readonly T[], requestedSize = 50) {
-  const pageSize = Number.isFinite(requestedSize) ? Math.max(1, Math.floor(requestedSize)) : 50;
+export function usePagedRecords<T>(records: readonly T[], requestedSize = 12) {
+  const initialPageSize = Number.isFinite(requestedSize) ? Math.max(1, Math.floor(requestedSize)) : 12;
+  const [pageSize, setPageSize] = useState(initialPageSize);
   const [requestedPage, setPage] = useState(0);
   // Keep a filtered/sorted result on its first page when its size changes.
   useEffect(() => setPage(0), [records]);
@@ -15,6 +16,7 @@ export function usePagedRecords<T>(records: readonly T[], requestedSize = 50) {
     pageSize,
     pageCount,
     total: records.length,
+    setPageSize: (size: number) => setPageSize(Math.max(1, Math.floor(size))),
     previous: () => setPage(Math.max(0, page - 1)),
     next: () => setPage(Math.min(pageCount - 1, page + 1)),
   };

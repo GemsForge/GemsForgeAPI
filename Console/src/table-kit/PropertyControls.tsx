@@ -12,6 +12,8 @@ export interface TablePropertyControlsProps {
   showAllLabel?: string;
   hideAllLabel?: string;
   resetLabel?: string;
+  /** Maximum number of visible properties for a constrained renderer. */
+  maxVisibleProperties?: number;
 }
 
 /** Render searchable, reorderable xs property controls without changing record data. */
@@ -23,6 +25,7 @@ export function TablePropertyControls({
   showAllLabel = "Show all",
   hideAllLabel = "Hide all",
   resetLabel = "Reset properties",
+  maxVisibleProperties,
 }: TablePropertyControlsProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -102,6 +105,11 @@ export function TablePropertyControls({
           }}
         >
           <h2 id={dialogTitleId}>{label}</h2>
+          {maxVisibleProperties !== undefined && (
+            <p className="table-kit-property-limit" role="status">
+              You can select up to {maxVisibleProperties} properties at a time.
+            </p>
+          )}
           <GSearchField
             label={undefined}
             aria-label={searchLabel}

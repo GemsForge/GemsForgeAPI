@@ -1,6 +1,6 @@
 import { useId, type ChangeEvent, type ReactNode } from "react";
-import { Form } from "tamagui";
-import { GCheckboxField, GDate, GemTextField, GSelectField } from "./ui";
+import { Dialog, Form, Tooltip } from "tamagui";
+import { GCheckboxField, GDate, GemButton, GemTextField, GSelectField } from "./ui";
 import type { GemTextFieldWidth } from "./ui/GemTextField";
 import { useRecordEditor } from "../hooks/useRecordEditor";
 
@@ -74,102 +74,159 @@ function EditableField({ field }: { field: EditableRecordField }) {
     editor.setDraft(event.currentTarget.value);
 
   return (
-    <div className={field.className}>
-      <dt className="editable-record-label" id={labelID}>
-        {!field.onSave || !editor.editing ? field.label : null}
-        {field.onSave && !editor.editing && (
-          <button
-            type="button"
-            className="field-edit-button"
-            aria-label={`Edit ${field.label.toLowerCase()}`}
-            onClick={editor.begin}
-          >
-            <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false">
-              <path d="M13.7 3.3a2 2 0 0 1 2.8 2.8L7.2 15.4l-3.7 1 1-3.7 9.2-9.4Z" />
-              <path d="m12.3 4.7 3 3" />
-            </svg>
-          </button>
-        )}
-      </dt>
-      <dd>
-        {!field.onSave || !editor.editing ? (
-          <>
-            {field.inputType === "boolean" ? (
-              <input
-                type="checkbox"
-                className="field-checkbox field-checkbox-display"
-                checked={String(value).toLowerCase() === "true"}
-                disabled
-                aria-label={`${field.label}: ${String(value).toLowerCase() === "true" ? "checked" : "unchecked"}`}
-                readOnly
-              />
+    <Dialog open={editor.editing} onOpenChange={(open) => !open && editor.cancel()} modal>
+      <div className={field.className}>
+        {!editor.editing && (
+          <dt className="editable-record-label" id={labelID}>
+            {field.onSave ? (
+              <Dialog.Trigger asChild>
+                <button type="button" className="editable-record-label-button" onClick={editor.begin}>
+                  {field.label}
+                </button>
+              </Dialog.Trigger>
             ) : (
-              (field.displayValue ?? presentValue(value))
+              field.label
             )}
-            {field.readOnlyReason && <small className="field-readonly-reason">{field.readOnlyReason}</small>}
-          </>
-        ) : (
-          <Form className="edit-form editable-field-form" onSubmit={() => void editor.save()}>
-            {field.inputType === "date" ? (
-              <GDate
-                label={field.label}
-                value={editor.draft}
-                onChange={editor.setDraft}
-                required={field.required}
-                width={field.width ?? "long"}
-                error={editor.error ?? undefined}
-              />
-            ) : field.inputType === "select" ? (
-              <GSelectField
-                label={field.label}
-                value={editor.draft}
-                options={(field.options ?? []).concat(field.nullable ? [{ value: "", label: "—" }] : [])}
-                onChange={editor.setDraft}
-                required={field.required}
-                width={field.width ?? "long"}
-                error={editor.error ?? undefined}
-              />
-            ) : field.inputType === "boolean" ? (
-              <GCheckboxField
-                label={field.label}
-                value={editor.draft === "true"}
-                onChange={(checked) => editor.setDraft(String(checked))}
-                required={field.required}
-                width={field.width ?? "long"}
-                error={editor.error ?? undefined}
-              />
-            ) : (
-              <GemTextField
-                label={field.label}
-                value={editor.draft}
-                onChange={onTextChange}
-                onBlur={() => undefined}
-                type={field.inputType === "longText" ? undefined : (field.inputType ?? "text")}
-                step={field.step}
-                placeholder={field.placeholder}
-                multiline={field.inputType === "longText"}
-                width={field.width ?? "long"}
-                required={field.required}
-                error={editor.error ?? undefined}
-              />
-            )}
-            {field.nullable && field.inputType !== "boolean" && field.inputType !== "select" && (
-              <button type="button" className="text-button" onClick={() => editor.setDraft("")}>
-                Clear value
-              </button>
-            )}
-            <div className="button-row">
-              <button type="submit" disabled={editor.saving || !editor.dirty}>
-                {editor.saving ? "Saving…" : `Save ${field.label.toLowerCase()}`}
-              </button>
-              <button type="button" className="secondary-button" disabled={editor.saving} onClick={editor.cancel}>
-                Cancel
-              </button>
-            </div>
-          </Form>
+          </dt>
         )}
-      </dd>
-    </div>
+        <dd>
+          {!field.onSave || !editor.editing ? (
+            <>
+              {field.inputType === "boolean" ? (
+                <input
+                  type="checkbox"
+                  className="field-checkbox field-checkbox-display"
+                  checked={String(value).toLowerCase() === "true"}
+                  disabled
+                  aria-label={`${field.label}: ${String(value).toLowerCase() === "true" ? "checked" : "unchecked"}`}
+                  readOnly
+                />
+              ) : (
+                (field.displayValue ?? presentValue(value))
+              )}
+              {field.readOnlyReason && <small className="field-readonly-reason">{field.readOnlyReason}</small>}
+            </>
+          ) : (
+            <Dialog.Portal>
+              <Dialog.Overlay className="table-kit-utility-backdrop" />
+              <Dialog.Content className="table-kit-new-record-utility editable-record-dialog">
+                <div className="table-kit-new-record-heading">
+                  <div>
+                    <Dialog.Title>Edit {field.label}</Dialog.Title>
+                    <div className="table-kit-new-record-description">
+                      <Dialog.Description>Make changes to this field, then save when you’re done.</Dialog.Description>
+                    </div>
+                  </div>
+                  <Dialog.Close asChild>
+                    <GemButton
+                      tone="secondary"
+                      type="button"
+                      variant="quiet"
+                      size="sm"
+                      aria-label={`Close edit ${field.label.toLowerCase()}`}
+                      disabled={editor.saving}
+                      onClick={editor.cancel}
+                    >
+                      ×
+                    </GemButton>
+                  </Dialog.Close>
+                </div>
+                <Form className="edit-form editable-field-form" onSubmit={() => void editor.save()}>
+                  <div className="editable-field-control-row">
+                    {field.inputType === "date" ? (
+                      <GDate
+                        label={field.label}
+                        value={editor.draft}
+                        onChange={editor.setDraft}
+                        required={field.required}
+                        width={field.width ?? "medium"}
+                        error={editor.error ?? undefined}
+                      />
+                    ) : field.inputType === "select" ? (
+                      <GSelectField
+                        label={field.label}
+                        value={editor.draft}
+                        options={(field.options ?? []).concat(field.nullable ? [{ value: "", label: "—" }] : [])}
+                        onChange={editor.setDraft}
+                        required={field.required}
+                        width={field.width ?? "medium"}
+                        error={editor.error ?? undefined}
+                      />
+                    ) : field.inputType === "boolean" ? (
+                      <GCheckboxField
+                        label={field.label}
+                        value={editor.draft === "true"}
+                        onChange={(checked) => editor.setDraft(String(checked))}
+                        required={field.required}
+                        width={field.width ?? "medium"}
+                        error={editor.error ?? undefined}
+                      />
+                    ) : (
+                      <GemTextField
+                        label={field.label}
+                        value={editor.draft}
+                        onChange={onTextChange}
+                        onBlur={() => undefined}
+                        type={field.inputType === "longText" ? undefined : (field.inputType ?? "text")}
+                        step={field.step}
+                        placeholder={field.placeholder}
+                        multiline={field.inputType === "longText"}
+                        width={field.width ?? "medium"}
+                        required={field.required}
+                        error={editor.error ?? undefined}
+                      />
+                    )}
+                    {field.nullable && field.inputType !== "boolean" && field.inputType !== "select" && (
+                      <button type="button" className="text-button" onClick={() => editor.setDraft("")}>
+                        Clear value
+                      </button>
+                    )}
+                    <div className="button-row editable-field-actions">
+                      <Tooltip placement="top" delay={300}>
+                        <Tooltip.Trigger asChild>
+                          <GemButton
+                            type="submit"
+                            variant="quiet"
+                            size="sm"
+                            aria-label={`Save ${field.label.toLowerCase()}`}
+                            disabled={editor.saving || !editor.dirty}
+                          >
+                            <span aria-hidden="true">✎</span>
+                          </GemButton>
+                        </Tooltip.Trigger>
+                        <Tooltip.Content className="table-kit-tooltip">
+                          <Tooltip.Arrow />
+                          <span>{editor.saving ? "Saving…" : `Save ${field.label.toLowerCase()}`}</span>
+                        </Tooltip.Content>
+                      </Tooltip>
+                      <Tooltip placement="top" delay={300}>
+                        <Tooltip.Trigger asChild>
+                          <GemButton
+                            tone="secondary"
+                            type="button"
+                            variant="quiet"
+                            size="sm"
+                            aria-label={`Cancel editing ${field.label.toLowerCase()}`}
+                            disabled={editor.saving}
+                            onClick={editor.cancel}
+                          >
+                            <span aria-hidden="true">×</span>
+                          </GemButton>
+                        </Tooltip.Trigger>
+                        <Tooltip.Content className="table-kit-tooltip">
+                          <Tooltip.Arrow />
+                          <span>Cancel editing</span>
+                        </Tooltip.Content>
+                      </Tooltip>
+                    </div>
+                  </div>
+                </Form>
+              </Dialog.Content>
+            </Dialog.Portal>
+          )}
+        </dd>
+      </div>
+    </Dialog>
   );
 }
 
