@@ -12,6 +12,7 @@ interface Props {
 }
 export function PaginationControls({ page, pageCount, total, pageSize, previous, next, setPageSize, label }: Props) {
   if (pageCount <= 1) return null;
+  const pageSizeID = `pagination-page-size-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
   return (
     <nav className="pagination-controls" aria-label={`${label} pages`}>
       <button
@@ -25,10 +26,10 @@ export function PaginationControls({ page, pageCount, total, pageSize, previous,
       <span role="status">
         {page * pageSize + 1}–{Math.min(total, (page + 1) * pageSize)} of {total}
       </span>
-      <label>
+      <label htmlFor={pageSizeID}>
         Records per page
         <Select value={String(pageSize)} onValueChange={(value) => setPageSize(Number(value))}>
-          <Select.Trigger aria-label="Records per page" size="$3" width={82}>
+          <Select.Trigger id={pageSizeID} aria-label="Records per page" size="$3" width={82}>
             <Select.Value />
           </Select.Trigger>
           <Select.Content>

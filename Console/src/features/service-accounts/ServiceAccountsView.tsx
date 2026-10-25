@@ -357,31 +357,3 @@ function ServiceAccountDetail({
     </article>
   );
 }
-
-function LegacyLogoPreview({
-  logo,
-  className,
-}: {
-  logo?: { id: number; logoKey: string | null; imagePath: string };
-  className?: string;
-}) {
-  const [url, setUrl] = useState<string | null>(null);
-  useEffect(() => {
-    if (!logo) return;
-    let objectURL: string | undefined;
-    const controller = new AbortController();
-    void api
-      .getServiceLogoImage(logo.id, controller.signal)
-      .then((blob) => {
-        objectURL = URL.createObjectURL(blob);
-        setUrl(objectURL);
-      })
-      .catch(() => undefined);
-    return () => {
-      controller.abort();
-      if (objectURL) URL.revokeObjectURL(objectURL);
-    };
-  }, [logo]);
-  if (!logo || !url) return null;
-  return <img className={className ?? "service-logo-preview"} src={url} alt={`${logo.logoKey ?? "Service"} logo`} />;
-}
