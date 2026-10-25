@@ -149,28 +149,25 @@ function displayValue(value: RecordPropertyValue): ReactNode {
 
 function RecordImage<Record>({
   image,
-  size,
   fitMedia,
   objectPosition,
 }: {
   image?: TableRecord<Record>["image"];
-  size: number;
   fitMedia?: boolean;
   objectPosition?: string;
 }) {
   if (!image?.src?.trim()) return null;
   return (
-    <img
-      src={image.src}
-      alt={image.alt}
-      width={size}
-      height={size}
-      style={{
-        objectFit: fitMedia ? "contain" : (image.fit ?? "cover"),
-        objectPosition,
-        display: "block",
-      }}
-    />
+    <Avatar circular={false} width="100%" height="100%" borderRadius={0}>
+      <Avatar.Image
+        src={image.src}
+        alt={image.alt}
+        width="100%"
+        height="100%"
+        objectFit={fitMedia ? "contain" : (image.fit ?? "cover")}
+        objectPosition={objectPosition}
+      />
+    </Avatar>
   );
 }
 
@@ -454,7 +451,6 @@ export function RecordGallery<Record>({
                 <GemButton
                   type="button"
                   variant="quiet"
-                  size="$3"
                   className="table-kit-gallery-card-menu-trigger"
                   aria-label={`Card options for ${title}`}
                   aria-expanded={openMenuId === record.id}
@@ -490,7 +486,7 @@ export function RecordGallery<Record>({
                   </div>
                 )}
               </div>
-              <div
+              <YStack
                 className="table-kit-gallery-card-surface"
                 role={onExpansionChange ? "button" : undefined}
                 tabIndex={onExpansionChange ? 0 : undefined}
@@ -507,8 +503,12 @@ export function RecordGallery<Record>({
                 onPointerUp={handlePointerEnd}
                 onPointerCancel={handlePointerEnd}
               >
-                <div
+                <YStack
                   className={`table-kit-gallery-image${options.dragToReposition ? " is-draggable" : ""}`}
+                  aspectRatio={1}
+                  width="100%"
+                  overflow="hidden"
+                  backgroundColor="$gemCanvas"
                   aria-label={`${title} image preview`}
                   onPointerDown={(event) => handleImagePointerDown(event, record.id)}
                   onPointerMove={handleImagePointerMove}
@@ -517,7 +517,6 @@ export function RecordGallery<Record>({
                 >
                   <RecordImage
                     image={image}
-                    size={180}
                     fitMedia={!fillMedia}
                     objectPosition={
                       imagePositions[record.id]
@@ -525,18 +524,18 @@ export function RecordGallery<Record>({
                         : undefined
                     }
                   />
-                </div>
-                <div className="table-kit-gallery-copy">
-                  <H3 className="table-kit-gallery-title" title={title}>
+                </YStack>
+                <YStack className="table-kit-gallery-copy" gap="$2" padding="$3">
+                  <H3 className="table-kit-gallery-title" aria-label={title}>
                     {title}
                   </H3>
                   {record.subtitle && (
-                    <Text className="table-kit-gallery-subtitle" title={record.subtitle}>
+                    <Text className="table-kit-gallery-subtitle" aria-label={record.subtitle}>
                       {record.subtitle}
                     </Text>
                   )}
-                  {record.status && <span className="table-kit-gallery-status">{record.status.label}</span>}
-                  <div className="table-kit-gallery-properties" aria-label="Visible properties">
+                  {record.status && <Text className="table-kit-gallery-status">{record.status.label}</Text>}
+                  <YStack className="table-kit-gallery-properties" aria-label="Visible properties" gap="$1">
                     {visibleProperties
                       .filter((property) => !property.primary && property.kind !== "image" && property.id !== "logo")
                       .slice(0, 6)
@@ -548,15 +547,14 @@ export function RecordGallery<Record>({
                             key={property.id}
                             className="table-kit-gallery-property"
                             aria-label={`${property.label}: ${text}`}
-                            title={text}
                           >
                             {text}
                           </Text>
                         );
                       })}
-                  </div>
-                </div>
-              </div>
+                  </YStack>
+                </YStack>
+              </YStack>
               {expanded && renderExpanded?.(record.source)}
             </div>
           );
