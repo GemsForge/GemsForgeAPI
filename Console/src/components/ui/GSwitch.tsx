@@ -23,11 +23,20 @@ export function GSwitch({ label, value = false, onChange, id, ...switchProps }: 
           width="$4"
           height="$3"
           borderRadius="$3"
+          backgroundColor="$gemPanelLight"
+          borderWidth={0}
+          transition="quick"
           flexShrink={0}
           checked={value}
           onCheckedChange={(checked) => onChange?.(checked === true)}
         >
-          <Switch.Thumb animation="quick" size="$2" />
+          <Switch.Thumb
+            animation="quick"
+            size="$2"
+            backgroundColor="$gemInk"
+            borderWidth={0}
+            transition="quickest"
+          />
         </Switch>
         <Label htmlFor={switchID} color="$gemMuted" fontSize="$2" fontWeight="700">
           <SizableText>{label}</SizableText>
