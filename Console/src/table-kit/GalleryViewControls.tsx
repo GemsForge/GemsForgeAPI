@@ -1,5 +1,5 @@
-import { Label, SizableText, Switch, XStack } from "tamagui";
-import { GSelectField } from "../components/ui";
+import { XStack } from "tamagui";
+import { GSelectField, GSwitch } from "../components/ui";
 
 export type GalleryCardSize = "small" | "medium" | "large";
 
@@ -37,21 +37,7 @@ export function GalleryViewControls({
         ]}
         onChange={(value) => onCardSizeChange(value as GalleryCardSize)}
       />
-      <XStack className="table-kit-gallery-fit-media" alignItems="center" gap="$2">
-        <Switch
-          id="gallery-fill-media"
-          size="$3"
-          flexShrink={0}
-          checked={fillMedia}
-          onCheckedChange={onFillMediaChange}
-          aria-label="Fill media"
-        >
-          <Switch.Thumb animation="quick" />
-        </Switch>
-        <Label htmlFor="gallery-fill-media">
-          <SizableText color="$gemMuted" fontSize="$2">Fill media</SizableText>
-        </Label>
-      </XStack>
+      <GSwitch id="gallery-fill-media" label="Fill media" value={fillMedia} onChange={onFillMediaChange} />
     </XStack>
   );
 }
