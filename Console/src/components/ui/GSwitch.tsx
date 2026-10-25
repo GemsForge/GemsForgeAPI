@@ -1,6 +1,5 @@
 import type { ComponentProps } from "react";
-import { Label, SizableText, XStack, YStack } from "tamagui";
-import { Switch } from "../tamagui/Switch";
+import { Label, SizableText, Switch, XStack, YStack } from "tamagui";
 
 /** Props for the shared GemsForge switch wrapper. */
 export interface GSwitchProps
@@ -21,6 +20,11 @@ export function GSwitch({ label, value = false, onChange, id, ...switchProps }: 
           id={switchID}
           {...switchProps}
           size="$3"
+          width="$4"
+          height="$3"
+          borderRadius="$3"
+          backgroundColor="$gemPanelLight"
+          borderWidth={0}
           transition="quick"
           flexShrink={0}
           checked={value}
@@ -28,6 +32,9 @@ export function GSwitch({ label, value = false, onChange, id, ...switchProps }: 
         >
           <Switch.Thumb
             animation="quick"
+            size="$2"
+            backgroundColor="$gemInk"
+            borderWidth={0}
             transition="quickest"
           />
         </Switch>
