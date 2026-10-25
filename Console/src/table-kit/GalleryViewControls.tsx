@@ -40,14 +40,12 @@ export function GalleryViewControls({
       <XStack className="table-kit-gallery-fit-media" alignItems="center" gap="$2">
         <Switch
           id="gallery-fill-media"
-          width={44}
-          height={24}
-          borderRadius={12}
+          size="$3"
           checked={fillMedia}
           onCheckedChange={onFillMediaChange}
           aria-label="Fill media"
         >
-          <Switch.Thumb animation="quick" size={18} margin={2} />
+          <Switch.Thumb animation="quick" />
         </Switch>
         <Label htmlFor="gallery-fill-media">
           <SizableText color="$gemMuted" fontSize="$2">Fill media</SizableText>
