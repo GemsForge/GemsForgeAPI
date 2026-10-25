@@ -16,7 +16,7 @@ import {
   type ICellRendererParams,
 } from "ag-grid-community";
 import { Avatar, H3, ListItem, Paragraph, SizableText, Text, XStack, YGroup, YStack } from "tamagui";
-import { GCheckboxField } from "../components/ui";
+import { GCheckboxField, GemButton } from "../components/ui";
 import { TableContext } from "./context";
 import { GalleryViewControls, type GalleryCardSize } from "./GalleryViewControls";
 import {
@@ -174,6 +174,15 @@ function RecordImage<Record>({
   );
 }
 
+type GalleryCardOptions = { dragToReposition: boolean };
+
+/**
+ * Keep card-action state and handlers available while the visual menu stays hidden.
+ * The menu is blocked until its interaction contract is finalized, but hiding it
+ * must not discard the preserved per-card drag behavior.
+ */
+const galleryCardActionsVisible = false;
+
 /** Render the shared list icon slot as media when available, with a stable symbol fallback. */
 function RecordAvatar<Record>({ record }: { record: TableRecord<Record> }) {
   const image = record.image?.src?.trim() ? record.image : undefined;
@@ -298,11 +307,22 @@ export function RecordGallery<Record>({
   const selection = useRendererSelection(selectedIds, onRecordSelect);
   const [cardSize, setCardSize] = useState<GalleryCardSize>("small");
   const [fillMedia, setFillMedia] = useState(true);
+  const [openMenuId, setOpenMenuId] = useState<TableRecordId | null>(null);
+  const [cardOptions, setCardOptions] = useState<{ [id: string]: GalleryCardOptions }>({});
+  const [imagePositions, setImagePositions] = useState<{ [id: string]: { x: number; y: number } }>({});
+  const imageDragRef = useRef<{ id: TableRecordId; x: number; y: number; startX: number; startY: number } | null>(null);
   const visibleProperties = propertiesFor(properties, propertyIds);
   const dragStartRef = useRef<{ index: number; x: number; y: number } | null>(null);
   const dragSelectedIdsRef = useRef<Set<TableRecordId>>(new Set());
   const suppressClickRef = useRef(false);
   const detailClickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const menuCardWasSelectedRef = useRef(false);
+
+  useEffect(() => {
+    if (openMenuId !== null && menuCardWasSelectedRef.current && !selection.selectedIds.has(openMenuId)) {
+      setOpenMenuId(null);
+    }
+  }, [openMenuId, selection.selectedIds]);
 
   /** Use the adapter image first, then allow an image property to supply the cover. */
   const getImage = (record: TableRecord<Record>) =>
@@ -360,6 +380,31 @@ export function RecordGallery<Record>({
     dragStartRef.current = null;
   };
 
+  const handleImagePointerDown = (event: ReactPointerEvent<HTMLDivElement>, id: TableRecordId) => {
+    if (!cardOptions[id]?.dragToReposition || event.button !== 0) return;
+    event.stopPropagation();
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+    const position = imagePositions[id] ?? { x: 50, y: 50 };
+    imageDragRef.current = { id, x: position.x, y: position.y, startX: event.clientX, startY: event.clientY };
+  };
+
+  const handleImagePointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const drag = imageDragRef.current;
+    if (!drag) return;
+    event.stopPropagation();
+    setImagePositions((current) => ({
+      ...current,
+      [drag.id]: {
+        x: Math.max(0, Math.min(100, drag.x - (event.clientX - drag.startX) / 3)),
+        y: Math.max(0, Math.min(100, drag.y - (event.clientY - drag.startY) / 3)),
+      },
+    }));
+  };
+
+  const handleImagePointerUp = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (imageDragRef.current) event.stopPropagation();
+    imageDragRef.current = null;
+  };
 
   const handleCardClick = (record: TableRecord<Record>, expanded: boolean) => {
     if (suppressClickRef.current) {
@@ -371,6 +416,23 @@ export function RecordGallery<Record>({
       onExpansionChange?.(expanded ? undefined : record.id);
       detailClickTimerRef.current = null;
     }, 250);
+  };
+
+  const updateCardOption = (
+    id: TableRecordId,
+    option: keyof GalleryCardOptions,
+    checked: boolean,
+  ) => {
+    setCardOptions((current) => {
+      const options = current[id] ?? { dragToReposition: false };
+      return {
+        ...current,
+        [id]: {
+          ...options,
+          [option]: checked,
+        },
+      };
+    });
   };
 
   return (
@@ -387,6 +449,7 @@ export function RecordGallery<Record>({
           const expanded = expandedId === record.id;
           const title = String(record.title ?? record.id);
           const image = getImage(record);
+          const options = cardOptions[record.id] ?? { dragToReposition: false };
           return (
             <div
               key={record.id}
@@ -394,6 +457,45 @@ export function RecordGallery<Record>({
               role="listitem"
               data-gallery-record-id={record.id}
             >
+              {galleryCardActionsVisible && <div className="table-kit-gallery-card-menu">
+                <GemButton
+                  type="button"
+                  variant="quiet"
+                  className="table-kit-gallery-card-menu-trigger"
+                  aria-label={`Card options for ${title}`}
+                  aria-expanded={openMenuId === record.id}
+                  onPointerDown={(event) => event.stopPropagation()}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setOpenMenuId((current) => {
+                      if (current === record.id) {
+                        menuCardWasSelectedRef.current = false;
+                        return null;
+                      }
+                      menuCardWasSelectedRef.current = selection.selectedIds.has(record.id);
+                      return record.id;
+                    });
+                  }}
+                >
+                  <Text color="$gemInk" fontSize="$6" lineHeight={1} aria-hidden>
+                    ⋮
+                  </Text>
+                </GemButton>
+                {openMenuId === record.id && (
+                  <div
+                    className="table-kit-gallery-card-menu-panel"
+                    role="menu"
+                    onPointerDown={(event) => event.stopPropagation()}
+                  >
+                    <GCheckboxField
+                      label="Drag to reposition"
+                      value={options.dragToReposition}
+                      width="medium"
+                      onChange={(checked) => updateCardOption(record.id, "dragToReposition", checked)}
+                    />
+                  </div>
+                )}
+              </div>}
               <YStack
                 className="table-kit-gallery-card-surface"
                 role={onExpansionChange ? "button" : undefined}
@@ -412,16 +514,25 @@ export function RecordGallery<Record>({
                 onPointerCancel={handlePointerEnd}
               >
                 <YStack
-                  className="table-kit-gallery-image"
+                  className={`table-kit-gallery-image${options.dragToReposition ? " is-draggable" : ""}`}
                   aspectRatio={1}
                   width="100%"
                   overflow="hidden"
                   backgroundColor="$gemCanvas"
                   aria-label={`${title} image preview`}
+                  onPointerDown={(event) => handleImagePointerDown(event, record.id)}
+                  onPointerMove={handleImagePointerMove}
+                  onPointerUp={handleImagePointerUp}
+                  onPointerCancel={handleImagePointerUp}
                 >
                   <RecordImage
                     image={image}
                     fitMedia={!fillMedia}
+                    objectPosition={
+                      imagePositions[record.id]
+                        ? `${imagePositions[record.id].x}% ${imagePositions[record.id].y}%`
+                        : undefined
+                    }
                   />
                 </YStack>
                 <YStack className="table-kit-gallery-copy" gap="$2" padding="$3">
