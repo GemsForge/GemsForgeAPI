@@ -15,7 +15,8 @@ import {
   type ColDef,
   type ICellRendererParams,
 } from "ag-grid-community";
-import { Avatar, Checkbox, ListItem, Paragraph, SizableText, XStack, YGroup, YStack } from "tamagui";
+import { Avatar, ListItem, Paragraph, SizableText, XStack, YGroup, YStack } from "tamagui";
+import { GCheckboxField } from "../components/ui";
 import { TableContext } from "./context";
 import { GalleryViewControls, type GalleryCardSize } from "./GalleryViewControls";
 import {
@@ -86,26 +87,21 @@ function SelectionButton({
   const selected = selection.selectedIds.has(record.id);
   const title = String(record.title ?? record.id);
   return (
-    <Checkbox
-      size="$2"
-      width="$2"
-      height="$2"
-      minWidth="$2"
-      minHeight="$2"
-      alignSelf="center"
-      flexShrink={0}
-      checked={selected}
+    <GCheckboxField
+      label=""
+      width="short"
+      value={selected}
       disabled={!selection.isSelectable(record.id)}
       aria-label={`${selected ? "Deselect" : "Select"} ${title}`}
       aria-checked={selected}
       data-selected={selected}
+      alignSelf="center"
+      flexShrink={0}
       onPointerDown={(event) => event.stopPropagation()}
       onMouseDown={(event) => event.stopPropagation()}
       onClick={(event) => event.stopPropagation()}
-      onCheckedChange={() => selection.onRecordSelect?.(record.id)}
-    >
-      <Checkbox.Indicator />
-    </Checkbox>
+      onChange={() => selection.onRecordSelect?.(record.id)}
+    />
   );
 }
 
