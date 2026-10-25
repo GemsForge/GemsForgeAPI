@@ -5,6 +5,7 @@ export { GemTextField } from "./GemTextField";
 export { GDate } from "./GDateField";
 export { GSelectField } from "./GSelectField";
 export { GCheckboxField } from "./GCheckboxField";
+export { GSwitch } from "./GSwitch";
 export { GSearchField } from "./GSearchField";
 export { GemDataTable } from "./GemDataTable--LEGACY";
 export { GemEmptyState } from "./GemEmptyState";
