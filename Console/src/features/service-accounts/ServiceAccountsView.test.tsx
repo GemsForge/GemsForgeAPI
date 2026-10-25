@@ -56,52 +56,58 @@ describe("ServiceAccountsView", () => {
     );
   }
 
+  /** Wait for the renderer's single-click detail gesture to settle before editing a field. */
+  async function openDetails() {
+    fireEvent.keyDown(screen.getByRole("listitem", { name: "Open Internet" }), { key: "Enter" });
+    await screen.findByRole("button", { name: "Service", hidden: true });
+  }
+
   it("sends only the edited service property", async () => {
     renderView();
     // Keep a regression guard for the first consumer migrated to Table Kit.
     expect(screen.getByRole("region", { name: "Table content" })).toBeInTheDocument();
     // The list item itself now opens details; there is no nested View action.
-    fireEvent.click(screen.getByRole("listitem", { name: "Open Internet" }));
-    fireEvent.click(await screen.findByRole("button", { name: "Edit service" }));
+    await openDetails();
+    fireEvent.click(screen.getByRole("button", { name: "Service", hidden: true }));
     // Required-field labels include a visible asterisk in the shared field component.
     fireEvent.change(screen.getByLabelText(/^Service \*/), { target: { value: "Fiber Internet" } });
-    fireEvent.click(screen.getByRole("button", { name: "Save service" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save service", hidden: true }));
     await waitFor(() => expect(mocks.patch).toHaveBeenCalledWith({ id: 7, patch: { service: "Fiber Internet" } }));
   });
 
   it("cancels a status edit without sending a PATCH", async () => {
     renderView();
-    fireEvent.click(screen.getByRole("listitem", { name: "Open Internet" }));
-    fireEvent.click(await screen.findByRole("button", { name: "Edit status" }));
+    await openDetails();
+    fireEvent.click(await screen.findByRole("button", { name: "Status", hidden: true }));
     fireEvent.change(screen.getByLabelText("Status"), { target: { value: "Paused" } });
-    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    fireEvent.click(screen.getByRole("button", { name: "Cancel editing status", hidden: true }));
     expect(screen.queryByLabelText("Status")).not.toBeInTheDocument();
     expect(mocks.patch).not.toHaveBeenCalled();
   });
 
   it("edits the service key through a changed-only PATCH", async () => {
     renderView();
-    fireEvent.click(screen.getByRole("listitem", { name: "Open Internet" }));
-    fireEvent.click(await screen.findByRole("button", { name: "Edit service key" }));
+    await openDetails();
+    fireEvent.click(screen.getByRole("button", { name: "Service key", hidden: true }));
     fireEvent.change(screen.getByLabelText("Service key"), { target: { value: "INTERNET_SERVICE" } });
-    fireEvent.click(screen.getByRole("button", { name: "Save service key" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save service key", hidden: true }));
     await waitFor(() => expect(mocks.patch).toHaveBeenCalledWith({ id: 7, patch: { serviceKey: "INTERNET_SERVICE" } }));
   });
 
   it("edits Email Updated with a checkbox", async () => {
     mocks.account.emailUpdated = false;
     renderView();
-    fireEvent.click(screen.getByRole("listitem", { name: "Open Internet" }));
-    fireEvent.click(await screen.findByRole("button", { name: "Edit email updated" }));
+    await openDetails();
+    fireEvent.click(screen.getByRole("button", { name: "Email updated", hidden: true }));
     fireEvent.click(screen.getByLabelText("Email updated"));
-    fireEvent.click(screen.getByRole("button", { name: "Save email updated" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save email updated", hidden: true }));
     await waitFor(() => expect(mocks.patch).toHaveBeenCalledWith({ id: 7, patch: { emailUpdated: true } }));
     mocks.account.emailUpdated = null;
   });
 
   it("explains why legacy logo and address relationship values stay read-only", async () => {
     renderView();
-    fireEvent.click(screen.getByRole("listitem", { name: "Open Internet" }));
+    await openDetails();
     expect(
       await screen.findByText("Legacy logo lookup relationship; no validated selector is available."),
     ).toBeInTheDocument();

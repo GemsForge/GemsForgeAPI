@@ -349,11 +349,6 @@ export function RecordGallery<Record>({
     if (!start || !selection.onRecordSelect) return;
     if (Math.hypot(event.clientX - start.x, event.clientY - start.y) < 8) return;
     suppressClickRef.current = true;
-    const startRecord = effectiveRecords[start.index];
-    if (startRecord && !dragSelectedIdsRef.current.has(startRecord.id)) {
-      selection.onRecordSelect(startRecord.id);
-      dragSelectedIdsRef.current.add(startRecord.id);
-    }
     const target = document
       .elementFromPoint(event.clientX, event.clientY)
       ?.closest<HTMLElement>("[data-gallery-record-id]");

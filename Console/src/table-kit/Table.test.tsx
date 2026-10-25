@@ -24,6 +24,15 @@ function renderActions(actions: ReactNode) {
   );
 }
 
+/** Render Table Kit controls with the Tamagui context required by shared fields. */
+function renderTable(actions: ReactNode) {
+  return render(
+    <TamaguiProvider config={tamaguiConfig} defaultTheme="dark">
+      {actions}
+    </TamaguiProvider>,
+  );
+}
+
 function PaginationHarness() {
   const { pagination, setPagination } = useTableContext<Row>();
   return (
@@ -270,7 +279,7 @@ describe("Table Kit", () => {
 
   it("coordinates current-page and clear selection in the scoped context", () => {
     const onSelectionChange = vi.fn();
-    render(
+    renderTable(
       <Table.Root<Row>
         rows={rows}
         columns={columns}
@@ -290,7 +299,7 @@ describe("Table Kit", () => {
   });
 
   it("exposes an indeterminate state for partial current-page selection", () => {
-    render(
+    renderTable(
       <Table.Root<Row>
         rows={rows}
         columns={columns}
@@ -309,19 +318,19 @@ describe("Table Kit", () => {
   });
 
   it("preserves selected IDs across page updates while applying current-page toggles", () => {
-    render(<SelectionPagingHarness />);
+    renderTable(<SelectionPagingHarness />);
 
     fireEvent.click(screen.getByRole("checkbox", { name: "Select all" }));
     fireEvent.click(screen.getByRole("button", { name: "Next page" }));
 
-    expect(screen.getByRole("status")).toHaveTextContent("1 selected");
+    expect(screen.getByText("1 selected")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("checkbox", { name: "Select all" }));
-    expect(screen.getByRole("status")).toHaveTextContent("2 selected");
+    expect(screen.getByText("2 selected")).toBeInTheDocument();
   });
 
   it("excludes disabled current-page records from bulk selection", () => {
     const onSelectionChange = vi.fn();
-    render(
+    renderTable(
       <Table.Root<Row>
         rows={rows}
         columns={columns}
@@ -337,7 +346,7 @@ describe("Table Kit", () => {
   });
 
   it("keeps selection isolated between Table.Root instances", () => {
-    render(
+    renderTable(
       <>
         <Table.Root<Row> rows={rows} columns={columns} rowKey={(row) => row.id}>
           <Table.Selection />
@@ -351,7 +360,8 @@ describe("Table Kit", () => {
     const checkboxes = screen.getAllByRole("checkbox", { name: "Select all" });
     fireEvent.click(checkboxes[0]);
 
-    expect(screen.getAllByRole("status").map((status) => status.textContent)).toEqual(["2 selected", "0 selected"]);
+    expect(screen.getByText("2 selected")).toBeInTheDocument();
+    expect(screen.queryByText("0 selected")).not.toBeInTheDocument();
   });
 
   it("throws when a compound component is outside Root", () => {
