@@ -16,7 +16,7 @@ import {
   type ICellRendererParams,
 } from "ag-grid-community";
 import { Avatar, ListItem, Paragraph, SizableText, XStack, YGroup, YStack } from "tamagui";
-import { GCheckboxField } from "../components/ui";
+import { GCheckboxField, GemButton } from "../components/ui";
 import { TableContext } from "./context";
 import { GalleryViewControls, type GalleryCardSize } from "./GalleryViewControls";
 import {
@@ -451,8 +451,10 @@ export function RecordGallery<Record>({
               data-gallery-record-id={record.id}
             >
               <div className="table-kit-gallery-card-menu">
-                <button
+                <GemButton
                   type="button"
+                  variant="quiet"
+                  size="$3"
                   className="table-kit-gallery-card-menu-trigger"
                   aria-label={`Card options for ${title}`}
                   aria-expanded={openMenuId === record.id}
@@ -470,23 +472,19 @@ export function RecordGallery<Record>({
                   }}
                 >
                   ⋮
-                </button>
+                </GemButton>
                 {openMenuId === record.id && (
                   <div
                     className="table-kit-gallery-card-menu-panel"
                     role="menu"
                     onPointerDown={(event) => event.stopPropagation()}
                   >
-                    {(["dragToReposition"] as const).map((option) => (
-                      <label key={option}>
-                        <input
-                          type="checkbox"
-                          checked={options[option]}
-                          onChange={(event) => updateCardOption(record.id, option, event.target.checked)}
-                        />
-                        Drag to reposition
-                      </label>
-                    ))}
+                    <GCheckboxField
+                      label="Drag to reposition"
+                      value={options.dragToReposition}
+                      width="medium"
+                      onChange={(checked) => updateCardOption(record.id, "dragToReposition", checked)}
+                    />
                   </div>
                 )}
               </div>
