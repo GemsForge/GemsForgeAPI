@@ -18,7 +18,14 @@ export function GalleryViewControls({
   onFillMediaChange,
 }: GalleryViewControlsProps) {
   return (
-    <XStack className="table-kit-gallery-controls" aria-label="Gallery display controls" alignItems="flex-end" gap="$3">
+    <XStack
+      className="table-kit-gallery-controls"
+      aria-label="Gallery display controls"
+      alignItems="flex-end"
+      flexDirection="row"
+      flexWrap="nowrap"
+      gap="$3"
+    >
       <GSelectField
         label="Card size"
         value={cardSize}
@@ -33,12 +40,14 @@ export function GalleryViewControls({
       <XStack className="table-kit-gallery-fit-media" alignItems="center" gap="$2">
         <Switch
           id="gallery-fill-media"
-          size="$3"
+          width={44}
+          height={24}
+          borderRadius={12}
           checked={fillMedia}
           onCheckedChange={onFillMediaChange}
           aria-label="Fill media"
         >
-          <Switch.Thumb animation="quick" />
+          <Switch.Thumb animation="quick" size={18} margin={2} />
         </Switch>
         <Label htmlFor="gallery-fill-media">
           <SizableText color="$gemMuted" fontSize="$2">Fill media</SizableText>
