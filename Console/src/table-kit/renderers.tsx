@@ -164,8 +164,11 @@ function RecordImage<Record>({
         alt={image.alt}
         width="100%"
         height="100%"
-        objectFit={fitMedia ? "contain" : (image.fit ?? "cover")}
-        objectPosition={objectPosition}
+        style={{
+          objectFit: fitMedia ? "contain" : "cover",
+          objectPosition,
+          display: "block",
+        }}
       />
     </Avatar>
   );
