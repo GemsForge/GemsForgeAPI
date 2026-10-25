@@ -20,11 +20,14 @@ export function GSwitch({ label, value = false, onChange, id, ...switchProps }: 
           id={switchID}
           {...switchProps}
           size="$3"
+          width="$4"
+          height="$3"
+          borderRadius="$3"
           flexShrink={0}
           checked={value}
           onCheckedChange={(checked) => onChange?.(checked === true)}
         >
-          <Switch.Thumb animation="quick" />
+          <Switch.Thumb animation="quick" size="$2" />
         </Switch>
         <Label htmlFor={switchID} color="$gemMuted" fontSize="$2" fontWeight="700">
           <SizableText>{label}</SizableText>
