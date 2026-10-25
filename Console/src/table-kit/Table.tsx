@@ -234,6 +234,7 @@ function Selection({ label = "Select all", clearLabel = "Clear selection" }: Tab
     if (checkboxRef.current) checkboxRef.current.indeterminate = currentPage.indeterminate;
   }, [currentPage.indeterminate]);
 
+  // GemButton uses its shared default size; typography tokens are not valid ButtonSize values.
   return (
     <div className="table-kit-selection" role="group" aria-label="Selection controls">
       <label>
@@ -249,7 +250,7 @@ function Selection({ label = "Select all", clearLabel = "Clear selection" }: Tab
         <span>{allMatching.selectedCount > 0 ? `${allMatching.selectedCount} selected` : label}</span>
       </label>
       {allMatching.selectedCount > 0 && (
-        <GemButton type="button" variant="outlined" size="$3" onPress={selection.clear}>
+        <GemButton type="button" variant="outlined" onPress={selection.clear}>
           {clearLabel}
         </GemButton>
       )}

@@ -262,7 +262,8 @@ export function RecordList<Record>({
               }
               icon={() => <RecordAvatar record={record} />}
               iconAfter={
-                <SizableText color="$gemMuted" fontSize="$8" aria-hidden="true">
+                // The chevron is decorative; keep it out of the accessibility tree.
+                <SizableText color="$gemMuted" fontSize="$8" aria-hidden>
                   ›
                 </SizableText>
               }
