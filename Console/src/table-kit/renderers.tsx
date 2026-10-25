@@ -544,14 +544,14 @@ export function RecordGallery<Record>({
                         const value = propertyValue(property, record);
                         const text = String(value.display || "unconfigured");
                         return (
-                          <div
+                          <Text
                             key={property.id}
                             className="table-kit-gallery-property"
                             aria-label={`${property.label}: ${text}`}
                             title={text}
                           >
-                            <PropertyValue value={value} />
-                          </div>
+                            {text}
+                          </Text>
                         );
                       })}
                   </div>
