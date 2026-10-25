@@ -156,10 +156,7 @@ function DatabaseRecordTableShell<Record>({
         .map((property) => property.id),
     [properties],
   );
-  const galleryDefaultConfiguration = useMemo(
-    () => ({ hiddenIds: galleryPropertyIds.slice(5) }),
-    [galleryPropertyIds],
-  );
+  const galleryDefaultConfiguration = useMemo(() => ({ hiddenIds: galleryPropertyIds.slice(5) }), [galleryPropertyIds]);
   const configuration = useTablePropertyConfiguration({
     properties: propertyOptions,
     viewId,

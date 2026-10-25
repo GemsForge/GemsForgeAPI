@@ -1,5 +1,10 @@
 import { useEffect, useMemo, useState, type ChangeEvent } from "react";
-import { useCreateGemHueMutation, useGemHueQuery, useGemHueImageQuery, useGemHuePatchMutation } from "../../data/recordQueries";
+import {
+  useCreateGemHueMutation,
+  useGemHueQuery,
+  useGemHueImageQuery,
+  useGemHuePatchMutation,
+} from "../../data/recordQueries";
 import { QueryFeedback } from "../../components/QueryFeedback";
 import type { GemHue, GemHueCreate } from "../../types";
 import { EditableRecordFields } from "../../components/EditableRecordFields";
@@ -51,13 +56,35 @@ function GemHueCreateForm({
       onSubmit={() => onCreate(values)}
     >
       <GemTextField label="ID" value={values.id} onChange={update("id")} required width="medium" />
-      <GemTextField label="Color name" value={values.colorName} onChange={update("colorName")} required width="medium" />
-      <GemTextField label="Color family" value={values.colorFamily ?? ""} onChange={update("colorFamily")} width="medium" />
+      <GemTextField
+        label="Color name"
+        value={values.colorName}
+        onChange={update("colorName")}
+        required
+        width="medium"
+      />
+      <GemTextField
+        label="Color family"
+        value={values.colorFamily ?? ""}
+        onChange={update("colorFamily")}
+        width="medium"
+      />
       <GemTextField label="Hex code" value={values.hexCode} onChange={update("hexCode")} required width="medium" />
       <GemTextField label="Mood" value={values.mood ?? ""} onChange={update("mood")} width="medium" />
       <GemTextField label="Palette" value={values.palette ?? ""} onChange={update("palette")} width="medium" />
-      <GemTextField label="Description" value={values.description ?? ""} onChange={update("description")} width="long" multiline />
-      <GemTextField label="Created date" value={values.createdDate ?? ""} onChange={update("createdDate")} width="medium" />
+      <GemTextField
+        label="Description"
+        value={values.description ?? ""}
+        onChange={update("description")}
+        width="long"
+        multiline
+      />
+      <GemTextField
+        label="Created date"
+        value={values.createdDate ?? ""}
+        onChange={update("createdDate")}
+        width="medium"
+      />
       <GemTextField label="Notes" value={values.notes ?? ""} onChange={update("notes")} width="long" multiline />
     </CreateFormFrame>
   );
@@ -97,7 +124,14 @@ export function GemHuesView({ hues }: GemHuesViewProps) {
 
   const actions = {
     newRecordUtility: {
-      options: [{ id: "new-gem-hue", label: "Input Form", description: "Create a Gem Hue record.", render: ({ close }: { close: () => void }) => createForm(close) }],
+      options: [
+        {
+          id: "new-gem-hue",
+          label: "Input Form",
+          description: "Create a Gem Hue record.",
+          render: ({ close }: { close: () => void }) => createForm(close),
+        },
+      ],
     },
   };
 
@@ -122,7 +156,9 @@ export function GemHuesView({ hues }: GemHuesViewProps) {
       }),
     ).then((entries) => {
       if (active) {
-        setGalleryImages(Object.fromEntries(entries.filter((entry): entry is readonly [string, string] => entry !== null)));
+        setGalleryImages(
+          Object.fromEntries(entries.filter((entry): entry is readonly [string, string] => entry !== null)),
+        );
       }
     });
 
@@ -179,8 +215,14 @@ export function GemHuesView({ hues }: GemHuesViewProps) {
         records={hues}
         utilities={utilities}
         adapter={tableAdapter}
-        sortOptions={[{ value: "name", label: "Color name" }, { value: "family", label: "Color family" }, { value: "created", label: "Created date" }]}
-        filterOptions={Array.from(new Set(hues.map((hue) => hue.colorFamily).filter((value): value is string => Boolean(value)))).sort()}
+        sortOptions={[
+          { value: "name", label: "Color name" },
+          { value: "family", label: "Color family" },
+          { value: "created", label: "Created date" },
+        ]}
+        filterOptions={Array.from(
+          new Set(hues.map((hue) => hue.colorFamily).filter((value): value is string => Boolean(value))),
+        ).sort()}
         actions={actions}
         detailId={selectedID}
         onDetailChange={(id) => {
@@ -189,126 +231,121 @@ export function GemHuesView({ hues }: GemHuesViewProps) {
         }}
         detail={
           selectedID && selectedHue ? (
-              <div className="gem-record-expansion">
-                <QueryFeedback query={detail} />
-                <QueryFeedback query={image} />
-                {selectedHue && (
-                  <section className="hue-detail">
-                    <div
-                      className="hue-detail-swatch"
-                      style={{ "--hue-color": selectedHue.hexCode } as React.CSSProperties}
-                    >
-                      {imageURL && (
-                        <img
-                          decoding="async"
-                          loading="lazy"
-                          src={imageURL}
-                          alt={`${selectedHue.colorName} reference`}
-                        />
-                      )}
-                    </div>
-                    <div className="hue-detail-copy">
-                      <p className="eyebrow">Gem Hue · Foundation reference data</p>
-                      <h3>{selectedHue.colorName}</h3>
-                      <p className="hue-code">
-                        {selectedHue.id} · {selectedHue.hexCode}
-                      </p>
-                      <EditableRecordFields
-                        className="hue-fields"
-                        fields={[
-                          {
-                            label: "Color family",
-                            value: selectedHue.colorFamily,
-                            inputType: "select",
-                            options: hueOptions([
-                              "Red",
-                              "Orange",
-                              "Yellow",
-                              "Green",
-                              "Blue",
-                              "Purple",
-                              "Pink",
-                              "Brown",
-                              "Gray",
-                              "Black",
-                              "White",
-                            ]),
-                            nullable: true,
-                            onSave: async (value) => {
-                              await patch.mutateAsync({
-                                id: selectedHue.id,
-                                patch: { colorFamily: value as string | null },
-                              });
-                            },
+            <div className="gem-record-expansion">
+              <QueryFeedback query={detail} />
+              <QueryFeedback query={image} />
+              {selectedHue && (
+                <section className="hue-detail">
+                  <div
+                    className="hue-detail-swatch"
+                    style={{ "--hue-color": selectedHue.hexCode } as React.CSSProperties}
+                  >
+                    {imageURL && (
+                      <img decoding="async" loading="lazy" src={imageURL} alt={`${selectedHue.colorName} reference`} />
+                    )}
+                  </div>
+                  <div className="hue-detail-copy">
+                    <p className="eyebrow">Gem Hue · Foundation reference data</p>
+                    <h3>{selectedHue.colorName}</h3>
+                    <p className="hue-code">
+                      {selectedHue.id} · {selectedHue.hexCode}
+                    </p>
+                    <EditableRecordFields
+                      className="hue-fields"
+                      fields={[
+                        {
+                          label: "Color family",
+                          value: selectedHue.colorFamily,
+                          inputType: "select",
+                          options: hueOptions([
+                            "Red",
+                            "Orange",
+                            "Yellow",
+                            "Green",
+                            "Blue",
+                            "Purple",
+                            "Pink",
+                            "Brown",
+                            "Gray",
+                            "Black",
+                            "White",
+                          ]),
+                          nullable: true,
+                          onSave: async (value) => {
+                            await patch.mutateAsync({
+                              id: selectedHue.id,
+                              patch: { colorFamily: value as string | null },
+                            });
                           },
-                          {
-                            label: "Mood",
-                            value: selectedHue.mood,
-                            inputType: "select",
-                            options: hueOptions([
-                              "Calm",
-                              "Warm",
-                              "Cool",
-                              "Energizing",
-                              "Grounding",
-                              "Romantic",
-                              "Playful",
-                              "Focused",
-                            ]),
-                            nullable: true,
-                            onSave: async (value) => {
-                              await patch.mutateAsync({ id: selectedHue.id, patch: { mood: value as string | null } });
-                            },
+                        },
+                        {
+                          label: "Mood",
+                          value: selectedHue.mood,
+                          inputType: "select",
+                          options: hueOptions([
+                            "Calm",
+                            "Warm",
+                            "Cool",
+                            "Energizing",
+                            "Grounding",
+                            "Romantic",
+                            "Playful",
+                            "Focused",
+                          ]),
+                          nullable: true,
+                          onSave: async (value) => {
+                            await patch.mutateAsync({ id: selectedHue.id, patch: { mood: value as string | null } });
                           },
-                          {
-                            label: "Palette",
-                            value: selectedHue.palette,
-                            inputType: "select",
-                            options: hueOptions([
-                              "Monochromatic",
-                              "Analogous",
-                              "Complementary",
-                              "Triadic",
-                              "Neutral",
-                              "Pastel",
-                              "Earth tones",
-                            ]),
-                            nullable: true,
-                            onSave: async (value) => {
-                              await patch.mutateAsync({
-                                id: selectedHue.id,
-                                patch: { palette: value as string | null },
-                              });
-                            },
+                        },
+                        {
+                          label: "Palette",
+                          value: selectedHue.palette,
+                          inputType: "select",
+                          options: hueOptions([
+                            "Monochromatic",
+                            "Analogous",
+                            "Complementary",
+                            "Triadic",
+                            "Neutral",
+                            "Pastel",
+                            "Earth tones",
+                          ]),
+                          nullable: true,
+                          onSave: async (value) => {
+                            await patch.mutateAsync({
+                              id: selectedHue.id,
+                              patch: { palette: value as string | null },
+                            });
                           },
-                          {
-                            label: "Description",
-                            value: selectedHue.description,
-                            inputType: "longText",
-                            nullable: true,
-                            onSave: async (value) => {
-                              await patch.mutateAsync({
-                                id: selectedHue.id,
-                                patch: { description: value as string | null },
-                              });
-                            },
+                        },
+                        {
+                          label: "Description",
+                          value: selectedHue.description,
+                          inputType: "longText",
+                          nullable: true,
+                          onSave: async (value) => {
+                            await patch.mutateAsync({
+                              id: selectedHue.id,
+                              patch: { description: value as string | null },
+                            });
                           },
-                          {
-                            label: "Notes",
-                            value: selectedHue.notes,
-                            inputType: "longText",
-                            nullable: true,
-                            className: "record-notes",
-                            onSave: async (value) => {
-                              await patch.mutateAsync({ id: selectedHue.id, patch: { notes: value as string | null } });
-                            },
+                        },
+                        {
+                          label: "Notes",
+                          value: selectedHue.notes,
+                          inputType: "longText",
+                          nullable: true,
+                          className: "record-notes",
+                          onSave: async (value) => {
+                            await patch.mutateAsync({ id: selectedHue.id, patch: { notes: value as string | null } });
                           },
-                        ]}
-                      />
-                    </div>
-                  </section>
-                )}
-              </div>
+                        },
+                      ]}
+                    />
+                  </div>
+                </section>
+              )}
+            </div>
           ) : null
         }
       />

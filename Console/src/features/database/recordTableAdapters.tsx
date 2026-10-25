@@ -5,7 +5,9 @@ import type { RecordAdapter, RecordImage, RecordPropertyDefinition } from "../..
 const display = (value: unknown) => ({ raw: value, display: value == null || value === "" ? "—" : String(value) });
 
 /** Adapt Gem Hue records to the shared Table Kit record/property contract. */
-export function createGemHueTableAdapter(getImage?: (record: GemHue) => RecordImage | undefined): RecordAdapter<GemHue> {
+export function createGemHueTableAdapter(
+  getImage?: (record: GemHue) => RecordImage | undefined,
+): RecordAdapter<GemHue> {
   return {
     toTableRecord: (record) => ({
       id: record.id,
@@ -15,18 +17,24 @@ export function createGemHueTableAdapter(getImage?: (record: GemHue) => RecordIm
       icon: "✦",
       image: getImage?.(record),
     }),
-  getPropertyDefinitions: () =>
-    [
-      { id: "colorName", label: "Color name", kind: "text", primary: true, getValue: (record) => display(record.colorName) },
-      { id: "colorFamily", label: "Color family", kind: "select", getValue: (record) => display(record.colorFamily) },
-      { id: "hexCode", label: "Hex code", kind: "text", getValue: (record) => display(record.hexCode) },
-      { id: "mood", label: "Mood", kind: "select", getValue: (record) => display(record.mood) },
-      { id: "palette", label: "Palette", kind: "select", getValue: (record) => display(record.palette) },
-      { id: "description", label: "Description", kind: "text", getValue: (record) => display(record.description) },
-      { id: "createdDate", label: "Created date", kind: "date", getValue: (record) => display(record.createdDate) },
-      { id: "notes", label: "Notes", kind: "text", getValue: (record) => display(record.notes) },
-      { id: "id", label: "Item ID", kind: "text", getValue: (record) => display(record.id) },
-    ] satisfies readonly RecordPropertyDefinition<GemHue>[],
+    getPropertyDefinitions: () =>
+      [
+        {
+          id: "colorName",
+          label: "Color name",
+          kind: "text",
+          primary: true,
+          getValue: (record) => display(record.colorName),
+        },
+        { id: "colorFamily", label: "Color family", kind: "select", getValue: (record) => display(record.colorFamily) },
+        { id: "hexCode", label: "Hex code", kind: "text", getValue: (record) => display(record.hexCode) },
+        { id: "mood", label: "Mood", kind: "select", getValue: (record) => display(record.mood) },
+        { id: "palette", label: "Palette", kind: "select", getValue: (record) => display(record.palette) },
+        { id: "description", label: "Description", kind: "text", getValue: (record) => display(record.description) },
+        { id: "createdDate", label: "Created date", kind: "date", getValue: (record) => display(record.createdDate) },
+        { id: "notes", label: "Notes", kind: "text", getValue: (record) => display(record.notes) },
+        { id: "id", label: "Item ID", kind: "text", getValue: (record) => display(record.id) },
+      ] satisfies readonly RecordPropertyDefinition<GemHue>[],
   };
 }
 

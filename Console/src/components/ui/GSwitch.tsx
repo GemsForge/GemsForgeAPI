@@ -2,8 +2,10 @@ import type { ComponentProps } from "react";
 import { Label, SizableText, Switch, XStack, YStack } from "tamagui";
 
 /** Props for the shared GemsForge switch wrapper. */
-export interface GSwitchProps
-  extends Omit<ComponentProps<typeof Switch>, "checked" | "defaultChecked" | "value" | "onCheckedChange" | "onChange"> {
+export interface GSwitchProps extends Omit<
+  ComponentProps<typeof Switch>,
+  "checked" | "defaultChecked" | "value" | "onCheckedChange" | "onChange"
+> {
   label: string;
   value?: boolean;
   onChange?: (value: boolean) => void;
@@ -30,13 +32,7 @@ export function GSwitch({ label, value = false, onChange, id, ...switchProps }: 
           checked={value}
           onCheckedChange={(checked) => onChange?.(checked === true)}
         >
-          <Switch.Thumb
-            animation="quick"
-            size="$2"
-            backgroundColor="$gemInk"
-            borderWidth={0}
-            transition="quickest"
-          />
+          <Switch.Thumb animation="quick" size="$2" backgroundColor="$gemInk" borderWidth={0} transition="quickest" />
         </Switch>
         <Label htmlFor={switchID} color="$gemMuted" fontSize="$2" fontWeight="700">
           <SizableText>{label}</SizableText>

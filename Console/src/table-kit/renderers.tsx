@@ -418,11 +418,7 @@ export function RecordGallery<Record>({
     }, 250);
   };
 
-  const updateCardOption = (
-    id: TableRecordId,
-    option: keyof GalleryCardOptions,
-    checked: boolean,
-  ) => {
+  const updateCardOption = (id: TableRecordId, option: keyof GalleryCardOptions, checked: boolean) => {
     setCardOptions((current) => {
       const options = current[id] ?? { dragToReposition: false };
       return {
@@ -457,45 +453,47 @@ export function RecordGallery<Record>({
               role="listitem"
               data-gallery-record-id={record.id}
             >
-              {galleryCardActionsVisible && <div className="table-kit-gallery-card-menu">
-                <GemButton
-                  type="button"
-                  variant="quiet"
-                  className="table-kit-gallery-card-menu-trigger"
-                  aria-label={`Card options for ${title}`}
-                  aria-expanded={openMenuId === record.id}
-                  onPointerDown={(event) => event.stopPropagation()}
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    setOpenMenuId((current) => {
-                      if (current === record.id) {
-                        menuCardWasSelectedRef.current = false;
-                        return null;
-                      }
-                      menuCardWasSelectedRef.current = selection.selectedIds.has(record.id);
-                      return record.id;
-                    });
-                  }}
-                >
-                  <Text color="$gemInk" fontSize="$6" lineHeight={1} aria-hidden>
-                    ⋮
-                  </Text>
-                </GemButton>
-                {openMenuId === record.id && (
-                  <div
-                    className="table-kit-gallery-card-menu-panel"
-                    role="menu"
+              {galleryCardActionsVisible && (
+                <div className="table-kit-gallery-card-menu">
+                  <GemButton
+                    type="button"
+                    variant="quiet"
+                    className="table-kit-gallery-card-menu-trigger"
+                    aria-label={`Card options for ${title}`}
+                    aria-expanded={openMenuId === record.id}
                     onPointerDown={(event) => event.stopPropagation()}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      setOpenMenuId((current) => {
+                        if (current === record.id) {
+                          menuCardWasSelectedRef.current = false;
+                          return null;
+                        }
+                        menuCardWasSelectedRef.current = selection.selectedIds.has(record.id);
+                        return record.id;
+                      });
+                    }}
                   >
-                    <GCheckboxField
-                      label="Drag to reposition"
-                      value={options.dragToReposition}
-                      width="medium"
-                      onChange={(checked) => updateCardOption(record.id, "dragToReposition", checked)}
-                    />
-                  </div>
-                )}
-              </div>}
+                    <Text color="$gemInk" fontSize="$6" lineHeight={1} aria-hidden>
+                      ⋮
+                    </Text>
+                  </GemButton>
+                  {openMenuId === record.id && (
+                    <div
+                      className="table-kit-gallery-card-menu-panel"
+                      role="menu"
+                      onPointerDown={(event) => event.stopPropagation()}
+                    >
+                      <GCheckboxField
+                        label="Drag to reposition"
+                        value={options.dragToReposition}
+                        width="medium"
+                        onChange={(checked) => updateCardOption(record.id, "dragToReposition", checked)}
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
               <YStack
                 className="table-kit-gallery-card-surface"
                 role={onExpansionChange ? "button" : undefined}
