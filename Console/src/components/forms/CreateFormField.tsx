@@ -1,11 +1,6 @@
 import { Controller, type Control, type FieldValues, type Path, type UseFormReturn } from "react-hook-form";
 import { Checkbox, Label, XStack, YStack } from "tamagui";
-import {
-  CreateFieldFrame,
-  CreateSearchableSelectField,
-  CreateSelectField,
-  CreateTextField,
-} from "./CreateForm";
+import { CreateFieldFrame, CreateSearchableSelectField, CreateSelectField, CreateTextField } from "./CreateForm";
 
 /** Render a reusable text field from any React Hook Form shape. */
 export function CreateFormText<T extends FieldValues>({
@@ -111,11 +106,18 @@ export function CreateFormCheckbox<T extends FieldValues>({
   const checked = Boolean(form.watch(name));
   const id = String(name);
   return (
-    <CreateFieldFrame id={id} label={label} required={required} error={typeof message === "string" ? message : undefined}>
+    <CreateFieldFrame
+      id={id}
+      label={label}
+      required={required}
+      error={typeof message === "string" ? message : undefined}
+    >
       <Checkbox
         id={id}
         checked={checked}
-        onCheckedChange={(checked) => form.setValue(name, checked === true, { shouldValidate: true, shouldDirty: true })}
+        onCheckedChange={(checked) =>
+          form.setValue(name, checked === true, { shouldValidate: true, shouldDirty: true })
+        }
         aria-invalid={Boolean(message)}
         aria-required={required}
       >
@@ -144,7 +146,12 @@ export function CreateFormMultiSelect<T extends FieldValues>({
   const id = String(name);
 
   return (
-    <CreateFieldFrame id={id} label={label} required={required} error={typeof message === "string" ? message : undefined}>
+    <CreateFieldFrame
+      id={id}
+      label={label}
+      required={required}
+      error={typeof message === "string" ? message : undefined}
+    >
       <YStack gap="$2" role="group" aria-label={label}>
         {options.map((option) => {
           const optionId = `${id}-${option.value}`;
@@ -155,9 +162,10 @@ export function CreateFormMultiSelect<T extends FieldValues>({
                 id={optionId}
                 checked={checked}
                 onCheckedChange={(nextChecked) => {
-                  const nextValues = nextChecked === true
-                    ? [...selected.filter((value) => value !== option.value), option.value]
-                    : selected.filter((value) => value !== option.value);
+                  const nextValues =
+                    nextChecked === true
+                      ? [...selected.filter((value) => value !== option.value), option.value]
+                      : selected.filter((value) => value !== option.value);
                   form.setValue(name, nextValues as T[Path<T>], { shouldValidate: true, shouldDirty: true });
                 }}
               >

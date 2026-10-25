@@ -20,11 +20,14 @@ export const GemField = forwardRef<HTMLInputElement | HTMLTextAreaElement, GemFi
   const generatedID = useId();
   const inputID = id ?? generatedID;
   const errorID = `${inputID}-error`;
-  const controlClassName = ["create-form-control", `create-form-control--${width}`, className].filter(Boolean).join(" ");
+  const controlClassName = ["create-form-control", `create-form-control--${width}`, className]
+    .filter(Boolean)
+    .join(" ");
   return (
     <YStack className="create-form-field" gap="$1">
       <Label htmlFor={inputID} color="$gemMuted" fontSize="$2" fontWeight="700">
-        {label}{required ? " *" : ""}
+        {label}
+        {required ? " *" : ""}
       </Label>
       {multiline ? (
         <TextArea

@@ -39,7 +39,12 @@ function validDate(value: string) {
   if (!match) return false;
   const [, year, month, day] = match;
   const date = new Date(`${value}T00:00:00Z`);
-  return !Number.isNaN(date.getTime()) && date.getUTCFullYear() === +year && date.getUTCMonth() + 1 === +month && date.getUTCDate() === +day;
+  return (
+    !Number.isNaN(date.getTime()) &&
+    date.getUTCFullYear() === +year &&
+    date.getUTCMonth() + 1 === +month &&
+    date.getUTCDate() === +day
+  );
 }
 const optionalDate = optional.refine((value) => !value.trim() || validDate(value.trim()), "Enter a valid date.");
 const optionalURL = optional.refine((value) => {
@@ -51,11 +56,16 @@ const optionalURL = optional.refine((value) => {
     return false;
   }
 }, "Enter a valid URL starting with http:// or https://.");
-const optionalEmail = optional.refine((value) => !value.trim() || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim()), "Enter a valid email address.");
+const optionalEmail = optional.refine(
+  (value) => !value.trim() || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim()),
+  "Enter a valid email address.",
+);
 const optionalPhone = optional.refine((value) => {
   const normalized = value.trim();
   if (!normalized) return true;
-  return /^\+?[0-9().\-\s]+(?:\s*(?:x|ext\.?)\s*[0-9]+)?$/i.test(normalized) && (normalized.match(/\d/g) ?? []).length >= 7;
+  return (
+    /^\+?[0-9().\-\s]+(?:\s*(?:x|ext\.?)\s*[0-9]+)?$/i.test(normalized) && (normalized.match(/\d/g) ?? []).length >= 7
+  );
 }, "Enter a valid phone number.");
 
 /** Build the canonical Employment field contract from feature-supplied options. */
@@ -68,11 +78,23 @@ export function createEmploymentFieldDefinitions(options: {
 }): readonly EmploymentFieldDefinition[] {
   return [
     { name: "employerName", label: "Employer name", schema: required("Employer name"), required: true },
-    { name: "employerType", label: "Employer type", schema: required("Employer type"), required: true, options: options.employerType },
+    {
+      name: "employerType",
+      label: "Employer type",
+      schema: required("Employer type"),
+      required: true,
+      options: options.employerType,
+    },
     { name: "industry", label: "Industry", schema: optional, options: options.industry },
     { name: "website", label: "Website", schema: optionalURL, type: "url", width: "medium" },
     { name: "positionTitle", label: "Position title", schema: required("Position title"), required: true },
-    { name: "employmentType", label: "Employment type", schema: required("Employment type"), required: true, options: options.employmentType },
+    {
+      name: "employmentType",
+      label: "Employment type",
+      schema: required("Employment type"),
+      required: true,
+      options: options.employmentType,
+    },
     { name: "startDate", label: "Start date", schema: optionalDate, type: "date", width: "short" },
     { name: "endDate", label: "End date", schema: optionalDate, type: "date", width: "short" },
     { name: "employmentStatus", label: "Status", schema: required("Status"), required: true, options: options.status },

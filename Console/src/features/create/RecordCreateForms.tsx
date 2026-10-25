@@ -2,9 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState, type ReactNode } from "react";
 import { useForm, type DefaultValues, type FieldValues, type Resolver, type UseFormReturn } from "react-hook-form";
 import { z } from "zod";
-import {
-  CreateFormFrame,
-} from "../../components/forms/CreateForm";
+import { CreateFormFrame } from "../../components/forms/CreateForm";
 import { CreateFormSelect as Select, CreateFormText as Text } from "../../components/forms/CreateFormField";
 import {
   GeoapifyAddressSearch,
@@ -49,7 +47,12 @@ import {
   type ServiceAccountCreateFormValues,
   type ServiceAccountFieldDefinition,
 } from "../service-accounts/serviceAccountCreateFields";
-import { domainFieldDefinitions, domainSchema, type DomainCreateFormValues, type DomainFieldDefinition } from "../domains/domainCreateFields";
+import {
+  domainFieldDefinitions,
+  domainSchema,
+  type DomainCreateFormValues,
+  type DomainFieldDefinition,
+} from "../domains/domainCreateFields";
 
 const transactionFieldDefinitions = createTransactionFieldDefinitions({ categories: [], subcategories: [] });
 const transactionSchema = createTransactionSchema(transactionFieldDefinitions);
@@ -132,7 +135,14 @@ function addressField(name: keyof AddressCreateFormValues): AddressFieldDefiniti
 
 function renderEducationField(form: UseFormReturn<EducationCreateFormValues>, field: EducationFieldDefinition) {
   return field.options ? (
-    <Select key={field.name} form={form} name={field.name} label={field.label} options={[...field.options]} required={field.required} />
+    <Select
+      key={field.name}
+      form={form}
+      name={field.name}
+      label={field.label}
+      options={[...field.options]}
+      required={field.required}
+    />
   ) : (
     <Text
       key={field.name}
@@ -160,7 +170,16 @@ function renderEmploymentField(form: UseFormReturn<EmploymentCreateFormValues>, 
       searchPlaceholder={field.name === "workAddressID" ? "Search existing addresses" : undefined}
     />
   ) : (
-    <Text key={field.name} form={form} name={field.name} label={field.label} required={field.required} type={field.type} multiline={field.multiline} width={field.width} />
+    <Text
+      key={field.name}
+      form={form}
+      name={field.name}
+      label={field.label}
+      required={field.required}
+      type={field.type}
+      multiline={field.multiline}
+      width={field.width}
+    />
   );
 }
 
@@ -170,20 +189,63 @@ function employmentField(fields: readonly EmploymentFieldDefinition[], name: key
   return definition;
 }
 
-function renderTransactionField(form: UseFormReturn<TransactionCreateFormValues>, field: import("../transactions/transactionCreateFields").TransactionFieldDefinition) {
+function renderTransactionField(
+  form: UseFormReturn<TransactionCreateFormValues>,
+  field: import("../transactions/transactionCreateFields").TransactionFieldDefinition,
+) {
   return field.options ? (
-    <Select key={field.name} form={form} name={field.name} label={field.label} options={[...field.options]} required={field.required} />
+    <Select
+      key={field.name}
+      form={form}
+      name={field.name}
+      label={field.label}
+      options={[...field.options]}
+      required={field.required}
+    />
   ) : (
-    <Text key={field.name} form={form} name={field.name} label={field.label} required={field.required} type={field.type} multiline={field.multiline} width={field.width} />
+    <Text
+      key={field.name}
+      form={form}
+      name={field.name}
+      label={field.label}
+      required={field.required}
+      type={field.type}
+      multiline={field.multiline}
+      width={field.width}
+    />
   );
 }
 
-function renderServiceAccountField(form: UseFormReturn<ServiceAccountCreateFormValues>, field: ServiceAccountFieldDefinition) {
-  return <Text key={field.name} form={form} name={field.name} label={field.label} required={field.required} type={field.type} multiline={field.multiline} width={field.width} />;
+function renderServiceAccountField(
+  form: UseFormReturn<ServiceAccountCreateFormValues>,
+  field: ServiceAccountFieldDefinition,
+) {
+  return (
+    <Text
+      key={field.name}
+      form={form}
+      name={field.name}
+      label={field.label}
+      required={field.required}
+      type={field.type}
+      multiline={field.multiline}
+      width={field.width}
+    />
+  );
 }
 
 function renderDomainField(form: UseFormReturn<DomainCreateFormValues>, field: DomainFieldDefinition) {
-  return <Text key={field.name} form={form} name={field.name} label={field.label} required={field.required} multiline={field.multiline} width={field.width} />;
+  return (
+    <Text
+      key={field.name}
+      form={form}
+      name={field.name}
+      label={field.label}
+      required={field.required}
+      multiline={field.multiline}
+      width={field.width}
+    />
+  );
 }
 
 /** Generate the stable EmploymentID required by the existing API without exposing it as form input. */
@@ -208,11 +270,7 @@ export function DomainCreateForm({
       }
       onCancel={onCancel}
     >
-      {(form) => (
-        <>
-          {domainFieldDefinitions.map((field) => renderDomainField(form, field))}
-        </>
-      )}
+      {(form) => <>{domainFieldDefinitions.map((field) => renderDomainField(form, field))}</>}
     </FormShell>
   );
 }
@@ -385,7 +443,10 @@ export function EmploymentCreateForm({
     industry: industryOptions,
     employmentType: employmentTypeOptions,
     status: statusOptions,
-    workAddress: addresses.map((a) => ({ value: a.id, label: [a.addressType, a.city, a.id].filter(Boolean).join(" · ") })),
+    workAddress: addresses.map((a) => ({
+      value: a.id,
+      label: [a.addressType, a.city, a.id].filter(Boolean).join(" · "),
+    })),
   });
   const schema = createEmploymentSchema(employmentFields);
 
@@ -510,11 +571,7 @@ export function ServiceAccountCreateForm({
       }
       onCancel={onCancel}
     >
-      {(form) => (
-        <>
-          {serviceAccountFieldDefinitions.map((field) => renderServiceAccountField(form, field))}
-        </>
-      )}
+      {(form) => <>{serviceAccountFieldDefinitions.map((field) => renderServiceAccountField(form, field))}</>}
     </FormShell>
   );
 }
@@ -583,9 +640,7 @@ function TransactionFields({ form }: { form: UseFormReturn<TransactionCreateForm
   useEffect(() => {
     form.setValue("subcategoryID", "");
   }, [categoryID, form]);
-  return (
-    <>{fieldDefinitions.map((field) => renderTransactionField(form, field))}</>
-  );
+  return <>{fieldDefinitions.map((field) => renderTransactionField(form, field))}</>;
 }
 
 function blank(value: string): string | null {
