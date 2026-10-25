@@ -1,4 +1,4 @@
-import type { ChangeEvent } from "react";
+import { Checkbox, Label, Select, SizableText, XStack, YStack } from "tamagui";
 
 export type GalleryCardSize = "small" | "medium" | "large";
 
@@ -16,24 +16,33 @@ export function GalleryViewControls({
   onCardSizeChange,
   onFillMediaChange,
 }: GalleryViewControlsProps) {
-  const handleSizeChange = (event: ChangeEvent<HTMLSelectElement>) => {
-    onCardSizeChange(event.target.value as GalleryCardSize);
-  };
-
   return (
-    <div className="table-kit-gallery-controls" aria-label="Gallery display controls">
-      <label className="table-kit-gallery-size">
-        Card size
-        <select value={cardSize} onChange={handleSizeChange}>
-          <option value="small">Small</option>
-          <option value="medium">Medium</option>
-          <option value="large">Large</option>
-        </select>
-      </label>
-      <label className="table-kit-gallery-fit-media">
-        <input type="checkbox" checked={fillMedia} onChange={(event) => onFillMediaChange(event.target.checked)} />
-        Fill media
-      </label>
-    </div>
+    <XStack className="table-kit-gallery-controls" aria-label="Gallery display controls" alignItems="flex-end" gap="$3">
+      <YStack className="table-kit-gallery-size" gap="$1">
+        <Label htmlFor="gallery-card-size">
+          <SizableText color="$gemMuted" fontSize="$2">Card size</SizableText>
+        </Label>
+        <Select value={cardSize} onValueChange={(value) => onCardSizeChange(value as GalleryCardSize)}>
+          <Select.Trigger id="gallery-card-size" aria-label="Card size" size="$3" minWidth={120}>
+            <Select.Value />
+          </Select.Trigger>
+          <Select.Content>
+            <Select.Viewport minWidth={120}>
+              <Select.Item value="small"><Select.ItemText>Small</Select.ItemText></Select.Item>
+              <Select.Item value="medium"><Select.ItemText>Medium</Select.ItemText></Select.Item>
+              <Select.Item value="large"><Select.ItemText>Large</Select.ItemText></Select.Item>
+            </Select.Viewport>
+          </Select.Content>
+        </Select>
+      </YStack>
+      <XStack className="table-kit-gallery-fit-media" alignItems="center" gap="$2">
+        <Checkbox id="gallery-fill-media" size="$3" checked={fillMedia} onCheckedChange={(checked) => onFillMediaChange(checked === true)}>
+          <Checkbox.Indicator />
+        </Checkbox>
+        <Label htmlFor="gallery-fill-media">
+          <SizableText color="$gemMuted" fontSize="$2">Fill media</SizableText>
+        </Label>
+      </XStack>
+    </XStack>
   );
 }
