@@ -405,9 +405,15 @@ jobs:
               }
             }`;
 
-            const projectItems = (
+            let projectItems = (
               await projectApi(itemQuery, { projectId: project.id })
             ).node?.items?.nodes ?? [];
+            /** Re-read project membership after a concurrent webhook add. */
+            const refreshProjectItems = async () => {
+              projectItems = (await projectApi(itemQuery, { projectId: project.id }))
+                .node?.items?.nodes ?? [];
+              return projectItems;
+            };
             let issueItem = projectItems.find(
               (item) =>
                 item.content?.__typename === "Issue" &&
@@ -421,17 +427,30 @@ jobs:
                   item { id }
                 }
               }`;
-              const addedIssue = await projectApi(addIssueMutation, {
-                projectId: project.id,
-                contentId: issue.node_id,
-              });
-              issueItem = {
-                id: addedIssue.addProjectV2ItemById.item.id,
-                fieldValues: { nodes: [] },
-              };
-              core.notice(
-                `Added issue #${issueNumber} to the GemsForgeAPI project.`,
-              );
+              try {
+                const addedIssue = await projectApi(addIssueMutation, {
+                  projectId: project.id,
+                  contentId: issue.node_id,
+                });
+                issueItem = {
+                  id: addedIssue.addProjectV2ItemById.item.id,
+                  fieldValues: { nodes: [] },
+                };
+                core.notice(
+                  `Added issue #${issueNumber} to the GemsForgeAPI project.`,
+                );
+              } catch (error) {
+                if (!String(error?.message ?? error).includes("Content already exists")) {
+                  throw error;
+                }
+                issueItem = (await refreshProjectItems()).find(
+                  (item) => item.content?.__typename === "Issue" &&
+                    item.content.number === issueNumber &&
+                    item.content.repository?.nameWithOwner === context.repo.owner + "/" + context.repo.repo,
+                );
+                if (!issueItem) throw error;
+                core.notice(`Issue #${issueNumber} was added by a concurrent sync.`);
+              }
             }
 
             // Reconcile from current repository state rather than event order.
@@ -519,11 +538,24 @@ jobs:
                     item { id }
                   }
                 }`;
-                const added = await projectApi(addItemMutation, {
-                  projectId: project.id,
-                  contentId: pullRequest.node_id,
-                });
-                pullRequestItem = { id: added.addProjectV2ItemById.item.id };
+                try {
+                  const added = await projectApi(addItemMutation, {
+                    projectId: project.id,
+                    contentId: pullRequest.node_id,
+                  });
+                  pullRequestItem = { id: added.addProjectV2ItemById.item.id };
+                } catch (error) {
+                  if (!String(error?.message ?? error).includes("Content already exists")) {
+                    throw error;
+                  }
+                  pullRequestItem = (await refreshProjectItems()).find(
+                    (item) => item.content?.__typename === "PullRequest" &&
+                      item.content.number === pullRequest.number &&
+                      item.content.repository?.nameWithOwner === context.repo.owner + "/" + context.repo.repo,
+                  );
+                  if (!pullRequestItem) throw error;
+                  core.notice(`PR #${pullRequest.number} was added by a concurrent sync.`);
+                }
               }
 
               await setStatus(pullRequestItem,
