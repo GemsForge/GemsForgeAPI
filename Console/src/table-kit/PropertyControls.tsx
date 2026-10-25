@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { Button, Tooltip, type TamaguiElement } from "tamagui";
+import { GCheckboxField, GSearchField } from "../components/ui";
 import { filterTableProperties, type TablePropertyConfigurationState, type TablePropertyOption } from "./configuration";
 
 /** Accessible property menu backed by the consumer-owned configuration state. */
@@ -11,8 +12,8 @@ export interface TablePropertyControlsProps {
   showAllLabel?: string;
   hideAllLabel?: string;
   resetLabel?: string;
-  /** Accessible name for the dialog close action. */
-  closeLabel?: string;
+  /** Maximum number of visible properties for a constrained renderer. */
+  maxVisibleProperties?: number;
 }
 
 /** Render searchable, reorderable xs property controls without changing record data. */
@@ -24,7 +25,7 @@ export function TablePropertyControls({
   showAllLabel = "Show all",
   hideAllLabel = "Hide all",
   resetLabel = "Reset properties",
-  closeLabel = "Close properties",
+  maxVisibleProperties,
 }: TablePropertyControlsProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -43,6 +44,22 @@ export function TablePropertyControls({
       triggerRef.current?.focus();
     }
     previousOpen.current = open;
+  }, [open]);
+
+  /** Close the transient popover when focus moves to another feature or the page. */
+  useEffect(() => {
+    if (!open) return;
+
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target;
+      const triggerElement = triggerRef.current as unknown as HTMLElement | null;
+      if (target instanceof Node && !dialogRef.current?.contains(target) && !triggerElement?.contains(target)) {
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
   }, [open]);
 
   return (
@@ -79,7 +96,7 @@ export function TablePropertyControls({
           id={dialogId}
           role="dialog"
           aria-labelledby={dialogTitleId}
-          className="table-kit-property-dialog"
+          className="table-kit-property-dialog table-kit-popover-frame"
           onKeyDown={(event) => {
             if (event.key === "Escape") {
               event.stopPropagation();
@@ -88,28 +105,19 @@ export function TablePropertyControls({
           }}
         >
           <h2 id={dialogTitleId}>{label}</h2>
-          <Button
-            size="xs"
-            color="$gemInk"
-            backgroundColor="$gemPanel"
-            borderColor="$gemPanelLight"
-            borderWidth={1}
-            borderRadius="$gemControl"
-            type="button"
-            aria-label={closeLabel}
-            onClick={() => setOpen(false)}
-          >
-            {closeLabel}
-          </Button>
-          <label>
-            {searchLabel}
-            <input
-              type="search"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder={searchLabel}
-            />
-          </label>
+          {maxVisibleProperties !== undefined && (
+            <p className="table-kit-property-limit" role="status">
+              You can select up to {maxVisibleProperties} properties at a time.
+            </p>
+          )}
+          <GSearchField
+            label={undefined}
+            aria-label={searchLabel}
+            value={search}
+            onChange={setSearch}
+            placeholder={searchLabel}
+            width="short"
+          />
           <div role="toolbar" aria-label="Property actions">
             <Button
               size="xs"
@@ -119,6 +127,7 @@ export function TablePropertyControls({
               borderWidth={1}
               borderRadius="$gemControl"
               type="button"
+              aria-label={showAllLabel}
               onClick={configuration.showAll}
             >
               {showAllLabel}
@@ -153,46 +162,15 @@ export function TablePropertyControls({
           )}
           <ul aria-label="Properties">
             {filteredProperties.map((property) => {
-              const index = configuration.configuration.order.indexOf(property.id);
               const visible = configuration.visibleIds.includes(property.id);
               return (
                 <li key={property.id}>
-                  <label>
-                    <input
-                      type="checkbox"
-                      checked={visible}
-                      onChange={(event) => configuration.setVisibility(property.id, event.target.checked)}
-                    />
-                    <span>{property.label}</span>
-                  </label>
-                  <Button
-                    type="button"
-                    size="xs"
-                    color="$gemInk"
-                    backgroundColor="$gemPanel"
-                    borderColor="$gemPanelLight"
-                    borderWidth={1}
-                    borderRadius="$gemControl"
-                    aria-label={`Move ${property.label} up`}
-                    disabled={index <= 0}
-                    onClick={() => configuration.move(property.id, "up")}
-                  >
-                    Move up
-                  </Button>
-                  <Button
-                    type="button"
-                    size="xs"
-                    color="$gemInk"
-                    backgroundColor="$gemPanel"
-                    borderColor="$gemPanelLight"
-                    borderWidth={1}
-                    borderRadius="$gemControl"
-                    aria-label={`Move ${property.label} down`}
-                    disabled={index < 0 || index >= configuration.configuration.order.length - 1}
-                    onClick={() => configuration.move(property.id, "down")}
-                  >
-                    Move down
-                  </Button>
+                  <GCheckboxField
+                    label={property.label}
+                    value={visible}
+                    onChange={(checked) => configuration.setVisibility(property.id, checked)}
+                    width="long"
+                  />
                 </li>
               );
             })}

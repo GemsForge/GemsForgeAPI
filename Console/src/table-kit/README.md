@@ -143,8 +143,7 @@ actions remain discoverable without expanding query controls.
 
 `Table.Root` owns one scoped selection context for its child components. Add
 `<Table.Selection />` inside the root to provide the accessible current-page
-Select All control, an explicit all-matching action when the adapter supplies
-IDs beyond the current page, selected-count feedback, and clear selection.
+Select All control, selected-count feedback, and clear selection.
 
 ```tsx
 <Table.Root

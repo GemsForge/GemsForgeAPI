@@ -618,6 +618,16 @@ dialog::backdrop {
 .create-form-control {
   width: 100%;
   min-height: 2.75rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 0.55rem;
+  outline: 0;
+  background: #0c1b20;
+  color: var(--ink);
+}
+.create-form-control:focus,
+.create-form-control:focus-visible {
+  border-color: var(--mint);
 }
 /* Map semantic field widths to compact controls without changing the shared field shell. */
 .create-form-control--short {
@@ -628,6 +638,24 @@ dialog::backdrop {
 }
 .create-form-control--long {
   max-width: 100%;
+}
+.field-checkbox {
+  width: 1.25rem;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  min-height: 1.25rem;
+  padding: 0;
+}
+.table-kit-property-dialog .field-checkbox[data-state="checked"] {
+  border-color: var(--mint);
+  background: var(--mint);
+  color: var(--canvas);
+}
+.table-kit-property-dialog [role="toolbar"] {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
 }
 /* Keep related form fields readable in columns while preserving a single-column compact layout. */
 .create-form-grid {
@@ -824,35 +852,24 @@ dialog::backdrop {
 .editable-record-label {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 0.5rem;
 }
-.field-edit-button {
-  display: inline-grid;
-  place-items: center;
-  flex: 0 0 auto;
-  width: 1.25rem;
-  height: 1.25rem;
-  padding: 0.15rem;
-  border: 1px solid transparent;
-  border-radius: 0.35rem;
+.editable-record-label-button {
+  display: inline;
+  padding: 0;
+  border: 0;
   background: transparent;
-  color: var(--mint);
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-align: left;
   cursor: pointer;
 }
-.field-edit-button:hover,
-.field-edit-button:focus-visible {
-  border-color: var(--line);
-  background: rgba(120, 209, 189, 0.1);
-}
-.field-edit-button svg {
-  width: 100%;
-  height: 100%;
-  fill: none;
-  stroke: currentColor;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-width: 1.7;
+.editable-record-label-button:hover,
+.editable-record-label-button:focus-visible {
+  color: var(--mint);
+  outline: 0;
+  text-decoration: underline;
 }
 .editable-field-form {
   display: grid;
@@ -861,9 +878,19 @@ dialog::backdrop {
 }
 .editable-field-form label {
   margin: 0;
+  color: var(--gold);
 }
-.editable-field-form .button-row {
-  margin-top: 0.15rem;
+/* Keeps the shared edit control and its actions aligned without sacrificing narrow-screen wrapping. */
+.editable-field-control-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+.editable-field-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
 }
 .editable-field-form [type="checkbox"] {
   width: 1.15rem;
@@ -929,6 +956,21 @@ dialog::backdrop {
 }
 .gem-record-list-row {
   min-width: 0;
+}
+/* Keep native list semantics without browser bullets or default indentation. */
+.table-kit-record-list {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.table-kit-record-list li {
+  min-width: 0;
+}
+.table-kit-record-list li[tabindex] {
+  width: 100%;
+  cursor: pointer;
 }
 .gem-record-view-toggle {
   display: flex;
@@ -1053,6 +1095,11 @@ dialog::backdrop {
   justify-content: center;
   color: var(--mint);
   font-size: 1rem;
+}
+.gem-hue-list-icon-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 .gem-record-table-unconfigured {
   color: var(--muted);
@@ -1309,34 +1356,7 @@ dialog::backdrop {
   width: 100%;
 }
 
-.table-kit-views {
-  display: inline-flex;
-  flex-direction: row;
-  flex-wrap: nowrap;
-  flex: 0 0 auto;
-  align-items: stretch;
-  gap: 0;
-  min-width: max-content;
-  max-width: 100%;
-  overflow: hidden;
-  border: 1px solid var(--line);
-  border-radius: 0.55rem;
-  background: var(--panel);
-}
-
-.table-kit-views > button {
-  flex: 0 0 auto;
-  min-height: 2.75rem;
-  padding: 0.55rem 0.8rem;
-  border: 0;
-  border-right: 1px solid var(--line);
-  border-radius: 0;
-  background: transparent;
-  color: var(--ink);
-  white-space: nowrap;
-}
-
-/* Keep view switching compact while retaining the full label for AT and Tooltip. */
+/* Keep view icons legible within Tamagui's equal-width XGroup items. */
 .table-kit-view-icon {
   display: inline-grid;
   pointer-events: auto;
@@ -1344,15 +1364,6 @@ dialog::backdrop {
   min-width: 1.25rem;
   min-height: 1.25rem;
   font-size: 1.05rem;
-}
-
-.table-kit-views > button:last-child {
-  border-right: 0;
-}
-
-.table-kit-views > button[data-state="on"] {
-  background: var(--mint);
-  color: var(--canvas);
 }
 
 /* Keep query controls and the properties gear attached to the view group. */
@@ -1515,8 +1526,14 @@ dialog::backdrop {
   position: absolute;
   z-index: 5;
   top: calc(100% + 0.35rem);
-  right: 0;
-  width: min(22rem, calc(100vw - 2rem));
+  left: 50%;
+  right: auto;
+  box-sizing: border-box;
+  width: min(24rem, calc(100vw - 2rem));
+  max-width: calc(100vw - 2rem);
+  max-height: min(42rem, calc(100vh - 2rem));
+  overflow: auto;
+  transform: translateX(-50%);
   padding: 0.85rem;
   border: 1px solid var(--line);
   border-radius: 0.55rem;
@@ -1524,28 +1541,62 @@ dialog::backdrop {
   box-shadow: 0 0.7rem 1.8rem rgb(0 0 0 / 20%);
 }
 
+.table-kit-popover-frame {
+  border: 1px solid var(--line);
+  border-radius: 0.55rem;
+  background: var(--panel);
+  box-shadow: 0 0.7rem 1.8rem rgb(0 0 0 / 20%);
+}
+
+.table-kit-popover-frame > h2,
+.table-kit-popover-frame > [role="heading"],
+.table-kit-popover-frame > [data-radix-menu-label] {
+  margin: 0 0 0.75rem;
+  color: var(--ink);
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+.table-kit-property-close {
+  position: absolute;
+  top: 0.65rem;
+  right: 0.65rem;
+  display: inline-grid;
+  width: 2rem;
+  min-width: 2rem;
+  height: 2rem;
+  min-height: 2rem;
+  padding: 0;
+  place-items: center;
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
 .table-kit-property-dialog ul {
   display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.45rem;
   padding: 0;
   list-style: none;
 }
+.table-kit-property-limit {
+  margin: -0.35rem 0 0.75rem;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
 
-/* Keep the New Record workflow over the collection while preserving its width. */
+/* Tamagui's full-screen portal centers its content and owns modal positioning. */
 .table-kit-utility-backdrop {
   position: fixed;
   z-index: 40;
   inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  padding: 1rem clamp(1rem, 3vw, 2rem);
   background: rgb(3 11 14 / 72%);
   backdrop-filter: blur(4px);
 }
 
 .table-kit-new-record-utility {
-  width: min(36rem, 100%);
+  width: min(36rem, calc(100vw - 2rem));
   max-height: min(48rem, calc(100vh - 2rem));
   overflow: auto;
   padding: 1.25rem;
@@ -1567,7 +1618,8 @@ dialog::backdrop {
   margin: 0;
 }
 
-.table-kit-new-record-heading p {
+/* Keep the operation description below the title/close row rather than in its flex line. */
+.table-kit-new-record-description p {
   margin: 0.35rem 0 0;
   color: var(--muted);
 }
@@ -2759,27 +2811,16 @@ dialog {
   gap: 0.75rem;
   min-width: 0;
 }
-.table-kit-gallery-size {
-  display: inline-grid;
-  justify-self: end;
-  gap: 0.25rem;
-  color: var(--muted);
-  font-size: 0.78rem;
-}
-.table-kit-gallery-size select {
-  min-height: 2.25rem;
-  border: 1px solid var(--line);
-  border-radius: 0.45rem;
-  background: var(--canvas);
-  color: var(--ink);
-}
 .table-kit-gallery > [role="list"] {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
   min-width: 0;
 }
 .table-kit-gallery-card {
+  position: relative;
   display: grid;
   min-width: 0;
-  flex: 1 1 15rem;
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 0.9rem;
@@ -2787,6 +2828,44 @@ dialog {
   transition:
     border-color 160ms ease,
     box-shadow 160ms ease;
+}
+.table-kit-gallery-card-menu {
+  position: absolute;
+  z-index: 2;
+  top: 0.45rem;
+  right: 0.45rem;
+}
+.table-kit-gallery-card-menu-trigger {
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: rgb(3 11 14 / 72%);
+  color: var(--ink);
+  font-size: 1.25rem;
+  line-height: 1;
+}
+.table-kit-gallery-card-menu-panel {
+  position: absolute;
+  top: 2.25rem;
+  right: 0;
+  display: grid;
+  gap: 0.45rem;
+  min-width: 12rem;
+  padding: 0.65rem;
+  border: 1px solid var(--line);
+  border-radius: 0.55rem;
+  background: var(--panel);
+  box-shadow: 0 0.7rem 1.8rem rgb(0 0 0 / 30%);
+}
+.table-kit-gallery-card-menu-panel label {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--ink);
+  font-size: 0.78rem;
+  white-space: nowrap;
 }
 .table-kit-gallery-card.is-selected,
 .table-kit-gallery-card:focus-within {
@@ -2805,15 +2884,20 @@ dialog {
 .table-kit-gallery-image {
   display: grid;
   place-items: center;
-  min-height: 8rem;
+  width: 100%;
+  aspect-ratio: 1;
   overflow: hidden;
   background: var(--canvas);
 }
 .table-kit-gallery-image img {
   width: 100%;
   height: 100%;
-  max-width: 100%;
-  max-height: 100%;
+}
+.table-kit-gallery-image.is-draggable {
+  cursor: grab;
+}
+.table-kit-gallery-image.is-draggable:active {
+  cursor: grabbing;
 }
 .table-kit-gallery-copy {
   display: grid;
@@ -2833,6 +2917,12 @@ dialog {
   color: var(--ink);
   font-weight: 750;
 }
+.table-kit-gallery-property p {
+  margin: 0;
+  color: inherit;
+  font-size: inherit;
+  line-height: inherit;
+}
 .table-kit-gallery-subtitle,
 .table-kit-gallery-status,
 .table-kit-gallery-property {
@@ -2849,7 +2939,7 @@ dialog {
 .table-kit-gallery-properties {
   display: grid;
   gap: 0.3rem;
-  max-height: 5.5rem;
+  max-height: calc(6 * 1.25rem + 1.5rem);
   overflow-y: auto;
   overscroll-behavior: contain;
 }
@@ -2857,32 +2947,38 @@ dialog {
   justify-self: start;
   margin: 0 0.75rem 0.75rem;
 }
-.table-kit-gallery-card.is-small {
-  flex-basis: 12rem;
+.table-kit-record-grid .table-kit-record-row-selected {
+  background: color-mix(in srgb, var(--mint) 12%, transparent);
 }
-.table-kit-gallery-card.is-small .table-kit-gallery-image {
-  min-height: 6rem;
+.table-kit-gallery.is-small .table-kit-gallery-card {
 }
-.table-kit-gallery-card.is-small .table-kit-gallery-properties {
-  max-height: 3.75rem;
+.table-kit-gallery.is-small > [role="list"] {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
 }
-.table-kit-gallery-card.is-large {
-  flex-basis: 20rem;
+.table-kit-gallery.is-small .table-kit-gallery-image {
+  aspect-ratio: 1;
 }
-.table-kit-gallery-card.is-large .table-kit-gallery-image {
-  min-height: 12rem;
+.table-kit-gallery.is-small .table-kit-gallery-properties {
+  max-height: calc(6 * 1.25rem + 1.5rem);
 }
-.table-kit-gallery-card.is-large .table-kit-gallery-properties {
-  max-height: 8rem;
+.table-kit-gallery.is-large .table-kit-gallery-card {
+}
+.table-kit-gallery.is-large > [role="list"] {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.table-kit-gallery.is-large .table-kit-gallery-image {
+  aspect-ratio: 1;
+}
+.table-kit-gallery.is-large .table-kit-gallery-properties {
+  max-height: calc(6 * 1.25rem + 1.5rem);
 }
 @media (max-width: 640px) {
-  .table-kit-gallery-size {
-    justify-self: stretch;
-  }
-  .table-kit-gallery-size select {
+  .table-kit-gallery-card {
     width: 100%;
   }
-  .table-kit-gallery-card {
-    flex-basis: min(100%, 18rem);
+  .table-kit-gallery > [role="list"],
+  .table-kit-gallery.is-small > [role="list"],
+  .table-kit-gallery.is-large > [role="list"] {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
