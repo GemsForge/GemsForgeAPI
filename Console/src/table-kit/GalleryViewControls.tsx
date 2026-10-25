@@ -41,6 +41,7 @@ export function GalleryViewControls({
         <Switch
           id="gallery-fill-media"
           size="$3"
+          flexShrink={0}
           checked={fillMedia}
           onCheckedChange={onFillMediaChange}
           aria-label="Fill media"
