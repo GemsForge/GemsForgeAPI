@@ -1,8 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
-import { useGemHueQuery, useGemHueImageQuery, useGemHuePatchMutation } from "../../data/recordQueries";
+import { useEffect, useMemo, useState, type ChangeEvent } from "react";
+import { useCreateGemHueMutation, useGemHueQuery, useGemHueImageQuery, useGemHuePatchMutation } from "../../data/recordQueries";
 import { QueryFeedback } from "../../components/QueryFeedback";
-import type { GemHue } from "../../types";
+import type { GemHue, GemHueCreate } from "../../types";
 import { EditableRecordFields } from "../../components/EditableRecordFields";
+import { CreateFormFrame } from "../../components/forms/CreateForm";
+import { GemTextField } from "../../components/ui";
 
 const hueOptions = (values: string[]) => values.map((value) => ({ value, label: value }));
 import { api } from "../../api";
@@ -13,6 +15,54 @@ import { createGemHueTableAdapter } from "../database/recordTableAdapters";
 interface GemHuesViewProps {
   hues: GemHue[];
 }
+
+/** Shared create workflow for Gem Hues, exposed through the Table Kit action utility. */
+function GemHueCreateForm({
+  submitting,
+  error,
+  onCancel,
+  onCreate,
+}: {
+  submitting: boolean;
+  error: string | null;
+  onCancel: () => void;
+  onCreate: (payload: GemHueCreate) => Promise<void>;
+}) {
+  const [values, setValues] = useState<GemHueCreate>({
+    id: "",
+    colorName: "",
+    colorFamily: "",
+    hexCode: "",
+    mood: "",
+    palette: "",
+    description: "",
+    createdDate: "",
+    notes: "",
+  });
+  const update = (field: keyof GemHueCreate) => (event: ChangeEvent<HTMLInputElement>) =>
+    setValues((current) => ({ ...current, [field]: event.target.value }));
+
+  return (
+    <CreateFormFrame
+      title="Create Gem Hue"
+      submitting={submitting}
+      error={error}
+      onCancel={onCancel}
+      onSubmit={() => onCreate(values)}
+    >
+      <GemTextField label="ID" value={values.id} onChange={update("id")} required width="medium" />
+      <GemTextField label="Color name" value={values.colorName} onChange={update("colorName")} required width="medium" />
+      <GemTextField label="Color family" value={values.colorFamily ?? ""} onChange={update("colorFamily")} width="medium" />
+      <GemTextField label="Hex code" value={values.hexCode} onChange={update("hexCode")} required width="medium" />
+      <GemTextField label="Mood" value={values.mood ?? ""} onChange={update("mood")} width="medium" />
+      <GemTextField label="Palette" value={values.palette ?? ""} onChange={update("palette")} width="medium" />
+      <GemTextField label="Description" value={values.description ?? ""} onChange={update("description")} width="long" multiline />
+      <GemTextField label="Created date" value={values.createdDate ?? ""} onChange={update("createdDate")} width="medium" />
+      <GemTextField label="Notes" value={values.notes ?? ""} onChange={update("notes")} width="long" multiline />
+    </CreateFormFrame>
+  );
+}
+
 export function GemHuesView({ hues }: GemHuesViewProps) {
   const utilities = useRecordUtilities(
     hues,
@@ -27,9 +77,29 @@ export function GemHuesView({ hues }: GemHuesViewProps) {
   const detail = useGemHueQuery(selectedID);
   const image = useGemHueImageQuery(selectedID);
   const patch = useGemHuePatchMutation();
+  const create = useCreateGemHueMutation();
   const selectedHue = detail.data;
   const [imageURL, setImageURL] = useState<string | null>(null);
   const [galleryImages, setGalleryImages] = useState<Record<string, string>>({});
+
+  const createForm = (close: () => void) => (
+    <GemHueCreateForm
+      submitting={create.isPending}
+      error={create.error instanceof Error ? create.error.message : null}
+      onCancel={close}
+      onCreate={async (payload) => {
+        const created = await create.mutateAsync(payload);
+        setSelectedID(created.id);
+        close();
+      }}
+    />
+  );
+
+  const actions = {
+    newRecordUtility: {
+      options: [{ id: "new-gem-hue", label: "Input Form", description: "Create a Gem Hue record.", render: ({ close }: { close: () => void }) => createForm(close) }],
+    },
+  };
 
   // Load stored logo files for the gallery and release their object URLs when the collection changes.
   useEffect(() => {
@@ -111,6 +181,7 @@ export function GemHuesView({ hues }: GemHuesViewProps) {
         adapter={tableAdapter}
         sortOptions={[{ value: "name", label: "Color name" }, { value: "family", label: "Color family" }, { value: "created", label: "Created date" }]}
         filterOptions={Array.from(new Set(hues.map((hue) => hue.colorFamily).filter((value): value is string => Boolean(value)))).sort()}
+        actions={actions}
         detailId={selectedID}
         onDetailChange={(id) => {
           if (id === null) setSelectedID(null);
