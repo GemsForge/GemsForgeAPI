@@ -26,9 +26,11 @@ jobs:
               return;
             }
             const { data: issue } = await github.rest.issues.get({ ...context.repo, issue_number: Number(match[3]) });
-            const expectedTitle = issue.title;
-            if (title !== expectedTitle) {
-              core.setFailed("PR title must match issue #" + match[3] + " title: \"" + expectedTitle + "\".");
+            const issueNumber = match[3];
+            const titleWithoutIssueNumber = title.replace(new RegExp(`: #${issueNumber} `), ": ");
+            const expectedTitle = issue.title.replace(new RegExp(`: #${issueNumber} `), ": ");
+            if (titleWithoutIssueNumber !== expectedTitle) {
+              core.setFailed("PR title must match issue #" + issueNumber + " title, with an optional #" + issueNumber + " after the scope.");
               return;
             }
             const required = {
