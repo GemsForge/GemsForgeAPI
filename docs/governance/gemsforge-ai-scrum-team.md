@@ -22,13 +22,13 @@ These are responsibilities ChatGPT/Codex may perform, not separate accounts or p
 
 ## GitHub-first workflow
 
-1. Inspect repository policies, current work, labels, Projects, Actions, architecture, and security boundaries.
+1. Inspect repository policies, current work, labels, Projects, Actions, architecture, and security boundaries when entering formal delivery. Iterative exploratory work may begin from a focused user prompt and does not require a new story for every refinement.
 2. Create or update the working issue with goal, scope, acceptance criteria, relationships, and exact verification.
 3. Report a plan checkpoint before materially ambiguous work.
-4. Implement on an issue-numbered branch using local branch and commit rules.
+4. Implement on an issue-numbered branch using local branch and commit rules for formal delivery. During iterative exploration, keep changes isolated and local until the user requests formalization.
 5. Verify with named automated and manual checks.
 6. Open a linked PR only when authorized with evidence and remaining work.
-7. Stop at a delivery report. Merge, deploy, close, Project changes, secrets, and credentials are separate approvals.
+7. Stop at a delivery report for formal work. Merge, deploy, close, Project changes, secrets, and credentials are separate approvals. Iterative work stops at the requested refinement checkpoint and is not delivery evidence until formal verification is requested.
 
 ## Checkpoints
 
