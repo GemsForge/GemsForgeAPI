@@ -11,7 +11,17 @@ const employmentImportConfig: RecordImportConfig = {
 };
 
 export const employmentOptions = {
-  industry: ["Technology", "Healthcare", "Education", "Finance", "Government", "Retail", "Hospitality", "Manufacturing", "Other"],
+  industry: [
+    "Technology",
+    "Healthcare",
+    "Education",
+    "Finance",
+    "Government",
+    "Retail",
+    "Hospitality",
+    "Manufacturing",
+    "Other",
+  ],
   employerType: ["Company", "Nonprofit", "Government", "Self-employed", "Other"],
   employmentType: ["Full-time", "Part-time", "Contract", "Temporary", "Internship", "Self-employed", "Other"],
   status: ["Current", "Former", "On leave", "Seasonal"],

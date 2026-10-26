@@ -1,5 +1,5 @@
-import { forwardRef, useId, type ComponentProps, type Ref } from "react";
-import { Input, Label, SizableText, TextArea, YStack } from "tamagui";
+import { forwardRef, useId, type ComponentProps } from "react";
+import { Input, Label, SizableText, TextArea, YStack, type TamaguiElement } from "tamagui";
 
 /** Standard reusable field widths shared by generic and feature forms. */
 export type GemFieldWidth = "short" | "medium" | "long";
@@ -13,24 +13,27 @@ export interface GemFieldProps extends ComponentProps<typeof Input> {
 }
 
 /** Shared labelled text field with standard prompt, type, and validation properties. */
-export const GemField = forwardRef<HTMLInputElement | HTMLTextAreaElement, GemFieldProps>(function GemField(
+export const GemField = forwardRef<TamaguiElement, GemFieldProps>(function GemField(
   { label, id, error, required = false, multiline = false, width = "long", className, ...props },
   ref,
 ) {
   const generatedID = useId();
   const inputID = id ?? generatedID;
   const errorID = `${inputID}-error`;
-  const controlClassName = ["create-form-control", `create-form-control--${width}`, className].filter(Boolean).join(" ");
+  const controlClassName = ["create-form-control", `create-form-control--${width}`, className]
+    .filter(Boolean)
+    .join(" ");
   return (
     <YStack className="create-form-field" gap="$1">
       <Label htmlFor={inputID} color="$gemMuted" fontSize="$2" fontWeight="700">
-        {label}{required ? " *" : ""}
+        {label}
+        {required ? " *" : ""}
       </Label>
       {multiline ? (
         <TextArea
           {...props}
           id={inputID}
-          ref={ref as Ref<HTMLTextAreaElement>}
+          ref={ref}
           className={controlClassName}
           aria-invalid={Boolean(error)}
           aria-describedby={error ? errorID : undefined}
@@ -40,7 +43,7 @@ export const GemField = forwardRef<HTMLInputElement | HTMLTextAreaElement, GemFi
         <Input
           {...props}
           id={inputID}
-          ref={ref as Ref<HTMLInputElement>}
+          ref={ref}
           className={controlClassName}
           aria-invalid={Boolean(error)}
           aria-describedby={error ? errorID : undefined}

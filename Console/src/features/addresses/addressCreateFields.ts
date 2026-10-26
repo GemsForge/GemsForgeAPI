@@ -26,6 +26,7 @@ export type AddressFieldDefinition =
       schema: schemaType;
       required?: boolean;
       type?: "text" | "date";
+      step?: string;
       multiline?: boolean;
       width?: CreateFieldWidth;
       placeholder?: string;
@@ -61,17 +62,24 @@ const optionalPostalCode = optional.refine(
   (value) => !value.trim() || /^[\p{L}\p{N}][\p{L}\p{N} .-]*$/u.test(value.trim()),
   "Enter a valid postal code.",
 );
-const optionalDate = optional.refine(
-  (value) => !value.trim() || isValidDateInput(value.trim()),
-  "Enter a valid date.",
-);
+const optionalDate = optional.refine((value) => !value.trim() || isValidDateInput(value.trim()), "Enter a valid date.");
 
-const addressTypeOptions = ["Residence", "Storage", "Work", "School", "Other"].map((value) => ({ value, label: value }));
+const addressTypeOptions = ["Residence", "Storage", "Work", "School", "Other"].map((value) => ({
+  value,
+  label: value,
+}));
 const addressStatusOptions = ["Current", "Former", "Seasonal", "Other"].map((value) => ({ value, label: value }));
 
 /** Canonical Address form field metadata, validation, and control configuration. */
 export const addressFieldDefinitions: readonly AddressFieldDefinition[] = [
-  { kind: "select", name: "addressType", label: "Address type", schema: required("Address type"), required: true, options: addressTypeOptions },
+  {
+    kind: "select",
+    name: "addressType",
+    label: "Address type",
+    schema: required("Address type"),
+    required: true,
+    options: addressTypeOptions,
+  },
   { kind: "text", name: "addressLine1", label: "Address line 1", schema: optional, width: "long" },
   { kind: "text", name: "addressLine2", label: "Address line 2", schema: optional, width: "long" },
   { kind: "text", name: "country", label: "Country", schema: required("Country"), required: true, width: "medium" },
@@ -80,7 +88,14 @@ export const addressFieldDefinitions: readonly AddressFieldDefinition[] = [
   { kind: "text", name: "postalCode", label: "Postal code", schema: optionalPostalCode, width: "short" },
   { kind: "text", name: "startDate", label: "Start date", schema: optionalDate, type: "date", width: "short" },
   { kind: "text", name: "endDate", label: "End date", schema: optionalDate, type: "date", width: "short" },
-  { kind: "select", name: "addressStatus", label: "Status", schema: required("Status"), required: true, options: addressStatusOptions },
+  {
+    kind: "select",
+    name: "addressStatus",
+    label: "Status",
+    schema: required("Status"),
+    required: true,
+    options: addressStatusOptions,
+  },
   { kind: "text", name: "notes", label: "Notes", schema: optional, multiline: true, width: "long" },
 ];
 

@@ -26,9 +26,7 @@ interface AddressRecordActionsResult {
  * Compose address-owned create and intake actions for the shared Table Kit.
  * The hook owns feature behavior; the table owns only menu structure and UI.
  */
-export function useAddressRecordActions({
-  onCreated,
-}: AddressRecordActionsOptions): AddressRecordActionsResult {
+export function useAddressRecordActions({ onCreated }: AddressRecordActionsOptions): AddressRecordActionsResult {
   const create = useCreateAddressMutation();
   const publish = async (rows: Record<string, unknown>[]) => {
     for (const row of rows) {

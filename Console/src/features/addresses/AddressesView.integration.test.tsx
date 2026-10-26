@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { TamaguiProvider } from "tamagui";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { api } from "../../api";
@@ -87,13 +87,17 @@ describe("Addresses create/edit integration", () => {
     expect(patch.mock.calls[0][1]).not.toHaveProperty("createdAt");
 
     fireEvent.click(screen.getByRole("button", { name: "Edit address type" }));
-    const addressType = screen.getByRole("combobox", { name: "Address type" });
-    expect(
-      within(addressType)
-        .getAllByRole("option")
-        .map((option) => option.textContent),
-    ).toEqual(["Residence", "Storage", "Work", "School", "Other"]);
-    fireEvent.change(addressType, { target: { value: "Work" } });
+    // The shared Tamagui select exposes a required combobox and portal-backed options.
+    const addressType = screen.getByRole("combobox", { name: /^Address type/ });
+    fireEvent.click(addressType);
+    expect(screen.getAllByRole("option").map((option) => option.textContent)).toEqual([
+      "Residence",
+      "Storage",
+      "Work",
+      "School",
+      "Other",
+    ]);
+    fireEvent.keyDown(screen.getByRole("option", { name: "Work" }), { key: "Enter" });
     fireEvent.click(screen.getByRole("button", { name: "Save address type" }));
     await waitFor(() => expect(patch).toHaveBeenCalledWith("ADDR-273", { addressType: "Work" }));
   });
