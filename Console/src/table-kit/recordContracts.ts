@@ -47,6 +47,8 @@ export interface TableRecord<Record> {
   source: Record;
   title?: string;
   subtitle?: string;
+  /** Main-page icon used when a record has no attached image. */
+  icon?: ReactNode;
   image?: RecordImage;
   status?: RecordStatus;
 }

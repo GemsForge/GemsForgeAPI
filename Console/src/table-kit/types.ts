@@ -84,11 +84,10 @@ export interface TableRootSelectionProps<Row> {
   onSelectionChange?: (selectedIds: ReadonlySet<string>) => void;
 }
 
-/** Props for the shared Select All control rendered inside a Table.Root. */
+/** Props for the shared current-page selection control rendered inside a Table.Root. */
 export interface TableSelectionProps {
   label?: string;
   clearLabel?: string;
-  allMatchingLabel?: string;
 }
 
 /** A consumer-owned alternate create action exposed by the New Record menu. */

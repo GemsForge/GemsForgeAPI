@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { QueryFeedback } from "../../components/QueryFeedback";
+import { api } from "../../api";
 import {
   useExecuteRepositoryMigrationsMutation,
   useLiveSchemaQuery,
@@ -16,6 +17,9 @@ export function LiveDatabaseMigrationView({ onError, onSuccess }: LiveDatabaseMi
   const preview = usePreviewRepositoryMigrationsMutation();
   const execute = useExecuteRepositoryMigrationsMutation();
   const [confirmationToken, setConfirmationToken] = useState<string | null>(null);
+  const [ownership, setOwnership] = useState<{ counts: Record<string, number>; message?: string } | null>(null);
+  const [ownershipError, setOwnershipError] = useState<string | null>(null);
+  const [ownershipBusy, setOwnershipBusy] = useState(false);
 
   useEffect(() => {
     if (schema.error) onError(schema.error);
@@ -109,6 +113,73 @@ export function LiveDatabaseMigrationView({ onError, onSuccess }: LiveDatabaseMi
             </div>
           </div>
         ) : null}
+      </section>
+      <section className="database-panel">
+        <div className="database-panel-heading">
+          <div>
+            <p className="eyebrow">Migration safety</p>
+            <h3>Assign existing records to my hub</h3>
+          </div>
+          <span className="life-mark database-icon" aria-hidden="true">
+            ⇄
+          </span>
+        </div>
+        <p className="muted">
+          Use this only for legacy rows that already exist with no HubID. It does not create duplicates.
+        </p>
+        <button
+          className="primary-button"
+          type="button"
+          disabled={ownershipBusy}
+          onClick={async () => {
+            setOwnershipBusy(true);
+            setOwnershipError(null);
+            try {
+              const result = await api.previewHubOwnership();
+              setOwnership({ counts: result.unownedCounts });
+            } catch (error) {
+              setOwnershipError(error instanceof Error ? error.message : "Could not preview ownership assignment.");
+            } finally {
+              setOwnershipBusy(false);
+            }
+          }}
+        >
+          {ownershipBusy ? "Loading…" : "Preview ownership assignment"}
+        </button>
+        {ownershipError && <p role="alert">{ownershipError}</p>}
+        {ownership && (
+          <>
+            <p>
+              {Object.entries(ownership.counts)
+                .filter(([, count]) => count > 0)
+                .map(([table, count]) => `${table}: ${count}`)
+                .join(" · ") || "No unowned records found."}
+            </p>
+            <button
+              className="secondary-button"
+              type="button"
+              disabled={ownershipBusy || !Object.values(ownership.counts).some((count) => count > 0)}
+              onClick={async () => {
+                setOwnershipBusy(true);
+                setOwnershipError(null);
+                try {
+                  const result = await api.assignHubOwnership(ownership.counts);
+                  setOwnership({
+                    counts: {},
+                    message: `Assigned ${Object.values(result.assignedCounts).reduce((sum, count) => sum + count, 0)} records.`,
+                  });
+                } catch (error) {
+                  setOwnershipError(error instanceof Error ? error.message : "Could not assign ownership.");
+                } finally {
+                  setOwnershipBusy(false);
+                }
+              }}
+            >
+              Assign existing records
+            </button>
+            {ownership.message && <p role="status">{ownership.message}</p>}
+          </>
+        )}
       </section>
     </>
   );

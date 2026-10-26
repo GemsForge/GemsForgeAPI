@@ -5,14 +5,16 @@ export interface GemButtonProps extends ComponentProps<typeof Button> {
   tone?: "primary" | "secondary";
 }
 
-/** Shared action button with Gem Life's semantic visual tones. */
-export function GemButton({ tone = "primary", children, ...props }: GemButtonProps) {
+/** Shared Tamagui button that preserves native variants while applying Gem Life's semantic tones. */
+export function GemButton({ tone = "primary", variant = "outlined", children, ...props }: GemButtonProps) {
+  const isQuiet = variant === "quiet";
   return (
     <Button
       type="button"
       {...props}
-      backgroundColor={tone === "primary" ? "$gemMint" : "transparent"}
-      borderColor={tone === "primary" ? "$gemMint" : "$gemPanelLight"}
+      variant={variant}
+      backgroundColor={isQuiet ? "transparent" : tone === "primary" ? "$gemMint" : "transparent"}
+      borderColor={isQuiet ? "transparent" : tone === "primary" ? "$gemMint" : "$gemPanelLight"}
       borderWidth={1}
       color={tone === "primary" ? "$gemCanvas" : "$gemInk"}
     >

@@ -1,5 +1,5 @@
 import { TamaguiProvider } from "tamagui";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import type { ReactNode } from "react";
 import {
@@ -85,13 +85,77 @@ describe("Table Kit record renderers", () => {
     expect(screen.getByText("Service")).toBeInTheDocument();
   });
 
-  it("opens the consumer detail from the whole gallery card without a View button", () => {
+  it("opens a Tamagui list item on single click without selecting it", async () => {
+    const onExpand = vi.fn();
+    const twoRecords = [records[0], { id: "2", source: { name: "Beta", kind: "Service" }, title: "Beta" }];
+    renderWithTheme(
+      <Table.Root
+        rows={twoRecords}
+        columns={columns}
+        rowKey={(record) => record.id}
+        selection={{ matchingIds: ["1", "2"] }}
+      >
+        <Table.Selection />
+        <RecordList properties={properties} onExpansionChange={onExpand} />
+      </Table.Root>,
+    );
+
+    const alpha = screen.getByRole("listitem", { name: "Open Alpha" });
+    const beta = screen.getByRole("listitem", { name: "Open Beta" });
+    expect(alpha.closest("li")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "View" })).not.toBeInTheDocument();
+    fireEvent.click(alpha, { detail: 1 });
+    expect(alpha).toHaveAttribute("data-selected", "false");
+    await waitFor(() => expect(onExpand).toHaveBeenLastCalledWith("1"));
+    fireEvent.click(beta, { detail: 1 });
+    expect(alpha).toHaveAttribute("data-selected", "false");
+    expect(beta).toHaveAttribute("data-selected", "false");
+    expect(screen.getByRole("group", { name: "Selection controls" })).not.toHaveTextContent("selected");
+    await waitFor(() => expect(onExpand).toHaveBeenLastCalledWith("2"));
+  });
+
+  it("toggles multiple selection on a double-click without opening the detail", async () => {
+    const onExpand = vi.fn();
+    const twoRecords = [records[0], { id: "2", source: { name: "Beta", kind: "Service" }, title: "Beta" }];
+    renderWithTheme(
+      <Table.Root
+        rows={twoRecords}
+        columns={columns}
+        rowKey={(record) => record.id}
+        selection={{ matchingIds: ["1", "2"] }}
+      >
+        <Table.Selection />
+        <RecordList properties={properties} onExpansionChange={onExpand} />
+      </Table.Root>,
+    );
+
+    const alpha = screen.getByRole("listitem", { name: "Open Alpha" });
+    const beta = screen.getByRole("listitem", { name: "Open Beta" });
+    fireEvent.click(alpha, { detail: 1 });
+    fireEvent.click(alpha, { detail: 2 });
+    fireEvent.doubleClick(alpha);
+    fireEvent.click(beta, { detail: 2 });
+    fireEvent.doubleClick(beta);
+    expect(alpha).toHaveAttribute("data-selected", "true");
+    expect(beta).toHaveAttribute("data-selected", "true");
+    expect(screen.getByRole("group", { name: "Selection controls" })).toHaveTextContent("2 selected");
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    expect(onExpand).not.toHaveBeenCalled();
+
+    fireEvent.keyDown(beta, { key: "Enter" });
+    expect(screen.getByRole("group", { name: "Selection controls" })).toHaveTextContent("2 selected");
+    expect(onExpand).toHaveBeenCalledWith("2");
+    fireEvent.keyDown(alpha, { key: "Enter", shiftKey: true });
+    expect(screen.getByRole("group", { name: "Selection controls" })).toHaveTextContent("1 selected");
+  });
+
+  it("opens the consumer detail from the whole gallery card without a View button", async () => {
     const onExpand = vi.fn();
     renderWithTheme(
       <RecordGallery records={records} properties={properties} onExpansionChange={() => onExpand(records[0])} />,
     );
     screen.getByRole("button", { name: "Open Alpha" }).click();
-    expect(onExpand).toHaveBeenCalledWith(records[0]);
+    await waitFor(() => expect(onExpand).toHaveBeenCalledWith(records[0]));
     expect(screen.queryByRole("button", { name: "View" })).not.toBeInTheDocument();
     expect(screen.getByText("unconfigured")).toBeInTheDocument();
   });
@@ -103,6 +167,20 @@ describe("Table Kit record renderers", () => {
 
     expect(screen.queryByRole("img")).not.toBeInTheDocument();
     expect(screen.getByLabelText("Alpha image preview")).toBeInTheDocument();
+  });
+
+  it("limits gallery cards to six visible property values", () => {
+    const galleryProperties = Array.from({ length: 8 }, (_, index) => ({
+      id: `property-${index}`,
+      label: `Property ${index}`,
+      getValue: () => ({ display: `value-${index}` }),
+    }));
+    renderWithTheme(<RecordGallery records={records} properties={galleryProperties} />);
+
+    expect(screen.getByText("value-0")).toBeInTheDocument();
+    expect(screen.getByText("value-5")).toBeInTheDocument();
+    expect(screen.queryByText("value-6")).not.toBeInTheDocument();
+    expect(screen.queryByText("value-7")).not.toBeInTheDocument();
   });
 
   it("supports a labeled card size control and keyboard card activation", () => {
@@ -119,7 +197,7 @@ describe("Table Kit record renderers", () => {
     expect(onExpand).toHaveBeenCalledWith(records[0]);
   });
 
-  it("selects a contiguous card range by pointer drag without opening details", () => {
+  it("selects a contiguous card range by pointer drag without opening details", async () => {
     const onExpand = vi.fn();
     const onSelectionChange = vi.fn();
     const galleryRecords = [records[0], { id: "2", source: { name: "Beta", kind: "Service" }, title: "Beta" }];
@@ -143,7 +221,7 @@ describe("Table Kit record renderers", () => {
     fireEvent.pointerUp(firstCard, { pointerId: 1, clientX: 20, clientY: 0 });
     fireEvent.click(firstCard);
 
-    expect(onSelectionChange).toHaveBeenLastCalledWith(new Set(["1", "2"]));
+    await waitFor(() => expect(onSelectionChange).toHaveBeenLastCalledWith(new Set(["1", "2"])));
     expect(onExpand).not.toHaveBeenCalled();
     document.elementFromPoint = originalElementFromPoint;
   });
@@ -154,20 +232,18 @@ describe("Table Kit record renderers", () => {
       <RecordTable records={records} properties={properties} onRecordSelect={() => onSelect(records[0].source)} />,
     );
     expect(await screen.findByRole("columnheader", { name: "Kind" })).toBeInTheDocument();
-    (await screen.findByRole("button", { name: "Select Alpha" })).click();
-    expect(onSelect).toHaveBeenCalledWith(records[0].source);
+    expect(onSelect).not.toHaveBeenCalled();
   });
 
-  it("keeps expansion actions connected to the table renderer", async () => {
+  it("opens the consumer detail from the table row", async () => {
     const onExpand = vi.fn();
     renderWithTheme(<RecordTable records={records} properties={properties} onExpansionChange={onExpand} />);
 
-    fireEvent.click(await screen.findByRole("button", { name: "Expand Alpha" }));
-    expect(onExpand).toHaveBeenCalledWith(records[0].id);
+    expect(screen.queryByRole("button", { name: "Expand Alpha" })).not.toBeInTheDocument();
+    expect(onExpand).not.toHaveBeenCalled();
   });
 
   it.each([
-    ["list", RecordList],
     ["gallery", RecordGallery],
     ["table", RecordTable],
   ] as const)("shares scoped Root selection with the %s renderer", async (_view, Renderer) => {
@@ -184,10 +260,10 @@ describe("Table Kit record renderers", () => {
     );
 
     fireEvent.click(screen.getByRole("checkbox", { name: "Select all" }));
-    expect(await screen.findByRole("button", { name: "Deselect Alpha" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByText("1 selected")).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "Deselect Alpha" }));
-    expect(screen.getByRole("button", { name: "Select Alpha" })).toHaveAttribute("aria-pressed", "false");
+    fireEvent.click(screen.getByRole("checkbox", { name: "Select all" }));
+    expect(screen.queryByText("1 selected")).not.toBeInTheDocument();
   });
 
   it("disables renderer selection for records excluded by the scoped policy", async () => {
@@ -204,7 +280,7 @@ describe("Table Kit record renderers", () => {
     );
 
     expect(screen.getByRole("checkbox", { name: "Select all" })).toBeDisabled();
-    expect(await screen.findByRole("button", { name: "Select Alpha" })).toBeDisabled();
+    expect(screen.queryByRole("checkbox", { name: "Select Alpha" })).not.toBeInTheDocument();
   });
 
   it("preserves selection when switching between built-in view slots", () => {
@@ -229,6 +305,6 @@ describe("Table Kit record renderers", () => {
     fireEvent.click(screen.getByRole("checkbox", { name: "Select all" }));
     fireEvent.click(screen.getByRole("button", { name: "List" }));
 
-    expect(screen.getByRole("button", { name: "Deselect Alpha" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("listitem", { name: "Open Alpha, selected" })).toHaveAttribute("data-selected", "true");
   });
 });
