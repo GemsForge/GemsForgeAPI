@@ -1,6 +1,13 @@
 # GemsForge project agent context
 
-Implementation feedback rule: when the user suggests or corrects a code, workflow, documentation, test, or policy behavior, treat it as an implementation request for the owning developer agent. Inspect the relevant files, prepare the smallest complete change, run focused verification, create a policy-compliant commit, and push it to the story branch. Do not respond with an explanation only when a repository change is expected.
+Implementation feedback rule: when the user suggests or corrects a code, workflow, documentation, test, or policy behavior, treat it as an implementation request for the owning developer agent. Use iterative development for exploratory build/test/refine work, and formal delivery when the user asks to finalize, review, commit, push, or open a PR. Do not respond with an explanation only when a repository change is expected.
+
+## Development modes
+
+- **Iterative exploratory development:** implement the focused slice, run proportionate checks, show the result, and accept refinement prompts. This mode may remain uncommitted and does not require a new issue or PR for every iteration. Keep work isolated and do not present it as delivered.
+- **Formal delivery:** when the user asks to finalize or deliver, complete the issue -> branch -> commit -> pull request path, run applicable checks, obtain independent Codex Review/QA evidence, and stop for human merge approval. All existing gates remain in force.
+
+The dedicated `.github/agents/iterative-development.agent.md` file defines the exploratory handoff.
 
 This repository is the source of truth for GemsForgeAPI.
 
