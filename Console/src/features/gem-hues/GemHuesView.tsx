@@ -246,7 +246,19 @@ export function GemHuesView({ hues }: GemHuesViewProps) {
                   </div>
                   <div className="hue-detail-copy">
                     <p className="eyebrow">Gem Hue · Foundation reference data</p>
-                    <h3>{selectedHue.colorName}</h3>
+                    <EditableRecordFields
+                      className="hue-title-field"
+                      fields={[{
+                        label: "Color name",
+                        value: selectedHue.colorName,
+                        editable: true,
+                        hideLabel: true,
+                        className: "hue-title-value",
+                        onSave: async (value) => {
+                          await patch.mutateAsync({ id: selectedHue.id, patch: { colorName: String(value ?? "") } });
+                        },
+                      }]}
+                    />
                     <p className="hue-code">
                       {selectedHue.id} · {selectedHue.hexCode}
                     </p>
@@ -256,6 +268,7 @@ export function GemHuesView({ hues }: GemHuesViewProps) {
                         {
                           label: "Color family",
                           value: selectedHue.colorFamily,
+                          editable: true,
                           inputType: "select",
                           options: hueOptions([
                             "Red",
@@ -281,6 +294,7 @@ export function GemHuesView({ hues }: GemHuesViewProps) {
                         {
                           label: "Mood",
                           value: selectedHue.mood,
+                          editable: true,
                           inputType: "select",
                           options: hueOptions([
                             "Calm",
@@ -300,6 +314,7 @@ export function GemHuesView({ hues }: GemHuesViewProps) {
                         {
                           label: "Palette",
                           value: selectedHue.palette,
+                          editable: true,
                           inputType: "select",
                           options: hueOptions([
                             "Monochromatic",
@@ -321,6 +336,7 @@ export function GemHuesView({ hues }: GemHuesViewProps) {
                         {
                           label: "Description",
                           value: selectedHue.description,
+                          editable: true,
                           inputType: "longText",
                           nullable: true,
                           onSave: async (value) => {
@@ -333,6 +349,7 @@ export function GemHuesView({ hues }: GemHuesViewProps) {
                         {
                           label: "Notes",
                           value: selectedHue.notes,
+                          editable: true,
                           inputType: "longText",
                           nullable: true,
                           className: "record-notes",

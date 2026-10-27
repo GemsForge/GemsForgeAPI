@@ -1,6 +1,6 @@
 export { GemButton } from "./GemButton";
 export { GemCard } from "./GemCard";
-export { GemField } from "./GemTextField";
+export { GemField } from "./GemField";
 export { GemTextField } from "./GemTextField";
 export { GDate } from "./GDateField";
 export { GSelectField } from "./GSelectField";

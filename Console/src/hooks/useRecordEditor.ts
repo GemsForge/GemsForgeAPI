@@ -23,15 +23,15 @@ export function useRecordEditor(initialValue: string, onSave: (value: string) =>
     setEditing(false);
   }
 
-  async function save() {
-    if (draft === baseline) {
+  async function save(nextDraft = draft) {
+    if (nextDraft === baseline) {
       setEditing(false);
       return;
     }
     setSaving(true);
     setError(null);
     try {
-      await onSave(draft);
+      await onSave(nextDraft);
       setEditing(false);
     } catch (cause) {
       setError(presentError(cause).message);

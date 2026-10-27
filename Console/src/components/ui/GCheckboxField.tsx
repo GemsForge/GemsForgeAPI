@@ -48,7 +48,7 @@ export function GCheckboxField({
         >
           <Checkbox.Indicator />
         </Checkbox>
-        <Label htmlFor={id} color="$gemMuted" fontSize="$2" fontWeight="700">
+        <Label htmlFor={id} color="$gemGold" fontSize="$2" fontWeight="800" textTransform="uppercase">
           {label}
           {required ? " *" : ""}
         </Label>
