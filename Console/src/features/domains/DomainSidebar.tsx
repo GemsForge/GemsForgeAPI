@@ -4,6 +4,7 @@ import type { Domain } from "../../types";
 
 const resources = [
   ["/", "Home", "Gem Life", "⌂"],
+  ["/workspace", "Workspace", "Pages, tables, and links", "✧"],
   ["/domains", "Domains", "ForgeKeeper organization", "◈"],
   ["/forgekeeper", "ForgeKeeper", "All root pages", "⌁"],
   ["/gemhues", "Gem Hues", "Foundation palette", "●"],

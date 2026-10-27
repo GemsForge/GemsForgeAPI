@@ -451,6 +451,18 @@ h3 {
   border-radius: 1rem;
   background: linear-gradient(120deg, rgba(23, 49, 56, 0.85), rgba(18, 37, 43, 0.65));
 }
+.page-card-edit-trigger {
+  border: 0;
+  color: inherit;
+  background: transparent;
+  text-align: left;
+  cursor: text;
+}
+.page-card-edit-trigger:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 0.35rem;
+  border-radius: 0.35rem;
+}
 .page-card:hover {
   border-color: rgba(120, 209, 189, 0.34);
 }

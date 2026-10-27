@@ -65,6 +65,9 @@ const LiveDatabaseMigrationView = lazy(() =>
     default: module.LiveDatabaseMigrationView,
   })),
 );
+const WorkspaceView = lazy(() =>
+  import("../features/workspace/WorkspaceView").then((module) => ({ default: module.WorkspaceView })),
+);
 
 type Notifications = { onError: (error: unknown) => void; onSuccess: (message: string) => void };
 
@@ -250,6 +253,9 @@ function ServiceAccounts() {
 function Databases() {
   return <LocalDatabaseView {...useOutletContext<Notifications>()} />;
 }
+function Workspace() {
+  return <WorkspaceView onSuccess={useOutletContext<Notifications>().onSuccess} />;
+}
 function Schema() {
   return <SchemaBuilderView {...useOutletContext<Notifications>()} />;
 }
@@ -283,6 +289,7 @@ export function AppRoutes() {
         >
           <Route index element={<Home />} />
           <Route path="domains" element={<Domains />} />
+          <Route path="workspace" element={<Workspace />} />
           <Route path="domains/:domainID" element={<Pages kind="domain" />} />
           <Route path="forgekeeper" element={<Pages kind="roots" />} />
           <Route path="forgekeeper/:pageID/children" element={<Pages kind="children" />} />

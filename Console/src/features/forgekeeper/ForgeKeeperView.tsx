@@ -50,7 +50,12 @@ export function ForgeKeeperView({ domain, pages, onLoadRoots, onLoadChildren, on
         ) : (
           paging.items.map((page) => (
             <article className="page-card" key={page.id}>
-              <div className="page-card-main">
+              <button
+                type="button"
+                className="page-card-main page-card-edit-trigger"
+                aria-label={`Open editor for ${page.title}`}
+                onClick={() => setEditingPage(page)}
+              >
                 <div className="page-meta">
                   <span className="page-id">#{page.id}</span>
                   <span>{page.parentID ? "Child page" : "Root page"}</span>
@@ -58,7 +63,7 @@ export function ForgeKeeperView({ domain, pages, onLoadRoots, onLoadChildren, on
                 <h3>{page.title}</h3>
                 <p>{page.description || "No description"}</p>
                 <small>Last updated: {formatRecordTimestamp(page.updatedAt)}</small>
-              </div>
+              </button>
               <div className="page-actions">
                 <button
                   className="text-button"
