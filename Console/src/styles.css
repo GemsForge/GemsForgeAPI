@@ -451,6 +451,36 @@ h3 {
   border-radius: 1rem;
   background: linear-gradient(120deg, rgba(23, 49, 56, 0.85), rgba(18, 37, 43, 0.65));
 }
+.hybrid-workspace-grid { display: grid; grid-template-columns: minmax(180px, 0.28fr) minmax(0, 1fr); gap: 1rem; margin-top: 1.5rem; }
+.workspace-page-tree { padding: 1rem; border: 1px solid var(--line); border-radius: 1rem; background: rgba(15, 35, 40, 0.72); }
+.workspace-tree-heading, .workspace-block-heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.workspace-page-link { display: flex; width: 100%; gap: .65rem; align-items: center; padding: .65rem .7rem; border: 0; border-radius: .6rem; color: var(--muted); background: transparent; text-align: left; cursor: pointer; }
+.workspace-page-link:hover, .workspace-page-link.selected { color: var(--ink); background: rgba(119, 209, 190, .13); }
+.workspace-tree-footer { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--line); color: var(--muted); font-size: .8rem; }
+.workspace-page-canvas { display: grid; gap: 1rem; min-width: 0; }
+.workspace-page-heading { display: flex; gap: 1rem; align-items: center; padding: .5rem 0; }
+.workspace-page-heading h3 { margin: .1rem 0 .3rem; font-size: clamp(1.7rem, 4vw, 2.8rem); }
+.workspace-inline-fields { flex: 1; min-width: 0; }.workspace-inline-fields .create-form-field { gap: .2rem; }.workspace-inline-fields .create-form-field label { font-size: .68rem; text-transform: uppercase; letter-spacing: .08em; }.workspace-inline-fields input, .workspace-inline-fields textarea { border-color: transparent; background: transparent; font-size: clamp(1.25rem, 3vw, 2.2rem); font-weight: 800; padding: .1rem .2rem; }.workspace-inline-fields textarea { font-size: 1rem; font-weight: 400; color: var(--muted); resize: vertical; }.workspace-inline-fields input:focus, .workspace-inline-fields textarea:focus { border-color: var(--mint); background: color-mix(in srgb, var(--mint) 6%, transparent); }
+.workspace-page-icon { display: grid; width: 3.5rem; height: 3.5rem; place-items: center; border-radius: 1rem; color: var(--gold); background: rgba(236, 183, 92, .14); font-size: 1.8rem; }
+.workspace-note-copy { max-width: 55rem; color: var(--ink); font-size: 1.05rem; line-height: 1.7; }
+.workspace-table-block, .workspace-note-block { min-width: 0; }
+.workspace-block-title { display: block; margin: .1rem 0 .3rem; }
+.workspace-demo-table-wrap { overflow-x: auto; margin-top: 1rem; }
+.workspace-demo-table { width: 100%; border-collapse: collapse; min-width: 560px; }
+.workspace-demo-table th, .workspace-demo-table td { padding: .75rem; border-bottom: 1px solid var(--line); text-align: left; }
+.workspace-demo-table th { color: var(--muted); font-size: .75rem; text-transform: uppercase; letter-spacing: .08em; }
+.workspace-lower-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.workspace-link-list { display: grid; gap: .6rem; padding: 0; margin: 1rem 0 0; list-style: none; }
+.workspace-link-list button { padding: 0; border: 0; color: var(--mint); background: transparent; cursor: pointer; }
+.workspace-map { position: relative; height: 7rem; margin: .5rem 0; }
+.map-node { position: absolute; display: grid; width: 2.2rem; height: 2.2rem; place-items: center; border-radius: 50%; color: var(--ink); background: var(--panel-light); z-index: 1; }
+.map-node-main { top: 2.25rem; left: 45%; color: var(--canvas); background: var(--mint); }
+.map-node-a { top: .3rem; left: 18%; }.map-node-b { right: 15%; bottom: .4rem; }
+.map-line { position: absolute; top: 3.25rem; left: 29%; width: 22%; height: 1px; background: var(--line); transform: rotate(-25deg); }.map-line-b { left: 53%; width: 24%; transform: rotate(24deg); }
+.workspace-editor-dialog { width: min(34rem, calc(100vw - 2rem)); padding: 1.5rem; border: 1px solid var(--line); border-radius: 1rem; color: var(--ink); background: var(--panel); }
+.workspace-editor-dialog::backdrop { background: rgba(3, 12, 14, .72); }
+.workspace-editor-dialog form { display: grid; gap: 1rem; }.workspace-editor-dialog label { display: grid; gap: .4rem; color: var(--muted); }.workspace-editor-dialog input, .workspace-editor-dialog textarea { width: 100%; padding: .7rem; border: 1px solid var(--line); border-radius: .5rem; color: var(--ink); background: var(--canvas); }
+@media (max-width: 760px) { .hybrid-workspace-grid, .workspace-lower-grid { grid-template-columns: 1fr; } }
 .page-card-edit-trigger {
   border: 0;
   color: inherit;
@@ -828,6 +858,34 @@ dialog::backdrop {
   margin-bottom: 0.25rem;
   font-size: 1.5rem;
 }
+.hue-title-field {
+  margin-bottom: 0.25rem;
+}
+.hue-title-field .editable-record-value-button,
+.hue-title-field .gem-field-display-value {
+  color: var(--ink);
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+.hue-title-field .editable-field-form {
+  padding: 0;
+}
+.hue-title-field .editable-field-form .create-form-field > label {
+  display: none;
+}
+.hue-title-field .editable-field-form .create-form-control {
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+.hue-title-field .editable-field-control-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+}
+.hue-title-field .editable-field-actions {
+  align-self: end;
+}
 .hue-code {
   margin-bottom: 1.2rem;
 }
@@ -883,6 +941,104 @@ dialog::backdrop {
   outline: 0;
   text-decoration: underline;
 }
+.editable-record-value-button {
+  display: block;
+  width: 100%;
+  padding: 0.25rem 0;
+  border: 1px solid transparent;
+  border-radius: 0.35rem;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: text;
+}
+.editable-record-value-button:hover,
+.editable-record-value-button:focus-visible {
+  border-color: var(--line);
+  background: color-mix(in srgb, var(--mint) 6%, transparent);
+  outline: 0;
+}
+.gem-field-display-value {
+  width: 100%;
+  padding: 0;
+  border: 0;
+  color: var(--muted);
+  background: transparent;
+  font: inherit;
+  text-align: left;
+}
+.gem-field-display-value:hover,
+.gem-field-display-value:focus-visible {
+  color: var(--ink);
+  outline: 0;
+}
+.database-record-detail-dialog {
+  position: relative;
+  width: min(54rem, calc(100vw - 2rem));
+  max-height: calc(100vh - 2rem);
+  overflow: auto;
+  padding: 1.25rem;
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  background: var(--panel) !important;
+  color: var(--ink);
+  box-shadow: 0 2rem 8rem rgb(0 0 0 / 45%);
+  scrollbar-color: color-mix(in srgb, var(--muted) 38%, transparent) transparent;
+  scrollbar-width: thin;
+}
+.database-record-detail-dialog::-webkit-scrollbar {
+  width: 0.4rem;
+}
+.database-record-detail-dialog::-webkit-scrollbar-track {
+  background: transparent;
+}
+.database-record-detail-dialog::-webkit-scrollbar-thumb {
+  border: 0.1rem solid transparent;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--muted) 38%, transparent);
+  background-clip: padding-box;
+}
+.database-record-detail-dialog::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--mint) 58%, transparent);
+  background-clip: padding-box;
+}
+.database-record-detail-dialog .gem-record-expansion {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.database-record-detail-dialog .hue-detail {
+  display: block;
+  margin: 0;
+}
+.database-record-detail-dialog .hue-detail-swatch {
+  min-height: 0;
+  width: min(16rem, 100%);
+  height: min(16rem, 32vw);
+  margin-right: auto;
+  margin-left: auto;
+  margin-bottom: 1.25rem;
+}
+.database-record-detail-dialog .hue-detail-swatch img {
+  min-height: 0;
+}
+.database-record-detail-dialog .hue-detail-copy {
+  min-width: 0;
+}
+@media (max-width: 600px) {
+  .database-record-detail-dialog .hue-detail-swatch {
+    width: min(16rem, 100%);
+    height: min(16rem, 70vw);
+  }
+}
+.database-record-detail-close {
+  position: absolute;
+  z-index: 1;
+  top: 0.75rem;
+  right: 0.75rem;
+}
 .editable-field-form {
   display: grid;
   gap: 0.55rem;
@@ -892,10 +1048,29 @@ dialog::backdrop {
   margin: 0;
   color: var(--gold);
 }
+.editable-field-form .create-form-field > label,
+.editable-field-form .editable-field-control-row > label {
+  margin-bottom: 0.1rem;
+  color: var(--gold);
+  font-family: inherit !important;
+  font-size: 0.68rem !important;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.gem-field-display > label {
+  margin-bottom: 0.1rem;
+  color: var(--gold) !important;
+  font-family: inherit !important;
+  font-size: 0.68rem !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
 /* Keeps the shared edit control and its actions aligned without sacrificing narrow-screen wrapping. */
 .editable-field-control-row {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   flex-wrap: wrap;
   gap: 0.55rem;
 }

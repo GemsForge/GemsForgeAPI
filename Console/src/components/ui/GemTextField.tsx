@@ -24,7 +24,7 @@ export const GemTextField = forwardRef<HTMLInputElement | HTMLTextAreaElement, G
     .join(" ");
   return (
     <YStack className="create-form-field" gap="$1">
-      <Label htmlFor={inputID} color="$gemMuted" fontSize="$2" fontWeight="700">
+      <Label htmlFor={inputID} color="$gemGold" fontSize="$2" fontWeight="800" textTransform="uppercase">
         {label}
         {required ? " *" : ""}
       </Label>

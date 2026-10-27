@@ -142,21 +142,7 @@ function QueryScreen<T>({ query, children }: { query: UseQueryResult<T, Error>; 
 }
 
 function Home() {
-  return (
-    <section>
-      <p className="eyebrow">Your local workspace</p>
-      <h2>Welcome to Gem Life</h2>
-      <p>Explore your structured records or manage your local database.</p>
-      <div className="button-row">
-        <Link className="primary-button" to="/domains">
-          Explore domains
-        </Link>
-        <Link className="secondary-button" to="/schema-builder">
-          Open Schema Builder
-        </Link>
-      </div>
-    </section>
-  );
+  return <Workspace />;
 }
 function Domains() {
   const query = useDomainsQuery();

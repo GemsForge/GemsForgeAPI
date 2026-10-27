@@ -89,7 +89,7 @@ describe("Gem Life navigation", () => {
   it("renders home without requesting feature data", async () => {
     const education = vi.spyOn(api, "listEducation");
     setup();
-    expect(screen.getByRole("heading", { name: "Welcome to Gem Life" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Your data, connected" })).toBeInTheDocument();
     expect(education).not.toHaveBeenCalled();
     expect(screen.getByRole("link", { name: "Home" })).toHaveAttribute("aria-current", "page");
   });

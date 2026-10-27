@@ -17,6 +17,8 @@ import {
 } from "../table-kit";
 import { usePagedRecords } from "../hooks/usePagedRecords";
 import type { ReactNode } from "react";
+import { Dialog } from "tamagui";
+import { GemButton } from "./ui";
 
 /** The existing domain utility state shared by each database consumer adapter. */
 export interface DatabaseRecordUtilities<Record> {
@@ -272,7 +274,28 @@ function DatabaseRecordRenderer<Record>({
           <RecordList properties={properties} propertyIds={propertyIds} onExpansionChange={onExpansionChange} />
         )}
       </div>
-      {detail ? <div className="database-record-detail">{detail}</div> : null}
+      {detail ? (
+        <Dialog open={detailId !== null} onOpenChange={(open) => !open && onDetailChange(null)} modal>
+          <Dialog.Portal>
+            <Dialog.Overlay className="table-kit-utility-backdrop" />
+            <Dialog.Content className="table-kit-new-record-utility database-record-detail-dialog">
+              <Dialog.Title className="sr-only">{label} record details</Dialog.Title>
+              <Dialog.Close asChild>
+                <GemButton
+                  variant="quiet"
+                  size="sm"
+                  className="database-record-detail-close"
+                  aria-label="Close record details"
+                  onClick={() => onDetailChange(null)}
+                >
+                  ×
+                </GemButton>
+              </Dialog.Close>
+              <div className="database-record-detail">{detail}</div>
+            </Dialog.Content>
+          </Dialog.Portal>
+        </Dialog>
+      ) : null}
     </>
   );
 }
