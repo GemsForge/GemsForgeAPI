@@ -1147,17 +1147,110 @@ dialog::backdrop {
 /* Keep native list semantics without browser bullets or default indentation. */
 .table-kit-record-list {
   display: grid;
-  gap: 0.5rem;
+  gap: 0 !important;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 .table-kit-record-list li {
   min-width: 0;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+}
+.table-kit-record-list > * {
+  margin: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
 }
 .table-kit-record-list li[tabindex] {
   width: 100%;
   cursor: pointer;
+}
+.table-kit-record-list li[tabindex] > [role="listitem"] {
+  min-height: 3.25rem !important;
+  padding: 0.35rem 0.5rem !important;
+  border-width: 0 0 1px;
+  border-color: var(--line);
+  border-radius: 0;
+  background: transparent;
+}
+.table-kit-record-list li[tabindex] > [role="listitem"] [data-testid="list-item-title"],
+.table-kit-record-list li[tabindex] > [role="listitem"] h3 {
+  font-size: 0.95rem;
+  line-height: 1.25;
+}
+.table-kit-record-list li[tabindex] > [role="listitem"] p {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.25;
+}
+.table-kit-list-row-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-width: 0;
+  gap: 1.5rem;
+}
+.table-kit-list-row-title {
+  min-width: 12rem;
+  color: var(--ink);
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+.table-kit-list-row-properties {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 0;
+  gap: 0.65rem;
+  color: var(--muted);
+}
+.table-kit-list-row-properties > span {
+  min-width: 0;
+  text-align: right;
+}
+.table-kit-record-list li[tabindex] > [role="listitem"] {
+  box-shadow: none;
+}
+.table-kit-record-list li[tabindex]:last-child > [role="listitem"] {
+  border-bottom-color: transparent;
+}
+.table-kit-inline-editable-title .editable-record-value-button,
+.table-kit-inline-editable-title .gem-field-display-value {
+  padding: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+.table-kit-inline-editable-title,
+.table-kit-inline-editable-title > dd,
+.table-kit-inline-editable-property,
+.table-kit-inline-editable-property > dd {
+  display: contents;
+}
+.table-kit-inline-editable-property .editable-record-label,
+.table-kit-inline-editable-property .gem-field-display > label {
+  display: none;
+}
+.table-kit-inline-editable-property .editable-record-value-button,
+.table-kit-inline-editable-property .gem-field-display-value {
+  padding: 0;
+  font-size: 0.78rem;
+  line-height: 1.25;
+}
+@media (max-width: 720px) {
+  .table-kit-list-row-content {
+    gap: 0.75rem;
+  }
+  .table-kit-list-row-properties {
+    gap: 0.4rem;
+  }
+  .table-kit-list-row-properties > span {
+    min-width: 0;
+  }
 }
 .gem-record-view-toggle {
   display: flex;
@@ -1541,6 +1634,20 @@ dialog::backdrop {
   align-items: center;
   gap: 0.5rem;
   width: 100%;
+}
+
+/* The view switcher is a single horizontal control, including when Tamagui's
+ * generated orientation styles are present. */
+.table-kit-views {
+  display: inline-flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  width: max-content;
+}
+
+.table-kit-views > * {
+  flex: 0 0 auto;
 }
 
 /* Keep view icons legible within Tamagui's equal-width XGroup items. */
