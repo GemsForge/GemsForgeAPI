@@ -3,6 +3,10 @@ import type { Address, Education, Employment, ExpenseTransaction, GemHue, Servic
 import type { RecordAdapter, RecordImage, RecordPropertyDefinition } from "../../table-kit";
 
 const display = (value: unknown) => ({ raw: value, display: value == null || value === "" ? "—" : String(value) });
+const currency = (value: number | null | undefined) => ({
+  raw: value,
+  display: value == null ? "—" : new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value),
+});
 const hueOptions = ["Red", "Orange", "Yellow", "Green", "Blue", "Purple", "Pink", "Brown", "Gray", "Black", "White"].map(
   (value) => ({ value, label: value }),
 );
@@ -223,11 +227,11 @@ export const transactionTableAdapter: RecordAdapter<ExpenseTransaction> = {
         id: "regularPrice",
         label: "Regular price",
         kind: "number",
-        getValue: (record) => display(record.regularPrice),
+        getValue: (record) => currency(record.regularPrice),
       },
-      { id: "paidPrice", label: "Paid price", kind: "number", getValue: (record) => display(record.paidPrice) },
-      { id: "total", label: "Total", kind: "number", getValue: (record) => display(record.total) },
-      { id: "discount", label: "Discount", kind: "number", getValue: (record) => display(record.discount) },
+      { id: "paidPrice", label: "Paid price", kind: "number", getValue: (record) => currency(record.paidPrice) },
+      { id: "total", label: "Total", kind: "number", getValue: (record) => currency(record.total) },
+      { id: "discount", label: "Discount", kind: "number", getValue: (record) => currency(record.discount) },
       { id: "notes", label: "Notes", kind: "text", getValue: (record) => display(record.notes) },
       { id: "image", label: "Image", kind: "image", getValue: (record) => display(record.image) },
       { id: "updatedAt", label: "Last updated", kind: "date", getValue: (record) => display(record.updatedAt) },
@@ -262,7 +266,7 @@ export function createServiceAccountTableAdapter(
           id: "monthlyAmount",
           label: "Monthly amount",
           kind: "number",
-          getValue: (record) => display(record.monthlyAmount),
+          getValue: (record) => currency(record.monthlyAmount),
         },
         {
           id: "interestRate",

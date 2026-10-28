@@ -35,6 +35,34 @@ import type {
 } from "./types";
 import { getBearerToken, notifySessionExpired } from "./auth/session";
 
+export interface SavedTableView {
+  view: {
+    viewID: string;
+    tableName: string;
+    name: string;
+    viewType: "Table" | "List" | "Gallery" | "Grid";
+  };
+  columns: Array<{
+    columnName: string;
+    isVisible: boolean;
+    sortOrder: number;
+    width: number | null;
+  }>;
+  queries: unknown[];
+}
+
+export interface SavedTableViewInput {
+  viewType: "Table" | "List" | "Gallery" | "Grid";
+  name: string;
+  columns: Array<{
+    columnName: string;
+    isVisible: boolean;
+    sortOrder: number;
+    width: number | null;
+  }>;
+  queries: unknown[];
+}
+
 export interface APIAuthenticationSession {
   sessionToken: string;
   expiresAt: string;
@@ -81,6 +109,16 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 }
 
 export const api = {
+  getTableView: (tableName: string, viewType: SavedTableViewInput["viewType"], signal?: AbortSignal) =>
+    request<SavedTableView>(
+      `/table-views/${encodeURIComponent(tableName)}/${encodeURIComponent(viewType)}`,
+      { signal },
+    ),
+  saveTableView: (tableName: string, viewType: SavedTableViewInput["viewType"], payload: SavedTableViewInput) =>
+    request<SavedTableView>(
+      `/table-views/${encodeURIComponent(tableName)}/${encodeURIComponent(viewType)}`,
+      { method: "PUT", body: JSON.stringify(payload) },
+    ),
   listMerchants: (signal?: AbortSignal) => request<Merchant[]>("/merchants", { signal }),
   getHealth: async (signal?: AbortSignal) => {
     const response = await checkedFetch("/health", { signal });
