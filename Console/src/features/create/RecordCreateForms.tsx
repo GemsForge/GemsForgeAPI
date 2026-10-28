@@ -1,17 +1,18 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState, type ReactNode } from "react";
-import { useForm, type DefaultValues, type FieldValues, type Resolver, type UseFormReturn } from "react-hook-form";
+import { Controller, useForm, type DefaultValues, type FieldValues, type Resolver, type UseFormReturn } from "react-hook-form";
 import { z } from "zod";
 import {
   CreateFormFrame,
 } from "../../components/forms/CreateForm";
-import { CreateFormSelect as Select, CreateFormText as Text } from "../../components/forms/CreateFormField";
+import { CreateFormCheckbox as Checkbox, CreateFormSelect as Select, CreateFormText as Text } from "../../components/forms/CreateFormField";
+import { GemPrimitiveField } from "../../components/ui/GemPrimitiveField";
 import {
   GeoapifyAddressSearch,
   type AddressSearchValues,
   type GeoapifySearchClient,
 } from "../addresses/GeoapifyAddressSearch";
-import { useExpenseCategoriesQuery, useExpenseSubcategoriesQuery } from "../../data/lifeQueries";
+import { useExpenseCategoriesQuery, useExpenseSubcategoriesQuery, useMerchantsQuery } from "../../data/lifeQueries";
 import type {
   Address,
   AddressCreate,
@@ -28,19 +29,22 @@ import {
   type AddressCreateFormValues,
 } from "../addresses/addressCreateFields";
 import {
-  educationFieldDefinitions,
+  educationFieldsWithAddresses,
   educationSchema,
   type EducationCreateFormValues,
+  type EducationFieldDefinition,
 } from "../education/educationCreateFields";
 import {
   createEmploymentFieldDefinitions,
   createEmploymentSchema,
+  employmentAddressOptions,
   type EmploymentCreateFormValues,
   type EmploymentFieldDefinition,
 } from "../employment/employmentCreateFields";
 import {
   createTransactionFieldDefinitions,
   createTransactionSchema,
+  transactionMerchantOptions,
   type TransactionCreateFormValues,
 } from "../transactions/transactionCreateFields";
 import {
@@ -56,6 +60,7 @@ const transactionSchema = createTransactionSchema(transactionFieldDefinitions);
 
 function FormShell<T extends FieldValues>({
   title,
+  className,
   schema,
   defaultValues,
   onCreate,
@@ -63,6 +68,7 @@ function FormShell<T extends FieldValues>({
   children,
 }: {
   title: string;
+  className?: string;
   schema: z.ZodType<T>;
   defaultValues: T;
   onCreate: (values: T) => Promise<void>;
@@ -77,6 +83,7 @@ function FormShell<T extends FieldValues>({
   return (
     <CreateFormFrame
       title={title}
+      className={className}
       submitting={form.formState.isSubmitting}
       error={serverError}
       onCancel={onCancel}
@@ -131,19 +138,29 @@ function addressField(name: keyof AddressCreateFormValues): AddressFieldDefiniti
 }
 
 function renderEducationField(form: UseFormReturn<EducationCreateFormValues>, field: EducationFieldDefinition) {
-  return field.options ? (
-    <Select key={field.name} form={form} name={field.name} label={field.label} options={[...field.options]} required={field.required} />
-  ) : (
-    <Text
-      key={field.name}
-      form={form}
-      name={field.name}
-      label={field.label}
-      required={field.required}
-      type={field.type}
-      multiline={field.multiline}
-      width={field.width}
-    />
+  const error = form.formState.errors[field.name]?.message;
+  return (
+    <div key={field.name} className={field.name === "notes" ? "record-notes" : undefined}>
+      <Controller
+        control={form.control}
+        name={field.name}
+        render={({ field: input }) => (
+          <GemPrimitiveField
+            primitive={field.primitive ?? "text"}
+            label={field.label}
+            value={input.value}
+            editing
+            onChange={(value) => input.onChange(value ?? "")}
+            options={field.options ? [...field.options] : undefined}
+            required={field.required}
+            nullable={!field.required}
+            multiline={field.multiline}
+            width={field.width ?? "long"}
+            error={typeof error === "string" ? error : undefined}
+          />
+        )}
+      />
+    </div>
   );
 }
 
@@ -171,7 +188,9 @@ function employmentField(fields: readonly EmploymentFieldDefinition[], name: key
 }
 
 function renderTransactionField(form: UseFormReturn<TransactionCreateFormValues>, field: import("../transactions/transactionCreateFields").TransactionFieldDefinition) {
-  return field.options ? (
+  return field.primitive === "checkbox" ? (
+    <Checkbox key={field.name} form={form} name={field.name} label={field.label} required={field.required} />
+  ) : field.options ? (
     <Select key={field.name} form={form} name={field.name} label={field.label} options={[...field.options]} required={field.required} />
   ) : (
     <Text key={field.name} form={form} name={field.name} label={field.label} required={field.required} type={field.type} multiline={field.multiline} width={field.width} />
@@ -179,7 +198,11 @@ function renderTransactionField(form: UseFormReturn<TransactionCreateFormValues>
 }
 
 function renderServiceAccountField(form: UseFormReturn<ServiceAccountCreateFormValues>, field: ServiceAccountFieldDefinition) {
-  return <Text key={field.name} form={form} name={field.name} label={field.label} required={field.required} type={field.type} multiline={field.multiline} width={field.width} />;
+  return field.options ? (
+    <Select key={field.name} form={form} name={field.name} label={field.label} options={[...field.options]} required={field.required} />
+  ) : (
+    <Text key={field.name} form={form} name={field.name} label={field.label} required={field.required} type={field.type} multiline={field.multiline} width={field.width} />
+  );
 }
 
 function renderDomainField(form: UseFormReturn<DomainCreateFormValues>, field: DomainFieldDefinition) {
@@ -308,6 +331,7 @@ export function EducationCreateForm({
   return (
     <FormShell
       title="Create education record"
+      className="create-record-form--properties"
       schema={educationSchema}
       defaultValues={{
         id: "",
@@ -344,18 +368,9 @@ export function EducationCreateForm({
       onCancel={onCancel}
     >
       {(form) => (
-        <>
-          {educationFieldDefinitions.map((field) => renderEducationField(form, field))}
-          <Select
-            form={form}
-            name="locationAddressID"
-            label="Location address"
-            options={addresses.map((a) => ({
-              value: a.id,
-              label: [a.addressType, a.city, a.id].filter(Boolean).join(" · "),
-            }))}
-          />
-        </>
+        <div className="record-fields education-fields create-education-properties">
+          {educationFieldsWithAddresses(addresses).map((field) => renderEducationField(form, field))}
+        </div>
       )}
     </FormShell>
   );
@@ -385,7 +400,7 @@ export function EmploymentCreateForm({
     industry: industryOptions,
     employmentType: employmentTypeOptions,
     status: statusOptions,
-    workAddress: addresses.map((a) => ({ value: a.id, label: [a.addressType, a.city, a.id].filter(Boolean).join(" · ") })),
+    workAddress: employmentAddressOptions(addresses),
   });
   const schema = createEmploymentSchema(employmentFields);
 
@@ -527,14 +542,14 @@ export function TransactionCreateForm({
   onCancel: () => void;
 }) {
   return (
-    <FormShell
+    <FormShell<TransactionCreateFormValues>
       title="Create transaction"
-      schema={transactionSchema}
+      schema={transactionSchema as z.ZodType<TransactionCreateFormValues>}
       defaultValues={{
         id: "",
         receiptID: "",
         item: "",
-        firstReceiptItem: "false",
+        firstReceiptItem: false,
         categoryID: "",
         subcategoryID: "",
         merchantCode: "",
@@ -551,7 +566,7 @@ export function TransactionCreateForm({
           id: v.id.trim(),
           receiptID: blank(v.receiptID),
           item: v.item,
-          firstReceiptItem: v.firstReceiptItem === "true",
+          firstReceiptItem: v.firstReceiptItem,
           categoryID: Number(v.categoryID),
           subcategoryID: numberOrNull(v.subcategoryID),
           merchantCode: blank(v.merchantCode),
@@ -576,9 +591,11 @@ function TransactionFields({ form }: { form: UseFormReturn<TransactionCreateForm
   const categoryID = /^\d+$/.test(selectedCategory) ? Number(selectedCategory) : null;
   const categories = useExpenseCategoriesQuery(true);
   const subcategories = useExpenseSubcategoriesQuery(categoryID, categoryID !== null);
+  const merchants = useMerchantsQuery(true);
   const fieldDefinitions = createTransactionFieldDefinitions({
     categories: (categories.data ?? []).map((item) => ({ value: String(item.id), label: item.name })),
     subcategories: (subcategories.data ?? []).map((item) => ({ value: String(item.id), label: item.name })),
+    merchants: transactionMerchantOptions(merchants.data ?? []),
   });
   useEffect(() => {
     form.setValue("subcategoryID", "");

@@ -4,14 +4,17 @@ import { QueryFeedback } from "../../components/QueryFeedback";
 import type { Education } from "../../types";
 import { GemEmptyState } from "../../components/ui";
 import { AttachmentControl } from "../../components/AttachmentControl";
-import { EditableRecordFields, formatRecordTimestamp } from "../../components/EditableRecordFields";
+import { EditableRecordFields } from "../../components/EditableRecordFields";
 import { useAddressesQuery } from "../../data/lifeQueries";
 import { RecordImport } from "../../components/RecordImport";
 import { useRecordUtilities } from "../../hooks/useRecordUtilities";
 import { DatabaseRecordCollection } from "../../components/DatabaseRecordCollection";
 import { educationTableAdapter } from "../database/recordTableAdapters";
 import { useEducationRecordActions } from "./useEducationRecordActions";
-import { educationTypeOptions } from "./educationCreateFields";
+import { educationFieldDefinitions } from "./educationCreateFields";
+import { educationEditableFields } from "./educationRecordFields";
+import { GemPrimitiveField, GemField } from "../../components/ui";
+import { useRecordEditor } from "../../hooks/useRecordEditor";
 
 interface EducationViewProps {
   records: Education[];
@@ -41,9 +44,6 @@ export function EducationView({ records }: EducationViewProps) {
     addresses: addresses.data ?? [],
     onCreated: setSelectedID,
   });
-  const programOptions = Array.from(
-    new Set(records.map((record) => record.program).filter((program): program is string => Boolean(program))),
-  ).sort();
 
   return (
     <>
@@ -108,7 +108,6 @@ export function EducationView({ records }: EducationViewProps) {
                   <EducationDetail
                     key={selectedRecord.id}
                     record={selectedRecord}
-                    programOptions={programOptions}
                     onPatch={async (values) => {
                       await patch.mutateAsync({ id: selectedRecord.id, patch: values });
                     }}
@@ -135,143 +134,43 @@ export function EducationView({ records }: EducationViewProps) {
     </>
   );
 }
-
 function EducationDetail({
   record,
-  programOptions,
   onPatch,
   onAttachment,
 }: {
   record: Education;
-  programOptions: string[];
   onPatch: (values: Partial<Education>) => Promise<void>;
   onAttachment: (metadata: import("../../types").FileMetadata | null) => Promise<void>;
 }) {
   const addresses = useAddressesQuery(true);
+  const titleEditor = useRecordEditor(record.institutionName, async (value) => onPatch({ institutionName: value }));
+  const titleProperty = educationFieldDefinitions.find((field) => field.name === "institutionName")!;
+  const idProperty = educationFieldDefinitions.find((field) => field.name === "id")!;
 
   return (
     <article className="education-detail">
       <div className="detail-heading">
         <div>
           <p className="eyebrow">Education record</p>
-          <h3>{record.institutionName}</h3>
-          <p className="education-code">{record.id}</p>
+          <GemField
+            className="education-title-input"
+            label={titleProperty.label}
+            value={titleEditor.draft}
+            editing={titleEditor.editing}
+            displayValue={record.institutionName}
+            onDisplayClick={titleEditor.begin}
+            onChange={(event) => titleEditor.setDraft(event.currentTarget.value)}
+            onBlur={() => void titleEditor.save()}
+          />
+          <GemPrimitiveField primitive="id" label={idProperty.label} value={record.id} editing={false} />
         </div>
         <span className="status-pill">{record.status}</span>
       </div>
       <EditableRecordFields
         className="education-fields"
-        fields={[
-          {
-            label: "Type",
-            value: record.educationType,
-            inputType: "select",
-            options: educationTypeOptions,
-            required: true,
-            onSave: async (value) => onPatch({ educationType: value as string }),
-          },
-          {
-            label: "Institution",
-            value: record.institutionName,
-            required: true,
-            onSave: async (value) => onPatch({ institutionName: value as string }),
-          },
-          {
-            label: "Program",
-            value: record.program,
-            inputType: "select",
-            nullable: true,
-            options: programOptions.map((program) => ({ value: program, label: program })),
-            onSave: async (value) => onPatch({ program: value as string | null }),
-          },
-          {
-            label: "Field of study",
-            value: record.fieldOfStudy,
-            nullable: true,
-            onSave: async (value) => onPatch({ fieldOfStudy: value as string | null }),
-          },
-          {
-            label: "Credential",
-            value: record.credential,
-            nullable: true,
-            onSave: async (value) => onPatch({ credential: value as string | null }),
-          },
-          {
-            label: "Credential ID",
-            value: record.credentialID,
-            nullable: true,
-            onSave: async (value) => onPatch({ credentialID: value as string | null }),
-          },
-          {
-            label: "Start date",
-            value: record.startDate,
-            inputType: "date",
-            nullable: true,
-            onSave: async (value) => onPatch({ startDate: value as string | null }),
-          },
-          {
-            label: "End date",
-            value: record.endDate,
-            inputType: "date",
-            nullable: true,
-            onSave: async (value) => onPatch({ endDate: value as string | null }),
-          },
-          {
-            label: "Awarded date",
-            value: record.awardedDate,
-            inputType: "date",
-            nullable: true,
-            onSave: async (value) => onPatch({ awardedDate: value as string | null }),
-          },
-          {
-            label: "Status",
-            value: record.status,
-            primitive: "status",
-            inputType: "select",
-            options: [
-              { label: "In progress", value: "In progress", colorToken: "blue", group: "In progress" },
-              { label: "Completed", value: "Completed", colorToken: "green", group: "Complete" },
-              { label: "Paused", value: "Paused", colorToken: "gold", group: "To-do" },
-              { label: "Other", value: "Other", colorToken: "gray", group: "Other" },
-            ],
-            required: true,
-            onSave: async (value) => onPatch({ status: value as string }),
-          },
-          {
-            label: "Location",
-            value: record.address?.id ?? null,
-            inputType: "select",
-            nullable: true,
-            options: (addresses.data ?? []).map((address) => ({
-              value: address.id,
-              label: addressOptionLabel(address),
-            })),
-            displayValue: <AddressSummary address={record.address} />,
-            onSave: async (value) => onPatch({ locationAddressID: value as string | null }),
-          },
-          {
-            label: "Website",
-            value: record.website,
-            primitive: "url",
-            inputType: "url",
-            nullable: true,
-            onSave: async (value) => onPatch({ website: value as string | null }),
-          },
-          {
-            label: "Notes",
-            value: record.notes,
-            inputType: "longText",
-            nullable: true,
-            className: "record-notes",
-            onSave: async (value) => onPatch({ notes: value as string | null }),
-          },
-          {
-            label: "Last updated",
-            value: record.updatedAt ?? null,
-            readOnlyReason: "Server managed",
-            displayValue: formatRecordTimestamp(record.updatedAt),
-          },
-        ]}
+        fields={educationEditableFields(record, addresses.data ?? [], onPatch)
+          .filter((field) => field.label !== titleProperty.label)}
       />
       <AttachmentControl
         fileMetadataID={record.documentFileMetadataID}
@@ -282,13 +181,4 @@ function EducationDetail({
       />
     </article>
   );
-}
-
-function AddressSummary({ address }: { address: Education["address"] }) {
-  if (!address) return <>—</>;
-  return <>{[address.addressLine1, address.city, address.state, address.postalCode].filter(Boolean).join(", ")}</>;
-}
-
-function addressOptionLabel(address: NonNullable<Education["address"]>) {
-  return [address.addressLine1, address.city, address.state, address.postalCode].filter(Boolean).join(", ");
 }

@@ -3,13 +3,15 @@ import { useEmploymentPatchMutation, useEmploymentRecordQuery } from "../../data
 import { QueryFeedback } from "../../components/QueryFeedback";
 import type { Employment } from "../../types";
 import { GemEmptyState } from "../../components/ui";
-import { EditableRecordFields, formatRecordDate, formatRecordTimestamp } from "../../components/EditableRecordFields";
+import { EditableRecordFields } from "../../components/EditableRecordFields";
 import { useAddressesQuery } from "../../data/lifeQueries";
 import { RecordImport } from "../../components/RecordImport";
 import { useRecordUtilities } from "../../hooks/useRecordUtilities";
 import { DatabaseRecordCollection } from "../../components/DatabaseRecordCollection";
 import { employmentTableAdapter } from "../database/recordTableAdapters";
 import { employmentOptions, toOptions, useEmploymentRecordActions } from "./useEmploymentRecordActions";
+import { createEmploymentFieldDefinitions, employmentAddressOptions } from "./employmentCreateFields";
+import { employmentEditableFields } from "./employmentRecordFields";
 
 interface EmploymentViewProps {
   records: Employment[];
@@ -36,6 +38,13 @@ export function EmploymentView({ records }: EmploymentViewProps) {
   const [creating, setCreating] = useState(false);
   const [importing, setImporting] = useState(false);
   const addresses = useAddressesQuery(true);
+  const definitions = createEmploymentFieldDefinitions({
+    employerType: toOptions(employmentOptions.employerType),
+    industry: toOptions(employmentOptions.industry),
+    employmentType: toOptions(employmentOptions.employmentType),
+    status: toOptions(employmentOptions.status),
+    workAddress: employmentAddressOptions(addresses.data ?? []),
+  });
   const { publish, importConfig, actions, createForm } = useEmploymentRecordActions({
     addresses: addresses.data ?? [],
     onCreated: setSelectedID,
@@ -106,6 +115,7 @@ export function EmploymentView({ records }: EmploymentViewProps) {
                     <EmploymentDetail
                       key={selectedRecord.id}
                       record={selectedRecord}
+                      definitions={definitions}
                       onPatch={async (values) => {
                         await patch.mutateAsync({ id: selectedRecord.id, patch: values });
                       }}
@@ -123,12 +133,13 @@ export function EmploymentView({ records }: EmploymentViewProps) {
 
 function EmploymentDetail({
   record,
+  definitions,
   onPatch,
 }: {
   record: Employment;
+  definitions: ReturnType<typeof createEmploymentFieldDefinitions>;
   onPatch: (values: Partial<Employment>) => Promise<void>;
 }) {
-  const addresses = useAddressesQuery(true);
 
   return (
     <article className="employment-detail">
@@ -140,139 +151,7 @@ function EmploymentDetail({
         </div>
         <span className="status-pill">{record.employmentStatus}</span>
       </div>
-      <EditableRecordFields
-        className="employment-fields"
-        fields={[
-          {
-            label: "Employer",
-            value: record.employerName,
-            required: true,
-            onSave: async (value) => onPatch({ employerName: value as string }),
-          },
-          {
-            label: "Employer type",
-            value: record.employerType,
-            inputType: "select",
-            options: toOptions(employmentOptions.employerType),
-            required: true,
-            onSave: async (value) => onPatch({ employerType: value as string }),
-          },
-          {
-            label: "Position",
-            value: record.positionTitle,
-            required: true,
-            onSave: async (value) => onPatch({ positionTitle: value as string }),
-          },
-          {
-            label: "Employment type",
-            value: record.employmentType,
-            inputType: "select",
-            options: toOptions(employmentOptions.employmentType),
-            required: true,
-            onSave: async (value) => onPatch({ employmentType: value as string }),
-          },
-          {
-            label: "Employment status",
-            value: record.employmentStatus,
-            primitive: "status",
-            inputType: "select",
-            options: toOptions(employmentOptions.status).map((option) => ({
-              ...option,
-              group: option.value === "Active" || option.value === "Current" ? "Current" : "Past",
-              colorToken: option.value === "Active" ? "green" : option.value === "Completed" ? "green" : option.value === "Paused" ? "gold" : "gray",
-            })),
-            required: true,
-            onSave: async (value) => onPatch({ employmentStatus: value as string }),
-          },
-          {
-            label: "Industry",
-            value: record.industry,
-            inputType: "select",
-            options: toOptions(employmentOptions.industry),
-            nullable: true,
-            onSave: async (value) => onPatch({ industry: value as string | null }),
-          },
-          {
-            label: "Start date",
-            value: record.startDate,
-            inputType: "date",
-            nullable: true,
-            displayValue: formatRecordDate(record.startDate),
-            onSave: async (value) => onPatch({ startDate: value as string | null }),
-          },
-          {
-            label: "End date",
-            value: record.endDate,
-            inputType: "date",
-            nullable: true,
-            displayValue: formatRecordDate(record.endDate),
-            onSave: async (value) => onPatch({ endDate: value as string | null }),
-          },
-          {
-            label: "Work address",
-            value: record.address?.id ?? null,
-            inputType: "select",
-            nullable: true,
-            options: (addresses.data ?? []).map((address) => ({
-              value: address.id,
-              label: addressOptionLabel(address),
-            })),
-            displayValue: <AddressSummary address={record.address} />,
-            onSave: async (value) => onPatch({ workAddressID: value as string | null }),
-          },
-          {
-            label: "Website",
-            value: record.website,
-            inputType: "url",
-            nullable: true,
-            onSave: async (value) => onPatch({ website: value as string | null }),
-          },
-          {
-            label: "Contact",
-            value: record.employerContact,
-            inputType: "text",
-            nullable: true,
-            onSave: async (value) => onPatch({ employerContact: value as string | null }),
-          },
-          {
-            label: "Contact number",
-            value: record.employerContactNumber,
-            inputType: "tel",
-            nullable: true,
-            onSave: async (value) => onPatch({ employerContactNumber: value as string | null }),
-          },
-          {
-            label: "Contact email",
-            value: record.employerContactEmail,
-            inputType: "email",
-            nullable: true,
-            onSave: async (value) => onPatch({ employerContactEmail: value as string | null }),
-          },
-          {
-            label: "Notes",
-            value: record.notes,
-            inputType: "longText",
-            nullable: true,
-            className: "record-notes",
-            onSave: async (value) => onPatch({ notes: value as string | null }),
-          },
-          {
-            label: "Last updated",
-            value: record.updatedAt ?? null,
-            readOnlyReason: "Server managed",
-            displayValue: formatRecordTimestamp(record.updatedAt),
-          },
-        ]}
-      />
+      <EditableRecordFields className="employment-fields" fields={employmentEditableFields(record, definitions, onPatch)} />
     </article>
   );
-}
-
-function AddressSummary({ address }: { address: Employment["address"] }) {
-  if (!address) return <>—</>;
-  return <>{[address.addressLine1, address.city, address.state, address.postalCode].filter(Boolean).join(", ")}</>;
-}
-
-function addressOptionLabel(address: NonNullable<Employment["address"]>) {
-  return [address.addressType, address.addressLine1, address.city, address.state].filter(Boolean).join(" · ");
 }

@@ -1,5 +1,7 @@
 import { z } from "zod";
 import type { CreateFieldWidth } from "../../components/forms/CreateForm";
+import type { RecordSelectOption } from "../../table-kit/recordContracts";
+import type { Address } from "../../types";
 
 /** Raw Employment values owned by React Hook Form before API normalization. */
 export type EmploymentCreateFormValues = {
@@ -20,7 +22,6 @@ export type EmploymentCreateFormValues = {
   notes: string;
 };
 
-type Option = { value: string; label: string };
 export type EmploymentFieldDefinition = {
   name: keyof EmploymentCreateFormValues;
   label: string;
@@ -29,8 +30,15 @@ export type EmploymentFieldDefinition = {
   type?: "text" | "date" | "url" | "tel" | "email";
   width?: CreateFieldWidth;
   multiline?: boolean;
-  options?: readonly Option[];
+  options?: readonly RecordSelectOption[];
 };
+
+export function employmentAddressOptions(addresses: readonly Address[]): RecordSelectOption[] {
+  return addresses.map((address) => ({
+    value: address.id,
+    label: [address.addressLine1, address.city, address.state, address.postalCode].filter(Boolean).join(", ") || address.id,
+  }));
+}
 
 const required = (label: string) => z.string().trim().min(1, `${label} is required.`);
 const optional = z.string();
@@ -60,13 +68,14 @@ const optionalPhone = optional.refine((value) => {
 
 /** Build the canonical Employment field contract from feature-supplied options. */
 export function createEmploymentFieldDefinitions(options: {
-  employerType: readonly Option[];
-  industry: readonly Option[];
-  employmentType: readonly Option[];
-  status: readonly Option[];
-  workAddress: readonly Option[];
+  employerType: readonly RecordSelectOption[];
+  industry: readonly RecordSelectOption[];
+  employmentType: readonly RecordSelectOption[];
+  status: readonly RecordSelectOption[];
+  workAddress: readonly RecordSelectOption[];
 }): readonly EmploymentFieldDefinition[] {
   return [
+    { name: "id", label: "ID", schema: required("Employment ID"), required: true },
     { name: "employerName", label: "Employer name", schema: required("Employer name"), required: true },
     { name: "employerType", label: "Employer type", schema: required("Employer type"), required: true, options: options.employerType },
     { name: "industry", label: "Industry", schema: optional, options: options.industry },
@@ -75,7 +84,11 @@ export function createEmploymentFieldDefinitions(options: {
     { name: "employmentType", label: "Employment type", schema: required("Employment type"), required: true, options: options.employmentType },
     { name: "startDate", label: "Start date", schema: optionalDate, type: "date", width: "short" },
     { name: "endDate", label: "End date", schema: optionalDate, type: "date", width: "short" },
-    { name: "employmentStatus", label: "Status", schema: required("Status"), required: true, options: options.status },
+    { name: "employmentStatus", label: "Status", schema: required("Status"), required: true, options: options.status.map((option) => ({
+      ...option,
+      group: option.value === "Active" || option.value === "Current" ? "Current" : "Past",
+      colorToken: option.value === "Active" || option.value === "Completed" ? "green" : option.value === "Paused" ? "gold" : "gray",
+    })) },
     { name: "employerContact", label: "Contact", schema: optional },
     { name: "employerContactNumber", label: "Contact number", schema: optionalPhone, type: "tel", width: "short" },
     { name: "employerContactEmail", label: "Contact email", schema: optionalEmail, type: "email", width: "medium" },

@@ -59,7 +59,7 @@ describe("ServiceAccountsView", () => {
   /** Wait for the renderer's single-click detail gesture to settle before editing a field. */
   async function openDetails() {
     fireEvent.keyDown(screen.getByRole("listitem", { name: "Open Internet" }), { key: "Enter" });
-    await screen.findByRole("button", { name: "Service", hidden: true });
+    await screen.findByRole("button", { name: "Service: Internet", hidden: true });
   }
 
   it("sends only the edited service property", async () => {
@@ -68,29 +68,28 @@ describe("ServiceAccountsView", () => {
     expect(screen.getByRole("region", { name: "Table content" })).toBeInTheDocument();
     // The list item itself now opens details; there is no nested View action.
     await openDetails();
-    fireEvent.click(screen.getByRole("button", { name: "Service", hidden: true }));
+    fireEvent.click(screen.getByRole("button", { name: "Service: Internet", hidden: true }));
     // Required-field labels include a visible asterisk in the shared field component.
     fireEvent.change(screen.getByLabelText(/^Service \*/), { target: { value: "Fiber Internet" } });
-    fireEvent.click(screen.getByRole("button", { name: "Save service", hidden: true }));
+    fireEvent.blur(screen.getByLabelText(/^Service \*/));
     await waitFor(() => expect(mocks.patch).toHaveBeenCalledWith({ id: 7, patch: { service: "Fiber Internet" } }));
   });
 
-  it("cancels a status edit without sending a PATCH", async () => {
+  it("saves a status change directly from the inline selector", async () => {
     renderView();
     await openDetails();
-    fireEvent.click(await screen.findByRole("button", { name: "Status", hidden: true }));
-    fireEvent.change(screen.getByLabelText("Status"), { target: { value: "Paused" } });
-    fireEvent.click(screen.getByRole("button", { name: "Cancel editing status", hidden: true }));
-    expect(screen.queryByLabelText("Status")).not.toBeInTheDocument();
-    expect(mocks.patch).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Active", hidden: true }));
+    fireEvent.click(screen.getByRole("combobox", { name: /^Status/, hidden: true }));
+    fireEvent.keyDown(screen.getByRole("option", { name: "Paused", hidden: true }), { key: "Enter" });
+    await waitFor(() => expect(mocks.patch).toHaveBeenCalledWith({ id: 7, patch: { status: "Paused" } }));
   });
 
   it("edits the service key through a changed-only PATCH", async () => {
     renderView();
     await openDetails();
-    fireEvent.click(screen.getByRole("button", { name: "Service key", hidden: true }));
+    fireEvent.click(screen.getByRole("button", { name: "Service key: —", hidden: true }));
     fireEvent.change(screen.getByLabelText("Service key"), { target: { value: "INTERNET_SERVICE" } });
-    fireEvent.click(screen.getByRole("button", { name: "Save service key", hidden: true }));
+    fireEvent.blur(screen.getByLabelText("Service key"));
     await waitFor(() => expect(mocks.patch).toHaveBeenCalledWith({ id: 7, patch: { serviceKey: "INTERNET_SERVICE" } }));
   });
 
@@ -98,9 +97,8 @@ describe("ServiceAccountsView", () => {
     mocks.account.emailUpdated = false;
     renderView();
     await openDetails();
-    fireEvent.click(screen.getByRole("button", { name: "Email updated", hidden: true }));
+    fireEvent.click(screen.getByRole("button", { name: "Email updated: false", hidden: true }));
     fireEvent.click(screen.getByLabelText("Email updated"));
-    fireEvent.click(screen.getByRole("button", { name: "Save email updated", hidden: true }));
     await waitFor(() => expect(mocks.patch).toHaveBeenCalledWith({ id: 7, patch: { emailUpdated: true } }));
     mocks.account.emailUpdated = null;
   });

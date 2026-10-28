@@ -4,7 +4,7 @@ import { GCheckboxField } from "./GCheckboxField";
 import { GDate } from "./GDateField";
 import { GSelectField } from "./GSelectField";
 import { GemStatusPill } from "./GemStatusPill";
-import type { GemFieldWidth } from "./GemTextField";
+import type { GemFieldWidth } from "./GemField";
 import type { GemPrimitiveType } from "./primitiveFieldContracts";
 import type { RecordColorToken, RecordDateFormat, RecordNumberFormat, RecordSelectOption } from "../../table-kit/recordContracts";
 
@@ -30,6 +30,7 @@ export interface GemPrimitiveFieldProps {
   max?: number;
   step?: number | string;
   placeholder?: string;
+  multiline?: boolean;
   error?: string;
   width?: GemFieldWidth;
 }
@@ -78,18 +79,22 @@ export function GemPrimitiveField({
   max,
   step,
   placeholder,
+  multiline,
   error,
   width = "long",
 }: GemPrimitiveFieldProps) {
   const [validationError, setValidationError] = useState<string>();
   const resolvedError = error ?? validationError;
+  const selectOptions = nullable && !options.some((option) => option.value === "")
+    ? [...options, { value: "", label: "—" }]
+    : options;
   const emit = (next: string | number | boolean | null) => {
     const message = validatePrimitiveValue(primitive, next, {
       required,
       nullable,
       min,
       max,
-      allowedValues: options.map((option) => option.value),
+      allowedValues: selectOptions.map((option) => option.value),
     });
     setValidationError(message);
     if (!message) {
@@ -100,13 +105,13 @@ export function GemPrimitiveField({
 
   if (primitive === "status" || primitive === "select") {
     const current = String(value ?? "");
-    const selectedOption = options.find((option) => option.value === current);
+    const selectedOption = selectOptions.find((option) => option.value === current);
     const selectedColorToken = colorToken ?? selectedOption?.colorToken;
     return (
       <GSelectField
         label={label}
         value={current}
-        options={options}
+        options={selectOptions}
         editing={editing}
         displayValue={displayValue ?? (primitive === "status" ? <GemStatusPill className={selectedColorToken ? `primitive-status-pill primitive-status-pill--${selectedColorToken}` : "primitive-status-pill"}>{current || "—"}</GemStatusPill> : undefined)}
         onDisplayClick={onDisplayClick}
@@ -115,6 +120,19 @@ export function GemPrimitiveField({
         required={required}
         width={width}
         error={resolvedError}
+      />
+    );
+  }
+  if (primitive === "id" && !editing) {
+    return (
+      <GemField
+        label={label}
+        value={String(value ?? "")}
+        editing={false}
+        displayValue={displayValue ?? String(value ?? "—")}
+        primitive="text"
+        type="text"
+        width={width}
       />
     );
   }
@@ -148,10 +166,14 @@ export function GemPrimitiveField({
       max={max}
       step={step ?? (numberFormat === "currency" ? "0.01" : undefined)}
       placeholder={placeholder}
+      multiline={multiline}
       required={required}
       width={width}
       error={resolvedError}
-      onBlur={(event) => emit(primitive === "number" ? Number(event.currentTarget.value) : event.currentTarget.value)}
+      onChange={(event) => onChange?.(event.currentTarget.value)}
+      onBlur={(event) => emit(primitive === "number"
+        ? event.currentTarget.value === "" ? null : Number(event.currentTarget.value)
+        : event.currentTarget.value)}
     />
   );
 }

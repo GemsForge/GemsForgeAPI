@@ -101,11 +101,15 @@ function EditableField({ field }: { field: EditableRecordField }) {
 
   if (field.primitive) {
     return (
-      <div className={field.className} data-editing={editor.editing || undefined} onBlur={onEditorBlur}>
+      <div
+        className={field.className}
+        data-editing={editor.editing || undefined}
+        onBlur={field.primitive === "date" || field.primitive === "select" || field.primitive === "status" ? onEditorBlur : undefined}
+      >
         <GemPrimitiveField
           primitive={field.primitive}
           label={field.label}
-          value={field.value as string | number | boolean | null}
+          value={(editor.editing ? editor.draft : field.value) as string | number | boolean | null}
           editing={editor.editing}
           displayValue={field.displayValue ?? (field.primitive === "date" ? formatRecordDateValue(value, field.dateFormat) : undefined)}
           colorToken={field.colorToken}

@@ -671,6 +671,19 @@ dialog::backdrop {
 .create-record-form h3 {
   margin: 0 0 1.25rem;
 }
+.create-record-form--properties {
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
+}
+.create-education-properties {
+  margin-bottom: 1.25rem;
+}
+.create-education-properties .create-form-field {
+  min-width: 0;
+  margin-bottom: 0;
+}
 .address-search-section {
   margin-bottom: 1.25rem;
   padding: 1rem;
@@ -726,6 +739,9 @@ dialog::backdrop {
 }
 .create-form-control {
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   min-height: 2.75rem;
   padding: 0.65rem 0.75rem;
   border: 1px solid var(--line);
@@ -1066,12 +1082,20 @@ dialog::backdrop {
 }
 .gem-field-display-value {
   width: 100%;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
   padding: 0;
   border: 0;
   color: var(--muted);
   background: transparent;
   font: inherit;
   text-align: left;
+}
+.editable-field-control-row > .create-form-field,
+.editable-field-control-row > .gem-field-display {
+  min-width: 0;
+  flex: 1 1 0;
 }
 .gem-field-display-value:hover,
 .gem-field-display-value:focus-visible {
