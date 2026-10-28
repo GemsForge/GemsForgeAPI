@@ -1192,6 +1192,12 @@ dialog::backdrop {
   width: 100%;
   min-width: 0;
   gap: 1.5rem;
+  font-size: 0.95rem !important;
+  line-height: 1.25 !important;
+}
+.table-kit-list-row-content * {
+  font-size: inherit !important;
+  line-height: inherit !important;
 }
 .table-kit-list-row-title {
   min-width: 12rem;
@@ -1211,6 +1217,10 @@ dialog::backdrop {
 .table-kit-list-row-properties > span {
   min-width: 0;
   text-align: right;
+}
+.table-kit-record-list li[tabindex] > [role="listitem"] > * {
+  font-size: 0.85rem !important;
+  line-height: 1.25 !important;
 }
 .table-kit-record-list li[tabindex] > [role="listitem"] {
   box-shadow: none;

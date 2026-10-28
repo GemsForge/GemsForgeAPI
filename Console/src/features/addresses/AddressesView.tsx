@@ -90,6 +90,9 @@ export function AddressesView({ records }: AddressesViewProps) {
             detailId={selectedID}
             onDetailChange={setSelectedID}
             actions={actions}
+            onRecordPatch={async (record, field, value) => {
+              await patch.mutateAsync({ id: record.id, patch: { [field]: value } as Partial<Address> });
+            }}
             detail={
               selectedID ? (
                 <>

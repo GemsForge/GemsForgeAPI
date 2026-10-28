@@ -45,6 +45,7 @@ export interface DatabaseRecordCollectionProps<Record> {
   detail?: ReactNode;
   /** Optional consumer-owned create and intake actions rendered in the utility row. */
   actions?: TableActionsProps;
+  onRecordPatch?: (record: Record, field: string, value: string | number | null) => Promise<void>;
 }
 
 /**
@@ -63,6 +64,7 @@ export function DatabaseRecordCollection<Record>({
   onDetailChange,
   detail,
   actions,
+  onRecordPatch,
 }: DatabaseRecordCollectionProps<Record>) {
   const paging = usePagedRecords(utilities.records);
   const properties = useMemo(() => adapter.getPropertyDefinitions(), [adapter]);
@@ -110,6 +112,7 @@ export function DatabaseRecordCollection<Record>({
         onDetailChange={onDetailChange}
         detail={detail}
         actions={actions}
+        onRecordPatch={onRecordPatch}
       />
     </Table.Root>
   );
@@ -128,6 +131,7 @@ function DatabaseRecordTableShell<Record>({
   onDetailChange,
   detail,
   actions,
+  onRecordPatch,
 }: {
   properties: readonly RecordPropertyDefinition<Record>[];
   label: string;
@@ -140,6 +144,7 @@ function DatabaseRecordTableShell<Record>({
   onDetailChange: (id: string | null) => void;
   detail?: ReactNode;
   actions?: TableActionsProps;
+  onRecordPatch?: (record: Record, field: string, value: string | number | null) => Promise<void>;
 }) {
   const { viewId } = useTableContext<TableRecord<Record>>();
   const propertyOptions = useMemo(
@@ -236,6 +241,7 @@ function DatabaseRecordTableShell<Record>({
           detailId={detailId}
           onDetailChange={onDetailChange}
           detail={detail}
+          onRecordPatch={onRecordPatch}
         />
       </Table.Content>
       <Table.Pagination>
@@ -252,6 +258,7 @@ function DatabaseRecordRenderer<Record>({
   detailId,
   onDetailChange,
   detail,
+  onRecordPatch,
 }: {
   properties: readonly RecordPropertyDefinition<Record>[];
   propertyIds: readonly string[];
@@ -259,6 +266,7 @@ function DatabaseRecordRenderer<Record>({
   detailId: string | null;
   onDetailChange: (id: string | null) => void;
   detail?: ReactNode;
+  onRecordPatch?: (record: Record, field: string, value: string | number | null) => Promise<void>;
 }) {
   const { viewId } = useTableContext<TableRecord<Record>>();
   const onExpansionChange = (id: string | undefined) => onDetailChange(id === detailId ? null : (id ?? null));
@@ -271,7 +279,7 @@ function DatabaseRecordRenderer<Record>({
         ) : viewId === "table" ? (
           <RecordTable properties={properties} propertyIds={propertyIds} onExpansionChange={onExpansionChange} />
         ) : (
-          <RecordList properties={properties} propertyIds={propertyIds} onExpansionChange={onExpansionChange} />
+          <RecordList properties={properties} propertyIds={propertyIds} onExpansionChange={onExpansionChange} onRecordPatch={onRecordPatch} />
         )}
       </div>
       {detail ? (

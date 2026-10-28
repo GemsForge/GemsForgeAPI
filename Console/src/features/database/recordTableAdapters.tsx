@@ -253,6 +253,7 @@ export function createServiceAccountTableAdapter(
       [
         { id: "logo", label: "Logo", kind: "image", getValue: (record) => ({ display: renderLogo(record) }) },
         { id: "service", label: "Service", kind: "text", primary: true, getValue: (record) => display(record.service) },
+        { id: "status", label: "Status", kind: "status", getValue: (record) => display(record.status) },
         { id: "type", label: "Category", kind: "select", getValue: (record) => display(record.type || "Service") },
         { id: "id", label: "Item ID", kind: "number", getValue: (record) => display(record.id) },
         { id: "group", label: "Group", kind: "text", getValue: (record) => display(record.expenseGroup) },

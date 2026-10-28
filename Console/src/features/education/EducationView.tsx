@@ -97,6 +97,9 @@ export function EducationView({ records }: EducationViewProps) {
             detailId={selectedID}
             onDetailChange={setSelectedID}
             actions={actions}
+            onRecordPatch={async (record, field, value) => {
+              await patch.mutateAsync({ id: record.id, patch: { [field]: value } as Partial<Education> });
+            }}
             detail={
               selectedRecord ? (
                 <>

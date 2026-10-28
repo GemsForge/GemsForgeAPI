@@ -107,6 +107,9 @@ export function TransactionsView({ records }: TransactionsViewProps) {
             detailId={selectedID}
             onDetailChange={setSelectedID}
             actions={actions}
+            onRecordPatch={async (record, field, value) => {
+              await patch.mutateAsync({ id: record.id, patch: { [field]: value } as Partial<ExpenseTransaction> });
+            }}
             detail={
               selectedID ? (
                 <>
