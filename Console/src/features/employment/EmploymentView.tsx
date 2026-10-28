@@ -174,8 +174,13 @@ function EmploymentDetail({
           {
             label: "Employment status",
             value: record.employmentStatus,
+            primitive: "status",
             inputType: "select",
-            options: toOptions(employmentOptions.status),
+            options: toOptions(employmentOptions.status).map((option) => ({
+              ...option,
+              group: option.value === "Active" || option.value === "Current" ? "Current" : "Past",
+              colorToken: option.value === "Active" ? "green" : option.value === "Completed" ? "green" : option.value === "Paused" ? "gold" : "gray",
+            })),
             required: true,
             onSave: async (value) => onPatch({ employmentStatus: value as string }),
           },

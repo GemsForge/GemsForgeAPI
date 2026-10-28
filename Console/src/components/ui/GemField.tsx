@@ -1,5 +1,6 @@
 import { forwardRef, useId, type ComponentProps, type ReactNode, type Ref } from "react";
 import { Input, Label, SizableText, TextArea, YStack } from "tamagui";
+import type { GemPrimitiveType } from "./primitiveFieldContracts";
 
 /** Standard reusable field widths shared by generic and feature forms. */
 export type GemFieldWidth = "short" | "medium" | "long";
@@ -14,6 +15,8 @@ export interface GemFieldProps extends ComponentProps<typeof Input> {
   required?: boolean;
   multiline?: boolean;
   width?: GemFieldWidth;
+  /** Semantic primitive contract used to select validation and input behavior. */
+  primitive?: Extract<GemPrimitiveType, "text" | "number" | "url" | "email" | "phone">;
 }
 
 /** Shared labelled text field with standard prompt, type, and validation properties. */
@@ -29,6 +32,7 @@ export const GemField = forwardRef<HTMLInputElement | HTMLTextAreaElement, GemFi
     editing = true,
     displayValue,
     onDisplayClick,
+    primitive,
     ...props
   },
   ref,
@@ -37,6 +41,8 @@ export const GemField = forwardRef<HTMLInputElement | HTMLTextAreaElement, GemFi
   const inputID = id ?? generatedID;
   const errorID = `${inputID}-error`;
   const controlClassName = ["create-form-control", `create-form-control--${width}`, className].filter(Boolean).join(" ");
+  const primitiveType = primitive === "phone" ? "tel" : primitive;
+  const primitiveInputMode = primitive === "number" ? "decimal" : primitive === "phone" ? "tel" : undefined;
   if (!editing) {
     return (
       <YStack className="gem-field-display" gap="$1">
@@ -58,6 +64,8 @@ export const GemField = forwardRef<HTMLInputElement | HTMLTextAreaElement, GemFi
       {multiline ? (
         <TextArea
           {...props}
+          type={primitiveType ?? props.type}
+          inputMode={primitiveInputMode ?? props.inputMode}
           id={inputID}
           ref={ref as Ref<HTMLTextAreaElement>}
           className={controlClassName}
@@ -68,6 +76,8 @@ export const GemField = forwardRef<HTMLInputElement | HTMLTextAreaElement, GemFi
       ) : (
         <Input
           {...props}
+          type={primitiveType ?? props.type}
+          inputMode={primitiveInputMode ?? props.inputMode}
           id={inputID}
           ref={ref as Ref<HTMLInputElement>}
           className={controlClassName}
