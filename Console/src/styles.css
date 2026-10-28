@@ -686,6 +686,16 @@ dialog::backdrop {
 .create-form-field > label {
   margin: 0;
 }
+.g-field-label {
+  margin: 0 0 0.1rem !important;
+  color: var(--gold) !important;
+  font-family: inherit !important;
+  font-size: 0.68rem !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.08em !important;
+  line-height: 1.3 !important;
+  text-transform: uppercase !important;
+}
 .create-form-control {
   width: 100%;
   min-height: 2.75rem;
@@ -961,15 +971,24 @@ dialog::backdrop {
 .record-fields .status-pill,
 .record-fields .primitive-status-pill,
 .record-fields [class*="primitive-status-pill--"] {
+  font-family: inherit !important;
   font-size: 0.84rem !important;
+  font-weight: 400 !important;
   line-height: 1.3 !important;
 }
 .editable-field-form .create-form-field > label {
+  font-family: inherit !important;
   color: var(--gold);
   font-size: 0.68rem;
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+.g-status-select-trigger .primitive-status-pill {
+  font-family: inherit !important;
+  font-size: 0.84rem !important;
+  font-weight: 400 !important;
+  line-height: 1.3 !important;
 }
 .record-fields a {
   color: var(--mint);
