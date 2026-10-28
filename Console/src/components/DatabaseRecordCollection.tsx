@@ -1,4 +1,5 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { api, type SavedTableViewInput } from "../api";
 import { PaginationControls } from "./PaginationControls";
 import { RecordUtilities } from "./RecordUtilities";
 import { useGemLifeShell } from "./layout/GemLifeShell";
@@ -16,6 +17,7 @@ import {
   type TableRecord,
 } from "../table-kit";
 import { usePagedRecords } from "../hooks/usePagedRecords";
+import type { TablePropertyConfigurationInput } from "../table-kit/configuration";
 import type { ReactNode } from "react";
 import { Dialog } from "tamagui";
 import { GemButton } from "./ui";
@@ -66,6 +68,10 @@ export function DatabaseRecordCollection<Record>({
   actions,
   onRecordPatch,
 }: DatabaseRecordCollectionProps<Record>) {
+  const [activeViewId, setActiveViewId] = useState("list");
+  const [viewConfigurations, setViewConfigurations] = useState<
+    Record<string, TablePropertyConfigurationInput>
+  >({});
   const paging = usePagedRecords(utilities.records);
   const properties = useMemo(() => adapter.getPropertyDefinitions(), [adapter]);
   const pageRecords = useMemo(
@@ -85,6 +91,63 @@ export function DatabaseRecordCollection<Record>({
       })),
     [properties],
   );
+  useEffect(() => {
+    const controller = new AbortController();
+    const viewTypes = [
+      ["list", "List"],
+      ["gallery", "Gallery"],
+      ["table", "Table"],
+    ] as const;
+    void Promise.all(
+      viewTypes.map(async ([viewId, viewType]) => {
+        try {
+          const saved = await api.getTableView(label, viewType, controller.signal);
+          return [
+            viewId,
+            {
+              order: saved.columns.map((column) => column.columnName),
+              hiddenIds: saved.columns.filter((column) => !column.isVisible).map((column) => column.columnName),
+            },
+          ] as const;
+        } catch {
+          return null;
+        }
+      }),
+    ).then((savedViews) => {
+      if (controller.signal.aborted) return;
+      setViewConfigurations((current) =>
+        savedViews.reduce(
+          (next, savedView) => (savedView ? { ...next, [savedView[0]]: savedView[1] } : next),
+          current,
+        ),
+      );
+    });
+    return () => controller.abort();
+  }, [label]);
+  const saveConfiguration = useCallback(
+    async (viewId: string | undefined, configuration: { order: readonly string[]; hiddenIds: readonly string[] }) => {
+      if (!viewId) return;
+      const viewType = viewId === "gallery" ? "Gallery" : viewId === "table" ? "Table" : "List";
+      const payload: SavedTableViewInput = {
+        viewType,
+        name: viewId,
+        columns: configuration.order.map((columnName, sortOrder) => ({
+          columnName,
+          sortOrder,
+          isVisible: !configuration.hiddenIds.includes(columnName),
+          width: null,
+        })),
+        queries: [],
+      };
+      setViewConfigurations((current) => ({ ...current, [viewId]: configuration }));
+      try {
+        await api.saveTableView(label, viewType, payload);
+      } catch {
+        // Keep the local change usable when the API is unavailable; the next change retries persistence.
+      }
+    },
+    [label],
+  );
 
   return (
     <Table.Root
@@ -97,7 +160,8 @@ export function DatabaseRecordCollection<Record>({
         { id: "gallery", label: "Gallery", icon: "▦" },
         { id: "table", label: "Table", icon: "▤" },
       ]}
-      defaultViewId="list"
+      viewId={activeViewId}
+      onViewChange={setActiveViewId}
       selection={{ matchingIds: matchingRecords.map((record) => record.id) }}
     >
       <DatabaseRecordTableShell
@@ -113,6 +177,8 @@ export function DatabaseRecordCollection<Record>({
         detail={detail}
         actions={actions}
         onRecordPatch={onRecordPatch}
+        viewConfigurations={viewConfigurations}
+        onConfigurationChange={saveConfiguration}
       />
     </Table.Root>
   );
@@ -132,6 +198,8 @@ function DatabaseRecordTableShell<Record>({
   detail,
   actions,
   onRecordPatch,
+  viewConfigurations,
+  onConfigurationChange,
 }: {
   properties: readonly RecordPropertyDefinition<Record>[];
   label: string;
@@ -145,6 +213,11 @@ function DatabaseRecordTableShell<Record>({
   detail?: ReactNode;
   actions?: TableActionsProps;
   onRecordPatch?: (record: Record, field: string, value: string | number | null) => Promise<void>;
+  viewConfigurations: Readonly<Record<string, TablePropertyConfigurationInput>>;
+  onConfigurationChange: (
+    viewId: string | undefined,
+    configuration: { order: readonly string[]; hiddenIds: readonly string[] },
+  ) => Promise<void>;
 }) {
   const { viewId } = useTableContext<TableRecord<Record>>();
   const propertyOptions = useMemo(
@@ -168,6 +241,10 @@ function DatabaseRecordTableShell<Record>({
     properties: propertyOptions,
     viewId,
     defaultConfiguration: viewId === "gallery" ? galleryDefaultConfiguration : undefined,
+    viewConfigurations,
+    onConfigurationChange: (next, context) => {
+      void onConfigurationChange(context.viewId, next);
+    },
   });
   const galleryConfiguration = useMemo(() => {
     if (viewId !== "gallery") return configuration;

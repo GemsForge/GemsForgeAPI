@@ -75,6 +75,7 @@ export function GSelectField({
           <Select.Value placeholder={`Select ${label.toLowerCase()}…`} />
         </Select.Trigger>
         <Select.Content
+          className="gem-select-content"
           backgroundColor="$gemPanel"
           borderColor="$gemPanelLight"
           borderWidth={1}

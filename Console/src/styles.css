@@ -83,6 +83,35 @@ textarea,
 select {
   font: inherit;
 }
+.gem-select-content {
+  background: var(--panel) !important;
+  opacity: 1 !important;
+  isolation: isolate;
+}
+.gem-select-content [role="option"] {
+  background: var(--panel) !important;
+  color: var(--ink) !important;
+}
+.gem-select-content [role="option"][data-highlighted],
+.gem-select-content [role="option"]:hover,
+.gem-select-content [role="option"]:focus-visible {
+  background: var(--panel-light) !important;
+}
+.gem-date-popover {
+  background: var(--panel) !important;
+  color: var(--ink) !important;
+  opacity: 1 !important;
+  isolation: isolate;
+  box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.3);
+}
+.gem-date-popover button {
+  color: var(--ink);
+  background: var(--panel-light);
+}
+.gem-date-popover button:hover,
+.gem-date-popover button:focus-visible {
+  background: var(--mint-dark);
+}
 button {
   cursor: pointer;
 }

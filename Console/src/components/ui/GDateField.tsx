@@ -64,7 +64,7 @@ export function GDateField({
             {selectedDate ? selectedDate.format(format) : `Select ${label.toLowerCase()}…`}
           </Button>
         </Popover.Trigger>
-        <Popover.Content padding="$3" borderWidth={1} minWidth={280}>
+        <Popover.Content className="gem-date-popover" padding="$3" borderWidth={1} minWidth={280}>
           <YStack gap="$3">
             <XStack alignItems="center" justifyContent="space-between">
               <Button

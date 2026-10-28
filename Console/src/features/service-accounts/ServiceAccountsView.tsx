@@ -261,18 +261,30 @@ function ServiceAccountDetail({
           {
             label: "Due",
             value: record.due,
+            inputType: "select",
+            options: [
+              "1st", "5th", "10th", "15th", "20th", "25th", "Last day of month", record.due,
+            ].filter((value): value is string => Boolean(value)).map((value) => ({ label: value, value })),
             nullable: true,
             onSave: async (value) => onPatch({ due: value as string | null }),
           },
           {
             label: "Occurrence",
             value: record.occurrence,
+            inputType: "select",
+            options: [
+              "Monthly", "Quarterly", "Annually", "One-time", "As needed",
+            ].map((value) => ({ label: value, value })),
             nullable: true,
             onSave: async (value) => onPatch({ occurrence: value as string | null }),
           },
           {
             label: "Status",
             value: record.status,
+            inputType: "select",
+            options: [
+              "Active", "Paused", "Closed", "Cancelled", "Pending",
+            ].map((value) => ({ label: value, value })),
             nullable: true,
             onSave: async (value) => onPatch({ status: value as string | null }),
           },
@@ -287,6 +299,10 @@ function ServiceAccountDetail({
           {
             label: "Payment method",
             value: record.paymentMethod,
+            inputType: "select",
+            options: [
+              "Apple", "Bank transfer", "Credit card", "Debit card", "PayPal", "Other",
+            ].map((value) => ({ label: value, value })),
             nullable: true,
             onSave: async (value) => onPatch({ paymentMethod: value as string | null }),
           },
