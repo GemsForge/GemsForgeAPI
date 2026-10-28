@@ -7,12 +7,14 @@ export interface GSwitchProps extends Omit<
   "checked" | "defaultChecked" | "value" | "onCheckedChange" | "onChange"
 > {
   label: string;
+  showLabel?: boolean;
+  compact?: boolean;
   value?: boolean;
   onChange?: (value: boolean) => void;
 }
 
 /** Render a labeled Tamagui switch with a stable project-wide layout contract. */
-export function GSwitch({ label, value = false, onChange, id, ...switchProps }: GSwitchProps) {
+export function GSwitch({ label, showLabel = true, compact = false, value = false, onChange, id, ...switchProps }: GSwitchProps) {
   const switchID = id ?? `g-switch-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
 
   return (
@@ -21,22 +23,26 @@ export function GSwitch({ label, value = false, onChange, id, ...switchProps }: 
         <Switch
           id={switchID}
           {...switchProps}
-          size="$3"
-          width="$4"
-          height="$3"
-          borderRadius="$3"
+          size={compact ? "sm" : "md"}
           backgroundColor="$gemPanelLight"
+          activeStyle={{ backgroundColor: "$gemMintDark" }}
           borderWidth={0}
           transition="quick"
           flexShrink={0}
           checked={value}
           onCheckedChange={(checked) => onChange?.(checked === true)}
         >
-          <Switch.Thumb animation="quick" size="$2" backgroundColor="$gemInk" borderWidth={0} transition="quickest" />
+          <Switch.Thumb
+            animation="quick"
+            backgroundColor="$gemInk"
+            transition="quickest"
+          />
         </Switch>
-        <Label htmlFor={switchID} color="$gemMuted" fontSize="$2" fontWeight="700">
-          <SizableText>{label}</SizableText>
-        </Label>
+        {showLabel && (
+          <Label htmlFor={switchID} color="$gemMuted" fontSize="$2" fontWeight="700">
+            <SizableText>{label}</SizableText>
+          </Label>
+        )}
       </XStack>
     </YStack>
   );

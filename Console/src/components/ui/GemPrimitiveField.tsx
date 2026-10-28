@@ -22,6 +22,8 @@ export interface GemPrimitiveFieldProps {
   colorToken?: RecordColorToken;
   numberFormat?: RecordNumberFormat;
   dateFormat?: RecordDateFormat;
+  includeTime?: boolean;
+  onDateConfigChange?: (config: { displayFormat: RecordDateFormat; includeTime: boolean }) => void;
   required?: boolean;
   nullable?: boolean;
   min?: number;
@@ -68,6 +70,8 @@ export function GemPrimitiveField({
   colorToken,
   numberFormat,
   dateFormat: _dateFormat = "iso",
+  includeTime,
+  onDateConfigChange,
   required,
   nullable,
   min,
@@ -116,7 +120,7 @@ export function GemPrimitiveField({
   }
   if (primitive === "date") {
     return (
-      <GDate label={label} value={String(value ?? "")} format="YYYY-MM-DD" onChange={emit} required={required} width={width} />
+      <GDate label={label} value={String(value ?? "")} format="YYYY-MM-DD" displayFormat={_dateFormat} includeTime={includeTime} onDateConfigChange={onDateConfigChange} onChange={emit} required={required} width={width} />
     );
   }
   if (primitive === "checkbox") {

@@ -1,8 +1,10 @@
 import dayjs, { type Dayjs } from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
-import { useMemo, useState, type ComponentProps } from "react";
+import { useEffect, useMemo, useRef, useState, type ComponentProps } from "react";
 import { Button, Input, Label, Popover, SizableText, XStack, YStack } from "tamagui";
 import type { GemTextFieldWidth } from "./GemTextField";
+import type { RecordDateFormat } from "../../table-kit/recordContracts";
+import { GSwitch } from "./GSwitch";
 
 dayjs.extend(customParseFormat);
 const calendarDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -16,6 +18,9 @@ export interface GDateFieldProps extends Omit<ComponentProps<typeof Input>, "val
   required?: boolean;
   width?: GemTextFieldWidth;
   onChange?: (value: string) => void;
+  displayFormat?: RecordDateFormat;
+  includeTime?: boolean;
+  onDateConfigChange?: (config: { displayFormat: RecordDateFormat; includeTime: boolean }) => void;
 }
 
 function parseDate(value: string | undefined, format: string): Dayjs | null {
@@ -33,12 +38,37 @@ export function GDateField({
   required = false,
   width = "long",
   onChange,
+  displayFormat = "iso",
+  includeTime = false,
+  onDateConfigChange,
 }: GDateFieldProps) {
   const selectedDate = parseDate(value, format);
   const [open, setOpen] = useState(false);
+  const [formatMenuOpen, setFormatMenuOpen] = useState(false);
+  const [selectedFormat, setSelectedFormat] = useState<RecordDateFormat>(displayFormat);
+  const [selectedIncludeTime, setSelectedIncludeTime] = useState(includeTime);
+  const previousDisplayFormat = useRef(displayFormat);
+  const previousIncludeTime = useRef(includeTime);
   const [visibleMonth, setVisibleMonth] = useState(() => selectedDate ?? dayjs());
   const id = `g-date-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
   const errorID = `${id}-error`;
+  const formatLabels: Record<RecordDateFormat, string> = {
+    iso: "Year/Month/Day",
+    local: "Full date",
+    relative: "Relative",
+  };
+  useEffect(() => {
+    if (previousDisplayFormat.current !== displayFormat) {
+      previousDisplayFormat.current = displayFormat;
+      setSelectedFormat(displayFormat);
+    }
+  }, [displayFormat]);
+  useEffect(() => {
+    if (previousIncludeTime.current !== includeTime) {
+      previousIncludeTime.current = includeTime;
+      setSelectedIncludeTime(includeTime);
+    }
+  }, [includeTime]);
   const days = useMemo(() => {
     const start = visibleMonth.startOf("month").startOf("week");
     return Array.from({ length: 42 }, (_, index) => start.add(index, "day"));
@@ -61,7 +91,7 @@ export function GDateField({
             justifyContent="space-between"
             width="100%"
           >
-            {selectedDate ? selectedDate.format(format) : `Select ${label.toLowerCase()}…`}
+            {selectedDate ? selectedDate.format(selectedFormat === "local" ? "MMM D, YYYY" : selectedFormat === "relative" ? "MMM D" : format) : `Select ${label.toLowerCase()}…`}
           </Button>
         </Popover.Trigger>
         <Popover.Content className="gem-date-popover" padding="$3" borderWidth={1} minWidth={280}>
@@ -94,6 +124,7 @@ export function GDateField({
                 return (
                   <Button
                     key={date.format("YYYY-MM-DD")}
+                    className="gem-calendar-day"
                     size="sm"
                     width="14.28%"
                     theme={isSelected ? "brand" : undefined}
@@ -109,6 +140,52 @@ export function GDateField({
                 );
               })}
             </XStack>
+            <YStack className="gem-date-settings" gap="$1">
+              <XStack justifyContent="space-between" alignItems="center">
+                <SizableText>Date format</SizableText>
+                <Popover open={formatMenuOpen} onOpenChange={setFormatMenuOpen} placement="left-start">
+                  <Popover.Trigger asChild>
+                    <Button size="sm" chromeless>{formatLabels[selectedFormat]} ›</Button>
+                  </Popover.Trigger>
+                  <Popover.Content className="gem-date-format-popover" padding="$2" borderWidth={1}>
+                    <YStack>
+                      {(["local", "iso", "relative"] as RecordDateFormat[]).map((option) => (
+                        <Button
+                          key={option}
+                          size="sm"
+                          justifyContent="space-between"
+                          backgroundColor={selectedFormat === option ? "$gemPanelLight" : "transparent"}
+                          onPress={() => {
+                            setSelectedFormat(option);
+                            onDateConfigChange?.({ displayFormat: option, includeTime: selectedIncludeTime });
+                            setFormatMenuOpen(false);
+                          }}
+                        >
+                          {formatLabels[option]}{selectedFormat === option ? " ✓" : ""}
+                        </Button>
+                      ))}
+                    </YStack>
+                  </Popover.Content>
+                </Popover>
+              </XStack>
+              <XStack justifyContent="space-between" alignItems="center">
+                <SizableText>Include time</SizableText>
+                <GSwitch
+                  label="Include time"
+                  showLabel={false}
+                  compact
+                  value={selectedIncludeTime}
+                  // Tamagui's controlled onCheckedChange path can be swallowed
+                  // when this switch is nested inside the date popover; keep
+                  // the press fallback until that upstream behavior is fixed.
+                  onPress={() => {
+                    const checked = !selectedIncludeTime;
+                    setSelectedIncludeTime(checked);
+                    onDateConfigChange?.({ displayFormat: selectedFormat, includeTime: checked });
+                  }}
+                />
+              </XStack>
+            </YStack>
           </YStack>
         </Popover.Content>
       </Popover>
