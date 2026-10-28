@@ -60,6 +60,7 @@ export { RecordGallery, RecordList, RecordTable } from "./renderers";
 export type { TableRendererProps } from "./renderers";
 export { GalleryViewControls } from "./GalleryViewControls";
 export type { GalleryCardSize, GalleryViewControlsProps } from "./GalleryViewControls";
+export { primitiveTypeDefaults, primitiveTypeDescriptions } from "./primitiveTypes";
 export { useTableSelection } from "./selection";
 export type {
   TableSelection,
@@ -77,6 +78,10 @@ export type {
   RecordPropertyDefinition,
   RecordPropertyKind,
   RecordPropertyValue,
+  RecordSelectOption,
+  RecordColorToken,
+  RecordDateFormat,
+  RecordNumberFormat,
   RecordSelectionHandlers,
   RecordSelectionState,
   RecordStatus,

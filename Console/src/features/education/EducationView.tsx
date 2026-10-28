@@ -223,6 +223,14 @@ function EducationDetail({
           {
             label: "Status",
             value: record.status,
+            primitive: "status",
+            inputType: "select",
+            options: [
+              { label: "In progress", value: "In progress", colorToken: "blue", group: "In progress" },
+              { label: "Completed", value: "Completed", colorToken: "green", group: "Complete" },
+              { label: "Paused", value: "Paused", colorToken: "gold", group: "To-do" },
+              { label: "Other", value: "Other", colorToken: "gray", group: "Other" },
+            ],
             required: true,
             onSave: async (value) => onPatch({ status: value as string }),
           },

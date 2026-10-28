@@ -15,8 +15,8 @@ import {
   type ColDef,
   type ICellRendererParams,
 } from "ag-grid-community";
-import { Avatar, H3, ListItem, Paragraph, SizableText, Text, XStack, YGroup, YStack } from "tamagui";
-import { GCheckboxField, GemButton } from "../components/ui";
+import { Avatar, H3, ListItem, Paragraph, Separator, SizableText, Text, XStack, YGroup, YStack } from "tamagui";
+import { GCheckboxField, GemButton, GemStatusPill } from "../components/ui";
 import { EditableRecordFields } from "../components/EditableRecordFields";
 import { TableContext } from "./context";
 import { GalleryViewControls, type GalleryCardSize } from "./GalleryViewControls";
@@ -212,8 +212,22 @@ function RecordAvatar<Record>({ record }: { record: TableRecord<Record> }) {
   );
 }
 
-function PropertyValue({ value }: { value: RecordPropertyValue }) {
-  return <Paragraph color="$gemMuted">{displayValue(value)}</Paragraph>;
+function PropertyValue({ property, value }: { property: RecordPropertyDefinition<unknown>; value: RecordPropertyValue }) {
+  const text = displayValue(value);
+  if (property.kind === "status") {
+    const tone = value.status?.tone ?? (property.colorToken === "green" ? "success" : property.colorToken === "red" ? "danger" : "default");
+    return <GemStatusPill tone={tone}>{text}</GemStatusPill>;
+  }
+  if ((property.kind === "url" || property.kind === "email") && value.href) {
+    return <a className="primitive-value-link" href={value.href}>{text}</a>;
+  }
+  if (property.kind === "checkbox") {
+    return <input className="primitive-checkbox" type="checkbox" checked={Boolean(value.checked ?? value.raw)} readOnly aria-label={property.label} />;
+  }
+  if ((property.kind === "image" || property.kind === "media") && value.image) {
+    return <img className="primitive-media-preview" src={value.image.src} alt={value.image.alt} />;
+  }
+  return <Paragraph color="$gemMuted">{text}</Paragraph>;
 }
 
 /** Render a property value through AG Grid without changing the record contract. */
@@ -251,7 +265,7 @@ export function RecordList<Record>({
     [],
   );
   return (
-    <YGroup className="table-kit-record-list" role="list" gap="$2">
+    <YGroup className="table-kit-record-list" role="list" gap="$0">
       {effectiveRecords.map((record) => {
         const selected = selection.selectedIds.has(record.id);
         return (
@@ -278,7 +292,7 @@ export function RecordList<Record>({
                           fields={[{ label: property.label, value: propertyValue(property, record).raw as string | number | null, inputType: property.edit.inputType, nullable: property.edit.nullable, options: property.edit.options, editable: true, onSave: (value) => property.edit?.onSave(record.source, value) }]}
                         />
                       </span>
-                    ) : <span key={property.id}><PropertyValue value={propertyValue(property, record)} /></span>
+                    ) : <span key={property.id}><PropertyValue property={property as RecordPropertyDefinition<unknown>} value={propertyValue(property, record)} /></span>
                   ))}
                 </span>
               </div>}
@@ -306,6 +320,14 @@ export function RecordList<Record>({
                 else if (!event.shiftKey) onExpansionChange?.(record.id);
               }}
             />
+            {record.id !== effectiveRecords[effectiveRecords.length - 1]?.id && (
+              <Separator
+                className="table-kit-list-separator"
+                horizontal
+                borderColor="$gemLine"
+                opacity={0.7}
+              />
+            )}
           </YGroup.Item>
         );
       })}

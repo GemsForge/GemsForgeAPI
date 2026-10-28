@@ -5,7 +5,23 @@ export type TableRecordId = string;
 
 /** Supported semantic hints for a record property renderer. */
 export type RecordPropertyKind =
-  "title" | "text" | "number" | "date" | "select" | "status" | "image" | "relation" | "formula";
+  | "title"
+  | "text"
+  | "url"
+  | "email"
+  | "number"
+  | "date"
+  | "select"
+  | "status"
+  | "checkbox"
+  | "image"
+  | "media"
+  | "relation"
+  | "formula";
+
+export type RecordNumberFormat = "decimal" | "currency" | "percent";
+export type RecordDateFormat = "iso" | "local" | "relative";
+export type RecordColorToken = "mint" | "gold" | "blue" | "green" | "purple" | "orange" | "red" | "gray";
 
 /** Image metadata that an adapter can provide without coupling the renderer to a domain. */
 export interface RecordImage {
@@ -26,6 +42,9 @@ export interface RecordPropertyValue {
   display: ReactNode;
   image?: RecordImage;
   status?: RecordStatus;
+  href?: string;
+  checked?: boolean;
+  colorToken?: RecordColorToken;
 }
 
 /** Domain-neutral property metadata consumed by every Table Kit view. */
@@ -33,6 +52,9 @@ export interface RecordPropertyDefinition<Record> {
   id: string;
   label: string;
   kind?: RecordPropertyKind;
+  numberFormat?: RecordNumberFormat;
+  dateFormat?: RecordDateFormat;
+  colorToken?: RecordColorToken;
   order?: number;
   visible?: boolean;
   primary?: boolean;
@@ -46,8 +68,17 @@ export interface RecordPropertyDefinition<Record> {
 export interface RecordPropertyEdit {
   inputType?: "text" | "date" | "number" | "select" | "longText";
   nullable?: boolean;
-  options?: Array<{ label: string; value: string }>;
+  options?: RecordSelectOption[];
   onSave: (record: unknown, value: string | number | null) => Promise<void>;
+}
+
+/** A selectable value with optional visual metadata for status/select primitives. */
+export interface RecordSelectOption {
+  label: string;
+  value: string;
+  colorToken?: RecordColorToken;
+  isDefault?: boolean;
+  group?: string;
 }
 
 /** A normalized record identity and optional presentation metadata for a view adapter. */

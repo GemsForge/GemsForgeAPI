@@ -281,10 +281,11 @@ function ServiceAccountDetail({
           {
             label: "Status",
             value: record.status,
+            primitive: "status",
             inputType: "select",
             options: [
-              "Active", "Paused", "Closed", "Cancelled", "Pending",
-            ].map((value) => ({ label: value, value })),
+              ["Active", "green"], ["Paused", "gold"], ["Closed", "gray"], ["Cancelled", "red"], ["Pending", "blue"],
+            ].map(([value, colorToken]) => ({ label: value, value, group: value === "Active" || value === "Pending" ? "Open" : "Closed", colorToken: colorToken as "green" | "gold" | "gray" | "red" | "blue" })),
             nullable: true,
             onSave: async (value) => onPatch({ status: value as string | null }),
           },

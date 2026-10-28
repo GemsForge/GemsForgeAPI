@@ -3,6 +3,8 @@ import type { Address, Education, Employment, ExpenseTransaction, GemHue, Servic
 import type { RecordAdapter, RecordImage, RecordPropertyDefinition } from "../../table-kit";
 
 const display = (value: unknown) => ({ raw: value, display: value == null || value === "" ? "—" : String(value) });
+const url = (value: string | null | undefined) => ({ ...display(value), href: value || undefined });
+const email = (value: string | null | undefined) => ({ ...display(value), href: value ? `mailto:${value}` : undefined });
 const currency = (value: number | null | undefined) => ({
   raw: value,
   display: value == null ? "—" : new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value),
@@ -121,7 +123,7 @@ export const educationTableAdapter: RecordAdapter<Education> = {
         kind: "text",
         getValue: (record) => display(record.locationAddressID),
       },
-      { id: "website", label: "Website", kind: "text", getValue: (record) => display(record.website) },
+      { id: "website", label: "Website", kind: "url", getValue: (record) => url(record.website) },
       { id: "notes", label: "Notes", kind: "text", getValue: (record) => display(record.notes) },
       {
         id: "documentFileMetadataID",
@@ -171,7 +173,7 @@ export const employmentTableAdapter: RecordAdapter<Employment> = {
       { id: "startDate", label: "Start date", kind: "date", getValue: (record) => display(record.startDate) },
       { id: "endDate", label: "End date", kind: "date", getValue: (record) => display(record.endDate) },
       { id: "workAddressID", label: "Work address", kind: "text", getValue: (record) => display(record.workAddressID) },
-      { id: "website", label: "Website", kind: "text", getValue: (record) => display(record.website) },
+      { id: "website", label: "Website", kind: "url", getValue: (record) => url(record.website) },
       { id: "employerContact", label: "Contact", kind: "text", getValue: (record) => display(record.employerContact) },
       {
         id: "employerContactNumber",
@@ -182,8 +184,8 @@ export const employmentTableAdapter: RecordAdapter<Employment> = {
       {
         id: "employerContactEmail",
         label: "Contact email",
-        kind: "text",
-        getValue: (record) => display(record.employerContactEmail),
+        kind: "email",
+        getValue: (record) => email(record.employerContactEmail),
       },
       { id: "notes", label: "Notes", kind: "text", getValue: (record) => display(record.notes) },
       { id: "updatedAt", label: "Last updated", kind: "date", getValue: (record) => display(record.updatedAt) },
@@ -227,11 +229,12 @@ export const transactionTableAdapter: RecordAdapter<ExpenseTransaction> = {
         id: "regularPrice",
         label: "Regular price",
         kind: "number",
+        numberFormat: "currency",
         getValue: (record) => currency(record.regularPrice),
       },
-      { id: "paidPrice", label: "Paid price", kind: "number", getValue: (record) => currency(record.paidPrice) },
-      { id: "total", label: "Total", kind: "number", getValue: (record) => currency(record.total) },
-      { id: "discount", label: "Discount", kind: "number", getValue: (record) => currency(record.discount) },
+      { id: "paidPrice", label: "Paid price", kind: "number", numberFormat: "currency", getValue: (record) => currency(record.paidPrice) },
+      { id: "total", label: "Total", kind: "number", numberFormat: "currency", getValue: (record) => currency(record.total) },
+      { id: "discount", label: "Discount", kind: "number", numberFormat: "currency", getValue: (record) => currency(record.discount) },
       { id: "notes", label: "Notes", kind: "text", getValue: (record) => display(record.notes) },
       { id: "image", label: "Image", kind: "image", getValue: (record) => display(record.image) },
       { id: "updatedAt", label: "Last updated", kind: "date", getValue: (record) => display(record.updatedAt) },
@@ -278,7 +281,7 @@ export function createServiceAccountTableAdapter(
         { id: "due", label: "Due", kind: "text", getValue: (record) => display(record.due) },
         { id: "occurrence", label: "Occurrence", kind: "text", getValue: (record) => display(record.occurrence) },
         { id: "since", label: "Since", kind: "date", getValue: (record) => display(record.since) },
-        { id: "website", label: "Website", kind: "text", getValue: (record) => display(record.website) },
+        { id: "website", label: "Website", kind: "url", getValue: (record) => url(record.website) },
         { id: "notes", label: "Notes", kind: "text", getValue: (record) => display(record.notes) },
         { id: "notionPage", label: "Notion page", kind: "text", getValue: (record) => display(record.notionPage) },
         {

@@ -1,8 +1,11 @@
-import { useId, type ChangeEvent, type ReactNode } from "react";
-import { Form, Tooltip } from "tamagui";
-import { GCheckboxField, GDate, GemButton, GemField, GSelectField } from "./ui";
+import { useId, type ChangeEvent, type FocusEvent, type ReactNode } from "react";
+import { Form } from "tamagui";
+import { GCheckboxField, GDate, GemField, GSelectField } from "./ui";
 import type { GemTextFieldWidth } from "./ui/GemTextField";
 import { useRecordEditor } from "../hooks/useRecordEditor";
+import { GemPrimitiveField } from "./ui/GemPrimitiveField";
+import type { GemPrimitiveType } from "./ui/primitiveFieldContracts";
+import type { RecordColorToken, RecordDateFormat, RecordSelectOption } from "../table-kit/recordContracts";
 
 export type EditableValue = string | number | boolean | null | undefined;
 export type RecordInputType = "text" | "date" | "email" | "url" | "tel" | "number" | "boolean" | "select" | "longText";
@@ -15,16 +18,20 @@ export interface EditableRecordField {
   /** Explicitly declares whether this field may be edited in the current context. */
   editable?: boolean;
   onSave?: (value: EditableValue) => Promise<void>;
+  onMediaChange?: (file: File | null) => Promise<void> | void;
   inputType?: RecordInputType;
   required?: boolean;
   nullable?: boolean;
-  options?: Array<{ label: string; value: string }>;
+  options?: RecordSelectOption[];
   step?: string;
   placeholder?: string;
   width?: GemTextFieldWidth;
   displayValue?: ReactNode;
   readOnlyReason?: string;
   className?: string;
+  primitive?: GemPrimitiveType;
+  colorToken?: RecordColorToken;
+  dateFormat?: RecordDateFormat;
 }
 
 export function formatRecordTimestamp(value?: string | null): string {
@@ -78,6 +85,36 @@ function EditableField({ field }: { field: EditableRecordField }) {
   const labelID = `${id}-label`;
   const onTextChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     editor.setDraft(event.currentTarget.value);
+  const onEditorBlur = (event: FocusEvent<HTMLElement>) => {
+    if (!event.currentTarget.contains(event.relatedTarget as Node | null)) void editor.save();
+  };
+
+  if (field.primitive) {
+    return (
+      <div className={field.className} data-editing={editor.editing || undefined} onBlur={onEditorBlur}>
+        <GemPrimitiveField
+          primitive={field.primitive}
+          label={field.label}
+          value={field.value as string | number | boolean | null}
+          editing={editor.editing}
+          displayValue={field.displayValue}
+          colorToken={field.colorToken}
+          dateFormat={field.dateFormat}
+          onDisplayClick={editor.begin}
+          options={field.options}
+          required={field.required}
+          nullable={field.nullable}
+          error={editor.error ?? undefined}
+          onSave={async (next) => {
+            editor.setDraft(String(next ?? ""));
+            await editor.save(String(next ?? ""));
+          }}
+          onChange={(next) => editor.setDraft(String(next ?? ""))}
+          onMediaChange={field.onMediaChange}
+        />
+      </div>
+    );
+  }
 
   return (
       <div className={field.className} data-editing={editor.editing || undefined}>
@@ -133,7 +170,7 @@ function EditableField({ field }: { field: EditableRecordField }) {
               </>
             )
           ) : (
-            <Form className="edit-form editable-field-form" onSubmit={(event) => { event.preventDefault(); void editor.save(); }}>
+            <Form className="edit-form editable-field-form" onSubmit={(event) => { event.preventDefault(); void editor.save(); }} onBlur={onEditorBlur}>
                   <div className="editable-field-control-row">
                     {field.inputType === "date" ? (
                       <GDate
@@ -185,7 +222,6 @@ function EditableField({ field }: { field: EditableRecordField }) {
                         width={field.width ?? "medium"}
                         required={field.required}
                         error={editor.error ?? undefined}
-                        onBlur={() => void editor.save()}
                       />
                     )}
                     {field.nullable && field.inputType !== "boolean" && field.inputType !== "select" && (
@@ -193,28 +229,6 @@ function EditableField({ field }: { field: EditableRecordField }) {
                         Clear value
                       </button>
                     )}
-                    <div className="button-row editable-field-actions">
-                      <Tooltip placement="top" delay={300}>
-                        <Tooltip.Trigger asChild>
-                          <GemButton
-                            tone="secondary"
-                            type="button"
-                            variant="quiet"
-                            size="sm"
-                            aria-label={`Cancel editing ${field.label.toLowerCase()}`}
-                            disabled={editor.saving}
-                            onMouseDown={(event) => event.preventDefault()}
-                            onClick={editor.cancel}
-                          >
-                            <span aria-hidden="true">×</span>
-                          </GemButton>
-                        </Tooltip.Trigger>
-                        <Tooltip.Content className="table-kit-tooltip">
-                          <Tooltip.Arrow />
-                          <span>Cancel editing</span>
-                        </Tooltip.Content>
-                      </Tooltip>
-                    </div>
                   </div>
             </Form>
           )}

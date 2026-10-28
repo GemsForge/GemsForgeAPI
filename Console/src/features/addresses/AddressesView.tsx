@@ -210,13 +210,14 @@ function AddressDetail({
           {
             label: "Address status",
             value: record.addressStatus,
+            primitive: "status",
             required: true,
             inputType: "select",
             options: [
-              { label: "Current", value: "Current" },
-              { label: "Former", value: "Former" },
-              { label: "Seasonal", value: "Seasonal" },
-              { label: "Other", value: "Other" },
+              { label: "Current", value: "Current", colorToken: "green", group: "Current" },
+              { label: "Former", value: "Former", colorToken: "gray", group: "Past" },
+              { label: "Seasonal", value: "Seasonal", colorToken: "gold", group: "Temporary" },
+              { label: "Other", value: "Other", colorToken: "mint", group: "Other" },
             ],
             onSave: async (value) => onPatch({ addressStatus: value as string }),
           },
