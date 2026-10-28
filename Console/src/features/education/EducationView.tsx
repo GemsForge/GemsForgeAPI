@@ -11,6 +11,7 @@ import { useRecordUtilities } from "../../hooks/useRecordUtilities";
 import { DatabaseRecordCollection } from "../../components/DatabaseRecordCollection";
 import { educationTableAdapter } from "../database/recordTableAdapters";
 import { useEducationRecordActions } from "./useEducationRecordActions";
+import { educationTypeOptions } from "./educationCreateFields";
 
 interface EducationViewProps {
   records: Education[];
@@ -164,6 +165,8 @@ function EducationDetail({
           {
             label: "Type",
             value: record.educationType,
+            inputType: "select",
+            options: educationTypeOptions,
             required: true,
             onSave: async (value) => onPatch({ educationType: value as string }),
           },
@@ -249,6 +252,7 @@ function EducationDetail({
           {
             label: "Website",
             value: record.website,
+            primitive: "url",
             inputType: "url",
             nullable: true,
             onSave: async (value) => onPatch({ website: value as string | null }),
@@ -286,5 +290,5 @@ function AddressSummary({ address }: { address: Education["address"] }) {
 }
 
 function addressOptionLabel(address: NonNullable<Education["address"]>) {
-  return [address.addressType, address.addressLine1, address.city, address.state].filter(Boolean).join(" · ");
+  return [address.addressLine1, address.city, address.state, address.postalCode].filter(Boolean).join(", ");
 }
