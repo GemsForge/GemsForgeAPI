@@ -74,7 +74,7 @@ export function GSelectField({
   if (!editing) {
     return (
       <YStack className="gem-field-display" gap="$1">
-        <Label color="$gemGold" fontSize="$2" fontWeight="800" textTransform="uppercase">
+        <Label className="g-field-label" color="$gemGold" fontSize="$2" fontWeight="800" textTransform="uppercase">
           {label}
         </Label>
         <button type="button" className="gem-field-display-value" onClick={onDisplayClick}>
@@ -86,7 +86,7 @@ export function GSelectField({
 
   return (
     <YStack className="create-form-field" gap="$1">
-      <Label htmlFor={id} color="$gemGold" fontSize="$2" fontWeight="800" textTransform="uppercase">
+      <Label className="g-field-label" htmlFor={id} color="$gemGold" fontSize="$2" fontWeight="800" textTransform="uppercase">
         {label}
         {required ? " *" : ""}
       </Label>
