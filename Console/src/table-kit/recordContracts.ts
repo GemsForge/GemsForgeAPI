@@ -39,6 +39,15 @@ export interface RecordPropertyDefinition<Record> {
   sortable?: boolean;
   filterable?: boolean;
   getValue: (record: Record) => RecordPropertyValue;
+  /** Optional inline editor used by views that support live property editing. */
+  edit?: RecordPropertyEdit;
+}
+
+export interface RecordPropertyEdit {
+  inputType?: "text" | "date" | "number" | "select" | "longText";
+  nullable?: boolean;
+  options?: Array<{ label: string; value: string }>;
+  onSave: (record: unknown, value: string | number | null) => Promise<void>;
 }
 
 /** A normalized record identity and optional presentation metadata for a view adapter. */
@@ -51,6 +60,8 @@ export interface TableRecord<Record> {
   icon?: ReactNode;
   image?: RecordImage;
   status?: RecordStatus;
+  /** Optional editor for the primary title slot in editable views. */
+  titleEdit?: RecordPropertyEdit;
 }
 
 /** Adapter boundary for turning a domain record into shared Table Kit metadata. */

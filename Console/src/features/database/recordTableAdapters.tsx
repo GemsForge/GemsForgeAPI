@@ -3,10 +3,14 @@ import type { Address, Education, Employment, ExpenseTransaction, GemHue, Servic
 import type { RecordAdapter, RecordImage, RecordPropertyDefinition } from "../../table-kit";
 
 const display = (value: unknown) => ({ raw: value, display: value == null || value === "" ? "—" : String(value) });
+const hueOptions = ["Red", "Orange", "Yellow", "Green", "Blue", "Purple", "Pink", "Brown", "Gray", "Black", "White"].map(
+  (value) => ({ value, label: value }),
+);
 
 /** Adapt Gem Hue records to the shared Table Kit record/property contract. */
 export function createGemHueTableAdapter(
   getImage?: (record: GemHue) => RecordImage | undefined,
+  onSave?: (record: GemHue, field: keyof GemHue, value: string | number | null) => Promise<void>,
 ): RecordAdapter<GemHue> {
   return {
     toTableRecord: (record) => ({
@@ -16,6 +20,7 @@ export function createGemHueTableAdapter(
       subtitle: `${record.hexCode} · ${record.colorFamily || "Unclassified"}`,
       icon: "✦",
       image: getImage?.(record),
+      titleEdit: onSave ? { onSave: (_record, value) => onSave(record, "colorName", value) } : undefined,
     }),
     getPropertyDefinitions: () =>
       [
@@ -25,12 +30,13 @@ export function createGemHueTableAdapter(
           kind: "text",
           primary: true,
           getValue: (record) => display(record.colorName),
+          edit: onSave ? { onSave: (record, value) => onSave(record as GemHue, "colorName", value) } : undefined,
         },
-        { id: "colorFamily", label: "Color family", kind: "select", getValue: (record) => display(record.colorFamily) },
-        { id: "hexCode", label: "Hex code", kind: "text", getValue: (record) => display(record.hexCode) },
-        { id: "mood", label: "Mood", kind: "select", getValue: (record) => display(record.mood) },
-        { id: "palette", label: "Palette", kind: "select", getValue: (record) => display(record.palette) },
-        { id: "description", label: "Description", kind: "text", getValue: (record) => display(record.description) },
+        { id: "colorFamily", label: "Color family", kind: "select", getValue: (record) => display(record.colorFamily), edit: onSave ? { inputType: "select", options: hueOptions, onSave: (record, value) => onSave(record as GemHue, "colorFamily", value) } : undefined },
+        { id: "hexCode", label: "Hex code", kind: "text", getValue: (record) => display(record.hexCode), edit: onSave ? { onSave: (record, value) => onSave(record as GemHue, "hexCode", value) } : undefined },
+        { id: "mood", label: "Mood", kind: "select", getValue: (record) => display(record.mood), edit: onSave ? { inputType: "select", options: hueOptions, onSave: (record, value) => onSave(record as GemHue, "mood", value) } : undefined },
+        { id: "palette", label: "Palette", kind: "select", getValue: (record) => display(record.palette), edit: onSave ? { inputType: "select", options: hueOptions, onSave: (record, value) => onSave(record as GemHue, "palette", value) } : undefined },
+        { id: "description", label: "Description", kind: "text", getValue: (record) => display(record.description), edit: onSave ? { inputType: "longText", onSave: (record, value) => onSave(record as GemHue, "description", value) } : undefined },
         { id: "createdDate", label: "Created date", kind: "date", getValue: (record) => display(record.createdDate) },
         { id: "notes", label: "Notes", kind: "text", getValue: (record) => display(record.notes) },
         { id: "id", label: "Item ID", kind: "text", getValue: (record) => display(record.id) },

@@ -174,8 +174,10 @@ export function GemHuesView({ hues }: GemHuesViewProps) {
       createGemHueTableAdapter((hue) => {
         const src = galleryImages[hue.id];
         return src ? { src, alt: `${hue.colorName} logo`, fit: "contain" } : undefined;
+      }, async (hue, field, value) => {
+        await patch.mutateAsync({ id: hue.id, patch: { [field]: value } });
       }),
-    [galleryImages],
+    [galleryImages, patch],
   );
 
   useEffect(() => {

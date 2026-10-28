@@ -17,6 +17,7 @@ import {
 } from "ag-grid-community";
 import { Avatar, H3, ListItem, Paragraph, SizableText, Text, XStack, YGroup, YStack } from "tamagui";
 import { GCheckboxField, GemButton } from "../components/ui";
+import { EditableRecordFields } from "../components/EditableRecordFields";
 import { TableContext } from "./context";
 import { GalleryViewControls, type GalleryCardSize } from "./GalleryViewControls";
 import {
@@ -125,6 +126,7 @@ function listPropertiesFor<Record>(
       const label = property.label.trim().toLowerCase();
       const id = property.id.trim().toLowerCase();
       return (
+        !property.primary &&
         property.kind !== "title" &&
         property.kind !== "image" &&
         label !== "name" &&
@@ -133,7 +135,7 @@ function listPropertiesFor<Record>(
         id !== "image"
       );
     })
-    .slice(0, 2);
+    .slice(0, 3);
 }
 
 function propertyValue<Record>(
@@ -188,7 +190,7 @@ function RecordAvatar<Record>({ record }: { record: TableRecord<Record> }) {
   const image = record.image?.src?.trim() ? record.image : undefined;
   return (
     <Avatar
-      size={64}
+      size={32}
       accessibilityLabel={`${String(record.title ?? record.id)} icon`}
       backgroundColor="$gemPanelLight"
       borderRadius="$4"
@@ -196,7 +198,7 @@ function RecordAvatar<Record>({ record }: { record: TableRecord<Record> }) {
       {image && <Avatar.Image src={image.src} accessibilityLabel={image.alt} objectFit={image.fit ?? "cover"} />}
       {!image && (
         <Avatar.Fallback backgroundColor="$gemPanelLight" alignItems="center" justifyContent="center">
-          <SizableText fontSize="$9" lineHeight={1} color="$gemMint">
+          <SizableText fontSize="$5" lineHeight={1} color="$gemMint">
             {record.icon}
           </SizableText>
         </Avatar.Fallback>
@@ -243,23 +245,28 @@ export function RecordList<Record>({
               aria-label={`Open ${String(record.title ?? record.id)}${selected ? ", selected" : ""}`}
               data-selected={selected}
               tabIndex={0}
-              gap="$3"
-              padding="$4"
-              minHeight={104}
-              borderWidth={1}
-              borderColor={selected ? "$gemMint" : "$gemPanelLight"}
-              borderRadius="$4"
-              backgroundColor="$gemPanel"
-              title={record.title ?? record.subtitle ?? record.id}
-              subTitle={
-                record.subtitle ?? (
-                  <YStack gap="$1">
-                    {visibleProperties.slice(0, 2).map((property) => (
-                      <PropertyValue key={property.id} value={propertyValue(property, record)} />
-                    ))}
-                  </YStack>
-                )
-              }
+              title={<div className="table-kit-list-row-content">
+                <span className="table-kit-list-row-title" onClick={(event) => event.stopPropagation()}>
+                  {record.titleEdit ? (
+                    <EditableRecordFields
+                      className="table-kit-inline-editable-title"
+                      fields={[{ label: "Title", value: record.title ?? record.id, editable: true, hideLabel: true, onSave: (value) => record.titleEdit?.onSave(record.source, value) }]}
+                    />
+                  ) : record.title ?? record.subtitle ?? record.id}
+                </span>
+                <span className="table-kit-list-row-properties">
+                  {visibleProperties.slice(0, 3).map((property) => (
+                    property.edit ? (
+                      <span key={property.id} onClick={(event) => event.stopPropagation()}>
+                        <EditableRecordFields
+                          className="table-kit-inline-editable-property"
+                          fields={[{ label: property.label, value: propertyValue(property, record).raw as string | number | null, inputType: property.edit.inputType, nullable: property.edit.nullable, options: property.edit.options, editable: true, onSave: (value) => property.edit?.onSave(record.source, value) }]}
+                        />
+                      </span>
+                    ) : <span key={property.id}><PropertyValue value={propertyValue(property, record)} /></span>
+                  ))}
+                </span>
+              </div>}
               icon={() => <RecordAvatar record={record} />}
               iconAfter={
                 // The chevron is decorative; keep it out of the accessibility tree.
