@@ -42,6 +42,7 @@ export interface TableRendererProps<Record> {
   onRecordSelect?: (id: TableRecordId) => void;
   onExpansionChange?: (id: TableRecordId | undefined) => void;
   renderExpanded?: (record: Record) => ReactNode;
+  onRecordPatch?: (record: Record, field: string, value: string | number | null) => Promise<void>;
 }
 
 interface RendererSelection {
@@ -121,7 +122,7 @@ function listPropertiesFor<Record>(
   properties: readonly RecordPropertyDefinition<Record>[],
   propertyIds?: readonly string[],
 ) {
-  return propertiesFor(properties, propertyIds)
+  const candidates = propertiesFor(properties, propertyIds)
     .filter((property) => {
       const label = property.label.trim().toLowerCase();
       const id = property.id.trim().toLowerCase();
@@ -134,8 +135,12 @@ function listPropertiesFor<Record>(
         id !== "name" &&
         id !== "image"
       );
-    })
-    .slice(0, 3);
+    });
+  const priority = candidates.filter((property) => {
+    const searchable = `${property.id} ${property.label}`.toLowerCase();
+    return property.kind === "status" || /(amount|price|total|cost|rate|balance|status)/.test(searchable);
+  });
+  return [...priority, ...candidates.filter((property) => !priority.includes(property))].slice(0, 3);
 }
 
 function propertyValue<Record>(
@@ -224,10 +229,20 @@ export function RecordList<Record>({
   selectedIds,
   onRecordSelect,
   onExpansionChange,
+  onRecordPatch,
 }: TableRendererProps<Record>) {
   const effectiveRecords = useRendererRecords(records);
   const selection = useRendererSelection(selectedIds, onRecordSelect);
   const visibleProperties = listPropertiesFor(properties, propertyIds);
+  const editableProperties = onRecordPatch
+    ? visibleProperties.map((property) => ({
+        ...property,
+        edit: property.edit ?? {
+          inputType: property.kind === "select" && property.edit?.options ? "select" : property.kind === "date" ? "date" : property.kind === "number" ? "number" : "text",
+          onSave: (source: unknown, value: string | number | null) => onRecordPatch(source as Record, property.id, value),
+        },
+      }))
+    : visibleProperties;
   const openTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(
     () => () => {
@@ -247,15 +262,15 @@ export function RecordList<Record>({
               tabIndex={0}
               title={<div className="table-kit-list-row-content">
                 <span className="table-kit-list-row-title" onClick={(event) => event.stopPropagation()}>
-                  {record.titleEdit ? (
+                  {record.titleEdit || onRecordPatch ? (
                     <EditableRecordFields
                       className="table-kit-inline-editable-title"
-                      fields={[{ label: "Title", value: record.title ?? record.id, editable: true, hideLabel: true, onSave: (value) => record.titleEdit?.onSave(record.source, value) }]}
+                      fields={[{ label: "Title", value: record.title ?? record.id, editable: true, hideLabel: true, onSave: (value) => record.titleEdit?.onSave(record.source, value) ?? onRecordPatch?.(record.source, "title", value) }]}
                     />
                   ) : record.title ?? record.subtitle ?? record.id}
                 </span>
                 <span className="table-kit-list-row-properties">
-                  {visibleProperties.slice(0, 3).map((property) => (
+                  {editableProperties.slice(0, 3).map((property) => (
                     property.edit ? (
                       <span key={property.id} onClick={(event) => event.stopPropagation()}>
                         <EditableRecordFields
@@ -290,9 +305,7 @@ export function RecordList<Record>({
                 if (event.shiftKey && selection.isSelectable(record.id)) selection.onRecordSelect?.(record.id);
                 else if (!event.shiftKey) onExpansionChange?.(record.id);
               }}
-            >
-              {record.status && <SizableText aria-label={record.status.label}>{record.status.label}</SizableText>}
-            </ListItem>
+            />
           </YGroup.Item>
         );
       })}

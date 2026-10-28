@@ -147,6 +147,9 @@ export function ServiceAccountsView({ records }: { records: ServiceAccount[] }) 
             detailId={selectedID == null ? null : String(selectedID)}
             onDetailChange={(id) => setSelectedID(id == null ? null : Number(id))}
             actions={actions}
+            onRecordPatch={async (record, field, value) => {
+              await patch.mutateAsync({ id: record.id, patch: { [field]: value } as Partial<ServiceAccount> });
+            }}
             detail={
               selectedID == null ? null : (
                 <>
