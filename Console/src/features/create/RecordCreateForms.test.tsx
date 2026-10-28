@@ -1,7 +1,7 @@
 import { act, fireEvent, render as rtlRender, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { GeoapifySearchClient } from "../addresses/GeoapifyAddressSearch";
-import { AddressCreateForm, EmploymentCreateForm } from "./RecordCreateForms";
+import { AddressCreateForm, EducationCreateForm, EmploymentCreateForm } from "./RecordCreateForms";
 import { TamaguiProvider } from "tamagui";
 import { tamaguiConfig } from "../../design-system";
 import type { Address } from "../../types";
@@ -20,6 +20,29 @@ afterEach(() => {
 });
 
 describe("shared create form workflow", () => {
+  it("uses the Education editor's property controls in the new-record form", async () => {
+    const onCreate = vi.fn().mockResolvedValue(undefined);
+    render(<EducationCreateForm addresses={[]} onCreate={onCreate} onCancel={vi.fn()} />);
+
+    const properties = document.querySelector(".create-education-properties");
+    expect(properties).toHaveClass("record-fields", "education-fields");
+    expect(properties?.children).toHaveLength(14);
+    expect(screen.getByLabelText("ID *")).toHaveAttribute("type", "text");
+    expect(screen.getByRole("combobox", { name: "Status *" })).toHaveTextContent("Completed");
+    expect(screen.getByLabelText("Start date")).toHaveAttribute("aria-haspopup", "dialog");
+    expect(screen.getByLabelText("Website")).toHaveAttribute("type", "url");
+    expect(screen.getByLabelText("Notes").tagName).toBe("TEXTAREA");
+
+    fireEvent.change(screen.getByLabelText("ID *"), { target: { value: "EDU-101" } });
+    fireEvent.change(screen.getByLabelText("Institution *"), { target: { value: "Test Academy" } });
+    fireEvent.click(screen.getByRole("combobox", { name: "Type *" }));
+    fireEvent.keyDown(screen.getByRole("option", { name: "Elementary School" }), { key: "Enter" });
+    fireEvent.click(screen.getByRole("button", { name: "Create record" }));
+    await waitFor(() => expect(onCreate).toHaveBeenCalledWith(expect.objectContaining({
+      id: "EDU-101", educationType: "Elementary School", institutionName: "Test Academy", status: "Completed",
+    })));
+  });
+
   it("validates address location fields before submitting", async () => {
     const onCreate = vi.fn();
     render(<AddressCreateForm onCreate={onCreate} onCancel={vi.fn()} />);

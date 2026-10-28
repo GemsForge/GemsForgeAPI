@@ -94,4 +94,17 @@ describe("EditableRecordFields", () => {
     fireEvent.keyDown(screen.getByRole("option", { name: "Former", hidden: true }), { key: "Enter" });
     await waitFor(() => expect(saveStatus).toHaveBeenCalledWith("Former"));
   });
+
+  it("keeps a primitive URL input controlled and saves its edited value on blur", async () => {
+    const save = vi.fn().mockResolvedValue(undefined);
+    renderFields([{ label: "Website", value: "https://example.com", primitive: "url", inputType: "url", onSave: save }]);
+
+    fireEvent.click(screen.getByRole("button", { name: "https://example.com" }));
+    const input = screen.getByLabelText("Website");
+    fireEvent.change(input, { target: { value: "https://updated.example.com" } });
+    expect(input).toHaveValue("https://updated.example.com");
+    fireEvent.blur(input);
+
+    await waitFor(() => expect(save).toHaveBeenCalledWith("https://updated.example.com"));
+  });
 });

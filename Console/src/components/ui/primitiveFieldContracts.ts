@@ -2,6 +2,7 @@ import type { RecordColorToken, RecordDateFormat, RecordNumberFormat, RecordSele
 
 /** Primitive field kinds supported by the shared G field layer. */
 export type GemPrimitiveType =
+  | "id"
   | "text"
   | "number"
   | "url"

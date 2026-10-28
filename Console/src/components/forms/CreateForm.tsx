@@ -41,6 +41,7 @@ function defaultTextPlaceholder(label: string): string {
 /** Render the shared Tamagui form shell used by every record-creation workflow. */
 export function CreateFormFrame({
   title,
+  className,
   submitting,
   error,
   onCancel,
@@ -48,6 +49,7 @@ export function CreateFormFrame({
   children,
 }: {
   title: string;
+  className?: string;
   submitting: boolean;
   error: string | null;
   onCancel: () => void;
@@ -55,7 +57,7 @@ export function CreateFormFrame({
   children: ReactNode;
 }) {
   return (
-    <Form className="edit-form create-record-form" aria-label={title} onSubmit={onSubmit}>
+    <Form className={`edit-form create-record-form${className ? ` ${className}` : ""}`} aria-label={title} onSubmit={onSubmit}>
       <h3>{title}</h3>
       {error && <p role="alert">{error}</p>}
       {children}
@@ -103,7 +105,7 @@ export function CreateTextField({
       error={error}
       required={required}
       type={type}
-      step={step}
+      step={type === "number" ? "any" : undefined}
       multiline={multiline}
       placeholder={inputPlaceholder}
       width={width}
