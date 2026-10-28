@@ -33,7 +33,7 @@ export type EducationFieldDefinition = {
 
 const required = (label: string) => z.string().trim().min(1, `${label} is required.`);
 const optional = z.string();
-const educationTypeOptions = ["High school", "Associate", "Bachelor", "Master", "Doctorate", "Certificate", "Other"].map(
+export const educationTypeOptions = ["High school", "Associate", "Bachelor", "Master", "Doctorate", "Certificate", "Other"].map(
   (value) => ({ value, label: value }),
 );
 const statusOptions = ["In progress", "Completed", "Paused", "Other"].map((value) => ({ value, label: value }));

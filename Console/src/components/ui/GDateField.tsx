@@ -13,6 +13,9 @@ const calendarDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 export interface GDateFieldProps extends Omit<ComponentProps<typeof Input>, "value" | "defaultValue" | "onChange"> {
   label: string;
   value?: string;
+  editing?: boolean;
+  displayValue?: string;
+  onDisplayClick?: () => void;
   format?: string;
   error?: string;
   required?: boolean;
@@ -33,6 +36,9 @@ function parseDate(value: string | undefined, format: string): Dayjs | null {
 export function GDateField({
   label,
   value = "",
+  editing = true,
+  displayValue,
+  onDisplayClick,
   format = "YYYY-MM-DD",
   error,
   required = false,
@@ -73,6 +79,19 @@ export function GDateField({
     const start = visibleMonth.startOf("month").startOf("week");
     return Array.from({ length: 42 }, (_, index) => start.add(index, "day"));
   }, [visibleMonth]);
+
+  if (!editing) {
+    return (
+      <YStack className="gem-field-display" gap="$1">
+        <Label className="g-field-label" color="$gemGold" fontSize="$2" fontWeight="800" textTransform="uppercase">
+          {label}
+        </Label>
+        <button type="button" className="gem-field-display-value" onClick={onDisplayClick}>
+          {displayValue ?? (selectedDate ? selectedDate.format(selectedFormat === "local" ? "MMM D, YYYY" : selectedFormat === "relative" ? "MMM D" : format) : "—")}
+        </button>
+      </YStack>
+    );
+  }
 
   return (
     <YStack className="create-form-field" gap="$1">

@@ -120,7 +120,7 @@ export function GemPrimitiveField({
   }
   if (primitive === "date") {
     return (
-      <GDate label={label} value={String(value ?? "")} format="YYYY-MM-DD" displayFormat={_dateFormat} includeTime={includeTime} onDateConfigChange={onDateConfigChange} onChange={emit} required={required} width={width} />
+      <GDate label={label} value={String(value ?? "")} editing={editing} displayValue={typeof displayValue === "string" ? displayValue : undefined} onDisplayClick={onDisplayClick} format="YYYY-MM-DD" displayFormat={_dateFormat} includeTime={includeTime} onDateConfigChange={onDateConfigChange} onChange={emit} required={required} width={width} />
     );
   }
   if (primitive === "checkbox") {
