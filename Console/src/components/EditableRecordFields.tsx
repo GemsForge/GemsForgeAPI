@@ -32,6 +32,8 @@ export interface EditableRecordField {
   primitive?: GemPrimitiveType;
   colorToken?: RecordColorToken;
   dateFormat?: RecordDateFormat;
+  includeTime?: boolean;
+  onDateConfigChange?: (config: { displayFormat: RecordDateFormat; includeTime: boolean }) => void;
 }
 
 export function formatRecordTimestamp(value?: string | null): string {
@@ -86,7 +88,15 @@ function EditableField({ field }: { field: EditableRecordField }) {
   const onTextChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     editor.setDraft(event.currentTarget.value);
   const onEditorBlur = (event: FocusEvent<HTMLElement>) => {
-    if (!event.currentTarget.contains(event.relatedTarget as Node | null)) void editor.save();
+    const nextTarget = event.relatedTarget as HTMLElement | null;
+    if (nextTarget?.closest(".gem-date-popover, .gem-date-format-popover")) return;
+    if (!event.currentTarget.contains(nextTarget)) {
+      window.setTimeout(() => {
+        const activeElement = document.activeElement as HTMLElement | null;
+        if (activeElement?.closest(".gem-date-popover, .gem-date-format-popover")) return;
+        void editor.save();
+      }, 0);
+    }
   };
 
   if (field.primitive) {
@@ -97,9 +107,11 @@ function EditableField({ field }: { field: EditableRecordField }) {
           label={field.label}
           value={field.value as string | number | boolean | null}
           editing={editor.editing}
-          displayValue={field.displayValue}
+          displayValue={field.displayValue ?? (field.primitive === "date" ? formatRecordDateValue(value, field.dateFormat) : undefined)}
           colorToken={field.colorToken}
           dateFormat={field.dateFormat}
+          includeTime={field.includeTime}
+          onDateConfigChange={field.onDateConfigChange}
           onDisplayClick={editor.begin}
           options={field.options}
           required={field.required}
@@ -148,7 +160,7 @@ function EditableField({ field }: { field: EditableRecordField }) {
                       aria-label={String(value).toLowerCase() === "true" ? "checked" : "unchecked"}
                     />
                   ) : (
-                    (field.displayValue ?? presentValue(value))
+                    (field.displayValue ?? (field.inputType === "date" ? formatRecordDateValue(value, field.dateFormat) : presentValue(value)))
                   )}
                   {field.readOnlyReason && <small className="field-readonly-reason">{field.readOnlyReason}</small>}
                 </button>
@@ -164,7 +176,7 @@ function EditableField({ field }: { field: EditableRecordField }) {
                     readOnly
                   />
                 ) : (
-                  (field.displayValue ?? presentValue(value))
+                  (field.displayValue ?? (field.inputType === "date" ? formatRecordDateValue(value, field.dateFormat) : presentValue(value)))
                 )}
                 {field.readOnlyReason && <small className="field-readonly-reason">{field.readOnlyReason}</small>}
               </>
@@ -182,6 +194,9 @@ function EditableField({ field }: { field: EditableRecordField }) {
                         }}
                         required={field.required}
                         width={field.width ?? "medium"}
+                        displayFormat={field.dateFormat}
+                        includeTime={field.includeTime}
+                        onDateConfigChange={field.onDateConfigChange}
                         error={editor.error ?? undefined}
                       />
                     ) : field.inputType === "select" ? (
@@ -261,4 +276,20 @@ function normalizeDateInput(value?: string | null): string {
 function presentValue(value: EditableValue): string {
   if (value == null || value === "") return "—";
   return String(value);
+}
+
+function formatRecordDateValue(value: EditableValue, format: RecordDateFormat = "local"): string {
+  const normalized = normalizeDateInput(value == null ? null : String(value));
+  if (!normalized) return "—";
+  const date = new Date(`${normalized}T00:00:00`);
+  if (format === "iso") return normalized;
+  if (format === "relative") {
+    const today = new Date();
+    const startToday = new Date(today.getFullYear(), today.getMonth(), today.getDate()).valueOf();
+    const difference = Math.round((date.valueOf() - startToday) / 86400000);
+    if (difference === 0) return "Today";
+    if (difference === -1) return "Yesterday";
+    if (difference === 1) return "Tomorrow";
+  }
+  return date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
 }

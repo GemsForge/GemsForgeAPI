@@ -98,19 +98,47 @@ select {
   background: var(--panel-light) !important;
 }
 .gem-date-popover {
+  width: min(22rem, calc(100vw - 2rem));
+  max-width: calc(100vw - 2rem);
+  padding: 0.75rem !important;
   background: var(--panel) !important;
   color: var(--ink) !important;
   opacity: 1 !important;
   isolation: isolate;
   box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.3);
 }
-.gem-date-popover button {
+.gem-date-popover .gem-calendar-day {
+  min-height: 2rem;
+  padding: 0.35rem;
   color: var(--ink);
   background: var(--panel-light);
+  font-size: 0.84rem;
 }
-.gem-date-popover button:hover,
-.gem-date-popover button:focus-visible {
+.gem-date-popover [class*="font_body"] {
+  font-size: 0.84rem;
+}
+.gem-date-popover .gem-calendar-day:hover,
+.gem-date-popover .gem-calendar-day:focus-visible {
   background: var(--mint-dark);
+}
+.gem-date-format-popover {
+  min-width: 12rem;
+  background: var(--panel) !important;
+  color: var(--ink) !important;
+  opacity: 1 !important;
+  isolation: isolate;
+  box-shadow: 0 1rem 2rem rgb(0 0 0 / 35%);
+}
+.gem-date-format-popover button {
+  width: 100%;
+  justify-content: space-between;
+  color: var(--ink);
+  background: transparent;
+  font-size: 0.84rem;
+}
+.gem-date-format-popover button:hover,
+.gem-date-format-popover button:focus-visible {
+  background: var(--panel-light);
 }
 button {
   cursor: pointer;
@@ -1119,7 +1147,7 @@ dialog::backdrop {
 .editable-field-form {
   display: grid;
   gap: 0.55rem;
-  padding: 0.65rem 0;
+  padding: 0;
 }
 .editable-field-form label {
   margin: 0;
