@@ -1,4 +1,4 @@
-import type { ComponentProps } from "react";
+import { useId, type ComponentProps } from "react";
 import { Checkbox, Label, SizableText, XStack, YStack } from "tamagui";
 import type { GemTextFieldWidth } from "./GemTextField";
 
@@ -25,7 +25,8 @@ export function GCheckboxField({
   onChange,
   ...checkboxProps
 }: GCheckboxFieldProps) {
-  const id = `g-checkbox-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+  const instanceID = useId();
+  const id = `g-checkbox-${instanceID}-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
   const errorID = `${id}-error`;
 
   return (
