@@ -1,4 +1,4 @@
-import type { ComponentProps, ReactNode } from "react";
+import { useId, type ComponentProps, type ReactNode } from "react";
 import { Select, Label, SizableText, YStack } from "tamagui";
 import type { GemTextFieldWidth } from "./GemTextField";
 import type { RecordColorToken } from "../../table-kit/recordContracts";
@@ -58,7 +58,8 @@ export function GSelectField({
   primitive,
   ...triggerProps
 }: GSelectFieldProps) {
-  const id = `g-select-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+  const instanceID = useId();
+  const id = `g-select-${instanceID}-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
   const errorID = `${id}-error`;
   const selectedOption = options.find((option) => option.value === value);
   const optionGroups = options.reduce<Array<{ label?: string; options: GSelectOption[] }>>((groups, option) => {
