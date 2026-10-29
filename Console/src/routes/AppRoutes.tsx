@@ -68,6 +68,9 @@ const LiveDatabaseMigrationView = lazy(() =>
 const WorkspaceView = lazy(() =>
   import("../features/workspace/WorkspaceView").then((module) => ({ default: module.WorkspaceView })),
 );
+const WireframeDemoView = lazy(() =>
+  import("../features/workspace/WireframeDemoView").then((module) => ({ default: module.WireframeDemoView })),
+);
 
 type Notifications = { onError: (error: unknown) => void; onSuccess: (message: string) => void };
 
@@ -242,6 +245,9 @@ function Databases() {
 function Workspace() {
   return <WorkspaceView onSuccess={useOutletContext<Notifications>().onSuccess} />;
 }
+function WireframeDemo() {
+  return <WireframeDemoView />;
+}
 function Schema() {
   return <SchemaBuilderView {...useOutletContext<Notifications>()} />;
 }
@@ -276,6 +282,7 @@ export function AppRoutes() {
           <Route index element={<Home />} />
           <Route path="domains" element={<Domains />} />
           <Route path="workspace" element={<Workspace />} />
+          <Route path="wireframe-demo" element={<WireframeDemo />} />
           <Route path="domains/:domainID" element={<Pages kind="domain" />} />
           <Route path="forgekeeper" element={<Pages kind="roots" />} />
           <Route path="forgekeeper/:pageID/children" element={<Pages kind="children" />} />

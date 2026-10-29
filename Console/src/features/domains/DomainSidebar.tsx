@@ -15,6 +15,7 @@ const resources = [
   ["/service-accounts", "Services", "Recurring accounts", "◎"],
   ["/local-databases", "Local Databases", "Safe test database creation", "⌘"],
   ["/schema-builder", "Schema Builder", "Build, import, and inspect", "▦"],
+  ["/wireframe-demo", "Wireframe Demo", "Visual layout prototype", "▤"],
   ["/live-database", "Live Database", "Preview and apply migrations", "⇄"],
 ] as const;
 
