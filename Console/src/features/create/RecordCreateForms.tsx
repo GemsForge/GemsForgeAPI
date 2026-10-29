@@ -140,11 +140,12 @@ function addressField(name: keyof AddressCreateFormValues): AddressFieldDefiniti
 function renderEducationField(form: UseFormReturn<EducationCreateFormValues>, field: EducationFieldDefinition) {
   const error = form.formState.errors[field.name]?.message;
   return (
-    <div key={field.name} className={field.name === "notes" ? "record-notes" : undefined}>
-      <Controller
-        control={form.control}
-        name={field.name}
-        render={({ field: input }) => (
+    <Controller
+      key={field.name}
+      control={form.control}
+      name={field.name}
+      render={({ field: input }) => (
+        <div className={field.name === "notes" ? "record-notes" : undefined} onBlur={input.onBlur}>
           <GemPrimitiveField
             primitive={field.primitive ?? "text"}
             label={field.label}
@@ -158,12 +159,11 @@ function renderEducationField(form: UseFormReturn<EducationCreateFormValues>, fi
             width={field.width ?? "long"}
             error={typeof error === "string" ? error : undefined}
           />
-        )}
-      />
-    </div>
+        </div>
+      )}
+    />
   );
 }
-
 function renderEmploymentField(form: UseFormReturn<EmploymentCreateFormValues>, field: EmploymentFieldDefinition) {
   return field.options ? (
     <Select
