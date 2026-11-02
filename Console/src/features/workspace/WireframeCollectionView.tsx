@@ -152,7 +152,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
       setTableIcon(state.tableIcon);
       window.localStorage.setItem(tableIconStorageKey, state.tableIcon);
     }
-  }, [savedViewsQuery.data, savedViewsQuery.isSuccess]);
+  }, [savedViewsQuery.data, savedViewsQuery.isSuccess, presentationTableName]);
   useEffect(() => {
     const pendingID = pendingSelectedID.current;
     if (!pendingID) return;
@@ -198,7 +198,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
       });
     }, 250);
     return () => window.clearTimeout(timer);
-  }, [view, workspaceSelectedID, galleryCardSize, galleryFillMedia, galleryImageSelection, query, sort, direction, filter, groupBy, pageIndex, pageSize, tableIcon, workspaceSelectionRevision, saveWorkspaceStateAsync]);
+  }, [view, workspaceSelectedID, galleryCardSize, galleryFillMedia, galleryImageSelection, query, sort, direction, filter, groupBy, pageIndex, pageSize, tableIcon, workspaceSelectionRevision, presentationTableName, saveWorkspaceStateAsync]);
   const presentationsQuery = useRecordPresentationsQuery(presentationTableName);
   const savePresentation = useSaveRecordPresentationMutation(presentationTableName);
   const deletePresentation = useDeleteRecordPresentationMutation(presentationTableName);

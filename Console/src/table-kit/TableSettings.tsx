@@ -147,7 +147,7 @@ export function TableSettingsMenu({
               <div className="table-kit-settings-choice-list" role="radiogroup" aria-label="Layout">
                 {(Object.keys(viewLabels) as TableViewId[]).map((id) => <ChoiceRow key={id} label={viewLabels[id]} selected={viewId === id} onClick={() => chooseView(id)} icon={id === "table" ? <Table2 size={18} aria-hidden="true" /> : id === "list" ? <List size={18} aria-hidden="true" /> : <LayoutGrid size={18} aria-hidden="true" />} />)}
               </div>
-              {properties && propertyConfiguration && <div className="table-kit-settings-subcontrol"><TablePropertyControls properties={properties} configuration={propertyConfiguration} label="Property visibility" /></div>}
+              {properties && propertyConfiguration && <div className="table-kit-settings-subcontrol"><TablePropertyControls properties={properties} configuration={propertyConfiguration} label="Property visibility" wireframe inline /></div>}
               {viewId === "gallery" && <SettingsRow icon={<LayoutGrid size={18} aria-hidden="true" />} label="Gallery layout" value="Card preview" onClick={() => setPanel("gallery")} />}
             </>
           ) : panel === "gallery" ? (
