@@ -79,11 +79,16 @@ export function WireframeCollectionView<T extends WireframeRecord>({
   const location = useLocation();
   const navigate = useNavigate();
   const recordPageID = location.pathname.match(/\/record\/([^/]+)$/)?.[1];
+  const tableIconStorageKey = `gemsforge:table-icon:${config.tableName ?? config.title}`;
   const [view, setView] = useState<"table" | "list" | "gallery">("gallery");
   const [galleryCardSize, setGalleryCardSize] = useState<GalleryCardSize>("small");
   const [galleryFillMedia, setGalleryFillMedia] = useState(true);
   const [galleryImageSelection, setGalleryImageSelection] = useState("__canvas");
-  const [tableIcon, setTableIcon] = useState("Folder");
+  const [tableIcon, setTableIcon] = useState(() => {
+    if (typeof window === "undefined") return "Folder";
+    return window.localStorage.getItem(tableIconStorageKey) || "Folder";
+  });
+  const tableIconDirty = useRef(false);
   const [selectedID, setSelectedID] = useState<string | null>(null);
   const [workspaceSelectionRevision, setWorkspaceSelectionRevision] = useState(0);
   const workspaceSelectedID = recordPageID ? decodeURIComponent(recordPageID) : selectedID;
@@ -143,7 +148,10 @@ export function WireframeCollectionView<T extends WireframeRecord>({
     if (typeof state.groupBy === "string") setGroupBy(state.groupBy);
     if (typeof state.pageIndex === "number") setPageIndex(state.pageIndex);
     if (typeof state.pageSize === "number") setPageSize(state.pageSize);
-    if (typeof state.tableIcon === "string") setTableIcon(state.tableIcon);
+    if (typeof state.tableIcon === "string" && !tableIconDirty.current) {
+      setTableIcon(state.tableIcon);
+      window.localStorage.setItem(tableIconStorageKey, state.tableIcon);
+    }
   }, [savedViewsQuery.data, savedViewsQuery.isSuccess]);
   useEffect(() => {
     const pendingID = pendingSelectedID.current;
@@ -208,6 +216,11 @@ export function WireframeCollectionView<T extends WireframeRecord>({
   const selected = config.records.find((record) => record.id === (recordPageID ? decodeURIComponent(recordPageID) : selectedID)) ?? null;
   const selectedCover = selected ? config.cover?.(selected) ?? storedCovers[selected.id] : undefined;
   const TableIcon = getPropertyIconByName(tableIcon).icon;
+  const updateTableIcon = (value: string) => {
+    tableIconDirty.current = true;
+    setTableIcon(value);
+    window.localStorage.setItem(tableIconStorageKey, value);
+  };
   const persistCover = async (record: T, cover: WireframeCoverValue | null) => {
     if (cover) {
       await savePresentation.mutateAsync({ recordID: record.id, presentation: JSON.stringify(cover) });
@@ -439,7 +452,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
             onGalleryImageSourceChange={setGalleryImageSelection}
             tableIcon={tableIcon}
             tableIconOptions={PROPERTY_ICON_LIBRARY}
-            onTableIconChange={setTableIcon}
+            onTableIconChange={updateTableIcon}
           />
           <Theme name="light">
             <Table.Actions
