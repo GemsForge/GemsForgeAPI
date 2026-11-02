@@ -4,9 +4,9 @@ export type WireframeInspectorField = {
   id: string;
   label: string;
   value: string;
-  kind?: "text" | "select" | "date" | "textarea";
+  kind?: "text" | "select" | "status" | "date" | "textarea";
   options?: string[];
-  onCommit: (value: string) => Promise<void>;
+  onCommit?: (value: string) => Promise<void>;
 };
 
 export function WireframeRecordInspector({ fields }: { fields: readonly WireframeInspectorField[] }) {
@@ -16,13 +16,17 @@ export function WireframeRecordInspector({ fields }: { fields: readonly Wirefram
         <div key={field.id}>
           <dt>{field.label}</dt>
           <dd>
-            <WireframeEditableValue
-              label={field.label}
-              value={field.value}
-              kind={field.kind}
-              options={field.options}
-              onCommit={field.onCommit}
-            />
+            {field.onCommit ? (
+              <WireframeEditableValue
+                label={field.label}
+                value={field.value}
+                kind={field.kind}
+                options={field.options}
+                onCommit={field.onCommit}
+              />
+            ) : (
+              field.value || "—"
+            )}
           </dd>
         </div>
       ))}

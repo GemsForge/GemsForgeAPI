@@ -18,7 +18,18 @@ export function EmploymentWireframeView({ records }: { records: readonly Employm
     status: "employmentStatus",
     notes: "notes",
   };
-  const properties = employmentTableAdapter.getPropertyDefinitions().filter((property) => propertyFields[property.id]);
+  const optionsByProperty = {
+    industry: [...new Set(records.map((record) => record.industry).filter((value): value is string => Boolean(value)))],
+    employmentType: [...new Set(records.map((record) => record.employmentType))],
+    status: [...new Set(records.map((record) => record.employmentStatus))],
+  };
+  const properties = employmentTableAdapter
+    .getPropertyDefinitions()
+    .filter((property) =>
+      ["employer", "position", "industry", "employmentType", "startDate", "endDate", "status", "notes", "id"].includes(
+        property.id,
+      ),
+    );
 
   return (
     <WireframeCollectionView
@@ -41,13 +52,33 @@ export function EmploymentWireframeView({ records }: { records: readonly Employm
         inspector: (record) => (
           <WireframeSchemaInspector
             record={record}
-            properties={properties.map((property) => ({
-              ...property,
-              edit: {
-                inputType: property.kind === "date" ? "date" : property.id === "notes" ? "longText" : "text",
-                onSave: (_record, value) => save(record, propertyFields[property.id])(String(value ?? "")),
-              },
-            }))}
+            properties={properties.map((property) => {
+              const field = propertyFields[property.id];
+              const selectProperty =
+                property.id === "industry" || property.id === "employmentType" || property.id === "status";
+              return {
+                ...property,
+                kind: selectProperty ? (property.id === "status" ? "status" : "select") : property.kind,
+                edit: field
+                  ? {
+                      inputType: selectProperty
+                        ? "select"
+                        : property.kind === "date"
+                          ? "date"
+                          : property.id === "notes"
+                            ? "longText"
+                            : "text",
+                      options: selectProperty
+                        ? optionsByProperty[property.id as keyof typeof optionsByProperty].map((value) => ({
+                            value,
+                            label: value,
+                          }))
+                        : undefined,
+                      onSave: (_record, value) => save(record, field)(String(value ?? "")),
+                    }
+                  : undefined,
+              };
+            })}
           />
         ),
       }}
