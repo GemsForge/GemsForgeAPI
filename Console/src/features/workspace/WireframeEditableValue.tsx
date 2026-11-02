@@ -73,7 +73,7 @@ export function WireframeEditableValue({
         primitive={primitive}
         value={currentValue}
         editing={editing}
-        displayValue={kind === "status" ? <GemStatusPill tone="success">{displayValue ?? (currentValue || "—")}</GemStatusPill> : displayValue ?? (currentValue || "—")}
+        displayValue={kind === "status" ? <GemStatusPill tone="success" wireframe>{displayValue ?? (currentValue || "—")}</GemStatusPill> : displayValue ?? (currentValue || "—")}
         onDisplayClick={() => {
           setSaveError(undefined);
           setEditing(true);

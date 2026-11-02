@@ -41,6 +41,8 @@ export interface SavedTableView {
     tableName: string;
     name: string;
     viewType: "Table" | "List" | "Gallery" | "Grid";
+    workspaceState: string | null;
+    updatedAt: string | null;
   };
   columns: Array<{
     columnName: string;
@@ -61,6 +63,7 @@ export interface SavedTableViewInput {
     width: number | null;
   }>;
   queries: unknown[];
+  workspaceState: string;
 }
 
 export interface APIAuthenticationSession {
@@ -118,6 +121,15 @@ export const api = {
       method: "PUT",
       body: JSON.stringify(payload),
     }),
+  saveTableViewWorkspaceState: (
+    tableName: string,
+    viewType: SavedTableViewInput["viewType"],
+    workspaceState: string,
+  ) =>
+    request<SavedTableView["view"]>(
+      `/table-views/${encodeURIComponent(tableName)}/${encodeURIComponent(viewType)}/workspace-state`,
+      { method: "PUT", body: JSON.stringify({ workspaceState }) },
+    ),
   listMerchants: (signal?: AbortSignal) => request<Merchant[]>("/merchants", { signal }),
   getHealth: async (signal?: AbortSignal) => {
     const response = await checkedFetch("/health", { signal });
