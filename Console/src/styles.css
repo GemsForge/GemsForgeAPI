@@ -2194,10 +2194,6 @@ dialog::backdrop {
 }
 
 .record-utilities-menu {
-  position: absolute;
-  z-index: 4;
-  top: calc(100% + 0.35rem);
-  right: 0.75rem;
   display: grid;
   gap: 0.65rem;
   min-width: 15rem;
