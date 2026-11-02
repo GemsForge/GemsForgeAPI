@@ -1,14 +1,16 @@
 import React, { cloneElement, isValidElement, useMemo, useRef, useState, type ReactNode } from "react";
-import { GalleryHorizontal, List, Table2 } from "lucide-react";
+import { ChevronLeft, Expand, GalleryHorizontal, List, Minimize2, Table2 } from "lucide-react";
 import { AgGridReact } from "ag-grid-react";
 import { themeQuartz, type ColDef } from "ag-grid-community";
 import { useLiveSchemaQuery } from "../../data/workflowQueries";
 import { WireframeLeftPane } from "./WireframeLeftPane";
 import { WireframePageView } from "./WireframePageView";
+import { WireframeRecordPageView } from "./WireframeRecordPageView";
 import { getPropertyIconDefinition } from "./propertyIcons";
 import { PropertyIcon, PropertyIconPicker } from "./PropertyIconPicker";
 import { formatRecordNumber, inferRecordNumberFormat } from "../../table-kit";
 import { RecordList, type RecordPropertyDefinition, type TableRecord } from "../../table-kit";
+import { useLocation, useNavigate } from "react-router-dom";
 
 export type WireframeRecord = { id: string };
 export type WireframeCollectionConfig<T extends WireframeRecord> = {
@@ -33,10 +35,15 @@ export function WireframeCollectionView<T extends WireframeRecord>({
   config: WireframeCollectionConfig<T>;
 }) {
   const schemaQuery = useLiveSchemaQuery();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [view, setView] = useState<"table" | "list" | "gallery">("gallery");
   const [selectedID, setSelectedID] = useState<string | null>(config.records[0]?.id ?? null);
   const [query, setQuery] = useState("");
   const [mobileNavigationOpen, setMobileNavigationOpen] = useState(false);
+  const [navigationCollapsed, setNavigationCollapsed] = useState(false);
+  const [inspectorWidth, setInspectorWidth] = useState(384);
+  const inspectorResizingRef = useRef(false);
   const [propertyDetails, setPropertyDetails] = useState<{
     label: string;
     value: string;
@@ -46,7 +53,9 @@ export function WireframeCollectionView<T extends WireframeRecord>({
     colorToken: string;
   } | null>(null);
   const selectedCardRef = useRef<HTMLButtonElement | null>(null);
-  const selected = config.records.find((record) => record.id === selectedID) ?? null;
+  const recordPageID = location.pathname.match(/\/record\/([^/]+)$/)?.[1];
+  const inspectorExpanded = Boolean(recordPageID);
+  const selected = config.records.find((record) => record.id === (recordPageID ? decodeURIComponent(recordPageID) : selectedID)) ?? null;
   const schema = schemaQuery.data?.tables.find((table) => table.name === (config.tableName ?? config.title));
   const filteredRecords = useMemo(
     () =>
@@ -57,7 +66,17 @@ export function WireframeCollectionView<T extends WireframeRecord>({
   );
   const closeInspector = () => {
     setSelectedID(null);
+    if (inspectorExpanded) navigate(location.pathname.replace(/\/record\/[^/]+$/, ""));
     requestAnimationFrame(() => selectedCardRef.current?.focus());
+  };
+  const openRecordPage = () => {
+    if (selected) navigate(`${location.pathname.replace(/\/record\/[^/]+$/, "")}/record/${encodeURIComponent(selected.id)}`);
+  };
+  const handleInspectorPointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!inspectorResizingRef.current) return;
+    const bounds = event.currentTarget.parentElement?.parentElement?.getBoundingClientRect();
+    if (!bounds) return;
+    setInspectorWidth(Math.min(640, Math.max(320, bounds.right - event.clientX)));
   };
   const openPropertyDetails = (details: { label: string; value: string; type?: string; icon?: string }) =>
     setPropertyDetails({
@@ -69,7 +88,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
     });
   return (
     <section
-      className="wireframe-demo wireframe-standalone"
+      className={`wireframe-demo wireframe-standalone ${inspectorExpanded ? "is-expanded" : ""} ${selected ? "has-inspector" : "inspector-closed"}`}
       data-schema-table={schema?.name ?? config.tableName ?? config.title}
       aria-labelledby="wireframe-page-title"
     >
@@ -86,8 +105,24 @@ export function WireframeCollectionView<T extends WireframeRecord>({
         id="wireframe-navigation"
         className={mobileNavigationOpen ? "wireframe-mobile-nav is-open" : "wireframe-mobile-nav"}
       >
-        <WireframeLeftPane recordCount={config.records.length} activeCollection={config.activeCollection} />
+        <WireframeLeftPane
+          recordCount={config.records.length}
+          activeCollection={config.activeCollection}
+          collapsed={navigationCollapsed}
+          onToggleCollapsed={() => setNavigationCollapsed((collapsed) => !collapsed)}
+        />
       </div>
+      {inspectorExpanded && selected ? (
+        <WireframeRecordPageView
+          collectionTitle={config.title}
+          recordTitle={config.cardTitle(selected)}
+          onBack={() => navigate(location.pathname.replace(/\/record\/[^/]+$/, ""))}
+          onClose={closeInspector}
+          cover={<div className="demo-cover" style={{ background: "linear-gradient(135deg, #e8b17d, #527b82)" }} />}
+        >
+          {renderInspector(config.inspector(selected), openPropertyDetails)}
+        </WireframeRecordPageView>
+      ) : (
       <WireframePageView title={config.title} description={config.description} recordCount={filteredRecords.length}>
         <div className="demo-toolbar">
           <div className="demo-view-tabs" role="tablist" aria-label={`${config.title} view mode`}>
@@ -136,7 +171,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
           </div>
         ) : (
           <div className={`demo-results demo-${view}`} role="list" aria-label={`${config.title} records`}>
-            {view === "table" ? <WireframeAgGrid records={filteredRecords} /> : view === "list" ? <WireframeMvpList config={config} records={filteredRecords} /> : filteredRecords.map((record, index) => (
+            {view === "table" ? <WireframeAgGrid records={filteredRecords} onRecordSelect={setSelectedID} /> : view === "list" ? <WireframeMvpList config={config} records={filteredRecords} onRecordSelect={setSelectedID} /> : filteredRecords.map((record, index) => (
               <button
                 ref={selectedID === record.id ? selectedCardRef : undefined}
                 type="button"
@@ -164,25 +199,51 @@ export function WireframeCollectionView<T extends WireframeRecord>({
           </div>
         )}
       </WireframePageView>
+      )}
       {selected ? (
-        <aside className="wireframe-demo-inspector" aria-labelledby="wireframe-inspector-title">
+        inspectorExpanded ? null : <aside
+          className={`wireframe-demo-inspector ${inspectorExpanded ? "is-expanded" : ""}`}
+          style={{ "--inspector-width": `${inspectorWidth}px` } as React.CSSProperties}
+          aria-labelledby="wireframe-inspector-title"
+        >
+          <div
+            className="wireframe-inspector-resizer"
+            role="separator"
+            aria-label="Resize record inspector"
+            aria-orientation="vertical"
+            aria-valuemin={320}
+            aria-valuemax={640}
+            aria-valuenow={inspectorWidth}
+            tabIndex={0}
+            onPointerDown={(event) => {
+              inspectorResizingRef.current = true;
+              event.currentTarget.setPointerCapture(event.pointerId);
+            }}
+            onPointerMove={handleInspectorPointerMove}
+            onPointerUp={(event) => {
+              inspectorResizingRef.current = false;
+              event.currentTarget.releasePointerCapture(event.pointerId);
+            }}
+            onPointerCancel={() => { inspectorResizingRef.current = false; }}
+          />
           <div className="demo-inspector-heading">
             <div>
-              <p>Record inspector</p>
+              <p>{inspectorExpanded ? "Record page" : "Record inspector"}</p>
               <h2 id="wireframe-inspector-title">{config.cardTitle(selected)}</h2>
             </div>
-            <button type="button" aria-label="Close inspector" onClick={closeInspector}>
-              ×
-            </button>
+            <div className="demo-inspector-actions">
+              {inspectorExpanded ? (
+                <button type="button" aria-label="Back to collection" title="Back to collection" onClick={() => navigate(location.pathname.replace(/\/record\/[^/]+$/, ""))}><ChevronLeft size={16} aria-hidden="true" /></button>
+              ) : (
+                <button type="button" aria-label="Open record page" title="Open record page" onClick={openRecordPage}><Expand size={15} aria-hidden="true" /></button>
+              )}
+              <button type="button" aria-label="Close inspector" title="Close inspector" onClick={closeInspector}>×</button>
+            </div>
           </div>
           <div className="demo-cover" style={{ background: "linear-gradient(135deg, #e8b17d, #527b82)" }} />
           {renderInspector(config.inspector(selected), openPropertyDetails)}
         </aside>
-      ) : (
-        <aside className="wireframe-demo-inspector wireframe-empty-inspector" aria-label="Record inspector">
-          <p>Select a record to inspect it.</p>
-        </aside>
-      )}
+      ) : null}
       {propertyDetails ? (
         <div className="wireframe-property-details-backdrop" role="presentation" onClick={() => setPropertyDetails(null)}>
           <section
@@ -289,9 +350,11 @@ export function WireframeCollectionView<T extends WireframeRecord>({
 function WireframeMvpList<T extends WireframeRecord>({
   config,
   records,
+  onRecordSelect,
 }: {
   config: WireframeCollectionConfig<T>;
   records: readonly T[];
+  onRecordSelect: (id: string) => void;
 }) {
   const tableRecords: readonly TableRecord<T>[] = records.map((record) => ({
     id: record.id,
@@ -310,10 +373,10 @@ function WireframeMvpList<T extends WireframeRecord>({
         getValue: (record) => ({ raw: record[field], display: record[field] == null ? "—" : String(record[field]) }),
       }))
     : [];
-  return <RecordList records={tableRecords} properties={properties} />;
+  return <RecordList records={tableRecords} properties={properties} onExpansionChange={(id) => id && onRecordSelect(String(id))} />;
 }
 
-function WireframeAgGrid<T extends WireframeRecord>({ records }: { records: readonly T[] }) {
+function WireframeAgGrid<T extends WireframeRecord>({ records, onRecordSelect }: { records: readonly T[]; onRecordSelect: (id: string) => void }) {
   const first = records[0] as Record<string, unknown> | undefined;
   const fields = first ? Object.keys(first) : [];
   const columns: ColDef<T>[] = fields.map((field) => ({
@@ -323,7 +386,7 @@ function WireframeAgGrid<T extends WireframeRecord>({ records }: { records: read
     minWidth: 140,
     valueFormatter: ({ value }) => formatWireframeTableValue(field, value),
   }));
-  return <div className="wireframe-ag-grid"><AgGridReact<T> theme={themeQuartz} rowData={[...records]} columnDefs={columns} getRowId={({ data }) => data.id} domLayout="autoHeight" /></div>;
+  return <div className="wireframe-ag-grid"><AgGridReact<T> theme={themeQuartz} rowData={[...records]} columnDefs={columns} getRowId={({ data }) => data.id} onRowClicked={({ data }) => data && onRecordSelect(data.id)} domLayout="autoHeight" /></div>;
 }
 
 function formatWireframeTableValue(field: string, value: unknown): string {

@@ -10,15 +10,13 @@ const LogoMark = styled(YStack, {
   backgroundColor: "$wireframePanel",
 });
 
-export function GemLogo() {
+export function GemLogo({ compact = false }: { compact?: boolean } = {}) {
   return (
-    <XStack alignItems="center" gap="$2" aria-label="GemsForge">
+    <XStack alignItems="center" gap="$2" aria-label="GemsForge" className={compact ? "gem-logo-compact" : undefined}>
       <LogoMark aria-hidden>
         <img src={logoSource} width={32} height={32} alt="GemsForge logo" style={{ objectFit: "contain" }} />
       </LogoMark>
-      <Text color="$wireframeHeading" fontSize="$4" fontWeight="700">
-        GemsForge
-      </Text>
+      {!compact ? <Text color="$wireframeHeading" fontSize="$4" fontWeight="700">GemsForge</Text> : null}
     </XStack>
   );
 }
