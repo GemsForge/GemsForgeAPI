@@ -33,8 +33,11 @@ export const gemRadii = { control: 8, card: 16 } as const;
 export const wireframeSpacing = { pane: 16, content: 28, card: 12 } as const;
 export const wireframeRadii = { control: 8, card: 12, pill: 999 } as const;
 
+export const gemFontFamily =
+  '"Avenir Next", Avenir, Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif';
+
 const bodyFont = createFont({
-  family: 'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif',
+  family: gemFontFamily,
   size: { 1: 12, 2: 14, 3: 16, 4: 20, 5: 28, 6: 36, true: 16 },
   lineHeight: { 1: 18, 2: 21, 3: 24, 4: 28, 5: 36, 6: 44, true: 24 },
   weight: { 1: "400", 2: "500", 3: "600", 4: "700", 5: "700", 6: "800", true: "400" },
