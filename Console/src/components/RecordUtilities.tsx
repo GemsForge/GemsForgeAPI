@@ -74,27 +74,28 @@ export function RecordUtilities({
             modal={false}
           >
             <Tooltip placement="top" delay={300}>
-              <Tooltip.Trigger asChild>
-                <Button
-                  ref={sortTriggerRef}
-                  type="button"
-                  size="xs"
-                  color="$gemInk"
-                  backgroundColor="$gemPanel"
-                  borderColor="$gemPanelLight"
-                  borderWidth={1}
-                  borderRadius="$gemControl"
-                  className="compact-icon-button"
-                  aria-label="Sort records"
-                  onClick={() => setCompactMenu((current) => (current === "sort" ? null : "sort"))}
-                >
-                  {sort ? (
-                    <ArrowDownWideNarrow size={16} aria-hidden="true" />
-                  ) : (
-                    <ArrowUpDown size={16} aria-hidden="true" />
-                  )}
-                </Button>
-              </Tooltip.Trigger>
+              <Menu.Trigger asChild>
+                <Tooltip.Trigger asChild>
+                  <Button
+                    ref={sortTriggerRef}
+                    type="button"
+                    size="xs"
+                    color="$gemInk"
+                    backgroundColor="$gemPanel"
+                    borderColor="$gemPanelLight"
+                    borderWidth={1}
+                    borderRadius="$gemControl"
+                    className="compact-icon-button"
+                    aria-label="Sort records"
+                  >
+                    {sort ? (
+                      <ArrowDownWideNarrow size={16} aria-hidden="true" />
+                    ) : (
+                      <ArrowUpDown size={16} aria-hidden="true" />
+                    )}
+                  </Button>
+                </Tooltip.Trigger>
+              </Menu.Trigger>
               <Tooltip.Content className="table-kit-tooltip">
                 <Tooltip.Arrow />
                 <span>Sort records</span>
@@ -140,23 +141,24 @@ export function RecordUtilities({
               modal={false}
             >
               <Tooltip placement="top" delay={300}>
-                <Tooltip.Trigger asChild>
-                  <Button
-                    ref={filterTriggerRef}
-                    type="button"
-                    size="xs"
-                    color="$gemInk"
-                    backgroundColor="$gemPanel"
-                    borderColor="$gemPanelLight"
-                    borderWidth={1}
-                    borderRadius="$gemControl"
-                    className="compact-icon-button"
-                    aria-label="Filter records"
-                    onClick={() => setCompactMenu((current) => (current === "filter" ? null : "filter"))}
-                  >
-                  <ListFilter size={16} aria-hidden="true" />
-                  </Button>
-                </Tooltip.Trigger>
+                <Menu.Trigger asChild>
+                  <Tooltip.Trigger asChild>
+                    <Button
+                      ref={filterTriggerRef}
+                      type="button"
+                      size="xs"
+                      color="$gemInk"
+                      backgroundColor="$gemPanel"
+                      borderColor="$gemPanelLight"
+                      borderWidth={1}
+                      borderRadius="$gemControl"
+                      className="compact-icon-button"
+                      aria-label="Filter records"
+                    >
+                      <ListFilter size={16} aria-hidden="true" />
+                    </Button>
+                  </Tooltip.Trigger>
+                </Menu.Trigger>
                 <Tooltip.Content className="table-kit-tooltip">
                   <Tooltip.Arrow />
                   <span>Filter records</span>
@@ -241,15 +243,15 @@ export function RecordUtilities({
   return (
     <div className="record-utilities" aria-label={`${label} utilities`}>
       {!hideSearch && (
-      <label>
-        Search {label.toLowerCase()}
-        <input
-          type="search"
-          value={search}
-          onChange={(event) => onSearch(event.target.value)}
-          placeholder={`Search ${label.toLowerCase()}…`}
-        />
-      </label>
+        <label>
+          Search {label.toLowerCase()}
+          <input
+            type="search"
+            value={search}
+            onChange={(event) => onSearch(event.target.value)}
+            placeholder={`Search ${label.toLowerCase()}…`}
+          />
+        </label>
       )}
       <label>
         Sort by
