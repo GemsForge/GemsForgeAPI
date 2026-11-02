@@ -19,6 +19,7 @@ import { SizableText, Theme } from "tamagui";
 import { inferRecordPropertyKind, normalizeStorageType } from "../../table-kit/storageTypes";
 import { formatAddress } from "../addresses/formatAddress";
 import { inferWireframePropertyMetadata, WIREFRAME_PROPERTY_TYPES } from "./propertyMetadata";
+import { WireframeCover, type WireframeCover as WireframeCoverValue } from "./WireframeCover";
 
 export type WireframeRecord = { id: string };
 export type WireframeCollectionConfig<T extends WireframeRecord> = {
@@ -38,6 +39,8 @@ export type WireframeCollectionConfig<T extends WireframeRecord> = {
   onCreateRecord?: () => void | Promise<void>;
   recordActions?: Omit<TableActionsProps, "onNew">;
   newRecordUtility?: TableActionsProps["newRecordUtility"];
+  cover?: (record: T) => WireframeCoverValue | null | undefined;
+  onCoverChange?: (record: T, cover: WireframeCoverValue | null) => Promise<void> | void;
 };
 const cardColors = ["#e8b17d", "#a8d2cf", "#9dc9e0", "#e8b3b7"];
 
@@ -178,7 +181,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
           recordTitle={config.cardTitle(selected)}
           onBack={() => navigate(location.pathname.replace(/\/record\/[^/]+$/, ""))}
           onClose={closeInspector}
-          cover={<div className="demo-cover" style={{ background: "linear-gradient(135deg, #e8b17d, #527b82)" }} />}
+          cover={<WireframeCover value={config.cover?.(selected)} onChange={(cover) => config.onCoverChange?.(selected, cover)} />}
         >
           {renderInspector(config.inspector(selected, schemaProperties), openPropertyDetails)}
         </WireframeRecordPageView>
@@ -278,6 +281,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
           className={`wireframe-demo-inspector ${inspectorExpanded ? "is-expanded" : ""}`}
           aria-labelledby="wireframe-inspector-title"
         >
+          <WireframeCover value={config.cover?.(selected)} onChange={(cover) => config.onCoverChange?.(selected, cover)} />
           <div className="demo-inspector-heading">
             <div>
               <p>{inspectorExpanded ? "Record page" : "Record inspector"}</p>
@@ -292,7 +296,6 @@ export function WireframeCollectionView<T extends WireframeRecord>({
               <button type="button" aria-label="Close inspector" title="Close inspector" onClick={closeInspector}>×</button>
             </div>
           </div>
-          <div className="demo-cover" style={{ background: "linear-gradient(135deg, #e8b17d, #527b82)" }} />
           {renderInspector(config.inspector(selected, schemaProperties), openPropertyDetails)}
         </aside>
       ) : null}

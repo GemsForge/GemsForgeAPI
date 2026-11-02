@@ -36,11 +36,11 @@ export function WireframeRecordPageView({
           </button>
         </div>
       </header>
+      {cover}
       <div className="wireframe-record-page-heading">
         <p>Record page</p>
         <h1 id="wireframe-record-page-title">{recordTitle}</h1>
       </div>
-      {cover}
       <div className="wireframe-record-page-content">{children}</div>
     </main>
   );

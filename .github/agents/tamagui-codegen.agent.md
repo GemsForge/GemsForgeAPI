@@ -143,6 +143,19 @@ system first, then use it from the page.
 
 ## Generation workflow
 
+### Cover feature visual references
+
+When implementing or refining record covers, use these repository-local
+screenshots as visual references for the interaction model and layout hierarchy:
+
+- `Console/src/assets/references/cover-feature/notion-cover-record-properties.png`
+- `Console/src/assets/references/cover-feature/notion-cover-with-image.png`
+- `Console/src/assets/references/cover-feature/notion-cover-picker.png`
+
+These references are inspiration only. Do not copy Notion branding, proprietary
+assets, or exact visual styling. Preserve GemsForge branding, Tamagui tokens,
+shared components, accessibility, and the existing project architecture.
+
 For each requested UI change:
 
 1. Read the repository instructions, relevant local design-system configuration,
