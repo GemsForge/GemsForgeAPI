@@ -333,12 +333,12 @@ export function AppRoutes() {
       <Route path="/" element={isRecoveryLink() ? <ResetPasswordPage /> : <Navigate to="/login" replace />} />
       <Route element={<RequireAuth />}>
         <Route element={<LocalSession><WireframeCanvas /></LocalSession>}>
-          <Route path="education-wireframe" element={<EducationWireframe />} />
-          <Route path="employment-wireframe" element={<EmploymentWireframe />} />
-          <Route path="addresses-wireframe" element={<AddressesWireframe />} />
-          <Route path="transactions-wireframe" element={<TransactionsWireframe />} />
-          <Route path="gemhues-wireframe" element={<GemHuesWireframe />} />
-          <Route path="service-catalog-wireframe" element={<ServiceCatalogWireframe />} />
+          <Route path="education-wireframe/*" element={<EducationWireframe />} />
+          <Route path="employment-wireframe/*" element={<EmploymentWireframe />} />
+          <Route path="addresses-wireframe/*" element={<AddressesWireframe />} />
+          <Route path="transactions-wireframe/*" element={<TransactionsWireframe />} />
+          <Route path="gemhues-wireframe/*" element={<GemHuesWireframe />} />
+          <Route path="service-catalog-wireframe/*" element={<ServiceCatalogWireframe />} />
         </Route>
         <Route
           element={

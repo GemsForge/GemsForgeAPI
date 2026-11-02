@@ -1,8 +1,9 @@
 import { styled, Text, YStack } from "tamagui";
+import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { Link } from "react-router-dom";
 import { GemButton } from "../../components/ui/GemButton";
 import { GSearchField } from "../../components/ui/GSearchField";
-import { GemLogo } from "../../components/ui/GemLogo";
+import { WireframeWorkspaceHeader } from "./WireframeWorkspaceHeader";
 import { useAddressesQuery, useEducationQuery, useEmploymentQuery, useGemHuesQuery, useServiceAccountsQuery, useTransactionsQuery } from "../../data/lifeQueries";
 
 const WireframeNavigation = styled(YStack, {
@@ -16,6 +17,8 @@ const WireframeNavigation = styled(YStack, {
 type WireframeLeftPaneProps = {
   recordCount: number;
   activeCollection?: string;
+  collapsed?: boolean;
+  onToggleCollapsed?: () => void;
 };
 
 const navigation = [
@@ -34,7 +37,7 @@ const collections = [
   { label: "Services", to: "/service-catalog-wireframe" },
 ] as const;
 
-export function WireframeLeftPane({ recordCount, activeCollection = "Education" }: WireframeLeftPaneProps) {
+export function WireframeLeftPane({ recordCount, activeCollection = "Education", collapsed = false, onToggleCollapsed }: WireframeLeftPaneProps) {
   const counts = {
     "Gem Hues": useGemHuesQuery(true).data?.length,
     Education: useEducationQuery(true).data?.length,
@@ -45,10 +48,8 @@ export function WireframeLeftPane({ recordCount, activeCollection = "Education" 
   };
   return (
     <WireframeNavigation asChild>
-      <nav className="wireframe-demo-sidebar" aria-label="Workspace navigation">
-        <div className="demo-brand">
-          <GemLogo />
-        </div>
+      <nav className={`wireframe-demo-sidebar ${collapsed ? "is-collapsed" : ""}`} aria-label="Workspace navigation">
+        <WireframeWorkspaceHeader compact={collapsed} />
         <div className="demo-search">
           <span aria-hidden="true">⌕</span>
           <GSearchField aria-label="Search workspace" placeholder="Search anything…" />
@@ -105,6 +106,19 @@ export function WireframeLeftPane({ recordCount, activeCollection = "Education" 
           <GemButton variant="quiet" tone="secondary" className="demo-trash" type="button">
             ⚙ Application Settings
           </GemButton>
+          {onToggleCollapsed ? (
+            <button
+              type="button"
+              className="demo-sidebar-toggle demo-sidebar-toggle-bottom"
+              aria-label={collapsed ? "Expand navigation" : "Collapse navigation"}
+              title={collapsed ? "Expand navigation" : "Collapse navigation"}
+              aria-expanded={!collapsed}
+              onClick={onToggleCollapsed}
+            >
+              {collapsed ? <PanelLeftOpen size={16} aria-hidden="true" /> : <PanelLeftClose size={16} aria-hidden="true" />}
+              <span>{collapsed ? "Expand navigation" : "Collapse navigation"}</span>
+            </button>
+          ) : null}
         </div>
       </nav>
     </WireframeNavigation>
