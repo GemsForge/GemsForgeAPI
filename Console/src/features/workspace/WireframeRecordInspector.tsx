@@ -26,6 +26,7 @@ export function WireframeRecordInspector({ fields }: { fields: readonly Wirefram
       {fields.map((field) => (
         <div key={field.id}>
           <dt
+            data-property-id={field.id}
             data-property-kind={field.propertyKind ?? field.kind ?? "text"}
             data-property-type={field.propertyType}
             data-property-icon={field.iconName}
