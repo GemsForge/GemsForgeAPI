@@ -12,6 +12,7 @@ const calendarDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 /** Props for the standard GemsForge calendar picker. */
 export interface GDateFieldProps extends Omit<ComponentProps<typeof Input>, "value" | "defaultValue" | "onChange"> {
   label: string;
+  showLabel?: boolean;
   value?: string;
   editing?: boolean;
   displayValue?: string;
@@ -35,6 +36,7 @@ function parseDate(value: string | undefined, format: string): Dayjs | null {
 /** Render the standard GemsForge calendar picker with Day.js date formatting. */
 export function GDateField({
   label,
+  showLabel = true,
   value = "",
   editing = true,
   displayValue,
@@ -87,7 +89,12 @@ export function GDateField({
           {label}
         </Label>
         <button type="button" className="gem-field-display-value" onClick={onDisplayClick}>
-          {displayValue ?? (selectedDate ? selectedDate.format(selectedFormat === "local" ? "MMM D, YYYY" : selectedFormat === "relative" ? "MMM D" : format) : "—")}
+          {displayValue ??
+            (selectedDate
+              ? selectedDate.format(
+                  selectedFormat === "local" ? "MMM D, YYYY" : selectedFormat === "relative" ? "MMM D" : format,
+                )
+              : "—")}
         </button>
       </YStack>
     );
@@ -95,10 +102,19 @@ export function GDateField({
 
   return (
     <YStack className="create-form-field" gap="$1">
-          <Label className="g-field-label" htmlFor={id} color="$gemGold" fontSize="$2" fontWeight="800" textTransform="uppercase">
-        {label}
-        {required ? " *" : ""}
-      </Label>
+      {showLabel ? (
+        <Label
+          className="g-field-label"
+          htmlFor={id}
+          color="$gemGold"
+          fontSize="$2"
+          fontWeight="800"
+          textTransform="uppercase"
+        >
+          {label}
+          {required ? " *" : ""}
+        </Label>
+      ) : null}
       <Popover open={open} onOpenChange={setOpen} placement="bottom-start">
         <Popover.Trigger asChild>
           <Button
@@ -107,10 +123,15 @@ export function GDateField({
             aria-invalid={Boolean(error)}
             aria-describedby={error ? errorID : undefined}
             aria-required={required}
+            aria-label={showLabel ? undefined : label}
             justifyContent="space-between"
             width="100%"
           >
-            {selectedDate ? selectedDate.format(selectedFormat === "local" ? "MMM D, YYYY" : selectedFormat === "relative" ? "MMM D" : format) : `Select ${label.toLowerCase()}…`}
+            {selectedDate
+              ? selectedDate.format(
+                  selectedFormat === "local" ? "MMM D, YYYY" : selectedFormat === "relative" ? "MMM D" : format,
+                )
+              : `Select ${label.toLowerCase()}…`}
           </Button>
         </Popover.Trigger>
         <Popover.Content className="gem-date-popover" padding="$3" borderWidth={1} minWidth={280}>
@@ -164,7 +185,9 @@ export function GDateField({
                 <SizableText>Date format</SizableText>
                 <Popover open={formatMenuOpen} onOpenChange={setFormatMenuOpen} placement="left-start">
                   <Popover.Trigger asChild>
-                    <Button size="sm" chromeless>{formatLabels[selectedFormat]} ›</Button>
+                    <Button size="sm" chromeless>
+                      {formatLabels[selectedFormat]} ›
+                    </Button>
                   </Popover.Trigger>
                   <Popover.Content className="gem-date-format-popover" padding="$2" borderWidth={1}>
                     <YStack>
@@ -180,7 +203,8 @@ export function GDateField({
                             setFormatMenuOpen(false);
                           }}
                         >
-                          {formatLabels[option]}{selectedFormat === option ? " ✓" : ""}
+                          {formatLabels[option]}
+                          {selectedFormat === option ? " ✓" : ""}
                         </Button>
                       ))}
                     </YStack>
