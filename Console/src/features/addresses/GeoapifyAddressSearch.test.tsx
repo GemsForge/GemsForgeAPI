@@ -1,11 +1,22 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render as rtlRender, screen } from "@testing-library/react";
+import type { ReactNode } from "react";
+import { TamaguiProvider } from "tamagui";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { tamaguiConfig } from "../../design-system";
 import {
   addressValuesFromGeoapify,
   createGeoapifySearchClient,
   GeoapifyAddressSearch,
   type GeoapifySuggestion,
 } from "./GeoapifyAddressSearch";
+
+function render(ui: ReactNode) {
+  return rtlRender(
+    <TamaguiProvider config={tamaguiConfig} defaultTheme="dark">
+      {ui}
+    </TamaguiProvider>,
+  );
+}
 
 afterEach(() => {
   vi.useRealTimers();

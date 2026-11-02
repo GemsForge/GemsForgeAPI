@@ -1,7 +1,11 @@
 import { useState, type ReactNode } from "react";
 import type { UseFormRegisterReturn } from "react-hook-form";
-import { Form, Input, Label, Select, SizableText, YStack } from "tamagui";
+import { Form, SizableText, YStack } from "tamagui";
 import { GemField } from "../ui/GemField";
+import { GemButton } from "../ui/GemButton";
+import { GSearchField } from "../ui/GSearchField";
+import { GSelectField } from "../ui/GSelectField";
+import { GemFieldError, GemFieldLabel } from "../ui/fieldPrimitives";
 
 interface CreateFieldFrameProps {
   id: string;
@@ -16,29 +20,19 @@ export function CreateFieldFrame({ id, label, required, error, children }: Creat
   const errorId = `${id}-error`;
   return (
     <YStack className="create-form-field" gap="$1">
-      <Label htmlFor={id} color="$gemMuted" fontSize="$2" fontWeight="700">
+      <GemFieldLabel htmlFor={id}>
         {label}
         {required ? " *" : ""}
-      </Label>
+      </GemFieldLabel>
       {children}
       {error && (
-        <SizableText id={errorId} role="alert" color="$gemDanger" fontSize="$1">
+        <GemFieldError id={errorId} role="alert">
           {error}
-        </SizableText>
+        </GemFieldError>
       )}
     </YStack>
   );
 }
-
-const controlStyle = {
-  width: "100%" as const,
-  minHeight: "$5" as const,
-  borderColor: "$gemPanelLight" as const,
-  borderWidth: 1,
-  borderRadius: "$gemControl" as const,
-  backgroundColor: "$gemCanvas" as const,
-  color: "$gemInk" as const,
-};
 
 /** Constrain shared text controls to the width appropriate for their value. */
 export type CreateFieldWidth = "short" | "medium" | "long";
@@ -68,16 +62,18 @@ export function CreateFormFrame({
 }) {
   return (
     <Form className={`edit-form create-record-form${className ? ` ${className}` : ""}`} aria-label={title} onSubmit={onSubmit}>
-      <h3>{title}</h3>
-      {error && <p role="alert">{error}</p>}
+      <SizableText className="create-record-form-title" size="$4" fontWeight="700" role="heading" aria-level={3}>
+        {title}
+      </SizableText>
+      {error && <SizableText role="alert" color="$gemDanger">{error}</SizableText>}
       {children}
       <div className="button-row">
-        <button type="submit" disabled={submitting}>
+        <GemButton type="submit" disabled={submitting}>
           {submitting ? "Creating…" : "Create record"}
-        </button>
-        <button type="button" className="secondary-button" onClick={onCancel} disabled={submitting}>
+        </GemButton>
+        <GemButton type="button" tone="secondary" onClick={onCancel} disabled={submitting}>
           Cancel
-        </button>
+        </GemButton>
       </div>
     </Form>
   );
@@ -119,56 +115,7 @@ export function CreateTextField({
       placeholder={inputPlaceholder}
       width={width}
       className={controlClassName}
-      {...controlStyle}
     />
-  );
-}
-
-interface CreateSelectControlProps {
-  id: string;
-  name: string;
-  value: string;
-  onValueChange: (value: string) => void;
-  onBlur: () => void;
-  error?: string;
-  options: Array<{ value: string; label: string }>;
-  required: boolean;
-}
-
-/** Render the shared select control used by both regular and searchable selectors. */
-function CreateSelectControl({
-  id,
-  name,
-  value,
-  onValueChange,
-  onBlur,
-  error,
-  options,
-  required,
-}: CreateSelectControlProps) {
-  return (
-    <Select name={name} value={value || undefined} onValueChange={onValueChange}>
-      <Select.Trigger
-        id={id}
-        className="create-form-control"
-        {...controlStyle}
-        aria-invalid={Boolean(error)}
-        aria-describedby={error ? `${id}-error` : undefined}
-        aria-required={required}
-        onBlur={onBlur}
-      >
-        <Select.Value placeholder="Select…" />
-      </Select.Trigger>
-      <Select.Content>
-        <Select.Viewport minWidth={240}>
-          {options.map((option) => (
-            <Select.Item key={option.value} value={option.value}>
-              <Select.ItemText>{option.label}</Select.ItemText>
-            </Select.Item>
-          ))}
-        </Select.Viewport>
-      </Select.Content>
-    </Select>
   );
 }
 
@@ -183,7 +130,7 @@ interface CreateSelectFieldProps {
   required?: boolean;
 }
 
-/** Render a keyboard-accessible Tamagui select while keeping React Hook Form as its value owner. */
+/** Render the shared select primitive while keeping React Hook Form as its value owner. */
 export function CreateSelectField({
   label,
   name,
@@ -194,21 +141,7 @@ export function CreateSelectField({
   options,
   required = false,
 }: CreateSelectFieldProps) {
-  const id = name;
-  return (
-    <CreateFieldFrame id={id} label={label} required={required} error={error}>
-      <CreateSelectControl
-        id={id}
-        name={name}
-        value={value}
-        onValueChange={onValueChange}
-        onBlur={onBlur}
-        error={error}
-        options={options}
-        required={required}
-      />
-    </CreateFieldFrame>
-  );
+  return <GSelectField id={name} label={label} value={value} onChange={onValueChange} onBlur={onBlur} error={error} options={options} required={required} wireframe />;
 }
 
 /** Render a searchable existing-record selector while preserving the selected record ID. */
@@ -230,29 +163,9 @@ export function CreateSearchableSelectField({
     : options;
 
   return (
-    <CreateFieldFrame id={name} label={label} required={required} error={error}>
-      <YStack gap="$2">
-        <Input
-          type="search"
-          className="create-form-control"
-          {...controlStyle}
-          aria-label={`Search ${label}`}
-          placeholder={searchPlaceholder}
-          autoComplete="off"
-          value={query}
-          onChange={(event) => setQuery(event.currentTarget.value)}
-        />
-        <CreateSelectControl
-          id={name}
-          name={name}
-          value={value}
-          onValueChange={onValueChange}
-          onBlur={onBlur}
-          error={error}
-          options={filteredOptions}
-          required={required}
-        />
-      </YStack>
-    </CreateFieldFrame>
+    <YStack gap="$2">
+      <GSearchField label={`Search ${label}`} value={query} onChange={setQuery} placeholder={searchPlaceholder} width="long" />
+      <GSelectField id={name} label={label} value={value} onChange={onValueChange} onBlur={onBlur} error={error} options={filteredOptions} required={required} wireframe />
+    </YStack>
   );
 }

@@ -3,8 +3,11 @@ import { useAddressPatchMutation } from "../../data/recordQueries";
 import { addressTableAdapter } from "../database/recordTableAdapters";
 import { WireframeCollectionView } from "../workspace/WireframeCollectionView";
 import { WireframeSchemaInspector } from "../workspace/WireframeSchemaInspector";
+import { useAddressRecordActions } from "./useAddressRecordActions";
+import type { RecordPropertyDefinition } from "../../table-kit";
 
 export function AddressesWireframeView({ records }: { records: readonly Address[] }) {
+  const recordActions = useAddressRecordActions({ onCreated: () => undefined });
   const patch = useAddressPatchMutation();
   const fieldByProperty: Record<string, keyof Address> = {
     addressType: "addressType",
@@ -23,9 +26,7 @@ export function AddressesWireframeView({ records }: { records: readonly Address[
     addressType: [...new Set(records.map((record) => record.addressType))],
     addressStatus: [...new Set(records.map((record) => record.addressStatus))],
   };
-  const properties = addressTableAdapter
-    .getPropertyDefinitions()
-    .filter((property) => [...Object.keys(fieldByProperty), "id"].includes(property.id));
+  const properties = addressTableAdapter.getPropertyDefinitions();
   return (
     <WireframeCollectionView
       config={{
@@ -34,6 +35,7 @@ export function AddressesWireframeView({ records }: { records: readonly Address[
         description: "Places, locations, and address history referenced across your records.",
         activeCollection: "Addresses",
         records,
+        newRecordUtility: recordActions.actions.newRecordUtility,
         searchValues: (record) => [
           record.addressLine1 ?? "",
           record.city ?? "",
@@ -46,10 +48,10 @@ export function AddressesWireframeView({ records }: { records: readonly Address[
         cardSubtitle: (record) => `${record.addressType} · ${record.state ?? record.country}`,
         cardStatus: (record) => record.addressStatus,
         cardMeta: (record) => record.startDate ?? "No start date",
-        inspector: (record) => (
+        inspector: (record, schemaProperties) => (
           <WireframeSchemaInspector
             record={record}
-            properties={properties.map((property) => {
+            properties={[...properties.map((property): RecordPropertyDefinition<Address> => {
               const field = fieldByProperty[property.id];
               const selectProperty = property.id === "addressType" || property.id === "addressStatus";
               return {
@@ -70,12 +72,12 @@ export function AddressesWireframeView({ records }: { records: readonly Address[
                             label: value,
                           }))
                         : undefined,
-                      onSave: (_record, value) =>
+                      onSave: (_record: unknown, value: string | number | null) =>
                         patch.mutateAsync({ id: record.id, patch: { [field]: value || null } }).then(() => undefined),
                     }
                   : undefined,
               };
-            })}
+            }), ...(schemaProperties ?? [])]}
           />
         ),
       }}

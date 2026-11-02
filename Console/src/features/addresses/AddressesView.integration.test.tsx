@@ -90,7 +90,7 @@ describe("Addresses create/edit integration", () => {
 
     fireEvent.click(await screen.findByRole("button", { name: "Residence", hidden: true }));
     // The shared Tamagui select exposes a required combobox and portal-backed options.
-    const addressType = screen.getByRole("combobox", { name: /^Address type/, hidden: true });
+    const addressType = screen.getByRole("combobox", { name: /^Address Type/, hidden: true });
     fireEvent.click(addressType);
     expect(screen.getAllByRole("option").map((option) => option.textContent)).toEqual([
       "Residence",

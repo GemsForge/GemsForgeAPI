@@ -6,6 +6,7 @@ import {
   CreateSelectField,
   CreateTextField,
 } from "./CreateForm";
+import { GDateField } from "../ui/GDateField";
 
 /** Render a reusable text field from any React Hook Form shape. */
 export function CreateFormText<T extends FieldValues>({
@@ -28,6 +29,25 @@ export function CreateFormText<T extends FieldValues>({
   width?: "short" | "medium" | "long";
 }) {
   const message = form.formState.errors[name]?.message;
+  if (type === "date") {
+    return (
+      <Controller
+        control={form.control as Control<T>}
+        name={name}
+        render={({ field }) => (
+          <GDateField
+            label={label}
+            value={String(field.value ?? "")}
+            onChange={field.onChange}
+            onBlur={field.onBlur}
+            required={required}
+            width={width}
+            error={typeof message === "string" ? message : undefined}
+          />
+        )}
+      />
+    );
+  }
   return (
     <CreateTextField
       label={label}

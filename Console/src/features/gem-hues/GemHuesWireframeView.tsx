@@ -5,8 +5,11 @@ import { createGemHueTableAdapter } from "../database/recordTableAdapters";
 import { WireframeCollectionView } from "../workspace/WireframeCollectionView";
 import { WireframeSchemaInspector } from "../workspace/WireframeSchemaInspector";
 import { WireframeImagePreview } from "../workspace/WireframeImagePreview";
+import { useCreateGemHueMutation } from "../../data/recordQueries";
+import { GemHueCreateForm } from "./GemHuesView";
 
 export function GemHuesWireframeView({ records }: { records: readonly GemHue[] }) {
+  const create = useCreateGemHueMutation();
   const [imageURLs, setImageURLs] = useState<Record<string, string>>({});
   useEffect(() => {
     const controller = new AbortController();
@@ -35,6 +38,24 @@ export function GemHuesWireframeView({ records }: { records: readonly GemHue[] }
         description: "Foundation colors, palettes, moods, and visual language for GemsForge.",
         activeCollection: "Gem Hues",
         records,
+        newRecordUtility: {
+          options: [{
+            id: "new-gem-hue",
+            label: "Input Form",
+            description: "Create a Gem Hue record.",
+            render: ({ close }) => (
+              <GemHueCreateForm
+                submitting={create.isPending}
+                error={create.error instanceof Error ? create.error.message : null}
+                onCancel={close}
+                onCreate={async (payload) => {
+                  await create.mutateAsync(payload);
+                  close();
+                }}
+              />
+            ),
+          }],
+        },
         searchValues: (record) => [
           record.colorName,
           record.colorFamily ?? "",
@@ -47,7 +68,7 @@ export function GemHuesWireframeView({ records }: { records: readonly GemHue[] }
         cardStatus: (record) => record.hexCode,
         cardMeta: (record) => record.mood ?? "No mood recorded",
         cardImage: (record) => imageURLs[record.id] ? { src: imageURLs[record.id], alt: `${record.colorName} reference` } : undefined,
-        inspector: (record) => (
+        inspector: (record, schemaProperties) => (
           <WireframeSchemaInspector
             record={record}
             properties={[
@@ -63,6 +84,7 @@ export function GemHuesWireframeView({ records }: { records: readonly GemHue[] }
                     : { display: "No image" };
                 },
               },
+              ...(schemaProperties ?? []),
             ]}
           />
         ),

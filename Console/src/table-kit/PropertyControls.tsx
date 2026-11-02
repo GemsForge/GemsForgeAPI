@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { Button, Tooltip, type TamaguiElement } from "tamagui";
+import { SlidersHorizontal } from "lucide-react";
 import { GCheckboxField, GSearchField } from "../components/ui";
 import { filterTableProperties, type TablePropertyConfigurationState, type TablePropertyOption } from "./configuration";
 
@@ -36,6 +37,20 @@ export function TablePropertyControls({
   const previousOpen = useRef(open);
   const filteredProperties = filterTableProperties(properties, search);
   const propertyById = new Map(properties.map((property) => [property.id, property]));
+  const atVisibilityLimit =
+    maxVisibleProperties !== undefined && configuration.visibleIds.length >= maxVisibleProperties;
+  const showAllVisibleProperties = () => {
+    if (maxVisibleProperties === undefined) {
+      configuration.showAll();
+      return;
+    }
+
+    const visibleIds = new Set(properties.slice(0, maxVisibleProperties).map((property) => property.id));
+    configuration.setConfiguration((current) => ({
+      ...current,
+      hiddenIds: current.order.filter((propertyId) => !visibleIds.has(propertyId)),
+    }));
+  };
 
   useEffect(() => {
     if (open) {
@@ -62,6 +77,15 @@ export function TablePropertyControls({
     return () => document.removeEventListener("pointerdown", handlePointerDown);
   }, [open]);
 
+  useEffect(() => {
+    if (maxVisibleProperties === undefined || configuration.visibleIds.length <= maxVisibleProperties) return;
+    const limitedVisibleIds = new Set(configuration.visibleIds.slice(0, maxVisibleProperties));
+    configuration.setConfiguration((current) => ({
+      ...current,
+      hiddenIds: current.order.filter((propertyId) => !limitedVisibleIds.has(propertyId)),
+    }));
+  }, [configuration.visibleIds, configuration.setConfiguration, maxVisibleProperties]);
+
   return (
     <div className="table-kit-property-controls" role="group" aria-label="Property configuration">
       <Tooltip placement="top" delay={300}>
@@ -81,7 +105,7 @@ export function TablePropertyControls({
             aria-expanded={open}
             onClick={() => setOpen((current) => !current)}
           >
-            <span aria-hidden="true">⚙</span>
+            <SlidersHorizontal size={16} aria-hidden="true" />
             <span className="sr-only">{label}</span>
           </Button>
         </Tooltip.Trigger>
@@ -107,7 +131,8 @@ export function TablePropertyControls({
           <h2 id={dialogTitleId}>{label}</h2>
           {maxVisibleProperties !== undefined && (
             <p className="table-kit-property-limit" role="status">
-              You can select up to {maxVisibleProperties} properties at a time.
+              {configuration.visibleIds.length} of {maxVisibleProperties} properties selected. You can select up to{" "}
+              {maxVisibleProperties}.
             </p>
           )}
           <GSearchField
@@ -128,7 +153,7 @@ export function TablePropertyControls({
               borderRadius="$gemControl"
               type="button"
               aria-label={showAllLabel}
-              onClick={configuration.showAll}
+              onClick={showAllVisibleProperties}
             >
               {showAllLabel}
             </Button>
@@ -169,6 +194,7 @@ export function TablePropertyControls({
                     label={property.label}
                     value={visible}
                     onChange={(checked) => configuration.setVisibility(property.id, checked)}
+                    disabled={!visible && atVisibilityLimit}
                     width="long"
                   />
                 </li>

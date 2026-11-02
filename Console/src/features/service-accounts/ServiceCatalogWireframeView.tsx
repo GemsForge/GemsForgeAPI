@@ -8,8 +8,10 @@ import { createServiceAccountTableAdapter } from "../database/recordTableAdapter
 import { WireframeCollectionView } from "../workspace/WireframeCollectionView";
 import { WireframeSchemaInspector } from "../workspace/WireframeSchemaInspector";
 import { WireframeImagePreview } from "../workspace/WireframeImagePreview";
+import { useServiceAccountRecordActions } from "./useServiceAccountRecordActions";
 
 export function ServiceCatalogWireframeView({ records }: { records: readonly ServiceAccount[] }) {
+  const recordActions = useServiceAccountRecordActions({ onCreated: () => undefined });
   const patch = useServiceAccountPatchMutation();
   const logos = useServiceLogosQuery(true);
   const [logoURLs, setLogoURLs] = useState<Record<number, string>>({});
@@ -52,9 +54,7 @@ export function ServiceCatalogWireframeView({ records }: { records: readonly Ser
     accountNumber: "accountNumber",
     emailUpdated: "emailUpdated",
   };
-  const properties = adapter
-    .getPropertyDefinitions()
-    .filter((property) => [...Object.keys(fieldByProperty), "id", "logo"].includes(property.id));
+  const properties = adapter.getPropertyDefinitions();
   return (
     <WireframeCollectionView
       config={{
@@ -63,6 +63,7 @@ export function ServiceCatalogWireframeView({ records }: { records: readonly Ser
         description: "Recurring services, accounts, costs, and renewal details.",
         activeCollection: "Services",
         records: records.map((record) => ({ ...record, id: String(record.id) })),
+        newRecordUtility: recordActions.actions.newRecordUtility,
         searchValues: (record) => [record.service, record.type ?? "", record.expenseGroup ?? "", record.status ?? ""],
         cardTitle: (record) => record.service,
         cardSubtitle: (record) => record.type ?? "Service account",
@@ -74,11 +75,11 @@ export function ServiceCatalogWireframeView({ records }: { records: readonly Ser
           const src = logo ? logoURLs[logo.id] : undefined;
           return src ? { src, alt: `${record.service} logo` } : undefined;
         },
-        inspector: (record) => (
+        inspector: (record, schemaProperties) => (
           <WireframeSchemaInspector
             record={record}
-            properties={
-              properties.map((property) => {
+            properties={[
+              ...(properties.map((property) => {
                 const field = fieldByProperty[property.id];
                 const numeric = ["monthlyAmount", "interestRate", "apr"].includes(property.id);
                 return {
@@ -97,8 +98,9 @@ export function ServiceCatalogWireframeView({ records }: { records: readonly Ser
                       }
                     : undefined,
                 };
-              }) as unknown as readonly RecordPropertyDefinition<typeof record>[]
-            }
+              }) as unknown as readonly RecordPropertyDefinition<typeof record>[]),
+              ...(schemaProperties ?? []),
+            ]}
           />
         ),
       }}

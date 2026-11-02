@@ -142,6 +142,7 @@ export function GemPrimitiveField({
         }
         onDisplayClick={onDisplayClick}
         onChange={emit}
+        onBlur={onBlur}
         primitive={primitive}
         required={required}
         width={width}
@@ -177,6 +178,7 @@ export function GemPrimitiveField({
         includeTime={includeTime}
         onDateConfigChange={onDateConfigChange}
         onChange={emit}
+        onBlur={onBlur}
         required={required}
         width={width}
       />
@@ -195,7 +197,17 @@ export function GemPrimitiveField({
     );
   }
   if (primitive === "image" || primitive === "media") {
-    return <GImageField label={label} value={typeof value === "string" ? value : null} editing={editing} displayValue={displayValue} onDisplayClick={onDisplayClick} onChange={onMediaChange} error={resolvedError} />;
+    return (
+      <GImageField
+        label={label}
+        value={typeof value === "string" ? value : null}
+        editing={editing}
+        displayValue={displayValue}
+        onDisplayClick={onDisplayClick}
+        onChange={onMediaChange}
+        error={resolvedError}
+      />
+    );
   }
   return (
     <GemField

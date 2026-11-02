@@ -7,6 +7,10 @@ import { WireframeLeftPane } from "../workspace/WireframeLeftPane";
 import { WireframePageView } from "../workspace/WireframePageView";
 import { WireframePropertyEditor } from "../workspace/WireframePropertyEditor";
 import { WireframeEditableValue } from "../workspace/WireframeEditableValue";
+import { useAddressesQuery } from "../../data/lifeQueries";
+import { useEducationRecordActions } from "./useEducationRecordActions";
+import { Table } from "../../table-kit";
+import { Theme } from "tamagui";
 
 type ViewMode = "table" | "list" | "gallery";
 const cardColors = ["#e8b17d", "#a8d2cf", "#9dc9e0", "#e8b3b7"];
@@ -36,6 +40,7 @@ function EducationInspectorField({
 
 export function EducationWireframeView({ records }: { records: readonly Education[] }) {
   const patch = useEducationPatchMutation();
+  const addresses = useAddressesQuery(true);
   const [view, setView] = useState<ViewMode>("gallery");
   const [selectedID, setSelectedID] = useState<string | null>(records[0]?.id ?? null);
   const [expanded, setExpanded] = useState(false);
@@ -43,6 +48,7 @@ export function EducationWireframeView({ records }: { records: readonly Educatio
   const [sortDescending, setSortDescending] = useState(false);
   const [mobileNavigationOpen, setMobileNavigationOpen] = useState(false);
   const selectedCardRef = useRef<HTMLButtonElement | null>(null);
+  const recordActions = useEducationRecordActions({ addresses: addresses.data ?? [], onCreated: setSelectedID });
   const selected = records.find((record) => record.id === selectedID) ?? null;
   const educationTypeOptions = [...new Set(records.map((record) => record.educationType))];
   const educationStatusOptions = [...new Set(records.map((record) => record.status))];
@@ -120,6 +126,13 @@ export function EducationWireframeView({ records }: { records: readonly Educatio
           >
             ↕ Sort {sortDescending ? "Z–A" : "A–Z"}
           </button>
+          <Theme name="light">
+            <Table.Actions
+              newRecordUtility={recordActions.actions.newRecordUtility}
+              newOptionsLabel="New education record options"
+              newLabel="New record"
+            />
+          </Theme>
         </div>
         {filteredRecords.length === 0 ? (
           <div className="wireframe-empty-state" role="status">
@@ -149,7 +162,6 @@ export function EducationWireframeView({ records }: { records: readonly Educatio
                 <span className="demo-place-copy">
                   <strong>{record.institutionName}</strong>
                   <small>{record.educationType}</small>
-                  <em>{record.status}</em>
                   <small className="demo-place-meta">
                     {record.startDate ?? "No start date"}　▤ {record.id}
                   </small>

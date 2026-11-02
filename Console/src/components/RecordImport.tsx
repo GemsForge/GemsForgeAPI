@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { GemButton } from "./ui/GemButton";
+import { GemTextArea } from "./ui/fieldPrimitives";
 
 type Row = Record<string, unknown>;
 
@@ -108,9 +110,9 @@ export function RecordImport({
         <section className="record-form">
           <div className="detail-heading">
             <h3>Import {label}</h3>
-            <button type="button" onClick={parse}>
+            <GemButton type="button" onClick={parse}>
               Preview import
-            </button>
+            </GemButton>
           </div>
           <p className="muted">Paste a CSV with a header row or a JSON array using the table column names.</p>
           {mode !== "paste" && (
@@ -127,7 +129,7 @@ export function RecordImport({
             </label>
           )}
           {mode !== "file" && (
-            <textarea
+            <GemTextArea
               aria-label={`${label} CSV or JSON`}
               rows={7}
               value={text}
@@ -138,7 +140,7 @@ export function RecordImport({
           {rows && (
             <>
               <p>{rows.length} records ready to review.</p>
-              <button
+              <GemButton
                 type="button"
                 disabled={busy || rows.length === 0}
                 onClick={async () => {
@@ -157,7 +159,7 @@ export function RecordImport({
                 }}
               >
                 {busy ? "Publishing…" : "Publish records"}
-              </button>
+              </GemButton>
             </>
           )}
         </section>

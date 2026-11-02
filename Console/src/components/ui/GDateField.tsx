@@ -10,7 +10,7 @@ dayjs.extend(customParseFormat);
 const calendarDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 /** Props for the standard GemsForge calendar picker. */
-export interface GDateFieldProps extends Omit<ComponentProps<typeof Input>, "value" | "defaultValue" | "onChange"> {
+export interface GDateFieldProps extends Omit<ComponentProps<typeof Input>, "value" | "defaultValue" | "onChange" | "onBlur"> {
   label: string;
   showLabel?: boolean;
   value?: string;
@@ -21,6 +21,7 @@ export interface GDateFieldProps extends Omit<ComponentProps<typeof Input>, "val
   error?: string;
   required?: boolean;
   width?: GemTextFieldWidth;
+  onBlur?: () => void;
   onChange?: (value: string) => void;
   displayFormat?: RecordDateFormat;
   includeTime?: boolean;
@@ -45,6 +46,7 @@ export function GDateField({
   error,
   required = false,
   width = "long",
+  onBlur,
   onChange,
   displayFormat = "iso",
   includeTime = false,
@@ -126,6 +128,7 @@ export function GDateField({
             aria-describedby={error ? errorID : undefined}
             aria-required={required}
             aria-label={showLabel ? undefined : label}
+            onBlur={onBlur}
             justifyContent="space-between"
             width="100%"
           >
@@ -187,7 +190,7 @@ export function GDateField({
                 <SizableText>Date format</SizableText>
                 <Popover open={formatMenuOpen} onOpenChange={setFormatMenuOpen} placement="left-start">
                   <Popover.Trigger asChild>
-                    <Button size="sm" chromeless>
+                    <Button size="sm" variant="quiet">
                       {formatLabels[selectedFormat]} ›
                     </Button>
                   </Popover.Trigger>

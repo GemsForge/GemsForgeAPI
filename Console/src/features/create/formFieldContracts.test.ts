@@ -10,6 +10,22 @@ const emptyOptions = { categories: [], subcategories: [] };
 const employmentOptions = { employerType: [], industry: [], employmentType: [], status: [], workAddress: [] };
 
 describe("feature form field contracts", () => {
+  it("uses the Address Type title-case convention for Address field labels", () => {
+    expect(addressFieldDefinitions.map((field) => field.label)).toEqual([
+      "Address Type",
+      "Address Line 1",
+      "Address Line 2",
+      "Country",
+      "City",
+      "State / Region",
+      "Postal Code",
+      "Start Date",
+      "End Date",
+      "Status",
+      "Notes",
+    ]);
+  });
+
   it("keep field names unique", () => {
     const contracts = [
       addressFieldDefinitions,

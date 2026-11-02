@@ -43,6 +43,7 @@ export interface GSelectFieldProps extends Omit<
   error?: string;
   required?: boolean;
   width?: GemTextFieldWidth;
+  containerClassName?: string;
   onChange?: (value: string) => void;
   primitive?: Extract<GemPrimitiveType, "select" | "status">;
   /** Marks portaled menu content that belongs to the light wireframe surface. */
@@ -61,13 +62,16 @@ export function GSelectField({
   error,
   required = false,
   width = "long",
+  id: providedID,
+  containerClassName,
   onChange,
   primitive,
   wireframe = false,
   ...triggerProps
 }: GSelectFieldProps) {
+  const { className: triggerClassName, ...selectTriggerProps } = triggerProps;
   const instanceID = useId();
-  const id = `g-select-${instanceID}-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+  const id = providedID ?? `g-select-${instanceID}-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
   const errorID = `${id}-error`;
   const selectedOption = options.find((option) => option.value === value);
   const optionGroups = options.reduce<Array<{ label?: string; options: GSelectOption[] }>>((groups, option) => {
@@ -96,7 +100,7 @@ export function GSelectField({
   }
 
   return (
-    <YStack className="create-form-field" gap="$1">
+    <YStack className={`create-form-field${containerClassName ? ` ${containerClassName}` : ""}`} gap="$1">
       {showLabel ? (
         <Label
           className="g-field-label"
@@ -110,11 +114,18 @@ export function GSelectField({
           {required ? " *" : ""}
         </Label>
       ) : null}
-      <Select value={value || undefined} onValueChange={onChange}>
+      <Select value={value || undefined} onValueChange={onChange} zIndex={100}>
         <Select.Trigger
-          {...triggerProps}
+          {...selectTriggerProps}
           id={id}
-          className={`create-form-control create-form-control--${width}${primitive === "status" ? " g-status-select-trigger" : ""}`}
+          className={[
+            "create-form-control",
+            `create-form-control--${width}`,
+            primitive === "status" ? "g-status-select-trigger" : "",
+            triggerClassName,
+          ]
+            .filter(Boolean)
+            .join(" ")}
           width="100%"
           aria-invalid={Boolean(error)}
           aria-describedby={error ? errorID : undefined}
@@ -133,41 +144,47 @@ export function GSelectField({
               {selectedOption.label}
             </SizableText>
           ) : (
-            <Select.Value placeholder={`Select ${label.toLowerCase()}…`} />
+            <Select.Value
+              placeholder={`Select ${label.toLowerCase()}…`}
+              fontSize={wireframe ? "$2" : undefined}
+              lineHeight={wireframe ? "$2" : undefined}
+            />
           )}
         </Select.Trigger>
-        <Select.Content
-          className={`gem-select-content${primitive === "status" ? " g-status-select-content" : ""}`}
-          data-wireframe-select={wireframe ? "true" : undefined}
-          backgroundColor="$fieldMenuBackground"
-          borderColor="$fieldBorder"
-          borderWidth={1}
-          color="$fieldMenuText"
-          zIndex={100}
-          elevate
-        >
-          <Select.Viewport minWidth={240} maxHeight={320} padding="$1">
+        <Select.Content>
+          <Select.Viewport
+            className="gem-select-content"
+            data-gem-select-content="true"
+            data-status-select={primitive === "status" ? "true" : undefined}
+            data-wireframe-select={wireframe ? "true" : undefined}
+            backgroundColor="$fieldMenuBackground"
+            borderColor="$fieldBorder"
+            borderWidth={1}
+            color="$fieldMenuText"
+            borderRadius="$2"
+            minWidth={240}
+            maxHeight={320}
+            padding="$1"
+          >
             {optionGroups.map((group, groupIndex) => (
               <Select.Group key={group.label ?? `ungrouped-${groupIndex}`}>
                 {group.label && <Select.Label className="g-select-option-group-label">{group.label}</Select.Label>}
-                {group.options.map((option, optionIndex) => (
+                {group.options.map((option) => (
                   <Select.Item
                     key={option.value}
-                    index={
-                      optionGroups
-                        .slice(0, groupIndex)
-                        .reduce((total, previousGroup) => total + previousGroup.options.length, 0) + optionIndex
-                    }
+                    className="gem-select-item"
                     value={option.value}
                     color="$fieldMenuText"
                     borderRadius="$2"
                     minHeight="$4"
                     paddingHorizontal="$2"
                     paddingVertical="$1"
-                    hoverStyle={{ backgroundColor: "$fieldMenuHover" }}
-                    focusStyle={{ backgroundColor: "$fieldMenuHover" }}
                   >
-                    <Select.ItemText color="$fieldMenuText" fontSize="$1" lineHeight="$1">
+                    <Select.ItemText
+                      color="$fieldMenuText"
+                      fontSize={wireframe ? "$2" : "$1"}
+                      lineHeight={wireframe ? "$2" : "$1"}
+                    >
                       {option.label}
                     </Select.ItemText>
                   </Select.Item>
