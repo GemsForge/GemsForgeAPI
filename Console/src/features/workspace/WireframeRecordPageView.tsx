@@ -22,11 +22,6 @@ export function WireframeRecordPageView({
   return (
     <main className="wireframe-record-page" aria-labelledby="wireframe-record-page-title">
       <header className="wireframe-record-page-header">
-        <nav className="demo-expanded-breadcrumb" aria-label="Record location">
-          <button type="button" onClick={onBack}>{collectionTitle}</button>
-          <span aria-hidden="true">›</span>
-          <span>{recordTitle}</span>
-        </nav>
         <div className="demo-inspector-actions">
           <button type="button" aria-label="Back to collection" title="Back to collection" onClick={onBack}>
             <ChevronLeft size={16} aria-hidden="true" />
@@ -37,6 +32,11 @@ export function WireframeRecordPageView({
         </div>
       </header>
       {cover}
+      <nav className="demo-expanded-breadcrumb wireframe-record-page-breadcrumb" aria-label="Record location">
+        <button type="button" onClick={onBack}>{collectionTitle}</button>
+        <span aria-hidden="true">›</span>
+        <span>{recordTitle}</span>
+      </nav>
       <div className="wireframe-record-page-heading">
         <p>Record page</p>
         <h1 id="wireframe-record-page-title">{recordTitle}</h1>
