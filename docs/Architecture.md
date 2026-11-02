@@ -6,9 +6,9 @@ system. Its first persistence layer is SQLite accessed through Fluent.
 ## Request and data flow
 
 ```text
-React testing console, fallback browser console, or other HTTP client
+React testing console, packaged host, fallback browser guidance page, or other HTTP client
     ↓
-Sources/main.swift
+Sources/ApplicationEntryPoint.swift
     ↓
 Routes (request validation and HTTP responses)
     ↓
@@ -30,6 +30,16 @@ The layers have deliberately separate responsibilities:
 - **Migrations** create or change the database schema in a repeatable order.
 - **Tests** verify behavior without requiring a running production server.
 
+The React Console is a separate presentation client, not a second API layer.
+Its typed API client and TanStack Query data modules own browser transport,
+query keys, caching, and invalidation. Feature views compose local form and
+workflow state from shared UI primitives. The Console does not bypass the API
+to access SQLite, local files, or credentials.
+
+The optional `GemLifeHost` native wrapper starts the local API and serves the
+packaged Console. It communicates with the web UI through the established
+bridge; native capabilities and lifecycle remain outside React feature code.
+
 ## Project structure
 
 ```text
@@ -42,12 +52,23 @@ GemsForgeAPI/
 │   ├── src/
 │   │   ├── api.ts
 │   │   ├── types.ts
-│   │   └── features/
+│   │   ├── components/ui/
+│   │   ├── features/
+│   │   ├── features/workspace/
+│   │   ├── table-kit/
+│   │   ├── data/
+│   │   └── routes/
+│   ├── ARCHITECTURE.md
+│   ├── UI_STANDARDS.md
 │   └── README.md
 ├── Public/
 │   ├── index.html
 │   ├── app.js
 │   └── styles.css
+├── GemLifeHost/
+│   ├── Package.swift
+│   ├── Sources/
+│   └── README.md
 ├── Sources/
 │   ├── main.swift
 │   ├── DatabaseConfiguration.swift
@@ -116,6 +137,7 @@ GemsForgeAPI/
 ├── Tests/
 │   └── GemsForgeAPITests/
 │       ├── HealthTests.swift
+│       ├── LocalDatabaseRouteTests.swift
 │       ├── DomainRouteTests.swift
 │       ├── ExpenseTransactionRouteTests.swift
 │       ├── ExpenseCategoryRouteTests.swift
@@ -134,17 +156,27 @@ GemsForgeAPI/
     └── Services.md
 ```
 
+The repository also contains operational and governance references, including
+[`Deployment-Security.md`](Deployment-Security.md),
+[`Workflow-Operations.md`](Workflow-Operations.md),
+[`Live-Schema-Management.md`](Live-Schema-Management.md), and
+[`Testing-Console.md`](Testing-Console.md). These documents define deployment,
+database-change, and verification boundaries rather than application layers.
+
 ## Entry file
 
-`Sources/main.swift` is the executable entry point. It:
+`Sources/ApplicationEntryPoint.swift` is the Vapor executable entry point. It:
 
 1. Creates a Vapor `Application`.
-2. Calls `app.configureDatabase()` to register the SQLite database selected by
-   `DATABASE_PATH`.
-3. Registers the health endpoint.
-4. Registers the domain routes.
+2. Configures the SQLite database selected by `DATABASE_PATH`.
+3. Registers authentication middleware and operational routes.
+4. Registers the health endpoint and domain routes.
 5. Starts the server with `app.execute()`.
 6. Shuts down the application cleanly with `app.asyncShutdown()`.
+
+`Sources/GemLife/main.swift` is a separate launcher executable. It invokes
+`Scripts/run-gem-life.sh` to coordinate the local API, Vite Console, and native
+`GemLifeHost` window; it is not the Vapor request entry point.
 
 The entry file is intentionally small. Feature-specific configuration,
 database access, and route definitions live in their own files so they can be
@@ -189,6 +221,12 @@ the parent table. The API model maps to the existing names, including
 The database path is supplied through the required `DATABASE_PATH` environment
 variable. The real local value is kept in Xcode's Scheme settings rather than
 in source code.
+
+The API remains private and owner-only. Supabase session authentication protects
+Console routes, while the Vapor service maps the authenticated owner to the
+configured Gem Life account. Authentication does not make public hosting safe:
+deployment security, network privacy, and the reviewed ownership migration must
+remain complete before exposing the service beyond the trusted local network.
 
 The four root domain identifiers are `POS`, `FOUNDATION`, `LIFE`, and
 `KNOWLEDGE`. These identifiers are stable values and should not be casually
