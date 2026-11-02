@@ -73,6 +73,7 @@ export type {
   UseTableSelectionOptions,
 } from "./selection";
 export { getPrimaryRecordProperty, orderRecordProperties } from "./recordContracts";
+export { formatRecordNumber, inferRecordNumberFormat } from "./numberFormatters";
 export type {
   RecordAdapter,
   RecordExpansionHandlers,

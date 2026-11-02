@@ -1,4 +1,4 @@
-import type { RecordPropertyDefinition } from "../../table-kit";
+import { formatRecordNumber, inferRecordNumberFormat, type RecordPropertyDefinition } from "../../table-kit";
 import { WireframeRecordInspector, type WireframeInspectorField } from "./WireframeRecordInspector";
 
 function editorKind(
@@ -27,7 +27,11 @@ export function WireframeSchemaInspector<Record extends object>({
       return {
         id: property.id,
         label: property.label,
-        value: typeof value.raw === "string" || typeof value.raw === "number" ? String(value.raw) : "",
+        value: typeof value.raw === "string" ? value.raw : typeof value.raw === "number" ? String(value.raw) : "",
+        displayValue:
+          typeof value.raw === "number"
+            ? formatRecordNumber(value.raw, property.numberFormat ?? inferRecordNumberFormat(property.id, property.label))
+            : value.display,
         display: value.display,
         kind: editorKind(property.kind, edit?.inputType),
         options: edit?.options?.map((option) => option.value),

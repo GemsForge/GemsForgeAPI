@@ -28,6 +28,7 @@ import {
   type TableRecord,
   type TableRecordId,
 } from "./recordContracts";
+import { formatRecordNumber } from "./numberFormatters";
 
 // Register the free Community modules once so every Table Kit grid shares the same engine setup.
 ModuleRegistry.registerModules([AllCommunityModule]);
@@ -151,7 +152,10 @@ function propertyValue<Record>(
   return property.getValue(record.source);
 }
 
-function displayValue(value: RecordPropertyValue): ReactNode {
+function displayValue(value: RecordPropertyValue, property?: RecordPropertyDefinition<unknown>): ReactNode {
+  if (typeof value.raw === "number" && property?.numberFormat) {
+    return formatRecordNumber(value.raw, property.numberFormat);
+  }
   return value.display || "unconfigured";
 }
 
@@ -214,7 +218,7 @@ function RecordAvatar<Record>({ record }: { record: TableRecord<Record> }) {
 }
 
 function PropertyValue({ property, value }: { property: RecordPropertyDefinition<unknown>; value: RecordPropertyValue }) {
-  const text = displayValue(value);
+  const text = displayValue(value, property);
   if (property.kind === "status") {
     const tone = value.status?.tone ?? (property.colorToken === "green" ? "success" : property.colorToken === "red" ? "danger" : "default");
     return <GemStatusPill tone={tone}>{text}</GemStatusPill>;
@@ -668,7 +672,7 @@ export function RecordTable<Record>({
           ? "left"
           : undefined,
       sortable: property.sortable ?? false,
-      valueGetter: ({ data }) => (data ? displayValue(propertyValue(property, data)) : ""),
+      valueGetter: ({ data }) => (data ? displayValue(propertyValue(property, data), property) : ""),
       cellRenderer: GridPropertyCell,
     })),
   );

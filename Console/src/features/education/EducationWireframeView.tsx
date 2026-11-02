@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from "react";
+import { GalleryHorizontal, List, Table2 } from "lucide-react";
 import type { Education } from "../../types";
 import { useEducationPatchMutation } from "../../data/recordQueries";
 import { WireframeLeftPane } from "../workspace/WireframeLeftPane";
@@ -77,10 +78,12 @@ export function EducationWireframeView({ records }: { records: readonly Educatio
                 type="button"
                 role="tab"
                 aria-selected={view === mode}
+                aria-label={`${mode[0].toUpperCase() + mode.slice(1)} view`}
+                title={`${mode[0].toUpperCase() + mode.slice(1)} view`}
                 onClick={() => setView(mode)}
                 key={mode}
               >
-                {mode === "table" ? "▣" : mode === "list" ? "☷" : "▦"} {mode[0].toUpperCase() + mode.slice(1)}
+                {mode === "table" ? <Table2 size={18} aria-hidden="true" /> : mode === "list" ? <List size={18} aria-hidden="true" /> : <GalleryHorizontal size={18} aria-hidden="true" />}
               </button>
             ))}
           </div>

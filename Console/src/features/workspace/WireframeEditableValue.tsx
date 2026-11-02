@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { GemPrimitiveField } from "../../components/ui/GemPrimitiveField";
 
 type EditableValueProps = {
@@ -6,6 +6,7 @@ type EditableValueProps = {
   label?: string;
   kind?: "text" | "select" | "status" | "number" | "date" | "textarea";
   options?: string[];
+  displayValue?: ReactNode;
   onCommit?: (value: string) => Promise<void>;
 };
 
@@ -15,6 +16,7 @@ export function WireframeEditableValue({
   kind = "text",
   options = [],
   onCommit,
+  displayValue,
 }: EditableValueProps) {
   const [currentValue, setCurrentValue] = useState(value);
   const [editing, setEditing] = useState(false);
@@ -41,7 +43,7 @@ export function WireframeEditableValue({
       primitive={primitive}
       value={currentValue}
       editing={editing}
-      displayValue={currentValue || "—"}
+      displayValue={displayValue ?? (currentValue || "—")}
       onDisplayClick={() => {
         setSaveError(undefined);
         setEditing(true);
