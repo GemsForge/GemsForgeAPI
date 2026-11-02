@@ -190,6 +190,11 @@ export const api = {
     request<GemHue>(`/gemhues/${encodeURIComponent(hueID)}`, { method: "PATCH", body: JSON.stringify(patch) }),
   getGemHueImage: (hueID: string, signal?: AbortSignal) =>
     checkedFetch(`/gemhues/${encodeURIComponent(hueID)}/image`, { signal }),
+  patchGemHueImage: (hueID: string, fileMetadataID: string | null) =>
+    request<{ fileMetadataID: string | null }>(`/gemhues/${encodeURIComponent(hueID)}/image`, {
+      method: "PATCH",
+      body: JSON.stringify({ fileMetadataID }),
+    }),
   listEducation: (signal?: AbortSignal) => request<Education[]>("/education", { signal }),
   createEducation: (payload: EducationCreate) =>
     request<Education>("/education", { method: "POST", body: JSON.stringify(payload) }),
@@ -245,12 +250,14 @@ export const api = {
       method: "PATCH",
       body: JSON.stringify(patch),
     }),
-  uploadImage: async (file: File, fileKind: string, ownerType: string, ownerID: string) => {
+  uploadImage: async (file: File, fileKind: string, ownerType?: string, ownerID?: string) => {
     const form = new FormData();
     form.append("file", file);
     form.append("fileKind", fileKind);
-    form.append("ownerType", ownerType);
-    form.append("ownerID", ownerID);
+    if (ownerType && ownerID) {
+      form.append("ownerType", ownerType);
+      form.append("ownerID", ownerID);
+    }
     const response = await checkedFetch("/file-uploads", { method: "POST", body: form });
     return (await response.json()) as FileMetadata;
   },
