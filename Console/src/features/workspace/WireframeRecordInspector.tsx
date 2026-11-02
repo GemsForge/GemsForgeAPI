@@ -11,7 +11,7 @@ export type WireframeInspectorField = {
 
 export function WireframeRecordInspector({ fields }: { fields: readonly WireframeInspectorField[] }) {
   return (
-    <dl>
+    <dl aria-label="Record properties">
       {fields.map((field) => (
         <div key={field.id}>
           <dt>{field.label}</dt>
