@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react";
-import { Asterisk, Badge, Bell, BellRing, BriefcaseBusiness, Building2, CalendarDays, CalendarClock, CheckSquare, CircleCheck, CircleDollarSign, CircleDot, Clock3, CreditCard, DollarSign, File, FileText, Fingerprint, Folder, Globe2, GraduationCap, Heart, House, Image, Landmark, Link, Link2, List, ListChecks, ListFilter, Lock, LockKeyhole, Mail, MapPin, Paperclip, Percent, Phone, Settings2, ShieldCheck, Star, Tag, Tags, ToggleLeft, Type, Upload, User, Users, WalletCards, Zap } from "lucide-react";
+import type { RecordNumberFormat, RecordPropertyKind } from "../../table-kit/recordContracts";
+import { Asterisk, Badge, Bell, BellRing, BriefcaseBusiness, Building2, CalendarDays, CalendarClock, CheckSquare, CircleCheck, CircleDot, Clock3, CreditCard, DollarSign, File, FileText, Fingerprint, Folder, Globe2, GraduationCap, Hash, Heart, House, Image, Landmark, Link, Link2, List, ListChecks, ListFilter, Lock, LockKeyhole, Mail, MapPin, Paperclip, Percent, Phone, Settings2, ShieldCheck, Star, Tag, Tags, ToggleLeft, Type, Upload, User, Users, WalletCards, Zap } from "lucide-react";
 
 export type PropertyIconDefinition = {
   name: string;
@@ -15,12 +16,12 @@ export const PROPERTY_ICON_LIBRARY = [
   { name: "Lock Keyhole", icon: LockKeyhole, keywords: ["lock", "key", "protected"] },
   { name: "Fingerprint", icon: Fingerprint, keywords: ["fingerprint", "identity", "secure"] },
   { name: "Text", icon: Type, keywords: ["text", "description"] },
-  { name: "Select", icon: ListFilter, keywords: ["select", "type"] },
+  { name: "Select", icon: ListFilter, keywords: ["select", "type", "due", "occurrence", "filter", "dropdown"] },
   { name: "Multi-select", icon: Tag, keywords: ["multi", "tag"] },
   { name: "Status", icon: CircleDot, keywords: ["status"] },
-  { name: "Number", icon: DollarSign, keywords: ["number", "amount", "price", "quantity"] },
+  { name: "Number", icon: Hash, keywords: ["number", "quantity", "count", "decimal"] },
   { name: "Date", icon: CalendarDays, keywords: ["date", "time"] },
-  { name: "URL", icon: Link, keywords: ["url", "website"] },
+  { name: "URL", icon: Link, keywords: ["url", "website", "web"] },
   { name: "Notes", icon: FileText, keywords: ["note"] },
   { name: "Address", icon: House, keywords: ["address", "location"] },
   { name: "Checkbox", icon: CheckSquare, keywords: ["checkbox", "boolean"] },
@@ -41,8 +42,8 @@ export const PROPERTY_ICON_LIBRARY = [
   { name: "Checklist", icon: ListChecks, keywords: ["checklist", "tasks", "todo"] },
   { name: "Tags", icon: Tags, keywords: ["tags", "labels"] },
   { name: "Toggle", icon: ToggleLeft, keywords: ["toggle", "switch"] },
-  { name: "Percent", icon: Percent, keywords: ["percent", "percentage", "rate"] },
-  { name: "Currency", icon: CircleDollarSign, keywords: ["currency", "money", "finance"] },
+  { name: "Percent", icon: Percent, keywords: ["percent", "percentage", "rate", "apr"] },
+  { name: "Currency", icon: DollarSign, keywords: ["currency", "money", "finance", "amount", "price"] },
   { name: "Wallet", icon: WalletCards, keywords: ["wallet", "payment", "account"] },
   { name: "Credit Card", icon: CreditCard, keywords: ["credit", "card", "payment"] },
   { name: "Bank", icon: Landmark, keywords: ["bank", "financial"] },
@@ -64,7 +65,48 @@ export const PROPERTY_ICON_OPTIONS = PROPERTY_ICON_LIBRARY.map(({ name }) => nam
 
 // TODO: Add custom icon uploads and user-defined icon collections.
 
-export function getPropertyIconDefinition(label: string, kind?: string): PropertyIconDefinition {
+/** Infer the property type from its semantic field metadata, with label fallbacks. */
+export function inferWireframePropertyType(
+  label: string,
+  kind?: RecordPropertyKind | string,
+  numberFormat?: RecordNumberFormat,
+): string {
+  const normalized = label.trim().toLowerCase();
+  if (kind === "select") return "Select";
+  if (kind === "status") return "Status";
+  if (kind === "date") return "Date";
+  if (kind === "url") return "URL";
+  if (kind === "image") return "Image";
+  if (kind === "media") return "Media";
+
+  if (numberFormat === "currency") return "Currency";
+  if (numberFormat === "percent") return "Percent";
+  if (numberFormat === "decimal") return "Number";
+  if (kind === "number") {
+    if (/\b(amount|price)\b/.test(normalized)) return "Currency";
+    if (/\b(rate|apr)\b/.test(normalized)) return "Percent";
+    return "Number";
+  }
+
+  if (/\b(due|occurrence|type)\b/.test(normalized)) return "Select";
+  if (/\b(url|website)\b/.test(normalized)) return "URL";
+  if (/\bstatus\b/.test(normalized)) return "Status";
+  if (/\b(date|time)\b/.test(normalized)) return "Date";
+  if (/\b(amount|price)\b/.test(normalized)) return "Currency";
+  if (/\b(rate|apr|percent|percentage)\b/.test(normalized)) return "Percent";
+  if (/\b(number|quantity|count)\b/.test(normalized)) return "Number";
+  if (/\b(name|title)\b/.test(normalized)) return "Name";
+  if (/\b(multi[-\s]?select|tags?)\b/.test(normalized)) return "Multi-select";
+  if (/\b(notes?|description)\b/.test(normalized)) return "Notes";
+  return "Text";
+}
+
+export function getPropertyIconDefinition(label: string, kind?: string, propertyType?: string): PropertyIconDefinition {
+  const exactType = propertyType && PROPERTY_ICON_LIBRARY.find((icon) => icon.name.toLowerCase() === propertyType.toLowerCase());
+  if (exactType) return exactType;
+  const inferredType = inferWireframePropertyType(label, kind);
+  const inferredIcon = PROPERTY_ICON_LIBRARY.find((icon) => icon.name === inferredType);
+  if (inferredIcon && inferredType !== "Text") return inferredIcon;
   const normalized = `${kind ?? ""} ${label}`.toLowerCase();
   return (
     PROPERTY_ICON_LIBRARY.find((icon) => icon.keywords.some((keyword) => normalized.includes(keyword))) ??

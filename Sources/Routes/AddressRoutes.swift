@@ -40,7 +40,7 @@ func registerAddressRoutes(_ app: Application) {
     let addresses = app.grouped("addresses")
 
     addresses.get { request async throws -> [AddressSummaryResponse] in
-        // List responses intentionally omit street lines, postal codes, and notes.
+        // List responses include the card title while omitting secondary street lines, postal codes, and notes.
         try await AddressService(database: request.db, hubID: request.authenticatedHubID).list().map(AddressSummaryResponse.init)
     }
 

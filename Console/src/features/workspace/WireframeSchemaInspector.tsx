@@ -1,13 +1,18 @@
 import { formatRecordNumber, inferRecordNumberFormat, type RecordPropertyDefinition } from "../../table-kit";
 import { WireframeRecordInspector, type WireframeInspectorField } from "./WireframeRecordInspector";
+import { inferWireframePropertyMetadata } from "./propertyMetadata";
 
 function editorKind(
   kind: RecordPropertyDefinition<unknown>["kind"],
   inputType?: string,
 ): WireframeInspectorField["kind"] {
   if (inputType === "longText") return "textarea";
-  if (kind === "date") return "date";
   if (kind === "select" || kind === "status") return kind;
+  if (kind === "date" || inputType === "date") return "date";
+  if (kind === "number" || inputType === "number") return "number";
+  if (kind === "url") return "url";
+  if (kind === "email") return "email";
+  if (inputType === "select") return "select";
   return "text";
 }
 
@@ -32,20 +37,46 @@ export function WireframeSchemaInspector<Record extends object>({
     .map((property) => {
       const value = property.getValue(record);
       const edit = property.edit;
+      const kind = editorKind(property.kind, edit?.inputType);
+      const metadataKind = property.kind && property.kind !== "text"
+        ? property.kind
+        : edit?.inputType === "select"
+          ? "select"
+          : edit?.inputType === "date"
+            ? "date"
+            : edit?.inputType === "number"
+              ? "number"
+              : property.kind ?? kind;
+      const metadata = inferWireframePropertyMetadata({
+        label: property.label,
+        kind: metadataKind,
+        numberFormat: property.numberFormat,
+        propertyType: property.propertyType,
+        iconName: property.iconName,
+      });
       return {
         id: property.id,
         label: property.label,
-        value: typeof value.raw === "string" ? value.raw : typeof value.raw === "number" ? String(value.raw) : "",
+        value:
+          typeof value.raw === "string" || typeof value.raw === "number" || typeof value.raw === "boolean"
+            ? String(value.raw)
+            : "",
         displayValue:
-          typeof value.raw === "number"
+          property.kind === "number" && typeof value.raw === "number"
             ? formatRecordNumber(value.raw, property.numberFormat ?? inferRecordNumberFormat(property.id, property.label))
             : value.display,
         display: value.display,
-        kind: editorKind(property.kind, edit?.inputType),
-        options: edit?.options?.map((option) => option.value),
+        kind,
+        propertyKind: property.kind,
+        propertyType: metadata.type,
+        iconName: metadata.iconName,
+        numberFormat: property.numberFormat,
+        nullable: edit?.nullable,
+        options: edit?.options?.map((option) => ({ value: option.value, label: option.label })),
         onCommit: edit ? async (next: string) => edit.onSave(record, next) : undefined,
       } satisfies WireframeInspectorField;
     });
 
-  return <WireframeRecordInspector fields={fields} />;
+  const recordID = "id" in record ? String((record as { id: unknown }).id) : "";
+  return <WireframeRecordInspector key={recordID} fields={fields} />;
 }

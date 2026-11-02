@@ -2,6 +2,7 @@ import { formatRecordTimestamp, type EditableRecordField } from "../../component
 import type { Address, Education } from "../../types";
 import { educationFieldsWithAddresses } from "./educationCreateFields";
 import { withCurrentRecordOption } from "../../components/recordFieldOptions";
+import { formatAddress } from "../addresses/formatAddress";
 
 /** The record dialog and add form use the same Education property contract. */
 export function educationEditableFields(
@@ -22,9 +23,7 @@ export function educationEditableFields(
       required: field.required,
       nullable: !field.required,
       className: field.name === "notes" ? "record-notes" : undefined,
-      displayValue: field.name === "locationAddressID" && record.address
-        ? [record.address.addressLine1, record.address.city, record.address.state, record.address.postalCode].filter(Boolean).join(", ")
-        : undefined,
+      displayValue: field.name === "locationAddressID" ? formatAddress(record.address) : undefined,
       onSave: async (value) => onPatch({ [field.name]: value } as Partial<Education>),
     }));
 

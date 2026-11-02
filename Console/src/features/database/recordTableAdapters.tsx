@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
-import type { Address, Education, Employment, ExpenseTransaction, GemHue, ServiceAccount } from "../../types";
+import type { Address, Education, Employment, ExpenseCategory, ExpenseSubcategory, ExpenseTransaction, GemHue, Merchant, ServiceAccount } from "../../types";
 import type { RecordAdapter, RecordImage, RecordPropertyDefinition } from "../../table-kit";
 import { formatRecordNumber } from "../../table-kit";
+import { formatAddress } from "../addresses/formatAddress";
 
 const display = (value: unknown) => ({ raw: value, display: value == null || value === "" ? "—" : String(value) });
 const url = (value: string | null | undefined) => ({ ...display(value), href: value || undefined });
@@ -120,7 +121,7 @@ export const addressTableAdapter: RecordAdapter<Address> = {
   toTableRecord: (record) => ({
     id: record.id,
     source: record,
-    title: record.city || record.addressType,
+    title: record.addressLine1 || record.city || record.addressType,
     subtitle: `${record.addressType} · ${record.id}`,
     icon: "⌂",
     status: { label: record.addressStatus },
@@ -209,8 +210,8 @@ export const educationTableAdapter: RecordAdapter<Education> = {
       {
         id: "locationAddressID",
         label: "Location address",
-        kind: "text",
-        getValue: (record) => display(record.locationAddressID),
+        kind: "relation",
+        getValue: (record) => ({ raw: record.locationAddressID ?? record.address?.id, display: formatAddress(record.address) }),
       },
       { id: "website", label: "Website", kind: "url", getValue: (record) => url(record.website) },
       { id: "notes", label: "Notes", kind: "text", getValue: (record) => display(record.notes) },
@@ -274,7 +275,7 @@ export const employmentTableAdapter: RecordAdapter<Employment> = {
         kind: "date",
         getValue: (record) => display(record.endDate),
       },
-      { id: "workAddressID", label: "Work address", kind: "text", getValue: (record) => display(record.workAddressID) },
+      { id: "workAddressID", label: "Work address", kind: "relation", getValue: (record) => ({ raw: record.workAddressID ?? record.address?.id, display: formatAddress(record.address) }) },
       { id: "website", label: "Website", kind: "url", getValue: (record) => url(record.website) },
       { id: "employerContact", label: "Contact", kind: "text", getValue: (record) => display(record.employerContact) },
       {
@@ -296,8 +297,16 @@ export const employmentTableAdapter: RecordAdapter<Employment> = {
     ] satisfies readonly RecordPropertyDefinition<Employment>[],
 };
 
-/** Shared adapter for expense transaction records. */
-export const transactionTableAdapter: RecordAdapter<ExpenseTransaction> = {
+/** Shared adapter for expense transaction records, resolving stored category IDs to labels. */
+export function createTransactionTableAdapter(
+  categories: readonly ExpenseCategory[] = [],
+  subcategories: readonly ExpenseSubcategory[] = [],
+  merchants: readonly Merchant[] = [],
+): RecordAdapter<ExpenseTransaction> {
+  const categoryNames = new Map(categories.map(({ id, name }) => [id, name]));
+  const subcategoryNames = new Map(subcategories.map(({ id, name }) => [id, name]));
+  const merchantNames = new Map(merchants.map(({ id, name }) => [id, name]));
+  return {
   toTableRecord: (record) => ({
     id: record.id,
     source: record,
@@ -314,18 +323,19 @@ export const transactionTableAdapter: RecordAdapter<ExpenseTransaction> = {
         id: "firstReceiptItem",
         label: "First receipt item",
         kind: "status",
-        getValue: (record) => display(record.firstReceiptItem),
+        getValue: (record) => ({ raw: record.firstReceiptItem, display: record.firstReceiptItem ? "Yes" : "No" }),
       },
-      { id: "category", label: "Category", kind: "number", sourceField: "categoryID", getValue: (record) => display(record.categoryID) },
+      { id: "category", label: "Category", kind: "select", sourceField: "categoryID", getValue: (record) => ({ raw: record.categoryID, display: categoryNames.get(record.categoryID) ?? String(record.categoryID) }) },
       { id: "id", label: "Item ID", kind: "text", getValue: (record) => display(record.id) },
       { id: "date", label: "Date", kind: "date", sourceField: "transactionDate", getValue: (record) => display(record.transactionDate) },
       {
-        id: "subcategoryID",
+        id: "subcategory",
         label: "Subcategory",
-        kind: "number",
-        getValue: (record) => display(record.subcategoryID),
+        kind: "select",
+        sourceField: "subcategoryID",
+        getValue: (record) => ({ raw: record.subcategoryID, display: record.subcategoryID == null ? "—" : subcategoryNames.get(record.subcategoryID) ?? String(record.subcategoryID) }),
       },
-      { id: "merchantCode", label: "Merchant code", kind: "text", getValue: (record) => display(record.merchantCode) },
+      { id: "merchantCode", label: "Merchant", kind: "select", sourceField: "merchantCode", getValue: (record) => ({ raw: record.merchantCode, display: record.merchantCode == null ? "—" : merchantNames.get(record.merchantCode) ?? record.merchantCode }) },
       { id: "quantity", label: "Quantity", kind: "number", getValue: (record) => display(record.quantity) },
       {
         id: "regularPrice",
@@ -359,7 +369,11 @@ export const transactionTableAdapter: RecordAdapter<ExpenseTransaction> = {
       { id: "image", label: "Image", kind: "image", getValue: (record) => display(record.image) },
       { id: "updatedAt", label: "Last updated", kind: "date", getValue: (record) => display(record.updatedAt) },
     ] satisfies readonly RecordPropertyDefinition<ExpenseTransaction>[],
-};
+  };
+}
+
+/** Default adapter retained for MVP consumers that do not provide lookups. */
+export const transactionTableAdapter = createTransactionTableAdapter();
 
 /** Create the service adapter while retaining the existing logo lookup and preview behavior. */
 export function createServiceAccountTableAdapter(

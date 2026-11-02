@@ -1,6 +1,7 @@
 import {
   useContext,
   useEffect,
+  isValidElement,
   useRef,
   useState,
   type KeyboardEvent,
@@ -150,6 +151,18 @@ function propertyValue<Record>(
   record: TableRecord<Record>,
 ): RecordPropertyValue {
   return property.getValue(record.source);
+}
+
+function galleryText(value: ReactNode): string {
+  if (typeof value === "string" || typeof value === "number") return String(value);
+  if (Array.isArray(value)) return value.map(galleryText).filter(Boolean).join(" ");
+  if (isValidElement<{ children?: ReactNode }>(value)) return galleryText(value.props.children);
+  return "";
+}
+
+function galleryDuplicateKeys(value: string | undefined): string[] {
+  if (!value) return [];
+  return [value, ...value.split(/\s*[·•|]\s*/)].map((part) => part.trim().toLocaleLowerCase()).filter(Boolean);
 }
 
 function displayValue<Record>(
@@ -629,22 +642,15 @@ export function RecordGallery<Record>({
                     </Text>
                   )}
                   <YStack className="table-kit-gallery-properties" aria-label="Visible properties" gap="$1">
-                    {visibleProperties
-                      .filter((property) => !property.primary && property.kind !== "image" && property.id !== "logo")
-                      .slice(0, 6)
-                      .map((property) => {
-                        const value = propertyValue(property, record);
-                        const text = String(value.display || "unconfigured");
-                        return (
-                          <Text
-                            key={property.id}
-                            className="table-kit-gallery-property"
-                            aria-label={`${property.label}: ${text}`}
-                          >
-                            {text}
-                          </Text>
-                        );
-                      })}
+                    {galleryPropertiesFor(record, visibleProperties).map(({ property, text }) => (
+                      <Text
+                        key={property.id}
+                        className="table-kit-gallery-property"
+                        aria-label={`${property.label}: ${text}`}
+                      >
+                        {text}
+                      </Text>
+                    ))}
                   </YStack>
                 </YStack>
               </YStack>
@@ -655,6 +661,29 @@ export function RecordGallery<Record>({
       </XStack>
     </div>
   );
+}
+
+function galleryPropertiesFor<Record>(
+  record: TableRecord<Record>,
+  properties: readonly RecordPropertyDefinition<Record>[],
+): { property: RecordPropertyDefinition<Record>; text: string }[] {
+  const seen = new Set([
+    ...galleryDuplicateKeys(record.title),
+    ...galleryDuplicateKeys(record.subtitle),
+  ]);
+  const result: { property: RecordPropertyDefinition<Record>; text: string }[] = [];
+  for (const property of properties) {
+    if (property.primary || property.kind === "title" || property.kind === "image" || property.kind === "media" || property.id === "logo") {
+      continue;
+    }
+    const text = galleryText(propertyValue(property, record).display).trim();
+    const key = text.toLocaleLowerCase();
+    if (!key || key === "—" || key === "unconfigured" || seen.has(key)) continue;
+    seen.add(key);
+    result.push({ property, text });
+    if (result.length === 6) break;
+  }
+  return result;
 }
 
 /** Renders records with AG Grid while keeping the Table Kit contract engine-neutral. */

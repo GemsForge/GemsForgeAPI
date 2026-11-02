@@ -59,6 +59,10 @@ export interface RecordPropertyDefinition<Record> {
   kind?: RecordPropertyKind;
   numberFormat?: RecordNumberFormat;
   dateFormat?: RecordDateFormat;
+  /** Explicit inspector type override when the inferred type is not suitable. */
+  propertyType?: string;
+  /** Explicit icon catalog name for this property. */
+  iconName?: string;
   colorToken?: RecordColorToken;
   order?: number;
   visible?: boolean;
@@ -140,7 +144,17 @@ export function orderRecordProperties<Record>(
   const seen = new Set<string>();
   return properties
     .map((property, index) => ({ property, index }))
-    .sort((left, right) => (left.property.order ?? left.index) - (right.property.order ?? right.index))
+    .sort((left, right) => {
+      if (left.property.id === "id" || left.property.primary) {
+        if (right.property.id !== "id" && !right.property.primary) return -1;
+      }
+      if (right.property.id === "id" || right.property.primary) {
+        if (left.property.id !== "id" && !left.property.primary) return 1;
+      }
+      if (left.property.id === "id" && right.property.id !== "id") return -1;
+      if (right.property.id === "id" && left.property.id !== "id") return 1;
+      return (left.property.order ?? left.index) - (right.property.order ?? right.index);
+    })
     .map(({ property }) => property)
     .filter((property) => {
       if (seen.has(property.id)) return false;

@@ -31,10 +31,11 @@ struct AddressCreateRequest: Content {
     }
 }
 
-/// Safe list representation that omits street lines, postal code, and notes.
+/// List representation with the card title, omitting secondary address details and notes.
 struct AddressSummaryResponse: Content {
     let id: String?
     let addressType: String
+    let addressLine1: String?
     let city: String?
     let state: String?
     let country: String
@@ -47,6 +48,7 @@ struct AddressSummaryResponse: Content {
     init(_ address: Address) {
         id = address.id
         addressType = address.addressType
+        addressLine1 = address.addressLine1
         city = address.city
         state = address.state
         country = address.country

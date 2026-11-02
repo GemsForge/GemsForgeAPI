@@ -5,11 +5,14 @@ import { createGemHueTableAdapter } from "../database/recordTableAdapters";
 import { WireframeCollectionView } from "../workspace/WireframeCollectionView";
 import { WireframeSchemaInspector } from "../workspace/WireframeSchemaInspector";
 import { WireframeImagePreview } from "../workspace/WireframeImagePreview";
-import { useCreateGemHueMutation } from "../../data/recordQueries";
+import { useCreateGemHueMutation, useGemHuePatchMutation } from "../../data/recordQueries";
 import { GemHueCreateForm } from "./GemHuesView";
+import type { RecordPropertyDefinition } from "../../table-kit";
+import { gemHueFieldDefinitions } from "./gemHueFields";
 
 export function GemHuesWireframeView({ records }: { records: readonly GemHue[] }) {
   const create = useCreateGemHueMutation();
+  const patch = useGemHuePatchMutation();
   const [imageURLs, setImageURLs] = useState<Record<string, string>>({});
   useEffect(() => {
     const controller = new AbortController();
@@ -26,10 +29,28 @@ export function GemHuesWireframeView({ records }: { records: readonly GemHue[] }
     })).then((entries) => setImageURLs(Object.fromEntries(entries.filter((entry): entry is readonly [string, string] => entry !== null))));
     return () => { controller.abort(); objectURLs.forEach((url) => URL.revokeObjectURL(url)); };
   }, [records]);
-  const adapter = createGemHueTableAdapter((record) => {
-    const src = imageURLs[record.id];
-    return src ? { src, alt: `${record.colorName} reference`, fit: "contain" } : undefined;
-  });
+  const adapter = createGemHueTableAdapter(
+    (record) => {
+      const src = imageURLs[record.id];
+      return src ? { src, alt: `${record.colorName} reference`, fit: "contain" } : undefined;
+    },
+    (record, field, value) =>
+      patch.mutateAsync({ id: record.id, patch: { [field]: value || null } }).then(() => undefined),
+  );
+  const properties = adapter.getPropertyDefinitions();
+  const optionsByProperty = new Map(
+    gemHueFieldDefinitions.filter((field) => field.options).map((field) => [field.name, field.options]),
+  );
+  const editableFields: Record<string, keyof GemHue> = {
+    colorName: "colorName",
+    colorFamily: "colorFamily",
+    hexCode: "hexCode",
+    mood: "mood",
+    palette: "palette",
+    description: "description",
+    createdDate: "createdDate",
+    notes: "notes",
+  };
   return (
     <WireframeCollectionView
       config={{
@@ -38,6 +59,7 @@ export function GemHuesWireframeView({ records }: { records: readonly GemHue[] }
         description: "Foundation colors, palettes, moods, and visual language for GemsForge.",
         activeCollection: "Gem Hues",
         records,
+        properties,
         newRecordUtility: {
           options: [{
             id: "new-gem-hue",
@@ -72,7 +94,21 @@ export function GemHuesWireframeView({ records }: { records: readonly GemHue[] }
           <WireframeSchemaInspector
             record={record}
             properties={[
-              ...adapter.getPropertyDefinitions(),
+              ...properties.map((property): RecordPropertyDefinition<GemHue> => {
+                const field = editableFields[property.id];
+                return {
+                  ...property,
+                  edit: field
+                    ? {
+                        ...property.edit,
+                        options: optionsByProperty.get(property.id as keyof GemHue) ?? property.edit?.options,
+                        inputType: property.edit?.inputType ?? (property.kind === "date" ? "date" : property.id === "notes" || property.id === "description" ? "longText" : "text"),
+                        onSave: property.edit?.onSave ?? ((_record: unknown, value: string | number | null) =>
+                          patch.mutateAsync({ id: record.id, patch: { [field]: value || null } }).then(() => undefined)),
+                      }
+                    : undefined,
+                };
+              }),
               {
                 id: "image",
                 label: "Image",

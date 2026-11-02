@@ -1,12 +1,11 @@
 import React, { cloneElement, isValidElement, useMemo, useRef, useState, type ReactNode } from "react";
-import { ChevronLeft, Expand, GalleryHorizontal, List, Plus, Table2 } from "lucide-react";
+import { ChevronLeft, Expand, GalleryHorizontal, List, Table2 } from "lucide-react";
 import { AgGridReact } from "ag-grid-react";
 import { themeQuartz, type ColDef, type ColDefField, type ICellRendererParams } from "ag-grid-community";
 import { useLiveSchemaQuery } from "../../data/workflowQueries";
 import { WireframeLeftPane } from "./WireframeLeftPane";
 import { WireframePageView } from "./WireframePageView";
 import { WireframeRecordPageView } from "./WireframeRecordPageView";
-import { getPropertyIconDefinition } from "./propertyIcons";
 import { PropertyIcon, PropertyIconPicker } from "./PropertyIconPicker";
 import { formatRecordNumber, inferRecordNumberFormat } from "../../table-kit";
 import { RecordList, Table, TablePropertyControls, type RecordPropertyDefinition, type TableActionsProps, type TableRecord, useTablePropertyConfiguration } from "../../table-kit";
@@ -18,6 +17,8 @@ import { GemTextField } from "../../components/ui/GemTextField";
 import { GemButton } from "../../components/ui/GemButton";
 import { SizableText, Theme } from "tamagui";
 import { inferRecordPropertyKind, normalizeStorageType } from "../../table-kit/storageTypes";
+import { formatAddress } from "../addresses/formatAddress";
+import { inferWireframePropertyMetadata, WIREFRAME_PROPERTY_TYPES } from "./propertyMetadata";
 
 export type WireframeRecord = { id: string };
 export type WireframeCollectionConfig<T extends WireframeRecord> = {
@@ -26,6 +27,7 @@ export type WireframeCollectionConfig<T extends WireframeRecord> = {
   description: string;
   activeCollection: string;
   records: readonly T[];
+  properties?: readonly RecordPropertyDefinition<T>[];
   searchValues: (record: T) => string[];
   cardTitle: (record: T) => string;
   cardSubtitle: (record: T) => string;
@@ -97,13 +99,22 @@ export function WireframeCollectionView<T extends WireframeRecord>({
   const visibleRecords = sortedRecords.slice(pageIndex * pageSize, (pageIndex + 1) * pageSize);
   const propertyOptions = useMemo(() => {
     const first = config.records[0] as Record<string, unknown> | undefined;
-    const ids = new Set(first ? Object.keys(first) : []);
+    const ids = new Set(first
+      ? Object.entries(first)
+          .filter(([, value]) => value == null || ["string", "number", "boolean"].includes(typeof value))
+          .map(([id]) => id)
+      : []);
     for (const record of config.records) {
       for (const [id, value] of Object.entries(record)) if (isImageProperty(id, value)) ids.add(id);
     }
+    for (const property of config.properties ?? []) ids.add(property.sourceField ?? property.id);
     if (config.cardImage) ids.add("image");
     for (const column of schema?.columns ?? []) ids.add(schemaColumnSourceField(column, config.records));
-    return [...ids].map((id) => ({ id, label: propertyLabel(id), defaultVisible: id !== "id" }));
+    return [...ids].map((id) => ({
+      id,
+      label: config.properties?.find((property) => property.id === id || property.sourceField === id)?.label ?? propertyLabel(id),
+      defaultVisible: id !== "id",
+    }));
   }, [config, schema]);
   const galleryDefaultConfiguration = useMemo(() => {
     const visibleByDefault = new Set(
@@ -131,14 +142,10 @@ export function WireframeCollectionView<T extends WireframeRecord>({
   const openRecordPage = () => {
     if (selected) navigate(`${location.pathname.replace(/\/record\/[^/]+$/, "")}/record/${encodeURIComponent(selected.id)}`);
   };
-  const openPropertyDetails = (details: { label: string; value: string; type?: string; icon?: string }) =>
-    setPropertyDetails({
-      ...details,
-      type: details.type ?? propertyTypeForLabel(details.label),
-      icon: details.icon ?? getPropertyIconDefinition(details.label).name,
-      statusText: details.value,
-      colorToken: "mint",
-    });
+  const openPropertyDetails = (details: { label: string; value: string; type?: string; icon?: string }) => {
+    const metadata = inferWireframePropertyMetadata({ label: details.label, propertyType: details.type, iconName: details.icon });
+    setPropertyDetails({ ...details, type: metadata.type, icon: metadata.iconName, statusText: details.value, colorToken: "mint" });
+  };
   return (
     <section
       className={`wireframe-demo wireframe-standalone ${inspectorExpanded ? "is-expanded" : ""} ${selected ? "has-inspector" : "inspector-closed"}`}
@@ -185,7 +192,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
               </button>
             ))}
           </div>
-          <RecordUtilities label={config.title} search={query} onSearch={(value) => { setQuery(value); resetPage(); }} sort={sort} onSort={(value) => { setSort(value); resetPage(); }} direction={direction} onDirection={() => setDirection((value) => value === "asc" ? "desc" : "asc")} filter={filter} onFilter={(value) => { setFilter(value); resetPage(); }} sortOptions={[{ value: "title", label: "Name" }, { value: "status", label: "Status" }, { value: "meta", label: "Metadata" }]} filterOptions={[...new Set(config.records.map((record) => config.cardStatus(record)))]} compact />
+          <RecordUtilities label={config.title} search={query} onSearch={(value) => { setQuery(value); resetPage(); }} sort={sort} onSort={(value) => { setSort(value); resetPage(); }} direction={direction} onDirection={() => setDirection((value) => value === "asc" ? "desc" : "asc")} filter={filter} onFilter={(value) => { setFilter(value); resetPage(); }} sortOptions={[{ value: "title", label: "Name" }, { value: "status", label: "Status" }, { value: "meta", label: "Metadata" }]} filterOptions={[...new Set(config.records.map((record) => config.cardStatus(record)))]} totalCount={config.records.length} visibleCount={matchingRecords.length} compact />
           <TablePropertyControls
             properties={propertyOptions}
             configuration={propertyConfiguration}
@@ -216,12 +223,11 @@ export function WireframeCollectionView<T extends WireframeRecord>({
             <p>Try a different search.</p>
           </div>
         ) : (
-          <div className={`demo-results demo-${view} ${view === "gallery" ? `gallery-size-${galleryCardSize}` : ""} ${galleryFillMedia ? "gallery-fill-media" : "gallery-fit-media"}`} role="list" aria-label={`${config.title} records`}>
-            {view === "table" ? <WireframeAgGrid records={visibleRecords} visiblePropertyIds={visiblePropertyIds} onRecordSelect={setSelectedID} /> : view === "list" ? <WireframeMvpList config={config} records={visibleRecords} visiblePropertyIds={visiblePropertyIds} onRecordSelect={setSelectedID} /> : visibleRecords.map((record, index) => (
+          <div className={`demo-results demo-${view} ${view === "gallery" ? `gallery-size-${galleryCardSize}` : ""} ${galleryFillMedia ? "gallery-fill-media" : "gallery-fit-media"}`} role="group" aria-label={`${config.title} records`}>
+            {view === "table" ? <WireframeAgGrid records={visibleRecords} visiblePropertyIds={visiblePropertyIds} properties={config.properties} onRecordSelect={setSelectedID} /> : view === "list" ? <WireframeMvpList config={config} records={visibleRecords} visiblePropertyIds={visiblePropertyIds} onRecordSelect={setSelectedID} /> : visibleRecords.map((record, index) => (
               <button
                 ref={selectedID === record.id ? selectedCardRef : undefined}
                 type="button"
-                role="listitem"
                 aria-pressed={selectedID === record.id}
                 className={`demo-place-card ${selectedID === record.id ? "selected" : ""}`}
                 onClick={() => setSelectedID(record.id)}
@@ -236,14 +242,14 @@ export function WireframeCollectionView<T extends WireframeRecord>({
                   <strong>{config.cardTitle(record)}</strong>
                   <small>{config.cardSubtitle(record)}</small>
                   <span className="demo-place-properties" aria-label="Visible properties">
-                    {getGalleryCardProperties(record, visiblePropertyIds).map((property) => (
+                    {getGalleryCardProperties(record, visiblePropertyIds, config.properties, [config.cardTitle(record), config.cardSubtitle(record), config.cardMeta(record)]).map((property) => (
                       <small className="demo-place-property" aria-label={`${property.label}: ${property.value}`} key={property.id}>
                         {property.value}
                       </small>
                     ))}
                   </span>
                   <small className="demo-place-meta">
-                    {config.cardMeta(record)}　▤ {record.id}
+                    {config.cardMeta(record)} · {record.id}
                   </small>
                 </span>
               </button>
@@ -327,7 +333,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
               id="wireframe-property-type"
               label="Primitive type"
               value={propertyDetails.type}
-              options={["Text", "Number", "Date", "Status", "Tags", "URL", "Notes"].map((type) => ({ value: type, label: type }))}
+              options={[...new Set([...WIREFRAME_PROPERTY_TYPES, propertyDetails.type])].map((type) => ({ value: type, label: type }))}
               onChange={(type) => setPropertyDetails({ ...propertyDetails, type })}
               wireframe
             />
@@ -393,28 +399,39 @@ function WireframeMvpList<T extends WireframeRecord>({
   }));
   const first = records[0] as Record<string, unknown> | undefined;
   const properties: readonly RecordPropertyDefinition<T>[] = first
-    ? Object.keys(first).filter((field) => field !== "id" && visiblePropertyIds.includes(field)).map((field) => ({
-        id: field,
-        label: field.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/^./, (character) => character.toUpperCase()),
-        kind: isImageProperty(field, first[field]) ? "image" : typeof first[field] === "number" ? "number" : "text",
-        getValue: (record) => isImageProperty(field, (record as Record<string, unknown>)[field])
-          ? { raw: (record as Record<string, unknown>)[field], display: "", image: { src: String((record as Record<string, unknown>)[field]), alt: field } }
-          : { raw: (record as Record<string, unknown>)[field], display: (record as Record<string, unknown>)[field] == null ? "—" : String((record as Record<string, unknown>)[field]) },
-      }))
+    ? visiblePropertyIds.filter((field) => field !== "id").map((field) => {
+        const adapted = config.properties?.find((property) => property.id === field || property.sourceField === field);
+        if (adapted) return adapted;
+        return {
+          id: field,
+          label: field.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/^./, (character) => character.toUpperCase()),
+          kind: isImageProperty(field, first[field]) ? "image" : typeof first[field] === "number" ? "number" : "text",
+          getValue: (record: T) => isImageProperty(field, (record as Record<string, unknown>)[field])
+            ? { raw: (record as Record<string, unknown>)[field], display: "", image: { src: String((record as Record<string, unknown>)[field]), alt: field } }
+            : { raw: (record as Record<string, unknown>)[field], display: (record as Record<string, unknown>)[field] == null ? "—" : String((record as Record<string, unknown>)[field]) },
+        };
+      })
     : [];
   return <RecordList records={tableRecords} properties={properties} onExpansionChange={(id) => id && onRecordSelect(String(id))} />;
 }
 
-function WireframeAgGrid<T extends WireframeRecord>({ records, visiblePropertyIds, onRecordSelect }: { records: readonly T[]; visiblePropertyIds: readonly string[]; onRecordSelect: (id: string) => void }) {
+function WireframeAgGrid<T extends WireframeRecord>({ records, visiblePropertyIds, properties = [], onRecordSelect }: { records: readonly T[]; visiblePropertyIds: readonly string[]; properties?: readonly RecordPropertyDefinition<T>[]; onRecordSelect: (id: string) => void }) {
   const fields = ["id", ...visiblePropertyIds.filter((field) => field !== "id")];
-  const columns: ColDef<T>[] = fields.map((field) => ({
-    field: field as ColDefField<T>,
-    headerName: field,
-    flex: 1,
-    minWidth: 140,
-    valueFormatter: (params) => formatWireframeTableValue(field, params.value),
-    cellRenderer: (params: ICellRendererParams<T>) => isImageProperty(field, params.value) ? <img className="wireframe-table-image" src={String(params.value)} alt={`${field} preview`} /> : undefined,
-  }));
+  const columns: ColDef<T>[] = fields.map((field) => {
+    const property = properties.find((item) => item.id === field || item.sourceField === field);
+    return {
+      field: field as ColDefField<T>,
+      headerName: property?.label ?? propertyLabel(field),
+      flex: 1,
+      minWidth: 140,
+      valueFormatter: (params) => {
+        if (!property || !params.data) return formatWireframeTableValue(field, params.value);
+        const display = property.getValue(params.data).display;
+        return typeof display === "string" || typeof display === "number" ? String(display) : display == null ? "—" : "";
+      },
+      cellRenderer: (params: ICellRendererParams<T>) => isImageProperty(field, params.value) ? <img className="wireframe-table-image" src={String(params.value)} alt={`${field} preview`} /> : undefined,
+    };
+  });
   return <div className="wireframe-ag-grid"><AgGridReact<T> theme={themeQuartz} rowData={[...records]} columnDefs={columns} getRowId={({ data }) => data.id} onRowClicked={({ data }) => data && onRecordSelect(data.id)} domLayout="autoHeight" /></div>;
 }
 
@@ -445,6 +462,13 @@ export function createWireframeSchemaProperties<T extends WireframeRecord>(
       primary: column.primaryKey,
       getValue: (record) => {
         const raw = (record as Record<string, unknown>)[sourceField];
+        if (/^(location|work)AddressID$/i.test(sourceField)) {
+          const address = (record as Record<string, unknown>).address;
+          const formatted = address && typeof address === "object"
+            ? formatAddress(address as Parameters<typeof formatAddress>[0])
+            : "Address unavailable";
+          return { raw, display: formatted };
+        }
         return { raw, display: raw == null || raw === "" ? "—" : String(raw) };
       },
     };
@@ -473,23 +497,42 @@ function galleryImageSource(record: object, property: string): string | undefine
   return undefined;
 }
 
-function getGalleryCardProperties(record: object, visiblePropertyIds: readonly string[]) {
+function getGalleryCardProperties<T extends WireframeRecord>(
+  record: T,
+  visiblePropertyIds: readonly string[],
+  properties: readonly RecordPropertyDefinition<T>[] = [],
+  repeatedValues: readonly string[] = [],
+) {
   const values = record as Record<string, unknown>;
+  const seen = new Set(repeatedValues.flatMap((value) => value.split(/[·•|]/).map(normalizeGalleryValue)).filter(Boolean));
   return visiblePropertyIds
-    .slice(0, 5)
-    .filter((id) => id !== "id" && Object.hasOwn(values, id) && !isImageProperty(id, values[id]))
-    .map((id) => ({
-      id,
-      label: id.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/^./, (character) => character.toUpperCase()),
-      value:
-        typeof values[id] === "boolean"
-          ? values[id]
-            ? "Yes"
-            : "No"
-          : values[id] && typeof values[id] === "object"
-            ? "—"
-            : formatWireframeTableValue(id, values[id]),
-    }));
+    .filter((id) => id !== "id" && (Object.hasOwn(values, id) || properties.some((property) => property.id === id || property.sourceField === id)) && !isImageProperty(id, values[id]))
+    .map((id) => {
+      const property = properties.find((item) => item.id === id || item.sourceField === id);
+      const adapted = property?.getValue(record);
+      const rawDisplay = adapted?.display;
+      const value = typeof rawDisplay === "string" || typeof rawDisplay === "number"
+        ? String(rawDisplay)
+        : typeof values[id] === "boolean"
+          ? values[id] ? "Yes" : "No"
+          : values[id] && typeof values[id] === "object" ? "—" : formatWireframeTableValue(id, values[id]);
+      return {
+        id,
+        label: property?.label ?? id.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/^./, (character) => character.toUpperCase()),
+        value,
+      };
+    })
+    .filter((property) => {
+      const normalized = normalizeGalleryValue(property.value);
+      if (!normalized || normalized === "—" || normalized === "unconfigured" || seen.has(normalized)) return false;
+      seen.add(normalized);
+      return true;
+    })
+    .slice(0, 5);
+}
+
+function normalizeGalleryValue(value: string): string {
+  return value.trim().toLocaleLowerCase();
 }
 
 function formatWireframeTableValue(field: string, value: unknown): string {
@@ -512,6 +555,18 @@ function renderInspector(
       if (!isValidElement(label) || !isValidElement(value)) return row;
       const labelText = String((label.props as { children?: ReactNode }).children ?? "");
       const propertyKind = (label.props as { "data-property-kind"?: string })["data-property-kind"];
+      const data = label.props as {
+        "data-property-type"?: string;
+        "data-property-icon"?: string;
+        "data-property-number-format"?: "decimal" | "currency" | "percent";
+      };
+      const metadata = inferWireframePropertyMetadata({
+        label: labelText,
+        kind: propertyKind,
+        numberFormat: data["data-property-number-format"],
+        propertyType: data["data-property-type"],
+        iconName: data["data-property-icon"],
+      });
       const valueText = String((value.props as { children?: ReactNode }).children ?? "");
       return cloneElement(
         row as React.ReactElement,
@@ -522,9 +577,14 @@ function renderInspector(
               type="button"
               className="wireframe-property-details-trigger"
               aria-label={`Open details for ${labelText}`}
-              onClick={() => onDetails({ label: labelText, value: valueText })}
+              onClick={() => onDetails({
+                label: labelText,
+                value: valueText,
+                type: metadata.type,
+                icon: metadata.iconName,
+              })}
             >
-              <PropertyIcon name={getPropertyIconDefinition(labelText, propertyKind).name} size={13} />
+              <PropertyIcon name={metadata.iconName} size={13} />
             </button>
             {labelText}
           </dt>
@@ -533,18 +593,6 @@ function renderInspector(
       );
     }),
   );
-}
-
-function propertyTypeForLabel(label: string): string {
-  const normalized = label.toLowerCase();
-  if (normalized === "name" || normalized === "title") return "Name";
-  if (normalized.includes("date") || normalized.includes("time")) return "Date";
-  if (normalized.includes("status")) return "Status";
-  if (normalized.includes("multi") || normalized.includes("tag")) return "Multi-select";
-  if (normalized.includes("amount") || normalized.includes("price") || normalized.includes("quantity")) return "Number";
-  if (normalized.includes("url") || normalized.includes("website")) return "URL";
-  if (normalized.includes("note")) return "Notes";
-  return "Text";
 }
 
 function isIdentityProperty(label: string): boolean {

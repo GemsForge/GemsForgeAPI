@@ -4,8 +4,9 @@ import { GemPrimitiveField } from "../../components/ui/GemPrimitiveField";
 type EditableValueProps = {
   value: string;
   label?: string;
-  kind?: "text" | "select" | "status" | "number" | "date" | "textarea";
-  options?: string[];
+  kind?: "text" | "select" | "status" | "number" | "date" | "url" | "email" | "textarea";
+  options?: readonly (string | { value: string; label: string })[];
+  nullable?: boolean;
   displayValue?: ReactNode;
   onCommit?: (value: string) => Promise<void>;
 };
@@ -15,6 +16,7 @@ export function WireframeEditableValue({
   label = "Value",
   kind = "text",
   options = [],
+  nullable = false,
   onCommit,
   displayValue,
 }: EditableValueProps) {
@@ -22,8 +24,9 @@ export function WireframeEditableValue({
   const [currentValue, setCurrentValue] = useState(value);
   const [editing, setEditing] = useState(false);
   const [saveError, setSaveError] = useState<string>();
-  const primitive =
-    kind === "select" || kind === "status" || kind === "number" ? kind : kind === "date" ? "date" : "text";
+  const primitive = kind === "select" || kind === "status" || kind === "number" || kind === "date" || kind === "url" || kind === "email"
+    ? kind
+    : "text";
   const commit = async (nextValue: string | number | boolean | null) => {
     const next = String(nextValue ?? "");
     setCurrentValue(next);
@@ -41,6 +44,12 @@ export function WireframeEditableValue({
     if (!editing) return;
     fieldRef.current?.querySelector<HTMLElement>("input, textarea, button.create-form-control")?.focus();
   }, [editing]);
+
+  useEffect(() => {
+    setCurrentValue(value);
+    setEditing(false);
+    setSaveError(undefined);
+  }, [value]);
 
   const returnToReadOnlyOnBlur = () => {
     window.setTimeout(() => {
@@ -70,9 +79,10 @@ export function WireframeEditableValue({
         }}
         options={
           kind === "select" || kind === "status"
-            ? options.map((option) => ({ value: option, label: option }))
+            ? options.map((option) => typeof option === "string" ? { value: option, label: option } : option)
             : undefined
         }
+        nullable={nullable}
         multiline={kind === "textarea"}
         width="long"
         wireframe
