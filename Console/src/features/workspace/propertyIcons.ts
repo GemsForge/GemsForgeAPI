@@ -1,6 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import type { RecordNumberFormat, RecordPropertyKind } from "../../table-kit/recordContracts";
-import { Asterisk, Badge, Bell, BellRing, BriefcaseBusiness, Building2, CalendarDays, CalendarClock, CheckSquare, CircleCheck, CircleDot, Clock3, CreditCard, DollarSign, File, FileText, Fingerprint, Folder, Globe2, GraduationCap, Hash, Heart, House, Image, Landmark, Link, Link2, List, ListChecks, ListFilter, Lock, LockKeyhole, Mail, MapPin, Paperclip, Percent, Phone, Settings2, ShieldCheck, Star, Tag, Tags, ToggleLeft, Type, Upload, User, Users, WalletCards, Zap } from "lucide-react";
+import { Asterisk, Badge, Bell, BellRing, BriefcaseBusiness, Building2, CalendarDays, CalendarClock, CheckSquare, CircleCheck, CircleDot, Clock3, CreditCard, DollarSign, File, FileText, Fingerprint, Folder, Globe2, GraduationCap, Hash, Heart, House, Image, Landmark, Link, Link2, List, ListChecks, ListFilter, Lock, LockKeyhole, Mail, MapPin, Palette, Paperclip, Percent, Phone, Settings2, ShieldCheck, Star, Tag, Tags, ToggleLeft, Type, Upload, User, Users, WalletCards, Zap } from "lucide-react";
 
 export type PropertyIconDefinition = {
   name: string;
@@ -36,6 +36,7 @@ export const PROPERTY_ICON_LIBRARY = [
   { name: "Folder", icon: Folder, keywords: ["folder", "collection", "category"] },
   { name: "File", icon: File, keywords: ["file", "document"] },
   { name: "Image", icon: Image, keywords: ["image", "photo", "picture"] },
+  { name: "Palette", icon: Palette, keywords: ["palette", "color", "colour", "theme", "art"] },
   { name: "Attachment", icon: Paperclip, keywords: ["attachment", "file", "paperclip"] },
   { name: "Globe", icon: Globe2, keywords: ["globe", "world", "website"] },
   { name: "List", icon: List, keywords: ["list", "items"] },

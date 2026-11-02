@@ -159,10 +159,14 @@ export function TableSettingsMenu({
           ) : panel === "icon" ? (
             <div className="table-kit-icon-picker" role="radiogroup" aria-label="Table icon">
               {tableIconOptions.map(({ name, icon: Icon }) => (
-                <button key={name} type="button" role="radio" aria-checked={tableIcon === name} aria-label={name} className="table-kit-icon-choice" onClick={() => onTableIconChange?.(name)}>
-                  <Icon size={18} aria-hidden="true" />
-                  <span>{name}</span>
-                </button>
+                <Tooltip key={name} placement="top" delay={250}>
+                  <Tooltip.Trigger asChild>
+                    <button type="button" role="radio" aria-checked={tableIcon === name} aria-label={name} className="table-kit-icon-choice" onClick={() => onTableIconChange?.(name)}>
+                      <Icon size={18} aria-hidden="true" />
+                    </button>
+                  </Tooltip.Trigger>
+                  <Tooltip.Content className="table-kit-tooltip"><Tooltip.Arrow /><span>{name}</span></Tooltip.Content>
+                </Tooltip>
               ))}
             </div>
           ) : (

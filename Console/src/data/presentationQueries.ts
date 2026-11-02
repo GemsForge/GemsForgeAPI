@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { APIError, api } from "../api";
 
 export const presentationQueryKeys = {
@@ -75,6 +75,30 @@ export function useTableViewsQuery(tableName: string) {
       >;
     },
   });
+}
+
+/** Load table icons for navigation without requiring each table page to be mounted. */
+export function useTableIconPreferences(tableNames: readonly string[]) {
+  const results = useQueries({
+    queries: tableNames.map((tableName) => ({
+      queryKey: presentationQueryKeys.tableViews(tableName),
+      queryFn: async ({ signal }: { signal: AbortSignal }) => {
+        const views = await Promise.all((['List', 'Gallery', 'Table'] as const).map(async (viewType) => {
+          try { return await api.getTableView(tableName, viewType, signal); }
+          catch (error) { if (error instanceof APIError && error.status === 404) return null; throw error; }
+        }));
+        return views
+          .filter((view): view is NonNullable<typeof view> => view !== null && Boolean(view.view.workspaceState))
+          .map((view) => {
+            try { return { updatedAt: Date.parse(view.view.updatedAt ?? ""), icon: (JSON.parse(view.view.workspaceState!) as { tableIcon?: unknown }).tableIcon }; }
+            catch { return null; }
+          })
+          .filter((value): value is { updatedAt: number; icon: unknown } => value !== null)
+          .sort((left, right) => right.updatedAt - left.updatedAt)[0]?.icon;
+      },
+    })),
+  });
+  return Object.fromEntries(tableNames.map((tableName, index) => [tableName, results[index].data])) as Record<string, unknown>;
 }
 
 export function useSaveTableViewWorkspaceStateMutation(tableName: string) {
