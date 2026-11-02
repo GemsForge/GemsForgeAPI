@@ -4,14 +4,27 @@ import type { RecordAdapter, RecordImage, RecordPropertyDefinition } from "../..
 
 const display = (value: unknown) => ({ raw: value, display: value == null || value === "" ? "—" : String(value) });
 const url = (value: string | null | undefined) => ({ ...display(value), href: value || undefined });
-const email = (value: string | null | undefined) => ({ ...display(value), href: value ? `mailto:${value}` : undefined });
+const email = (value: string | null | undefined) => ({
+  ...display(value),
+  href: value ? `mailto:${value}` : undefined,
+});
 const currency = (value: number | null | undefined) => ({
   raw: value,
   display: value == null ? "—" : new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value),
 });
-const hueOptions = ["Red", "Orange", "Yellow", "Green", "Blue", "Purple", "Pink", "Brown", "Gray", "Black", "White"].map(
-  (value) => ({ value, label: value }),
-);
+const hueOptions = [
+  "Red",
+  "Orange",
+  "Yellow",
+  "Green",
+  "Blue",
+  "Purple",
+  "Pink",
+  "Brown",
+  "Gray",
+  "Black",
+  "White",
+].map((value) => ({ value, label: value }));
 
 /** Adapt Gem Hue records to the shared Table Kit record/property contract. */
 export function createGemHueTableAdapter(
@@ -38,11 +51,61 @@ export function createGemHueTableAdapter(
           getValue: (record) => display(record.colorName),
           edit: onSave ? { onSave: (record, value) => onSave(record as GemHue, "colorName", value) } : undefined,
         },
-        { id: "colorFamily", label: "Color family", kind: "select", getValue: (record) => display(record.colorFamily), edit: onSave ? { inputType: "select", options: hueOptions, onSave: (record, value) => onSave(record as GemHue, "colorFamily", value) } : undefined },
-        { id: "hexCode", label: "Hex code", kind: "text", getValue: (record) => display(record.hexCode), edit: onSave ? { onSave: (record, value) => onSave(record as GemHue, "hexCode", value) } : undefined },
-        { id: "mood", label: "Mood", kind: "select", getValue: (record) => display(record.mood), edit: onSave ? { inputType: "select", options: hueOptions, onSave: (record, value) => onSave(record as GemHue, "mood", value) } : undefined },
-        { id: "palette", label: "Palette", kind: "select", getValue: (record) => display(record.palette), edit: onSave ? { inputType: "select", options: hueOptions, onSave: (record, value) => onSave(record as GemHue, "palette", value) } : undefined },
-        { id: "description", label: "Description", kind: "text", getValue: (record) => display(record.description), edit: onSave ? { inputType: "longText", onSave: (record, value) => onSave(record as GemHue, "description", value) } : undefined },
+        {
+          id: "colorFamily",
+          label: "Color family",
+          kind: "select",
+          getValue: (record) => display(record.colorFamily),
+          edit: onSave
+            ? {
+                inputType: "select",
+                options: hueOptions,
+                onSave: (record, value) => onSave(record as GemHue, "colorFamily", value),
+              }
+            : undefined,
+        },
+        {
+          id: "hexCode",
+          label: "Hex code",
+          kind: "text",
+          getValue: (record) => display(record.hexCode),
+          edit: onSave ? { onSave: (record, value) => onSave(record as GemHue, "hexCode", value) } : undefined,
+        },
+        {
+          id: "mood",
+          label: "Mood",
+          kind: "select",
+          getValue: (record) => display(record.mood),
+          edit: onSave
+            ? {
+                inputType: "select",
+                options: hueOptions,
+                onSave: (record, value) => onSave(record as GemHue, "mood", value),
+              }
+            : undefined,
+        },
+        {
+          id: "palette",
+          label: "Palette",
+          kind: "select",
+          getValue: (record) => display(record.palette),
+          edit: onSave
+            ? {
+                inputType: "select",
+                options: hueOptions,
+                onSave: (record, value) => onSave(record as GemHue, "palette", value),
+              }
+            : undefined,
+        },
+        {
+          id: "description",
+          label: "Description",
+          kind: "text",
+          getValue: (record) => display(record.description),
+          edit: onSave
+            ? { inputType: "longText", onSave: (record, value) => onSave(record as GemHue, "description", value) }
+            : undefined,
+        },
         { id: "createdDate", label: "Created date", kind: "date", getValue: (record) => display(record.createdDate) },
         { id: "notes", label: "Notes", kind: "text", getValue: (record) => display(record.notes) },
         { id: "id", label: "Item ID", kind: "text", getValue: (record) => display(record.id) },
@@ -69,8 +132,20 @@ export const addressTableAdapter: RecordAdapter<Address> = {
       { id: "state", label: "State", kind: "text", getValue: (record) => display(record.state) },
       { id: "postalCode", label: "Postal code", kind: "text", getValue: (record) => display(record.postalCode) },
       { id: "country", label: "Country", kind: "text", getValue: (record) => display(record.country) },
-      { id: "startDate", label: "Start date", kind: "date", getValue: (record) => display(record.startDate) },
-      { id: "endDate", label: "End date", kind: "date", getValue: (record) => display(record.endDate) },
+      {
+        id: "startDate",
+        label: "Start date",
+        storageType: "text",
+        kind: "date",
+        getValue: (record) => display(record.startDate),
+      },
+      {
+        id: "endDate",
+        label: "End date",
+        storageType: "text",
+        kind: "date",
+        getValue: (record) => display(record.endDate),
+      },
       { id: "addressStatus", label: "Status", kind: "status", getValue: (record) => display(record.addressStatus) },
       { id: "notes", label: "Notes", kind: "text", getValue: (record) => display(record.notes) },
       {
@@ -113,8 +188,20 @@ export const educationTableAdapter: RecordAdapter<Education> = {
       { id: "fieldOfStudy", label: "Field of study", kind: "text", getValue: (record) => display(record.fieldOfStudy) },
       { id: "credential", label: "Credential", kind: "text", getValue: (record) => display(record.credential) },
       { id: "credentialID", label: "Credential ID", kind: "text", getValue: (record) => display(record.credentialID) },
-      { id: "startDate", label: "Start date", kind: "date", getValue: (record) => display(record.startDate) },
-      { id: "endDate", label: "End date", kind: "date", getValue: (record) => display(record.endDate) },
+      {
+        id: "startDate",
+        label: "Start date",
+        storageType: "text",
+        kind: "date",
+        getValue: (record) => display(record.startDate),
+      },
+      {
+        id: "endDate",
+        label: "End date",
+        storageType: "text",
+        kind: "date",
+        getValue: (record) => display(record.endDate),
+      },
       { id: "awardedDate", label: "Awarded date", kind: "date", getValue: (record) => display(record.awardedDate) },
       { id: "educationStatus", label: "Status", kind: "status", getValue: (record) => display(record.status) },
       {
@@ -170,8 +257,20 @@ export const employmentTableAdapter: RecordAdapter<Employment> = {
         kind: "select",
         getValue: (record) => display(record.employmentType),
       },
-      { id: "startDate", label: "Start date", kind: "date", getValue: (record) => display(record.startDate) },
-      { id: "endDate", label: "End date", kind: "date", getValue: (record) => display(record.endDate) },
+      {
+        id: "startDate",
+        label: "Start date",
+        storageType: "text",
+        kind: "date",
+        getValue: (record) => display(record.startDate),
+      },
+      {
+        id: "endDate",
+        label: "End date",
+        storageType: "text",
+        kind: "date",
+        getValue: (record) => display(record.endDate),
+      },
       { id: "workAddressID", label: "Work address", kind: "text", getValue: (record) => display(record.workAddressID) },
       { id: "website", label: "Website", kind: "url", getValue: (record) => url(record.website) },
       { id: "employerContact", label: "Contact", kind: "text", getValue: (record) => display(record.employerContact) },
@@ -232,9 +331,27 @@ export const transactionTableAdapter: RecordAdapter<ExpenseTransaction> = {
         numberFormat: "currency",
         getValue: (record) => currency(record.regularPrice),
       },
-      { id: "paidPrice", label: "Paid price", kind: "number", numberFormat: "currency", getValue: (record) => currency(record.paidPrice) },
-      { id: "total", label: "Total", kind: "number", numberFormat: "currency", getValue: (record) => currency(record.total) },
-      { id: "discount", label: "Discount", kind: "number", numberFormat: "currency", getValue: (record) => currency(record.discount) },
+      {
+        id: "paidPrice",
+        label: "Paid price",
+        kind: "number",
+        numberFormat: "currency",
+        getValue: (record) => currency(record.paidPrice),
+      },
+      {
+        id: "total",
+        label: "Total",
+        kind: "number",
+        numberFormat: "currency",
+        getValue: (record) => currency(record.total),
+      },
+      {
+        id: "discount",
+        label: "Discount",
+        kind: "number",
+        numberFormat: "currency",
+        getValue: (record) => currency(record.discount),
+      },
       { id: "notes", label: "Notes", kind: "text", getValue: (record) => display(record.notes) },
       { id: "image", label: "Image", kind: "image", getValue: (record) => display(record.image) },
       { id: "updatedAt", label: "Last updated", kind: "date", getValue: (record) => display(record.updatedAt) },

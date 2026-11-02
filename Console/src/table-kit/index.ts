@@ -61,6 +61,9 @@ export type { TableRendererProps } from "./renderers";
 export { GalleryViewControls } from "./GalleryViewControls";
 export type { GalleryCardSize, GalleryViewControlsProps } from "./GalleryViewControls";
 export { primitiveTypeDefaults, primitiveTypeDescriptions } from "./primitiveTypes";
+export { inferRecordPropertyKind, normalizeStorageType } from "./storageTypes";
+export { createTableWorkspaceDefinition } from "./workspaceContracts";
+export { createLiveSchemaProperties } from "./liveSchemaWorkspace";
 export { useTableSelection } from "./selection";
 export type {
   TableSelection,
@@ -76,6 +79,7 @@ export type {
   RecordExpansionState,
   RecordImage,
   RecordPropertyDefinition,
+  RecordStorageType,
   RecordPropertyKind,
   RecordPropertyValue,
   RecordSelectOption,
@@ -88,3 +92,4 @@ export type {
   TableRecord,
   TableRecordId,
 } from "./recordContracts";
+export type { TableWorkspaceDefinition } from "./workspaceContracts";

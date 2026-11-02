@@ -19,6 +19,9 @@ export type RecordPropertyKind =
   | "relation"
   | "formula";
 
+/** Database storage categories remain separate from the UI editing primitive. */
+export type RecordStorageType = "text" | "integer" | "real" | "boolean" | "blob" | "date" | "unknown";
+
 export type RecordNumberFormat = "decimal" | "currency" | "percent";
 export type RecordDateFormat = "iso" | "local" | "relative";
 export type RecordColorToken = "mint" | "gold" | "blue" | "green" | "purple" | "orange" | "red" | "gray";
@@ -51,6 +54,8 @@ export interface RecordPropertyValue {
 export interface RecordPropertyDefinition<Record> {
   id: string;
   label: string;
+  /** Physical database type, when known. A date may still be stored as text. */
+  storageType?: RecordStorageType;
   kind?: RecordPropertyKind;
   numberFormat?: RecordNumberFormat;
   dateFormat?: RecordDateFormat;
