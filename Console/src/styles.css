@@ -971,6 +971,13 @@ dialog::backdrop {
 .demo-collection-search { margin-left: auto; min-width: 12rem; }
 .demo-results { display: grid; gap: .9rem; }
 .demo-gallery { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.demo-gallery.gallery-size-small { grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr)); }
+.demo-gallery.gallery-size-medium { grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); }
+.demo-gallery.gallery-size-large { grid-template-columns: repeat(auto-fill, minmax(19rem, 1fr)); }
+.demo-gallery .demo-place-image { min-height: 0; overflow: hidden; }
+.demo-gallery .demo-place-image img { object-fit: cover; }
+.demo-gallery.gallery-fit-media .demo-place-image img { object-fit: contain; }
+.table-kit-gallery-controls + .demo-results { margin-top: .8rem; }
 .demo-list, .demo-table { grid-template-columns: 1fr; }
 .demo-place-card { display: grid; grid-template-rows: 9rem auto; overflow: hidden; padding: 0; border: 1px solid #dfe6e3; border-radius: .7rem; background: white; color: #233c42; text-align: left; box-shadow: 0 3px 12px rgba(30,60,66,.04); }
 .demo-gallery .demo-place-card.selected { outline: 2px solid #1c796d; outline-offset: 2px; }
