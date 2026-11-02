@@ -1109,8 +1109,8 @@ dialog::backdrop {
 .demo-inspector-heading button { border: 0; background: transparent; color: #68777c; font-size: 1.3rem; }
 .demo-cover { height: 8rem; border-radius: .7rem; }
 .wireframe-cover { width: 100%; }
-.wireframe-demo-inspector > .wireframe-cover { width: calc(100% + 2.2rem); margin-left: -1.1rem; }
-.wireframe-cover-visual { position: relative; min-height: 11rem; overflow: hidden; border-radius: .45rem; isolation: isolate; }
+.wireframe-demo-inspector > .wireframe-cover { width: calc(100% + 2.2rem); max-width: none; margin-left: -1.1rem; }
+.wireframe-cover-visual { position: relative; min-height: 11rem; overflow: hidden; border-radius: 0; isolation: isolate; }
 .wireframe-cover-image { position: absolute; z-index: 0; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; }
 .wireframe-cover-visual.is-repositioning { cursor: grab; }
 .wireframe-cover-visual.is-repositioning:active { cursor: grabbing; }
@@ -1134,7 +1134,7 @@ dialog::backdrop {
 .wireframe-cover-dialog [data-focus-visible] { outline: 3px solid #1f6f74; outline-offset: 2px; }
 @media (max-width: 600px) { .wireframe-cover-visual { min-height: 8rem; } .wireframe-cover-actions { left: .75rem; right: .75rem; } .wireframe-cover-presets { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (hover: none) { .wireframe-cover-actions { opacity: 1; pointer-events: auto; transform: none; } }
-@media (max-width: 760px) { .wireframe-demo-inspector > .wireframe-cover { width: calc(100% + 2.6rem); margin-left: -1.3rem; } }
+@media (max-width: 760px) { .wireframe-demo-inspector > .wireframe-cover { width: calc(100% + 2.6rem); max-width: none; margin-left: -1.3rem; } }
 .demo-secondary-button { margin: .6rem 0 1rem; padding: .5rem .7rem; border: 1px solid #dfe6e3; border-radius: .5rem; background: white; color: #52636a; }
 .wireframe-demo-inspector dl { display: grid; gap: .65rem; }
 .wireframe-demo-inspector dl > div { display: grid; grid-template-columns: minmax(7rem, 34%) minmax(0, 1fr); gap: .8rem; align-items: baseline; }
@@ -1189,13 +1189,17 @@ dialog::backdrop {
 .demo-page-actions { display: flex; gap: .5rem; margin-top: 1.25rem; }
 .demo-expanded-breadcrumb { margin-bottom: 1rem; color: #738187; font-size: .75rem; }
 .demo-expanded-breadcrumb button { padding: 0; border: 0; background: transparent; color: #39736d; cursor: pointer; font: inherit; }
-.wireframe-record-page { grid-column: 2; min-width: 0; min-height: calc(100vh - 7rem); padding: 3rem clamp(2rem, 8vw, 8rem); background: #fbfbf9; }
-.wireframe-record-page-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; max-width: 52rem; }
+.wireframe-record-page { grid-column: 2; min-width: 0; min-height: calc(100vh - 7rem); padding: 0 clamp(2rem, 8vw, 8rem) 3rem; background: #fbfbf9; }
+.wireframe-record-page > .wireframe-cover { width: calc(100% + (2 * clamp(2rem, 8vw, 8rem))); max-width: none; margin-left: calc(-1 * clamp(2rem, 8vw, 8rem)); }
+.wireframe-record-page-header { display: flex; align-items: flex-start; justify-content: flex-start; gap: .25rem; max-width: none; min-height: 2rem; margin-left: calc(-1 * clamp(2rem, 8vw, 8rem)); }
+.wireframe-record-page-header .demo-inspector-actions { gap: .15rem; }
+.wireframe-record-page-header .demo-inspector-actions button { min-width: 1.75rem; min-height: 1.75rem; padding: .2rem .3rem; border: 1px solid #dfe6e3; border-radius: .3rem; background: #fff; font-size: .65rem; }
 .wireframe-record-page-heading { max-width: 52rem; margin: 1.5rem 0 1.25rem; }
 .wireframe-record-page-heading p { margin: 0 0 .35rem; color: #39736d; font-size: .7rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
 .wireframe-record-page-heading h1 { margin: 0; color: #173d45; font: 700 2.2rem/1.1 inherit; letter-spacing: -.04em; }
 .wireframe-record-page > .demo-cover { max-width: 52rem; height: 18rem; }
 .wireframe-record-page-content { max-width: 52rem; margin-top: 1.5rem; }
+.wireframe-record-page-breadcrumb { max-width: 52rem; margin-top: 1rem; }
 .wireframe-record-page-content dl { display: grid; gap: .65rem; }
 .wireframe-record-page-content dl > div { display: grid; grid-template-columns: minmax(7rem, 34%) minmax(0, 1fr); gap: .8rem; align-items: baseline; }
 .wireframe-record-page-content dt { color: #68777c; font-size: .7rem; font-weight: 700; }
