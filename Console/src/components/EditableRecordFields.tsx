@@ -64,11 +64,11 @@ export function formatRecordPercentage(value?: number | null): string {
 /** Shared field behavior with a resource-controlled semantic layout. */
 export function EditableRecordFields({ fields, className }: { fields: EditableRecordField[]; className?: string }) {
   return (
-    <dl className={className ? `record-fields ${className}` : "record-fields"}>
+    <div className={className ? `record-fields ${className}` : "record-fields"}>
       {fields.map((field) => (
         <EditableField field={field} key={field.label} />
       ))}
-    </dl>
+    </div>
   );
 }
 

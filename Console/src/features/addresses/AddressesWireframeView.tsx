@@ -1,0 +1,7 @@
+import type { Address } from "../../types";
+import { WireframeCollectionView } from "../workspace/WireframeCollectionView";
+
+export function AddressesWireframeView({ records }: { records: readonly Address[] }) {
+  return <WireframeCollectionView config={{ title: "Addresses", description: "Places, locations, and address history referenced across your records.", activeCollection: "Addresses", records, searchValues: (record) => [record.addressLine1 ?? "", record.city ?? "", record.state ?? "", record.country, record.addressType, record.addressStatus], cardTitle: (record) => record.city ?? record.addressLine1 ?? record.id, cardSubtitle: (record) => `${record.addressType} · ${record.state ?? record.country}`, cardStatus: (record) => record.addressStatus, cardMeta: (record) => record.startDate ?? "No start date", inspector: (record) => <dl><div><dt>Address</dt><dd>{record.addressLine1 ?? "—"}{record.addressLine2 ? `, ${record.addressLine2}` : ""}</dd></div><div><dt>City</dt><dd>{record.city ?? "—"}</dd></div><div><dt>State / Postal code</dt><dd>{record.state ?? "—"} {record.postalCode ?? ""}</dd></div><div><dt>Country</dt><dd>{record.country}</dd></div><div><dt>Type</dt><dd>{record.addressType}</dd></div><div><dt>Status</dt><dd>{record.addressStatus}</dd></div><div><dt>Dates</dt><dd>{record.startDate ?? "—"} → {record.endDate ?? "Present"}</dd></div><div><dt>Notes</dt><dd>{record.notes ?? "No notes yet."}</dd></div></dl> }} />;
+}
+
