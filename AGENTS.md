@@ -15,6 +15,12 @@ Use the shared GemsForge Scrum/PO operating model: GitHub is the system of recor
 
 Preserve this repository's existing stack, workflows, scripts, labels, and documentation. Before proposing work, read the relevant README and project documentation, then inspect the applicable files under `.github/workflows/` and `Scripts/`. Do not assume another repository's commands or paths apply here.
 
+Before any commit, read [`docs/Commit-Policy.md`](docs/Commit-Policy.md) and
+validate the proposed subject with `Scripts/commit-policy.mjs`. Every commit
+must use the enforced `type(scope): #issue imperative description` format.
+This applies to documentation, code, tests, workflow, and policy changes; do
+not wait for the user to restate the rule.
+
 For issue creation, use `Scripts/create-github-story.mjs` and its tests as the established implementation. Before creating a story, inspect this repository's current GitHub milestones and Project configuration through the GitHub integration or browser. Select and pass the matching milestone with `--milestone`; do not substitute a milestone from another repository. Add the issue to this repository's configured Project and verify the issue URL, milestone, labels, assignees, and Project membership after creation. Use `.github/ISSUE_WORKFLOW.md` and the repository's metadata workflow as the operational reference. Do not replace or bypass this working mechanism without explicit approval.
 
 QA gate: PR checks validate the proposed change before merge. After merge to `master`, QA validates the merged development branch against the story's acceptance criteria, regression, accessibility, responsive behavior, security/privacy expectations, and required evidence. QA may set Project status to `QA` and recommend release or corrective work; QA does not merge, release, or close the story.
