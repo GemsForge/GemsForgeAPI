@@ -40,6 +40,7 @@ Console/src/
 ├── routes/                 exact URL routes and feature loading boundaries
 ├── bridge/                 typed messages and native picker adapter
 ├── design-system/          Tamagui tokens, fonts, themes, media keys
+├── table-kit/              schema-driven tables, renderers, imports, and workspace contracts
 └── test/                   test setup and synthetic visual fixture
 ```
 
@@ -74,9 +75,27 @@ them aligned with the token definitions until those features migrate. Do not
 claim all legacy markup is already composed of Tamagui primitives.
 
 Use GemButton, GemField, GemCard, GemSectionHeader, GemStatusPill,
-GemEmptyState, GemLoadingState, and GemDataTable for reusable visual behavior.
-AttachmentControl/FilePresentation own feature behavior and compose the data
-layer rather than becoming generic visual primitives.
+GemEmptyState, GemLoadingState, and the shared field controls for reusable
+visual behavior. The field controls include text, date, select/status,
+checkbox, switch, and search variants; preserve their labels, error states,
+and keyboard behavior when composing a feature.
+
+The schema-driven table workspace is the default for table-backed screens.
+`src/features/workspace/WorkspaceView.tsx` owns the shared shell: the left pane
+lists configured tables/views, the collection renders records from schema and
+data, and the inspector renders semantic field definitions. `src/table-kit`
+owns table configuration, record contracts, property renderers, selection,
+imports, and query/cache adapters. Feature code supplies schema metadata,
+record mapping, query wiring, and mutation contracts; it must not duplicate the
+workspace shell or inspector layout. A bespoke `*WireframeView.tsx` is an
+explicit exception and must document which shared workspace behavior cannot
+express the feature.
+
+`GemDataTable` and the `GemRecord*--LEGACY` components remain compatibility
+components for screens that have not migrated. Do not use them as a reason to
+create another table-specific layout. AttachmentControl/FilePresentation own
+feature behavior and compose the data layer rather than becoming generic
+visual primitives.
 
 ## State and data rules
 

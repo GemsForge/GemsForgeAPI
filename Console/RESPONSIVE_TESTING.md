@@ -6,7 +6,10 @@ builder with synthetic data. All HTTP requests are intercepted locally; writes
 are rejected. It is not included in the production Vite build.
 
 Test compact (up to 640 CSS px), tablet (up to 900), intermediate (up to 1200),
-and desktop layouts. The sidebar collapses below 900; feature grids stack below 1200. Wide tables scroll inside their named region, not the whole document.
+and desktop layouts. The workspace sidebar collapses below 900; feature grids
+stack below 1200. The collection and record inspector must remain usable when
+the left pane is collapsed. Wide tables scroll inside their named region, not
+the whole document.
 Inputs, long IDs/names, images and dialogs must remain inside the viewport.
 
 ## Recorded M3 browser smoke test
