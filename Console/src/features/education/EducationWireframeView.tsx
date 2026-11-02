@@ -19,6 +19,8 @@ export function EducationWireframeView({ records }: { records: readonly Educatio
   const [mobileNavigationOpen, setMobileNavigationOpen] = useState(false);
   const selectedCardRef = useRef<HTMLButtonElement | null>(null);
   const selected = records.find((record) => record.id === selectedID) ?? null;
+  const educationTypeOptions = [...new Set(records.map((record) => record.educationType))];
+  const educationStatusOptions = [...new Set(records.map((record) => record.status))];
   const filteredRecords = useMemo(() => {
     const normalized = query.trim().toLowerCase();
     const result = records.filter((record) =>
@@ -210,7 +212,7 @@ export function EducationWireframeView({ records }: { records: readonly Educatio
                   label="Type"
                   value={selected.educationType}
                   kind="select"
-                  options={["Elementary School", "Middle School", "High School", "College"]}
+                  options={educationTypeOptions}
                   onCommit={(value) =>
                     patch.mutateAsync({ id: selected.id, patch: { educationType: value } }).then(() => undefined)
                   }
@@ -239,8 +241,8 @@ export function EducationWireframeView({ records }: { records: readonly Educatio
                 <WireframeEditableValue
                   label="Status"
                   value={selected.status}
-                  kind="select"
-                  options={["Completed", "In Progress", "Planned"]}
+                  kind="status"
+                  options={educationStatusOptions}
                   onCommit={(value) =>
                     patch.mutateAsync({ id: selected.id, patch: { status: value } }).then(() => undefined)
                   }
@@ -288,6 +290,12 @@ export function EducationWireframeView({ records }: { records: readonly Educatio
                   }
                 />
               </dd>
+            </div>
+          </dl>
+          <dl>
+            <div>
+              <dt>Record ID</dt>
+              <dd>{selected.id}</dd>
             </div>
           </dl>
           <h4>

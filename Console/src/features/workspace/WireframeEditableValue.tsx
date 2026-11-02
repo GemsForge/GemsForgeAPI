@@ -4,7 +4,7 @@ import { GemPrimitiveField } from "../../components/ui/GemPrimitiveField";
 type EditableValueProps = {
   value: string;
   label?: string;
-  kind?: "text" | "select" | "status" | "date" | "textarea";
+  kind?: "text" | "select" | "status" | "number" | "date" | "textarea";
   options?: string[];
   onCommit?: (value: string) => Promise<void>;
 };
@@ -17,7 +17,8 @@ export function WireframeEditableValue({
   onCommit,
 }: EditableValueProps) {
   const [currentValue, setCurrentValue] = useState(value);
-  const primitive = kind === "select" || kind === "status" ? kind : kind === "date" ? "date" : "text";
+  const primitive =
+    kind === "select" || kind === "status" || kind === "number" ? kind : kind === "date" ? "date" : "text";
   const commit = async (nextValue: string | number | boolean | null) => {
     const next = String(nextValue ?? "");
     setCurrentValue(next);
