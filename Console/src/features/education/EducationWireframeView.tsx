@@ -11,6 +11,29 @@ import { WireframeEditableValue } from "../workspace/WireframeEditableValue";
 type ViewMode = "table" | "list" | "gallery";
 const cardColors = ["#e8b17d", "#a8d2cf", "#9dc9e0", "#e8b3b7"];
 
+function EducationInspectorField({
+  label,
+  value,
+  kind = "text",
+  options,
+  onCommit,
+}: {
+  label: string;
+  value: string;
+  kind?: "text" | "select" | "status" | "date" | "textarea";
+  options?: string[];
+  onCommit?: (value: string) => Promise<void>;
+}) {
+  return (
+    <div>
+      <dt><WireframePropertyEditor label={label} value={value} kind={kind} /></dt>
+      <dd>
+        <WireframeEditableValue label={label} value={value} kind={kind} options={options} onCommit={onCommit} />
+      </dd>
+    </div>
+  );
+}
+
 export function EducationWireframeView({ records }: { records: readonly Education[] }) {
   const patch = useEducationPatchMutation();
   const [view, setView] = useState<ViewMode>("gallery");
@@ -176,112 +199,84 @@ export function EducationWireframeView({ records }: { records: readonly Educatio
             ▧ Change cover
           </button>
           <dl>
+            <EducationInspectorField label="Record ID" value={selected.id} />
+            <EducationInspectorField
+              label="Institution"
+              value={selected.institutionName}
+              onCommit={(value) => patch.mutateAsync({ id: selected.id, patch: { institutionName: value } }).then(() => undefined)}
+            />
+            <EducationInspectorField
+              label="Type"
+              value={selected.educationType}
+              kind="select"
+              options={educationTypeOptions}
+              onCommit={(value) => patch.mutateAsync({ id: selected.id, patch: { educationType: value } }).then(() => undefined)}
+            />
+            <EducationInspectorField
+              label="Program"
+              value={selected.program ?? ""}
+              onCommit={(value) => patch.mutateAsync({ id: selected.id, patch: { program: value || null } }).then(() => undefined)}
+            />
+            <EducationInspectorField
+              label="Field of study"
+              value={selected.fieldOfStudy ?? ""}
+              onCommit={(value) => patch.mutateAsync({ id: selected.id, patch: { fieldOfStudy: value || null } }).then(() => undefined)}
+            />
+            <EducationInspectorField
+              label="Credential"
+              value={selected.credential ?? ""}
+              onCommit={(value) => patch.mutateAsync({ id: selected.id, patch: { credential: value || null } }).then(() => undefined)}
+            />
+            <EducationInspectorField
+              label="Credential ID"
+              value={selected.credentialID ?? ""}
+              onCommit={(value) => patch.mutateAsync({ id: selected.id, patch: { credentialID: value || null } }).then(() => undefined)}
+            />
             <div>
-              <dt>Record ID</dt>
-              <dd>{selected.id}</dd>
-            </div>
-            <div>
-              <dt>
-                <WireframePropertyEditor label="Institution" value={selected.institutionName} />
-              </dt>
-              <dd>
-                <WireframeEditableValue
-                  label="Institution"
-                  value={selected.institutionName}
-                  onCommit={(value) =>
-                    patch.mutateAsync({ id: selected.id, patch: { institutionName: value } }).then(() => undefined)
-                  }
-                />
-              </dd>
-            </div>
-            <div>
-              <dt>
-                <WireframePropertyEditor label="Type" value={selected.educationType} />
-              </dt>
-              <dd>
-                <WireframeEditableValue
-                  label="Type"
-                  value={selected.educationType}
-                  kind="select"
-                  options={educationTypeOptions}
-                  onCommit={(value) =>
-                    patch.mutateAsync({ id: selected.id, patch: { educationType: value } }).then(() => undefined)
-                  }
-                />
-              </dd>
-            </div>
-            <div>
-              <dt>
-                <WireframePropertyEditor label="Program" value={selected.program ?? "—"} />
-              </dt>
-              <dd>
-                <WireframeEditableValue
-                  label="Program"
-                  value={selected.program ?? ""}
-                  onCommit={(value) =>
-                    patch.mutateAsync({ id: selected.id, patch: { program: value || null } }).then(() => undefined)
-                  }
-                />
-              </dd>
-            </div>
-            <div>
-              <dt>
-                <WireframePropertyEditor label="Status" value={selected.status} />
-              </dt>
-              <dd>
-                <WireframeEditableValue
-                  label="Status"
-                  value={selected.status}
-                  kind="status"
-                  options={educationStatusOptions}
-                  onCommit={(value) =>
-                    patch.mutateAsync({ id: selected.id, patch: { status: value } }).then(() => undefined)
-                  }
-                />
-              </dd>
-            </div>
-            <div>
-              <dt>
-                <WireframePropertyEditor
-                  label="Dates"
-                  value={`${selected.startDate ?? "—"} → ${selected.endDate ?? "—"}`}
-                />
-              </dt>
+              <dt><WireframePropertyEditor label="Dates" value={`${selected.startDate ?? "—"} → ${selected.endDate ?? "—"}`} /></dt>
               <dd className="wireframe-date-pair">
                 <WireframeEditableValue
                   label="Start date"
                   value={selected.startDate ?? ""}
                   kind="date"
-                  onCommit={(value) =>
-                    patch.mutateAsync({ id: selected.id, patch: { startDate: value || null } }).then(() => undefined)
-                  }
+                  onCommit={(value) => patch.mutateAsync({ id: selected.id, patch: { startDate: value || null } }).then(() => undefined)}
                 />
                 <span>→</span>
                 <WireframeEditableValue
                   label="End date"
                   value={selected.endDate ?? ""}
                   kind="date"
-                  onCommit={(value) =>
-                    patch.mutateAsync({ id: selected.id, patch: { endDate: value || null } }).then(() => undefined)
-                  }
+                  onCommit={(value) => patch.mutateAsync({ id: selected.id, patch: { endDate: value || null } }).then(() => undefined)}
                 />
               </dd>
             </div>
-            <div>
-              <dt>
-                <WireframePropertyEditor label="Notes" value={selected.notes ?? "No notes yet."} />
-              </dt>
-              <dd>
-                <WireframeEditableValue
-                  label="Notes"
-                  value={selected.notes ?? ""}
-                  kind="textarea"
-                  onCommit={(value) =>
-                    patch.mutateAsync({ id: selected.id, patch: { notes: value || null } }).then(() => undefined)
-                  }
-                />
-              </dd>
-            </div>
+            <EducationInspectorField
+              label="Awarded date"
+              value={selected.awardedDate ?? ""}
+              kind="date"
+              onCommit={(value) => patch.mutateAsync({ id: selected.id, patch: { awardedDate: value || null } }).then(() => undefined)}
+            />
+            <EducationInspectorField
+              label="Status"
+              value={selected.status}
+              kind="status"
+              options={educationStatusOptions}
+              onCommit={(value) => patch.mutateAsync({ id: selected.id, patch: { status: value } }).then(() => undefined)}
+            />
+            <EducationInspectorField label="Location address" value={selected.locationAddressID ?? "—"} />
+            <EducationInspectorField
+              label="Website"
+              value={selected.website ?? ""}
+              onCommit={(value) => patch.mutateAsync({ id: selected.id, patch: { website: value || null } }).then(() => undefined)}
+            />
+            <EducationInspectorField
+              label="Notes"
+              value={selected.notes ?? ""}
+              kind="textarea"
+              onCommit={(value) => patch.mutateAsync({ id: selected.id, patch: { notes: value || null } }).then(() => undefined)}
+            />
+            <EducationInspectorField label="Document file" value={selected.documentFileMetadataID ?? "—"} />
+            <EducationInspectorField label="Last updated" value={selected.updatedAt ?? "—"} />
           </dl>
           <h4>
             Attachments{" "}

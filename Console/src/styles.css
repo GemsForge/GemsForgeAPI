@@ -1,5 +1,6 @@
 :root {
   color-scheme: dark;
+  --gem-font-family: "Avenir Next", Avenir, Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
   --ink: #edf4f4;
   --muted: #8da2a5;
   --line: rgba(175, 214, 208, 0.14);
@@ -14,14 +15,22 @@
   --mint-dark: #1d574f;
   --gold: #f0bd73;
   --danger: #f08a83;
-  font-family:
-    Inter,
-    ui-sans-serif,
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "SF Pro Display",
-    sans-serif;
+  font-family: var(--gem-font-family);
+}
+
+.table-kit-record-list,
+.table-kit-record-list *,
+.table-kit-gallery,
+.table-kit-gallery *,
+.table-kit-record-grid,
+.table-kit-record-grid *,
+.table-kit-header,
+.table-kit-header *,
+.table-kit-toolbar,
+.table-kit-toolbar *,
+.table-kit-pagination,
+.table-kit-pagination * {
+  font-family: var(--gem-font-family) !important;
 }
 .sidebar a,
 a.page-card,
