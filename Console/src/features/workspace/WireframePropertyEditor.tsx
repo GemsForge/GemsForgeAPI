@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { SizableText, Theme } from "tamagui";
 import { getPropertyIconByName } from "./propertyIcons";
 import { inferWireframePropertyMetadata, WIREFRAME_PROPERTY_TYPES } from "./propertyMetadata";
@@ -6,6 +6,12 @@ import { PropertyIconPicker } from "./PropertyIconPicker";
 import { GemButton } from "../../components/ui/GemButton";
 import { GemTextField } from "../../components/ui/GemTextField";
 import { GSelectField } from "../../components/ui/GSelectField";
+
+export const WireframePropertyIconContext = createContext<((propertyID: string, icon: string) => void) | null>(null);
+
+export function WireframePropertyIconProvider({ children, onSave }: { children: ReactNode; onSave: (propertyID: string, icon: string) => void }) {
+  return <WireframePropertyIconContext.Provider value={onSave}>{children}</WireframePropertyIconContext.Provider>;
+}
 
 export function WireframePropertyEditor({
   label,
@@ -21,12 +27,14 @@ export function WireframePropertyEditor({
   numberFormat?: "decimal" | "currency" | "percent";
   propertyType?: string;
   iconName?: string;
+  propertyID?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState(label);
   const metadata = inferWireframePropertyMetadata({ label, kind, numberFormat, propertyType, iconName });
   const [type, setType] = useState(metadata.type);
   const [icon, setIcon] = useState(metadata.iconName);
+  const savePropertyIcon = useContext(WireframePropertyIconContext);
 
   useEffect(() => {
     setName(label);
@@ -50,7 +58,7 @@ export function WireframePropertyEditor({
             <GemTextField label="Property name" value={name} readOnly={/^(id|item id|record id|primary key)$/i.test(label.trim())} onChange={(event) => setName(event.currentTarget.value)} />
             <GSelectField label="Primitive type" value={type} options={[...new Set([...WIREFRAME_PROPERTY_TYPES, type])].map((item) => ({ value: item, label: item }))} onChange={setType} wireframe />
             <fieldset className="wireframe-property-icon-fieldset"><legend>Icon</legend><PropertyIconPicker value={icon} onChange={setIcon} /></fieldset>
-            <div className="wireframe-property-details-actions"><GemButton type="button" variant="outlined" aria-label="Save property settings" onClick={() => setOpen(false)}>✓</GemButton></div>
+            <div className="wireframe-property-details-actions"><GemButton type="button" variant="outlined" aria-label="Save property settings" onClick={() => { if (propertyID) savePropertyIcon?.(propertyID, icon); setOpen(false); }}>Save</GemButton></div>
           </section>
         </div>
         </Theme>

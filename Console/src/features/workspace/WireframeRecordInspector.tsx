@@ -39,6 +39,7 @@ export function WireframeRecordInspector({ fields }: { fields: readonly Wirefram
               numberFormat={field.numberFormat}
               propertyType={field.propertyType}
               iconName={field.iconName}
+              propertyID={field.id}
             />
           </dt>
           <dd>
