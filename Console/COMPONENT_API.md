@@ -30,6 +30,25 @@ These components own reusable visual and semantic building blocks:
 - `GemEmptyState`
 - `GemSectionHeader`
 
+Shared field controls such as `GDateField`, `GSelectField`, `GCheckboxField`,
+`GSwitch`, and `GSearchField` own their label association, interaction
+semantics, and field-level error presentation. Prefer them over feature-local
+input markup.
+
+### Workspace and table-kit components
+
+The schema-driven workspace is the standard composition for table-backed
+features. `WorkspaceView` owns the shell, while `WireframeLeftPane`,
+`WireframeCollectionView`, and `WireframeRecordInspector` provide the shared
+navigation, collection, and semantic property surfaces. The `src/table-kit`
+modules provide table configuration, record contracts, property renderers,
+selection, imports, and query/cache adapters.
+
+Feature components provide schema metadata, typed records, query wiring, and
+mutation intent. They should not copy the workspace shell, collection, or
+inspector layout. A bespoke feature view is appropriate only when the shared
+workspace cannot express the required behavior; document that exception.
+
 ### Shared application components
 
 These components compose primitives into recurring application patterns:
@@ -41,6 +60,10 @@ These components compose primitives into recurring application patterns:
 - `GemFieldGroup`
 - `GemErrorState`
 - `GemAttachmentSection`
+
+`GemDataTable`, `GemRecordList`, and `GemRecordCard` may remain as compatibility
+components during migration. New table-backed screens should use the shared
+workspace and table-kit contracts rather than introducing another table layout.
 
 ### Feature components
 
