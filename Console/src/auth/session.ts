@@ -7,6 +7,9 @@ const SESSION_KEY = "gem-life.session.v1";
 export const SESSION_EXPIRED_EVENT = "gem-life:session-expired";
 let expiredSessionNotice = false;
 
+/** Deliberate local UI inspection switch; keep disabled in normal and production environments. */
+export const inspectionBypassEnabled = import.meta.env.VITE_INSPECTION_BYPASS === "true";
+
 function isValidSession(value: unknown): value is BrowserSession {
   if (!value || typeof value !== "object") return false;
   const candidate = value as Partial<BrowserSession>;
