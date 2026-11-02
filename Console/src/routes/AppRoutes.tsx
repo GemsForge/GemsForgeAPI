@@ -153,6 +153,24 @@ function Layout() {
   );
 }
 
+function WireframeCanvas() {
+  const location = useLocation();
+  useEffect(() => {
+    document.title = "Gem Life · " + (location.pathname.split("/")[1] || "Wireframe");
+    document.getElementById("main-content")?.focus();
+  }, [location.pathname]);
+
+  return (
+    <main className="wireframe-canvas" id="main-content" tabIndex={-1} aria-label="Wireframe screen">
+      <ScreenBoundary key={location.pathname}>
+        <Suspense fallback={<p role="status">Loading wireframe…</p>}>
+          <Outlet />
+        </Suspense>
+      </ScreenBoundary>
+    </main>
+  );
+}
+
 function QueryScreen<T>({ query, children }: { query: UseQueryResult<T, Error>; children: (data: T) => ReactNode }) {
   return (
     <>
@@ -314,12 +332,14 @@ export function AppRoutes() {
       <Route path="reset-password" element={<ResetPasswordPage />} />
       <Route path="/" element={isRecoveryLink() ? <ResetPasswordPage /> : <Navigate to="/login" replace />} />
       <Route element={<RequireAuth />}>
-        <Route path="education-wireframe" element={<LocalSession><EducationWireframe /></LocalSession>} />
-        <Route path="employment-wireframe" element={<LocalSession><EmploymentWireframe /></LocalSession>} />
-        <Route path="addresses-wireframe" element={<LocalSession><AddressesWireframe /></LocalSession>} />
-        <Route path="transactions-wireframe" element={<LocalSession><TransactionsWireframe /></LocalSession>} />
-        <Route path="gemhues-wireframe" element={<LocalSession><GemHuesWireframe /></LocalSession>} />
-        <Route path="service-catalog-wireframe" element={<LocalSession><ServiceCatalogWireframe /></LocalSession>} />
+        <Route element={<LocalSession><WireframeCanvas /></LocalSession>}>
+          <Route path="education-wireframe" element={<EducationWireframe />} />
+          <Route path="employment-wireframe" element={<EmploymentWireframe />} />
+          <Route path="addresses-wireframe" element={<AddressesWireframe />} />
+          <Route path="transactions-wireframe" element={<TransactionsWireframe />} />
+          <Route path="gemhues-wireframe" element={<GemHuesWireframe />} />
+          <Route path="service-catalog-wireframe" element={<ServiceCatalogWireframe />} />
+        </Route>
         <Route
           element={
             <LocalSession>

@@ -39,13 +39,17 @@ func registerTableViewRoutes(_ app: Application) {
     let views = app.grouped("table-views")
 
     views.get(":tableName", ":viewType") { request async throws -> SavedTableViewResponse in
+        guard let hubID = request.authenticatedHubID else {
+            throw Abort(.unauthorized)
+        }
+
         guard let tableName = request.parameters.get("tableName"),
               let viewTypeValue = request.parameters.get("viewType"),
               let viewType = TableViewType(rawValue: viewTypeValue)
         else { throw Abort(.badRequest, reason: "A valid table name and view type are required.") }
 
         guard let view = try await TableView.query(on: request.db)
-            .filter(\.$hubID == request.authenticatedHubID)
+            .filter(\.$hubID == hubID)
             .filter(\.$tableName == tableName)
             .filter(\.$viewType == viewType.rawValue)
             .first()
@@ -65,6 +69,10 @@ func registerTableViewRoutes(_ app: Application) {
     }
 
     views.put(":tableName", ":viewType") { request async throws -> SavedTableViewResponse in
+        guard let hubID = request.authenticatedHubID else {
+            throw Abort(.unauthorized)
+        }
+
         guard let tableName = request.parameters.get("tableName"),
               let viewTypeValue = request.parameters.get("viewType"),
               let viewType = TableViewType(rawValue: viewTypeValue)
@@ -74,10 +82,10 @@ func registerTableViewRoutes(_ app: Application) {
         guard input.viewType == viewType else { throw Abort(.badRequest, reason: "The view type does not match the route.") }
 
         let view = try await TableView.query(on: request.db)
-            .filter(\.$hubID == request.authenticatedHubID)
+            .filter(\.$hubID == hubID)
             .filter(\.$tableName == tableName)
             .filter(\.$viewType == viewType.rawValue)
-            .first() ?? TableView(hubID: request.authenticatedHubID, tableName: tableName, name: input.name, viewType: viewType, isDefault: true)
+            .first() ?? TableView(hubID: hubID, tableName: tableName, name: input.name, viewType: viewType, isDefault: true)
         view.name = input.name
         try await view.save(on: request.db)
         guard let viewID = view.id else { throw Abort(.internalServerError) }

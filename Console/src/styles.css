@@ -146,6 +146,15 @@ button {
 .app-shell {
   min-height: 100vh;
 }
+.wireframe-canvas {
+  min-height: 100vh;
+  background: #f7f7f4;
+  color: #233c42;
+  isolation: isolate;
+}
+.wireframe-canvas:focus {
+  outline: none;
+}
 .header-actions {
   display: flex;
   align-items: center;
@@ -855,7 +864,6 @@ dialog::backdrop {
 .wireframe-collection-page .education-detail .gem-field-display-value, .wireframe-collection-page .education-detail dd { color: var(--muted) !important; }
 .wireframe-demo, .wireframe-demo * { font-family: inherit; }
 .wireframe-demo button, .wireframe-demo input { font: inherit; }
-.wireframe-demo-sidebar { padding: 1.4rem 1rem; border-right: 1px solid #dfe6e3; background: #fbfbf9; }
 .demo-sidebar-bottom { margin-top: auto; display: grid; gap: .35rem; }
 .wireframe-mobile-nav-toggle { display: none; }
 .wireframe-mobile-nav { display: contents; }

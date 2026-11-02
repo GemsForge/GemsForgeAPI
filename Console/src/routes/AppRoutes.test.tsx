@@ -86,6 +86,18 @@ describe("Gem Life navigation", () => {
     expect(await screen.findByRole("heading", { name: "Education" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Home" })).toHaveAttribute("href", "/app");
   });
+  it("renders wireframe routes on their dedicated canvas", async () => {
+    vi.spyOn(api, "listEducation").mockResolvedValue([]);
+    setup("/education-wireframe");
+    expect(await screen.findByRole("heading", { name: "Education" })).toBeInTheDocument();
+    expect(screen.getByRole("main", { name: "Wireframe screen" })).toHaveClass("wireframe-canvas");
+    expect(screen.getByRole("navigation", { name: "Workspace navigation" })).toHaveClass("wireframe-demo-sidebar");
+    expect(screen.getByRole("link", { name: /Gem Hues/ })).toHaveAttribute("href", "/gemhues-wireframe");
+    expect(screen.getByRole("link", { name: /Employment/ })).toHaveAttribute("href", "/employment-wireframe");
+    expect(screen.getByRole("link", { name: /Expense Tracker/ })).toHaveAttribute("href", "/transactions-wireframe");
+    expect(screen.getByRole("complementary", { name: "Record inspector" })).toHaveClass("wireframe-demo-inspector");
+    expect(screen.queryByRole("heading", { name: "Gem Life Console" })).not.toBeInTheDocument();
+  });
   it("renders home without requesting feature data", async () => {
     const education = vi.spyOn(api, "listEducation");
     setup();

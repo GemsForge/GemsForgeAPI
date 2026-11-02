@@ -1,4 +1,6 @@
 import type { ReactNode } from "react";
+import { Button, Text, XStack, YStack } from "tamagui";
+import { WireframeCount, WireframeDescription, WireframeHeader, WireframeHeading, WireframeIcon, WireframeMain, WireframeTitleGroup } from "./WireframePrimitives";
 
 type WireframePageViewProps = {
   title: string;
@@ -9,9 +11,25 @@ type WireframePageViewProps = {
 
 export function WireframePageView({ title, description, recordCount, children }: WireframePageViewProps) {
   return (
-    <main className="wireframe-demo-main" aria-labelledby="wireframe-page-title">
-      <header className="demo-collection-header"><div className="demo-collection-title"><span className="demo-collection-icon">✦</span><div><h2 id="wireframe-page-title">{title}</h2><p>{description}</p></div></div><span className="demo-record-count">{recordCount} records</span><button type="button" className="demo-icon-button" aria-label="More collection actions">•••</button></header>
+    <WireframeMain asChild>
+      <main aria-labelledby="wireframe-page-title">
+        <WireframeHeader asChild>
+          <header>
+            <WireframeTitleGroup>
+              <WireframeIcon><Text>✦</Text></WireframeIcon>
+              <YStack minWidth={0}>
+                <WireframeHeading id="wireframe-page-title">{title}</WireframeHeading>
+                <WireframeDescription>{description}</WireframeDescription>
+              </YStack>
+            </WireframeTitleGroup>
+            <XStack alignItems="center" gap="$wireframeCard">
+              <WireframeCount>{recordCount} records</WireframeCount>
+              <Button aria-label="More collection actions" size="$3" chromeless>•••</Button>
+            </XStack>
+          </header>
+        </WireframeHeader>
       {children}
-    </main>
+      </main>
+    </WireframeMain>
   );
 }
