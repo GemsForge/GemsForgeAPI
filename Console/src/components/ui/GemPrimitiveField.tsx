@@ -6,11 +6,17 @@ import { GSelectField } from "./GSelectField";
 import { GemStatusPill } from "./GemStatusPill";
 import type { GemFieldWidth } from "./GemField";
 import type { GemPrimitiveType } from "./primitiveFieldContracts";
-import type { RecordColorToken, RecordDateFormat, RecordNumberFormat, RecordSelectOption } from "../../table-kit/recordContracts";
+import type {
+  RecordColorToken,
+  RecordDateFormat,
+  RecordNumberFormat,
+  RecordSelectOption,
+} from "../../table-kit/recordContracts";
 
 export interface GemPrimitiveFieldProps {
   primitive: GemPrimitiveType;
   label: string;
+  showLabel?: boolean;
   value?: string | number | boolean | null;
   editing?: boolean;
   displayValue?: ReactNode;
@@ -44,12 +50,13 @@ export function validatePrimitiveValue(
   const empty = value === null || value === undefined || value === "";
   if (empty && options.required && !options.nullable) return `${primitive} is required.`;
   if (empty) return undefined;
-  if ((primitive === "number") && (typeof value !== "number" || Number.isNaN(value))) return "Enter a valid number.";
+  if (primitive === "number" && (typeof value !== "number" || Number.isNaN(value))) return "Enter a valid number.";
   if (primitive === "number" && typeof value === "number") {
     if (options.min !== undefined && value < options.min) return `Enter a number of at least ${options.min}.`;
     if (options.max !== undefined && value > options.max) return `Enter a number no greater than ${options.max}.`;
   }
-  if (primitive === "email" && (typeof value !== "string" || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value))) return "Enter a valid email address.";
+  if (primitive === "email" && (typeof value !== "string" || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)))
+    return "Enter a valid email address.";
   if (primitive === "url" && (typeof value !== "string" || !/^https?:\/\//i.test(value))) return "Enter a valid URL.";
   if (primitive === "select" || primitive === "status") {
     if (typeof value !== "string" || !options.allowedValues?.includes(value)) return "Choose an available option.";
@@ -61,6 +68,7 @@ export function validatePrimitiveValue(
 export function GemPrimitiveField({
   primitive,
   label,
+  showLabel = true,
   value = null,
   editing = true,
   displayValue,
@@ -87,9 +95,8 @@ export function GemPrimitiveField({
 }: GemPrimitiveFieldProps) {
   const [validationError, setValidationError] = useState<string>();
   const resolvedError = error ?? validationError;
-  const selectOptions = nullable && !options.some((option) => option.value === "")
-    ? [...options, { value: "", label: "—" }]
-    : options;
+  const selectOptions =
+    nullable && !options.some((option) => option.value === "") ? [...options, { value: "", label: "—" }] : options;
   const emit = (next: string | number | boolean | null) => {
     const message = validatePrimitiveValue(primitive, next, {
       required,
@@ -112,10 +119,24 @@ export function GemPrimitiveField({
     return (
       <GSelectField
         label={label}
+        showLabel={showLabel}
         value={current}
         options={selectOptions}
         editing={editing}
-        displayValue={displayValue ?? (primitive === "status" ? <GemStatusPill className={selectedColorToken ? `primitive-status-pill primitive-status-pill--${selectedColorToken}` : "primitive-status-pill"}>{current || "—"}</GemStatusPill> : undefined)}
+        displayValue={
+          displayValue ??
+          (primitive === "status" ? (
+            <GemStatusPill
+              className={
+                selectedColorToken
+                  ? `primitive-status-pill primitive-status-pill--${selectedColorToken}`
+                  : "primitive-status-pill"
+              }
+            >
+              {current || "—"}
+            </GemStatusPill>
+          ) : undefined)
+        }
         onDisplayClick={onDisplayClick}
         onChange={emit}
         primitive={primitive}
@@ -140,17 +161,48 @@ export function GemPrimitiveField({
   }
   if (primitive === "date") {
     return (
-      <GDate label={label} value={String(value ?? "")} editing={editing} displayValue={typeof displayValue === "string" ? displayValue : undefined} onDisplayClick={onDisplayClick} format="YYYY-MM-DD" displayFormat={_dateFormat} includeTime={includeTime} onDateConfigChange={onDateConfigChange} onChange={emit} required={required} width={width} />
+      <GDate
+        label={label}
+        showLabel={showLabel}
+        value={String(value ?? "")}
+        editing={editing}
+        displayValue={typeof displayValue === "string" ? displayValue : undefined}
+        onDisplayClick={onDisplayClick}
+        format="YYYY-MM-DD"
+        displayFormat={_dateFormat}
+        includeTime={includeTime}
+        onDateConfigChange={onDateConfigChange}
+        onChange={emit}
+        required={required}
+        width={width}
+      />
     );
   }
   if (primitive === "checkbox") {
-    return <GCheckboxField label={label} value={Boolean(value)} onChange={emit} required={required} width={width} error={resolvedError} />;
+    return (
+      <GCheckboxField
+        label={label}
+        value={Boolean(value)}
+        onChange={emit}
+        required={required}
+        width={width}
+        error={resolvedError}
+      />
+    );
   }
   if (primitive === "media") {
     return (
       <label className="primitive-media-field">
-        <span>{label}{required ? " *" : ""}</span>
-        <input type="file" required={required} onChange={(event) => onMediaChange?.(event.currentTarget.files?.[0] ?? null)} aria-label={label} />
+        <span>
+          {label}
+          {required ? " *" : ""}
+        </span>
+        <input
+          type="file"
+          required={required}
+          onChange={(event) => onMediaChange?.(event.currentTarget.files?.[0] ?? null)}
+          aria-label={label}
+        />
         {error && <span role="alert">{error}</span>}
       </label>
     );
@@ -158,12 +210,27 @@ export function GemPrimitiveField({
   return (
     <GemField
       label={label}
+      showLabel={showLabel}
       value={String(value ?? "")}
       editing={editing}
       displayValue={displayValue}
       onDisplayClick={onDisplayClick}
-      primitive={primitive === "number" || primitive === "url" || primitive === "email" || primitive === "phone" ? primitive : "text"}
-      type={primitive === "number" ? "number" : primitive === "url" ? "url" : primitive === "email" ? "email" : primitive === "phone" ? "tel" : "text"}
+      primitive={
+        primitive === "number" || primitive === "url" || primitive === "email" || primitive === "phone"
+          ? primitive
+          : "text"
+      }
+      type={
+        primitive === "number"
+          ? "number"
+          : primitive === "url"
+            ? "url"
+            : primitive === "email"
+              ? "email"
+              : primitive === "phone"
+                ? "tel"
+                : "text"
+      }
       min={min}
       max={max}
       step={step ?? (numberFormat === "currency" ? "0.01" : undefined)}
@@ -174,9 +241,13 @@ export function GemPrimitiveField({
       error={resolvedError}
       onChange={(event) => onChange?.(event.currentTarget.value)}
       onBlur={(event) => {
-        emit(primitive === "number"
-          ? event.currentTarget.value === "" ? null : Number(event.currentTarget.value)
-          : event.currentTarget.value);
+        emit(
+          primitive === "number"
+            ? event.currentTarget.value === ""
+              ? null
+              : Number(event.currentTarget.value)
+            : event.currentTarget.value,
+        );
         onBlur?.();
       }}
     />

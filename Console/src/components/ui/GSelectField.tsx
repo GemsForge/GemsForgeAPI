@@ -34,6 +34,10 @@ export interface GSelectFieldProps extends Omit<
   "value" | "onValueChange" | "onChange"
 > {
   label: string;
+  showLabel?: boolean;
+  editing?: boolean;
+  displayValue?: ReactNode;
+  onDisplayClick?: () => void;
   value?: string;
   options: GSelectOption[];
   error?: string;
@@ -46,6 +50,7 @@ export interface GSelectFieldProps extends Omit<
 /** Render the standard Tamagui single-select field for feature-owned values. */
 export function GSelectField({
   label,
+  showLabel = true,
   editing = true,
   displayValue,
   onDisplayClick,
@@ -87,10 +92,19 @@ export function GSelectField({
 
   return (
     <YStack className="create-form-field" gap="$1">
-      <Label className="g-field-label" htmlFor={id} color="$gemGold" fontSize="$2" fontWeight="800" textTransform="uppercase">
-        {label}
-        {required ? " *" : ""}
-      </Label>
+      {showLabel ? (
+        <Label
+          className="g-field-label"
+          htmlFor={id}
+          color="$gemGold"
+          fontSize="$2"
+          fontWeight="800"
+          textTransform="uppercase"
+        >
+          {label}
+          {required ? " *" : ""}
+        </Label>
+      ) : null}
       <Select value={value || undefined} onValueChange={onChange}>
         <Select.Trigger
           {...triggerProps}
@@ -100,10 +114,15 @@ export function GSelectField({
           aria-invalid={Boolean(error)}
           aria-describedby={error ? errorID : undefined}
           aria-required={required}
+          aria-label={showLabel ? undefined : label}
         >
           {primitive === "status" && selectedOption ? (
             <SizableText
-              className={selectedOption.colorToken ? `primitive-status-pill primitive-status-pill--${selectedOption.colorToken}` : "primitive-status-pill"}
+              className={
+                selectedOption.colorToken
+                  ? `primitive-status-pill primitive-status-pill--${selectedOption.colorToken}`
+                  : "primitive-status-pill"
+              }
               {...(selectedOption.colorToken ? statusPillColors[selectedOption.colorToken] : {})}
             >
               {selectedOption.label}
@@ -128,7 +147,11 @@ export function GSelectField({
                 {group.options.map((option, optionIndex) => (
                   <Select.Item
                     key={option.value}
-                    index={optionGroups.slice(0, groupIndex).reduce((total, previousGroup) => total + previousGroup.options.length, 0) + optionIndex}
+                    index={
+                      optionGroups
+                        .slice(0, groupIndex)
+                        .reduce((total, previousGroup) => total + previousGroup.options.length, 0) + optionIndex
+                    }
                     value={option.value}
                     color="$gemInk"
                     borderRadius="$2"
@@ -139,7 +162,11 @@ export function GSelectField({
                     focusStyle={{ backgroundColor: "$gemPanelLight" }}
                   >
                     <Select.ItemText color="$gemInk" fontSize="$3">
-                      <span className={option.colorToken ? `select-option-pill select-option-pill--${option.colorToken}` : undefined}>
+                      <span
+                        className={
+                          option.colorToken ? `select-option-pill select-option-pill--${option.colorToken}` : undefined
+                        }
+                      >
                         {option.label}
                       </span>
                     </Select.ItemText>
