@@ -30,4 +30,13 @@ describe("WireframeCover", () => {
     fireEvent.click(screen.getByRole("button", { name: "Remove cover" }));
     await waitFor(() => expect(onChange).toHaveBeenCalledWith(null));
   });
+  it("resets uncontrolled cover state when the record scope changes", async () => {
+    const onChange = vi.fn();
+    const view = renderCover({ recordKey: "one", onChange });
+    fireEvent.click(screen.getByRole("button", { name: "Change cover" }));
+    fireEvent.click(document.querySelector('[aria-label="Use Mint cover"]')!);
+    await waitFor(() => expect(screen.getByRole("button", { name: "Remove cover" })).toBeInTheDocument());
+    view.rerender(<TamaguiProvider config={tamaguiConfig} defaultTheme="light"><WireframeCover recordKey="two" onChange={onChange} /></TamaguiProvider>);
+    expect(screen.queryByRole("button", { name: "Remove cover" })).not.toBeInTheDocument();
+  });
 });
