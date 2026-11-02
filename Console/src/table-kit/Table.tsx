@@ -14,6 +14,7 @@ import type { TableQueryState } from "./query";
 import { useTableContext } from "./context";
 import { useTableSelection, type TableSelectionScope } from "./selection";
 import { TablePropertyControls } from "./PropertyControls";
+import { TableSettingsMenu } from "./TableSettings";
 import { NewRecordUtility } from "./NewRecordUtility";
 import { GemButton } from "../components/ui";
 
@@ -497,6 +498,7 @@ export const Table = {
   QueryControls,
   Actions,
   PropertyControls: TablePropertyControls,
+  Settings: TableSettingsMenu,
   Content,
   Pagination,
 };

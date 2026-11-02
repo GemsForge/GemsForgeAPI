@@ -60,6 +60,8 @@ export { RecordGallery, RecordList, RecordTable } from "./renderers";
 export type { TableRendererProps } from "./renderers";
 export { GalleryViewControls } from "./GalleryViewControls";
 export type { GalleryCardSize, GalleryViewControlsProps } from "./GalleryViewControls";
+export { TableSettingsMenu } from "./TableSettings";
+export type { TableSettingsMenuProps } from "./TableSettings";
 export { primitiveTypeDefaults, primitiveTypeDescriptions } from "./primitiveTypes";
 export { inferRecordPropertyKind, normalizeStorageType } from "./storageTypes";
 export { createTableWorkspaceDefinition } from "./workspaceContracts";

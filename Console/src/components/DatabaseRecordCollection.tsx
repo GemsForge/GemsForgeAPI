@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api, type SavedTableViewInput } from "../api";
 import { PaginationControls } from "./PaginationControls";
 import { RecordUtilities } from "./RecordUtilities";
@@ -9,10 +9,12 @@ import {
   RecordList,
   RecordTable,
   Table,
+  TableSettingsMenu,
   useTableContext,
   useTablePropertyConfiguration,
   type RecordAdapter,
   type RecordPropertyDefinition,
+  type RecordPropertyValue,
   type TableActionsProps,
   type TableRecord,
 } from "../table-kit";
@@ -50,6 +52,26 @@ export interface DatabaseRecordCollectionProps<Record> {
   onRecordPatch?: (record: Record, field: string, value: string | number | null) => Promise<void>;
 }
 
+type CollectionWorkspaceState = {
+  activeViewId: "list" | "gallery" | "table";
+  selectedRecordId: string | null;
+};
+
+function decodeCollectionWorkspaceState(value: string | null): CollectionWorkspaceState | null {
+  if (!value) return null;
+  try {
+    const parsed = JSON.parse(value) as Partial<CollectionWorkspaceState>;
+    if (
+      (parsed.activeViewId === "list" || parsed.activeViewId === "gallery" || parsed.activeViewId === "table") &&
+      (parsed.selectedRecordId === null || typeof parsed.selectedRecordId === "string")
+    )
+      return parsed as CollectionWorkspaceState;
+  } catch {
+    // Ignore workspace state from an incompatible or older client.
+  }
+  return null;
+}
+
 /**
  * Compose the shared Table Kit views around one consumer-owned effective result
  * set. Querying and domain detail remain outside the toolkit, while selection,
@@ -68,10 +90,20 @@ export function DatabaseRecordCollection<Record>({
   actions,
   onRecordPatch,
 }: DatabaseRecordCollectionProps<Record>) {
-  const [activeViewId, setActiveViewId] = useState("gallery");
+  const [activeViewId, setActiveViewId] = useState<"list" | "gallery" | "table">("gallery");
+  const [workspaceLoaded, setWorkspaceLoaded] = useState(false);
+  const [pendingSelectionId, setPendingSelectionId] = useState<string | null>(null);
   const [viewConfigurations, setViewConfigurations] = useState<
     globalThis.Record<string, TablePropertyConfigurationInput>
   >({});
+  const workspaceStateRef = useRef<CollectionWorkspaceState>({
+    activeViewId: "gallery",
+    selectedRecordId: null,
+  });
+  const handleDetailChange = useCallback((id: string | null) => {
+    setPendingSelectionId(null);
+    onDetailChange(id);
+  }, [onDetailChange]);
   const paging = usePagedRecords(utilities.records);
   const properties = useMemo(() => adapter.getPropertyDefinitions(), [adapter]);
   const pageRecords = useMemo(
@@ -102,13 +134,7 @@ export function DatabaseRecordCollection<Record>({
       viewTypes.map(async ([viewId, viewType]) => {
         try {
           const saved = await api.getTableView(label, viewType, controller.signal);
-          return [
-            viewId,
-            {
-              order: saved.columns.map((column) => column.columnName),
-              hiddenIds: saved.columns.filter((column) => !column.isVisible).map((column) => column.columnName),
-            },
-          ] as const;
+          return [viewId, saved] as const;
         } catch {
           return null;
         }
@@ -117,20 +143,63 @@ export function DatabaseRecordCollection<Record>({
       if (controller.signal.aborted) return;
       setViewConfigurations((current) =>
         savedViews.reduce(
-          (next, savedView) => (savedView ? { ...next, [savedView[0]]: savedView[1] } : next),
+          (next, savedView) =>
+            savedView
+              ? {
+                  ...next,
+                  [savedView[0]]: {
+                    order: savedView[1].columns.map((column) => column.columnName),
+                    hiddenIds: savedView[1].columns
+                      .filter((column) => !column.isVisible)
+                      .map((column) => column.columnName),
+                  },
+                }
+              : next,
           current,
         ),
       );
+      const restored = savedViews
+        .filter((savedView): savedView is Exclude<typeof savedView, null> => savedView !== null)
+        .map(([, saved]) => ({ saved, state: decodeCollectionWorkspaceState(saved.view.workspaceState) }))
+        .filter((candidate) => candidate.state !== null)
+        .sort(
+          (left, right) => Date.parse(right.saved.view.updatedAt ?? "") - Date.parse(left.saved.view.updatedAt ?? ""),
+        )[0];
+      if (restored?.state) {
+        workspaceStateRef.current = restored.state;
+        setActiveViewId(restored.state.activeViewId);
+        if (restored.state.selectedRecordId === null) {
+          setPendingSelectionId(null);
+          onDetailChange(null);
+        } else {
+          setPendingSelectionId(restored.state.selectedRecordId);
+        }
+      }
+      setWorkspaceLoaded(true);
     });
     return () => controller.abort();
   }, [label]);
+
+  useEffect(() => {
+    if (!pendingSelectionId) return;
+    const recordIsAvailable = records.some(
+      (record, index) => adapter.toTableRecord(record, index).id === pendingSelectionId,
+    );
+    if (recordIsAvailable) handleDetailChange(pendingSelectionId);
+  }, [adapter, handleDetailChange, pendingSelectionId, records]);
+
   const saveConfiguration = useCallback(
-    async (viewId: string | undefined, configuration: { order: readonly string[]; hiddenIds: readonly string[] }) => {
+    async (
+      viewId: string | undefined,
+      configuration: { order: readonly string[]; hiddenIds: readonly string[] },
+      selectedRecordId: string | null = detailId,
+    ) => {
       if (!viewId) return;
       const viewType = viewId === "gallery" ? "Gallery" : viewId === "table" ? "Table" : "List";
       const payload: SavedTableViewInput = {
         viewType,
         name: viewId,
+        workspaceState: JSON.stringify({ activeViewId: viewId, selectedRecordId }),
         columns: configuration.order.map((columnName, sortOrder) => ({
           columnName,
           sortOrder,
@@ -146,8 +215,23 @@ export function DatabaseRecordCollection<Record>({
         // Keep the local change usable when the API is unavailable; the next change retries persistence.
       }
     },
-    [label],
+    [detailId, label],
   );
+
+  useEffect(() => {
+    if (!workspaceLoaded || pendingSelectionId !== null) return;
+    const nextState: CollectionWorkspaceState = { activeViewId, selectedRecordId: detailId };
+    if (
+      workspaceStateRef.current.activeViewId === nextState.activeViewId &&
+      workspaceStateRef.current.selectedRecordId === nextState.selectedRecordId
+    )
+      return;
+    workspaceStateRef.current = nextState;
+    const viewType = activeViewId === "gallery" ? "Gallery" : activeViewId === "table" ? "Table" : "List";
+    void api.saveTableViewWorkspaceState(label, viewType, JSON.stringify(nextState)).catch(() => {
+      // Keep navigation responsive if persistence is temporarily unavailable.
+    });
+  }, [activeViewId, detailId, label, pendingSelectionId, workspaceLoaded]);
 
   return (
     <Table.Root
@@ -161,7 +245,9 @@ export function DatabaseRecordCollection<Record>({
         { id: "table", label: "Table", icon: "▤" },
       ]}
       viewId={activeViewId}
-      onViewChange={setActiveViewId}
+      onViewChange={(viewId) => {
+        if (viewId === "list" || viewId === "gallery" || viewId === "table") setActiveViewId(viewId);
+      }}
       selection={{ matchingIds: matchingRecords.map((record) => record.id) }}
     >
       <DatabaseRecordTableShell
@@ -173,7 +259,7 @@ export function DatabaseRecordCollection<Record>({
         filterOptions={filterOptions}
         paging={paging}
         detailId={detailId}
-        onDetailChange={onDetailChange}
+        onDetailChange={handleDetailChange}
         detail={detail}
         actions={actions}
         onRecordPatch={onRecordPatch}
@@ -219,7 +305,7 @@ function DatabaseRecordTableShell<Record>({
     configuration: { order: readonly string[]; hiddenIds: readonly string[] },
   ) => Promise<void>;
 }) {
-  const { viewId } = useTableContext<TableRecord<Record>>();
+  const { viewId, setViewId } = useTableContext<TableRecord<Record>>();
   const propertyOptions = useMemo(
     () =>
       properties.map((property) => ({
@@ -246,6 +332,7 @@ function DatabaseRecordTableShell<Record>({
       void onConfigurationChange(context.viewId, next);
     },
   });
+  const [groupBy, setGroupBy] = useState("");
   const galleryConfiguration = useMemo(() => {
     if (viewId !== "gallery") return configuration;
     const galleryVisibleIds = configuration.visibleIds
@@ -291,10 +378,22 @@ function DatabaseRecordTableShell<Record>({
         <div className="table-kit-header-controls">
           <Table.Views />
           <Table.Toolbar>
-            <Table.PropertyControls
+            <TableSettingsMenu
+              viewId={viewId as "list" | "gallery" | "table"}
+              onViewChange={setViewId}
               properties={propertyOptions}
-              configuration={galleryConfiguration}
-              maxVisibleProperties={viewId === "gallery" ? 6 : undefined}
+              propertyConfiguration={galleryConfiguration}
+              sort={utilities.sort}
+              sortOptions={sortOptions}
+              onSort={utilities.onSort}
+              direction={utilities.direction}
+              onDirection={utilities.onDirection}
+              filter={utilities.filter}
+              filterOptions={filterOptions}
+              onFilter={utilities.onFilter}
+              groupBy={groupBy}
+              onGroupBy={setGroupBy}
+              groupOptions={propertyOptions.map((property) => ({ value: property.id, label: property.label }))}
             />
             <RecordUtilities
               label={label}
@@ -315,6 +414,7 @@ function DatabaseRecordTableShell<Record>({
         <DatabaseRecordRenderer
           properties={properties}
           propertyIds={galleryConfiguration.visibleIds}
+          groupBy={groupBy}
           label={label}
           detailId={detailId}
           onDetailChange={onDetailChange}
@@ -332,6 +432,7 @@ function DatabaseRecordTableShell<Record>({
 function DatabaseRecordRenderer<Record>({
   properties,
   propertyIds,
+  groupBy,
   label,
   detailId,
   onDetailChange,
@@ -340,15 +441,40 @@ function DatabaseRecordRenderer<Record>({
 }: {
   properties: readonly RecordPropertyDefinition<Record>[];
   propertyIds: readonly string[];
+  groupBy: string;
   label: string;
   detailId: string | null;
   onDetailChange: (id: string | null) => void;
   detail?: ReactNode;
   onRecordPatch?: (record: Record, field: string, value: string | number | null) => Promise<void>;
 }) {
-  const { viewId } = useTableContext<TableRecord<Record>>();
+  const { viewId, rows } = useTableContext<TableRecord<Record>>();
   const [expanded, setExpanded] = useState(false);
   const onExpansionChange = (id: string | undefined) => onDetailChange(id === detailId ? null : (id ?? null));
+  const groupProperty = groupBy ? properties.find((property) => property.id === groupBy) : undefined;
+  const groups = useMemo(() => {
+    if (!groupProperty) return null;
+    const grouped = new Map<string, TableRecord<Record>[]>();
+    for (const record of rows) {
+      const label = getRecordGroupLabel(groupProperty.getValue(record.source));
+      const group = grouped.get(label) ?? [];
+      group.push(record);
+      grouped.set(label, group);
+    }
+    return [...grouped].map(([label, records]) => ({ label, records }));
+  }, [groupProperty, rows]);
+
+  const renderView = (groupRecords?: readonly TableRecord<Record>[]) => {
+    const rendererProps = {
+      records: groupRecords,
+      properties,
+      propertyIds,
+      onExpansionChange,
+    };
+    if (viewId === "gallery") return <RecordGallery {...rendererProps} />;
+    if (viewId === "table") return <RecordTable {...rendererProps} />;
+    return <RecordList {...rendererProps} onRecordPatch={onRecordPatch} />;
+  };
 
   useEffect(() => {
     if (detailId === null) setExpanded(false);
@@ -357,13 +483,19 @@ function DatabaseRecordRenderer<Record>({
   return (
     <>
       <div className="database-record-renderer" aria-label={`${label} view`}>
-        {viewId === "gallery" ? (
-          <RecordGallery properties={properties} propertyIds={propertyIds} onExpansionChange={onExpansionChange} />
-        ) : viewId === "table" ? (
-          <RecordTable properties={properties} propertyIds={propertyIds} onExpansionChange={onExpansionChange} />
-        ) : (
-          <RecordList properties={properties} propertyIds={propertyIds} onExpansionChange={onExpansionChange} onRecordPatch={onRecordPatch} />
-        )}
+        {groups ? (
+          <div className="database-record-groups">
+            {groups.map((group) => (
+              <section className="database-record-group" key={group.label}>
+                <h3 className="database-record-group-heading">
+                  <span>{groupProperty?.label}: {group.label}</span>
+                  <span className="database-record-group-count">{group.records.length}</span>
+                </h3>
+                {renderView(group.records)}
+              </section>
+            ))}
+          </div>
+        ) : renderView()}
       </div>
       {detail && detailId !== null && !expanded ? (
         <aside className="database-record-inspector" aria-label={`${label} record inspector`}>
@@ -388,4 +520,16 @@ function DatabaseRecordRenderer<Record>({
       ) : null}
     </>
   );
+}
+
+function getRecordGroupLabel(value: RecordPropertyValue): string {
+  if (value.raw === null || value.raw === "") return "Empty";
+  if (typeof value.raw === "string" || typeof value.raw === "number" || typeof value.raw === "boolean") {
+    return String(value.raw);
+  }
+  if (value.status?.label) return value.status.label;
+  if (typeof value.display === "string" || typeof value.display === "number") {
+    return String(value.display).trim() || "Empty";
+  }
+  return value.raw === undefined ? "Empty" : "Other";
 }

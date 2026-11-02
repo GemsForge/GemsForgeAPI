@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Button, Text, XStack, YStack } from "tamagui";
+import { Text, XStack, YStack } from "tamagui";
 import { WireframeCount, WireframeDescription, WireframeHeader, WireframeHeading, WireframeIcon, WireframeMain, WireframeTitleGroup } from "./WireframePrimitives";
 
 type WireframePageViewProps = {
@@ -24,7 +24,6 @@ export function WireframePageView({ title, description, recordCount, children }:
             </WireframeTitleGroup>
             <XStack alignItems="center" gap="$wireframeCard">
               <WireframeCount>{recordCount} records</WireframeCount>
-              <Button aria-label="More collection actions" size="$3" chromeless>•••</Button>
             </XStack>
           </header>
         </WireframeHeader>

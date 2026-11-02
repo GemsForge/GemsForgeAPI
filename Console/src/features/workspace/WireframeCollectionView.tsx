@@ -8,13 +8,14 @@ import { WireframePageView } from "./WireframePageView";
 import { WireframeRecordPageView } from "./WireframeRecordPageView";
 import { PropertyIcon, PropertyIconPicker } from "./PropertyIconPicker";
 import { formatRecordNumber, inferRecordNumberFormat } from "../../table-kit";
-import { RecordList, Table, TablePropertyControls, type RecordPropertyDefinition, type TableActionsProps, type TableRecord, useTablePropertyConfiguration } from "../../table-kit";
+import { RecordList, Table, TableSettingsMenu, type RecordPropertyDefinition, type TableActionsProps, type TableRecord, useTablePropertyConfiguration } from "../../table-kit";
 import { RecordUtilities } from "../../components/RecordUtilities";
 import { GalleryViewControls, type GalleryCardSize } from "../../table-kit";
 import { useLocation, useNavigate } from "react-router-dom";
 import { GSelectField } from "../../components/ui/GSelectField";
 import { GemTextField } from "../../components/ui/GemTextField";
 import { GemButton } from "../../components/ui/GemButton";
+import { GemStatusPill } from "../../components/ui/GemStatusPill";
 import { SizableText, Theme } from "tamagui";
 import { inferRecordPropertyKind, normalizeStorageType } from "../../table-kit/storageTypes";
 import { formatAddress } from "../addresses/formatAddress";
@@ -55,11 +56,13 @@ export function WireframeCollectionView<T extends WireframeRecord>({
   const [view, setView] = useState<"table" | "list" | "gallery">("gallery");
   const [galleryCardSize, setGalleryCardSize] = useState<GalleryCardSize>("small");
   const [galleryFillMedia, setGalleryFillMedia] = useState(true);
+  const [galleryImageSelection, setGalleryImageSelection] = useState("__canvas");
   const [selectedID, setSelectedID] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState("");
   const [direction, setDirection] = useState<"asc" | "desc">("asc");
   const [filter, setFilter] = useState("");
+  const [groupBy, setGroupBy] = useState("");
   const [pageIndex, setPageIndex] = useState(0);
   const [pageSize, setPageSize] = useState(9);
   const [mobileNavigationOpen, setMobileNavigationOpen] = useState(false);
@@ -134,6 +137,25 @@ export function WireframeCollectionView<T extends WireframeRecord>({
       defaultVisible: id !== "id",
     }));
   }, [config, schema]);
+  const groupProperty = groupBy
+    ? config.properties?.find((property) => property.id === groupBy || property.sourceField === groupBy) ??
+      schemaProperties.find((property) => property.id === groupBy || property.sourceField === groupBy)
+    : undefined;
+  const groupPropertyLabel = propertyOptions.find((property) => property.id === groupBy)?.label ?? propertyLabel(groupBy);
+  const visibleRecordGroups = useMemo(() => {
+    if (!groupBy) return [{ key: "all", label: "", records: visibleRecords }];
+    const groups = new Map<string, { label: string; records: T[] }>();
+    for (const record of visibleRecords) {
+      const propertyValue = groupProperty?.getValue(record);
+      const sourceValue = (record as Record<string, unknown>)[groupBy];
+      const rawValue = propertyValue?.raw === undefined ? sourceValue : propertyValue.raw;
+      const group = getWireframeGroup(rawValue, propertyValue?.status?.label, propertyValue?.display);
+      const recordsInGroup = groups.get(group.key)?.records ?? [];
+      recordsInGroup.push(record);
+      groups.set(group.key, { label: group.label, records: recordsInGroup });
+    }
+    return [...groups].map(([key, group]) => ({ key, ...group }));
+  }, [groupBy, groupProperty, visibleRecords]);
   const galleryDefaultConfiguration = useMemo(() => {
     const visibleByDefault = new Set(
       propertyOptions
@@ -151,6 +173,14 @@ export function WireframeCollectionView<T extends WireframeRecord>({
   const visiblePropertyIds = propertyConfiguration.visibleIds;
   const imagePropertyOptions = propertyOptions.filter((property) => isImageProperty(property.id, (config.records[0] as Record<string, unknown> | undefined)?.[property.id]) || property.id === "image");
   const galleryImageProperty = imagePropertyOptions[0]?.id ?? "";
+  const galleryImageOptions = useMemo(
+    () => [
+      { value: "__canvas", label: "Canvas fallback" },
+      ...imagePropertyOptions.map((property) => ({ value: property.id, label: property.label })),
+      ...(config.cardImage ? [{ value: "__record-image", label: "Record image" }] : []),
+    ],
+    [config.cardImage, imagePropertyOptions],
+  );
   const resetPage = () => setPageIndex(0);
   const closeInspector = () => {
     setSelectedID(null);
@@ -211,10 +241,29 @@ export function WireframeCollectionView<T extends WireframeRecord>({
             ))}
           </div>
           <RecordUtilities label={config.title} search={query} onSearch={(value) => { setQuery(value); resetPage(); }} sort={sort} onSort={(value) => { setSort(value); resetPage(); }} direction={direction} onDirection={() => setDirection((value) => value === "asc" ? "desc" : "asc")} filter={filter} onFilter={(value) => { setFilter(value); resetPage(); }} sortOptions={[{ value: "title", label: "Name" }, { value: "status", label: "Status" }, { value: "meta", label: "Metadata" }]} filterOptions={[...new Set(config.records.map((record) => config.cardStatus(record)))]} totalCount={config.records.length} visibleCount={matchingRecords.length} compact />
-          <TablePropertyControls
+          <TableSettingsMenu
+            viewId={view}
+            onViewChange={setView}
             properties={propertyOptions}
-            configuration={propertyConfiguration}
-            maxVisibleProperties={view === "gallery" ? 5 : undefined}
+            propertyConfiguration={propertyConfiguration}
+            sort={sort}
+            onSort={(value) => { setSort(value); resetPage(); }}
+            onDirection={() => setDirection((value) => value === "asc" ? "desc" : "asc")}
+            direction={direction}
+            sortOptions={[{ value: "title", label: "Name" }, { value: "status", label: "Status" }, { value: "meta", label: "Metadata" }]}
+            filter={filter}
+            onFilter={(value) => { setFilter(value); resetPage(); }}
+            filterOptions={[...new Set(config.records.map((record) => config.cardStatus(record)))]}
+            groupBy={groupBy}
+            onGroupBy={(value) => { setGroupBy(value); resetPage(); }}
+            groupOptions={propertyOptions.map((property) => ({ value: property.id, label: property.label }))}
+            galleryCardSize={galleryCardSize}
+            onGalleryCardSizeChange={setGalleryCardSize}
+            galleryFillMedia={galleryFillMedia}
+            onGalleryFillMediaChange={setGalleryFillMedia}
+            galleryImageSource={galleryImageSelection}
+            galleryImageOptions={galleryImageOptions}
+            onGalleryImageSourceChange={setGalleryImageSelection}
           />
           <Theme name="light">
             <Table.Actions
@@ -241,8 +290,17 @@ export function WireframeCollectionView<T extends WireframeRecord>({
             <p>Try a different search.</p>
           </div>
         ) : (
-          <div className={`demo-results demo-${view} ${view === "gallery" ? `gallery-size-${galleryCardSize}` : ""} ${galleryFillMedia ? "gallery-fill-media" : "gallery-fit-media"}`} role="group" aria-label={`${config.title} records`}>
-            {view === "table" ? <WireframeAgGrid records={visibleRecords} visiblePropertyIds={visiblePropertyIds} properties={config.properties} onRecordSelect={setSelectedID} /> : view === "list" ? <WireframeMvpList config={config} records={visibleRecords} visiblePropertyIds={visiblePropertyIds} onRecordSelect={setSelectedID} /> : visibleRecords.map((record, index) => (
+          <div className={groupBy ? "wireframe-record-groups" : undefined}>
+            {visibleRecordGroups.map((group) => (
+              <section className={groupBy ? "wireframe-record-group" : undefined} key={group.key}>
+                {groupBy ? (
+                  <h3 className="wireframe-record-group-heading">
+                    <span>{groupPropertyLabel}: {group.label}</span>
+                    <span className="wireframe-record-group-count">{group.records.length}</span>
+                  </h3>
+                ) : null}
+                <div className={`demo-results demo-${view} ${view === "gallery" ? `gallery-size-${galleryCardSize}` : ""} ${galleryFillMedia ? "gallery-fill-media" : "gallery-fit-media"}`} role="group" aria-label={`${config.title}${groupBy ? ` ${groupPropertyLabel}: ${group.label}` : ""} records`}>
+            {view === "table" ? <WireframeAgGrid records={group.records} visiblePropertyIds={visiblePropertyIds} properties={config.properties} onRecordSelect={setSelectedID} /> : view === "list" ? <WireframeMvpList config={config} records={group.records} visiblePropertyIds={visiblePropertyIds} onRecordSelect={setSelectedID} /> : group.records.map((record, index) => (
               <button
                 ref={selectedID === record.id ? selectedCardRef : undefined}
                 type="button"
@@ -251,14 +309,15 @@ export function WireframeCollectionView<T extends WireframeRecord>({
                 onClick={() => setSelectedID(record.id)}
                 key={record.id}
               >
-                {galleryImageSource(record, galleryImageProperty) ?? config.cardImage?.(record)?.src ? (
-                  <span className="demo-place-image"><img src={galleryImageSource(record, galleryImageProperty) ?? config.cardImage?.(record)?.src} alt={config.cardImage?.(record)?.alt ?? `${config.cardTitle(record)} image`} /></span>
+                {galleryImageSelection !== "__canvas" && (galleryImageSelection === "__record-image" ? config.cardImage?.(record)?.src : galleryImageSource(record, galleryImageSelection)) ? (
+                  <span className="demo-place-image"><img src={galleryImageSelection === "__record-image" ? config.cardImage?.(record)?.src : galleryImageSource(record, galleryImageSelection)} alt={config.cardImage?.(record)?.alt ?? `${config.cardTitle(record)} image`} /></span>
                 ) : (
                   <span className="demo-place-image" style={{ background: `linear-gradient(135deg, ${cardColors[index % cardColors.length]}, #527b82)` }} aria-hidden="true" />
                 )}
                 <span className="demo-place-copy">
                   <strong>{config.cardTitle(record)}</strong>
                   <small>{config.cardSubtitle(record)}</small>
+                  <GemStatusPill wireframe>{config.cardStatus(record)}</GemStatusPill>
                   <span className="demo-place-properties" aria-label="Visible properties">
                     {getGalleryCardProperties(record, visiblePropertyIds, config.properties, [config.cardTitle(record), config.cardSubtitle(record), config.cardMeta(record)]).map((property) => (
                       <small className="demo-place-property" aria-label={`${property.label}: ${property.value}`} key={property.id}>
@@ -271,6 +330,9 @@ export function WireframeCollectionView<T extends WireframeRecord>({
                   </small>
                 </span>
               </button>
+            ))}
+                </div>
+              </section>
             ))}
           </div>
         )}
@@ -491,6 +553,24 @@ export function createWireframeSchemaProperties<T extends WireframeRecord>(
       },
     };
   });
+}
+
+function getWireframeGroup(
+  rawValue: unknown,
+  statusLabel?: string,
+  display?: ReactNode,
+): { key: string; label: string } {
+  if (rawValue === null || rawValue === "") return { key: "empty", label: "Empty" };
+  if (typeof rawValue === "string" || typeof rawValue === "number" || typeof rawValue === "boolean") {
+    const label = String(rawValue).trim();
+    return label ? { key: `${typeof rawValue}:${label}`, label } : { key: "empty", label: "Empty" };
+  }
+  if (statusLabel) return { key: `status:${statusLabel}`, label: statusLabel };
+  if (typeof display === "string" || typeof display === "number") {
+    const label = String(display).trim();
+    return label && label !== "—" ? { key: `display:${label}`, label } : { key: "empty", label: "Empty" };
+  }
+  return rawValue === undefined ? { key: "empty", label: "Empty" } : { key: "other", label: "Other" };
 }
 
 function schemaColumnSourceField<T extends WireframeRecord>(

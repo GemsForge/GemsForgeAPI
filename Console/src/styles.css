@@ -1075,6 +1075,10 @@ dialog::backdrop {
 .wireframe-pagination > label { display: flex; align-items: center; gap: .4rem; }
 .demo-collection-search { margin-left: auto; min-width: 12rem; }
 .demo-results { display: grid; gap: .9rem; }
+.wireframe-record-groups { display: grid; gap: 1.25rem; }
+.wireframe-record-group { display: grid; gap: .55rem; min-width: 0; }
+.wireframe-record-group-heading { display: flex; align-items: center; gap: .5rem; margin: 0; color: #233c42; font-size: .9rem; }
+.wireframe-record-group-count { color: #738187; font-size: .78rem; font-weight: 400; }
 .demo-gallery { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .demo-gallery.gallery-size-small { grid-template-columns: repeat(auto-fill, minmax(min(100%, 10rem), 12rem)); justify-content: start; }
 .demo-gallery.gallery-size-medium { grid-template-columns: repeat(auto-fill, minmax(min(100%, 14rem), 17rem)); justify-content: start; }
@@ -1491,6 +1495,16 @@ dialog::backdrop {
   font: inherit;
   text-align: left;
 }
+.wireframe-demo .gem-field-display-value .primitive-status-pill,
+.wireframe-record-page .gem-field-display-value .primitive-status-pill,
+.wireframe-demo .gem-field-display-value .status-pill,
+.wireframe-record-page .gem-field-display-value .status-pill {
+  min-height: 1.35rem;
+  padding: 0.15rem 0.55rem;
+  font-size: 0.75rem !important;
+  font-weight: 700 !important;
+  line-height: 1.1 !important;
+}
 .editable-field-control-row > .create-form-field,
 .editable-field-control-row > .gem-field-display {
   min-width: 0;
@@ -1539,6 +1553,10 @@ dialog::backdrop {
 }
 .database-record-renderer { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; min-width: 0; }
 .database-record-renderer:has(.database-record-inspector) { grid-template-columns: minmax(0, 1fr) minmax(18rem, 24rem); align-items: start; }
+.database-record-groups { display: grid; gap: 1rem; min-width: 0; }
+.database-record-group { display: grid; gap: .5rem; min-width: 0; }
+.database-record-group-heading { display: flex; align-items: center; gap: .5rem; margin: 0; color: var(--ink); font-size: .9rem; }
+.database-record-group-count { color: var(--muted); font-size: .8rem; font-weight: 400; }
 .database-record-inspector { margin-top: 1rem; padding: 1rem; border: 1px solid color-mix(in srgb, var(--mint) 45%, var(--line)); border-radius: 1rem; background: linear-gradient(145deg, color-mix(in srgb, var(--panel-light) 75%, transparent), var(--panel)); }
 .database-record-inspector-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: .8rem; margin-bottom: 1rem; }
 .database-record-inspector-heading > div:first-child { display: grid; gap: .25rem; }
@@ -2361,6 +2379,88 @@ dialog::backdrop {
   flex: 0 0 auto;
 }
 
+.table-kit-settings {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.table-kit-settings-panel {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + .45rem);
+  right: 0;
+  box-sizing: border-box;
+  width: min(25rem, calc(100vw - 1.5rem));
+  max-height: min(42rem, calc(100vh - 1.5rem));
+  overflow: auto;
+  padding: .7rem;
+  border: 1px solid var(--line);
+  border-radius: .75rem;
+  background: var(--panel);
+  box-shadow: 0 .8rem 2rem rgb(0 0 0 / 20%);
+}
+
+.table-kit-settings-heading {
+  display: flex;
+  align-items: center;
+  gap: .35rem;
+  padding: .15rem .2rem .6rem;
+}
+
+.table-kit-settings-heading h2 {
+  flex: 1;
+  margin: 0;
+  color: var(--ink);
+  font-size: 1.05rem;
+}
+
+.table-kit-settings-row,
+.table-kit-settings-choice {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 2.55rem;
+  gap: .7rem;
+  padding: .55rem .6rem;
+  border: 0;
+  border-radius: .45rem;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.table-kit-settings-row:hover,
+.table-kit-settings-row:focus-visible,
+.table-kit-settings-choice:hover,
+.table-kit-settings-choice:focus-visible {
+  background: var(--panel-light);
+  outline: none;
+}
+
+.table-kit-settings-row span:nth-child(2),
+.table-kit-settings-choice span:nth-child(2) { flex: 1; }
+
+.table-kit-settings-row strong {
+  color: var(--muted);
+  font-size: .82rem;
+  font-weight: 500;
+}
+
+.table-kit-settings-view-name { margin-bottom: .35rem; border-bottom: 1px solid var(--line); border-radius: 0; cursor: default; }
+.table-kit-settings-view-name:disabled { opacity: 1; }
+.table-kit-settings-choice[aria-checked="true"] { color: var(--mint); }
+.table-kit-settings-subcontrol { margin: .35rem 0; padding: .35rem; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.table-kit-settings-subcontrol .table-kit-property-controls { width: 100%; }
+.table-kit-settings-field { display: grid; gap: .35rem; padding: .55rem .6rem; color: var(--ink); }
+.table-kit-settings-field select { min-height: 2.35rem; padding: .35rem .5rem; border: 1px solid var(--line); border-radius: .4rem; background: var(--panel); color: var(--ink); font: inherit; }
+.table-kit-settings-switch { display: flex; align-items: center; gap: .55rem; padding: .65rem .6rem; color: var(--ink); }
+
+@media (max-width: 640px) {
+  .table-kit-settings-panel { position: fixed; top: 4.5rem; right: .75rem; left: .75rem; width: auto; max-height: calc(100vh - 5.25rem); }
+}
+
 .table-kit-property-dialog {
   position: absolute;
   z-index: 5;
@@ -2698,11 +2798,17 @@ dialog::backdrop {
   font-size: 0.72rem;
 }
 .status-pill {
-  padding: 0.35rem 0.55rem;
+  display: inline-flex;
+  min-height: 1.35rem;
+  box-sizing: border-box;
+  align-items: center;
+  padding: 0.15rem 0.55rem;
   border: 1px solid rgba(120, 209, 189, 0.24);
   border-radius: 999px;
   color: var(--mint);
-  font-size: 0.7rem;
+  font-size: 0.75rem;
+  line-height: 1.1;
+  font-weight: 700;
   white-space: nowrap;
 }
 .status-success {
@@ -3870,6 +3976,16 @@ dialog {
   font-size: 0.84rem;
   font-weight: 750;
   line-height: 1.1;
+}
+.status-pill--wireframe {
+  display: inline-flex;
+  min-height: 1.35rem;
+  align-items: center;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.75rem !important;
+  font-weight: 700 !important;
+  line-height: 1.1 !important;
 }
 .primitive-status-pill--mint { color: #06231e; background: var(--mint); }
 .primitive-status-pill--gold { color: #2b1c08; background: var(--gold); }
