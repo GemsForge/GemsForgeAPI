@@ -20,6 +20,7 @@ type WireframeCollectionLinksProps = {
   counts: Record<string, number | undefined>;
   search: string;
   activeCollectionIcon?: ReactNode;
+  recordsByCollection: Record<string, readonly unknown[]>;
 };
 
 export function WireframeCollectionLinks({
@@ -28,10 +29,20 @@ export function WireframeCollectionLinks({
   counts,
   search,
   activeCollectionIcon,
+  recordsByCollection,
 }: WireframeCollectionLinksProps) {
   const normalizedSearch = search.trim().toLowerCase();
   const iconPreferences = useTableIconPreferences(collections.map((item) => item.tableName));
-  const visibleCollections = collections.filter((item) => item.label.toLowerCase().includes(normalizedSearch));
+  const searchTerms = normalizedSearch.split(/\s+/).filter(Boolean);
+  const visibleCollections = collections.filter((item) => {
+    if (searchTerms.length === 0) return true;
+    if (searchTerms.every((term) => item.label.toLowerCase().includes(term))) return true;
+    return recordsByCollection[item.label]?.some((record) => {
+      let searchable = "";
+      try { searchable = JSON.stringify(record).toLowerCase(); } catch { searchable = ""; }
+      return searchTerms.every((term) => searchable.includes(term));
+    }) ?? false;
+  });
 
   return (
     <nav className="demo-collections" aria-label="Collections">

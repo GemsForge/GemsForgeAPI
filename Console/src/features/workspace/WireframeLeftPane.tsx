@@ -49,6 +49,14 @@ export function WireframeLeftPane({
     "Expense Tracker": useTransactionsQuery(true).data?.length,
     Services: useServiceAccountsQuery(true).data?.length,
   };
+  const recordsByCollection: Record<string, readonly unknown[]> = {
+    "Gem Hues": useGemHuesQuery(true).data ?? [],
+    Education: useEducationQuery(true).data ?? [],
+    Employment: useEmploymentQuery(true).data ?? [],
+    Addresses: useAddressesQuery(true).data ?? [],
+    "Expense Tracker": useTransactionsQuery(true).data ?? [],
+    Services: useServiceAccountsQuery(true).data ?? [],
+  };
   return (
     <WireframeNavigation asChild>
       <nav className={`wireframe-demo-sidebar ${collapsed ? "is-collapsed" : ""}`} aria-label="Workspace navigation">
@@ -75,6 +83,7 @@ export function WireframeLeftPane({
           counts={counts}
           activeCollectionIcon={activeCollectionIcon}
           search={search}
+          recordsByCollection={recordsByCollection}
         />
         <div className="demo-decision">
           ◫{" "}
