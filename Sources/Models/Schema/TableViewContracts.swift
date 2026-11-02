@@ -204,6 +204,7 @@ struct TableViewResponse: Content, Sendable, Equatable {
     let isDefault: Bool
     let sortOrder: Int
     let configurationVersion: Int
+    let workspaceState: String?
     let createdAt: Date?
     let updatedAt: Date?
 }

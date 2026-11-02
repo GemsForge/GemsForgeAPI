@@ -7,7 +7,8 @@ Table, and changing a View never changes the records or columns in that Table.
 ## Physical contract
 
 `TableViews` stores `ViewID`, `HubID`, `TableName`, `Name`, `ViewType`,
-`IsDefault`, `SortOrder`, `ConfigurationVersion`, `CreatedAt`, and `UpdatedAt`.
+`IsDefault`, `SortOrder`, `ConfigurationVersion`, optional `WorkspaceState`,
+`CreatedAt`, and `UpdatedAt`.
 `ViewType` is one of `Table`, `List`, `Gallery`, or `Grid`.
 
 `ViewColumnConfigurations` stores presentation metadata per View and Column:
@@ -28,6 +29,24 @@ TableViews
 ├── ViewColumnConfigurations
 └── ViewQueryConfigurations
 ```
+
+`WorkspaceState` stores the active record and collection navigation state for a
+view. The dedicated `PUT /table-views/:tableName/:viewType/workspace-state`
+route updates this field without replacing saved columns or query settings.
+The dedicated `PUT /table-views/:tableName/:viewType/columns` route updates
+visible columns and order without replacing saved queries or workspace state.
+
+Per-record visual presentation is stored separately in `RecordPresentations`,
+keyed by `(HubID, TableName, RecordID)`. `GET /record-presentations/:tableName`
+loads a Hub's saved covers, `PUT /record-presentations/:tableName/:recordID`
+creates or replaces one JSON presentation, and `DELETE` clears it. A `PUT`
+requires a supported cover `source`; send `DELETE` to remove the cover rather
+than sending an empty presentation object. Cover images
+use the existing file upload and content routes; the saved cover retains its
+`FileMetadataID`, while the Console fetches image bytes through authenticated
+API transport. Uploaded cover metadata must belong to the authenticated Hub and
+the same table/record owner. The Console caches view and presentation state with
+TanStack Query; covers are not stored in browser local storage.
 
 The owning Hub cascades to its Table Views, and a View cascades to both child
 configuration tables. A partial unique index permits at most one default View

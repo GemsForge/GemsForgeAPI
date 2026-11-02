@@ -3,6 +3,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { TamaguiProvider } from "tamagui";
 import { tamaguiConfig } from "../../design-system";
 import { validateCoverImageURL, WireframeCover } from "./WireframeCover";
+import { api } from "../../api";
 
 function renderCover(props: React.ComponentProps<typeof WireframeCover> = {}) {
   return render(<TamaguiProvider config={tamaguiConfig} defaultTheme="light"><WireframeCover {...props} /></TamaguiProvider>);
@@ -38,5 +39,36 @@ describe("WireframeCover", () => {
     await waitFor(() => expect(screen.getByRole("button", { name: "Remove cover" })).toBeInTheDocument());
     view.rerender(<TamaguiProvider config={tamaguiConfig} defaultTheme="light"><WireframeCover recordKey="two" onChange={onChange} /></TamaguiProvider>);
     expect(screen.queryByRole("button", { name: "Remove cover" })).not.toBeInTheDocument();
+  });
+  it("persists uploaded covers by FileMetadataID and loads bytes through the authenticated API", async () => {
+    const onUpload = vi.fn().mockResolvedValue({ id: "FILE-COVER-1" });
+    const onChange = vi.fn();
+    vi.spyOn(api, "getFileContent").mockResolvedValue(new Blob(["image"], { type: "image/png" }));
+    renderCover({ onUpload, onChange });
+    fireEvent.click(screen.getByRole("button", { name: "Change cover" }));
+    fireEvent.click(screen.getByText("Upload"));
+    const file = new File(["image"], "cover.png", { type: "image/png" });
+    fireEvent.change(document.querySelector('input[type="file"]')!, { target: { files: [file] } });
+    await waitFor(() => expect(onChange).toHaveBeenCalledWith(expect.objectContaining({
+      source: "upload",
+      fileMetadataID: "FILE-COVER-1",
+      imageUrl: undefined,
+    })));
+    await waitFor(() => expect(api.getFileContent).toHaveBeenCalledWith("FILE-COVER-1", expect.any(AbortSignal)));
+  });
+  it("restores a saved image focal point when cover state hydrates", async () => {
+    const view = renderCover({
+      recordKey: "record-1",
+      value: { source: "url", imageUrl: "https://example.com/cover.jpg", position: { x: 20, y: 30 } },
+    });
+    view.rerender(
+      <TamaguiProvider config={tamaguiConfig} defaultTheme="light">
+        <WireframeCover
+          recordKey="record-1"
+          value={{ source: "url", imageUrl: "https://example.com/cover.jpg", position: { x: 45, y: 65 } }}
+        />
+      </TamaguiProvider>,
+    );
+    await waitFor(() => expect(document.querySelector(".wireframe-cover-image")).toHaveStyle({ objectPosition: "45% 65%" }));
   });
 });

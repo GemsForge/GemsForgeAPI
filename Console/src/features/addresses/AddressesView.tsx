@@ -4,7 +4,7 @@ import { useAddressQuery, useAddressAttachmentMutation, useAddressPatchMutation 
 import { QueryFeedback } from "../../components/QueryFeedback";
 import type { Address } from "../../types";
 import { AttachmentControl } from "../../components/AttachmentControl";
-import { GemEmptyState } from "../../components/ui";
+import { GemEmptyState, GemStatusPill } from "../../components/ui";
 import { EditableRecordFields } from "../../components/EditableRecordFields";
 import { addressEditableFields } from "./addressRecordFields";
 import { RecordImport } from "../../components/RecordImport";
@@ -137,7 +137,7 @@ function AddressDetail({
           <h3>{record.addressType}</h3>
           <p className="address-code">{record.id}</p>
         </div>
-        <span className="status-pill">{record.addressStatus}</span>
+        <GemStatusPill>{record.addressStatus}</GemStatusPill>
       </div>
       <EditableRecordFields className="address-fields" fields={addressEditableFields(record, onPatch)} />
       <AttachmentControl

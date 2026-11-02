@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState, type ChangeEvent } from "react";
 import { Dialog, Input, SizableText, XStack, YStack } from "tamagui";
 import { GemButton } from "../../components/ui/GemButton";
+import { api } from "../../api";
 import addressesCover from "../../assets/covers/addresses.png";
 import educationCover from "../../assets/covers/education.png";
 import employmentCover from "../../assets/covers/employment.png";
@@ -14,7 +15,7 @@ export type WireframeCover = {
   source: "color" | "gradient" | "gallery" | "upload" | "url";
   presetId?: string;
   imageUrl?: string;
-  fileId?: string;
+  fileMetadataID?: string;
   position?: { x: number; y: number };
 };
 
@@ -47,8 +48,12 @@ type Props = {
   label?: string;
 };
 
-function visualStyle(cover: WireframeCover | null | undefined): { background: string; image?: string } {
+export function getWireframeCoverVisualStyle(cover: WireframeCover | null | undefined): { background: string; image?: string } {
   if (!cover) return { background: COVER_PRESETS[0].value };
+  if (cover.source === "gallery") {
+    const galleryCover = COVER_GALLERY.find((item) => item.id === cover.presetId);
+    if (galleryCover) return { background: "#dfe6e3", image: galleryCover.imageUrl };
+  }
   if (cover.imageUrl) return { background: "#dfe6e3", image: cover.imageUrl };
   return { background: COVER_PRESETS.find((preset) => preset.id === cover.presetId)?.value ?? COVER_PRESETS[0].value };
 }
@@ -70,6 +75,7 @@ export function WireframeCover({ value, onChange, onUpload, recordKey, label = "
   const [link, setLink] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [uploadedImageURL, setUploadedImageURL] = useState<string | null>(null);
   const [tab, setTab] = useState<"gallery" | "upload" | "link">("gallery");
   const [repositioning, setRepositioning] = useState(false);
   const [position, setPosition] = useState(value?.position ?? { x: 50, y: 50 });
@@ -83,8 +89,22 @@ export function WireframeCover({ value, onChange, onUpload, recordKey, label = "
     positionRef.current = nextPosition;
     setRepositioning(false);
     drag.current = null;
-  }, [recordKey]);
-  const style = visualStyle(currentCover);
+  }, [recordKey, value?.position?.x, value?.position?.y]);
+  useEffect(() => {
+    if (!currentCover?.fileMetadataID) { setUploadedImageURL(null); return; }
+    const controller = new AbortController();
+    let objectURL: string | null = null;
+    setUploadedImageURL(null);
+    void api.getFileContent(currentCover.fileMetadataID, controller.signal).then((blob) => {
+      objectURL = URL.createObjectURL(blob);
+      setUploadedImageURL(objectURL);
+    }).catch(() => { if (!controller.signal.aborted) setUploadedImageURL(null); });
+    return () => { controller.abort(); if (objectURL) URL.revokeObjectURL(objectURL); };
+  }, [currentCover?.fileMetadataID]);
+  const visualCover = currentCover?.fileMetadataID && uploadedImageURL
+    ? { ...currentCover, imageUrl: uploadedImageURL }
+    : currentCover;
+  const style = getWireframeCoverVisualStyle(visualCover);
   const save = async (next: WireframeCover | null) => { setBusy(true); setError(null); try { setLocalCover(next); await onChange?.(next); setOpen(false); } catch (reason) { setLocalCover(currentCover); setError(reason instanceof Error ? reason.message : "Cover could not be saved."); } finally { setBusy(false); } };
   const upload = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.currentTarget.files?.[0];
@@ -92,7 +112,10 @@ export function WireframeCover({ value, onChange, onUpload, recordKey, label = "
     if (!file) return;
     if (!file.type.startsWith("image/")) { setError("Choose an image file."); return; }
     setBusy(true); setError(null);
-    try { const result = await onUpload?.(file); await save({ source: "upload", fileId: result?.id, imageUrl: result?.url ?? (onUpload ? URL.createObjectURL(file) : await fileAsDataURL(file)), position }); }
+    try {
+      const result = await onUpload?.(file);
+      await save({ source: "upload", fileMetadataID: result?.id, imageUrl: result?.id ? undefined : result?.url ?? (onUpload ? URL.createObjectURL(file) : await fileAsDataURL(file)), position });
+    }
     catch (reason) { setError(reason instanceof Error ? reason.message : "Image upload failed."); setBusy(false); }
   };
   const useLink = () => { const url = validateCoverImageURL(link); if (!url) { setError("Enter a valid http or https image URL."); return; } void save({ source: "url", imageUrl: url, position }); };
@@ -122,9 +145,47 @@ export function WireframeCover({ value, onChange, onUpload, recordKey, label = "
   return <YStack className="wireframe-cover" gap="$2" aria-label={label}>
     <div className={`wireframe-cover-visual${repositioning ? " is-repositioning" : ""}`} style={{ background: style.background }} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={(event) => void handlePointerUp(event)} onPointerCancel={() => { drag.current = null; }}>
       {style.image ? <img className="wireframe-cover-image" src={style.image} alt={`${label} image`} style={{ objectPosition: `${position.x}% ${position.y}%` }} /> : null}
-      <XStack className="wireframe-cover-actions" gap={0} role="group" aria-label="Cover actions"><GemButton className="wireframe-cover-action" size="$1" tone="secondary" aria-label="Change cover" onClick={() => { setTab("gallery"); setOpen(true); }}>Change</GemButton><GemButton className="wireframe-cover-action" size="$1" tone="secondary" aria-label={repositioning ? "Finish repositioning cover" : "Reposition cover"} aria-pressed={repositioning} onClick={reposition}>{repositioning ? "Done" : "Reposition"}</GemButton>{currentCover ? <GemButton className="wireframe-cover-action" size="$1" tone="secondary" aria-label="Remove cover" onClick={() => void save(null)}>Remove</GemButton> : null}</XStack>
+      <XStack className="wireframe-cover-actions" gap={0} role="group" aria-label="Cover actions"><GemButton className="wireframe-cover-action" size="xs" tone="secondary" aria-label="Change cover" onClick={() => { setTab("gallery"); setOpen(true); }}>Change</GemButton><GemButton className="wireframe-cover-action" size="xs" tone="secondary" aria-label={repositioning ? "Finish repositioning cover" : "Reposition cover"} aria-pressed={repositioning} onClick={reposition}>{repositioning ? "Done" : "Reposition"}</GemButton>{currentCover ? <GemButton className="wireframe-cover-action" size="xs" tone="secondary" aria-label="Remove cover" onClick={() => void save(null)}>Remove</GemButton> : null}</XStack>
       {repositioning ? <div className="wireframe-cover-reposition-hint" role="status">Drag the image to reposition it</div> : null}
     </div>
-    <Dialog open={open} onOpenChange={setOpen}><Dialog.Portal><Dialog.Overlay backgroundColor="rgba(16, 35, 38, .58)" /><Dialog.Content className="wireframe-cover-dialog" backgroundColor="#ffffff" color="#173d45" borderColor="#dfe6e3" borderWidth={1} borderRadius="$4" padding={0} width="min(46rem, calc(100vw - 2rem))" maxHeight="min(42rem, calc(100vh - 2rem))" overflow="hidden" aria-label="Change cover"><Dialog.Title padding="$4" paddingBottom="$2">Change cover</Dialog.Title><XStack className="wireframe-cover-tabs" role="tablist" aria-label="Cover source"><GemButton size="$3" variant={tab === "gallery" ? "outlined" : "quiet"} role="tab" aria-selected={tab === "gallery"} onClick={() => setTab("gallery")}>Gallery</GemButton><GemButton size="$3" variant={tab === "upload" ? "outlined" : "quiet"} role="tab" aria-selected={tab === "upload"} onClick={() => setTab("upload")}>Upload</GemButton><GemButton size="$3" variant={tab === "link" ? "outlined" : "quiet"} role="tab" aria-selected={tab === "link"} onClick={() => setTab("link")}>Link</GemButton></XStack><YStack gap="$3" className="wireframe-cover-picker">{tab === "gallery" ? <><SizableText className="wireframe-cover-section-label">Record cover gallery</SizableText><div className="wireframe-cover-presets" aria-label="Record cover gallery">{COVER_GALLERY.map((cover) => <button className="wireframe-cover-preset" key={cover.id} type="button" aria-label={`Use ${cover.label} cover`} style={{ backgroundImage: `url(${cover.imageUrl})`, backgroundPosition: "center", backgroundSize: "cover" }} onClick={() => void save({ source: "gallery", presetId: cover.id, imageUrl: cover.imageUrl, position })} />)}</div><SizableText className="wireframe-cover-section-label">Color &amp; gradient</SizableText><div className="wireframe-cover-presets" aria-label="Cover presets">{COVER_PRESETS.map((preset) => <button className="wireframe-cover-preset" key={preset.id} type="button" aria-label={`Use ${preset.label} cover`} style={{ background: preset.value }} onClick={() => void save({ source: preset.id === "sandstone" ? "gallery" : "gradient", presetId: preset.id, position })} />)}</div></> : null}{tab === "upload" ? <><SizableText>Upload an image from your device.</SizableText><input id={inputId} ref={fileInput} hidden type="file" accept="image/*" onChange={upload} /><GemButton alignSelf="flex-start" onClick={() => fileInput.current?.click()} aria-label="Upload cover image">Choose image</GemButton></> : null}{tab === "link" ? <><SizableText>Use an image URL.</SizableText><XStack gap="$2"><Input aria-label="Image URL" placeholder="https://…" value={link} onChangeText={setLink} /><GemButton onClick={useLink} aria-label="Use image link">Use link</GemButton></XStack></> : null}{busy ? <div role="status">Saving cover…</div> : null}{error ? <div role="alert">{error}</div> : null}</YStack><Dialog.Close asChild><GemButton alignSelf="flex-start" margin="$4" marginTop={0} aria-label="Close change cover dialog">Cancel</GemButton></Dialog.Close></Dialog.Content></Dialog.Portal></Dialog>
+      <Dialog open={open} onOpenChange={setOpen}><Dialog.Portal><Dialog.Overlay backgroundColor="rgba(16, 35, 38, .58)" /><Dialog.Content className="wireframe-cover-dialog" backgroundColor="#ffffff" color="#173d45" borderColor="#dfe6e3" borderWidth={1} borderRadius="$4" padding={0} width="min(46rem, calc(100vw - 2rem))" maxHeight="min(42rem, calc(100vh - 2rem))" overflow="hidden" aria-label="Change cover"><Dialog.Title padding="$4" paddingBottom="$2">Change cover</Dialog.Title><XStack className="wireframe-cover-tabs" role="tablist" aria-label="Cover source"><GemButton size="sm" variant={tab === "gallery" ? "outlined" : "quiet"} role="tab" aria-selected={tab === "gallery"} onClick={() => setTab("gallery")}>Gallery</GemButton><GemButton size="sm" variant={tab === "upload" ? "outlined" : "quiet"} role="tab" aria-selected={tab === "upload"} onClick={() => setTab("upload")}>Upload</GemButton><GemButton size="sm" variant={tab === "link" ? "outlined" : "quiet"} role="tab" aria-selected={tab === "link"} onClick={() => setTab("link")}>Link</GemButton></XStack><YStack gap="$3" className="wireframe-cover-picker">{tab === "gallery" ? <><SizableText className="wireframe-cover-section-label">Record cover gallery</SizableText><div className="wireframe-cover-presets" aria-label="Record cover gallery">{COVER_GALLERY.map((cover) => <button className="wireframe-cover-preset" key={cover.id} type="button" aria-label={`Use ${cover.label} cover`} style={{ backgroundImage: `url(${cover.imageUrl})`, backgroundPosition: "center", backgroundSize: "cover" }} onClick={() => void save({ source: "gallery", presetId: cover.id, position })} />)}</div><SizableText className="wireframe-cover-section-label">Color &amp; gradient</SizableText><div className="wireframe-cover-presets" aria-label="Cover presets">{COVER_PRESETS.map((preset) => <button className="wireframe-cover-preset" key={preset.id} type="button" aria-label={`Use ${preset.label} cover`} style={{ background: preset.value }} onClick={() => void save({ source: preset.id === "sandstone" ? "gallery" : "gradient", presetId: preset.id, position })} />)}</div></> : null}{tab === "upload" ? <><SizableText>Upload an image from your device.</SizableText><input id={inputId} ref={fileInput} hidden type="file" accept="image/*" onChange={upload} /><GemButton alignSelf="flex-start" onClick={() => fileInput.current?.click()} aria-label="Upload cover image">Choose image</GemButton></> : null}{tab === "link" ? <><SizableText>Use an image URL.</SizableText><XStack gap="$2"><Input aria-label="Image URL" placeholder="https://…" value={link} onChangeText={setLink} /><GemButton onClick={useLink} aria-label="Use image link">Use link</GemButton></XStack></> : null}{busy ? <div role="status">Saving cover…</div> : null}{error ? <div role="alert">{error}</div> : null}</YStack><Dialog.Close asChild><GemButton alignSelf="flex-start" margin="$4" marginTop={0} aria-label="Close change cover dialog">Cancel</GemButton></Dialog.Close></Dialog.Content></Dialog.Portal></Dialog>
   </YStack>;
+}
+
+export function WireframeCoverCardImage({ cover, alt }: { cover: WireframeCover; alt: string }) {
+  const [uploadedImageURL, setUploadedImageURL] = useState<string | null>(null);
+  useEffect(() => {
+    if (cover.source !== "upload" || !cover.fileMetadataID) {
+      setUploadedImageURL(null);
+      return;
+    }
+    const controller = new AbortController();
+    let objectURL: string | null = null;
+    setUploadedImageURL(null);
+    void api.getFileContent(cover.fileMetadataID, controller.signal).then((blob) => {
+      if (controller.signal.aborted) return;
+      objectURL = URL.createObjectURL(blob);
+      setUploadedImageURL(objectURL);
+    }).catch(() => {
+      if (!controller.signal.aborted) setUploadedImageURL(null);
+    });
+    return () => {
+      controller.abort();
+      if (objectURL) URL.revokeObjectURL(objectURL);
+    };
+  }, [cover.fileMetadataID, cover.source]);
+
+  const style = getWireframeCoverVisualStyle(cover);
+  const imageURL = uploadedImageURL ?? style.image;
+  return (
+    <span className="demo-place-image" style={{ background: style.background }}>
+      {imageURL ? (
+        <img
+          src={imageURL}
+          alt={alt}
+          style={{ objectPosition: `${cover.position?.x ?? 50}% ${cover.position?.y ?? 50}%` }}
+        />
+      ) : null}
+    </span>
+  );
 }

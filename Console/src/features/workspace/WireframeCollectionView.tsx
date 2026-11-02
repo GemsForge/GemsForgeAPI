@@ -1,4 +1,4 @@
-import React, { cloneElement, isValidElement, useMemo, useRef, useState, type ReactNode } from "react";
+import React, { cloneElement, isValidElement, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { ChevronLeft, Expand, GalleryHorizontal, List, Table2 } from "lucide-react";
 import { AgGridReact } from "ag-grid-react";
 import { themeQuartz, type ColDef, type ColDefField, type ICellRendererParams } from "ag-grid-community";
@@ -7,6 +7,7 @@ import { WireframeLeftPane } from "./WireframeLeftPane";
 import { WireframePageView } from "./WireframePageView";
 import { WireframeRecordPageView } from "./WireframeRecordPageView";
 import { PropertyIcon, PropertyIconPicker } from "./PropertyIconPicker";
+import { PROPERTY_ICON_LIBRARY, getPropertyIconByName } from "./propertyIcons";
 import { formatRecordNumber, inferRecordNumberFormat } from "../../table-kit";
 import { RecordList, Table, TableSettingsMenu, type RecordPropertyDefinition, type TableActionsProps, type TableRecord, useTablePropertyConfiguration } from "../../table-kit";
 import { RecordUtilities } from "../../components/RecordUtilities";
@@ -20,9 +21,33 @@ import { SizableText, Theme } from "tamagui";
 import { inferRecordPropertyKind, normalizeStorageType } from "../../table-kit/storageTypes";
 import { formatAddress } from "../addresses/formatAddress";
 import { inferWireframePropertyMetadata, WIREFRAME_PROPERTY_TYPES } from "./propertyMetadata";
-import { WireframeCover, type WireframeCover as WireframeCoverValue } from "./WireframeCover";
+import { WireframeCover, WireframeCoverCardImage, type WireframeCover as WireframeCoverValue } from "./WireframeCover";
+import { api } from "../../api";
+import { useUploadImageMutation } from "../../data/workflowQueries";
+import {
+  useDeleteRecordPresentationMutation,
+  useRecordPresentationsQuery,
+  useSaveRecordPresentationMutation,
+  useSaveTableViewWorkspaceStateMutation,
+  useTableViewsQuery,
+} from "../../data/presentationQueries";
 
 export type WireframeRecord = { id: string };
+type WireframeWorkspaceState = {
+  activeViewId?: "table" | "list" | "gallery";
+  selectedRecordId?: string | null;
+  galleryCardSize?: GalleryCardSize;
+  galleryFillMedia?: boolean;
+  galleryImageSelection?: string;
+  query?: string;
+  sort?: string;
+  direction?: "asc" | "desc";
+  filter?: string;
+  groupBy?: string;
+  pageIndex?: number;
+  pageSize?: number;
+  tableIcon?: string;
+};
 export type WireframeCollectionConfig<T extends WireframeRecord> = {
   tableName?: string;
   title: string;
@@ -53,11 +78,15 @@ export function WireframeCollectionView<T extends WireframeRecord>({
   const schemaQuery = useLiveSchemaQuery();
   const location = useLocation();
   const navigate = useNavigate();
+  const recordPageID = location.pathname.match(/\/record\/([^/]+)$/)?.[1];
   const [view, setView] = useState<"table" | "list" | "gallery">("gallery");
   const [galleryCardSize, setGalleryCardSize] = useState<GalleryCardSize>("small");
   const [galleryFillMedia, setGalleryFillMedia] = useState(true);
   const [galleryImageSelection, setGalleryImageSelection] = useState("__canvas");
+  const [tableIcon, setTableIcon] = useState("Folder");
   const [selectedID, setSelectedID] = useState<string | null>(null);
+  const [workspaceSelectionRevision, setWorkspaceSelectionRevision] = useState(0);
+  const workspaceSelectedID = recordPageID ? decodeURIComponent(recordPageID) : selectedID;
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState("");
   const [direction, setDirection] = useState<"asc" | "desc">("asc");
@@ -67,6 +96,8 @@ export function WireframeCollectionView<T extends WireframeRecord>({
   const [pageSize, setPageSize] = useState(9);
   const [mobileNavigationOpen, setMobileNavigationOpen] = useState(false);
   const [navigationCollapsed, setNavigationCollapsed] = useState(false);
+  const [inspectorWidth, setInspectorWidth] = useState(384);
+  const inspectorResizeRef = useRef<{ startX: number; startWidth: number } | null>(null);
   const [propertyDetails, setPropertyDetails] = useState<{
     label: string;
     value: string;
@@ -75,24 +106,124 @@ export function WireframeCollectionView<T extends WireframeRecord>({
     statusText: string;
     colorToken: string;
   } | null>(null);
-  const coverStoragePrefix = `gemsforge:record-cover:${config.tableName ?? config.title}:`;
-  const [storedCovers, setStoredCovers] = useState<Record<string, WireframeCoverValue | null>>(() => {
-    if (typeof window === "undefined") return {};
-    return config.records.reduce<Record<string, WireframeCoverValue | null>>((covers, record) => {
-      const raw = window.localStorage.getItem(`${coverStoragePrefix}${record.id}`);
-      if (raw) { try { covers[record.id] = JSON.parse(raw) as WireframeCoverValue | null; } catch { /* ignore malformed local cover */ } }
-      return covers;
-    }, {});
-  });
+  const presentationTableName = config.tableName ?? config.title;
+  const savedViewsQuery = useTableViewsQuery(presentationTableName);
+  const { mutateAsync: saveWorkspaceStateAsync } = useSaveTableViewWorkspaceStateMutation(presentationTableName);
+  const workspaceHydrated = useRef(false);
+  const pendingSelectedID = useRef<string | null>(null);
+  const skipWorkspaceSaveOnce = useRef(false);
+  const lastSavedWorkspaceState = useRef("");
+  useEffect(() => {
+    if (!savedViewsQuery.isSuccess || workspaceHydrated.current) return;
+    workspaceHydrated.current = true;
+    const candidates = ([
+      ["List", savedViewsQuery.data.List],
+      ["Gallery", savedViewsQuery.data.Gallery],
+      ["Table", savedViewsQuery.data.Table],
+    ] as const)
+      .filter((entry) => entry[1]?.view.workspaceState)
+      .map((entry) => {
+        try {
+          return { updatedAt: Date.parse(entry[1]!.view.updatedAt ?? ""), state: JSON.parse(entry[1]!.view.workspaceState!) as WireframeWorkspaceState };
+        } catch { return null; }
+      })
+      .filter((entry): entry is { updatedAt: number; state: WireframeWorkspaceState } => entry !== null)
+      .sort((left, right) => right.updatedAt - left.updatedAt);
+    const state = candidates[0]?.state;
+    if (!state) return;
+    if (state.activeViewId) setView(state.activeViewId);
+    if (state.selectedRecordId) pendingSelectedID.current = state.selectedRecordId;
+    if (state.galleryCardSize) setGalleryCardSize(state.galleryCardSize);
+    if (typeof state.galleryFillMedia === "boolean") setGalleryFillMedia(state.galleryFillMedia);
+    if (state.galleryImageSelection) setGalleryImageSelection(state.galleryImageSelection);
+    if (typeof state.query === "string") setQuery(state.query);
+    if (typeof state.sort === "string") setSort(state.sort);
+    if (state.direction) setDirection(state.direction);
+    if (typeof state.filter === "string") setFilter(state.filter);
+    if (typeof state.groupBy === "string") setGroupBy(state.groupBy);
+    if (typeof state.pageIndex === "number") setPageIndex(state.pageIndex);
+    if (typeof state.pageSize === "number") setPageSize(state.pageSize);
+    if (typeof state.tableIcon === "string") setTableIcon(state.tableIcon);
+  }, [savedViewsQuery.data, savedViewsQuery.isSuccess]);
+  useEffect(() => {
+    const pendingID = pendingSelectedID.current;
+    if (!pendingID) return;
+    pendingSelectedID.current = null;
+    skipWorkspaceSaveOnce.current = true;
+    if (config.records.some((record) => record.id === pendingID)) {
+      setSelectedID(pendingID);
+      return;
+    }
+    // The collection is mounted with its loaded record set. Clear the stale
+    // selection and trigger a follow-up save after hydration updates settle.
+    setSelectedID(null);
+    setWorkspaceSelectionRevision((revision) => revision + 1);
+  }, [config.records, savedViewsQuery.isSuccess]);
+  useEffect(() => {
+    if (!workspaceHydrated.current || pendingSelectedID.current) return;
+    if (skipWorkspaceSaveOnce.current) {
+      skipWorkspaceSaveOnce.current = false;
+      return;
+    }
+    const state: WireframeWorkspaceState = {
+      activeViewId: view,
+      selectedRecordId: workspaceSelectedID,
+      galleryCardSize,
+      galleryFillMedia,
+      galleryImageSelection,
+      query,
+      sort,
+      direction,
+      filter,
+      groupBy,
+      pageIndex,
+      pageSize,
+      tableIcon,
+    };
+    const serialized = JSON.stringify(state);
+    if (serialized === lastSavedWorkspaceState.current) return;
+    const timer = window.setTimeout(() => {
+      lastSavedWorkspaceState.current = serialized;
+      const viewType = view === "gallery" ? "Gallery" : view === "table" ? "Table" : "List";
+      void saveWorkspaceStateAsync({ viewType, workspaceState: serialized }).catch(() => {
+        lastSavedWorkspaceState.current = "";
+      });
+    }, 250);
+    return () => window.clearTimeout(timer);
+  }, [view, workspaceSelectedID, galleryCardSize, galleryFillMedia, galleryImageSelection, query, sort, direction, filter, groupBy, pageIndex, pageSize, tableIcon, workspaceSelectionRevision, saveWorkspaceStateAsync]);
+  const presentationsQuery = useRecordPresentationsQuery(presentationTableName);
+  const savePresentation = useSaveRecordPresentationMutation(presentationTableName);
+  const deletePresentation = useDeleteRecordPresentationMutation(presentationTableName);
+  const { mutateAsync: uploadImageAsync } = useUploadImageMutation();
+  const storedCovers = useMemo(() => {
+    const covers: Record<string, WireframeCoverValue | null> = {};
+    for (const item of presentationsQuery.data ?? []) {
+      try { covers[item.recordID] = JSON.parse(item.presentation) as WireframeCoverValue | null; }
+      catch { /* ignore malformed persisted presentation */ }
+    }
+    return covers;
+  }, [presentationsQuery.data]);
   const selectedCardRef = useRef<HTMLButtonElement | null>(null);
-  const recordPageID = location.pathname.match(/\/record\/([^/]+)$/)?.[1];
   const inspectorExpanded = Boolean(recordPageID);
   const selected = config.records.find((record) => record.id === (recordPageID ? decodeURIComponent(recordPageID) : selectedID)) ?? null;
   const selectedCover = selected ? config.cover?.(selected) ?? storedCovers[selected.id] : undefined;
+  const TableIcon = getPropertyIconByName(tableIcon).icon;
   const persistCover = async (record: T, cover: WireframeCoverValue | null) => {
-    setStoredCovers((current) => ({ ...current, [record.id]: cover }));
-    window.localStorage.setItem(`${coverStoragePrefix}${record.id}`, JSON.stringify(cover));
+    if (cover) {
+      await savePresentation.mutateAsync({ recordID: record.id, presentation: JSON.stringify(cover) });
+    } else {
+      await deletePresentation.mutateAsync(record.id);
+    }
     await config.onCoverChange?.(record, cover);
+  };
+  const uploadCover = async (record: T, file: File) => {
+    const metadata = await uploadImageAsync({
+      file,
+      kind: "image",
+      ownerType: `RecordPresentation.${presentationTableName}`,
+      ownerID: record.id,
+    });
+    return { id: metadata.id, url: api.fileContentURL(metadata.id) };
   };
   const schema = schemaQuery.data?.tables.find((table) => table.name === (config.tableName ?? config.title));
   const schemaProperties = useMemo(
@@ -176,17 +307,37 @@ export function WireframeCollectionView<T extends WireframeRecord>({
   const galleryImageOptions = useMemo(
     () => [
       { value: "__canvas", label: "Canvas fallback" },
+      { value: "__record-cover", label: "Record cover" },
       ...imagePropertyOptions.map((property) => ({ value: property.id, label: property.label })),
       ...(config.cardImage ? [{ value: "__record-image", label: "Record image" }] : []),
     ],
     [config.cardImage, imagePropertyOptions],
   );
+  useEffect(() => {
+    const available = new Set(galleryImageOptions.map((option) => option.value));
+    if (!available.has(galleryImageSelection)) setGalleryImageSelection("__canvas");
+  }, [galleryImageSelection, galleryImageOptions]);
   const resetPage = () => setPageIndex(0);
   const closeInspector = () => {
     setSelectedID(null);
     if (inspectorExpanded) navigate(location.pathname.replace(/\/record\/[^/]+$/, ""));
     requestAnimationFrame(() => selectedCardRef.current?.focus());
   };
+  useEffect(() => {
+    const move = (event: PointerEvent) => {
+      const resize = inspectorResizeRef.current;
+      if (!resize) return;
+      const nextWidth = resize.startWidth + (resize.startX - event.clientX);
+      setInspectorWidth(Math.min(520, Math.max(280, nextWidth)));
+    };
+    const end = () => { inspectorResizeRef.current = null; };
+    document.addEventListener("pointermove", move);
+    document.addEventListener("pointerup", end);
+    return () => {
+      document.removeEventListener("pointermove", move);
+      document.removeEventListener("pointerup", end);
+    };
+  }, []);
   const openRecordPage = () => {
     if (selected) navigate(`${location.pathname.replace(/\/record\/[^/]+$/, "")}/record/${encodeURIComponent(selected.id)}`);
   };
@@ -197,6 +348,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
   return (
     <section
       className={`wireframe-demo wireframe-standalone ${inspectorExpanded ? "is-expanded" : ""} ${selected ? "has-inspector" : "inspector-closed"}`}
+      style={{ "--inspector-width": `${inspectorWidth}px` } as React.CSSProperties}
       data-schema-table={schema?.name ?? config.tableName ?? config.title}
       aria-labelledby="wireframe-page-title"
     >
@@ -216,6 +368,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
         <WireframeLeftPane
           recordCount={config.records.length}
           activeCollection={config.activeCollection}
+          activeCollectionIcon={<TableIcon size={16} aria-hidden="true" />}
           collapsed={navigationCollapsed}
           onToggleCollapsed={() => setNavigationCollapsed((collapsed) => !collapsed)}
         />
@@ -226,12 +379,32 @@ export function WireframeCollectionView<T extends WireframeRecord>({
           recordTitle={config.cardTitle(selected)}
           onBack={() => navigate(location.pathname.replace(/\/record\/[^/]+$/, ""))}
           onClose={closeInspector}
-          cover={<WireframeCover recordKey={selected.id} value={selectedCover} onChange={(cover) => persistCover(selected, cover)} />}
+          cover={<WireframeCover recordKey={selected.id} value={selectedCover} onChange={(cover) => persistCover(selected, cover)} onUpload={(file) => uploadCover(selected, file)} />}
         >
+          <button
+            type="button"
+            className="wireframe-inspector-resizer"
+            aria-label="Resize record inspector"
+            role="separator"
+            aria-orientation="vertical"
+            aria-valuemin={280}
+            aria-valuemax={520}
+            aria-valuenow={inspectorWidth}
+            onPointerDown={(event) => {
+              event.preventDefault();
+              inspectorResizeRef.current = { startX: event.clientX, startWidth: inspectorWidth };
+            }}
+            onKeyDown={(event) => {
+              if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+                event.preventDefault();
+                setInspectorWidth((width) => Math.min(520, Math.max(280, width + (event.key === "ArrowLeft" ? 16 : -16))));
+              }
+            }}
+          />
           {renderInspector(config.inspector(selected, schemaProperties), openPropertyDetails)}
         </WireframeRecordPageView>
       ) : (
-      <WireframePageView title={config.title} description={config.description} recordCount={sortedRecords.length}>
+      <WireframePageView title={config.title} description={config.description} recordCount={sortedRecords.length} tableIcon={<TableIcon size={20} aria-hidden="true" />}>
         <div className="demo-toolbar">
           <div className="demo-view-tabs" role="tablist" aria-label={`${config.title} view mode`}>
             {(["table", "list", "gallery"] as const).map((mode) => (
@@ -264,6 +437,9 @@ export function WireframeCollectionView<T extends WireframeRecord>({
             galleryImageSource={galleryImageSelection}
             galleryImageOptions={galleryImageOptions}
             onGalleryImageSourceChange={setGalleryImageSelection}
+            tableIcon={tableIcon}
+            tableIconOptions={PROPERTY_ICON_LIBRARY}
+            onTableIconChange={setTableIcon}
           />
           <Theme name="light">
             <Table.Actions
@@ -309,7 +485,9 @@ export function WireframeCollectionView<T extends WireframeRecord>({
                 onClick={() => setSelectedID(record.id)}
                 key={record.id}
               >
-                {galleryImageSelection !== "__canvas" && (galleryImageSelection === "__record-image" ? config.cardImage?.(record)?.src : galleryImageSource(record, galleryImageSelection)) ? (
+                {galleryImageSelection === "__record-cover" && (config.cover?.(record) ?? storedCovers[record.id]) ? (
+                  <WireframeCoverCardImage cover={(config.cover?.(record) ?? storedCovers[record.id])!} alt={`${config.cardTitle(record)} cover`} />
+                ) : galleryImageSelection !== "__canvas" && galleryImageSelection !== "__record-cover" && (galleryImageSelection === "__record-image" ? config.cardImage?.(record)?.src : galleryImageSource(record, galleryImageSelection)) ? (
                   <span className="demo-place-image"><img src={galleryImageSelection === "__record-image" ? config.cardImage?.(record)?.src : galleryImageSource(record, galleryImageSelection)} alt={config.cardImage?.(record)?.alt ?? `${config.cardTitle(record)} image`} /></span>
                 ) : (
                   <span className="demo-place-image" style={{ background: `linear-gradient(135deg, ${cardColors[index % cardColors.length]}, #527b82)` }} aria-hidden="true" />
@@ -358,12 +536,8 @@ export function WireframeCollectionView<T extends WireframeRecord>({
           className={`wireframe-demo-inspector ${inspectorExpanded ? "is-expanded" : ""}`}
           aria-labelledby="wireframe-inspector-title"
         >
-          <WireframeCover recordKey={selected.id} value={selectedCover} onChange={(cover) => persistCover(selected, cover)} />
           <div className="demo-inspector-heading">
-            <div>
-              <p>{inspectorExpanded ? "Record page" : "Record inspector"}</p>
-              <h2 id="wireframe-inspector-title">{config.cardTitle(selected)}</h2>
-            </div>
+            <div aria-hidden="true" />
             <div className="demo-inspector-actions">
               {inspectorExpanded ? (
                 <button type="button" aria-label="Back to collection" title="Back to collection" onClick={() => navigate(location.pathname.replace(/\/record\/[^/]+$/, ""))}><ChevronLeft size={16} aria-hidden="true" /></button>
@@ -372,6 +546,10 @@ export function WireframeCollectionView<T extends WireframeRecord>({
               )}
               <button type="button" aria-label="Close inspector" title="Close inspector" onClick={closeInspector}>×</button>
             </div>
+          </div>
+          <WireframeCover recordKey={selected.id} value={selectedCover} onChange={(cover) => persistCover(selected, cover)} onUpload={(file) => uploadCover(selected, file)} />
+          <div className="wireframe-inspector-record-title">
+            <h2 id="wireframe-inspector-title">{config.cardTitle(selected)}</h2>
           </div>
           {renderInspector(config.inspector(selected, schemaProperties), openPropertyDetails)}
         </aside>

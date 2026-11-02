@@ -49,6 +49,8 @@ final class TableViewContractTests: XCTestCase {
             app.migrations.add(CreateTableViews())
             app.migrations.add(CreateViewColumnConfigurations())
             app.migrations.add(CreateViewQueryConfigurations())
+            app.migrations.add(AddTableViewWorkspaceState())
+            app.migrations.add(CreateRecordPresentations())
             try await app.autoMigrate()
         }) { app in
             let sql = try XCTUnwrap(app.db(.sqlite) as? SQLDatabase)
@@ -57,6 +59,7 @@ final class TableViewContractTests: XCTestCase {
 
             let schema = try await LiveSchemaService(database: app.db(.sqlite)).inspect()
             let tableViews = try XCTUnwrap(schema.tables.first { $0.name == TableView.schema })
+            XCTAssertTrue(tableViews.columns.contains { $0.name == "WorkspaceState" })
             XCTAssertTrue(tableViews.foreignKeys.contains {
                 $0.column == "HubID" && $0.referencedTable == Hub.schema && $0.onDelete == "CASCADE"
             })
@@ -75,9 +78,22 @@ final class TableViewContractTests: XCTestCase {
             XCTAssertTrue(queryConfigurations.foreignKeys.contains {
                 $0.column == "ParentQueryID" && $0.referencedTable == ViewQueryConfiguration.schema && $0.onDelete == "CASCADE"
             })
+            let recordPresentations = try XCTUnwrap(schema.tables.first { $0.name == RecordPresentation.schema })
+            XCTAssertTrue(recordPresentations.indexes.contains {
+                $0.name == "uq_RecordPresentations_Hub_Table_Record" && $0.unique
+                    && $0.columns == ["HubID", "TableName", "RecordID"]
+            })
+            XCTAssertTrue(recordPresentations.foreignKeys.contains {
+                $0.column == "HubID" && $0.referencedTable == Hub.schema && $0.onDelete == "CASCADE"
+            })
 
-            let first = TableView(hubID: "hub-1", tableName: "Services", name: "Default", viewType: .table, isDefault: true)
+            let first = TableView(
+                hubID: "hub-1", tableName: "Services", name: "Default", viewType: .table,
+                isDefault: true, workspaceState: #"{"selectedRecordID":"record-1"}"#
+            )
             try await first.create(on: app.db(.sqlite))
+            let persistedView = try await TableView.find(first.id, on: app.db(.sqlite))
+            XCTAssertEqual(persistedView?.workspaceState, #"{"selectedRecordID":"record-1"}"#)
             let duplicate = TableView(hubID: "hub-1", tableName: "Services", name: "Also default", viewType: .list, isDefault: true)
             do {
                 try await duplicate.create(on: app.db(.sqlite))
@@ -90,14 +106,29 @@ final class TableViewContractTests: XCTestCase {
             try await child.create(on: app.db(.sqlite))
             let query = ViewQueryConfiguration(viewID: first.id!, nodeType: .group, booleanOperator: .and)
             try await query.create(on: app.db(.sqlite))
+            let presentation = RecordPresentation(
+                hubID: "hub-1", tableName: "Services", recordID: "record-1", presentation: #"{"cover":{"source":"color"}}"#
+            )
+            try await presentation.create(on: app.db(.sqlite))
+            let duplicatePresentation = RecordPresentation(
+                hubID: "hub-1", tableName: "Services", recordID: "record-1", presentation: "{}"
+            )
+            do {
+                try await duplicatePresentation.create(on: app.db(.sqlite))
+                XCTFail("Expected one presentation per Hub, table, and record")
+            } catch {
+                // Expected uniqueness failure.
+            }
 
             try await sql.raw(SQLQueryString(stringLiteral: "DELETE FROM Hubs WHERE HubID = 'hub-1'")).run()
             let columnCount = try await ViewColumnConfiguration.query(on: app.db(.sqlite)).count()
             let queryCount = try await ViewQueryConfiguration.query(on: app.db(.sqlite)).count()
             let viewCount = try await TableView.query(on: app.db(.sqlite)).count()
+            let presentationCount = try await RecordPresentation.query(on: app.db(.sqlite)).count()
             XCTAssertEqual(columnCount, 0)
             XCTAssertEqual(queryCount, 0)
             XCTAssertEqual(viewCount, 0)
+            XCTAssertEqual(presentationCount, 0)
         }
     }
 }

@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { api, type SavedTableViewInput } from "../api";
 import { PaginationControls } from "./PaginationControls";
 import { RecordUtilities } from "./RecordUtilities";
 import { useGemLifeShell } from "./layout/GemLifeShell";
@@ -23,6 +22,7 @@ import type { TablePropertyConfigurationInput } from "../table-kit/configuration
 import type { ReactNode } from "react";
 import { Dialog } from "tamagui";
 import { GemButton } from "./ui";
+import { useSaveTableViewColumnsMutation, useSaveTableViewWorkspaceStateMutation, useTableViewsQuery } from "../data/presentationQueries";
 
 /** The existing domain utility state shared by each database consumer adapter. */
 export interface DatabaseRecordUtilities<Record> {
@@ -32,7 +32,7 @@ export interface DatabaseRecordUtilities<Record> {
   sort: string;
   onSort: (value: string) => void;
   direction: RecordSortDirection;
-  onDirection: () => void;
+  onDirection: (direction?: RecordSortDirection) => void;
   filter: string;
   onFilter: (value: string) => void;
 }
@@ -55,6 +55,11 @@ export interface DatabaseRecordCollectionProps<Record> {
 type CollectionWorkspaceState = {
   activeViewId: "list" | "gallery" | "table";
   selectedRecordId: string | null;
+  search: string;
+  sort: string;
+  direction: RecordSortDirection;
+  filter: string;
+  groupBy: string;
 };
 
 function decodeCollectionWorkspaceState(value: string | null): CollectionWorkspaceState | null {
@@ -65,7 +70,15 @@ function decodeCollectionWorkspaceState(value: string | null): CollectionWorkspa
       (parsed.activeViewId === "list" || parsed.activeViewId === "gallery" || parsed.activeViewId === "table") &&
       (parsed.selectedRecordId === null || typeof parsed.selectedRecordId === "string")
     )
-      return parsed as CollectionWorkspaceState;
+      return {
+        activeViewId: parsed.activeViewId,
+        selectedRecordId: parsed.selectedRecordId,
+        search: typeof parsed.search === "string" ? parsed.search : "",
+        sort: typeof parsed.sort === "string" ? parsed.sort : "",
+        direction: parsed.direction === "desc" ? "desc" : "asc",
+        filter: typeof parsed.filter === "string" ? parsed.filter : "",
+        groupBy: typeof parsed.groupBy === "string" ? parsed.groupBy : "",
+      };
   } catch {
     // Ignore workspace state from an incompatible or older client.
   }
@@ -93,13 +106,23 @@ export function DatabaseRecordCollection<Record>({
   const [activeViewId, setActiveViewId] = useState<"list" | "gallery" | "table">("gallery");
   const [workspaceLoaded, setWorkspaceLoaded] = useState(false);
   const [pendingSelectionId, setPendingSelectionId] = useState<string | null>(null);
+  const [groupBy, setGroupBy] = useState("");
   const [viewConfigurations, setViewConfigurations] = useState<
     globalThis.Record<string, TablePropertyConfigurationInput>
   >({});
+  const savedViewsQuery = useTableViewsQuery(label);
+  const { mutateAsync: saveWorkspaceStateAsync } = useSaveTableViewWorkspaceStateMutation(label);
+  const { mutateAsync: saveColumnsAsync } = useSaveTableViewColumnsMutation(label);
   const workspaceStateRef = useRef<CollectionWorkspaceState>({
     activeViewId: "gallery",
     selectedRecordId: null,
+    search: "",
+    sort: "",
+    direction: "asc",
+    filter: "",
+    groupBy: "",
   });
+  const workspaceRestored = useRef(false);
   const handleDetailChange = useCallback((id: string | null) => {
     setPendingSelectionId(null);
     onDetailChange(id);
@@ -124,27 +147,17 @@ export function DatabaseRecordCollection<Record>({
     [properties],
   );
   useEffect(() => {
-    const controller = new AbortController();
-    const viewTypes = [
-      ["list", "List"],
-      ["gallery", "Gallery"],
-      ["table", "Table"],
-    ] as const;
-    void Promise.all(
-      viewTypes.map(async ([viewId, viewType]) => {
-        try {
-          const saved = await api.getTableView(label, viewType, controller.signal);
-          return [viewId, saved] as const;
-        } catch {
-          return null;
-        }
-      }),
-    ).then((savedViews) => {
-      if (controller.signal.aborted) return;
+      if (!savedViewsQuery.isSuccess || workspaceRestored.current) return;
+      workspaceRestored.current = true;
+      const savedViews = ([
+        ["list", savedViewsQuery.data?.List ?? null],
+        ["gallery", savedViewsQuery.data?.Gallery ?? null],
+        ["table", savedViewsQuery.data?.Table ?? null],
+      ] as const);
       setViewConfigurations((current) =>
         savedViews.reduce(
           (next, savedView) =>
-            savedView
+            savedView[1]
               ? {
                   ...next,
                   [savedView[0]]: {
@@ -159,8 +172,8 @@ export function DatabaseRecordCollection<Record>({
         ),
       );
       const restored = savedViews
-        .filter((savedView): savedView is Exclude<typeof savedView, null> => savedView !== null)
-        .map(([, saved]) => ({ saved, state: decodeCollectionWorkspaceState(saved.view.workspaceState) }))
+        .filter((savedView) => savedView[1] !== null)
+        .map(([, saved]) => ({ saved: saved!, state: decodeCollectionWorkspaceState(saved!.view.workspaceState) }))
         .filter((candidate) => candidate.state !== null)
         .sort(
           (left, right) => Date.parse(right.saved.view.updatedAt ?? "") - Date.parse(left.saved.view.updatedAt ?? ""),
@@ -168,6 +181,11 @@ export function DatabaseRecordCollection<Record>({
       if (restored?.state) {
         workspaceStateRef.current = restored.state;
         setActiveViewId(restored.state.activeViewId);
+        utilities.onSearch(restored.state.search);
+        utilities.onSort(restored.state.sort);
+        utilities.onDirection(restored.state.direction);
+        utilities.onFilter(restored.state.filter);
+        setGroupBy(restored.state.groupBy);
         if (restored.state.selectedRecordId === null) {
           setPendingSelectionId(null);
           onDetailChange(null);
@@ -176,9 +194,7 @@ export function DatabaseRecordCollection<Record>({
         }
       }
       setWorkspaceLoaded(true);
-    });
-    return () => controller.abort();
-  }, [label]);
+  }, [savedViewsQuery.data, savedViewsQuery.isSuccess, onDetailChange, utilities]);
 
   useEffect(() => {
     if (!pendingSelectionId) return;
@@ -186,52 +202,50 @@ export function DatabaseRecordCollection<Record>({
       (record, index) => adapter.toTableRecord(record, index).id === pendingSelectionId,
     );
     if (recordIsAvailable) handleDetailChange(pendingSelectionId);
+    else setPendingSelectionId(null);
   }, [adapter, handleDetailChange, pendingSelectionId, records]);
 
   const saveConfiguration = useCallback(
     async (
       viewId: string | undefined,
       configuration: { order: readonly string[]; hiddenIds: readonly string[] },
-      selectedRecordId: string | null = detailId,
     ) => {
       if (!viewId) return;
       const viewType = viewId === "gallery" ? "Gallery" : viewId === "table" ? "Table" : "List";
-      const payload: SavedTableViewInput = {
-        viewType,
-        name: viewId,
-        workspaceState: JSON.stringify({ activeViewId: viewId, selectedRecordId }),
-        columns: configuration.order.map((columnName, sortOrder) => ({
+      const columns = configuration.order.map((columnName, sortOrder) => ({
           columnName,
           sortOrder,
           isVisible: !configuration.hiddenIds.includes(columnName),
           width: null,
-        })),
-        queries: [],
-      };
+        }));
       setViewConfigurations((current) => ({ ...current, [viewId]: configuration }));
       try {
-        await api.saveTableView(label, viewType, payload);
+        await saveColumnsAsync({ viewType, columns });
       } catch {
         // Keep the local change usable when the API is unavailable; the next change retries persistence.
       }
     },
-    [detailId, label],
+    [saveColumnsAsync],
   );
 
   useEffect(() => {
     if (!workspaceLoaded || pendingSelectionId !== null) return;
-    const nextState: CollectionWorkspaceState = { activeViewId, selectedRecordId: detailId };
-    if (
-      workspaceStateRef.current.activeViewId === nextState.activeViewId &&
-      workspaceStateRef.current.selectedRecordId === nextState.selectedRecordId
-    )
-      return;
+    const nextState: CollectionWorkspaceState = {
+      activeViewId,
+      selectedRecordId: detailId,
+      search: utilities.search,
+      sort: utilities.sort,
+      direction: utilities.direction,
+      filter: utilities.filter,
+      groupBy,
+    };
+    if (JSON.stringify(workspaceStateRef.current) === JSON.stringify(nextState)) return;
     workspaceStateRef.current = nextState;
     const viewType = activeViewId === "gallery" ? "Gallery" : activeViewId === "table" ? "Table" : "List";
-    void api.saveTableViewWorkspaceState(label, viewType, JSON.stringify(nextState)).catch(() => {
+    void saveWorkspaceStateAsync({ viewType, workspaceState: JSON.stringify(nextState) }).catch(() => {
       // Keep navigation responsive if persistence is temporarily unavailable.
     });
-  }, [activeViewId, detailId, label, pendingSelectionId, workspaceLoaded]);
+  }, [activeViewId, detailId, groupBy, pendingSelectionId, saveWorkspaceStateAsync, utilities, workspaceLoaded]);
 
   return (
     <Table.Root
@@ -265,6 +279,8 @@ export function DatabaseRecordCollection<Record>({
         onRecordPatch={onRecordPatch}
         viewConfigurations={viewConfigurations}
         onConfigurationChange={saveConfiguration}
+        groupBy={groupBy}
+        onGroupByChange={setGroupBy}
       />
     </Table.Root>
   );
@@ -286,6 +302,8 @@ function DatabaseRecordTableShell<Record>({
   onRecordPatch,
   viewConfigurations,
   onConfigurationChange,
+  groupBy,
+  onGroupByChange,
 }: {
   properties: readonly RecordPropertyDefinition<Record>[];
   label: string;
@@ -304,6 +322,8 @@ function DatabaseRecordTableShell<Record>({
     viewId: string | undefined,
     configuration: { order: readonly string[]; hiddenIds: readonly string[] },
   ) => Promise<void>;
+  groupBy: string;
+  onGroupByChange: (groupBy: string) => void;
 }) {
   const { viewId, setViewId } = useTableContext<TableRecord<Record>>();
   const propertyOptions = useMemo(
@@ -332,7 +352,6 @@ function DatabaseRecordTableShell<Record>({
       void onConfigurationChange(context.viewId, next);
     },
   });
-  const [groupBy, setGroupBy] = useState("");
   const galleryConfiguration = useMemo(() => {
     if (viewId !== "gallery") return configuration;
     const galleryVisibleIds = configuration.visibleIds
@@ -392,7 +411,7 @@ function DatabaseRecordTableShell<Record>({
               filterOptions={filterOptions}
               onFilter={utilities.onFilter}
               groupBy={groupBy}
-              onGroupBy={setGroupBy}
+              onGroupBy={onGroupByChange}
               groupOptions={propertyOptions.map((property) => ({ value: property.id, label: property.label }))}
             />
             <RecordUtilities
