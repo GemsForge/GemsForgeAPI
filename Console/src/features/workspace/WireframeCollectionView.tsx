@@ -749,6 +749,10 @@ function WireframeAgGrid<T extends WireframeRecord>({ records, visiblePropertyId
         }
         if (property) {
           const display = property.getValue(params.data).display;
+          const value = property.getValue(params.data);
+          if ((property.kind === "url" || property.kind === "email") && value.href) {
+            return <a className="primitive-value-link" href={value.href} target="_blank" rel="noreferrer" onClick={(event) => event.stopPropagation()}>{typeof display === "string" ? display : value.href}</a>;
+          }
           return typeof display === "string" || typeof display === "number" ? String(display) : display == null ? "—" : "";
         }
         return formatWireframeTableValue(field, rawValue);

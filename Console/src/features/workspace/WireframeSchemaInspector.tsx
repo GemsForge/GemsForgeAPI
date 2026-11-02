@@ -54,6 +54,13 @@ export function WireframeSchemaInspector<Record extends object>({
         propertyType: property.propertyType,
         iconName: property.iconName,
       });
+      const resolvedKind: WireframeInspectorField["kind"] =
+        metadata.type === "URL" ? "url" : metadata.type === "Email" ? "email" : kind;
+      const displayValue = property.getValue(record).display;
+      const propertyValue = property.getValue(record);
+      const linkedDisplayValue = (property.kind === "url" || property.kind === "email") && propertyValue.href
+        ? <a className="primitive-value-link" href={propertyValue.href} target="_blank" rel="noreferrer" onClick={(event) => event.stopPropagation()}>{typeof displayValue === "string" ? displayValue : propertyValue.href}</a>
+        : displayValue;
       return {
         id: property.id,
         label: property.label,
@@ -65,8 +72,8 @@ export function WireframeSchemaInspector<Record extends object>({
           property.kind === "number" && typeof value.raw === "number"
             ? formatRecordNumber(value.raw, property.numberFormat ?? inferRecordNumberFormat(property.id, property.label))
             : value.display,
-        display: value.display,
-        kind,
+        display: linkedDisplayValue,
+        kind: resolvedKind,
         propertyKind: property.kind,
         propertyType: metadata.type,
         iconName: metadata.iconName,
