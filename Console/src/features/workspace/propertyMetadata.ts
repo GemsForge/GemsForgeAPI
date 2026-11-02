@@ -29,6 +29,8 @@ export function inferWireframePropertyMetadata({
   const type = propertyType?.trim() || inferWireframePropertyType(label, kind, numberFormat);
   const icon = iconName?.trim()
     ? getPropertyIconByName(iconName)
+    : /^(id|item id|record id|primary key)$/i.test(label.trim())
+      ? getPropertyIconByName("Lock")
     : getPropertyIconDefinition(label, kind, propertyType?.trim() || (type === "Text" ? undefined : type));
   return { type, iconName: icon.name };
 }

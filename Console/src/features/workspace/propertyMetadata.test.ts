@@ -34,6 +34,10 @@ describe("wireframe property metadata", () => {
     expect(inferWireframePropertyType("Logo", "image")).toBe("Image");
   });
 
+  it.each(["ID", "Item ID", "Record ID", "Primary Key"])("defaults %s to the Lock icon", (label) => {
+    expect(inferWireframePropertyMetadata({ label }).iconName).toBe("Lock");
+  });
+
   it.each([
     ["Monthly amount", "number", undefined, "Currency"],
     ["APR", "number", undefined, "Percent"],
