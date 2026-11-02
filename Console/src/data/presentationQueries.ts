@@ -4,6 +4,7 @@ import { APIError, api } from "../api";
 export const presentationQueryKeys = {
   recordPresentations: (tableName: string) => ["record-presentations", tableName] as const,
   tableViews: (tableName: string) => ["table-views", tableName] as const,
+  tableViewIconPreference: (tableName: string) => ["table-view-icon-preference", tableName] as const,
 };
 
 export function useRecordPresentationsQuery(tableName: string) {
@@ -81,7 +82,7 @@ export function useTableViewsQuery(tableName: string) {
 export function useTableIconPreferences(tableNames: readonly string[]) {
   const results = useQueries({
     queries: tableNames.map((tableName) => ({
-      queryKey: presentationQueryKeys.tableViews(tableName),
+      queryKey: presentationQueryKeys.tableViewIconPreference(tableName),
       queryFn: async ({ signal }: { signal: AbortSignal }) => {
         const views = await Promise.all((['List', 'Gallery', 'Table'] as const).map(async (viewType) => {
           try { return await api.getTableView(tableName, viewType, signal); }
