@@ -4,7 +4,7 @@ export type WireframeInspectorField = {
   id: string;
   label: string;
   value: string;
-  kind?: "text" | "select" | "status" | "date" | "textarea";
+  kind?: "text" | "select" | "status" | "number" | "date" | "textarea";
   options?: string[];
   onCommit?: (value: string) => Promise<void>;
 };

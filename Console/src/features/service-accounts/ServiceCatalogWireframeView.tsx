@@ -1,11 +1,33 @@
 import type { ServiceAccount } from "../../types";
 import type { RecordPropertyDefinition } from "../../table-kit";
+import { useServiceAccountPatchMutation } from "../../data/recordQueries";
 import { createServiceAccountTableAdapter } from "../database/recordTableAdapters";
 import { WireframeCollectionView } from "../workspace/WireframeCollectionView";
 import { WireframeSchemaInspector } from "../workspace/WireframeSchemaInspector";
 
 export function ServiceCatalogWireframeView({ records }: { records: readonly ServiceAccount[] }) {
+  const patch = useServiceAccountPatchMutation();
   const adapter = createServiceAccountTableAdapter((record) => record.service);
+  const fieldByProperty: Record<string, keyof ServiceAccount> = {
+    service: "service",
+    type: "type",
+    group: "expenseGroup",
+    monthlyAmount: "monthlyAmount",
+    interestRate: "interestRate",
+    apr: "apr",
+    due: "due",
+    occurrence: "occurrence",
+    status: "status",
+    since: "since",
+    website: "website",
+    notes: "notes",
+    paymentMethod: "paymentMethod",
+    accountNumber: "accountNumber",
+    emailUpdated: "emailUpdated",
+  };
+  const properties = adapter
+    .getPropertyDefinitions()
+    .filter((property) => [...Object.keys(fieldByProperty), "id"].includes(property.id));
   return (
     <WireframeCollectionView
       config={{
@@ -24,7 +46,26 @@ export function ServiceCatalogWireframeView({ records }: { records: readonly Ser
           <WireframeSchemaInspector
             record={record}
             properties={
-              adapter.getPropertyDefinitions() as unknown as readonly RecordPropertyDefinition<typeof record>[]
+              properties.map((property) => {
+                const field = fieldByProperty[property.id];
+                const numeric = ["monthlyAmount", "interestRate", "apr"].includes(property.id);
+                return {
+                  ...property,
+                  kind: numeric ? "number" : property.kind,
+                  edit: field
+                    ? {
+                        inputType: numeric ? "number" : property.kind === "date" ? "date" : "text",
+                        onSave: (_record: unknown, value: string | number | null) =>
+                          patch
+                            .mutateAsync({
+                              id: Number(record.id),
+                              patch: { [field]: numeric ? (value === "" ? null : Number(value)) : value || null },
+                            })
+                            .then(() => undefined),
+                      }
+                    : undefined,
+                };
+              }) as unknown as readonly RecordPropertyDefinition<typeof record>[]
             }
           />
         ),
