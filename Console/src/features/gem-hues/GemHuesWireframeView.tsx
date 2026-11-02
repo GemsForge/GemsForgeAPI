@@ -1,6 +1,33 @@
 import type { GemHue } from "../../types";
+import { createGemHueTableAdapter } from "../database/recordTableAdapters";
 import { WireframeCollectionView } from "../workspace/WireframeCollectionView";
+import { WireframeSchemaInspector } from "../workspace/WireframeSchemaInspector";
 
 export function GemHuesWireframeView({ records }: { records: readonly GemHue[] }) {
-  return <WireframeCollectionView config={{ title: "Gem Hues", description: "Foundation colors, palettes, moods, and visual language for GemsForge.", activeCollection: "Gem Hues", records, searchValues: (record) => [record.colorName, record.colorFamily ?? "", record.hexCode, record.mood ?? "", record.palette ?? ""], cardTitle: (record) => record.colorName, cardSubtitle: (record) => record.colorFamily ?? "Color family", cardStatus: (record) => record.hexCode, cardMeta: (record) => record.mood ?? "No mood recorded", inspector: (record) => <dl><div><dt>Color name</dt><dd>{record.colorName}</dd></div><div><dt>Hex code</dt><dd>{record.hexCode}</dd></div><div><dt>Color family</dt><dd>{record.colorFamily ?? "—"}</dd></div><div><dt>Mood</dt><dd>{record.mood ?? "—"}</dd></div><div><dt>Palette</dt><dd>{record.palette ?? "—"}</dd></div><div><dt>Description</dt><dd>{record.description ?? "No description yet."}</dd></div><div><dt>Notes</dt><dd>{record.notes ?? "No notes yet."}</dd></div></dl> }} />;
+  const adapter = createGemHueTableAdapter();
+  return (
+    <WireframeCollectionView
+      config={{
+        tableName: "GemHues",
+        title: "Gem Hues",
+        description: "Foundation colors, palettes, moods, and visual language for GemsForge.",
+        activeCollection: "Gem Hues",
+        records,
+        searchValues: (record) => [
+          record.colorName,
+          record.colorFamily ?? "",
+          record.hexCode,
+          record.mood ?? "",
+          record.palette ?? "",
+        ],
+        cardTitle: (record) => record.colorName,
+        cardSubtitle: (record) => record.colorFamily ?? "Color family",
+        cardStatus: (record) => record.hexCode,
+        cardMeta: (record) => record.mood ?? "No mood recorded",
+        inspector: (record) => (
+          <WireframeSchemaInspector record={record} properties={adapter.getPropertyDefinitions()} />
+        ),
+      }}
+    />
+  );
 }

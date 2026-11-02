@@ -80,6 +80,7 @@ export const GemField = forwardRef<HTMLInputElement | HTMLTextAreaElement, GemFi
           aria-invalid={Boolean(error)}
           aria-describedby={error ? errorID : undefined}
           required={required}
+          readOnly={false}
           aria-label={showLabel ? undefined : label}
         />
       ) : (
@@ -94,6 +95,7 @@ export const GemField = forwardRef<HTMLInputElement | HTMLTextAreaElement, GemFi
           aria-invalid={Boolean(error)}
           aria-describedby={error ? errorID : undefined}
           required={required}
+          readOnly={false}
           aria-label={showLabel ? undefined : label}
         />
       )}
