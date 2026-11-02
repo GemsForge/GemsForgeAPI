@@ -1,4 +1,6 @@
 import { WireframeEditableValue } from "./WireframeEditableValue";
+import { WireframePropertyEditor } from "./WireframePropertyEditor";
+import type { ReactNode } from "react";
 
 export type WireframeInspectorField = {
   id: string;
@@ -6,6 +8,7 @@ export type WireframeInspectorField = {
   value: string;
   kind?: "text" | "select" | "status" | "number" | "date" | "textarea";
   options?: string[];
+  display?: ReactNode;
   onCommit?: (value: string) => Promise<void>;
 };
 
@@ -14,7 +17,9 @@ export function WireframeRecordInspector({ fields }: { fields: readonly Wirefram
     <dl aria-label="Record properties">
       {fields.map((field) => (
         <div key={field.id}>
-          <dt>{field.label}</dt>
+          <dt data-property-kind={field.kind ?? "text"}>
+            <WireframePropertyEditor label={field.label} value={field.value} kind={field.kind} />
+          </dt>
           <dd>
             {field.onCommit ? (
               <WireframeEditableValue
@@ -25,7 +30,7 @@ export function WireframeRecordInspector({ fields }: { fields: readonly Wirefram
                 onCommit={field.onCommit}
               />
             ) : (
-              field.value || "—"
+              (field.display ?? field.value) || "—"
             )}
           </dd>
         </div>

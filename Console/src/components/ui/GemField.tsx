@@ -52,7 +52,7 @@ export const GemField = forwardRef<HTMLInputElement | HTMLTextAreaElement, GemFi
   if (!editing) {
     return (
       <GemFieldRoot className="gem-field-display">
-        <GemFieldLabel>{label}</GemFieldLabel>
+        {showLabel ? <GemFieldLabel>{label}</GemFieldLabel> : null}
         <button type="button" className="gem-field-display-value" onClick={onDisplayClick}>
           {displayValue ?? props.value ?? "—"}
         </button>

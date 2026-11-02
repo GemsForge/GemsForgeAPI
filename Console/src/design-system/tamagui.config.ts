@@ -94,6 +94,9 @@ export const tamaguiConfig = createTamagui({
       fieldBorder: "$gemPanelLight",
       fieldText: "$gemInk",
       fieldFocus: "$gemMint",
+      fieldMenuBackground: "$gemPanel",
+      fieldMenuHover: "$gemPanelLight",
+      fieldMenuText: "$gemInk",
     },
     light: {
       ...defaultConfig.themes.light,
@@ -105,6 +108,9 @@ export const tamaguiConfig = createTamagui({
       fieldBorder: "$lightBorder",
       fieldText: "$lightInk",
       fieldFocus: "$wireframeMint",
+      fieldMenuBackground: "$wireframePanel",
+      fieldMenuHover: "$wireframePanelLight",
+      fieldMenuText: "$lightInk",
     },
   },
 });
