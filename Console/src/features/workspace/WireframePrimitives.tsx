@@ -3,6 +3,9 @@ import { styled, Text, XStack, YStack } from "tamagui";
 export const WireframeMain = styled(YStack, {
   flex: 1,
   minWidth: 0,
+  width: "100%",
+  gridColumn: 2,
+  gridRow: 2,
   padding: "$wireframeContent",
   backgroundColor: "$wireframeCanvas",
   color: "$wireframeInk",
