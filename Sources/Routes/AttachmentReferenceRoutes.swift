@@ -1,3 +1,4 @@
+import Foundation
 import Vapor
 
 /// Request used by the console when attaching, replacing, or removing a file.
@@ -5,9 +6,70 @@ struct AttachmentReferenceRequest: Content {
     let fileMetadataID: String?
 }
 
+struct GemHueImageReferenceResponse: Content {
+    let fileMetadataID: String?
+}
+
 /// Registers small PATCH endpoints so clients do not need to resend an entire
 /// owner record just to change its image or document reference.
 func registerAttachmentReferenceRoutes(_ app: Application) {
+    app.patch("gemhues", ":id", "image") { request async throws -> GemHueImageReferenceResponse in
+        guard let id = request.parameters.get("id") else { throw Abort(.badRequest) }
+        let input = try request.content.decode(AttachmentReferenceRequest.self)
+        let hubID = request.authenticatedHubID
+
+        return try await request.db.transaction { database in
+            let hueService = GemHueService(database: database, hubID: hubID)
+            guard try await hueService.find(id: id) != nil else { throw Abort(.notFound) }
+
+            let imageService = GemHueService(database: database, hubID: hubID)
+            let existingImage = try await imageService.findImage(hueID: id)
+            let metadataService = FileMetadataService(database: database, hubID: hubID)
+
+            guard let metadataID = input.fileMetadataID?.trimmingCharacters(in: .whitespacesAndNewlines), !metadataID.isEmpty else {
+                if let existingImage, let imageID = existingImage.id {
+                    try await AttachmentReferenceService(database: database, hubID: hubID).replace(
+                        oldMetadataID: existingImage.fileMetadataID,
+                        newMetadataID: nil,
+                        ownerType: "GemHueImage",
+                        ownerID: String(imageID)
+                    )
+                    try await existingImage.delete(on: database)
+                }
+                return GemHueImageReferenceResponse(fileMetadataID: nil)
+            }
+
+            guard let metadata = try await metadataService.find(id: metadataID), metadata.mimeType.hasPrefix("image/") else {
+                throw Abort(.unprocessableEntity, reason: "The image file metadata does not exist or is not an image.")
+            }
+
+            let image = existingImage ?? GemHueImage()
+            if existingImage == nil {
+                image.$hue.id = id
+                image.hubID = hubID
+                image.image = Data()
+                image.mimeType = metadata.mimeType
+                image.fileName = metadata.fileName
+                image.fileSizeBytes = metadata.byteSize
+                try await image.save(on: database)
+            }
+            guard let imageID = image.id else { throw Abort(.internalServerError) }
+
+            try await AttachmentReferenceService(database: database, hubID: hubID).replace(
+                oldMetadataID: image.fileMetadataID,
+                newMetadataID: metadataID,
+                ownerType: "GemHueImage",
+                ownerID: String(imageID)
+            )
+            image.fileMetadataID = metadataID
+            image.mimeType = metadata.mimeType
+            image.fileName = metadata.fileName
+            image.fileSizeBytes = metadata.byteSize
+            try await image.save(on: database)
+            return GemHueImageReferenceResponse(fileMetadataID: metadataID)
+        }
+    }
+
     app.patch("addresses", ":id", "attachment") { request async throws -> AddressDetailResponse in
         guard let id = request.parameters.get("id"),
               let address = try await AddressService(database: request.db, hubID: request.authenticatedHubID).find(id: id)

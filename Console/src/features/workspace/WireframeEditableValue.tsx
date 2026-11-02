@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { Pencil } from "lucide-react";
 import { GemPrimitiveField } from "../../components/ui/GemPrimitiveField";
 import { GemStatusPill } from "../../components/ui/GemStatusPill";
 
@@ -67,10 +68,31 @@ export function WireframeEditableValue({
 
   return (
     <div ref={fieldRef} className="wireframe-editable-value">
-      {!editing && kind === "url" && currentValue ? (
-        <a className="primitive-value-link" href={currentValue} target="_blank" rel="noreferrer" onClick={(event) => event.stopPropagation()}>
-          {displayValue ?? currentValue}
-        </a>
+      {!editing && (kind === "url" || kind === "email") && currentValue ? (
+        <span className="wireframe-action-value">
+          <a
+            className="primitive-value-link"
+            href={kind === "email" ? `mailto:${currentValue}` : currentValue}
+            target={kind === "url" ? "_blank" : undefined}
+            rel={kind === "url" ? "noreferrer" : undefined}
+            onClick={(event) => event.stopPropagation()}
+          >
+            {displayValue ?? currentValue}
+          </a>
+          <button
+            type="button"
+            className="wireframe-value-edit-trigger"
+            aria-label={`Edit ${label}`}
+            title={`Edit ${label}`}
+            onClick={(event) => {
+              event.stopPropagation();
+              setSaveError(undefined);
+              setEditing(true);
+            }}
+          >
+            <Pencil size={14} aria-hidden="true" />
+          </button>
+        </span>
       ) : <GemPrimitiveField
         label={label}
         showLabel={false}

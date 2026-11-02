@@ -71,6 +71,8 @@ export function WireframeSchemaInspector<Record extends object>({
         displayValue:
           property.kind === "number" && typeof value.raw === "number"
             ? formatRecordNumber(value.raw, property.numberFormat ?? inferRecordNumberFormat(property.id, property.label))
+            : (property.kind === "url" || property.kind === "email") && propertyValue.href
+              ? typeof displayValue === "string" ? displayValue : propertyValue.href
             : value.display,
         display: linkedDisplayValue,
         kind: resolvedKind,

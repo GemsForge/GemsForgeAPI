@@ -15,8 +15,24 @@
   --mint-dark: #1d574f;
   --gold: #f0bd73;
   --danger: #f08a83;
+  --gem-scrollbar-size: 6px;
+  --gem-scrollbar-thumb: color-mix(in srgb, var(--muted) 42%, transparent);
+  --gem-scrollbar-track: transparent;
   font-family: var(--gem-font-family);
 }
+
+*:where(*) {
+  scrollbar-width: thin;
+  scrollbar-color: var(--gem-scrollbar-thumb) var(--gem-scrollbar-track);
+}
+
+*::-webkit-scrollbar {
+  width: var(--gem-scrollbar-size);
+  height: var(--gem-scrollbar-size);
+}
+
+*::-webkit-scrollbar-track { background: var(--gem-scrollbar-track); }
+*::-webkit-scrollbar-thumb { border-radius: 999px; background: var(--gem-scrollbar-thumb); }
 
 .table-kit-record-list,
 .table-kit-record-list *,
@@ -871,7 +887,7 @@ dialog::backdrop {
     grid-template-columns: minmax(0, 1fr);
   }
 }
-.wireframe-demo { --field-background: #ffffff; --field-ink: #233c42; --field-border: #a8d2cf; --field-focus: #39736d; --field-label: #76571b; --panel: #ffffff; --panel-light: #e8f1ef; --ink: #233c42; --line: #dfe6e3; --muted: #738187; --mint: #39736d; display: grid; grid-template-columns: 16rem minmax(0, 1fr) 24rem; grid-template-rows: 4.5rem minmax(0, 1fr); min-height: calc(100vh - 7rem); margin: -2.4rem clamp(-5rem, -5vw, -1.25rem); color: #233c42; background: #f7f7f4; font-family: "Avenir Next", "Avenir Next Demo", Avenir, Inter, ui-sans-serif, system-ui, sans-serif; }
+.wireframe-demo { --field-background: #ffffff; --field-ink: #233c42; --field-border: #a8d2cf; --field-focus: #39736d; --field-label: #76571b; --panel: #ffffff; --panel-light: #e8f1ef; --ink: #233c42; --line: #dfe6e3; --muted: #738187; --mint: #39736d; --gem-scrollbar-size: 4px; --gem-scrollbar-thumb: color-mix(in srgb, #738187 32%, transparent); --gem-scrollbar-track: transparent; display: grid; grid-template-columns: 16rem minmax(0, 1fr) 24rem; grid-template-rows: 4.5rem minmax(0, 1fr); min-height: calc(100vh - 7rem); margin: -2.4rem clamp(-5rem, -5vw, -1.25rem); color: #233c42; background: #f7f7f4; font-family: "Avenir Next", "Avenir Next Demo", Avenir, Inter, ui-sans-serif, system-ui, sans-serif; }
 .wireframe-standalone { width: 100%; min-width: 0; margin: 0; box-sizing: border-box; grid-template-columns: minmax(13rem, 16rem) minmax(0, 1fr) minmax(20rem, 24rem); overflow: hidden; }
 .wireframe-collection-page { --canvas: #f7f7f4; --panel: #ffffff; --panel-light: #e8f1ef; --ink: #233c42; --muted: #738187; --line: #dfe6e3; --mint: #39736d; --gold: #9a6b22; margin: -2.4rem clamp(-5rem, -5vw, -1.25rem); min-height: calc(100vh - 7rem); padding: 2.2rem clamp(1.3rem, 4vw, 3rem); background: var(--canvas); color: var(--ink); font-family: "Avenir Next", "Avenir Next Demo", Avenir, Inter, ui-sans-serif, system-ui, sans-serif; }
 .employment-wireframe .demo-gallery .demo-place-card { aspect-ratio: 1 / 1; grid-template-rows: minmax(0, 1fr) auto; min-height: 0; }
@@ -1090,10 +1106,8 @@ dialog::backdrop {
 .wireframe-demo-main .demo-gallery.gallery-size-large { --gallery-card-width: 19rem; }
 .wireframe-demo-main .demo-gallery .demo-place-card { flex: 0 0 min(var(--gallery-card-width, 19rem), 100%); max-width: 100%; aspect-ratio: 1; grid-template-rows: minmax(0, 1fr) minmax(0, 2fr); min-height: 0; }
 .wireframe-demo-main .demo-gallery .demo-place-image { width: 100%; height: 100%; min-height: 0; overflow: hidden; }
-.wireframe-demo-main .demo-gallery .demo-place-copy { min-width: 0; min-height: 0; overflow-x: hidden; overflow-y: auto; padding: .5rem; gap: .2rem; scrollbar-color: #c8d6d3 transparent; scrollbar-width: thin; }
-.wireframe-demo-main .demo-gallery .demo-place-properties { min-width: 0; min-height: 0; overflow-x: hidden; overflow-y: auto; scrollbar-color: #c8d6d3 transparent; scrollbar-width: thin; }
-.wireframe-demo-main .demo-gallery .demo-place-copy::-webkit-scrollbar, .wireframe-demo-main .demo-gallery .demo-place-properties::-webkit-scrollbar { width: .25rem; }
-.wireframe-demo-main .demo-gallery .demo-place-copy::-webkit-scrollbar-thumb, .wireframe-demo-main .demo-gallery .demo-place-properties::-webkit-scrollbar-thumb { border-radius: 999px; background: #c8d6d3; }
+.wireframe-demo-main .demo-gallery .demo-place-copy { min-width: 0; min-height: 0; overflow-x: hidden; overflow-y: auto; padding: .5rem; gap: .2rem; }
+.wireframe-demo-main .demo-gallery .demo-place-properties { min-width: 0; min-height: 0; overflow-x: hidden; overflow-y: auto; }
 .wireframe-demo-main .demo-gallery .demo-place-property { min-width: 0; overflow-wrap: anywhere; white-space: normal; }
 .wireframe-demo-main .demo-gallery.gallery-size-small .demo-place-properties { display: none; }
 .wireframe-demo-main .demo-gallery.gallery-size-small .demo-place-meta { display: none; }
@@ -1165,6 +1179,17 @@ dialog::backdrop {
 .wireframe-demo-inspector dd { min-width: 0; margin: 0; color: #233c42; font-size: .78rem; overflow-wrap: anywhere; }
 .wireframe-editable-value { box-sizing: border-box; width: 100%; padding: .3rem .4rem; border: 1px solid transparent; border-radius: .3rem; background: transparent; color: inherit; font: inherit; }
 .wireframe-editable-value:hover, .wireframe-editable-value:focus { border-color: #a8d2cf; background: #fff; outline: none; }
+.wireframe-action-value { display: flex; min-width: 0; align-items: center; gap: .35rem; }
+.wireframe-action-value .primitive-value-link { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wireframe-image-preview-row { display: inline-flex; max-width: 100%; align-items: center; gap: .35rem; }
+.wireframe-image-preview-row:hover .wireframe-value-edit-trigger, .wireframe-image-preview-row:focus-within .wireframe-value-edit-trigger { opacity: 1; pointer-events: auto; }
+.wireframe-image-edit-input { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.wireframe-image-edit-status, .wireframe-image-edit-error { display: block; margin-top: .25rem; font-size: .72rem; }
+.wireframe-image-edit-error { color: var(--danger); }
+.wireframe-value-edit-trigger { display: inline-grid; width: 2rem; height: 2rem; flex: 0 0 auto; place-items: center; padding: 0; border: 1px solid transparent; border-radius: .35rem; background: transparent; color: var(--mint); cursor: pointer; opacity: 0; pointer-events: none; transition: opacity 120ms ease; }
+.wireframe-action-value:hover .wireframe-value-edit-trigger, .wireframe-action-value:focus-within .wireframe-value-edit-trigger { opacity: 1; pointer-events: auto; }
+.wireframe-value-edit-trigger:hover, .wireframe-value-edit-trigger:focus-visible { border-color: #a8d2cf; background: #fff; color: var(--ink); outline: 2px solid #a8d2cf; outline-offset: 1px; }
+@media (hover: none) { .wireframe-value-edit-trigger { opacity: 1; pointer-events: auto; } }
 .wireframe-editable-notes { resize: vertical; line-height: 1.4; }
 .wireframe-date-pair { display: flex !important; align-items: center; gap: .35rem; }
 .wireframe-date-pair .wireframe-editable-value { min-width: 0; }

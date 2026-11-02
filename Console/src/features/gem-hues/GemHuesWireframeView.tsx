@@ -14,6 +14,7 @@ export function GemHuesWireframeView({ records }: { records: readonly GemHue[] }
   const create = useCreateGemHueMutation();
   const patch = useGemHuePatchMutation();
   const [imageURLs, setImageURLs] = useState<Record<string, string>>({});
+  const [imageRevision, setImageRevision] = useState(0);
   useEffect(() => {
     const controller = new AbortController();
     const objectURLs: string[] = [];
@@ -28,7 +29,7 @@ export function GemHuesWireframeView({ records }: { records: readonly GemHue[] }
       } catch { return null; }
     })).then((entries) => setImageURLs(Object.fromEntries(entries.filter((entry): entry is readonly [string, string] => entry !== null))));
     return () => { controller.abort(); objectURLs.forEach((url) => URL.revokeObjectURL(url)); };
-  }, [records]);
+  }, [records, imageRevision]);
   const adapter = createGemHueTableAdapter(
     (record) => {
       const src = imageURLs[record.id];
@@ -115,9 +116,20 @@ export function GemHuesWireframeView({ records }: { records: readonly GemHue[] }
                 kind: "image",
                 getValue: () => {
                   const src = imageURLs[record.id];
-                  return src
-                    ? { raw: src, display: <WireframeImagePreview src={src} alt={`${record.colorName} reference`} /> }
-                    : { display: "No image" };
+                  return {
+                    raw: src,
+                    display: (
+                      <WireframeImagePreview
+                        src={src}
+                        alt={`${record.colorName} reference`}
+                        onEdit={async (file) => {
+                          const metadata = await api.uploadImage(file, "image");
+                          await api.patchGemHueImage(record.id, metadata.id);
+                          setImageRevision((revision) => revision + 1);
+                        }}
+                      />
+                    ),
+                  };
                 },
               },
               ...(schemaProperties ?? []),
