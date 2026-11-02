@@ -152,7 +152,10 @@ function propertyValue<Record>(
   return property.getValue(record.source);
 }
 
-function displayValue(value: RecordPropertyValue, property?: RecordPropertyDefinition<unknown>): ReactNode {
+function displayValue<Record>(
+  value: RecordPropertyValue,
+  property?: RecordPropertyDefinition<Record>,
+): ReactNode {
   if (typeof value.raw === "number" && property?.numberFormat) {
     return formatRecordNumber(value.raw, property.numberFormat);
   }
@@ -253,12 +256,20 @@ export function RecordList<Record>({
   const effectiveRecords = useRendererRecords(records);
   const selection = useRendererSelection(selectedIds, onRecordSelect);
   const visibleProperties = listPropertiesFor(properties, propertyIds);
-  const editableProperties = onRecordPatch
+  const editableProperties: readonly RecordPropertyDefinition<Record>[] = onRecordPatch
     ? visibleProperties.map((property) => ({
         ...property,
         edit: property.edit ?? {
-          inputType: property.kind === "select" && property.edit?.options ? "select" : property.kind === "date" ? "date" : property.kind === "number" ? "number" : "text",
-          onSave: (source: unknown, value: string | number | null) => onRecordPatch(source as Record, property.id, value),
+          inputType:
+            property.kind === "select"
+              ? "select"
+              : property.kind === "date"
+                ? "date"
+                : property.kind === "number"
+                  ? "number"
+                  : "text",
+          onSave: (source: unknown, value: string | number | null) =>
+            onRecordPatch(source as Record, property.id, value),
         },
       }))
     : visibleProperties;
@@ -284,21 +295,53 @@ export function RecordList<Record>({
                   {record.titleEdit || onRecordPatch ? (
                     <EditableRecordFields
                       className="table-kit-inline-editable-title"
-                      fields={[{ label: "Title", value: record.title ?? record.id, editable: true, hideLabel: true, onSave: (value) => record.titleEdit?.onSave(record.source, value) ?? onRecordPatch?.(record.source, "title", value) }]}
+                      fields={[{
+                        label: "Title",
+                        value: record.title ?? record.id,
+                        editable: true,
+                        hideLabel: true,
+                        onSave: async (value) => {
+                          const next = typeof value === "string" || typeof value === "number" ? String(value) : "";
+                          if (record.titleEdit) await record.titleEdit.onSave(record.source, next);
+                          else await onRecordPatch?.(record.source, "title", next);
+                        },
+                      }]}
                     />
                   ) : record.title ?? record.subtitle ?? record.id}
                 </span>
                 <span className="table-kit-list-row-properties">
-                  {editableProperties.slice(0, 3).map((property) => (
-                    property.edit ? (
+                  {editableProperties.slice(0, 3).map((property) => {
+                    const edit = property.edit;
+                    const rawValue = propertyValue(property, record).raw;
+                    const value = typeof rawValue === "string" || typeof rawValue === "number" ? rawValue : null;
+                    return edit ? (
                       <span key={property.id} onClick={(event) => event.stopPropagation()}>
                         <EditableRecordFields
                           className="table-kit-inline-editable-property"
-                          fields={[{ label: property.label, value: propertyValue(property, record).raw as string | number | null, inputType: property.edit.inputType, nullable: property.edit.nullable, options: property.edit.options, editable: true, onSave: (value) => property.edit?.onSave(record.source, value) }]}
+                          fields={[{
+                            label: property.label,
+                            value,
+                            inputType: edit.inputType,
+                            nullable: edit.nullable,
+                            options: edit.options,
+                            editable: true,
+                            onSave: async (nextValue) => {
+                              const next = typeof nextValue === "string" || typeof nextValue === "number"
+                                ? nextValue
+                                : nextValue == null
+                                  ? null
+                                  : String(nextValue);
+                              await edit.onSave(record.source, next);
+                            },
+                          }]}
                         />
                       </span>
-                    ) : <span key={property.id}><PropertyValue property={property as RecordPropertyDefinition<unknown>} value={propertyValue(property, record)} /></span>
-                  ))}
+                    ) : (
+                      <span key={property.id}>
+                        <PropertyValue property={property as RecordPropertyDefinition<unknown>} value={propertyValue(property, record)} />
+                      </span>
+                    );
+                  })}
                 </span>
               </div>}
               icon={() => <RecordAvatar record={record} />}
@@ -328,7 +371,7 @@ export function RecordList<Record>({
             {record.id !== effectiveRecords[effectiveRecords.length - 1]?.id && (
               <Separator
                 className="table-kit-list-separator"
-                horizontal
+                vertical={false}
                 borderColor="$gemLine"
                 opacity={0.7}
               />
@@ -585,7 +628,6 @@ export function RecordGallery<Record>({
                       {record.subtitle}
                     </Text>
                   )}
-                  {record.status && <Text className="table-kit-gallery-status">{record.status.label}</Text>}
                   <YStack className="table-kit-gallery-properties" aria-label="Visible properties" gap="$1">
                     {visibleProperties
                       .filter((property) => !property.primary && property.kind !== "image" && property.id !== "logo")
@@ -627,9 +669,8 @@ export function RecordTable<Record>({
   const effectiveRecords = useRendererRecords(records);
   const selection = useRendererSelection(selectedIds, onRecordSelect);
   const visibleProperties = propertiesFor(properties, propertyIds);
-  const hasStatus = effectiveRecords.some((record) => record.status !== undefined);
   const primaryProperty = getPrimaryRecordProperty(visibleProperties);
-  const hasTitleProperty = visibleProperties.some((property) => property.kind === "title" || property.id === "title");
+  const hasTitleProperty = visibleProperties.some((property) => property.primary || property.kind === "title" || property.id === "title");
   const hasLogo = visibleProperties.some((property) => property.kind === "image" || property.id === "logo");
   const columnDefs: ColDef<TableRecord<Record>>[] = [];
 
@@ -676,16 +717,6 @@ export function RecordTable<Record>({
       cellRenderer: GridPropertyCell,
     })),
   );
-
-  if (hasStatus) {
-    columnDefs.push({
-      colId: "status",
-      headerName: "Status",
-      flex: 1,
-      minWidth: 120,
-      valueGetter: ({ data }) => data?.status?.label ?? "—",
-    });
-  }
 
   return (
     <YStack

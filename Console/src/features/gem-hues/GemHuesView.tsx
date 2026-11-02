@@ -9,7 +9,7 @@ import { QueryFeedback } from "../../components/QueryFeedback";
 import type { GemHue, GemHueCreate } from "../../types";
 import { EditableRecordFields } from "../../components/EditableRecordFields";
 import { CreateFormFrame, CreateSelectField } from "../../components/forms/CreateForm";
-import { GemTextField } from "../../components/ui";
+import { GDate as GDateField, GemTextField } from "../../components/ui";
 import { api } from "../../api";
 import { DatabaseRecordCollection } from "../../components/DatabaseRecordCollection";
 import { useRecordUtilities } from "../../hooks/useRecordUtilities";
@@ -22,7 +22,7 @@ interface GemHuesViewProps {
 }
 
 /** Shared create workflow for Gem Hues, exposed through the Table Kit action utility. */
-function GemHueCreateForm({
+export function GemHueCreateForm({
   submitting,
   error,
   onCancel,
@@ -65,6 +65,15 @@ function GemHueCreateForm({
           onBlur={() => undefined}
           options={[...field.options!]}
           required={field.required}
+        />
+      ) : field.name === "createdDate" ? (
+        <GDateField
+          key={field.name}
+          label={field.label}
+          value={values[field.name] ?? ""}
+          onChange={(value) => setValues((current) => ({ ...current, [field.name]: value }))}
+          required={field.required}
+          width="medium"
         />
       ) : (
         <GemTextField

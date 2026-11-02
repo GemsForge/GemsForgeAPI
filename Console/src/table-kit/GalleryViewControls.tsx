@@ -6,6 +6,7 @@ export type GalleryCardSize = "small" | "medium" | "large";
 export interface GalleryViewControlsProps {
   cardSize: GalleryCardSize;
   fillMedia: boolean;
+  wireframe?: boolean;
   onCardSizeChange: (size: GalleryCardSize) => void;
   onFillMediaChange: (fill: boolean) => void;
 }
@@ -14,6 +15,7 @@ export interface GalleryViewControlsProps {
 export function GalleryViewControls({
   cardSize,
   fillMedia,
+  wireframe = false,
   onCardSizeChange,
   onFillMediaChange,
 }: GalleryViewControlsProps) {
@@ -30,6 +32,8 @@ export function GalleryViewControls({
         label="Card size"
         value={cardSize}
         width="medium"
+        fontSize="$2"
+        wireframe={wireframe}
         options={[
           { value: "small", label: "Small" },
           { value: "medium", label: "Medium" },
@@ -37,7 +41,14 @@ export function GalleryViewControls({
         ]}
         onChange={(value) => onCardSizeChange(value as GalleryCardSize)}
       />
-      <GSwitch id="gallery-fill-media" label="Fill media" value={fillMedia} onChange={onFillMediaChange} />
+      <GSwitch
+        id="gallery-fill-media"
+        label="Fill media"
+        compact
+        wireframe={wireframe}
+        value={fillMedia}
+        onChange={onFillMediaChange}
+      />
     </XStack>
   );
 }

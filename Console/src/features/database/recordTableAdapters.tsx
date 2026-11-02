@@ -178,6 +178,7 @@ export const educationTableAdapter: RecordAdapter<Education> = {
         label: "Institution",
         kind: "text",
         primary: true,
+        sourceField: "institutionName",
         getValue: (record) => display(record.institutionName),
       },
       {
@@ -205,7 +206,6 @@ export const educationTableAdapter: RecordAdapter<Education> = {
         getValue: (record) => display(record.endDate),
       },
       { id: "awardedDate", label: "Awarded date", kind: "date", getValue: (record) => display(record.awardedDate) },
-      { id: "educationStatus", label: "Status", kind: "status", getValue: (record) => display(record.status) },
       {
         id: "locationAddressID",
         label: "Location address",
@@ -243,6 +243,7 @@ export const employmentTableAdapter: RecordAdapter<Employment> = {
         label: "Employer",
         kind: "text",
         primary: true,
+        sourceField: "employerName",
         getValue: (record) => display(record.employerName),
       },
       {
@@ -252,7 +253,7 @@ export const employmentTableAdapter: RecordAdapter<Employment> = {
         getValue: (record) => display(record.employerType),
       },
       { id: "industry", label: "Industry", kind: "text", getValue: (record) => display(record.industry) },
-      { id: "position", label: "Position", kind: "text", getValue: (record) => display(record.positionTitle) },
+      { id: "position", label: "Position", kind: "text", sourceField: "positionTitle", getValue: (record) => display(record.positionTitle) },
       {
         id: "employmentType",
         label: "Employment type",
@@ -291,7 +292,7 @@ export const employmentTableAdapter: RecordAdapter<Employment> = {
       { id: "notes", label: "Notes", kind: "text", getValue: (record) => display(record.notes) },
       { id: "updatedAt", label: "Last updated", kind: "date", getValue: (record) => display(record.updatedAt) },
       { id: "id", label: "Item ID", kind: "text", getValue: (record) => display(record.id) },
-      { id: "status", label: "Status", kind: "status", getValue: (record) => display(record.employmentStatus) },
+      { id: "status", label: "Status", kind: "status", sourceField: "employmentStatus", getValue: (record) => display(record.employmentStatus) },
     ] satisfies readonly RecordPropertyDefinition<Employment>[],
 };
 
@@ -315,9 +316,9 @@ export const transactionTableAdapter: RecordAdapter<ExpenseTransaction> = {
         kind: "status",
         getValue: (record) => display(record.firstReceiptItem),
       },
-      { id: "category", label: "Category", kind: "number", getValue: (record) => display(record.categoryID) },
+      { id: "category", label: "Category", kind: "number", sourceField: "categoryID", getValue: (record) => display(record.categoryID) },
       { id: "id", label: "Item ID", kind: "text", getValue: (record) => display(record.id) },
-      { id: "date", label: "Date", kind: "date", getValue: (record) => display(record.transactionDate) },
+      { id: "date", label: "Date", kind: "date", sourceField: "transactionDate", getValue: (record) => display(record.transactionDate) },
       {
         id: "subcategoryID",
         label: "Subcategory",
@@ -382,7 +383,7 @@ export function createServiceAccountTableAdapter(
         { id: "status", label: "Status", kind: "status", getValue: (record) => display(record.status) },
         { id: "type", label: "Category", kind: "select", getValue: (record) => display(record.type || "Service") },
         { id: "id", label: "Item ID", kind: "number", getValue: (record) => display(record.id) },
-        { id: "group", label: "Group", kind: "text", getValue: (record) => display(record.expenseGroup) },
+        { id: "group", label: "Group", kind: "text", sourceField: "expenseGroup", getValue: (record) => display(record.expenseGroup) },
         { id: "logoKey", label: "Logo key", kind: "text", getValue: (record) => display(record.logoKey) },
         {
           id: "monthlyAmount",

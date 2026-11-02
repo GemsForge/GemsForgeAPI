@@ -63,6 +63,8 @@ export interface RecordPropertyDefinition<Record> {
   order?: number;
   visible?: boolean;
   primary?: boolean;
+  /** Backing record field when this property uses a presentation alias. */
+  sourceField?: string;
   sortable?: boolean;
   filterable?: boolean;
   getValue: (record: Record) => RecordPropertyValue;
@@ -135,10 +137,16 @@ export interface RecordExpansionHandlers<Record> {
 export function orderRecordProperties<Record>(
   properties: readonly RecordPropertyDefinition<Record>[],
 ): readonly RecordPropertyDefinition<Record>[] {
+  const seen = new Set<string>();
   return properties
     .map((property, index) => ({ property, index }))
     .sort((left, right) => (left.property.order ?? left.index) - (right.property.order ?? right.index))
-    .map(({ property }) => property);
+    .map(({ property }) => property)
+    .filter((property) => {
+      if (seen.has(property.id)) return false;
+      seen.add(property.id);
+      return true;
+    });
 }
 
 /** Return the explicitly primary property, or the first property in stable display order. */

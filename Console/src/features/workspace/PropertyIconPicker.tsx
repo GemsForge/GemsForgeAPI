@@ -1,5 +1,7 @@
 import { useMemo, useState } from "react";
 import { PROPERTY_ICON_LIBRARY, getPropertyIconByName } from "./propertyIcons";
+import { GemButton } from "../../components/ui/GemButton";
+import { GemTextField } from "../../components/ui/GemTextField";
 
 export function PropertyIconPicker({ value, onChange }: { value: string; onChange: (value: string) => void }) {
   const [query, setQuery] = useState("");
@@ -13,28 +15,30 @@ export function PropertyIconPicker({ value, onChange }: { value: string; onChang
 
   return (
     <div className="wireframe-property-icon-picker" aria-label="Property icon catalog">
-      <input
+      <GemTextField
         className="wireframe-property-icon-search"
-        type="search"
+        label="Search property icons"
+        showLabel={false}
         value={query}
-        onChange={(event) => setQuery(event.target.value)}
+        onChange={(event) => setQuery(event.currentTarget.value)}
         placeholder="Search icons"
-        aria-label="Search property icons"
       />
       <div className="wireframe-property-icon-grid" role="radiogroup" aria-label="Matching property icons">
       {filteredIcons.map(({ name, icon: Icon }) => (
-        <button
+        <GemButton
           key={name}
           type="button"
           className={value === name ? "is-selected" : undefined}
+          size="xs"
+          variant="quiet"
+          tone="secondary"
           role="radio"
           aria-checked={value === name}
           aria-label={name}
-          title={name}
           onClick={() => onChange(name)}
         >
           <Icon size={16} strokeWidth={2} aria-hidden="true" />
-        </button>
+        </GemButton>
       ))}
       </div>
       {filteredIcons.length === 0 ? <p className="wireframe-property-icon-empty">No matching icons.</p> : null}

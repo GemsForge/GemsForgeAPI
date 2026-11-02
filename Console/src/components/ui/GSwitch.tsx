@@ -9,12 +9,22 @@ export interface GSwitchProps extends Omit<
   label: string;
   showLabel?: boolean;
   compact?: boolean;
+  wireframe?: boolean;
   value?: boolean;
   onChange?: (value: boolean) => void;
 }
 
 /** Render a labeled Tamagui switch with a stable project-wide layout contract. */
-export function GSwitch({ label, showLabel = true, compact = false, value = false, onChange, id, ...switchProps }: GSwitchProps) {
+export function GSwitch({
+  label,
+  showLabel = true,
+  compact = false,
+  wireframe = false,
+  value = false,
+  onChange,
+  id,
+  ...switchProps
+}: GSwitchProps) {
   const switchID = id ?? `g-switch-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
 
   return (
@@ -24,8 +34,8 @@ export function GSwitch({ label, showLabel = true, compact = false, value = fals
           id={switchID}
           {...switchProps}
           size={compact ? "sm" : "md"}
-          backgroundColor="$gemPanelLight"
-          activeStyle={{ backgroundColor: "$gemMintDark" }}
+          backgroundColor={wireframe ? "$wireframeLine" : "$gemPanelLight"}
+          activeStyle={{ backgroundColor: wireframe ? "$wireframeMint" : "$gemMintDark" }}
           borderWidth={0}
           transition="quick"
           flexShrink={0}
@@ -34,13 +44,13 @@ export function GSwitch({ label, showLabel = true, compact = false, value = fals
         >
           <Switch.Thumb
             animation="quick"
-            backgroundColor="$gemInk"
+            backgroundColor={wireframe ? (value ? "$wireframePanel" : "$wireframeMuted") : "$gemInk"}
             transition="quickest"
           />
         </Switch>
         {showLabel && (
-          <Label htmlFor={switchID} color="$gemMuted" fontSize="$2" fontWeight="700">
-            <SizableText>{label}</SizableText>
+          <Label htmlFor={switchID} color={wireframe ? "$wireframeMuted" : "$gemMuted"} fontSize="$2" fontWeight="700">
+            <SizableText size={compact ? "$2" : undefined}>{label}</SizableText>
           </Label>
         )}
       </XStack>

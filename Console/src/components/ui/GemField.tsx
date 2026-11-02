@@ -4,7 +4,7 @@ import type { GemPrimitiveType } from "./primitiveFieldContracts";
 import { GemFieldError, GemFieldLabel, GemFieldRoot, GemInput, GemTextArea } from "./fieldPrimitives";
 
 /** Standard reusable field widths shared by generic and feature forms. */
-export type GemFieldWidth = "short" | "medium" | "long";
+export type GemFieldWidth = "xs" | "short" | "medium" | "long";
 export type GemTextFieldWidth = GemFieldWidth;
 
 export interface GemFieldProps extends ComponentProps<typeof Input> {
@@ -52,7 +52,7 @@ export const GemField = forwardRef<HTMLInputElement | HTMLTextAreaElement, GemFi
   if (!editing) {
     return (
       <GemFieldRoot className="gem-field-display">
-        {showLabel ? <GemFieldLabel>{label}</GemFieldLabel> : null}
+        {showLabel ? <GemFieldLabel className="g-field-label">{label}</GemFieldLabel> : null}
         <button type="button" className="gem-field-display-value" onClick={onDisplayClick}>
           {displayValue ?? props.value ?? "—"}
         </button>
@@ -63,7 +63,7 @@ export const GemField = forwardRef<HTMLInputElement | HTMLTextAreaElement, GemFi
   return (
     <GemFieldRoot className="create-form-field">
       {showLabel ? (
-        <GemFieldLabel htmlFor={inputID}>
+        <GemFieldLabel className="g-field-label" htmlFor={inputID}>
           {label}
           {required ? " *" : ""}
         </GemFieldLabel>

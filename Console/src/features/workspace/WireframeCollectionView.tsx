@@ -1,7 +1,7 @@
 import React, { cloneElement, isValidElement, useMemo, useRef, useState, type ReactNode } from "react";
 import { ChevronLeft, Expand, GalleryHorizontal, List, Plus, Table2 } from "lucide-react";
 import { AgGridReact } from "ag-grid-react";
-import { themeQuartz, type ColDef } from "ag-grid-community";
+import { themeQuartz, type ColDef, type ColDefField, type ICellRendererParams } from "ag-grid-community";
 import { useLiveSchemaQuery } from "../../data/workflowQueries";
 import { WireframeLeftPane } from "./WireframeLeftPane";
 import { WireframePageView } from "./WireframePageView";
@@ -17,6 +17,7 @@ import { GSelectField } from "../../components/ui/GSelectField";
 import { GemTextField } from "../../components/ui/GemTextField";
 import { GemButton } from "../../components/ui/GemButton";
 import { SizableText, Theme } from "tamagui";
+import { inferRecordPropertyKind, normalizeStorageType } from "../../table-kit/storageTypes";
 
 export type WireframeRecord = { id: string };
 export type WireframeCollectionConfig<T extends WireframeRecord> = {
@@ -31,7 +32,7 @@ export type WireframeCollectionConfig<T extends WireframeRecord> = {
   cardStatus: (record: T) => string;
   cardMeta: (record: T) => string;
   cardImage?: (record: T) => { src: string; alt: string } | undefined;
-  inspector: (record: T) => ReactNode;
+  inspector: (record: T, schemaProperties?: readonly RecordPropertyDefinition<T>[]) => ReactNode;
   onCreateRecord?: () => void | Promise<void>;
   recordActions?: Omit<TableActionsProps, "onNew">;
   newRecordUtility?: TableActionsProps["newRecordUtility"];
@@ -49,7 +50,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
   const [view, setView] = useState<"table" | "list" | "gallery">("gallery");
   const [galleryCardSize, setGalleryCardSize] = useState<GalleryCardSize>("small");
   const [galleryFillMedia, setGalleryFillMedia] = useState(true);
-  const [selectedID, setSelectedID] = useState<string | null>(config.records[0]?.id ?? null);
+  const [selectedID, setSelectedID] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState("");
   const [direction, setDirection] = useState<"asc" | "desc">("asc");
@@ -71,6 +72,10 @@ export function WireframeCollectionView<T extends WireframeRecord>({
   const inspectorExpanded = Boolean(recordPageID);
   const selected = config.records.find((record) => record.id === (recordPageID ? decodeURIComponent(recordPageID) : selectedID)) ?? null;
   const schema = schemaQuery.data?.tables.find((table) => table.name === (config.tableName ?? config.title));
+  const schemaProperties = useMemo(
+    () => schema ? createWireframeSchemaProperties<T>(schema.columns, config.records) : [],
+    [config.records, schema],
+  );
   const matchingRecords = useMemo(
     () =>
       config.records.filter((record) =>
@@ -97,9 +102,23 @@ export function WireframeCollectionView<T extends WireframeRecord>({
       for (const [id, value] of Object.entries(record)) if (isImageProperty(id, value)) ids.add(id);
     }
     if (config.cardImage) ids.add("image");
-    return [...ids].map((id) => ({ id, label: id.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/^./, (character) => character.toUpperCase()), defaultVisible: id !== "id" }));
-  }, [config]);
-  const propertyConfiguration = useTablePropertyConfiguration({ properties: propertyOptions });
+    for (const column of schema?.columns ?? []) ids.add(schemaColumnSourceField(column, config.records));
+    return [...ids].map((id) => ({ id, label: propertyLabel(id), defaultVisible: id !== "id" }));
+  }, [config, schema]);
+  const galleryDefaultConfiguration = useMemo(() => {
+    const visibleByDefault = new Set(
+      propertyOptions
+        .filter((property) => property.defaultVisible !== false)
+        .slice(0, 5)
+        .map((property) => property.id),
+    );
+    return { hiddenIds: propertyOptions.filter((property) => !visibleByDefault.has(property.id)).map((property) => property.id) };
+  }, [propertyOptions]);
+  const propertyConfiguration = useTablePropertyConfiguration({
+    properties: propertyOptions,
+    viewId: view,
+    defaultConfiguration: view === "gallery" ? galleryDefaultConfiguration : undefined,
+  });
   const visiblePropertyIds = propertyConfiguration.visibleIds;
   const imagePropertyOptions = propertyOptions.filter((property) => isImageProperty(property.id, (config.records[0] as Record<string, unknown> | undefined)?.[property.id]) || property.id === "image");
   const galleryImageProperty = imagePropertyOptions[0]?.id ?? "";
@@ -154,7 +173,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
           onClose={closeInspector}
           cover={<div className="demo-cover" style={{ background: "linear-gradient(135deg, #e8b17d, #527b82)" }} />}
         >
-          {renderInspector(config.inspector(selected), openPropertyDetails)}
+          {renderInspector(config.inspector(selected, schemaProperties), openPropertyDetails)}
         </WireframeRecordPageView>
       ) : (
       <WireframePageView title={config.title} description={config.description} recordCount={sortedRecords.length}>
@@ -167,7 +186,11 @@ export function WireframeCollectionView<T extends WireframeRecord>({
             ))}
           </div>
           <RecordUtilities label={config.title} search={query} onSearch={(value) => { setQuery(value); resetPage(); }} sort={sort} onSort={(value) => { setSort(value); resetPage(); }} direction={direction} onDirection={() => setDirection((value) => value === "asc" ? "desc" : "asc")} filter={filter} onFilter={(value) => { setFilter(value); resetPage(); }} sortOptions={[{ value: "title", label: "Name" }, { value: "status", label: "Status" }, { value: "meta", label: "Metadata" }]} filterOptions={[...new Set(config.records.map((record) => config.cardStatus(record)))]} compact />
-          <TablePropertyControls properties={propertyOptions} configuration={propertyConfiguration} />
+          <TablePropertyControls
+            properties={propertyOptions}
+            configuration={propertyConfiguration}
+            maxVisibleProperties={view === "gallery" ? 5 : undefined}
+          />
           <Theme name="light">
             <Table.Actions
               onNew={config.onCreateRecord}
@@ -178,7 +201,15 @@ export function WireframeCollectionView<T extends WireframeRecord>({
             />
           </Theme>
         </div>
-        {view === "gallery" ? <GalleryViewControls cardSize={galleryCardSize} fillMedia={galleryFillMedia} onCardSizeChange={setGalleryCardSize} onFillMediaChange={setGalleryFillMedia} /> : null}
+        {view === "gallery" ? (
+          <GalleryViewControls
+            cardSize={galleryCardSize}
+            fillMedia={galleryFillMedia}
+            wireframe
+            onCardSizeChange={setGalleryCardSize}
+            onFillMediaChange={setGalleryFillMedia}
+          />
+        ) : null}
         {visibleRecords.length === 0 ? (
           <div className="wireframe-empty-state" role="status">
             <strong>No {config.title.toLowerCase()} records found</strong>
@@ -204,7 +235,13 @@ export function WireframeCollectionView<T extends WireframeRecord>({
                 <span className="demo-place-copy">
                   <strong>{config.cardTitle(record)}</strong>
                   <small>{config.cardSubtitle(record)}</small>
-                  <em>{config.cardStatus(record)}</em>
+                  <span className="demo-place-properties" aria-label="Visible properties">
+                    {getGalleryCardProperties(record, visiblePropertyIds).map((property) => (
+                      <small className="demo-place-property" aria-label={`${property.label}: ${property.value}`} key={property.id}>
+                        {property.value}
+                      </small>
+                    ))}
+                  </span>
                   <small className="demo-place-meta">
                     {config.cardMeta(record)}　▤ {record.id}
                   </small>
@@ -250,7 +287,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
             </div>
           </div>
           <div className="demo-cover" style={{ background: "linear-gradient(135deg, #e8b17d, #527b82)" }} />
-          {renderInspector(config.inspector(selected), openPropertyDetails)}
+          {renderInspector(config.inspector(selected, schemaProperties), openPropertyDetails)}
         </aside>
       ) : null}
       {propertyDetails ? (
@@ -360,30 +397,71 @@ function WireframeMvpList<T extends WireframeRecord>({
         id: field,
         label: field.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/^./, (character) => character.toUpperCase()),
         kind: isImageProperty(field, first[field]) ? "image" : typeof first[field] === "number" ? "number" : "text",
-        getValue: (record) => isImageProperty(field, record[field])
-          ? { raw: record[field], display: "", image: { src: String(record[field]), alt: field } }
-          : { raw: record[field], display: record[field] == null ? "—" : String(record[field]) },
+        getValue: (record) => isImageProperty(field, (record as Record<string, unknown>)[field])
+          ? { raw: (record as Record<string, unknown>)[field], display: "", image: { src: String((record as Record<string, unknown>)[field]), alt: field } }
+          : { raw: (record as Record<string, unknown>)[field], display: (record as Record<string, unknown>)[field] == null ? "—" : String((record as Record<string, unknown>)[field]) },
       }))
     : [];
   return <RecordList records={tableRecords} properties={properties} onExpansionChange={(id) => id && onRecordSelect(String(id))} />;
 }
 
 function WireframeAgGrid<T extends WireframeRecord>({ records, visiblePropertyIds, onRecordSelect }: { records: readonly T[]; visiblePropertyIds: readonly string[]; onRecordSelect: (id: string) => void }) {
-  const first = records[0] as Record<string, unknown> | undefined;
-  const fields = first ? Object.keys(first).filter((field) => field === "id" || visiblePropertyIds.includes(field)) : [];
+  const fields = ["id", ...visiblePropertyIds.filter((field) => field !== "id")];
   const columns: ColDef<T>[] = fields.map((field) => ({
-    field: field as keyof T & string,
+    field: field as ColDefField<T>,
     headerName: field,
     flex: 1,
     minWidth: 140,
-    valueFormatter: ({ value }) => formatWireframeTableValue(field, value),
-    cellRenderer: ({ value }) => isImageProperty(field, value) ? <img className="wireframe-table-image" src={String(value)} alt={`${field} preview`} /> : undefined,
+    valueFormatter: (params) => formatWireframeTableValue(field, params.value),
+    cellRenderer: (params: ICellRendererParams<T>) => isImageProperty(field, params.value) ? <img className="wireframe-table-image" src={String(params.value)} alt={`${field} preview`} /> : undefined,
   }));
   return <div className="wireframe-ag-grid"><AgGridReact<T> theme={themeQuartz} rowData={[...records]} columnDefs={columns} getRowId={({ data }) => data.id} onRowClicked={({ data }) => data && onRecordSelect(data.id)} domLayout="autoHeight" /></div>;
 }
 
 function isImageProperty(field: string, value: unknown): boolean {
   return typeof value === "string" && /(^|_|-)(image|logo|avatar|cover|photo|thumbnail)(s|$)/i.test(field.replace(/([a-z])([A-Z])/g, "$1_$2"));
+}
+
+function propertyLabel(id: string): string {
+  return id
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/[_-]+/g, " ")
+    .replace(/^./, (character) => character.toUpperCase());
+}
+
+export function createWireframeSchemaProperties<T extends WireframeRecord>(
+  columns: readonly { name: string; dataType: string; primaryKey: boolean }[],
+  records: readonly T[] = [],
+): readonly RecordPropertyDefinition<T>[] {
+  return columns.map((column, order) => {
+    const sourceField = schemaColumnSourceField(column, records);
+    return {
+      id: sourceField,
+      sourceField,
+      label: propertyLabel(sourceField),
+      storageType: normalizeStorageType(column.dataType),
+      kind: inferRecordPropertyKind(column),
+      order,
+      primary: column.primaryKey,
+      getValue: (record) => {
+        const raw = (record as Record<string, unknown>)[sourceField];
+        return { raw, display: raw == null || raw === "" ? "—" : String(raw) };
+      },
+    };
+  });
+}
+
+function schemaColumnSourceField<T extends WireframeRecord>(
+  column: { name: string; primaryKey: boolean },
+  records: readonly T[],
+): string {
+  if (column.primaryKey) return "id";
+  if (column.name.toLowerCase() === "dateupdated") return "updatedAt";
+  const recordKeys = records.flatMap((record) => Object.keys(record));
+  const matchingKey = recordKeys.find((key) => key.toLowerCase() === column.name.toLowerCase());
+  return matchingKey ?? column.name.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/[_-]+/g, " ").split(" ").map((part, index) =>
+    index === 0 ? part.toLowerCase() : `${part[0]?.toUpperCase() ?? ""}${part.slice(1)}`,
+  ).join("");
 }
 
 function galleryImageSource(record: object, property: string): string | undefined {
@@ -393,6 +471,25 @@ function galleryImageSource(record: object, property: string): string | undefine
   if (typeof value === "string") return value.trim() || undefined;
   if (value && typeof value === "object" && "src" in value && typeof value.src === "string") return value.src;
   return undefined;
+}
+
+function getGalleryCardProperties(record: object, visiblePropertyIds: readonly string[]) {
+  const values = record as Record<string, unknown>;
+  return visiblePropertyIds
+    .slice(0, 5)
+    .filter((id) => id !== "id" && Object.hasOwn(values, id) && !isImageProperty(id, values[id]))
+    .map((id) => ({
+      id,
+      label: id.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/^./, (character) => character.toUpperCase()),
+      value:
+        typeof values[id] === "boolean"
+          ? values[id]
+            ? "Yes"
+            : "No"
+          : values[id] && typeof values[id] === "object"
+            ? "—"
+            : formatWireframeTableValue(id, values[id]),
+    }));
 }
 
 function formatWireframeTableValue(field: string, value: unknown): string {

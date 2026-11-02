@@ -70,7 +70,7 @@ export function DatabaseRecordCollection<Record>({
 }: DatabaseRecordCollectionProps<Record>) {
   const [activeViewId, setActiveViewId] = useState("gallery");
   const [viewConfigurations, setViewConfigurations] = useState<
-    Record<string, TablePropertyConfigurationInput>
+    globalThis.Record<string, TablePropertyConfigurationInput>
   >({});
   const paging = usePagedRecords(utilities.records);
   const properties = useMemo(() => adapter.getPropertyDefinitions(), [adapter]);
@@ -213,7 +213,7 @@ function DatabaseRecordTableShell<Record>({
   detail?: ReactNode;
   actions?: TableActionsProps;
   onRecordPatch?: (record: Record, field: string, value: string | number | null) => Promise<void>;
-  viewConfigurations: Readonly<Record<string, TablePropertyConfigurationInput>>;
+  viewConfigurations: Readonly<globalThis.Record<string, TablePropertyConfigurationInput>>;
   onConfigurationChange: (
     viewId: string | undefined,
     configuration: { order: readonly string[]; hiddenIds: readonly string[] },
@@ -304,6 +304,7 @@ function DatabaseRecordTableShell<Record>({
               sortOptions={sortOptions}
               filterOptions={filterOptions}
               compact
+              hideSearch
             />
             {resolvedActions && <Table.Actions {...resolvedActions} />}
           </Table.Toolbar>

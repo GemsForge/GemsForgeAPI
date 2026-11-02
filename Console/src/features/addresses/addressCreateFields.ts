@@ -77,22 +77,15 @@ const addressStatusOptions: readonly RecordSelectOption[] = [
 
 /** Canonical Address form field metadata, validation, and control configuration. */
 export const addressFieldDefinitions: readonly AddressFieldDefinition[] = [
-  {
-    kind: "select",
-    name: "addressType",
-    label: "Address type",
-    schema: required("Address type"),
-    required: true,
-    options: addressTypeOptions,
-  },
-  { kind: "text", name: "addressLine1", label: "Address line 1", schema: optional, width: "long" },
-  { kind: "text", name: "addressLine2", label: "Address line 2", schema: optional, width: "long" },
+  { kind: "select", name: "addressType", label: "Address Type", schema: required("Address Type"), required: true, options: addressTypeOptions },
+  { kind: "text", name: "addressLine1", label: "Address Line 1", schema: optional, width: "long" },
+  { kind: "text", name: "addressLine2", label: "Address Line 2", schema: optional, width: "long" },
   { kind: "text", name: "country", label: "Country", schema: required("Country"), required: true, width: "medium" },
   { kind: "text", name: "city", label: "City", schema: optionalLocation, width: "short" },
-  { kind: "text", name: "state", label: "State / region", schema: optionalLocation, width: "short" },
-  { kind: "text", name: "postalCode", label: "Postal code", schema: optionalPostalCode, width: "short" },
-  { kind: "text", name: "startDate", label: "Start date", schema: optionalDate, type: "date", width: "short" },
-  { kind: "text", name: "endDate", label: "End date", schema: optionalDate, type: "date", width: "short" },
+  { kind: "text", name: "state", label: "State / Region", schema: optionalLocation, width: "short" },
+  { kind: "text", name: "postalCode", label: "Postal Code", schema: optionalPostalCode, width: "short" },
+  { kind: "text", name: "startDate", label: "Start Date", schema: optionalDate, type: "date", width: "short" },
+  { kind: "text", name: "endDate", label: "End Date", schema: optionalDate, type: "date", width: "short" },
   { kind: "select", name: "addressStatus", label: "Status", schema: required("Status"), required: true, primitive: "status", options: addressStatusOptions },
   { kind: "text", name: "notes", label: "Notes", schema: optional, multiline: true, width: "long" },
 ];

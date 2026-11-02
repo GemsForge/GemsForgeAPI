@@ -18,8 +18,16 @@ export function WireframeSchemaInspector<Record extends object>({
   record: Record;
   properties: readonly RecordPropertyDefinition<Record>[];
 }) {
+  const seen = new Set<string>();
+  const seenSourceFields = new Set<string>();
   const fields = properties
-    .filter((property) => property.visible !== false)
+    .filter((property) => {
+      const sourceField = property.sourceField ?? property.id;
+      if (seen.has(property.id) || seenSourceFields.has(sourceField)) return false;
+      seen.add(property.id);
+      seenSourceFields.add(sourceField);
+      return true;
+    })
     .sort((left, right) => (left.id === "id" ? -1 : right.id === "id" ? 1 : 0))
     .map((property) => {
       const value = property.getValue(record);

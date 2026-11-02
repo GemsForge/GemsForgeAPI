@@ -48,7 +48,7 @@ export function GSearchField({
   return (
     <YStack className="create-form-field" gap="$1">
       {label && (
-        <Label htmlFor={id} color="$gemMuted" fontSize="$2" fontWeight="700">
+        <Label className="g-field-label" htmlFor={id}>
           {label}
           {required ? " *" : ""}
         </Label>
