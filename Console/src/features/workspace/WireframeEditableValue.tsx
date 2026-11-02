@@ -67,7 +67,11 @@ export function WireframeEditableValue({
 
   return (
     <div ref={fieldRef} className="wireframe-editable-value">
-      <GemPrimitiveField
+      {!editing && kind === "url" && currentValue ? (
+        <a className="primitive-value-link" href={currentValue} target="_blank" rel="noreferrer" onClick={(event) => event.stopPropagation()}>
+          {displayValue ?? currentValue}
+        </a>
+      ) : <GemPrimitiveField
         label={label}
         showLabel={false}
         primitive={primitive}
@@ -94,7 +98,7 @@ export function WireframeEditableValue({
         }}
         onSave={commit}
         onBlur={returnToReadOnlyOnBlur}
-      />
+      />}
     </div>
   );
 }
