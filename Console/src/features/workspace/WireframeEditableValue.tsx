@@ -17,12 +17,20 @@ export function WireframeEditableValue({
   onCommit,
 }: EditableValueProps) {
   const [currentValue, setCurrentValue] = useState(value);
+  const [saveError, setSaveError] = useState<string>();
   const primitive =
     kind === "select" || kind === "status" || kind === "number" ? kind : kind === "date" ? "date" : "text";
   const commit = async (nextValue: string | number | boolean | null) => {
     const next = String(nextValue ?? "");
     setCurrentValue(next);
-    if (onCommit && next !== value) await onCommit(next);
+    if (onCommit && next !== value) {
+      setSaveError(undefined);
+      try {
+        await onCommit(next);
+      } catch (error) {
+        setSaveError(error instanceof Error ? error.message : "Could not save this property.");
+      }
+    }
   };
 
   return (
@@ -36,6 +44,7 @@ export function WireframeEditableValue({
       }
       multiline={kind === "textarea"}
       width="long"
+      error={saveError}
       onChange={(next) => {
         if (typeof next === "string") setCurrentValue(next);
       }}
