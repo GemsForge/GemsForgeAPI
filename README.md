@@ -52,6 +52,10 @@ The project currently includes:
 - A local React + TypeScript testing console for domains, ForgeKeeper pages,
   Gem Hues, Education, Employment, and Addresses, with the original HTML prototype retained as a
   fallback.
+- A schema-driven Table Kit workspace with Table, List, and Gallery views,
+  searchable/sortable/filterable/grouped collections, and a record inspector.
+- Hub-scoped saved view state for collection selection and settings, plus
+  per-record presentation state for covers and gallery images.
 - A reusable local attachment lifecycle for uploading, safely retrieving,
   previewing, replacing, and removing image references on owner records.
 - Automated route, service, model, and integration-focused tests using isolated
@@ -173,12 +177,8 @@ current Notes-import boundary.
 - [`docs/Live-Schema-Inspection.md`](docs/Live-Schema-Inspection.md) documents
   the read-only live schema endpoint and its safety boundary.
 - [`docs/Table-Views.md`](docs/Table-Views.md) documents the Hub-scoped Table
-  View metadata contracts, query grammar, schema-drift policy, and migration
-  order.
-- [`docs/Table-View-Metadata-Architecture.md`](docs/Table-View-Metadata-Architecture.md)
-  is the canonical finalized architecture for the five logical contracts,
-  three normalized persistence tables, ownership boundary, responsibilities,
-  query tree, and migration decisions.
+  View metadata contracts, saved workspace state, record presentations, query
+  grammar, schema-drift policy, and migration order.
 - [`docs/Milestone-5-Implementation-Ledger.md`](docs/Milestone-5-Implementation-Ledger.md)
   records the M5 issue, test, and pull-request ledger.
 
@@ -188,8 +188,10 @@ GitHub Actions, commit policy, story creation, and verification commands.
 
 For the active Console-specific workflow, see [`Console/README.md`](Console/README.md).
 It documents the React/Vite development server, Supabase owner-session
-configuration, API proxy paths, shared form and attachment conventions, and the
-local schema-builder boundary.
+configuration, API proxy paths, persistent Table Kit workspace and inspector,
+shared form and attachment conventions, and the local schema-builder boundary.
+See [`Console/COMPONENT_API.md`](Console/COMPONENT_API.md) for shared workspace
+component responsibilities and inspector editing interactions.
 
 ## Dependencies
 

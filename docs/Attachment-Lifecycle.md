@@ -35,6 +35,7 @@ Owner records keep references rather than binary data:
 | Service Accounts | `LogoFileMetadataID` | `ServiceAccount` |
 | Transactions | `Image` | `ExpenseTransaction` |
 | Education | `DocumentFileMetadataID` | `Education` |
+| Gem Hue image | `GemHueImages.FileMetadataID` | `GemHueImage` |
 
 The console uses the small owner-specific PATCH endpoints when replacing or
 removing an attachment:
@@ -42,6 +43,7 @@ removing an attachment:
 ```text
 PATCH /addresses/:id/attachment
 PATCH /transactions/:id/image
+PATCH /gemhues/:id/image
 ```
 
 The body is `{ "fileMetadataID": "..." }`; send `null` to detach. The API
@@ -58,8 +60,10 @@ operation rather than a side effect of editing a record.
 
 Addresses and Transactions expose the reusable attachment control. It supports
 choosing an image, showing a preview, replacing an image, removing a reference,
-and displaying API validation errors. The same pattern can be reused for
-Service Accounts, Education, and future HomeInventory records.
+and displaying API validation errors. Gem Hue inspector image previews also
+support image selection and replacement while keeping the enlarge action
+separate. The same attachment lifecycle can be reused for Service Accounts,
+Education, and HomeInventory records.
 
 The user-facing concept is **Service Account Catalog**, even though the legacy
 SQLite table remains named `Services`.

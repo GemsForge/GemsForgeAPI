@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useId, useRef, useState, type KeyboardEvent, type RefObject } from "react";
-import { SizableText, Tooltip, YStack, type TamaguiElement } from "tamagui";
+import { Dialog, SizableText, Tooltip, YStack, type TamaguiElement } from "tamagui";
 import { GemButton } from "../components/ui/GemButton";
 import type { TableNewRecordUtilityProps } from "./types";
 
@@ -28,6 +28,9 @@ export function NewRecordUtility({
   const [selectedId, setSelectedId] = useState(options[0]?.id);
   const isOpen = open ?? uncontrolledOpen;
   const wasOpen = useRef(isOpen);
+  const dialogRef = useRef<HTMLDivElement | null>(null);
+  const titleId = useId();
+  const descriptionId = useId();
   const selectedOption = options.find((option) => option.id === selectedId) ?? options[0];
   const activeDescription = selectedOption?.description ?? description;
 
@@ -49,6 +52,17 @@ export function NewRecordUtility({
     if (wasOpen.current && !isOpen) triggerRef.current?.focus();
     wasOpen.current = isOpen;
   }, [isOpen, triggerRef]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleEscape = (event: globalThis.KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      setOpen(false);
+    };
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [isOpen, setOpen]);
 
   const handleOptionKeyDown = (event: KeyboardEvent<HTMLElement>, index: number) => {
     if (!options.length || !["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) return;
@@ -112,20 +126,27 @@ export function NewRecordUtility({
           >
             <div className="table-kit-new-record-heading">
               <div>
-                <SizableText id={titleId} className="table-kit-new-record-title" role="heading" aria-level={2} size="$4" fontWeight="700">
+                <SizableText
+                  id={titleId}
+                  className="table-kit-new-record-title"
+                  role="heading"
+                  aria-level={2}
+                  size="$4"
+                  fontWeight="700"
+                >
                   {title}
                 </SizableText>
-                <SizableText id={descriptionId} className="table-kit-new-record-description" size="$2" color="$color" opacity={0.75}>
+                <SizableText
+                  id={descriptionId}
+                  className="table-kit-new-record-description"
+                  size="$2"
+                  color="$color"
+                  opacity={0.75}
+                >
                   {activeDescription}
                 </SizableText>
               </div>
-              <GemButton
-                type="button"
-                size="xs"
-                tone="secondary"
-                variant="quiet"
-                aria-label="Close new record utility"
-              >
+              <GemButton type="button" size="xs" tone="secondary" variant="quiet" aria-label="Close new record utility" onClick={() => setOpen(false)}>
                 ×
               </GemButton>
             </div>
@@ -159,6 +180,6 @@ export function NewRecordUtility({
           </YStack>
         </div>
       )}
-    </>
+    </Dialog>
   );
 }

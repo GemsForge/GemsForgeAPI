@@ -133,6 +133,22 @@ domain-specific `RecordAdapter`, keep its form and empty/error states inside the
 same collection boundary, and add its searchable fields, sort comparators, and
 categorical filter options explicitly.
 
+The workspace saves its active presentation, selected record, search, sort and
+direction, filter, grouping, and supported gallery/property settings through
+Hub-scoped Table View workspace state. The selected record and inspector
+selection restore together after reload. Table View state is loaded and saved
+through the Console's TanStack Query layer; it is not browser-local state.
+Per-record covers and other presentation metadata use the separate
+Hub-scoped `RecordPresentations` contract. See [Table Views](Table-Views.md)
+for the API and persistence details.
+
+The inspector renders schema-defined properties. Editable ordinary values enter
+edit mode on click. URL and email values keep their link action and use a
+separate Edit button; image previews keep their enlarge action and use a
+separate image picker. Image selection uploads through the shared file service
+and associates the returned file metadata with the record. See the
+[Component API](../Console/COMPONENT_API.md) for the shared component behavior.
+
 The React project keeps the API client and UI features separate:
 
 ```text

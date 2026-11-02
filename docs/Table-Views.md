@@ -32,9 +32,35 @@ TableViews
 └── ViewQueryConfigurations
 ```
 
-`WorkspaceState` stores the active record and collection navigation state for a
-view. The dedicated `PUT /table-views/:tableName/:viewType/workspace-state`
-route updates this field without replacing saved columns or query settings.
+`WorkspaceState` stores the selected record and collection presentation state
+for a view. Depending on the consuming workspace, this includes the active
+Table/List/Gallery view, search, sort and direction, filter, grouping,
+pagination, gallery sizing/media settings, and supported property display
+settings. The dedicated
+`PUT /table-views/:tableName/:viewType/workspace-state` route updates this
+field without replacing saved columns or query settings. Selection restoration
+waits for the corresponding records to load; stale selections are reconciled
+before later workspace changes are saved.
+
+For example, a saved Table view can retain the selected record and the
+collection controls together:
+
+```json
+{
+  "activeViewId": "gallery",
+  "selectedRecordId": "HUE-42",
+  "query": "blue",
+  "sort": "colorName",
+  "direction": "asc",
+  "filter": "active",
+  "groupBy": "colorFamily",
+  "galleryCardSize": "medium"
+}
+```
+
+The Console serializes this state as `workspaceState` and sends it to the
+dedicated route. The JSON shape is client presentation state; it does not
+change the underlying table schema or saved query tree.
 The dedicated `PUT /table-views/:tableName/:viewType/columns` route updates
 visible columns and order without replacing saved queries or workspace state.
 
@@ -48,7 +74,8 @@ use the existing file upload and content routes; the saved cover retains its
 `FileMetadataID`, while the Console fetches image bytes through authenticated
 API transport. Uploaded cover metadata must belong to the authenticated Hub and
 the same table/record owner. The Console caches view and presentation state with
-TanStack Query; covers are not stored in browser local storage.
+TanStack Query; covers and workspace state are not stored in browser local
+storage.
 
 The owning Hub cascades to its Table Views, and a View cascades to both child
 configuration tables. A partial unique index permits at most one default View
