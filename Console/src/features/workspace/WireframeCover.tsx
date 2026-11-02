@@ -1,4 +1,4 @@
-import { useId, useRef, useState, type ChangeEvent } from "react";
+import { useEffect, useId, useRef, useState, type ChangeEvent } from "react";
 import { Dialog, Input, SizableText, XStack, YStack } from "tamagui";
 import { GemButton } from "../../components/ui/GemButton";
 import addressesCover from "../../assets/covers/addresses.png";
@@ -43,6 +43,7 @@ type Props = {
   value?: WireframeCover | null;
   onChange?: (cover: WireframeCover | null) => Promise<void> | void;
   onUpload?: (file: File) => Promise<{ id?: string; url?: string } | void>;
+  recordKey?: string;
   label?: string;
 };
 
@@ -52,7 +53,16 @@ function visualStyle(cover: WireframeCover | null | undefined): { background: st
   return { background: COVER_PRESETS.find((preset) => preset.id === cover.presetId)?.value ?? COVER_PRESETS[0].value };
 }
 
-export function WireframeCover({ value, onChange, onUpload, label = "Record cover" }: Props) {
+function fileAsDataURL(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(new Error("Image upload failed."));
+    reader.readAsDataURL(file);
+  });
+}
+
+export function WireframeCover({ value, onChange, onUpload, recordKey, label = "Record cover" }: Props) {
   const inputId = useId();
   const fileInput = useRef<HTMLInputElement>(null);
   const [open, setOpen] = useState(false);
@@ -63,8 +73,17 @@ export function WireframeCover({ value, onChange, onUpload, label = "Record cove
   const [tab, setTab] = useState<"gallery" | "upload" | "link">("gallery");
   const [repositioning, setRepositioning] = useState(false);
   const [position, setPosition] = useState(value?.position ?? { x: 50, y: 50 });
+  const positionRef = useRef(position);
   const drag = useRef<{ startX: number; startY: number; originX: number; originY: number } | null>(null);
   const currentCover = value !== undefined ? value : localCover;
+  useEffect(() => {
+    setLocalCover(undefined);
+    const nextPosition = value?.position ?? { x: 50, y: 50 };
+    setPosition(nextPosition);
+    positionRef.current = nextPosition;
+    setRepositioning(false);
+    drag.current = null;
+  }, [recordKey]);
   const style = visualStyle(currentCover);
   const save = async (next: WireframeCover | null) => { setBusy(true); setError(null); try { setLocalCover(next); await onChange?.(next); setOpen(false); } catch (reason) { setLocalCover(currentCover); setError(reason instanceof Error ? reason.message : "Cover could not be saved."); } finally { setBusy(false); } };
   const upload = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -73,7 +92,7 @@ export function WireframeCover({ value, onChange, onUpload, label = "Record cove
     if (!file) return;
     if (!file.type.startsWith("image/")) { setError("Choose an image file."); return; }
     setBusy(true); setError(null);
-    try { const result = await onUpload?.(file); await save({ source: "upload", fileId: result?.id, imageUrl: result?.url ?? URL.createObjectURL(file), position }); }
+    try { const result = await onUpload?.(file); await save({ source: "upload", fileId: result?.id, imageUrl: result?.url ?? (onUpload ? URL.createObjectURL(file) : await fileAsDataURL(file)), position }); }
     catch (reason) { setError(reason instanceof Error ? reason.message : "Image upload failed."); setBusy(false); }
   };
   const useLink = () => { const url = validateCoverImageURL(link); if (!url) { setError("Enter a valid http or https image URL."); return; } void save({ source: "url", imageUrl: url, position }); };
@@ -91,12 +110,13 @@ export function WireframeCover({ value, onChange, onUpload, label = "Record cove
       y: Math.max(0, Math.min(100, drag.current.originY - ((event.clientY - drag.current.startY) / rect.height) * 100)),
     };
     setPosition(nextPosition);
+    positionRef.current = nextPosition;
   };
   const handlePointerUp = async (event: React.PointerEvent<HTMLDivElement>) => {
     if (!drag.current) return;
     drag.current = null;
     event.currentTarget.releasePointerCapture(event.pointerId);
-    if (currentCover) await save({ ...currentCover, position });
+    if (currentCover) await save({ ...currentCover, position: positionRef.current });
     setRepositioning(false);
   };
   return <YStack className="wireframe-cover" gap="$2" aria-label={label}>

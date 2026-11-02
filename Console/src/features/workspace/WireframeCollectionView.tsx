@@ -72,10 +72,25 @@ export function WireframeCollectionView<T extends WireframeRecord>({
     statusText: string;
     colorToken: string;
   } | null>(null);
+  const coverStoragePrefix = `gemsforge:record-cover:${config.tableName ?? config.title}:`;
+  const [storedCovers, setStoredCovers] = useState<Record<string, WireframeCoverValue | null>>(() => {
+    if (typeof window === "undefined") return {};
+    return config.records.reduce<Record<string, WireframeCoverValue | null>>((covers, record) => {
+      const raw = window.localStorage.getItem(`${coverStoragePrefix}${record.id}`);
+      if (raw) { try { covers[record.id] = JSON.parse(raw) as WireframeCoverValue | null; } catch { /* ignore malformed local cover */ } }
+      return covers;
+    }, {});
+  });
   const selectedCardRef = useRef<HTMLButtonElement | null>(null);
   const recordPageID = location.pathname.match(/\/record\/([^/]+)$/)?.[1];
   const inspectorExpanded = Boolean(recordPageID);
   const selected = config.records.find((record) => record.id === (recordPageID ? decodeURIComponent(recordPageID) : selectedID)) ?? null;
+  const selectedCover = selected ? config.cover?.(selected) ?? storedCovers[selected.id] : undefined;
+  const persistCover = async (record: T, cover: WireframeCoverValue | null) => {
+    setStoredCovers((current) => ({ ...current, [record.id]: cover }));
+    window.localStorage.setItem(`${coverStoragePrefix}${record.id}`, JSON.stringify(cover));
+    await config.onCoverChange?.(record, cover);
+  };
   const schema = schemaQuery.data?.tables.find((table) => table.name === (config.tableName ?? config.title));
   const schemaProperties = useMemo(
     () => schema ? createWireframeSchemaProperties<T>(schema.columns, config.records) : [],
@@ -181,7 +196,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
           recordTitle={config.cardTitle(selected)}
           onBack={() => navigate(location.pathname.replace(/\/record\/[^/]+$/, ""))}
           onClose={closeInspector}
-          cover={<WireframeCover value={config.cover?.(selected)} onChange={(cover) => config.onCoverChange?.(selected, cover)} />}
+          cover={<WireframeCover recordKey={selected.id} value={selectedCover} onChange={(cover) => persistCover(selected, cover)} />}
         >
           {renderInspector(config.inspector(selected, schemaProperties), openPropertyDetails)}
         </WireframeRecordPageView>
@@ -281,7 +296,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
           className={`wireframe-demo-inspector ${inspectorExpanded ? "is-expanded" : ""}`}
           aria-labelledby="wireframe-inspector-title"
         >
-          <WireframeCover value={config.cover?.(selected)} onChange={(cover) => config.onCoverChange?.(selected, cover)} />
+          <WireframeCover recordKey={selected.id} value={selectedCover} onChange={(cover) => persistCover(selected, cover)} />
           <div className="demo-inspector-heading">
             <div>
               <p>{inspectorExpanded ? "Record page" : "Record inspector"}</p>
