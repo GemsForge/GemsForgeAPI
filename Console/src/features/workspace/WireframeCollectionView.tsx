@@ -1,4 +1,5 @@
 import React, { cloneElement, isValidElement, useMemo, useRef, useState, type ReactNode } from "react";
+import { GalleryHorizontal, List, Table2 } from "lucide-react";
 import { AgGridReact } from "ag-grid-react";
 import { themeQuartz, type ColDef } from "ag-grid-community";
 import { useLiveSchemaQuery } from "../../data/workflowQueries";
@@ -6,6 +7,8 @@ import { WireframeLeftPane } from "./WireframeLeftPane";
 import { WireframePageView } from "./WireframePageView";
 import { getPropertyIconDefinition } from "./propertyIcons";
 import { PropertyIcon, PropertyIconPicker } from "./PropertyIconPicker";
+import { formatRecordNumber, inferRecordNumberFormat } from "../../table-kit";
+import { RecordList, type RecordPropertyDefinition, type TableRecord } from "../../table-kit";
 
 export type WireframeRecord = { id: string };
 export type WireframeCollectionConfig<T extends WireframeRecord> = {
@@ -94,10 +97,12 @@ export function WireframeCollectionView<T extends WireframeRecord>({
                 type="button"
                 role="tab"
                 aria-selected={view === mode}
+                aria-label={`${mode[0].toUpperCase() + mode.slice(1)} view`}
+                title={`${mode[0].toUpperCase() + mode.slice(1)} view`}
                 onClick={() => setView(mode)}
                 key={mode}
               >
-                {mode === "table" ? "▣" : mode === "list" ? "☷" : "▦"} {mode[0].toUpperCase() + mode.slice(1)}
+                {mode === "table" ? <Table2 size={18} aria-hidden="true" /> : mode === "list" ? <List size={18} aria-hidden="true" /> : <GalleryHorizontal size={18} aria-hidden="true" />}
               </button>
             ))}
           </div>
@@ -131,7 +136,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
           </div>
         ) : (
           <div className={`demo-results demo-${view}`} role="list" aria-label={`${config.title} records`}>
-            {view === "table" ? <WireframeAgGrid records={filteredRecords} /> : filteredRecords.map((record, index) => (
+            {view === "table" ? <WireframeAgGrid records={filteredRecords} /> : view === "list" ? <WireframeMvpList config={config} records={filteredRecords} /> : filteredRecords.map((record, index) => (
               <button
                 ref={selectedID === record.id ? selectedCardRef : undefined}
                 type="button"
@@ -281,11 +286,49 @@ export function WireframeCollectionView<T extends WireframeRecord>({
   );
 }
 
+function WireframeMvpList<T extends WireframeRecord>({
+  config,
+  records,
+}: {
+  config: WireframeCollectionConfig<T>;
+  records: readonly T[];
+}) {
+  const tableRecords: readonly TableRecord<T>[] = records.map((record) => ({
+    id: record.id,
+    source: record,
+    title: config.cardTitle(record),
+    subtitle: config.cardSubtitle(record),
+    status: { label: config.cardStatus(record) },
+    image: config.cardImage?.(record),
+  }));
+  const first = records[0] as Record<string, unknown> | undefined;
+  const properties: readonly RecordPropertyDefinition<T>[] = first
+    ? Object.keys(first).filter((field) => field !== "id").map((field) => ({
+        id: field,
+        label: field.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/^./, (character) => character.toUpperCase()),
+        kind: typeof first[field] === "number" ? "number" : "text",
+        getValue: (record) => ({ raw: record[field], display: record[field] == null ? "—" : String(record[field]) }),
+      }))
+    : [];
+  return <RecordList records={tableRecords} properties={properties} />;
+}
+
 function WireframeAgGrid<T extends WireframeRecord>({ records }: { records: readonly T[] }) {
   const first = records[0] as Record<string, unknown> | undefined;
   const fields = first ? Object.keys(first) : [];
-  const columns: ColDef<T>[] = fields.map((field) => ({ field: field as keyof T & string, headerName: field, flex: 1, minWidth: 140 }));
+  const columns: ColDef<T>[] = fields.map((field) => ({
+    field: field as keyof T & string,
+    headerName: field,
+    flex: 1,
+    minWidth: 140,
+    valueFormatter: ({ value }) => formatWireframeTableValue(field, value),
+  }));
   return <div className="wireframe-ag-grid"><AgGridReact<T> theme={themeQuartz} rowData={[...records]} columnDefs={columns} getRowId={({ data }) => data.id} domLayout="autoHeight" /></div>;
+}
+
+function formatWireframeTableValue(field: string, value: unknown): string {
+  if (typeof value !== "number") return value == null || value === "" ? "—" : String(value);
+  return formatRecordNumber(value, inferRecordNumberFormat(field));
 }
 function renderInspector(
   node: ReactNode,

@@ -9,6 +9,7 @@ export type WireframeInspectorField = {
   kind?: "text" | "select" | "status" | "number" | "date" | "textarea";
   options?: string[];
   display?: ReactNode;
+  displayValue?: ReactNode;
   onCommit?: (value: string) => Promise<void>;
 };
 
@@ -25,6 +26,7 @@ export function WireframeRecordInspector({ fields }: { fields: readonly Wirefram
               <WireframeEditableValue
                 label={field.label}
                 value={field.value}
+                displayValue={field.displayValue}
                 kind={field.kind}
                 options={field.options}
                 onCommit={field.onCommit}

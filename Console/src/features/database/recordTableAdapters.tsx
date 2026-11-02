@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { Address, Education, Employment, ExpenseTransaction, GemHue, ServiceAccount } from "../../types";
 import type { RecordAdapter, RecordImage, RecordPropertyDefinition } from "../../table-kit";
+import { formatRecordNumber } from "../../table-kit";
 
 const display = (value: unknown) => ({ raw: value, display: value == null || value === "" ? "—" : String(value) });
 const url = (value: string | null | undefined) => ({ ...display(value), href: value || undefined });
@@ -10,8 +11,9 @@ const email = (value: string | null | undefined) => ({
 });
 const currency = (value: number | null | undefined) => ({
   raw: value,
-  display: value == null ? "—" : new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value),
+  display: formatRecordNumber(value, "currency"),
 });
+const percent = (value: number | null | undefined) => ({ raw: value, display: formatRecordNumber(value, "percent") });
 const hueOptions = [
   "Red",
   "Orange",
@@ -386,15 +388,17 @@ export function createServiceAccountTableAdapter(
           id: "monthlyAmount",
           label: "Monthly amount",
           kind: "number",
+          numberFormat: "currency",
           getValue: (record) => currency(record.monthlyAmount),
         },
         {
           id: "interestRate",
           label: "Interest rate",
           kind: "number",
-          getValue: (record) => display(record.interestRate),
+          numberFormat: "percent",
+          getValue: (record) => percent(record.interestRate),
         },
-        { id: "apr", label: "APR", kind: "number", getValue: (record) => display(record.apr) },
+        { id: "apr", label: "APR", kind: "number", numberFormat: "percent", getValue: (record) => percent(record.apr) },
         { id: "due", label: "Due", kind: "text", getValue: (record) => display(record.due) },
         { id: "occurrence", label: "Occurrence", kind: "text", getValue: (record) => display(record.occurrence) },
         { id: "since", label: "Since", kind: "date", getValue: (record) => display(record.since) },
