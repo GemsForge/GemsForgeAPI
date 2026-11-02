@@ -57,7 +57,9 @@ The project currently includes:
 - Automated route, service, model, and integration-focused tests using isolated
   in-memory databases.
 
-Authentication, production hosting, and remote private-network access remain planned work.
+Production hosting and remote private-network access remain planned work.
+Authentication is owner-only through the Supabase session contract; keep the
+API private until deployment security and ownership migration are complete.
 
 ## Requirements
 
@@ -76,6 +78,9 @@ GemsForgeAPI/
 ├── Console/
 │   ├── package.json
 │   ├── src/
+│   │   ├── features/workspace/
+│   │   ├── table-kit/
+│   │   └── components/ui/
 │   └── README.md
 ├── Public/
 │   ├── index.html
@@ -116,7 +121,7 @@ current Notes-import boundary.
 
 ### Entry file
 
-`Sources/main.swift` is the application entry point. It creates the Vapor application, registers the database, defines the initial health route, starts the server, and handles asynchronous shutdown.
+`Sources/ApplicationEntryPoint.swift` is the Vapor application entry point. It creates the application, configures the database and authentication middleware, registers routes, starts the server, and handles asynchronous shutdown. `Sources/GemLife/main.swift` is the separate local launcher that coordinates the API, Console, and native host.
 
 ### Dependency registry
 
@@ -177,6 +182,11 @@ The current operational workflow is documented in docs/Workflow-Operations.md.
 It covers local configuration, live migrations, attachment relationships,
 GitHub Actions, commit policy, story creation, and verification commands.
 
+For the active Console-specific workflow, see [`Console/README.md`](Console/README.md).
+It documents the React/Vite development server, Supabase owner-session
+configuration, API proxy paths, shared form and attachment conventions, and the
+local schema-builder boundary.
+
 ## Dependencies
 
 - [Vapor](https://github.com/vapor/vapor) — Swift web framework.
@@ -229,6 +239,18 @@ The project can also be built and tested with Swift Package Manager:
 swift build
 swift test
 ```
+
+The Console has its own focused checks. From `Console/`, run:
+
+```bash
+npm ci
+npm run lint
+npm test
+npm run build
+```
+
+Use `npm run format:check` when reviewing formatting-only changes. These checks
+validate the Console bundle and do not replace the Swift API test suite.
 
 To run the API against a selected database:
 
@@ -283,6 +305,13 @@ See [`docs/Architecture.md`](docs/Architecture.md) and
 architecture and development workflow. Route handlers coordinate requests and
 responses, while database access belongs in services so it can be tested,
 changed, and reused independently.
+
+The repository's security and operational boundaries are documented in
+[`docs/Deployment-Security.md`](docs/Deployment-Security.md),
+[`docs/Workflow-Operations.md`](docs/Workflow-Operations.md), and
+[`docs/Live-Schema-Management.md`](docs/Live-Schema-Management.md). Keep the
+API private and use the reviewed backup and migration workflow before changing
+the configured personal database.
 
 ## Privacy and hosting direction
 
