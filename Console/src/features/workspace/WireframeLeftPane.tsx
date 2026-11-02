@@ -2,6 +2,8 @@ import { styled, Text, YStack } from "tamagui";
 import { Link } from "react-router-dom";
 import { GemButton } from "../../components/ui/GemButton";
 import { GSearchField } from "../../components/ui/GSearchField";
+import { GemLogo } from "../../components/ui/GemLogo";
+import { useAddressesQuery, useEducationQuery, useEmploymentQuery, useGemHuesQuery, useServiceAccountsQuery, useTransactionsQuery } from "../../data/lifeQueries";
 
 const WireframeNavigation = styled(YStack, {
   paddingHorizontal: "$wireframePane",
@@ -33,12 +35,19 @@ const collections = [
 ] as const;
 
 export function WireframeLeftPane({ recordCount, activeCollection = "Education" }: WireframeLeftPaneProps) {
+  const counts = {
+    "Gem Hues": useGemHuesQuery(true).data?.length,
+    Education: useEducationQuery(true).data?.length,
+    Employment: useEmploymentQuery(true).data?.length,
+    Addresses: useAddressesQuery(true).data?.length,
+    "Expense Tracker": useTransactionsQuery(true).data?.length,
+    Services: useServiceAccountsQuery(true).data?.length,
+  };
   return (
     <WireframeNavigation asChild>
       <nav className="wireframe-demo-sidebar" aria-label="Workspace navigation">
         <div className="demo-brand">
-          <span className="demo-brand-mark">◆</span>
-          <Text fontWeight="700">GemsForge</Text>
+          <GemLogo />
         </div>
         <div className="demo-search">
           <span aria-hidden="true">⌕</span>
@@ -71,7 +80,7 @@ export function WireframeLeftPane({ recordCount, activeCollection = "Education" 
               <Link to={item.to} aria-current={item.label === activeCollection ? "page" : undefined}>
                 ◈ {item.label}
                 <Text asChild>
-                  <small>{item.label === activeCollection ? recordCount : "—"}</small>
+                  <small>{item.label === activeCollection ? recordCount : counts[item.label] ?? "—"}</small>
                 </Text>
               </Link>
             </GemButton>

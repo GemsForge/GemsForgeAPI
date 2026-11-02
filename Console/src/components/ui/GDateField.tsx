@@ -85,9 +85,11 @@ export function GDateField({
   if (!editing) {
     return (
       <YStack className="gem-field-display" gap="$1">
-        <Label className="g-field-label" color="$gemGold" fontSize="$2" fontWeight="800" textTransform="uppercase">
-          {label}
-        </Label>
+        {showLabel ? (
+          <Label className="g-field-label" color="$gemGold" fontSize="$2" fontWeight="800" textTransform="uppercase">
+            {label}
+          </Label>
+        ) : null}
         <button type="button" className="gem-field-display-value" onClick={onDisplayClick}>
           {displayValue ??
             (selectedDate

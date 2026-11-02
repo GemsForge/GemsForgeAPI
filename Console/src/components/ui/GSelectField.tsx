@@ -45,6 +45,8 @@ export interface GSelectFieldProps extends Omit<
   width?: GemTextFieldWidth;
   onChange?: (value: string) => void;
   primitive?: Extract<GemPrimitiveType, "select" | "status">;
+  /** Marks portaled menu content that belongs to the light wireframe surface. */
+  wireframe?: boolean;
 }
 
 /** Render the standard Tamagui single-select field for feature-owned values. */
@@ -61,6 +63,7 @@ export function GSelectField({
   width = "long",
   onChange,
   primitive,
+  wireframe = false,
   ...triggerProps
 }: GSelectFieldProps) {
   const instanceID = useId();
@@ -80,9 +83,11 @@ export function GSelectField({
   if (!editing) {
     return (
       <YStack className="gem-field-display" gap="$1">
-        <Label className="g-field-label" color="$gemGold" fontSize="$2" fontWeight="800" textTransform="uppercase">
-          {label}
-        </Label>
+        {showLabel ? (
+          <Label className="g-field-label" color="$gemGold" fontSize="$2" fontWeight="800" textTransform="uppercase">
+            {label}
+          </Label>
+        ) : null}
         <button type="button" className="gem-field-display-value" onClick={onDisplayClick}>
           {displayValue ?? options.find((option) => option.value === value)?.label ?? "—"}
         </button>
@@ -133,10 +138,11 @@ export function GSelectField({
         </Select.Trigger>
         <Select.Content
           className={`gem-select-content${primitive === "status" ? " g-status-select-content" : ""}`}
-          backgroundColor="$gemPanel"
-          borderColor="$gemPanelLight"
+          data-wireframe-select={wireframe ? "true" : undefined}
+          backgroundColor="$fieldMenuBackground"
+          borderColor="$fieldBorder"
           borderWidth={1}
-          color="$gemInk"
+          color="$fieldMenuText"
           zIndex={100}
           elevate
         >
@@ -153,22 +159,16 @@ export function GSelectField({
                         .reduce((total, previousGroup) => total + previousGroup.options.length, 0) + optionIndex
                     }
                     value={option.value}
-                    color="$gemInk"
+                    color="$fieldMenuText"
                     borderRadius="$2"
                     minHeight="$4"
                     paddingHorizontal="$2"
                     paddingVertical="$1"
-                    hoverStyle={{ backgroundColor: "$gemPanelLight" }}
-                    focusStyle={{ backgroundColor: "$gemPanelLight" }}
+                    hoverStyle={{ backgroundColor: "$fieldMenuHover" }}
+                    focusStyle={{ backgroundColor: "$fieldMenuHover" }}
                   >
-                    <Select.ItemText color="$gemInk" fontSize="$3">
-                      <span
-                        className={
-                          option.colorToken ? `select-option-pill select-option-pill--${option.colorToken}` : undefined
-                        }
-                      >
-                        {option.label}
-                      </span>
+                    <Select.ItemText color="$fieldMenuText" fontSize="$1" lineHeight="$1">
+                      {option.label}
                     </Select.ItemText>
                   </Select.Item>
                 ))}

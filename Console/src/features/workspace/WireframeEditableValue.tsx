@@ -17,6 +17,7 @@ export function WireframeEditableValue({
   onCommit,
 }: EditableValueProps) {
   const [currentValue, setCurrentValue] = useState(value);
+  const [editing, setEditing] = useState(false);
   const [saveError, setSaveError] = useState<string>();
   const primitive =
     kind === "select" || kind === "status" || kind === "number" ? kind : kind === "date" ? "date" : "text";
@@ -39,16 +40,25 @@ export function WireframeEditableValue({
       showLabel={false}
       primitive={primitive}
       value={currentValue}
+      editing={editing}
+      displayValue={currentValue || "—"}
+      onDisplayClick={() => {
+        setSaveError(undefined);
+        setEditing(true);
+      }}
       options={
         kind === "select" || kind === "status" ? options.map((option) => ({ value: option, label: option })) : undefined
       }
       multiline={kind === "textarea"}
       width="long"
+      wireframe
       error={saveError}
       onChange={(next) => {
         if (typeof next === "string") setCurrentValue(next);
+        if (kind === "select" || kind === "status") setEditing(false);
       }}
       onSave={commit}
+      onBlur={() => setEditing(false)}
     />
   );
 }

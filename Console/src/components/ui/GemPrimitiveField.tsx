@@ -2,6 +2,7 @@ import { useState, type ReactNode } from "react";
 import { GemField } from "./GemField";
 import { GCheckboxField } from "./GCheckboxField";
 import { GDate } from "./GDateField";
+import { GImageField } from "./GImageField";
 import { GSelectField } from "./GSelectField";
 import { GemStatusPill } from "./GemStatusPill";
 import type { GemFieldWidth } from "./GemField";
@@ -40,6 +41,7 @@ export interface GemPrimitiveFieldProps {
   multiline?: boolean;
   error?: string;
   width?: GemFieldWidth;
+  wireframe?: boolean;
 }
 
 export function validatePrimitiveValue(
@@ -92,6 +94,7 @@ export function GemPrimitiveField({
   multiline,
   error,
   width = "long",
+  wireframe = false,
 }: GemPrimitiveFieldProps) {
   const [validationError, setValidationError] = useState<string>();
   const resolvedError = error ?? validationError;
@@ -143,6 +146,7 @@ export function GemPrimitiveField({
         required={required}
         width={width}
         error={resolvedError}
+        wireframe={wireframe}
       />
     );
   }
@@ -190,22 +194,8 @@ export function GemPrimitiveField({
       />
     );
   }
-  if (primitive === "media") {
-    return (
-      <label className="primitive-media-field">
-        <span>
-          {label}
-          {required ? " *" : ""}
-        </span>
-        <input
-          type="file"
-          required={required}
-          onChange={(event) => onMediaChange?.(event.currentTarget.files?.[0] ?? null)}
-          aria-label={label}
-        />
-        {error && <span role="alert">{error}</span>}
-      </label>
-    );
+  if (primitive === "image" || primitive === "media") {
+    return <GImageField label={label} value={typeof value === "string" ? value : null} editing={editing} displayValue={displayValue} onDisplayClick={onDisplayClick} onChange={onMediaChange} error={resolvedError} />;
   }
   return (
     <GemField

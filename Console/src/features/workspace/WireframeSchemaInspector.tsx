@@ -20,6 +20,7 @@ export function WireframeSchemaInspector<Record extends object>({
 }) {
   const fields = properties
     .filter((property) => property.visible !== false)
+    .sort((left, right) => (left.id === "id" ? -1 : right.id === "id" ? 1 : 0))
     .map((property) => {
       const value = property.getValue(record);
       const edit = property.edit;
@@ -27,6 +28,7 @@ export function WireframeSchemaInspector<Record extends object>({
         id: property.id,
         label: property.label,
         value: typeof value.raw === "string" || typeof value.raw === "number" ? String(value.raw) : "",
+        display: value.display,
         kind: editorKind(property.kind, edit?.inputType),
         options: edit?.options?.map((option) => option.value),
         onCommit: edit ? async (next: string) => edit.onSave(record, next) : undefined,

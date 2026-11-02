@@ -190,6 +190,10 @@ export function EducationWireframeView({ records }: { records: readonly Educatio
           </button>
           <dl>
             <div>
+              <dt>Record ID</dt>
+              <dd>{selected.id}</dd>
+            </div>
+            <div>
               <dt>
                 <WireframePropertyEditor label="Institution" value={selected.institutionName} />
               </dt>
@@ -290,12 +294,6 @@ export function EducationWireframeView({ records }: { records: readonly Educatio
                   }
                 />
               </dd>
-            </div>
-          </dl>
-          <dl>
-            <div>
-              <dt>Record ID</dt>
-              <dd>{selected.id}</dd>
             </div>
           </dl>
           <h4>
