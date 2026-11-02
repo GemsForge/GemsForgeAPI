@@ -32,7 +32,7 @@ export function AddressesWireframeView({ records }: { records: readonly Address[
           record.addressType,
           record.addressStatus,
         ],
-        cardTitle: (record) => addressTableAdapter.toTableRecord(record, 0).title || record.id,
+        cardTitle: (record) => record.addressLine1?.trim() || addressTableAdapter.toTableRecord(record, 0).title || record.id,
         cardSubtitle: (record) =>
           [record.city, record.state, record.postalCode, record.country]
             .filter(Boolean)

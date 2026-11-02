@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { GemPrimitiveField } from "../../components/ui/GemPrimitiveField";
+import { GemStatusPill } from "../../components/ui/GemStatusPill";
 
 type EditableValueProps = {
   value: string;
@@ -72,7 +73,7 @@ export function WireframeEditableValue({
         primitive={primitive}
         value={currentValue}
         editing={editing}
-        displayValue={displayValue ?? (currentValue || "—")}
+        displayValue={kind === "status" ? <GemStatusPill tone="success">{displayValue ?? (currentValue || "—")}</GemStatusPill> : displayValue ?? (currentValue || "—")}
         onDisplayClick={() => {
           setSaveError(undefined);
           setEditing(true);

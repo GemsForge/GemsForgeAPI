@@ -1,0 +1,110 @@
+import { useId, useRef, useState, type ChangeEvent } from "react";
+import { Dialog, Input, SizableText, XStack, YStack } from "tamagui";
+import { GemButton } from "../../components/ui/GemButton";
+import addressesCover from "../../assets/covers/addresses.png";
+import educationCover from "../../assets/covers/education.png";
+import employmentCover from "../../assets/covers/employment.png";
+import mineralGardenCover from "../../assets/covers/mineral-garden.png";
+import quietCoastCover from "../../assets/covers/quiet-coast.png";
+import sunstoneTerraceCover from "../../assets/covers/sunstone-terrace.png";
+import transactionsCover from "../../assets/covers/transactions.png";
+import travelDawnCover from "../../assets/covers/travel-dawn.png";
+
+export type WireframeCover = {
+  source: "color" | "gradient" | "gallery" | "upload" | "url";
+  presetId?: string;
+  imageUrl?: string;
+  fileId?: string;
+  position?: { x: number; y: number };
+};
+
+export const COVER_PRESETS = [
+  { id: "sunstone", label: "Sunstone", value: "linear-gradient(135deg, #e8b17d, #527b82)" },
+  { id: "mint", label: "Mint", value: "linear-gradient(135deg, #b7e1d5, #6b9fa0)" },
+  { id: "cobalt", label: "Cobalt", value: "linear-gradient(135deg, #5f78b8, #273b63)" },
+  { id: "plum", label: "Plum", value: "linear-gradient(135deg, #d7a8c7, #654c78)" },
+  { id: "sandstone", label: "Sandstone texture", value: "repeating-linear-gradient(135deg, #d8c3a5 0 8px, #cdb28c 8px 16px)" },
+] as const;
+export const COVER_GALLERY = [
+  { id: "education", label: "Education", imageUrl: educationCover },
+  { id: "employment", label: "Employment", imageUrl: employmentCover },
+  { id: "addresses", label: "Addresses", imageUrl: addressesCover },
+  { id: "transactions", label: "Transactions", imageUrl: transactionsCover },
+  { id: "travel-dawn", label: "Travel dawn", imageUrl: travelDawnCover },
+  { id: "mineral-garden", label: "Mineral garden", imageUrl: mineralGardenCover },
+  { id: "sunstone-terrace", label: "Sunstone terrace", imageUrl: sunstoneTerraceCover },
+  { id: "quiet-coast", label: "Quiet coast", imageUrl: quietCoastCover },
+] as const;
+export function validateCoverImageURL(value: string): string | null {
+  try { const url = new URL(value.trim()); return ["http:", "https:"].includes(url.protocol) ? url.toString() : null; } catch { return null; }
+}
+
+type Props = {
+  value?: WireframeCover | null;
+  onChange?: (cover: WireframeCover | null) => Promise<void> | void;
+  onUpload?: (file: File) => Promise<{ id?: string; url?: string } | void>;
+  label?: string;
+};
+
+function visualStyle(cover: WireframeCover | null | undefined): { background: string; image?: string } {
+  if (!cover) return { background: COVER_PRESETS[0].value };
+  if (cover.imageUrl) return { background: "#dfe6e3", image: cover.imageUrl };
+  return { background: COVER_PRESETS.find((preset) => preset.id === cover.presetId)?.value ?? COVER_PRESETS[0].value };
+}
+
+export function WireframeCover({ value, onChange, onUpload, label = "Record cover" }: Props) {
+  const inputId = useId();
+  const fileInput = useRef<HTMLInputElement>(null);
+  const [open, setOpen] = useState(false);
+  const [localCover, setLocalCover] = useState<WireframeCover | null | undefined>(undefined);
+  const [link, setLink] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [tab, setTab] = useState<"gallery" | "upload" | "link">("gallery");
+  const [repositioning, setRepositioning] = useState(false);
+  const [position, setPosition] = useState(value?.position ?? { x: 50, y: 50 });
+  const drag = useRef<{ startX: number; startY: number; originX: number; originY: number } | null>(null);
+  const currentCover = value !== undefined ? value : localCover;
+  const style = visualStyle(currentCover);
+  const save = async (next: WireframeCover | null) => { setBusy(true); setError(null); try { setLocalCover(next); await onChange?.(next); setOpen(false); } catch (reason) { setLocalCover(currentCover); setError(reason instanceof Error ? reason.message : "Cover could not be saved."); } finally { setBusy(false); } };
+  const upload = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.currentTarget.files?.[0];
+    event.currentTarget.value = "";
+    if (!file) return;
+    if (!file.type.startsWith("image/")) { setError("Choose an image file."); return; }
+    setBusy(true); setError(null);
+    try { const result = await onUpload?.(file); await save({ source: "upload", fileId: result?.id, imageUrl: result?.url ?? URL.createObjectURL(file), position }); }
+    catch (reason) { setError(reason instanceof Error ? reason.message : "Image upload failed."); setBusy(false); }
+  };
+  const useLink = () => { const url = validateCoverImageURL(link); if (!url) { setError("Enter a valid http or https image URL."); return; } void save({ source: "url", imageUrl: url, position }); };
+  const reposition = () => setRepositioning((active) => !active);
+  const handlePointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!repositioning || (event.target as HTMLElement).closest("button")) return;
+    event.currentTarget.setPointerCapture(event.pointerId);
+    drag.current = { startX: event.clientX, startY: event.clientY, originX: position.x, originY: position.y };
+  };
+  const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!drag.current) return;
+    const rect = event.currentTarget.getBoundingClientRect();
+    const nextPosition = {
+      x: Math.max(0, Math.min(100, drag.current.originX - ((event.clientX - drag.current.startX) / rect.width) * 100)),
+      y: Math.max(0, Math.min(100, drag.current.originY - ((event.clientY - drag.current.startY) / rect.height) * 100)),
+    };
+    setPosition(nextPosition);
+  };
+  const handlePointerUp = async (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!drag.current) return;
+    drag.current = null;
+    event.currentTarget.releasePointerCapture(event.pointerId);
+    if (currentCover) await save({ ...currentCover, position });
+    setRepositioning(false);
+  };
+  return <YStack className="wireframe-cover" gap="$2" aria-label={label}>
+    <div className={`wireframe-cover-visual${repositioning ? " is-repositioning" : ""}`} style={{ background: style.background }} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={(event) => void handlePointerUp(event)} onPointerCancel={() => { drag.current = null; }}>
+      {style.image ? <img className="wireframe-cover-image" src={style.image} alt={`${label} image`} style={{ objectPosition: `${position.x}% ${position.y}%` }} /> : null}
+      <XStack className="wireframe-cover-actions" gap={0} role="group" aria-label="Cover actions"><GemButton className="wireframe-cover-action" size="$1" tone="secondary" aria-label="Change cover" onClick={() => { setTab("gallery"); setOpen(true); }}>Change</GemButton><GemButton className="wireframe-cover-action" size="$1" tone="secondary" aria-label={repositioning ? "Finish repositioning cover" : "Reposition cover"} aria-pressed={repositioning} onClick={reposition}>{repositioning ? "Done" : "Reposition"}</GemButton>{currentCover ? <GemButton className="wireframe-cover-action" size="$1" tone="secondary" aria-label="Remove cover" onClick={() => void save(null)}>Remove</GemButton> : null}</XStack>
+      {repositioning ? <div className="wireframe-cover-reposition-hint" role="status">Drag the image to reposition it</div> : null}
+    </div>
+    <Dialog open={open} onOpenChange={setOpen}><Dialog.Portal><Dialog.Overlay backgroundColor="rgba(16, 35, 38, .58)" /><Dialog.Content className="wireframe-cover-dialog" backgroundColor="#ffffff" color="#173d45" borderColor="#dfe6e3" borderWidth={1} borderRadius="$4" padding={0} width="min(46rem, calc(100vw - 2rem))" maxHeight="min(42rem, calc(100vh - 2rem))" overflow="hidden" aria-label="Change cover"><Dialog.Title padding="$4" paddingBottom="$2">Change cover</Dialog.Title><XStack className="wireframe-cover-tabs" role="tablist" aria-label="Cover source"><GemButton size="$3" variant={tab === "gallery" ? "outlined" : "quiet"} role="tab" aria-selected={tab === "gallery"} onClick={() => setTab("gallery")}>Gallery</GemButton><GemButton size="$3" variant={tab === "upload" ? "outlined" : "quiet"} role="tab" aria-selected={tab === "upload"} onClick={() => setTab("upload")}>Upload</GemButton><GemButton size="$3" variant={tab === "link" ? "outlined" : "quiet"} role="tab" aria-selected={tab === "link"} onClick={() => setTab("link")}>Link</GemButton></XStack><YStack gap="$3" className="wireframe-cover-picker">{tab === "gallery" ? <><SizableText className="wireframe-cover-section-label">Record cover gallery</SizableText><div className="wireframe-cover-presets" aria-label="Record cover gallery">{COVER_GALLERY.map((cover) => <button className="wireframe-cover-preset" key={cover.id} type="button" aria-label={`Use ${cover.label} cover`} style={{ backgroundImage: `url(${cover.imageUrl})`, backgroundPosition: "center", backgroundSize: "cover" }} onClick={() => void save({ source: "gallery", presetId: cover.id, imageUrl: cover.imageUrl, position })} />)}</div><SizableText className="wireframe-cover-section-label">Color &amp; gradient</SizableText><div className="wireframe-cover-presets" aria-label="Cover presets">{COVER_PRESETS.map((preset) => <button className="wireframe-cover-preset" key={preset.id} type="button" aria-label={`Use ${preset.label} cover`} style={{ background: preset.value }} onClick={() => void save({ source: preset.id === "sandstone" ? "gallery" : "gradient", presetId: preset.id, position })} />)}</div></> : null}{tab === "upload" ? <><SizableText>Upload an image from your device.</SizableText><input id={inputId} ref={fileInput} hidden type="file" accept="image/*" onChange={upload} /><GemButton alignSelf="flex-start" onClick={() => fileInput.current?.click()} aria-label="Upload cover image">Choose image</GemButton></> : null}{tab === "link" ? <><SizableText>Use an image URL.</SizableText><XStack gap="$2"><Input aria-label="Image URL" placeholder="https://…" value={link} onChangeText={setLink} /><GemButton onClick={useLink} aria-label="Use image link">Use link</GemButton></XStack></> : null}{busy ? <div role="status">Saving cover…</div> : null}{error ? <div role="alert">{error}</div> : null}</YStack><Dialog.Close asChild><GemButton alignSelf="flex-start" margin="$4" marginTop={0} aria-label="Close change cover dialog">Cancel</GemButton></Dialog.Close></Dialog.Content></Dialog.Portal></Dialog>
+  </YStack>;
+}

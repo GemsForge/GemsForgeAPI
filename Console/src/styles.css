@@ -1108,6 +1108,33 @@ dialog::backdrop {
 .demo-inspector-heading h3 { margin: .35rem 0 0; font-family: inherit; font-size: 1rem; font-weight: 700; }
 .demo-inspector-heading button { border: 0; background: transparent; color: #68777c; font-size: 1.3rem; }
 .demo-cover { height: 8rem; border-radius: .7rem; }
+.wireframe-cover { width: 100%; }
+.wireframe-demo-inspector > .wireframe-cover { width: calc(100% + 2.2rem); margin-left: -1.1rem; }
+.wireframe-cover-visual { position: relative; min-height: 11rem; overflow: hidden; border-radius: .45rem; isolation: isolate; }
+.wireframe-cover-image { position: absolute; z-index: 0; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; }
+.wireframe-cover-visual.is-repositioning { cursor: grab; }
+.wireframe-cover-visual.is-repositioning:active { cursor: grabbing; }
+.wireframe-cover-reposition-hint { position: absolute; z-index: 2; left: .75rem; bottom: .75rem; padding: .35rem .55rem; border-radius: .35rem; background: rgba(20, 35, 37, .82); color: #fff; font-size: .7rem; pointer-events: none; }
+.wireframe-cover-visual::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 45%, rgba(14, 35, 38, .42)); pointer-events: none; }
+.wireframe-cover-actions { position: absolute; z-index: 2; right: .75rem; top: .75rem; flex-wrap: wrap; padding: .2rem; border: 1px solid rgba(255,255,255,.35); border-radius: .45rem; background: rgba(20, 35, 37, .82); opacity: 0; pointer-events: none; transform: translateY(-.2rem); transition: opacity .16s ease, transform .16s ease; backdrop-filter: blur(10px); }
+.wireframe-cover-visual:hover .wireframe-cover-actions, .wireframe-cover-visual:focus-within .wireframe-cover-actions { opacity: 1; pointer-events: auto; transform: translateY(0); }
+.wireframe-cover-action { min-height: 1.8rem !important; padding: .25rem .55rem !important; border-color: rgba(255,255,255,.28) !important; border-radius: 0 !important; color: #fff !important; font-size: .7rem !important; }
+.wireframe-cover-action:first-child { border-radius: .28rem 0 0 .28rem !important; }
+.wireframe-cover-action:last-child { border-radius: 0 .28rem .28rem 0 !important; }
+.wireframe-cover-action + .wireframe-cover-action { border-left-width: 0 !important; }
+.wireframe-cover-dialog { width: min(46rem, calc(100vw - 2rem)); padding: 0; overflow: hidden; }
+.wireframe-cover-dialog > h2 { padding: 1.1rem 1.25rem .8rem; }
+.wireframe-cover-tabs { padding: 0 1rem; border-bottom: 1px solid var(--border-color, #dfe6e3); }
+.wireframe-cover-picker { padding: 1rem 1.25rem 1.25rem; }
+.wireframe-cover-section-label { font-weight: 700; }
+.wireframe-cover-presets { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .75rem; }
+.wireframe-cover-preset { min-height: 5.5rem; border: 2px solid transparent; border-radius: .55rem; color: white; cursor: pointer; text-shadow: 0 1px 2px #173d45; transition: transform .15s ease, border-color .15s ease; }
+.wireframe-cover-preset:hover, .wireframe-cover-preset:focus-visible { border-color: #1f6f74; transform: translateY(-2px); outline: none; }
+.wireframe-cover-preset span { display: inline-block; padding: .25rem .45rem; border-radius: .3rem; background: rgba(20,35,37,.5); }
+.wireframe-cover-dialog [data-focus-visible] { outline: 3px solid #1f6f74; outline-offset: 2px; }
+@media (max-width: 600px) { .wireframe-cover-visual { min-height: 8rem; } .wireframe-cover-actions { left: .75rem; right: .75rem; } .wireframe-cover-presets { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (hover: none) { .wireframe-cover-actions { opacity: 1; pointer-events: auto; transform: none; } }
+@media (max-width: 760px) { .wireframe-demo-inspector > .wireframe-cover { width: calc(100% + 2.6rem); margin-left: -1.3rem; } }
 .demo-secondary-button { margin: .6rem 0 1rem; padding: .5rem .7rem; border: 1px solid #dfe6e3; border-radius: .5rem; background: white; color: #52636a; }
 .wireframe-demo-inspector dl { display: grid; gap: .65rem; }
 .wireframe-demo-inspector dl > div { display: grid; grid-template-columns: minmax(7rem, 34%) minmax(0, 1fr); gap: .8rem; align-items: baseline; }
