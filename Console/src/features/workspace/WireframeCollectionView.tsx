@@ -9,7 +9,8 @@ import { WireframeRecordPageView } from "./WireframeRecordPageView";
 import { getPropertyIconDefinition } from "./propertyIcons";
 import { PropertyIcon, PropertyIconPicker } from "./PropertyIconPicker";
 import { formatRecordNumber, inferRecordNumberFormat } from "../../table-kit";
-import { RecordList, type RecordPropertyDefinition, type TableRecord } from "../../table-kit";
+import { RecordList, TablePropertyControls, type RecordPropertyDefinition, type TableRecord, useTablePropertyConfiguration } from "../../table-kit";
+import { RecordUtilities } from "../../components/RecordUtilities";
 import { useLocation, useNavigate } from "react-router-dom";
 
 export type WireframeRecord = { id: string };
@@ -26,6 +27,7 @@ export type WireframeCollectionConfig<T extends WireframeRecord> = {
   cardMeta: (record: T) => string;
   cardImage?: (record: T) => { src: string; alt: string } | undefined;
   inspector: (record: T) => ReactNode;
+  onCreateRecord?: () => void | Promise<void>;
 };
 const cardColors = ["#e8b17d", "#a8d2cf", "#9dc9e0", "#e8b3b7"];
 
@@ -40,10 +42,13 @@ export function WireframeCollectionView<T extends WireframeRecord>({
   const [view, setView] = useState<"table" | "list" | "gallery">("gallery");
   const [selectedID, setSelectedID] = useState<string | null>(config.records[0]?.id ?? null);
   const [query, setQuery] = useState("");
+  const [sort, setSort] = useState("");
+  const [direction, setDirection] = useState<"asc" | "desc">("asc");
+  const [filter, setFilter] = useState("");
+  const [pageIndex, setPageIndex] = useState(0);
+  const [pageSize, setPageSize] = useState(24);
   const [mobileNavigationOpen, setMobileNavigationOpen] = useState(false);
   const [navigationCollapsed, setNavigationCollapsed] = useState(false);
-  const [inspectorWidth, setInspectorWidth] = useState(384);
-  const inspectorResizingRef = useRef(false);
   const [propertyDetails, setPropertyDetails] = useState<{
     label: string;
     value: string;
@@ -57,13 +62,32 @@ export function WireframeCollectionView<T extends WireframeRecord>({
   const inspectorExpanded = Boolean(recordPageID);
   const selected = config.records.find((record) => record.id === (recordPageID ? decodeURIComponent(recordPageID) : selectedID)) ?? null;
   const schema = schemaQuery.data?.tables.find((table) => table.name === (config.tableName ?? config.title));
-  const filteredRecords = useMemo(
+  const matchingRecords = useMemo(
     () =>
       config.records.filter((record) =>
-        config.searchValues(record).some((value) => value.toLowerCase().includes(query.trim().toLowerCase())),
+        config.searchValues(record).some((value) => value.toLowerCase().includes(query.trim().toLowerCase())) &&
+        (!filter || config.cardStatus(record) === filter),
       ),
-    [config, query],
+    [config, filter, query],
   );
+  const sortedRecords = useMemo(() => {
+    if (!sort) return matchingRecords;
+    return [...matchingRecords].sort((left, right) => {
+      const leftValue = sort === "title" ? config.cardTitle(left) : sort === "status" ? config.cardStatus(left) : config.cardMeta(left);
+      const rightValue = sort === "title" ? config.cardTitle(right) : sort === "status" ? config.cardStatus(right) : config.cardMeta(right);
+      const result = leftValue.localeCompare(rightValue, undefined, { numeric: true });
+      return direction === "asc" ? result : -result;
+    });
+  }, [config, direction, matchingRecords, sort]);
+  const pageCount = Math.max(1, Math.ceil(sortedRecords.length / pageSize));
+  const visibleRecords = sortedRecords.slice(pageIndex * pageSize, (pageIndex + 1) * pageSize);
+  const propertyOptions = useMemo(() => {
+    const first = config.records[0] as Record<string, unknown> | undefined;
+    return first ? Object.keys(first).map((id) => ({ id, label: id.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/^./, (character) => character.toUpperCase()), defaultVisible: id !== "id" })) : [];
+  }, [config.records]);
+  const propertyConfiguration = useTablePropertyConfiguration({ properties: propertyOptions });
+  const visiblePropertyIds = propertyConfiguration.visibleIds;
+  const resetPage = () => setPageIndex(0);
   const closeInspector = () => {
     setSelectedID(null);
     if (inspectorExpanded) navigate(location.pathname.replace(/\/record\/[^/]+$/, ""));
@@ -71,12 +95,6 @@ export function WireframeCollectionView<T extends WireframeRecord>({
   };
   const openRecordPage = () => {
     if (selected) navigate(`${location.pathname.replace(/\/record\/[^/]+$/, "")}/record/${encodeURIComponent(selected.id)}`);
-  };
-  const handleInspectorPointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
-    if (!inspectorResizingRef.current) return;
-    const bounds = event.currentTarget.parentElement?.parentElement?.getBoundingClientRect();
-    if (!bounds) return;
-    setInspectorWidth(Math.min(640, Math.max(320, bounds.right - event.clientX)));
   };
   const openPropertyDetails = (details: { label: string; value: string; type?: string; icon?: string }) =>
     setPropertyDetails({
@@ -123,55 +141,28 @@ export function WireframeCollectionView<T extends WireframeRecord>({
           {renderInspector(config.inspector(selected), openPropertyDetails)}
         </WireframeRecordPageView>
       ) : (
-      <WireframePageView title={config.title} description={config.description} recordCount={filteredRecords.length}>
+      <WireframePageView title={config.title} description={config.description} recordCount={sortedRecords.length}>
         <div className="demo-toolbar">
           <div className="demo-view-tabs" role="tablist" aria-label={`${config.title} view mode`}>
             {(["table", "list", "gallery"] as const).map((mode) => (
-              <button
-                className={view === mode ? "active" : ""}
-                type="button"
-                role="tab"
-                aria-selected={view === mode}
-                aria-label={`${mode[0].toUpperCase() + mode.slice(1)} view`}
-                title={`${mode[0].toUpperCase() + mode.slice(1)} view`}
-                onClick={() => setView(mode)}
-                key={mode}
-              >
+              <button className={view === mode ? "active" : ""} type="button" role="tab" aria-selected={view === mode} aria-label={`${mode[0].toUpperCase() + mode.slice(1)} view`} title={`${mode[0].toUpperCase() + mode.slice(1)} view`} onClick={() => setView(mode)} key={mode}>
                 {mode === "table" ? <Table2 size={18} aria-hidden="true" /> : mode === "list" ? <List size={18} aria-hidden="true" /> : <GalleryHorizontal size={18} aria-hidden="true" />}
               </button>
             ))}
           </div>
-          <label className="demo-collection-search">
-            ⌕{" "}
-            <input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              aria-label={`Search ${config.title}`}
-              placeholder="Search this collection…"
-            />
-          </label>
-          <button
-            type="button"
-            className="demo-filter"
-            aria-label={query ? "Clear search" : "Filter records"}
-            title={query ? "Clear search" : "Filter records"}
-            disabled={!query}
-            onClick={() => setQuery("")}
-          >
-            {query ? "×" : "≡"}
-          </button>
-          <button type="button" className="demo-sort">
-            ↕ Sort
-          </button>
+          {searchOpen ? <label className="demo-collection-search"><span aria-hidden="true">⌕</span><input autoFocus value={query} onChange={(event) => { setQuery(event.target.value); resetPage(); }} aria-label={`Search ${config.title}`} placeholder="Search this collection…" /></label> : <button type="button" className="demo-filter" aria-label="Search records" title="Search records" onClick={() => setSearchOpen(true)}>⌕</button>}
+          <RecordUtilities label={config.title} search={query} onSearch={(value) => { setQuery(value); resetPage(); }} sort={sort} onSort={(value) => { setSort(value); resetPage(); }} direction={direction} onDirection={() => setDirection((value) => value === "asc" ? "desc" : "asc")} filter={filter} onFilter={(value) => { setFilter(value); resetPage(); }} sortOptions={[{ value: "title", label: "Name" }, { value: "status", label: "Status" }, { value: "meta", label: "Metadata" }]} filterOptions={[...new Set(config.records.map((record) => config.cardStatus(record)))]} compact />
+          <TablePropertyControls properties={propertyOptions} configuration={propertyConfiguration} />
+          {config.onCreateRecord ? <button type="button" className="demo-sort" onClick={() => void config.onCreateRecord?.()}>＋ New record</button> : null}
         </div>
-        {filteredRecords.length === 0 ? (
+        {visibleRecords.length === 0 ? (
           <div className="wireframe-empty-state" role="status">
             <strong>No {config.title.toLowerCase()} records found</strong>
             <p>Try a different search.</p>
           </div>
         ) : (
           <div className={`demo-results demo-${view}`} role="list" aria-label={`${config.title} records`}>
-            {view === "table" ? <WireframeAgGrid records={filteredRecords} onRecordSelect={setSelectedID} /> : view === "list" ? <WireframeMvpList config={config} records={filteredRecords} onRecordSelect={setSelectedID} /> : filteredRecords.map((record, index) => (
+            {view === "table" ? <WireframeAgGrid records={visibleRecords} visiblePropertyIds={visiblePropertyIds} onRecordSelect={setSelectedID} /> : view === "list" ? <WireframeMvpList config={config} records={visibleRecords} visiblePropertyIds={visiblePropertyIds} onRecordSelect={setSelectedID} /> : visibleRecords.map((record, index) => (
               <button
                 ref={selectedID === record.id ? selectedCardRef : undefined}
                 type="button"
@@ -200,32 +191,12 @@ export function WireframeCollectionView<T extends WireframeRecord>({
         )}
       </WireframePageView>
       )}
+      {!inspectorExpanded && pageCount > 1 ? <nav className="wireframe-pagination" aria-label={`${config.title} pages`}><button type="button" disabled={pageIndex === 0} onClick={() => setPageIndex((page) => page - 1)}>Previous</button><span>{pageIndex + 1} of {pageCount}</span><button type="button" disabled={pageIndex >= pageCount - 1} onClick={() => setPageIndex((page) => page + 1)}>Next</button><label>Rows <select value={pageSize} onChange={(event) => { setPageSize(Number(event.target.value)); resetPage(); }}><option value="12">12</option><option value="24">24</option><option value="48">48</option></select></label></nav> : null}
       {selected ? (
         inspectorExpanded ? null : <aside
           className={`wireframe-demo-inspector ${inspectorExpanded ? "is-expanded" : ""}`}
-          style={{ "--inspector-width": `${inspectorWidth}px` } as React.CSSProperties}
           aria-labelledby="wireframe-inspector-title"
         >
-          <div
-            className="wireframe-inspector-resizer"
-            role="separator"
-            aria-label="Resize record inspector"
-            aria-orientation="vertical"
-            aria-valuemin={320}
-            aria-valuemax={640}
-            aria-valuenow={inspectorWidth}
-            tabIndex={0}
-            onPointerDown={(event) => {
-              inspectorResizingRef.current = true;
-              event.currentTarget.setPointerCapture(event.pointerId);
-            }}
-            onPointerMove={handleInspectorPointerMove}
-            onPointerUp={(event) => {
-              inspectorResizingRef.current = false;
-              event.currentTarget.releasePointerCapture(event.pointerId);
-            }}
-            onPointerCancel={() => { inspectorResizingRef.current = false; }}
-          />
           <div className="demo-inspector-heading">
             <div>
               <p>{inspectorExpanded ? "Record page" : "Record inspector"}</p>
@@ -350,10 +321,12 @@ export function WireframeCollectionView<T extends WireframeRecord>({
 function WireframeMvpList<T extends WireframeRecord>({
   config,
   records,
+  visiblePropertyIds,
   onRecordSelect,
 }: {
   config: WireframeCollectionConfig<T>;
   records: readonly T[];
+  visiblePropertyIds: readonly string[];
   onRecordSelect: (id: string) => void;
 }) {
   const tableRecords: readonly TableRecord<T>[] = records.map((record) => ({
@@ -366,27 +339,34 @@ function WireframeMvpList<T extends WireframeRecord>({
   }));
   const first = records[0] as Record<string, unknown> | undefined;
   const properties: readonly RecordPropertyDefinition<T>[] = first
-    ? Object.keys(first).filter((field) => field !== "id").map((field) => ({
+    ? Object.keys(first).filter((field) => field !== "id" && visiblePropertyIds.includes(field)).map((field) => ({
         id: field,
         label: field.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/^./, (character) => character.toUpperCase()),
-        kind: typeof first[field] === "number" ? "number" : "text",
-        getValue: (record) => ({ raw: record[field], display: record[field] == null ? "—" : String(record[field]) }),
+        kind: isImageProperty(field, first[field]) ? "image" : typeof first[field] === "number" ? "number" : "text",
+        getValue: (record) => isImageProperty(field, record[field])
+          ? { raw: record[field], display: "", image: { src: String(record[field]), alt: field } }
+          : { raw: record[field], display: record[field] == null ? "—" : String(record[field]) },
       }))
     : [];
   return <RecordList records={tableRecords} properties={properties} onExpansionChange={(id) => id && onRecordSelect(String(id))} />;
 }
 
-function WireframeAgGrid<T extends WireframeRecord>({ records, onRecordSelect }: { records: readonly T[]; onRecordSelect: (id: string) => void }) {
+function WireframeAgGrid<T extends WireframeRecord>({ records, visiblePropertyIds, onRecordSelect }: { records: readonly T[]; visiblePropertyIds: readonly string[]; onRecordSelect: (id: string) => void }) {
   const first = records[0] as Record<string, unknown> | undefined;
-  const fields = first ? Object.keys(first) : [];
+  const fields = first ? Object.keys(first).filter((field) => field === "id" || visiblePropertyIds.includes(field)) : [];
   const columns: ColDef<T>[] = fields.map((field) => ({
     field: field as keyof T & string,
     headerName: field,
     flex: 1,
     minWidth: 140,
     valueFormatter: ({ value }) => formatWireframeTableValue(field, value),
+    cellRenderer: ({ value }) => isImageProperty(field, value) ? <img className="wireframe-table-image" src={String(value)} alt={`${field} preview`} /> : undefined,
   }));
   return <div className="wireframe-ag-grid"><AgGridReact<T> theme={themeQuartz} rowData={[...records]} columnDefs={columns} getRowId={({ data }) => data.id} onRowClicked={({ data }) => data && onRecordSelect(data.id)} domLayout="autoHeight" /></div>;
+}
+
+function isImageProperty(field: string, value: unknown): boolean {
+  return typeof value === "string" && /(^|_|-)(image|logo|avatar|cover|photo|thumbnail)(s|$)/i.test(field.replace(/([a-z])([A-Z])/g, "$1_$2"));
 }
 
 function formatWireframeTableValue(field: string, value: unknown): string {

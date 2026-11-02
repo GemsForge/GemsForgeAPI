@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from "react";
+import { ChevronLeft, Expand } from "lucide-react";
 import { GalleryHorizontal, List, Table2 } from "lucide-react";
 import type { Education } from "../../types";
 import { useEducationPatchMutation } from "../../data/recordQueries";
@@ -73,29 +74,12 @@ export function EducationWireframeView({ records }: { records: readonly Educatio
         <div className="demo-toolbar">
           <div className="demo-view-tabs" role="tablist" aria-label="Education view mode">
             {(["table", "list", "gallery"] as const).map((mode) => (
-              <button
-                className={view === mode ? "active" : ""}
-                type="button"
-                role="tab"
-                aria-selected={view === mode}
-                aria-label={`${mode[0].toUpperCase() + mode.slice(1)} view`}
-                title={`${mode[0].toUpperCase() + mode.slice(1)} view`}
-                onClick={() => setView(mode)}
-                key={mode}
-              >
+              <button className={view === mode ? "active" : ""} type="button" role="tab" aria-selected={view === mode} aria-label={`${mode[0].toUpperCase() + mode.slice(1)} view`} title={`${mode[0].toUpperCase() + mode.slice(1)} view`} onClick={() => setView(mode)} key={mode}>
                 {mode === "table" ? <Table2 size={18} aria-hidden="true" /> : mode === "list" ? <List size={18} aria-hidden="true" /> : <GalleryHorizontal size={18} aria-hidden="true" />}
               </button>
             ))}
           </div>
-          <label className="demo-collection-search">
-            ⌕{" "}
-            <input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              aria-label="Search education records"
-              placeholder="Search this collection…"
-            />
-          </label>
+          <label className="demo-collection-search"><span aria-hidden="true">⌕</span><input value={query} onChange={(event) => setQuery(event.target.value)} aria-label="Search education records" placeholder="Search this collection…" /></label>
           <button
             type="button"
             className="demo-filter"
@@ -170,7 +154,7 @@ export function EducationWireframeView({ records }: { records: readonly Educatio
                     requestAnimationFrame(() => selectedCardRef.current?.focus());
                   }}
                 >
-                  ←
+                  <ChevronLeft size={16} aria-hidden="true" />
                 </button>
               ) : (
                 <button
@@ -179,7 +163,7 @@ export function EducationWireframeView({ records }: { records: readonly Educatio
                   title="Open full page"
                   onClick={() => setExpanded(true)}
                 >
-                  ↗
+                  <Expand size={15} aria-hidden="true" />
                 </button>
               )}
               <button type="button" aria-label="Close inspector" onClick={closeInspector}>

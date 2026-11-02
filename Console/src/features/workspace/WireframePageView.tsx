@@ -12,7 +12,7 @@ type WireframePageViewProps = {
 export function WireframePageView({ title, description, recordCount, children }: WireframePageViewProps) {
   return (
     <WireframeMain asChild>
-      <main aria-labelledby="wireframe-page-title">
+      <main className="wireframe-demo-main" aria-labelledby="wireframe-page-title">
         <WireframeHeader asChild>
           <header>
             <WireframeTitleGroup>
