@@ -1,5 +1,5 @@
 import React, { cloneElement, isValidElement, useMemo, useRef, useState, type ReactNode } from "react";
-import { ChevronLeft, Expand, GalleryHorizontal, List, Minimize2, Table2 } from "lucide-react";
+import { ChevronLeft, Expand, GalleryHorizontal, List, Plus, Table2 } from "lucide-react";
 import { AgGridReact } from "ag-grid-react";
 import { themeQuartz, type ColDef } from "ag-grid-community";
 import { useLiveSchemaQuery } from "../../data/workflowQueries";
@@ -9,10 +9,14 @@ import { WireframeRecordPageView } from "./WireframeRecordPageView";
 import { getPropertyIconDefinition } from "./propertyIcons";
 import { PropertyIcon, PropertyIconPicker } from "./PropertyIconPicker";
 import { formatRecordNumber, inferRecordNumberFormat } from "../../table-kit";
-import { RecordList, TablePropertyControls, type RecordPropertyDefinition, type TableRecord, useTablePropertyConfiguration } from "../../table-kit";
+import { RecordList, Table, TablePropertyControls, type RecordPropertyDefinition, type TableActionsProps, type TableRecord, useTablePropertyConfiguration } from "../../table-kit";
 import { RecordUtilities } from "../../components/RecordUtilities";
 import { GalleryViewControls, type GalleryCardSize } from "../../table-kit";
 import { useLocation, useNavigate } from "react-router-dom";
+import { GSelectField } from "../../components/ui/GSelectField";
+import { GemTextField } from "../../components/ui/GemTextField";
+import { GemButton } from "../../components/ui/GemButton";
+import { SizableText, Theme } from "tamagui";
 
 export type WireframeRecord = { id: string };
 export type WireframeCollectionConfig<T extends WireframeRecord> = {
@@ -29,6 +33,8 @@ export type WireframeCollectionConfig<T extends WireframeRecord> = {
   cardImage?: (record: T) => { src: string; alt: string } | undefined;
   inspector: (record: T) => ReactNode;
   onCreateRecord?: () => void | Promise<void>;
+  recordActions?: Omit<TableActionsProps, "onNew">;
+  newRecordUtility?: TableActionsProps["newRecordUtility"];
 };
 const cardColors = ["#e8b17d", "#a8d2cf", "#9dc9e0", "#e8b3b7"];
 
@@ -41,16 +47,15 @@ export function WireframeCollectionView<T extends WireframeRecord>({
   const location = useLocation();
   const navigate = useNavigate();
   const [view, setView] = useState<"table" | "list" | "gallery">("gallery");
-  const [galleryCardSize, setGalleryCardSize] = useState<GalleryCardSize>("medium");
+  const [galleryCardSize, setGalleryCardSize] = useState<GalleryCardSize>("small");
   const [galleryFillMedia, setGalleryFillMedia] = useState(true);
   const [selectedID, setSelectedID] = useState<string | null>(config.records[0]?.id ?? null);
   const [query, setQuery] = useState("");
-  const [searchOpen, setSearchOpen] = useState(false);
   const [sort, setSort] = useState("");
   const [direction, setDirection] = useState<"asc" | "desc">("asc");
   const [filter, setFilter] = useState("");
   const [pageIndex, setPageIndex] = useState(0);
-  const [pageSize, setPageSize] = useState(24);
+  const [pageSize, setPageSize] = useState(9);
   const [mobileNavigationOpen, setMobileNavigationOpen] = useState(false);
   const [navigationCollapsed, setNavigationCollapsed] = useState(false);
   const [propertyDetails, setPropertyDetails] = useState<{
@@ -161,10 +166,17 @@ export function WireframeCollectionView<T extends WireframeRecord>({
               </button>
             ))}
           </div>
-          {searchOpen ? <label className="demo-collection-search"><span aria-hidden="true">⌕</span><input autoFocus value={query} onChange={(event) => { setQuery(event.target.value); resetPage(); }} aria-label={`Search ${config.title}`} placeholder="Search this collection…" /></label> : <button type="button" className="demo-filter" aria-label="Search records" title="Search records" onClick={() => setSearchOpen(true)}>⌕</button>}
           <RecordUtilities label={config.title} search={query} onSearch={(value) => { setQuery(value); resetPage(); }} sort={sort} onSort={(value) => { setSort(value); resetPage(); }} direction={direction} onDirection={() => setDirection((value) => value === "asc" ? "desc" : "asc")} filter={filter} onFilter={(value) => { setFilter(value); resetPage(); }} sortOptions={[{ value: "title", label: "Name" }, { value: "status", label: "Status" }, { value: "meta", label: "Metadata" }]} filterOptions={[...new Set(config.records.map((record) => config.cardStatus(record)))]} compact />
           <TablePropertyControls properties={propertyOptions} configuration={propertyConfiguration} />
-          {config.onCreateRecord ? <button type="button" className="demo-sort" onClick={() => void config.onCreateRecord?.()}>＋ New record</button> : null}
+          <Theme name="light">
+            <Table.Actions
+              onNew={config.onCreateRecord}
+              {...config.recordActions}
+              newRecordUtility={config.newRecordUtility}
+              newOptionsLabel="New record options"
+              newLabel="New record"
+            />
+          </Theme>
         </div>
         {view === "gallery" ? <GalleryViewControls cardSize={galleryCardSize} fillMedia={galleryFillMedia} onCardSizeChange={setGalleryCardSize} onFillMediaChange={setGalleryFillMedia} /> : null}
         {visibleRecords.length === 0 ? (
@@ -202,10 +214,19 @@ export function WireframeCollectionView<T extends WireframeRecord>({
           </div>
         )}
         <nav className="wireframe-pagination" aria-label={`${config.title} pages`}>
-          <button type="button" aria-label={`Previous page of ${config.title}`} disabled={pageIndex === 0 || sortedRecords.length === 0} onClick={() => setPageIndex((page) => Math.max(0, page - 1))}>Previous</button>
+          <GemButton className="wireframe-design-button" type="button" variant="outlined" tone="wireframe" size="xs" aria-label={`Previous page of ${config.title}`} disabled={pageIndex === 0 || sortedRecords.length === 0} onClick={() => setPageIndex((page) => Math.max(0, page - 1))}>Previous</GemButton>
           <span role="status">{sortedRecords.length === 0 ? "0 records" : `${pageIndex * pageSize + 1}–${Math.min(sortedRecords.length, (pageIndex + 1) * pageSize)} of ${sortedRecords.length}`}</span>
-          <label htmlFor="wireframe-page-size">Records per page <select id="wireframe-page-size" value={pageSize} onChange={(event) => { setPageSize(Number(event.target.value)); resetPage(); }}><option value="12">12</option><option value="24">24</option><option value="48">48</option></select></label>
-          <button type="button" aria-label={`Next page of ${config.title}`} disabled={pageIndex >= pageCount - 1 || sortedRecords.length === 0} onClick={() => setPageIndex((page) => Math.min(pageCount - 1, page + 1))}>Next</button>
+        <GSelectField
+          label="Records per page"
+          value={String(pageSize)}
+          width="xs"
+          containerClassName="wireframe-pagination-page-size"
+          size="$2"
+          wireframe
+          options={[9, 18, 27].map((size) => ({ value: String(size), label: String(size) }))}
+          onChange={(value) => { setPageSize(Number(value)); resetPage(); }}
+        />
+          <GemButton className="wireframe-design-button" type="button" variant="outlined" tone="wireframe" size="xs" aria-label={`Next page of ${config.title}`} disabled={pageIndex >= pageCount - 1 || sortedRecords.length === 0} onClick={() => setPageIndex((page) => Math.min(pageCount - 1, page + 1))}>Next</GemButton>
         </nav>
       </WireframePageView>
       )}
@@ -233,6 +254,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
         </aside>
       ) : null}
       {propertyDetails ? (
+        <Theme name="light">
         <div className="wireframe-property-details-backdrop" role="presentation" onClick={() => setPropertyDetails(null)}>
           <section
             className="wireframe-property-details"
@@ -241,15 +263,15 @@ export function WireframeCollectionView<T extends WireframeRecord>({
             aria-labelledby="wireframe-property-details-title"
             onClick={(event) => event.stopPropagation()}
           >
-            <button type="button" aria-label="Close property details" onClick={() => setPropertyDetails(null)}>
+            <GemButton type="button" variant="quiet" tone="secondary" aria-label="Close property details" onClick={() => setPropertyDetails(null)}>
               ×
-            </button>
+            </GemButton>
             <div className="wireframe-property-details-heading">
               <span className="wireframe-property-details-icon" aria-hidden="true">
                 <PropertyIcon name={propertyDetails.icon} />
               </span>
               <div>
-                <h3 id="wireframe-property-details-title">Property settings</h3>
+                <SizableText id="wireframe-property-details-title" className="wireframe-property-dialog-title" size="$3" fontWeight="700" role="heading" aria-level={2}>Property settings</SizableText>
                 <p>{propertyDetails.label}</p>
               </div>
             </div>
@@ -257,31 +279,21 @@ export function WireframeCollectionView<T extends WireframeRecord>({
               <strong>Current value</strong>
               <p>{propertyDetails.value || "No value recorded."}</p>
             </div>
-            <label>
-              Property name
-              <input
-                id="wireframe-property-name"
-                value={propertyDetails.label}
-                readOnly={isIdentityProperty(propertyDetails.label)}
-                onChange={(event) => setPropertyDetails({ ...propertyDetails, label: event.target.value })}
-              />
-            </label>
-            <label>
-              Primitive type
-              <select
-                id="wireframe-property-type"
-                value={propertyDetails.type}
-                onChange={(event) => setPropertyDetails({ ...propertyDetails, type: event.target.value })}
-              >
-                <option>Text</option>
-                <option>Number</option>
-                <option>Date</option>
-                <option>Status</option>
-                <option>Tags</option>
-                <option>URL</option>
-                <option>Notes</option>
-              </select>
-            </label>
+            <GemTextField
+              id="wireframe-property-name"
+              label="Property name"
+              value={propertyDetails.label}
+              readOnly={isIdentityProperty(propertyDetails.label)}
+              onChange={(event) => setPropertyDetails({ ...propertyDetails, label: event.currentTarget.value })}
+            />
+            <GSelectField
+              id="wireframe-property-type"
+              label="Primitive type"
+              value={propertyDetails.type}
+              options={["Text", "Number", "Date", "Status", "Tags", "URL", "Notes"].map((type) => ({ value: type, label: type }))}
+              onChange={(type) => setPropertyDetails({ ...propertyDetails, type })}
+              wireframe
+            />
             <fieldset className="wireframe-property-icon-fieldset">
               <legend>Icon</legend>
               <PropertyIconPicker
@@ -289,47 +301,35 @@ export function WireframeCollectionView<T extends WireframeRecord>({
                 onChange={(icon) => setPropertyDetails({ ...propertyDetails, icon })}
               />
             </fieldset>
-            <label>
-              Status text
-              <input
-                id="wireframe-property-status-text"
-                value={propertyDetails.statusText}
-                onChange={(event) => setPropertyDetails({ ...propertyDetails, statusText: event.target.value })}
-              />
-            </label>
-            <label>
-              Pill color
-              <select
-                id="wireframe-property-color"
-                value={propertyDetails.colorToken}
-                onChange={(event) => setPropertyDetails({ ...propertyDetails, colorToken: event.target.value })}
-              >
-                <option value="mint">Mint</option>
-                <option value="gold">Gold</option>
-                <option value="blue">Blue</option>
-                <option value="green">Green</option>
-                <option value="purple">Purple</option>
-                <option value="orange">Orange</option>
-                <option value="red">Red</option>
-                <option value="gray">Gray</option>
-              </select>
-            </label>
+            <GemTextField
+              id="wireframe-property-status-text"
+              label="Status text"
+              value={propertyDetails.statusText}
+              onChange={(event) => setPropertyDetails({ ...propertyDetails, statusText: event.currentTarget.value })}
+            />
+            <GSelectField
+              id="wireframe-property-color"
+              label="Pill color"
+              value={propertyDetails.colorToken}
+              options={["mint", "gold", "blue", "green", "purple", "orange", "red", "gray"].map((color) => ({ value: color, label: color[0].toUpperCase() + color.slice(1) }))}
+              onChange={(colorToken) => setPropertyDetails({ ...propertyDetails, colorToken })}
+              wireframe
+            />
             <div className="wireframe-property-details-actions">
-              <button type="button" className="demo-secondary-button" onClick={() => setPropertyDetails(null)}>
+              <GemButton type="button" variant="outlined" tone="secondary" onClick={() => setPropertyDetails(null)}>
                 Cancel
-              </button>
-              <button
+              </GemButton>
+              <GemButton
                 type="button"
-                className="wireframe-property-save-button"
                 aria-label="Save property settings"
-                title="Save property settings"
                 onClick={() => setPropertyDetails(null)}
               >
                 ✓
-              </button>
+              </GemButton>
             </div>
           </section>
         </div>
+        </Theme>
       ) : null}
     </section>
   );
