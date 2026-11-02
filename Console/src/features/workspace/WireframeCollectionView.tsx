@@ -507,7 +507,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
                   </h3>
                 ) : null}
                 <div className={`demo-results demo-${view} ${view === "gallery" ? `gallery-size-${galleryCardSize}` : ""} ${galleryFillMedia ? "gallery-fill-media" : "gallery-fit-media"}`} role="group" aria-label={`${config.title}${groupBy ? ` ${groupPropertyLabel}: ${group.label}` : ""} records`}>
-            {view === "table" ? <WireframeAgGrid records={group.records} visiblePropertyIds={visiblePropertyIds} properties={config.properties} onRecordSelect={setSelectedID} /> : view === "list" ? <WireframeMvpList config={config} records={group.records} visiblePropertyIds={visiblePropertyIds} onRecordSelect={setSelectedID} /> : group.records.map((record, index) => (
+            {view === "table" ? <WireframeAgGrid records={group.records} visiblePropertyIds={visiblePropertyIds} properties={config.properties} cardImage={config.cardImage} onRecordSelect={setSelectedID} /> : view === "list" ? <WireframeMvpList config={config} records={group.records} visiblePropertyIds={visiblePropertyIds} onRecordSelect={setSelectedID} /> : group.records.map((record, index) => (
               (() => {
                 const subtitleVisible = isGallerySlotVisible(record, config.cardSubtitle(record), visiblePropertyIds, config.properties);
                 const statusVisible = isGallerySlotVisible(record, config.cardStatus(record), visiblePropertyIds, config.properties);
@@ -718,7 +718,7 @@ function WireframeMvpList<T extends WireframeRecord>({
   return <RecordList records={tableRecords} properties={properties} onExpansionChange={(id) => id && onRecordSelect(String(id))} />;
 }
 
-function WireframeAgGrid<T extends WireframeRecord>({ records, visiblePropertyIds, properties = [], onRecordSelect }: { records: readonly T[]; visiblePropertyIds: readonly string[]; properties?: readonly RecordPropertyDefinition<T>[]; onRecordSelect: (id: string) => void }) {
+function WireframeAgGrid<T extends WireframeRecord>({ records, visiblePropertyIds, properties = [], cardImage, onRecordSelect }: { records: readonly T[]; visiblePropertyIds: readonly string[]; properties?: readonly RecordPropertyDefinition<T>[]; cardImage?: (record: T) => { src: string; alt: string } | undefined; onRecordSelect: (id: string) => void }) {
   const fields = ["id", ...visiblePropertyIds.filter((field) => field !== "id")];
   const columns: ColDef<T>[] = fields.map((field) => {
     const property = properties.find((item) => item.id === field || item.sourceField === field);
@@ -727,12 +727,32 @@ function WireframeAgGrid<T extends WireframeRecord>({ records, visiblePropertyId
       headerName: property?.label ?? propertyLabel(field),
       flex: 1,
       minWidth: 140,
+      valueGetter: ({ data }) => {
+        if (!data) return undefined;
+        if (field === "image") return cardImage?.(data)?.src;
+        if (!property) return (data as Record<string, unknown>)[field];
+        const value = property.getValue(data);
+        return value.raw ?? (typeof value.display === "string" || typeof value.display === "number" ? value.display : undefined);
+      },
       valueFormatter: (params) => {
         if (!property || !params.data) return formatWireframeTableValue(field, params.value);
         const display = property.getValue(params.data).display;
         return typeof display === "string" || typeof display === "number" ? String(display) : display == null ? "—" : "";
       },
-      cellRenderer: (params: ICellRendererParams<T>) => isImageProperty(field, params.value) ? <img className="wireframe-table-image" src={String(params.value)} alt={`${field} preview`} /> : undefined,
+      cellRenderer: (params: ICellRendererParams<T>) => {
+        if (!params.data) return "";
+        const rawValue = field === "image"
+          ? cardImage?.(params.data)?.src
+          : property ? property.getValue(params.data).raw : (params.data as Record<string, unknown>)[field];
+        if (isImageProperty(field, rawValue)) {
+          return <img className="wireframe-table-image" src={String(rawValue)} alt={field === "image" ? cardImage?.(params.data)?.alt ?? "Record image" : `${field} preview`} />;
+        }
+        if (property) {
+          const display = property.getValue(params.data).display;
+          return typeof display === "string" || typeof display === "number" ? String(display) : display == null ? "—" : "";
+        }
+        return formatWireframeTableValue(field, rawValue);
+      },
     };
   });
   return <div className="wireframe-ag-grid"><AgGridReact<T> theme={themeQuartz} rowData={[...records]} columnDefs={columns} getRowId={({ data }) => data.id} onRowClicked={({ data }) => data && onRecordSelect(data.id)} domLayout="autoHeight" /></div>;
