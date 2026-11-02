@@ -13,6 +13,8 @@ describe("Gem Life design foundation", () => {
     expect(tamaguiConfig.fonts.heading).toBeDefined();
     expect(gemSpacing.section).toBeGreaterThan(gemSpacing.control);
     expect(gemRadii.card).toBeGreaterThan(gemRadii.control);
+    expect(gemColors.lightCanvas).toBe("#f3f8f7");
+    expect(tamaguiConfig.themes.light.background.val).toBe("$lightCanvas");
     expect(tamaguiConfig.themes.dark).toBeDefined();
     expect(tamaguiConfig.themes.light).toBeDefined();
   });
