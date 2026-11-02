@@ -68,7 +68,7 @@ export function DatabaseRecordCollection<Record>({
   actions,
   onRecordPatch,
 }: DatabaseRecordCollectionProps<Record>) {
-  const [activeViewId, setActiveViewId] = useState("list");
+  const [activeViewId, setActiveViewId] = useState("gallery");
   const [viewConfigurations, setViewConfigurations] = useState<
     Record<string, TablePropertyConfigurationInput>
   >({});
@@ -346,7 +346,12 @@ function DatabaseRecordRenderer<Record>({
   onRecordPatch?: (record: Record, field: string, value: string | number | null) => Promise<void>;
 }) {
   const { viewId } = useTableContext<TableRecord<Record>>();
+  const [expanded, setExpanded] = useState(false);
   const onExpansionChange = (id: string | undefined) => onDetailChange(id === detailId ? null : (id ?? null));
+
+  useEffect(() => {
+    if (detailId === null) setExpanded(false);
+  }, [detailId]);
 
   return (
     <>
@@ -359,26 +364,25 @@ function DatabaseRecordRenderer<Record>({
           <RecordList properties={properties} propertyIds={propertyIds} onExpansionChange={onExpansionChange} onRecordPatch={onRecordPatch} />
         )}
       </div>
-      {detail ? (
-        <Dialog open={detailId !== null} onOpenChange={(open) => !open && onDetailChange(null)} modal>
-          <Dialog.Portal>
-            <Dialog.Overlay className="table-kit-utility-backdrop" />
-            <Dialog.Content className="table-kit-new-record-utility database-record-detail-dialog">
-              <Dialog.Title className="sr-only">{label} record details</Dialog.Title>
-              <Dialog.Close asChild>
-                <GemButton
-                  variant="quiet"
-                  size="sm"
-                  className="database-record-detail-close"
-                  aria-label="Close record details"
-                  onClick={() => onDetailChange(null)}
-                >
-                  ×
-                </GemButton>
-              </Dialog.Close>
-              <div className="database-record-detail">{detail}</div>
-            </Dialog.Content>
-          </Dialog.Portal>
+      {detail && detailId !== null && !expanded ? (
+        <aside className="database-record-inspector" aria-label={`${label} record inspector`}>
+          <div className="database-record-inspector-heading">
+            <div><span className="eyebrow">Record inspector</span><strong>{label}</strong></div>
+            <div className="database-record-inspector-actions">
+              <button type="button" aria-label="Expand record into page view" title="Expand record into page view" onClick={() => setExpanded(true)}>↗</button>
+              <button type="button" aria-label="Close record inspector" title="Close record inspector" onClick={() => onDetailChange(null)}>×</button>
+            </div>
+          </div>
+          <div className="database-record-detail">{detail}</div>
+        </aside>
+      ) : null}
+      {detail && expanded ? (
+        <Dialog open onOpenChange={(open) => !open && setExpanded(false)} modal>
+          <Dialog.Portal><Dialog.Overlay className="table-kit-utility-backdrop" /><Dialog.Content className="table-kit-new-record-utility database-record-detail-dialog">
+            <Dialog.Title className="sr-only">{label} record page</Dialog.Title>
+            <Dialog.Close asChild><GemButton variant="quiet" size="sm" className="database-record-detail-close" aria-label="Close record page" onClick={() => setExpanded(false)}>×</GemButton></Dialog.Close>
+            <div className="database-record-detail database-record-page-view">{detail}</div>
+          </Dialog.Content></Dialog.Portal>
         </Dialog>
       ) : null}
     </>

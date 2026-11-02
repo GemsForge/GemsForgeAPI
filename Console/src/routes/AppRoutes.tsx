@@ -40,6 +40,24 @@ const GemHuesView = lazy(() =>
 const EducationView = lazy(() =>
   import("../features/education/EducationView").then((module) => ({ default: module.EducationView })),
 );
+const EducationWireframeView = lazy(() =>
+  import("../features/education/EducationWireframeView").then((module) => ({ default: module.EducationWireframeView })),
+);
+const EmploymentWireframeView = lazy(() =>
+  import("../features/employment/EmploymentWireframeView").then((module) => ({ default: module.EmploymentWireframeView })),
+);
+const AddressesWireframeView = lazy(() =>
+  import("../features/addresses/AddressesWireframeView").then((module) => ({ default: module.AddressesWireframeView })),
+);
+const TransactionsWireframeView = lazy(() =>
+  import("../features/transactions/TransactionsWireframeView").then((module) => ({ default: module.TransactionsWireframeView })),
+);
+const GemHuesWireframeView = lazy(() =>
+  import("../features/gem-hues/GemHuesWireframeView").then((module) => ({ default: module.GemHuesWireframeView })),
+);
+const ServiceCatalogWireframeView = lazy(() =>
+  import("../features/service-accounts/ServiceCatalogWireframeView").then((module) => ({ default: module.ServiceCatalogWireframeView })),
+);
 const EmploymentView = lazy(() =>
   import("../features/employment/EmploymentView").then((module) => ({ default: module.EmploymentView })),
 );
@@ -223,6 +241,30 @@ function Education() {
   const query = useEducationQuery(true);
   return <QueryScreen query={query}>{(records) => <EducationView records={records} />}</QueryScreen>;
 }
+function EducationWireframe() {
+  const query = useEducationQuery(true);
+  return <QueryScreen query={query}>{(records) => <EducationWireframeView records={records} />}</QueryScreen>;
+}
+function EmploymentWireframe() {
+  const query = useEmploymentQuery(true);
+  return <QueryScreen query={query}>{(records) => <EmploymentWireframeView records={records} />}</QueryScreen>;
+}
+function AddressesWireframe() {
+  const query = useAddressesQuery(true);
+  return <QueryScreen query={query}>{(records) => <AddressesWireframeView records={records} />}</QueryScreen>;
+}
+function TransactionsWireframe() {
+  const query = useTransactionsQuery(true);
+  return <QueryScreen query={query}>{(records) => <TransactionsWireframeView records={records} />}</QueryScreen>;
+}
+function GemHuesWireframe() {
+  const query = useGemHuesQuery(true);
+  return <QueryScreen query={query}>{(records) => <GemHuesWireframeView records={records} />}</QueryScreen>;
+}
+function ServiceCatalogWireframe() {
+  const query = useServiceAccountsQuery(true);
+  return <QueryScreen query={query}>{(records) => <ServiceCatalogWireframeView records={records} />}</QueryScreen>;
+}
 function Employment() {
   const query = useEmploymentQuery(true);
   return <QueryScreen query={query}>{(records) => <EmploymentView records={records} />}</QueryScreen>;
@@ -272,6 +314,12 @@ export function AppRoutes() {
       <Route path="reset-password" element={<ResetPasswordPage />} />
       <Route path="/" element={isRecoveryLink() ? <ResetPasswordPage /> : <Navigate to="/login" replace />} />
       <Route element={<RequireAuth />}>
+        <Route path="education-wireframe" element={<LocalSession><EducationWireframe /></LocalSession>} />
+        <Route path="employment-wireframe" element={<LocalSession><EmploymentWireframe /></LocalSession>} />
+        <Route path="addresses-wireframe" element={<LocalSession><AddressesWireframe /></LocalSession>} />
+        <Route path="transactions-wireframe" element={<LocalSession><TransactionsWireframe /></LocalSession>} />
+        <Route path="gemhues-wireframe" element={<LocalSession><GemHuesWireframe /></LocalSession>} />
+        <Route path="service-catalog-wireframe" element={<LocalSession><ServiceCatalogWireframe /></LocalSession>} />
         <Route
           element={
             <LocalSession>

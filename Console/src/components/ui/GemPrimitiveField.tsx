@@ -16,6 +16,7 @@ export interface GemPrimitiveFieldProps {
   displayValue?: ReactNode;
   onDisplayClick?: () => void;
   onChange?: (value: string | number | boolean | null) => void;
+  onBlur?: () => void;
   onSave?: (value: string | number | boolean | null) => Promise<void> | void;
   onMediaChange?: (file: File | null) => void;
   options?: RecordSelectOption[];
@@ -65,6 +66,7 @@ export function GemPrimitiveField({
   displayValue,
   onDisplayClick,
   onChange,
+  onBlur,
   onSave,
   onMediaChange,
   options = [],
@@ -171,9 +173,12 @@ export function GemPrimitiveField({
       width={width}
       error={resolvedError}
       onChange={(event) => onChange?.(event.currentTarget.value)}
-      onBlur={(event) => emit(primitive === "number"
-        ? event.currentTarget.value === "" ? null : Number(event.currentTarget.value)
-        : event.currentTarget.value)}
+      onBlur={(event) => {
+        emit(primitive === "number"
+          ? event.currentTarget.value === "" ? null : Number(event.currentTarget.value)
+          : event.currentTarget.value);
+        onBlur?.();
+      }}
     />
   );
 }

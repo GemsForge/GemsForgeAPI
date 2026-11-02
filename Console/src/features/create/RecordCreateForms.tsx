@@ -158,6 +158,7 @@ function renderEducationField(form: UseFormReturn<EducationCreateFormValues>, fi
             value={input.value}
             editing
             onChange={(value) => input.onChange(value ?? "")}
+            onBlur={input.onBlur}
             options={field.options ? [...field.options] : undefined}
             required={field.required}
             nullable={!field.required}

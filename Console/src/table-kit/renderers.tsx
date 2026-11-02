@@ -21,6 +21,7 @@ import { EditableRecordFields } from "../components/EditableRecordFields";
 import { TableContext } from "./context";
 import { GalleryViewControls, type GalleryCardSize } from "./GalleryViewControls";
 import {
+  getPrimaryRecordProperty,
   orderRecordProperties,
   type RecordPropertyDefinition,
   type RecordPropertyValue,
@@ -623,7 +624,8 @@ export function RecordTable<Record>({
   const selection = useRendererSelection(selectedIds, onRecordSelect);
   const visibleProperties = propertiesFor(properties, propertyIds);
   const hasStatus = effectiveRecords.some((record) => record.status !== undefined);
-  const primaryProperty = properties.find((property) => property.primary) ?? visibleProperties[0];
+  const primaryProperty = getPrimaryRecordProperty(visibleProperties);
+  const hasTitleProperty = visibleProperties.some((property) => property.kind === "title" || property.id === "title");
   const hasLogo = visibleProperties.some((property) => property.kind === "image" || property.id === "logo");
   const columnDefs: ColDef<TableRecord<Record>>[] = [];
 
@@ -639,6 +641,19 @@ export function RecordTable<Record>({
       resizable: false,
       cellRenderer: ({ data }: ICellRendererParams<TableRecord<Record>>) =>
         data ? <SelectionButton record={data} selection={selection} /> : null,
+    });
+  }
+
+  if (!hasTitleProperty) {
+    columnDefs.push({
+      colId: "title",
+      headerName: "Title",
+      flex: 1,
+      minWidth: 180,
+      pinned: "left",
+      sortable: true,
+      valueGetter: ({ data }) => data?.title ?? data?.subtitle ?? data?.id ?? "Untitled",
+      cellRenderer: GridPropertyCell,
     });
   }
 

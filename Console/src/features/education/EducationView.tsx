@@ -33,7 +33,7 @@ export function EducationView({ records }: EducationViewProps) {
       end: (a, b) => (a.endDate ?? "").localeCompare(b.endDate ?? ""),
     },
   );
-  const [selectedID, setSelectedID] = useState<string | null>(null);
+  const [selectedID, setSelectedID] = useState<string | null>(records[0]?.id ?? null);
   const detail = useEducationRecordQuery(selectedID);
   const patch = useEducationPatchMutation();
   const selectedRecord = detail.data;
@@ -46,11 +46,11 @@ export function EducationView({ records }: EducationViewProps) {
   });
 
   return (
-    <>
+    <section className="wireframe-collection-page" aria-labelledby="education-title">
       <div className="content-heading">
         <div>
           <p className="eyebrow">Life-area records</p>
-          <h2>Education</h2>
+          <h2 id="education-title">Education</h2>
           <p className="muted">
             Read education history from the existing Gem Life database. These records are not assigned to a Domain.
           </p>
@@ -131,7 +131,7 @@ export function EducationView({ records }: EducationViewProps) {
           />
         </div>
       )}
-    </>
+    </section>
   );
 }
 function EducationDetail({
