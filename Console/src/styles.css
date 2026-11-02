@@ -1084,9 +1084,9 @@ dialog::backdrop {
 .wireframe-record-group-heading { display: flex; align-items: center; gap: .5rem; margin: 0; color: #233c42; font-size: .9rem; }
 .wireframe-record-group-count { color: #738187; font-size: .78rem; font-weight: 400; }
 .demo-gallery { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.demo-gallery.gallery-size-small { grid-template-columns: repeat(auto-fill, minmax(min(100%, 10rem), 12rem)); justify-content: start; }
-.demo-gallery.gallery-size-medium { grid-template-columns: repeat(auto-fill, minmax(min(100%, 14rem), 17rem)); justify-content: start; }
-.demo-gallery.gallery-size-large { grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 22rem)); justify-content: start; }
+.demo-gallery.gallery-size-small { grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr)); }
+.demo-gallery.gallery-size-medium { grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr)); }
+.demo-gallery.gallery-size-large { grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr)); }
 .demo-gallery .demo-place-image { min-height: 0; overflow: hidden; }
 .demo-gallery .demo-place-image img { object-fit: cover; }
 .demo-gallery.gallery-fit-media .demo-place-image img { object-fit: contain; }

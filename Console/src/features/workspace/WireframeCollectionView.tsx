@@ -11,7 +11,7 @@ import { PROPERTY_ICON_LIBRARY, getPropertyIconByName } from "./propertyIcons";
 import { formatRecordNumber, inferRecordNumberFormat } from "../../table-kit";
 import { RecordList, Table, TableSettingsMenu, type RecordPropertyDefinition, type TableActionsProps, type TableRecord, useTablePropertyConfiguration } from "../../table-kit";
 import { RecordUtilities } from "../../components/RecordUtilities";
-import { GalleryViewControls, type GalleryCardSize } from "../../table-kit";
+import { type GalleryCardSize } from "../../table-kit";
 import { useLocation, useNavigate } from "react-router-dom";
 import { GSelectField } from "../../components/ui/GSelectField";
 import { GemTextField } from "../../components/ui/GemTextField";
@@ -47,6 +47,7 @@ type WireframeWorkspaceState = {
   pageIndex?: number;
   pageSize?: number;
   tableIcon?: string;
+  propertyIcons?: Record<string, string>;
 };
 export type WireframeCollectionConfig<T extends WireframeRecord> = {
   tableName?: string;
@@ -89,6 +90,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
     return window.localStorage.getItem(tableIconStorageKey) || "Folder";
   });
   const tableIconDirty = useRef(false);
+  const [propertyIcons, setPropertyIcons] = useState<Record<string, string>>({});
   const [selectedID, setSelectedID] = useState<string | null>(null);
   const [workspaceSelectionRevision, setWorkspaceSelectionRevision] = useState(0);
   const workspaceSelectedID = recordPageID ? decodeURIComponent(recordPageID) : selectedID;
@@ -104,6 +106,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
   const [inspectorWidth, setInspectorWidth] = useState(384);
   const inspectorResizeRef = useRef<{ startX: number; startWidth: number } | null>(null);
   const [propertyDetails, setPropertyDetails] = useState<{
+    id: string;
     label: string;
     value: string;
     type: string;
@@ -136,6 +139,9 @@ export function WireframeCollectionView<T extends WireframeRecord>({
       .sort((left, right) => right.updatedAt - left.updatedAt);
     const state = candidates[0]?.state;
     if (!state) return;
+    // Applying persisted values causes several state updates. Do not let the
+    // save effect write the component defaults while those updates settle.
+    skipWorkspaceSaveOnce.current = true;
     if (state.activeViewId) setView(state.activeViewId);
     if (state.selectedRecordId) pendingSelectedID.current = state.selectedRecordId;
     if (state.galleryCardSize) setGalleryCardSize(state.galleryCardSize);
@@ -151,6 +157,11 @@ export function WireframeCollectionView<T extends WireframeRecord>({
     if (typeof state.tableIcon === "string" && !tableIconDirty.current) {
       setTableIcon(state.tableIcon);
       window.localStorage.setItem(tableIconStorageKey, state.tableIcon);
+    }
+    if (state.propertyIcons && typeof state.propertyIcons === "object") {
+      setPropertyIcons(Object.fromEntries(
+        Object.entries(state.propertyIcons).filter((entry): entry is [string, string] => typeof entry[1] === "string"),
+      ));
     }
   }, [savedViewsQuery.data, savedViewsQuery.isSuccess, presentationTableName]);
   useEffect(() => {
@@ -187,6 +198,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
       pageIndex,
       pageSize,
       tableIcon,
+      propertyIcons,
     };
     const serialized = JSON.stringify(state);
     if (serialized === lastSavedWorkspaceState.current) return;
@@ -198,7 +210,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
       });
     }, 250);
     return () => window.clearTimeout(timer);
-  }, [view, workspaceSelectedID, galleryCardSize, galleryFillMedia, galleryImageSelection, query, sort, direction, filter, groupBy, pageIndex, pageSize, tableIcon, workspaceSelectionRevision, presentationTableName, saveWorkspaceStateAsync]);
+  }, [view, workspaceSelectedID, galleryCardSize, galleryFillMedia, galleryImageSelection, query, sort, direction, filter, groupBy, pageIndex, pageSize, tableIcon, propertyIcons, workspaceSelectionRevision, presentationTableName, saveWorkspaceStateAsync]);
   const presentationsQuery = useRecordPresentationsQuery(presentationTableName);
   const savePresentation = useSaveRecordPresentationMutation(presentationTableName);
   const deletePresentation = useDeleteRecordPresentationMutation(presentationTableName);
@@ -354,9 +366,12 @@ export function WireframeCollectionView<T extends WireframeRecord>({
   const openRecordPage = () => {
     if (selected) navigate(`${location.pathname.replace(/\/record\/[^/]+$/, "")}/record/${encodeURIComponent(selected.id)}`);
   };
-  const openPropertyDetails = (details: { label: string; value: string; type?: string; icon?: string }) => {
+  const openPropertyDetails = (details: { id: string; label: string; value: string; type?: string; icon?: string }) => {
     const metadata = inferWireframePropertyMetadata({ label: details.label, propertyType: details.type, iconName: details.icon });
-    setPropertyDetails({ ...details, type: metadata.type, icon: metadata.iconName, statusText: details.value, colorToken: "mint" });
+    setPropertyDetails({ ...details, type: metadata.type, icon: propertyIcons[details.id] ?? metadata.iconName, statusText: details.value, colorToken: "mint" });
+  };
+  const savePropertyIcon = (propertyID: string, icon: string) => {
+    setPropertyIcons((current) => ({ ...current, [propertyID]: icon }));
   };
   return (
     <section
@@ -414,7 +429,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
               }
             }}
           />
-          {renderInspector(config.inspector(selected, schemaProperties), openPropertyDetails)}
+          {renderInspector(config.inspector(selected, schemaProperties), openPropertyDetails, propertyIcons)}
         </WireframeRecordPageView>
       ) : (
       <WireframePageView title={config.title} description={config.description} recordCount={sortedRecords.length} tableIcon={<TableIcon size={20} aria-hidden="true" />}>
@@ -464,15 +479,6 @@ export function WireframeCollectionView<T extends WireframeRecord>({
             />
           </Theme>
         </div>
-        {view === "gallery" ? (
-          <GalleryViewControls
-            cardSize={galleryCardSize}
-            fillMedia={galleryFillMedia}
-            wireframe
-            onCardSizeChange={setGalleryCardSize}
-            onFillMediaChange={setGalleryFillMedia}
-          />
-        ) : null}
         {visibleRecords.length === 0 ? (
           <div className="wireframe-empty-state" role="status">
             <strong>No {config.title.toLowerCase()} records found</strong>
@@ -636,7 +642,10 @@ export function WireframeCollectionView<T extends WireframeRecord>({
               <GemButton
                 type="button"
                 aria-label="Save property settings"
-                onClick={() => setPropertyDetails(null)}
+                onClick={() => {
+                  savePropertyIcon(propertyDetails.id, propertyDetails.icon);
+                  setPropertyDetails(null);
+                }}
               >
                 ✓
               </GemButton>
@@ -830,7 +839,8 @@ function formatWireframeTableValue(field: string, value: unknown): string {
 }
 function renderInspector(
   node: ReactNode,
-  onDetails: (details: { label: string; value: string; type?: string; icon?: string }) => void,
+  onDetails: (details: { id: string; label: string; value: string; type?: string; icon?: string }) => void,
+  propertyIcons: Readonly<Record<string, string>>,
 ): ReactNode {
   if (!isValidElement(node) || node.type !== "dl") return node;
   return cloneElement(
@@ -843,6 +853,7 @@ function renderInspector(
       const value = children.find((child) => isValidElement(child) && child.type === "dd");
       if (!isValidElement(label) || !isValidElement(value)) return row;
       const labelText = String((label.props as { children?: ReactNode }).children ?? "");
+      const propertyID = String((label.props as { "data-property-id"?: string })["data-property-id"] ?? labelText);
       const propertyKind = (label.props as { "data-property-kind"?: string })["data-property-kind"];
       const data = label.props as {
         "data-property-type"?: string;
@@ -854,7 +865,7 @@ function renderInspector(
         kind: propertyKind,
         numberFormat: data["data-property-number-format"],
         propertyType: data["data-property-type"],
-        iconName: data["data-property-icon"],
+        iconName: propertyIcons[propertyID] ?? data["data-property-icon"],
       });
       const valueText = String((value.props as { children?: ReactNode }).children ?? "");
       return cloneElement(
@@ -870,6 +881,7 @@ function renderInspector(
                 label: labelText,
                 value: valueText,
                 type: metadata.type,
+                id: propertyID,
                 icon: metadata.iconName,
               })}
             >
