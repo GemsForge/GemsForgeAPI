@@ -13,17 +13,17 @@ struct GemHueImageReferenceResponse: Content {
 /// Registers small PATCH endpoints so clients do not need to resend an entire
 /// owner record just to change its image or document reference.
 func registerAttachmentReferenceRoutes(_ app: Application) {
-    app.patch("gemhues", ":id", "image") { request async throws -> GemHueImageReferenceResponse in
-        guard let id = request.parameters.get("id") else { throw Abort(.badRequest) }
+    app.patch("gemhues", ":hueID", "image") { request async throws -> GemHueImageReferenceResponse in
+        guard let hueID = request.parameters.get("hueID") else { throw Abort(.badRequest) }
         let input = try request.content.decode(AttachmentReferenceRequest.self)
         let hubID = request.authenticatedHubID
 
         return try await request.db.transaction { database in
             let hueService = GemHueService(database: database, hubID: hubID)
-            guard try await hueService.find(id: id) != nil else { throw Abort(.notFound) }
+            guard try await hueService.find(id: hueID) != nil else { throw Abort(.notFound) }
 
             let imageService = GemHueService(database: database, hubID: hubID)
-            let existingImage = try await imageService.findImage(hueID: id)
+            let existingImage = try await imageService.findImage(hueID: hueID)
             let metadataService = FileMetadataService(database: database, hubID: hubID)
 
             guard let metadataID = input.fileMetadataID?.trimmingCharacters(in: .whitespacesAndNewlines), !metadataID.isEmpty else {
@@ -45,7 +45,7 @@ func registerAttachmentReferenceRoutes(_ app: Application) {
 
             let image = existingImage ?? GemHueImage()
             if existingImage == nil {
-                image.$hue.id = id
+                image.$hue.id = hueID
                 image.hubID = hubID
                 image.image = Data()
                 image.mimeType = metadata.mimeType
