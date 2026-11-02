@@ -1,6 +1,7 @@
 import { styled, Text, YStack } from "tamagui";
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { useState } from "react";
+import type { ReactNode } from "react";
 import { GemButton } from "../../components/ui/GemButton";
 import { GSearchField } from "../../components/ui/GSearchField";
 import { WireframeCollectionLinks } from "./WireframeCollectionLinks";
@@ -29,6 +30,7 @@ type WireframeLeftPaneProps = {
   activeCollection?: string;
   collapsed?: boolean;
   onToggleCollapsed?: () => void;
+  activeCollectionIcon?: ReactNode;
 };
 
 export function WireframeLeftPane({
@@ -36,6 +38,7 @@ export function WireframeLeftPane({
   activeCollection = "Education",
   collapsed = false,
   onToggleCollapsed,
+  activeCollectionIcon,
 }: WireframeLeftPaneProps) {
   const [search, setSearch] = useState("");
   const counts = {
@@ -70,6 +73,7 @@ export function WireframeLeftPane({
           activeCollection={activeCollection}
           recordCount={recordCount}
           counts={counts}
+          activeCollectionIcon={activeCollectionIcon}
           search={search}
         />
         <div className="demo-decision">

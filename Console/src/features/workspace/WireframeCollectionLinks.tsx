@@ -1,4 +1,5 @@
 import { Text } from "tamagui";
+import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { GemButton } from "../../components/ui/GemButton";
 
@@ -16,6 +17,7 @@ type WireframeCollectionLinksProps = {
   recordCount: number;
   counts: Record<string, number | undefined>;
   search: string;
+  activeCollectionIcon?: ReactNode;
 };
 
 export function WireframeCollectionLinks({
@@ -23,6 +25,7 @@ export function WireframeCollectionLinks({
   recordCount,
   counts,
   search,
+  activeCollectionIcon,
 }: WireframeCollectionLinksProps) {
   const normalizedSearch = search.trim().toLowerCase();
   const visibleCollections = collections.filter((item) => item.label.toLowerCase().includes(normalizedSearch));
@@ -39,7 +42,7 @@ export function WireframeCollectionLinks({
         >
           <Link to={item.to} aria-current={item.label === activeCollection ? "page" : undefined}>
             <span className="wireframe-collection-link-name">
-              <span aria-hidden="true">◈</span>
+              <span className="wireframe-collection-link-icon" aria-hidden="true">{item.label === activeCollection ? activeCollectionIcon ?? "◈" : "◈"}</span>
               {item.label}
             </span>
             <Text asChild>

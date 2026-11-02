@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Button, Tooltip, type TamaguiElement } from "tamagui";
-import { ArrowLeft, Eye, Filter, LayoutGrid, List, Search, SlidersHorizontal, Table2 } from "lucide-react";
+import { ArrowLeft, Eye, Filter, LayoutGrid, List, Search, SlidersHorizontal, Table2, type LucideIcon } from "lucide-react";
 import type { GalleryCardSize } from "./GalleryViewControls";
 import type { TablePropertyConfigurationState, TablePropertyOption } from "./configuration";
 import { TablePropertyControls } from "./PropertyControls";
@@ -29,9 +29,12 @@ export interface TableSettingsMenuProps {
   galleryImageSource?: string;
   galleryImageOptions?: readonly { value: string; label: string }[];
   onGalleryImageSourceChange?: (value: string) => void;
+  tableIcon?: string;
+  tableIconOptions?: readonly { name: string; icon: LucideIcon }[];
+  onTableIconChange?: (value: string) => void;
 }
 
-type Panel = "root" | "layout" | "sort" | "filter" | "group" | "gallery";
+type Panel = "root" | "layout" | "sort" | "filter" | "group" | "gallery" | "icon";
 
 const viewLabels: Record<TableViewId, string> = { table: "Table", list: "List", gallery: "Gallery" };
 
@@ -58,6 +61,9 @@ export function TableSettingsMenu({
   galleryImageSource = "__canvas",
   galleryImageOptions = [],
   onGalleryImageSourceChange,
+  tableIcon = "Folder",
+  tableIconOptions = [],
+  onTableIconChange,
 }: TableSettingsMenuProps) {
   const [open, setOpen] = useState(false);
   const [panel, setPanel] = useState<Panel>("root");
@@ -79,7 +85,7 @@ export function TableSettingsMenu({
     onViewChange(next);
     setPanel(next === "gallery" ? "gallery" : "root");
   };
-  const title = panel === "root" ? "View settings" : panel === "layout" ? "Layout" : panel === "gallery" ? "Gallery layout" : panel === "sort" ? "Sort" : panel === "filter" ? "Filter" : "Group by";
+  const title = panel === "root" ? "View settings" : panel === "layout" ? "Layout" : panel === "gallery" ? "Gallery layout" : panel === "icon" ? "Table icon" : panel === "sort" ? "Sort" : panel === "filter" ? "Filter" : "Group by";
 
   return (
     <div className="table-kit-settings" role="group" aria-label="Table settings">
@@ -129,6 +135,7 @@ export function TableSettingsMenu({
               <button type="button" className="table-kit-settings-row table-kit-settings-view-name" disabled>
                 <SlidersHorizontal size={18} aria-hidden="true" /><span>Current view</span><strong>{viewLabels[viewId]}</strong>
               </button>
+              {onTableIconChange && tableIconOptions.length > 0 && <SettingsRow icon={<SlidersHorizontal size={18} aria-hidden="true" />} label="Table icon" value={tableIcon} onClick={() => setPanel("icon")} />}
               <SettingsRow icon={<LayoutGrid size={18} aria-hidden="true" />} label="Layout" value={viewLabels[viewId]} onClick={() => setPanel("layout")} />
               {propertyConfiguration && properties && <SettingsRow icon={<Eye size={18} aria-hidden="true" />} label="Property visibility" value={String(propertyConfiguration.visibleIds.length)} onClick={() => setPanel("layout")} />}
               {onFilter && <SettingsRow icon={<Filter size={18} aria-hidden="true" />} label="Filter" value={filter ? "Active" : "Add filter"} onClick={() => setPanel("filter")} />}
@@ -149,6 +156,15 @@ export function TableSettingsMenu({
               <label className="table-kit-settings-field">Card size<select value={galleryCardSize} onChange={(event) => onGalleryCardSizeChange?.(event.target.value as GalleryCardSize)}><option value="small">Small</option><option value="medium">Medium</option><option value="large">Large</option></select></label>
               <label className="table-kit-settings-switch"><input type="checkbox" checked={galleryFillMedia} onChange={(event) => onGalleryFillMediaChange?.(event.target.checked)} /> <span>Fit media to card</span></label>
             </>
+          ) : panel === "icon" ? (
+            <div className="table-kit-icon-picker" role="radiogroup" aria-label="Table icon">
+              {tableIconOptions.map(({ name, icon: Icon }) => (
+                <button key={name} type="button" role="radio" aria-checked={tableIcon === name} aria-label={name} className="table-kit-icon-choice" onClick={() => onTableIconChange?.(name)}>
+                  <Icon size={18} aria-hidden="true" />
+                  <span>{name}</span>
+                </button>
+              ))}
+            </div>
           ) : (
             <div className="table-kit-settings-choice-list" role="radiogroup" aria-label={title}>
               {panel === "sort" && <ChoiceRow label="Default order" selected={!sort} onClick={() => { onSort?.(""); setPanel("root"); }} />}

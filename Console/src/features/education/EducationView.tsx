@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useEducationPatchMutation, useEducationRecordQuery } from "../../data/recordQueries";
 import { QueryFeedback } from "../../components/QueryFeedback";
 import type { Education } from "../../types";
-import { GemEmptyState } from "../../components/ui";
+import { GemEmptyState, GemStatusPill } from "../../components/ui";
 import { AttachmentControl } from "../../components/AttachmentControl";
 import { EditableRecordFields } from "../../components/EditableRecordFields";
 import { useAddressesQuery } from "../../data/lifeQueries";
@@ -165,7 +165,7 @@ function EducationDetail({
           />
           <GemPrimitiveField primitive="id" label={idProperty.label} value={record.id} editing={false} />
         </div>
-        <span className="status-pill">{record.status}</span>
+        <GemStatusPill>{record.status}</GemStatusPill>
       </div>
       <EditableRecordFields
         className="education-fields"

@@ -7,16 +7,17 @@ type WireframePageViewProps = {
   description: string;
   recordCount: number;
   children: ReactNode;
+  tableIcon?: ReactNode;
 };
 
-export function WireframePageView({ title, description, recordCount, children }: WireframePageViewProps) {
+export function WireframePageView({ title, description, recordCount, tableIcon, children }: WireframePageViewProps) {
   return (
     <WireframeMain asChild>
       <main className="wireframe-demo-main" aria-labelledby="wireframe-page-title">
         <WireframeHeader asChild>
           <header>
             <WireframeTitleGroup>
-              <WireframeIcon><Text>✦</Text></WireframeIcon>
+              <WireframeIcon>{tableIcon ?? <Text>✦</Text>}</WireframeIcon>
               <YStack minWidth={0}>
                 <WireframeHeading id="wireframe-page-title">{title}</WireframeHeading>
                 <WireframeDescription>{description}</WireframeDescription>

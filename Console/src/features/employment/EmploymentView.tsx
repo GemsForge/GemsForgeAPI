@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useEmploymentPatchMutation, useEmploymentRecordQuery } from "../../data/recordQueries";
 import { QueryFeedback } from "../../components/QueryFeedback";
 import type { Employment } from "../../types";
-import { GemEmptyState } from "../../components/ui";
+import { GemEmptyState, GemStatusPill } from "../../components/ui";
 import { EditableRecordFields } from "../../components/EditableRecordFields";
 import { useAddressesQuery } from "../../data/lifeQueries";
 import { RecordImport } from "../../components/RecordImport";
@@ -149,7 +149,7 @@ function EmploymentDetail({
           <h3>{record.employerName}</h3>
           <p className="employment-code">{record.id}</p>
         </div>
-        <span className="status-pill">{record.employmentStatus}</span>
+        <GemStatusPill>{record.employmentStatus}</GemStatusPill>
       </div>
       <EditableRecordFields className="employment-fields" fields={employmentEditableFields(record, definitions, onPatch)} />
     </article>

@@ -7,7 +7,7 @@ import {
 import { QueryFeedback } from "../../components/QueryFeedback";
 import type { ExpenseTransaction } from "../../types";
 import { AttachmentControl } from "../../components/AttachmentControl";
-import { GemEmptyState } from "../../components/ui";
+import { GemEmptyState, GemStatusPill } from "../../components/ui";
 import { EditableRecordFields } from "../../components/EditableRecordFields";
 import { transactionEditableFields } from "./transactionRecordFields";
 import { useExpenseCategoriesQuery, useExpenseSubcategoriesQuery, useMerchantsQuery } from "../../data/lifeQueries";
@@ -157,9 +157,9 @@ function TransactionDetail({
           <h3>{record.item}</h3>
           <p className="transaction-code">{record.id}</p>
         </div>
-        <span className="status-pill">
+        <GemStatusPill>
           Category {categories.data?.find((category) => category.id === record.categoryID)?.name ?? record.categoryID}
-        </span>
+        </GemStatusPill>
       </div>
       <EditableRecordFields
         className="transaction-fields"
