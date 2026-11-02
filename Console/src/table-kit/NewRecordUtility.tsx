@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useId, useRef, useState, type KeyboardEvent, type RefObject } from "react";
-import { Button, Tooltip, type TamaguiElement } from "tamagui";
+import { SizableText, Tooltip, YStack, type TamaguiElement } from "tamagui";
+import { GemButton } from "../components/ui/GemButton";
 import type { TableNewRecordUtilityProps } from "./types";
 
 interface NewRecordUtilityComponentProps extends TableNewRecordUtilityProps {
@@ -106,16 +107,13 @@ export function NewRecordUtility({
     <>
       <Tooltip placement="top" delay={300}>
         <Tooltip.Trigger asChild>
-          <Button
+          <GemButton
             ref={triggerRef}
             type="button"
             size="xs"
-            color="$gemInk"
-            backgroundColor="$gemPanel"
-            borderColor="$gemPanelLight"
-            borderWidth={1}
-            borderRadius="$gemControl"
-            className="compact-icon-button"
+            className="compact-icon-button wireframe-design-button"
+            tone="wireframe"
+            variant="outlined"
             aria-label="New record"
             aria-haspopup="dialog"
             aria-expanded={isOpen}
@@ -124,7 +122,7 @@ export function NewRecordUtility({
           >
             <span aria-hidden="true">＋</span>
             <span className="sr-only">New record</span>
-          </Button>
+          </GemButton>
         </Tooltip.Trigger>
         <Tooltip.Content className="table-kit-tooltip">
           <Tooltip.Arrow />
@@ -132,54 +130,62 @@ export function NewRecordUtility({
         </Tooltip.Content>
       </Tooltip>
       {isOpen && (
-        <div className="table-kit-utility-backdrop" role="presentation">
-          <div
-            ref={dialogRef}
+        <div className="table-kit-utility-backdrop table-kit-new-record-backdrop" role="presentation">
+          <YStack
+            ref={(element) => {
+              dialogRef.current = element as unknown as HTMLDivElement | null;
+            }}
             className="table-kit-new-record-utility"
+            style={{ backgroundColor: "var(--panel)" }}
+            borderColor="$borderColor"
+            borderWidth={1}
+            borderRadius="$gemCard"
+            color="$color"
             role="dialog"
-            aria-modal="true"
+            aria-modal={true}
             aria-labelledby={titleId}
             aria-describedby={descriptionId}
           >
             <div className="table-kit-new-record-heading">
               <div>
-                <h2 id={titleId}>{title}</h2>
-                <p id={descriptionId}>{activeDescription}</p>
+                <SizableText id={titleId} className="table-kit-new-record-title" role="heading" aria-level={2} size="$4" fontWeight="700">
+                  {title}
+                </SizableText>
+                <SizableText id={descriptionId} className="table-kit-new-record-description" size="$2" color="$color" opacity={0.75}>
+                  {activeDescription}
+                </SizableText>
               </div>
-              <Button
+              <GemButton
                 type="button"
                 size="xs"
-                color="$gemInk"
-                backgroundColor="$gemPanel"
-                borderColor="$gemPanelLight"
-                borderWidth={1}
-                borderRadius="$gemControl"
-                className="secondary-button"
+                tone="secondary"
+                variant="quiet"
                 aria-label="Close new record utility"
                 onClick={() => setOpen(false)}
               >
                 ×
-              </Button>
+              </GemButton>
             </div>
             <div className="table-kit-new-record-options" role="tablist" aria-label="New record operations">
               {options.map((option, index) => (
-                <Button
+                <GemButton
                   key={option.id}
                   type="button"
                   size="sm"
-                  color="$gemInk"
-                  backgroundColor="$gemPanelLight"
-                  borderColor="$gemPanelLight"
-                  borderWidth={1}
-                  borderRadius="$gemControl"
+                  className="table-kit-new-record-option-button"
+                  color="$gemCanvas"
+                  tone={option.id === selectedOption?.id ? "primary" : "secondary"}
+                  variant="outlined"
                   data-new-record-option
                   role="tab"
                   aria-selected={option.id === selectedOption?.id}
                   onClick={() => setSelectedId(option.id)}
                   onKeyDown={(event) => handleOptionKeyDown(event, index)}
                 >
-                  <strong>{option.label}</strong>
-                </Button>
+                  <SizableText className="table-kit-new-record-option-label" fontWeight="700">
+                    {option.label}
+                  </SizableText>
+                </GemButton>
               ))}
             </div>
             {selectedOption && (
@@ -187,7 +193,7 @@ export function NewRecordUtility({
                 {selectedOption.render({ close: () => setOpen(false) })}
               </section>
             )}
-          </div>
+          </YStack>
         </div>
       )}
     </>
