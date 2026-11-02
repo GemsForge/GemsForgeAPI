@@ -39,22 +39,15 @@ export function ServiceCatalogWireframeView({ records }: { records: readonly Ser
   });
   const fieldByProperty: Record<string, keyof ServiceAccount> = {
     service: "service",
-    type: "type",
-    group: "expenseGroup",
     monthlyAmount: "monthlyAmount",
-    interestRate: "interestRate",
-    apr: "apr",
-    due: "due",
-    occurrence: "occurrence",
     status: "status",
-    since: "since",
-    website: "website",
     notes: "notes",
-    paymentMethod: "paymentMethod",
-    accountNumber: "accountNumber",
     emailUpdated: "emailUpdated",
   };
   const properties = adapter.getPropertyDefinitions();
+  const wireframeRecords = records.map((record) => ({ ...record, id: String(record.id) }));
+  const wireframeProperties = properties as unknown as readonly RecordPropertyDefinition<(typeof wireframeRecords)[number]>[];
+  const serviceStatusOptions = [...new Set(records.map((record) => record.status).filter((value): value is string => Boolean(value)))].map((value) => ({ value, label: value }));
   return (
     <WireframeCollectionView
       config={{
@@ -62,7 +55,8 @@ export function ServiceCatalogWireframeView({ records }: { records: readonly Ser
         title: "Service Catalog",
         description: "Recurring services, accounts, costs, and renewal details.",
         activeCollection: "Services",
-        records: records.map((record) => ({ ...record, id: String(record.id) })),
+        records: wireframeRecords,
+        properties: wireframeProperties,
         newRecordUtility: recordActions.actions.newRecordUtility,
         searchValues: (record) => [record.service, record.type ?? "", record.expenseGroup ?? "", record.status ?? ""],
         cardTitle: (record) => record.service,
@@ -81,18 +75,30 @@ export function ServiceCatalogWireframeView({ records }: { records: readonly Ser
             properties={[
               ...(properties.map((property) => {
                 const field = fieldByProperty[property.id];
-                const numeric = ["monthlyAmount", "interestRate", "apr"].includes(property.id);
+                const numeric = property.id === "monthlyAmount";
+                const options = property.id === "status"
+                  ? serviceStatusOptions
+                  : property.id === "emailUpdated"
+                    ? [{ value: "true", label: "Yes" }, { value: "false", label: "No" }]
+                    : undefined;
                 return {
                   ...property,
                   kind: numeric ? "number" : property.kind,
                   edit: field
                     ? {
-                        inputType: numeric ? "number" : property.kind === "date" ? "date" : "text",
+                        inputType: options ? "select" : numeric ? "number" : property.kind === "date" ? "date" : "text",
+                        options,
                         onSave: (_record: unknown, value: string | number | null) =>
                           patch
                             .mutateAsync({
                               id: Number(record.id),
-                              patch: { [field]: numeric ? (value === "" ? null : Number(value)) : value || null },
+                              patch: {
+                                [field]: property.id === "emailUpdated"
+                                  ? value === "true"
+                                  : numeric
+                                    ? (value === "" ? null : Number(value))
+                                    : value || null,
+                              },
                             })
                             .then(() => undefined),
                       }

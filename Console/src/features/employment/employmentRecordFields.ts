@@ -2,6 +2,7 @@ import { formatRecordDate, formatRecordTimestamp, type EditableRecordField } fro
 import type { Employment } from "../../types";
 import type { EmploymentFieldDefinition } from "./employmentCreateFields";
 import { withCurrentRecordOption } from "../../components/recordFieldOptions";
+import { formatAddress } from "../addresses/formatAddress";
 
 /** Bind an Employment record to the definitions also used by its add form. */
 export function employmentEditableFields(
@@ -22,8 +23,8 @@ export function employmentEditableFields(
       nullable: !field.required,
       className: field.name === "notes" ? "record-notes" : undefined,
       displayValue: field.type === "date" ? formatRecordDate(record[field.name] as string | null)
-        : field.name === "workAddressID" && record.address
-          ? [record.address.addressLine1, record.address.city, record.address.state, record.address.postalCode].filter(Boolean).join(", ")
+        : field.name === "workAddressID"
+          ? formatAddress(record.address)
           : undefined,
       onSave: async (value) => onPatch({ [field.name]: value } as Partial<Employment>),
     })),

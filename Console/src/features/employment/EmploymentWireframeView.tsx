@@ -4,29 +4,38 @@ import { employmentTableAdapter } from "../database/recordTableAdapters";
 import { WireframeCollectionView } from "../workspace/WireframeCollectionView";
 import { WireframeSchemaInspector } from "../workspace/WireframeSchemaInspector";
 import { useAddressesQuery } from "../../data/lifeQueries";
-import { useEmploymentRecordActions } from "./useEmploymentRecordActions";
-import type { RecordPropertyDefinition } from "../../table-kit";
+import { employmentOptions, toOptions, useEmploymentRecordActions } from "./useEmploymentRecordActions";
+import type { RecordPropertyDefinition, RecordSelectOption } from "../../table-kit";
 
 export function EmploymentWireframeView({ records }: { records: readonly Employment[] }) {
   const addresses = useAddressesQuery(true);
   const recordActions = useEmploymentRecordActions({ addresses: addresses.data ?? [], onCreated: () => undefined });
   const patch = useEmploymentPatchMutation();
-  const save = (record: Employment, field: keyof Employment) => (value: string) =>
-    patch.mutateAsync({ id: record.id, patch: { [field]: value || null } }).then(() => undefined);
   const propertyFields: Record<string, keyof Employment> = {
     employer: "employerName",
+    employerType: "employerType",
     position: "positionTitle",
     industry: "industry",
+    website: "website",
     employmentType: "employmentType",
     startDate: "startDate",
     endDate: "endDate",
     status: "employmentStatus",
+    employerContact: "employerContact",
+    employerContactNumber: "employerContactNumber",
+    employerContactEmail: "employerContactEmail",
+    workAddressID: "workAddressID",
     notes: "notes",
   };
-  const optionsByProperty = {
-    industry: [...new Set(records.map((record) => record.industry).filter((value): value is string => Boolean(value)))],
-    employmentType: [...new Set(records.map((record) => record.employmentType))],
-    status: [...new Set(records.map((record) => record.employmentStatus))],
+  const optionsByProperty: Record<string, RecordSelectOption[]> = {
+    employerType: toOptions(employmentOptions.employerType),
+    industry: toOptions(employmentOptions.industry),
+    employmentType: toOptions(employmentOptions.employmentType),
+    status: toOptions(employmentOptions.status),
+    workAddressID: (addresses.data ?? []).map((address) => ({
+      value: address.id,
+      label: [address.addressLine1, address.city, address.state, address.postalCode].filter(Boolean).join(", ") || address.id,
+    })),
   };
   const properties = employmentTableAdapter.getPropertyDefinitions();
 
@@ -38,6 +47,7 @@ export function EmploymentWireframeView({ records }: { records: readonly Employm
         description: "Employers, roles, dates, and professional history.",
         activeCollection: "Employment",
         records,
+        properties,
         newRecordUtility: recordActions.actions.newRecordUtility,
         searchValues: (record) => [
           record.employerName,
@@ -55,7 +65,8 @@ export function EmploymentWireframeView({ records }: { records: readonly Employm
             properties={[...properties.map((property): RecordPropertyDefinition<Employment> => {
               const field = propertyFields[property.id];
               const selectProperty =
-                property.id === "industry" || property.id === "employmentType" || property.id === "status";
+                property.id === "employerType" || property.id === "industry" || property.id === "employmentType" ||
+                property.id === "status" || property.id === "workAddressID";
               return {
                 ...property,
                 kind: selectProperty ? (property.id === "status" ? "status" : "select") : property.kind,
@@ -68,13 +79,10 @@ export function EmploymentWireframeView({ records }: { records: readonly Employm
                           : property.id === "notes"
                             ? "longText"
                             : "text",
-                      options: selectProperty
-                        ? optionsByProperty[property.id as keyof typeof optionsByProperty].map((value) => ({
-                            value,
-                            label: value,
-                          }))
-                        : undefined,
-                      onSave: (_record: unknown, value: string | number | null) => save(record, field)(String(value ?? "")),
+                      nullable: property.id === "workAddressID",
+                      options: selectProperty ? optionsByProperty[property.id] : undefined,
+                      onSave: (_record: unknown, value: string | number | null) =>
+                        patch.mutateAsync({ id: record.id, patch: { [field]: value === "" ? null : value } }).then(() => undefined),
                     }
                   : undefined,
               };

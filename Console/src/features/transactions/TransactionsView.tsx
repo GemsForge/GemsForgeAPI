@@ -14,7 +14,7 @@ import { useExpenseCategoriesQuery, useExpenseSubcategoriesQuery, useMerchantsQu
 import { RecordImport } from "../../components/RecordImport";
 import { useRecordUtilities } from "../../hooks/useRecordUtilities";
 import { DatabaseRecordCollection } from "../../components/DatabaseRecordCollection";
-import { transactionTableAdapter } from "../database/recordTableAdapters";
+import { createTransactionTableAdapter } from "../database/recordTableAdapters";
 import { useTransactionRecordActions } from "./useTransactionRecordActions";
 
 interface TransactionsViewProps {
@@ -39,8 +39,11 @@ export function TransactionsView({ records }: TransactionsViewProps) {
   const detail = useTransactionQuery(selectedID);
   const attachment = useTransactionImageMutation();
   const patch = useTransactionPatchMutation();
-  const selectedRecord = detail.data;
+  const categories = useExpenseCategoriesQuery(true);
+  const subcategories = useExpenseSubcategoriesQuery(null, true);
   const merchants = useMerchantsQuery(true);
+  const transactionAdapter = createTransactionTableAdapter(categories.data ?? [], subcategories.data ?? [], merchants.data ?? []);
+  const selectedRecord = detail.data;
   const [creating, setCreating] = useState(false);
   const [importing, setImporting] = useState(false);
   const { publish, importConfig, actions, createForm } = useTransactionRecordActions({
@@ -87,7 +90,7 @@ export function TransactionsView({ records }: TransactionsViewProps) {
             label="Transactions"
             records={records}
             utilities={utilities}
-            adapter={transactionTableAdapter}
+            adapter={transactionAdapter}
             sortOptions={[
               { value: "date", label: "Transaction date" },
               { value: "item", label: "Item" },

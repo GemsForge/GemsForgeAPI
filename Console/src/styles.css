@@ -872,12 +872,8 @@ dialog::backdrop {
   }
 }
 .wireframe-demo { --field-background: #ffffff; --field-ink: #233c42; --field-border: #a8d2cf; --field-focus: #39736d; --field-label: #76571b; --panel: #ffffff; --panel-light: #e8f1ef; --ink: #233c42; --line: #dfe6e3; --muted: #738187; --mint: #39736d; display: grid; grid-template-columns: 16rem minmax(0, 1fr) 24rem; grid-template-rows: 4.5rem minmax(0, 1fr); min-height: calc(100vh - 7rem); margin: -2.4rem clamp(-5rem, -5vw, -1.25rem); color: #233c42; background: #f7f7f4; font-family: "Avenir Next", "Avenir Next Demo", Avenir, Inter, ui-sans-serif, system-ui, sans-serif; }
-.education-wireframe { width: 100%; min-height: calc(100vh - 4rem); margin: 0; }
 .wireframe-standalone { width: 100%; min-width: 0; margin: 0; box-sizing: border-box; grid-template-columns: minmax(13rem, 16rem) minmax(0, 1fr) minmax(20rem, 24rem); overflow: hidden; }
 .wireframe-collection-page { --canvas: #f7f7f4; --panel: #ffffff; --panel-light: #e8f1ef; --ink: #233c42; --muted: #738187; --line: #dfe6e3; --mint: #39736d; --gold: #9a6b22; margin: -2.4rem clamp(-5rem, -5vw, -1.25rem); min-height: calc(100vh - 7rem); padding: 2.2rem clamp(1.3rem, 4vw, 3rem); background: var(--canvas); color: var(--ink); font-family: "Avenir Next", "Avenir Next Demo", Avenir, Inter, ui-sans-serif, system-ui, sans-serif; }
-.education-wireframe .demo-place-card { grid-template-rows: 6rem auto; }
-.education-wireframe .demo-place-image { background-image: linear-gradient(135deg, #e8b17d, #527b82); }
-.education-wireframe .demo-gallery .demo-place-card { aspect-ratio: 1 / 1; grid-template-rows: minmax(0, 1fr) auto; min-height: 0; }
 .employment-wireframe .demo-gallery .demo-place-card { aspect-ratio: 1 / 1; grid-template-rows: minmax(0, 1fr) auto; min-height: 0; }
 .addresses-wireframe .demo-gallery .demo-place-card { aspect-ratio: 1 / 1; grid-template-rows: minmax(0, 1fr) auto; min-height: 0; }
 .transactions-wireframe .demo-gallery .demo-place-card { aspect-ratio: 1 / 1; grid-template-rows: minmax(0, 1fr) auto; min-height: 0; }
