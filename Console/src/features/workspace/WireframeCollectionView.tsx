@@ -563,6 +563,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
           label="Records per page"
           value={String(pageSize)}
           width="xs"
+          density="compact"
           containerClassName="wireframe-pagination-page-size"
           size="$2"
           wireframe
