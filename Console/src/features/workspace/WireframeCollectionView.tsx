@@ -1,5 +1,5 @@
 import React, { cloneElement, isValidElement, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { ChevronLeft, Expand, GalleryHorizontal, GripVertical, List, Table2 } from "lucide-react";
+import { ChevronLeft, Expand, GalleryHorizontal, GripVertical, List, Menu, Table2, X } from "lucide-react";
 import { AgGridReact } from "ag-grid-react";
 import { themeQuartz, type ColDef, type ColDefField, type ICellRendererParams } from "ag-grid-community";
 import { useLiveSchemaQuery } from "../../data/workflowQueries";
@@ -420,16 +420,36 @@ export function WireframeCollectionView<T extends WireframeRecord>({
       <button
         type="button"
         className="wireframe-mobile-nav-toggle"
+        aria-label={mobileNavigationOpen ? "Close navigation" : "Open navigation"}
         aria-expanded={mobileNavigationOpen}
         aria-controls="wireframe-navigation"
         onClick={() => setMobileNavigationOpen((open) => !open)}
       >
-        ☰ <span>Navigation</span>
+        {mobileNavigationOpen ? <X size={17} aria-hidden="true" /> : <Menu size={17} aria-hidden="true" />}
+        <span>{mobileNavigationOpen ? "Close" : "Navigation"}</span>
       </button>
       <div
         id="wireframe-navigation"
         className={mobileNavigationOpen ? "wireframe-mobile-nav is-open" : "wireframe-mobile-nav"}
       >
+        {mobileNavigationOpen ? (
+          <>
+            <button
+              type="button"
+              className="wireframe-nav-backdrop"
+              aria-label="Close navigation"
+              onClick={() => setMobileNavigationOpen(false)}
+            />
+            <button
+              type="button"
+              className="wireframe-nav-close"
+              aria-label="Close navigation"
+              onClick={() => setMobileNavigationOpen(false)}
+            >
+              <X size={17} aria-hidden="true" />
+            </button>
+          </>
+        ) : null}
         <WireframeLeftPane
           recordCount={config.records.length}
           activeCollection={config.activeCollection}
@@ -476,7 +496,8 @@ export function WireframeCollectionView<T extends WireframeRecord>({
           <div className="demo-view-tabs" role="tablist" aria-label={`${config.title} view mode`}>
             {(["table", "list", "gallery"] as const).map((mode) => (
               <button className={view === mode ? "active" : ""} type="button" role="tab" aria-selected={view === mode} aria-label={`${mode[0].toUpperCase() + mode.slice(1)} view`} title={`${mode[0].toUpperCase() + mode.slice(1)} view`} onClick={() => setView(mode)} key={mode}>
-                {mode === "table" ? <Table2 size={18} aria-hidden="true" /> : mode === "list" ? <List size={18} aria-hidden="true" /> : <GalleryHorizontal size={18} aria-hidden="true" />}
+                {mode === "table" ? <Table2 size={16} aria-hidden="true" /> : mode === "list" ? <List size={16} aria-hidden="true" /> : <GalleryHorizontal size={16} aria-hidden="true" />}
+                <span className="wireframe-view-label">{mode[0].toUpperCase() + mode.slice(1)}</span>
               </button>
             ))}
           </div>
@@ -602,7 +623,14 @@ export function WireframeCollectionView<T extends WireframeRecord>({
       </WireframePageView>
       )}
       {selected ? (
-        inspectorExpanded ? null : <aside
+        inspectorExpanded ? null : <>
+        <button
+          type="button"
+          className="wireframe-inspector-backdrop"
+          aria-label="Close record inspector"
+          onClick={closeInspector}
+        />
+        <aside
           className={`wireframe-demo-inspector ${inspectorExpanded ? "is-expanded" : ""}`}
           aria-labelledby="wireframe-inspector-title"
         >
@@ -630,6 +658,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
           </div>
           <WireframeInspector node={config.inspector(selected, schemaProperties)} options={inspectorRenderOptions} />
         </aside>
+        </>
       ) : null}
       {propertyDetails ? (
         <Theme name="light">
@@ -733,6 +762,7 @@ function WireframeMvpList<T extends WireframeRecord>({
     title: config.cardTitle(record),
     subtitle: config.cardSubtitle(record),
     status: { label: config.cardStatus(record) },
+    icon: config.cardTitle(record).trim().split(/\s+/).slice(0, 2).map((part) => part[0]?.toLocaleUpperCase()).join(""),
     image: config.cardImage?.(record),
   }));
   const first = records[0] as Record<string, unknown> | undefined;

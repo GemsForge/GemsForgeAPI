@@ -72,9 +72,7 @@ export function WireframeLeftPane({
         </div>
         <WireframePrimaryLinks search={search} />
         <Text asChild>
-          <p className="demo-sidebar-label">
-            Collections <span aria-hidden="true">＋</span>
-          </p>
+          <p className="demo-sidebar-label">Collections</p>
         </Text>
         <WireframeCollectionLinks
           activeCollection={activeCollection}
@@ -84,15 +82,6 @@ export function WireframeLeftPane({
           search={search}
           recordsByCollection={recordsByCollection}
         />
-        <div className="demo-decision">
-          ◫{" "}
-          <Text asChild>
-            <span>
-              Dual navigation —<br />
-              <Text fontWeight="700">recommended, not yet chosen</Text>
-            </span>
-          </Text>
-        </div>
         <div className="demo-sidebar-bottom">
           <WireframeUtilityLinks />
           {onToggleCollapsed ? (

@@ -216,15 +216,16 @@ function RecordAvatar<Record>({ record }: { record: TableRecord<Record> }) {
   const image = record.image?.src?.trim() ? record.image : undefined;
   return (
     <Avatar
+      className="wireframe-record-avatar"
       size={32}
       accessibilityLabel={`${String(record.title ?? record.id)} icon`}
-      backgroundColor="$gemPanelLight"
+      backgroundColor="$surfaceRaised"
       borderRadius="$4"
     >
       {image && <Avatar.Image src={image.src} accessibilityLabel={image.alt} objectFit={image.fit ?? "cover"} />}
       {!image && (
-        <Avatar.Fallback backgroundColor="$gemPanelLight" alignItems="center" justifyContent="center">
-          <SizableText fontSize="$5" lineHeight={1} color="$gemMint">
+        <Avatar.Fallback backgroundColor="$surfaceRaised" alignItems="center" justifyContent="center">
+          <SizableText fontSize="$1" lineHeight={1} fontWeight="700" color="$action">
             {record.icon}
           </SizableText>
         </Avatar.Fallback>

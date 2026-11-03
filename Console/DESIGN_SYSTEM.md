@@ -135,17 +135,20 @@ flowchart LR
   Table --> Scroll[Contained horizontal or vertical scrolling]
 ```
 
-- Preserve the current three-region composition: navigation, collection, and
-  inspector. The standalone workspace uses a 16rem navigation pane and a
-  24rem inspector by default; resizable panes retain their user-controlled
-  widths.
+- Preserve the three-region composition: navigation, collection, and
+  inspector. The wireframe MVP uses a 15rem navigation pane and a 22.5rem
+  inspector; the inspector remains resizable on desktop.
 - Keep collection content and inspector independently shrinkable with
   `minWidth: 0`; wide tables scroll inside the collection rather than widening
   the page.
 - Keep record cards at their defined aspect ratio and size. Grid columns adapt
   to available space; card content scrolls or truncates within its region.
-- On compact screens, panes collapse or stack according to the existing
-  workspace behavior. Do not introduce a second page-level horizontal scroll.
+- At 1100px and below, navigation opens in a drawer and the inspector overlays
+  the collection. At 640px and below, the inspector becomes a bottom sheet,
+  list properties stack below each title, and view controls keep touch-sized
+  targets.
+- The selected record uses the same quiet mint surface in list, table, and
+  gallery views. Property labels and values share a compact readable size.
 
 ### Forms, dialogs, and feedback
 
@@ -245,7 +248,9 @@ shared elevation roles for legacy CSS consumers. The `.wireframe-demo` and `.wir
 scopes intentionally remap those aliases to the light workspace palette. Other
 feature rules remain CSS-owned until their feature migration; table-library
 variables and geometry rules also stay in CSS because the grid and virtualized
-renderers consume CSS custom properties directly.
+renderers consume CSS custom properties directly. The wireframe MVP's shared
+responsive layout and collection presentation live in
+`src/design-system/wireframe-mvp.css`, imported after the compatibility sheet.
 
 When migrating a surface:
 

@@ -7,6 +7,7 @@ import { tamaguiConfig } from "@gemsforge/ui";
 import { queryClient } from "./data/queryClient";
 import "./styles.css";
 import "./design-system/global-density.css";
+import "./design-system/wireframe-mvp.css";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
