@@ -1,4 +1,5 @@
 import React, { cloneElement, isValidElement, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { ChevronDown, ChevronLeft, Expand, GalleryHorizontal, GripVertical, List, Menu as MenuIcon, Table2, X } from "lucide-react";
 import { AgGridReact } from "ag-grid-react";
 import { themeQuartz, type ColDef, type ColDefField, type ICellRendererParams } from "ag-grid-community";
@@ -125,6 +126,9 @@ export function WireframeCollectionView<T extends WireframeRecord>({
     statusText: string;
     colorToken: string;
   } | null>(null);
+  const propertyDetailsOpen = propertyDetails !== null;
+  const propertyDetailsDialogRef = useRef<HTMLElement | null>(null);
+  const propertyDetailsTriggerRef = useRef<HTMLButtonElement | null>(null);
   const presentationTableName = config.tableName ?? config.title;
   const savedViewsQuery = useTableViewsQuery(presentationTableName);
   const { mutateAsync: saveWorkspaceStateAsync } = useSaveTableViewWorkspaceStateMutation(presentationTableName);
@@ -386,10 +390,27 @@ export function WireframeCollectionView<T extends WireframeRecord>({
   const openRecordPage = () => {
     if (selected) navigate(`${location.pathname.replace(/\/record\/[^/]+$/, "")}/record/${encodeURIComponent(selected.id)}`);
   };
-  const openPropertyDetails = (details: { id: string; label: string; value: string; type?: string; icon?: string }) => {
+  const openPropertyDetails = (details: { id: string; label: string; value: string; type?: string; icon?: string }, trigger: HTMLButtonElement) => {
+    propertyDetailsTriggerRef.current = trigger;
     const metadata = inferWireframePropertyMetadata({ label: details.label, propertyType: details.type, iconName: details.icon });
     setPropertyDetails({ ...details, type: metadata.type, icon: propertyIcons[details.id] ?? metadata.iconName, statusText: details.value, colorToken: "mint" });
   };
+  useEffect(() => {
+    if (!propertyDetailsOpen) return;
+    const dialog = propertyDetailsDialogRef.current;
+    if (!dialog) return;
+    document.getElementById("wireframe-property-name")?.focus();
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape" || event.defaultPrevented) return;
+      event.preventDefault();
+      setPropertyDetails(null);
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      if (propertyDetailsTriggerRef.current?.isConnected) propertyDetailsTriggerRef.current.focus();
+    };
+  }, [propertyDetailsOpen]);
   const savePropertyIcon = (propertyID: string, icon: string) => {
     skipWorkspaceSaveOnce.current = false;
     setPropertyIcons((current) => ({ ...current, [propertyID]: icon }));
@@ -699,15 +720,18 @@ export function WireframeCollectionView<T extends WireframeRecord>({
         </aside>
         </>
       ) : null}
-      {propertyDetails ? (
+      {propertyDetails ? createPortal(
         <Theme name="light">
-        <div className="wireframe-property-details-backdrop" role="presentation" onClick={() => setPropertyDetails(null)}>
+        <div className="wireframe-property-details-backdrop" role="presentation" onClick={(event) => {
+          if (event.target === event.currentTarget) setPropertyDetails(null);
+        }}>
           <section
+            ref={propertyDetailsDialogRef}
             className="wireframe-property-details"
             role="dialog"
             aria-modal="true"
             aria-labelledby="wireframe-property-details-title"
-            onClick={(event) => event.stopPropagation()}
+            tabIndex={-1}
           >
             <GemButton type="button" variant="quiet" tone="secondary" aria-label="Close property details" onClick={() => setPropertyDetails(null)}>
               ×
@@ -778,7 +802,8 @@ export function WireframeCollectionView<T extends WireframeRecord>({
             </div>
           </section>
         </div>
-        </Theme>
+        </Theme>,
+        document.body,
       ) : null}
     </section>
   );
@@ -1003,7 +1028,7 @@ function formatWireframeTableValue(field: string, value: unknown): string {
   return formatRecordNumber(value, inferRecordNumberFormat(field));
 }
 type InspectorRenderOptions = {
-  onDetails: (details: { id: string; label: string; value: string; type?: string; icon?: string }) => void;
+  onDetails: (details: { id: string; label: string; value: string; type?: string; icon?: string }, trigger: HTMLButtonElement) => void;
   propertyIcons: Readonly<Record<string, string>>;
   propertyOrder?: readonly string[];
   onReorder: (order: string[], announcement: string) => void;
@@ -1128,13 +1153,13 @@ function WireframeInspector({ node, options }: { node: ReactNode; options: Inspe
               type="button"
               className="wireframe-property-details-trigger"
               aria-label={`Open details for ${labelText}`}
-              onClick={() => options.onDetails({
+              onClick={(event) => options.onDetails({
                 label: labelText,
                 value: valueText,
                 type: metadata.type,
                 id: propertyID,
                 icon: metadata.iconName,
-              })}
+              }, event.currentTarget)}
             >
               <PropertyIcon name={metadata.iconName} size={13} />
             </button>
