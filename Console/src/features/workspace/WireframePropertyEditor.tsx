@@ -3,7 +3,7 @@ import { SizableText, Theme } from "tamagui";
 import { getPropertyIconByName } from "./propertyIcons";
 import { inferWireframePropertyMetadata, WIREFRAME_PROPERTY_TYPES } from "./propertyMetadata";
 import { PropertyIconPicker } from "./PropertyIconPicker";
-import { GemButton } from "@gemsforge/ui";
+import { GemButton, GemCaption } from "@gemsforge/ui";
 import { GemTextField } from "@gemsforge/ui";
 import { GSelectField } from "@gemsforge/ui";
 
@@ -48,7 +48,7 @@ export function WireframePropertyEditor({
       <GemButton type="button" variant="quiet" tone="secondary" className="wireframe-property-details-trigger" aria-label={`Edit ${label} property`} onClick={() => setOpen(true)}>
         {(() => { const Icon = getPropertyIconByName(icon).icon; return <Icon size={13} strokeWidth={2} />; })()}
       </GemButton>
-      {label}
+      <GemCaption className="wireframe-inspector-label" fontWeight="700">{label}</GemCaption>
       {open ? (
         <Theme name="light">
         <div className="wireframe-property-details-backdrop" role="presentation" onClick={() => setOpen(false)}>

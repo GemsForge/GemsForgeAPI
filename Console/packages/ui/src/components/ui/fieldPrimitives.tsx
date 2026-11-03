@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Button, Input, Label, SizableText, styled, TextArea, YStack } from "tamagui";
+import { GemCaption } from "./GemTypography";
 
 export const GemFieldRoot = styled(YStack, {
   gap: "$1",
@@ -14,6 +15,8 @@ export const GemFieldLabel = styled(Label, {
   lineHeight: "$2",
   textTransform: "uppercase",
 });
+
+export type GemFieldTextRole = "body" | "caption";
 
 const gemFieldDisplayStyles = {
   width: "100%",
@@ -47,18 +50,39 @@ export interface GemFieldDisplayValueProps {
   children?: ReactNode;
   className?: string;
   onClick?: () => void;
+  textRole?: GemFieldTextRole;
   "aria-describedby"?: string;
   "aria-invalid"?: boolean;
   "aria-label"?: string;
 }
 
 /** Theme-aware, keyboard-visible value button shared by read-mode fields. */
-export function GemFieldDisplayValue({ className, onClick, children, ...accessibilityProps }: GemFieldDisplayValueProps) {
+export function GemFieldDisplayValue({
+  className,
+  onClick,
+  children,
+  textRole = "body",
+  ...accessibilityProps
+}: GemFieldDisplayValueProps) {
   const mergedClassName = ["gem-field-display-value", className].filter(Boolean).join(" ");
+  const content = textRole === "caption" ? <GemCaption>{children}</GemCaption> : children;
   if (!onClick) {
-    return <StyledGemFieldDisplayText {...accessibilityProps} className={mergedClassName}>{children}</StyledGemFieldDisplayText>;
+    return (
+      <StyledGemFieldDisplayText
+        {...accessibilityProps}
+        className={mergedClassName}
+        fontSize={textRole === "caption" ? "$1" : "$3"}
+        lineHeight={textRole === "caption" ? "$1" : "$3"}
+      >
+        {content}
+      </StyledGemFieldDisplayText>
+    );
   }
-  return <StyledGemFieldDisplayButton type="button" {...accessibilityProps} onClick={onClick} className={mergedClassName}>{children}</StyledGemFieldDisplayButton>;
+  return (
+    <StyledGemFieldDisplayButton type="button" {...accessibilityProps} onClick={onClick} className={mergedClassName}>
+      {content}
+    </StyledGemFieldDisplayButton>
+  );
 }
 
 const fieldControlStyles = {

@@ -1,6 +1,7 @@
 import { forwardRef, useId, type ComponentProps, type ReactNode } from "react";
 import { Input } from "tamagui";
 import type { GemPrimitiveType } from "./primitiveFieldContracts";
+import type { GemFieldTextRole } from "./fieldPrimitives";
 import {
   GemFieldDisplayValue,
   GemFieldError,
@@ -20,6 +21,7 @@ export interface GemFieldProps extends ComponentProps<typeof Input> {
   /** Renders the live read view when false and the input control when true. */
   editing?: boolean;
   displayValue?: ReactNode;
+  valueTextRole?: GemFieldTextRole;
   onDisplayClick?: () => void;
   error?: string;
   required?: boolean;
@@ -42,6 +44,7 @@ export const GemField = forwardRef<HTMLInputElement | HTMLTextAreaElement, GemFi
     className,
     editing = true,
     displayValue,
+    valueTextRole = "body",
     onDisplayClick,
     primitive,
     ...props
@@ -62,7 +65,11 @@ export const GemField = forwardRef<HTMLInputElement | HTMLTextAreaElement, GemFi
         <GemFieldLabel id={`${inputID}-display-label`} className={showLabel ? "g-field-label" : "sr-only"}>
           {label}
         </GemFieldLabel>
-        <GemFieldDisplayValue aria-describedby={`${inputID}-display-label`} onClick={onDisplayClick}>
+        <GemFieldDisplayValue
+          aria-describedby={`${inputID}-display-label`}
+          onClick={onDisplayClick}
+          textRole={valueTextRole}
+        >
           {displayValue ?? props.value ?? "—"}
         </GemFieldDisplayValue>
       </GemFieldRoot>
@@ -85,6 +92,9 @@ export const GemField = forwardRef<HTMLInputElement | HTMLTextAreaElement, GemFi
           id={inputID}
           ref={ref as never}
           className={controlClassName}
+          fontSize={valueTextRole === "caption" ? "$1" : undefined}
+          lineHeight={valueTextRole === "caption" ? "$1" : undefined}
+          fontWeight={valueTextRole === "caption" ? "500" : undefined}
           fieldWidth={width}
           aria-invalid={Boolean(error)}
           aria-describedby={error ? errorID : undefined}
@@ -100,6 +110,9 @@ export const GemField = forwardRef<HTMLInputElement | HTMLTextAreaElement, GemFi
           id={inputID}
           ref={ref as never}
           className={controlClassName}
+          fontSize={valueTextRole === "caption" ? "$1" : undefined}
+          lineHeight={valueTextRole === "caption" ? "$1" : undefined}
+          fontWeight={valueTextRole === "caption" ? "500" : undefined}
           fieldWidth={width}
           aria-invalid={Boolean(error)}
           aria-describedby={error ? errorID : undefined}

@@ -56,6 +56,28 @@ import { GemBody, GemPageTitle, GemSectionHeading } from "@gemsforge/ui";
 <GemSectionHeading>Record properties</GemSectionHeading>
 ```
 
+Inspector labels, displayed values, and editable field values use the shared
+caption role. Set `valueTextRole="caption"` on a primitive field so the same
+token applies in read and edit states, including select options:
+
+```tsx
+import { GemCaption, GemPrimitiveField } from "@gemsforge/ui";
+
+<dt><GemCaption fontWeight="700">Institution</GemCaption></dt>
+<dd>
+  <GemPrimitiveField
+    primitive="text"
+    label="Institution"
+    value="Heron Creek Middle School"
+    editing={false}
+    valueTextRole="caption"
+  />
+</dd>
+```
+
+Keep inspector sizing in these semantic components. The inspector layout may set
+color and wrapping, but should not assign separate font sizes to labels and values.
+
 Keep heading levels in document order. A visual size does not justify skipping
 the semantic heading level.
 

@@ -4,6 +4,7 @@ import type { GemTextFieldWidth } from "./GemTextField";
 import type { GemColorToken } from "../../presentationTypes";
 import type { GemPrimitiveType } from "./primitiveFieldContracts";
 import { GemFieldDisplayValue } from "./fieldPrimitives";
+import type { GemFieldTextRole } from "./fieldPrimitives";
 
 const statusPillColors: Record<string, { backgroundColor: string; color: string }> = {
   mint: { backgroundColor: "#78d1bd", color: "#06231e" },
@@ -38,6 +39,7 @@ export interface GSelectFieldProps extends Omit<
   showLabel?: boolean;
   editing?: boolean;
   displayValue?: ReactNode;
+  valueTextRole?: GemFieldTextRole;
   onDisplayClick?: () => void;
   value?: string;
   options: GSelectOption[];
@@ -57,6 +59,7 @@ export function GSelectField({
   showLabel = true,
   editing = true,
   displayValue,
+  valueTextRole = "body",
   onDisplayClick,
   value = "",
   options,
@@ -102,6 +105,7 @@ export function GSelectField({
           aria-describedby={`${id}-display-label`}
           onClick={onDisplayClick}
           aria-invalid={Boolean(error)}
+          textRole={valueTextRole}
         >
           {displayValue ?? options.find((option) => option.value === value)?.label ?? "—"}
         </GemFieldDisplayValue>
@@ -148,9 +152,12 @@ export function GSelectField({
           aria-describedby={error ? errorID : undefined}
           aria-required={required}
           aria-label={showLabel ? undefined : label}
+          fontSize={valueTextRole === "caption" ? "$1" : undefined}
         >
           {primitive === "status" && selectedOption ? (
             <SizableText
+              fontSize={valueTextRole === "caption" ? "$1" : undefined}
+              lineHeight={valueTextRole === "caption" ? "$1" : undefined}
               className={
                 selectedOption.colorToken
                   ? `primitive-status-pill primitive-status-pill--${selectedOption.colorToken}`
@@ -163,8 +170,8 @@ export function GSelectField({
           ) : (
             <Select.Value
               placeholder={`Select ${label.toLowerCase()}…`}
-              fontSize={wireframe ? "$2" : undefined}
-              lineHeight={wireframe ? "$2" : undefined}
+              fontSize={valueTextRole === "caption" ? "$1" : wireframe ? "$2" : undefined}
+              lineHeight={valueTextRole === "caption" ? "$1" : wireframe ? "$2" : undefined}
             />
           )}
         </Select.Trigger>
@@ -199,8 +206,8 @@ export function GSelectField({
                   >
                     <Select.ItemText
                       color="$fieldMenuText"
-                      fontSize={wireframe ? "$2" : "$1"}
-                      lineHeight={wireframe ? "$2" : "$1"}
+                      fontSize={valueTextRole === "caption" ? "$1" : wireframe ? "$2" : "$1"}
+                      lineHeight={valueTextRole === "caption" ? "$1" : wireframe ? "$2" : "$1"}
                     >
                       {option.label}
                     </Select.ItemText>

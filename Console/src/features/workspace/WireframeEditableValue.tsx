@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Pencil } from "lucide-react";
 import { GemPrimitiveField } from "@gemsforge/ui";
-import { GemStatusPill } from "@gemsforge/ui";
+import { GemCaption, GemStatusPill } from "@gemsforge/ui";
 
 type EditableValueProps = {
   value: string;
@@ -77,7 +77,7 @@ export function WireframeEditableValue({
             rel={kind === "url" ? "noreferrer" : undefined}
             onClick={(event) => event.stopPropagation()}
           >
-            {displayValue ?? currentValue}
+            <GemCaption>{displayValue ?? currentValue}</GemCaption>
           </a>
           <button
             type="button"
@@ -100,6 +100,7 @@ export function WireframeEditableValue({
         value={currentValue}
         editing={editing}
         displayValue={kind === "status" ? <GemStatusPill tone="success" wireframe>{displayValue ?? (currentValue || "—")}</GemStatusPill> : displayValue ?? (currentValue || "—")}
+        valueTextRole="caption"
         onDisplayClick={() => {
           setSaveError(undefined);
           setEditing(true);

@@ -6,6 +6,8 @@ import type { GemTextFieldWidth } from "./GemTextField";
 import type { GemDateFormat } from "../../presentationTypes";
 import { GSwitch } from "./GSwitch";
 import { GemFieldDisplayValue } from "./fieldPrimitives";
+import type { GemFieldTextRole } from "./fieldPrimitives";
+import { GemCaption } from "./GemTypography";
 
 dayjs.extend(customParseFormat);
 const calendarDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -20,6 +22,7 @@ export interface GDateFieldProps extends Omit<
   value?: string;
   editing?: boolean;
   displayValue?: string;
+  valueTextRole?: GemFieldTextRole;
   onDisplayClick?: () => void;
   format?: string;
   error?: string;
@@ -47,6 +50,7 @@ export function GDateField({
   value = "",
   editing = true,
   displayValue,
+  valueTextRole = "body",
   onDisplayClick,
   format = "YYYY-MM-DD",
   error,
@@ -74,6 +78,9 @@ export function GDateField({
     local: "Full date",
     relative: "Relative",
   };
+  const displayDateText = selectedDate
+    ? selectedDate.format(selectedFormat === "local" ? "MMM D, YYYY" : selectedFormat === "relative" ? "MMM D" : format)
+    : `Select ${label.toLowerCase()}…`;
   useEffect(() => {
     if (previousDisplayFormat.current !== displayFormat) {
       previousDisplayFormat.current = displayFormat;
@@ -104,13 +111,12 @@ export function GDateField({
         >
           {label}
         </Label>
-        <GemFieldDisplayValue aria-describedby={`${id}-display-label`} onClick={onDisplayClick}>
-          {displayValue ??
-            (selectedDate
-              ? selectedDate.format(
-                  selectedFormat === "local" ? "MMM D, YYYY" : selectedFormat === "relative" ? "MMM D" : format,
-                )
-              : "—")}
+        <GemFieldDisplayValue
+          aria-describedby={`${id}-display-label`}
+          onClick={onDisplayClick}
+          textRole={valueTextRole}
+        >
+          {displayValue ?? (selectedDate ? displayDateText : "—")}
         </GemFieldDisplayValue>
       </YStack>
     );
@@ -141,15 +147,12 @@ export function GDateField({
             aria-describedby={error ? errorID : undefined}
             aria-required={required}
             aria-label={showLabel ? undefined : label}
+            fontSize={valueTextRole === "caption" ? "$1" : undefined}
             onBlur={onBlur}
             justifyContent="space-between"
             width="100%"
           >
-            {selectedDate
-              ? selectedDate.format(
-                  selectedFormat === "local" ? "MMM D, YYYY" : selectedFormat === "relative" ? "MMM D" : format,
-                )
-              : `Select ${label.toLowerCase()}…`}
+            {valueTextRole === "caption" ? <GemCaption>{displayDateText}</GemCaption> : displayDateText}
           </Button>
         </Popover.Trigger>
         <Popover.Content

@@ -8,6 +8,7 @@ import { GemStatusPill } from "./GemStatusPill";
 import type { GemFieldWidth } from "./GemField";
 import type { GemPrimitiveType } from "./primitiveFieldContracts";
 import type { GemColorToken, GemDateFormat, GemNumberFormat, GemSelectOption } from "../../presentationTypes";
+import type { GemFieldTextRole } from "./fieldPrimitives";
 
 export interface GemPrimitiveFieldProps {
   primitive: GemPrimitiveType;
@@ -16,6 +17,7 @@ export interface GemPrimitiveFieldProps {
   value?: string | number | boolean | null;
   editing?: boolean;
   displayValue?: ReactNode;
+  valueTextRole?: GemFieldTextRole;
   onDisplayClick?: () => void;
   onChange?: (value: string | number | boolean | null) => void;
   onBlur?: () => void;
@@ -69,6 +71,7 @@ export function GemPrimitiveField({
   value = null,
   editing = true,
   displayValue,
+  valueTextRole = "body",
   onDisplayClick,
   onChange,
   onBlur,
@@ -135,6 +138,7 @@ export function GemPrimitiveField({
             </GemStatusPill>
           ) : undefined)
         }
+        valueTextRole={valueTextRole}
         onDisplayClick={onDisplayClick}
         onChange={emit}
         onBlur={onBlur}
@@ -153,6 +157,7 @@ export function GemPrimitiveField({
         value={String(value ?? "")}
         editing={false}
         displayValue={displayValue ?? String(value ?? "—")}
+        valueTextRole={valueTextRole}
         primitive="text"
         type="text"
         width={width}
@@ -167,6 +172,7 @@ export function GemPrimitiveField({
         value={String(value ?? "")}
         editing={editing}
         displayValue={typeof displayValue === "string" ? displayValue : undefined}
+        valueTextRole={valueTextRole}
         onDisplayClick={onDisplayClick}
         format="YYYY-MM-DD"
         displayFormat={_dateFormat}
@@ -212,6 +218,7 @@ export function GemPrimitiveField({
       value={String(value ?? "")}
       editing={editing}
       displayValue={displayValue}
+      valueTextRole={valueTextRole}
       onDisplayClick={onDisplayClick}
       primitive={
         primitive === "number" || primitive === "url" || primitive === "email" || primitive === "phone"

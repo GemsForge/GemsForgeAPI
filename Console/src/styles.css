@@ -890,9 +890,6 @@ dialog::backdrop {
   color: var(--ink);
   font-size: 0.84rem;
 }
-.create-form-control .primitive-status-pill {
-  font-size: 0.84rem !important;
-}
 .g-status-select-trigger {
   padding: 0.5rem 0.75rem;
 }
@@ -1017,7 +1014,7 @@ dialog::backdrop {
 .wireframe-demo-sidebar > .demo-decision,
 .wireframe-demo-sidebar > .demo-sidebar-bottom { margin-left: 0; margin-right: 0; }
 .wireframe-demo-sidebar > .demo-sidebar-bottom { margin-top: auto; }
-.wireframe-demo button, .wireframe-demo input { font: inherit; }
+.wireframe-demo button, .wireframe-demo input { font-family: inherit; }
 .wireframe-demo .create-form-control { background: var(--field-background) !important; border-color: var(--field-border) !important; color: var(--field-ink) !important; }
 .wireframe-demo button.create-form-control:not(.g-status-select-trigger) > * { color: var(--field-ink) !important; }
 .wireframe-demo .create-form-control::placeholder { color: #65767b !important; opacity: 1; }
@@ -1259,11 +1256,8 @@ dialog::backdrop {
 .demo-secondary-button { margin: .6rem 0 1rem; padding: .5rem .7rem; border: 1px solid #dfe6e3; border-radius: .5rem; background: white; color: #52636a; }
 .wireframe-demo-inspector dl { display: grid; gap: .65rem; }
 .wireframe-demo-inspector dl > div { display: grid; grid-template-columns: minmax(7rem, 34%) minmax(0, 1fr); gap: .8rem; align-items: baseline; }
-.wireframe-demo-inspector dt { color: #68777c; font-size: .7rem; font-weight: 700; }
-.wireframe-demo-inspector dd { min-width: 0; margin: 0; color: #233c42; font-size: .7rem; overflow-wrap: anywhere; }
-.wireframe-demo-inspector .gem-field-display-value .primitive-status-pill,
-.wireframe-demo-inspector .gem-field-display-value .status-pill { font-size: .7rem !important; }
-.wireframe-demo-inspector .gem-field-display-value > span { font-size: inherit !important; line-height: inherit !important; }
+.wireframe-demo-inspector dt { color: #68777c; }
+.wireframe-demo-inspector dd { min-width: 0; margin: 0; color: #233c42; overflow-wrap: anywhere; }
 .wireframe-editable-value { box-sizing: border-box; width: 100%; padding: .3rem .4rem; border: 1px solid transparent; border-radius: .3rem; background: transparent; color: inherit; font: inherit; }
 .wireframe-editable-value:hover, .wireframe-editable-value:focus { border-color: #a8d2cf; background: #fff; outline: none; }
 .wireframe-action-value { display: flex; min-width: 0; align-items: center; gap: .35rem; }

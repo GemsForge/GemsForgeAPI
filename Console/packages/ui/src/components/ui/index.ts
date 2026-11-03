@@ -32,5 +32,6 @@ export {
   GemInput,
   GemTextArea,
 } from "./fieldPrimitives";
+export type { GemFieldTextRole } from "./fieldPrimitives";
 export type { GemFieldProps, GemFieldWidth, GemTextFieldWidth } from "./GemField";
 export { GemLogo } from "./GemLogo";
