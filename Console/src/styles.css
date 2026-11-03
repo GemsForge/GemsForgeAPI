@@ -2869,8 +2869,26 @@ dialog::backdrop {
     padding: 1rem;
   }
 
+  .table-kit-new-record-options {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.35rem;
+    margin: 0.85rem 0;
+  }
+
   .table-kit-new-record-options > button {
-    flex-basis: 100%;
+    min-width: 0;
+    min-height: 44px;
+    flex: initial;
+    justify-content: center;
+    padding: 0.35rem 0.25rem;
+    text-align: center;
+  }
+
+  .table-kit-new-record-option-label {
+    font-size: 0.7rem;
+    line-height: 1.2;
+    white-space: nowrap;
   }
 }
 /* Keep intermediate gallery cards wide enough to preserve readable titles and properties. */
