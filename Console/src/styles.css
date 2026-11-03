@@ -1288,6 +1288,13 @@ dialog::backdrop {
 .wireframe-property-details-trigger { display: inline; margin-right: .35rem; padding: 0; border: 0; background: transparent; color: var(--mint); cursor: pointer; font: inherit; line-height: 1; opacity: 1; }
 .wireframe-property-details-trigger:hover, .wireframe-property-details-trigger:focus-visible { color: var(--ink); }
 .wireframe-demo-inspector dt:hover .wireframe-property-details-trigger, .wireframe-property-details-trigger:focus-visible { opacity: 1; }
+.wireframe-property-sort-handle { display: inline-grid; width: 2rem; height: 2rem; margin: 0 .25rem 0 -.25rem; padding: 0; place-items: center; vertical-align: middle; border: 0; border-radius: .35rem; background: transparent; color: var(--muted); cursor: grab; touch-action: none; }
+.wireframe-property-sort-handle:hover { color: var(--mint); background: var(--panel-light); }
+.wireframe-property-sort-handle:active { cursor: grabbing; }
+.wireframe-property-sort-handle:focus-visible { outline: 2px solid var(--mint); outline-offset: 1px; }
+.wireframe-demo [data-inspector-property-row].is-drop-target { box-shadow: inset 0 2px var(--mint); }
+.wireframe-demo [data-inspector-property-row].is-being-dragged { opacity: .55; }
+@media (hover: none) { .wireframe-property-sort-handle { width: 2.75rem; height: 2.75rem; } }
 .wireframe-property-details-backdrop { position: fixed; z-index: 10; inset: 0; padding: 1rem; background: transparent; }
 .wireframe-property-details { position: absolute; top: 4.5rem; right: min(25rem, 3vw); display: flex; flex-direction: column; gap: .75rem; width: min(22rem, calc(100vw - 2rem)); padding: .85rem; border: 1px solid var(--field-border); border-radius: .75rem; background: var(--panel); color: var(--ink); box-shadow: 0 .75rem 2rem rgb(23 61 69 / 18%); }
 .wireframe-property-details-heading { display: flex; align-items: center; gap: .65rem; padding: .35rem .35rem .7rem; border-bottom: 1px solid #edf1ef; }

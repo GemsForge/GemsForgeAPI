@@ -1,5 +1,5 @@
 import React, { cloneElement, isValidElement, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { ChevronLeft, Expand, GalleryHorizontal, List, Table2 } from "lucide-react";
+import { ChevronLeft, Expand, GalleryHorizontal, GripVertical, List, Table2 } from "lucide-react";
 import { AgGridReact } from "ag-grid-react";
 import { themeQuartz, type ColDef, type ColDefField, type ICellRendererParams } from "ag-grid-community";
 import { useLiveSchemaQuery } from "../../data/workflowQueries";
@@ -51,6 +51,7 @@ type WireframeWorkspaceState = {
   tableIcon?: string;
   propertyIcons?: Record<string, string>;
   propertyConfigurations?: Record<string, TablePropertyConfiguration>;
+  inspectorPropertyOrder?: string[];
 };
 export type WireframeCollectionConfig<T extends WireframeRecord> = {
   tableName?: string;
@@ -95,6 +96,11 @@ export function WireframeCollectionView<T extends WireframeRecord>({
   const tableIconDirty = useRef(false);
   const [propertyIcons, setPropertyIcons] = useState<Record<string, string>>({});
   const [propertyConfigurations, setPropertyConfigurations] = useState<Record<string, TablePropertyConfiguration>>({});
+  const [inspectorPropertyOrder, setInspectorPropertyOrder] = useState<string[]>();
+  const [inspectorSortAnnouncement, setInspectorSortAnnouncement] = useState("");
+  const [draggedInspectorPropertyID, setDraggedInspectorPropertyID] = useState<string | null>(null);
+  const [inspectorDropTargetID, setInspectorDropTargetID] = useState<string | null>(null);
+  const draggedInspectorPropertyRef = useRef<string | null>(null);
   const [selectedID, setSelectedID] = useState<string | null>(null);
   const [workspaceSelectionRevision, setWorkspaceSelectionRevision] = useState(0);
   const workspaceSelectedID = recordPageID ? decodeURIComponent(recordPageID) : selectedID;
@@ -170,6 +176,9 @@ export function WireframeCollectionView<T extends WireframeRecord>({
     if (state.propertyConfigurations && typeof state.propertyConfigurations === "object") {
       setPropertyConfigurations(state.propertyConfigurations);
     }
+    if (Array.isArray(state.inspectorPropertyOrder)) {
+      setInspectorPropertyOrder([...new Set(state.inspectorPropertyOrder.filter((id): id is string => typeof id === "string"))]);
+    }
   }, [savedViewsQuery.data, savedViewsQuery.isSuccess, presentationTableName]);
   useEffect(() => {
     const pendingID = pendingSelectedID.current;
@@ -207,6 +216,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
       tableIcon,
       propertyIcons,
       propertyConfigurations,
+      ...(inspectorPropertyOrder ? { inspectorPropertyOrder } : {}),
     };
     const serialized = JSON.stringify(state);
     if (serialized === lastSavedWorkspaceState.current) return;
@@ -218,7 +228,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
       });
     }, 250);
     return () => window.clearTimeout(timer);
-  }, [view, workspaceSelectedID, galleryCardSize, galleryFillMedia, galleryImageSelection, query, sort, direction, filter, groupBy, pageIndex, pageSize, tableIcon, propertyIcons, propertyConfigurations, workspaceSelectionRevision, presentationTableName, saveWorkspaceStateAsync]);
+  }, [view, workspaceSelectedID, galleryCardSize, galleryFillMedia, galleryImageSelection, query, sort, direction, filter, groupBy, pageIndex, pageSize, tableIcon, propertyIcons, propertyConfigurations, inspectorPropertyOrder, workspaceSelectionRevision, presentationTableName, saveWorkspaceStateAsync]);
   const presentationsQuery = useRecordPresentationsQuery(presentationTableName);
   const savePresentation = useSaveRecordPresentationMutation(presentationTableName);
   const deletePresentation = useDeleteRecordPresentationMutation(presentationTableName);
@@ -383,6 +393,23 @@ export function WireframeCollectionView<T extends WireframeRecord>({
     skipWorkspaceSaveOnce.current = false;
     setPropertyIcons((current) => ({ ...current, [propertyID]: icon }));
   };
+  const reorderInspectorProperties = (order: string[], announcement: string) => {
+    skipWorkspaceSaveOnce.current = false;
+    setInspectorPropertyOrder(order);
+    setInspectorSortAnnouncement(announcement);
+  };
+  const inspectorRenderOptions = {
+    onDetails: openPropertyDetails,
+    propertyIcons,
+    propertyOrder: inspectorPropertyOrder,
+    onReorder: reorderInspectorProperties,
+    draggedPropertyRef: draggedInspectorPropertyRef,
+    draggedPropertyID: draggedInspectorPropertyID,
+    dropTargetID: inspectorDropTargetID,
+    setDraggedPropertyID: setDraggedInspectorPropertyID,
+    setDropTargetID: setInspectorDropTargetID,
+    announcement: inspectorSortAnnouncement,
+  };
   return (
     <section
       className={`wireframe-demo wireframe-standalone ${inspectorExpanded ? "is-expanded" : ""} ${selected ? "has-inspector" : "inspector-closed"}`}
@@ -440,7 +467,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
             }}
           />
           <WireframePropertyIconProvider onSave={savePropertyIcon}>
-            {renderInspector(config.inspector(selected, schemaProperties), openPropertyDetails, propertyIcons)}
+            <WireframeInspector node={config.inspector(selected, schemaProperties)} options={inspectorRenderOptions} />
           </WireframePropertyIconProvider>
         </WireframeRecordPageView>
       ) : (
@@ -601,7 +628,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
               {config.cardTitle(selected)}
             </GemSectionHeading>
           </div>
-          {renderInspector(config.inspector(selected, schemaProperties), openPropertyDetails, propertyIcons)}
+          <WireframeInspector node={config.inspector(selected, schemaProperties)} options={inspectorRenderOptions} />
         </aside>
       ) : null}
       {propertyDetails ? (
@@ -906,47 +933,133 @@ function formatWireframeTableValue(field: string, value: unknown): string {
   if (typeof value !== "number") return value == null || value === "" ? "—" : String(value);
   return formatRecordNumber(value, inferRecordNumberFormat(field));
 }
-function renderInspector(
-  node: ReactNode,
-  onDetails: (details: { id: string; label: string; value: string; type?: string; icon?: string }) => void,
-  propertyIcons: Readonly<Record<string, string>>,
-): ReactNode {
+type InspectorRenderOptions = {
+  onDetails: (details: { id: string; label: string; value: string; type?: string; icon?: string }) => void;
+  propertyIcons: Readonly<Record<string, string>>;
+  propertyOrder?: readonly string[];
+  onReorder: (order: string[], announcement: string) => void;
+  draggedPropertyRef: React.MutableRefObject<string | null>;
+  draggedPropertyID: string | null;
+  dropTargetID: string | null;
+  setDraggedPropertyID: (id: string | null) => void;
+  setDropTargetID: (id: string | null) => void;
+  announcement: string;
+};
+
+function WireframeInspector({ node, options }: { node: ReactNode; options: InspectorRenderOptions }) {
   if (!isValidElement(node) || node.type !== "dl") return node;
-  return cloneElement(
+  const rows = React.Children.toArray((node.props as { children?: ReactNode }).children).map((row, originalIndex) => {
+    if (!isValidElement(row)) return { row, originalIndex, propertyID: null, labelText: "", valueText: "", metadata: null };
+    const children = React.Children.toArray((row.props as { children?: ReactNode }).children);
+    const label = children.find((child) => isValidElement(child) && child.type === "dt");
+    const value = children.find((child) => isValidElement(child) && child.type === "dd");
+    if (!isValidElement(label) || !isValidElement(value)) return { row, originalIndex, propertyID: null, labelText: "", valueText: "", metadata: null };
+    const labelText = String((label.props as { children?: ReactNode }).children ?? "");
+    const propertyID = String((label.props as { "data-property-id"?: string })["data-property-id"] ?? labelText);
+    const propertyKind = (label.props as { "data-property-kind"?: string })["data-property-kind"];
+    const data = label.props as {
+      "data-property-type"?: string;
+      "data-property-icon"?: string;
+      "data-property-number-format"?: "decimal" | "currency" | "percent";
+    };
+    const metadata = inferWireframePropertyMetadata({
+      label: labelText,
+      kind: propertyKind,
+      numberFormat: data["data-property-number-format"],
+      propertyType: data["data-property-type"],
+      iconName: options.propertyIcons[propertyID] ?? data["data-property-icon"],
+    });
+    return { row, originalIndex, propertyID, labelText, valueText: String((value.props as { children?: ReactNode }).children ?? ""), metadata };
+  });
+  const propertyIDs = rows.flatMap((entry) => entry.propertyID ? [entry.propertyID] : []);
+  const savedOrder = [...new Set(options.propertyOrder ?? [])].filter((id) => propertyIDs.includes(id));
+  const order = [...savedOrder, ...propertyIDs.filter((id) => !savedOrder.includes(id))];
+  rows.sort((left, right) => {
+    const leftOrder = left.propertyID ? order.indexOf(left.propertyID) : Number.MAX_SAFE_INTEGER;
+    const rightOrder = right.propertyID ? order.indexOf(right.propertyID) : Number.MAX_SAFE_INTEGER;
+    return leftOrder - rightOrder || left.originalIndex - right.originalIndex;
+  });
+  const reorder = (sourceID: string, targetID: string, labelText: string) => {
+    const sourceIndex = order.indexOf(sourceID);
+    const targetIndex = order.indexOf(targetID);
+    if (sourceIndex < 0 || targetIndex < 0 || sourceIndex === targetIndex) return;
+    const nextOrder = [...order];
+    nextOrder.splice(sourceIndex, 1);
+    nextOrder.splice(targetIndex, 0, sourceID);
+    options.onReorder(nextOrder, `${labelText} moved to position ${targetIndex + 1} of ${nextOrder.length}.`);
+  };
+  return <>
+    {cloneElement(
     node as React.ReactElement<{ children?: ReactNode }>,
     {},
-    React.Children.map((node.props as { children?: ReactNode }).children, (row) => {
-      if (!isValidElement(row)) return row;
+    rows.map(({ row, propertyID, labelText, valueText, metadata }) => {
+      if (!propertyID || !metadata || !isValidElement(row)) return row;
       const children = React.Children.toArray((row.props as { children?: ReactNode }).children);
-      const label = children.find((child) => isValidElement(child) && child.type === "dt");
       const value = children.find((child) => isValidElement(child) && child.type === "dd");
-      if (!isValidElement(label) || !isValidElement(value)) return row;
-      const labelText = String((label.props as { children?: ReactNode }).children ?? "");
-      const propertyID = String((label.props as { "data-property-id"?: string })["data-property-id"] ?? labelText);
-      const propertyKind = (label.props as { "data-property-kind"?: string })["data-property-kind"];
-      const data = label.props as {
-        "data-property-type"?: string;
-        "data-property-icon"?: string;
-        "data-property-number-format"?: "decimal" | "currency" | "percent";
-      };
-      const metadata = inferWireframePropertyMetadata({
-        label: labelText,
-        kind: propertyKind,
-        numberFormat: data["data-property-number-format"],
-        propertyType: data["data-property-type"],
-        iconName: propertyIcons[propertyID] ?? data["data-property-icon"],
-      });
-      const valueText = String((value.props as { children?: ReactNode }).children ?? "");
       return cloneElement(
-        row as React.ReactElement,
-        {},
+        row as React.ReactElement<Record<string, unknown>>,
+        {
+          "data-inspector-property-row": propertyID,
+          className: [
+            (row.props as { className?: string }).className,
+            options.dropTargetID === propertyID ? "is-drop-target" : "",
+            options.draggedPropertyID === propertyID ? "is-being-dragged" : "",
+          ].filter(Boolean).join(" "),
+          onPointerMove: (event: React.PointerEvent<HTMLDivElement>) => {
+            if (!options.draggedPropertyRef.current) return;
+            const target = document.elementFromPoint(event.clientX, event.clientY)?.closest<HTMLElement>("[data-inspector-property-row]");
+            options.setDropTargetID(target?.dataset.inspectorPropertyRow ?? null);
+          },
+          onPointerUp: (event: React.PointerEvent<HTMLDivElement>) => {
+            const sourceID = options.draggedPropertyRef.current;
+            if (!sourceID) return;
+            const target = document.elementFromPoint(event.clientX, event.clientY)?.closest<HTMLElement>("[data-inspector-property-row]");
+            const targetID = target?.dataset.inspectorPropertyRow;
+            if (targetID) reorder(sourceID, targetID, rows.find((entry) => entry.propertyID === sourceID)?.labelText ?? labelText);
+            options.draggedPropertyRef.current = null;
+            options.setDraggedPropertyID(null);
+            options.setDropTargetID(null);
+          },
+          onPointerCancel: () => {
+            options.draggedPropertyRef.current = null;
+            options.setDraggedPropertyID(null);
+            options.setDropTargetID(null);
+          },
+        },
         <>
           <dt data-property-id={propertyID}>
             <button
               type="button"
+              className="wireframe-property-sort-handle"
+              aria-label={`Reorder ${labelText}`}
+              title="Drag to reorder, or use the Up and Down arrow keys"
+              onPointerDown={(event) => {
+                if (event.button !== 0) return;
+                event.preventDefault();
+                options.draggedPropertyRef.current = propertyID;
+                options.setDraggedPropertyID(propertyID);
+                options.setDropTargetID(propertyID);
+                event.currentTarget.setPointerCapture(event.pointerId);
+              }}
+              onKeyDown={(event) => {
+                if (event.key !== "ArrowUp" && event.key !== "ArrowDown") return;
+                const index = order.indexOf(propertyID);
+                const targetIndex = index + (event.key === "ArrowUp" ? -1 : 1);
+                if (targetIndex < 0 || targetIndex >= order.length) return;
+                event.preventDefault();
+                const nextOrder = [...order];
+                nextOrder.splice(index, 1);
+                nextOrder.splice(targetIndex, 0, propertyID);
+                options.onReorder(nextOrder, `${labelText} moved to position ${targetIndex + 1} of ${nextOrder.length}.`);
+              }}
+            >
+              <GripVertical size={14} aria-hidden="true" />
+            </button>
+            <button
+              type="button"
               className="wireframe-property-details-trigger"
               aria-label={`Open details for ${labelText}`}
-              onClick={() => onDetails({
+              onClick={() => options.onDetails({
                 label: labelText,
                 value: valueText,
                 type: metadata.type,
@@ -962,7 +1075,9 @@ function renderInspector(
         </>,
       );
     }),
-  );
+    )}
+    <span className="sr-only" role="status">{options.announcement}</span>
+  </>;
 }
 
 function isIdentityProperty(label: string): boolean {
