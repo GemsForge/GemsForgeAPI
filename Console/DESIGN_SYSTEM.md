@@ -75,6 +75,11 @@ import { GemCaption, GemPrimitiveField } from "@gemsforge/ui";
 </dd>
 ```
 
+Table Kit List rows use that same caption role for property values in both
+read-only and inline-edit modes; status values retain their pill treatment at
+the caption size. Record titles keep their separate title role; avoid broad
+descendant font rules that override these semantic roles.
+
 Keep inspector sizing in these semantic components. The inspector layout may set
 color and wrapping, but should not assign separate font sizes to labels and values.
 Use `density="compact"` for inspector and inline pagination controls: it sets a

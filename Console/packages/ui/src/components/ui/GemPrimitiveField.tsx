@@ -130,6 +130,8 @@ export function GemPrimitiveField({
           displayValue ??
           (primitive === "status" ? (
             <GemStatusPill
+              fontSize={valueTextRole === "caption" ? "$1" : undefined}
+              lineHeight={valueTextRole === "caption" ? "$1" : undefined}
               className={
                 selectedColorToken
                   ? `primitive-status-pill primitive-status-pill--${selectedColorToken}`

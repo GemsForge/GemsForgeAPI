@@ -1932,10 +1932,6 @@ dialog::backdrop {
   font-size: 0.95rem !important;
   line-height: 1.25 !important;
 }
-.table-kit-list-row-content * {
-  font-size: inherit !important;
-  line-height: inherit !important;
-}
 .table-kit-list-row-title {
   min-width: 12rem;
   color: var(--ink);
@@ -1985,8 +1981,6 @@ dialog::backdrop {
 .table-kit-inline-editable-property .editable-record-value-button,
 .table-kit-inline-editable-property .gem-field-display-value {
   padding: 0;
-  font-size: 0.78rem;
-  line-height: 1.25;
 }
 @media (max-width: 720px) {
   .table-kit-list-row-content {

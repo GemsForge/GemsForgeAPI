@@ -1,6 +1,6 @@
 import { useId, type ChangeEvent, type FocusEvent, type ReactNode } from "react";
 import { Form } from "tamagui";
-import { GCheckboxField, GDate, GemField, GSelectField } from "@gemsforge/ui";
+import { GCheckboxField, GDate, GemCaption, GemField, GSelectField } from "@gemsforge/ui";
 import type { GemTextFieldWidth } from "@gemsforge/ui";
 import { useRecordEditor } from "../hooks/useRecordEditor";
 import { GemPrimitiveField } from "@gemsforge/ui";
@@ -27,6 +27,7 @@ export interface EditableRecordField {
   placeholder?: string;
   width?: GemTextFieldWidth;
   displayValue?: ReactNode;
+  valueTextRole?: "body" | "caption";
   readOnlyReason?: string;
   className?: string;
   primitive?: GemPrimitiveType;
@@ -85,6 +86,8 @@ function EditableField({ field }: { field: EditableRecordField }) {
   });
   const id = `edit-${instanceID}-${field.label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
   const labelID = `${id}-label`;
+  const displayValue = field.displayValue ?? (field.inputType === "date" ? formatRecordDateValue(value, field.dateFormat) : presentValue(value));
+  const displayedValue = field.valueTextRole === "caption" ? <GemCaption>{displayValue}</GemCaption> : displayValue;
   const onTextChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     editor.setDraft(event.currentTarget.value);
   const onEditorBlur = (event: FocusEvent<HTMLElement>) => {
@@ -112,6 +115,7 @@ function EditableField({ field }: { field: EditableRecordField }) {
           value={(editor.editing ? editor.draft : field.value) as string | number | boolean | null}
           editing={editor.editing}
           displayValue={field.displayValue ?? (field.primitive === "date" ? formatRecordDateValue(value, field.dateFormat) : undefined)}
+          valueTextRole={field.valueTextRole}
           colorToken={field.colorToken}
           dateFormat={field.dateFormat}
           includeTime={field.includeTime}
@@ -149,6 +153,7 @@ function EditableField({ field }: { field: EditableRecordField }) {
                   options={field.options ?? []}
                   editing={false}
                   displayValue={field.displayValue ?? presentValue(value)}
+                  valueTextRole={field.valueTextRole}
                   onDisplayClick={editor.begin}
                 />
               ) : <button
@@ -164,7 +169,7 @@ function EditableField({ field }: { field: EditableRecordField }) {
                       aria-label={String(value).toLowerCase() === "true" ? "checked" : "unchecked"}
                     />
                   ) : (
-                    (field.displayValue ?? (field.inputType === "date" ? formatRecordDateValue(value, field.dateFormat) : presentValue(value)))
+                    displayedValue
                   )}
                   {field.readOnlyReason && <small className="field-readonly-reason">{field.readOnlyReason}</small>}
                 </button>
@@ -180,7 +185,7 @@ function EditableField({ field }: { field: EditableRecordField }) {
                     readOnly
                   />
                 ) : (
-                  (field.displayValue ?? (field.inputType === "date" ? formatRecordDateValue(value, field.dateFormat) : presentValue(value)))
+                  displayedValue
                 )}
                 {field.readOnlyReason && <small className="field-readonly-reason">{field.readOnlyReason}</small>}
               </>

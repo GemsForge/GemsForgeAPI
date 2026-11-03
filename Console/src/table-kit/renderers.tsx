@@ -16,8 +16,8 @@ import {
   type ColDef,
   type ICellRendererParams,
 } from "ag-grid-community";
-import { Avatar, H3, ListItem, Paragraph, Separator, SizableText, Text, XStack, YGroup, YStack } from "tamagui";
-import { GCheckboxField, GemButton, GemStatusPill } from "@gemsforge/ui";
+import { Avatar, H3, ListItem, Separator, SizableText, Text, XStack, YGroup, YStack } from "tamagui";
+import { GCheckboxField, GemButton, GemCaption, GemStatusPill } from "@gemsforge/ui";
 import { EditableRecordFields } from "../components/EditableRecordFields";
 import { TableContext } from "./context";
 import { GalleryViewControls, type GalleryCardSize } from "./GalleryViewControls";
@@ -237,10 +237,10 @@ function PropertyValue({ property, value }: { property: RecordPropertyDefinition
   const text = displayValue(value, property);
   if (property.kind === "status") {
     const tone = value.status?.tone ?? (property.colorToken === "green" ? "success" : property.colorToken === "red" ? "danger" : "default");
-    return <GemStatusPill tone={tone}>{text}</GemStatusPill>;
+    return <GemStatusPill tone={tone} fontSize="$1" lineHeight="$1">{text}</GemStatusPill>;
   }
   if ((property.kind === "url" || property.kind === "email") && value.href) {
-    return <a className="primitive-value-link" href={value.href}>{text}</a>;
+    return <a className="primitive-value-link" href={value.href}><GemCaption>{text}</GemCaption></a>;
   }
   if (property.kind === "checkbox") {
     return <input className="primitive-checkbox" type="checkbox" checked={Boolean(value.checked ?? value.raw)} readOnly aria-label={property.label} />;
@@ -248,7 +248,7 @@ function PropertyValue({ property, value }: { property: RecordPropertyDefinition
   if ((property.kind === "image" || property.kind === "media") && value.image) {
     return <img className="primitive-media-preview" src={value.image.src} alt={value.image.alt} />;
   }
-  return <Paragraph color="$gemMuted">{text}</Paragraph>;
+  return <GemCaption color="$gemMuted">{text}</GemCaption>;
 }
 
 /** Render a property value through AG Grid without changing the record contract. */
@@ -337,6 +337,7 @@ export function RecordList<Record>({
                             inputType: edit.inputType,
                             nullable: edit.nullable,
                             options: edit.options,
+                            valueTextRole: "caption",
                             editable: true,
                             onSave: async (nextValue) => {
                               const next = typeof nextValue === "string" || typeof nextValue === "number"
