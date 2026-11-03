@@ -46,6 +46,7 @@ export function CreateFormText<T extends FieldValues>({
             required={required}
             width={width}
             error={typeof message === "string" ? message : undefined}
+            wireframe
           />
         )}
       />

@@ -176,6 +176,7 @@ export function GemPrimitiveField({
         onBlur={onBlur}
         required={required}
         width={width}
+        wireframe={wireframe}
       />
     );
   }

@@ -28,4 +28,22 @@ describe("GSelectField", () => {
     fireEvent.keyDown(screen.getByRole("option", { name: "Former" }), { key: "Enter" });
     expect(onChange).toHaveBeenCalledWith("Former", expect.objectContaining({ reason: "keyboard" }));
   });
+
+  it("marks its trigger and menu for the light workspace surface", () => {
+    render(
+      <TamaguiProvider config={tamaguiConfig} defaultTheme="dark">
+        <GSelectField
+          label="Status"
+          value="Current"
+          options={[{ label: "Current", value: "Current" }]}
+          wireframe
+        />
+      </TamaguiProvider>,
+    );
+
+    const trigger = screen.getByRole("combobox", { name: "Status" });
+    expect(trigger).toHaveAttribute("data-wireframe-field", "true");
+    fireEvent.click(trigger);
+    expect(document.querySelector('[data-wireframe-select="true"]')).toBeInTheDocument();
+  });
 });

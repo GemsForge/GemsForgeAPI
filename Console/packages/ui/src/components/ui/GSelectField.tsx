@@ -136,12 +136,14 @@ export function GSelectField({
           className={[
             "create-form-control",
             `create-form-control--${width}`,
+            wireframe ? "gem-field-control--wireframe" : "",
             primitive === "status" ? "g-status-select-trigger" : "",
             triggerClassName,
           ]
             .filter(Boolean)
             .join(" ")}
           width="100%"
+          data-wireframe-field={wireframe ? "true" : undefined}
           aria-invalid={Boolean(error)}
           aria-describedby={error ? errorID : undefined}
           aria-required={required}

@@ -163,6 +163,15 @@ select {
   opacity: 1 !important;
   isolation: isolate;
 }
+[data-wireframe-field="true"] {
+  border-color: var(--gem-wireframe-border-strong) !important;
+  background: var(--gem-wireframe-surface) !important;
+  color: var(--gem-wireframe-text) !important;
+}
+[data-wireframe-field="true"]:focus,
+[data-wireframe-field="true"]:focus-visible {
+  border-color: var(--gem-wireframe-action) !important;
+}
 [data-gem-select-content] [role="option"] {
   background: var(--panel) !important;
   color: var(--ink) !important;
@@ -196,6 +205,28 @@ select {
   opacity: 1 !important;
   isolation: isolate;
   box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.3);
+}
+.gem-date-popover[data-wireframe-date="true"],
+.gem-date-format-popover[data-wireframe-date="true"] {
+  border-color: var(--gem-wireframe-border-strong) !important;
+  background: var(--gem-wireframe-surface) !important;
+  color: var(--gem-wireframe-text) !important;
+}
+.gem-date-popover[data-wireframe-date="true"] .gem-calendar-day {
+  background: var(--gem-wireframe-surface-raised);
+  color: var(--gem-wireframe-text);
+}
+.gem-date-popover[data-wireframe-date="true"] .gem-calendar-day:hover,
+.gem-date-popover[data-wireframe-date="true"] .gem-calendar-day:focus-visible {
+  background: var(--gem-wireframe-action);
+  color: #fff;
+}
+.gem-date-format-popover[data-wireframe-date="true"] button {
+  color: var(--gem-wireframe-text);
+}
+.gem-date-format-popover[data-wireframe-date="true"] button:hover,
+.gem-date-format-popover[data-wireframe-date="true"] button:focus-visible {
+  background: var(--gem-wireframe-surface-raised);
 }
 .gem-date-popover .gem-calendar-day {
   min-height: 2rem;
@@ -1325,6 +1356,13 @@ dialog::backdrop {
   .wireframe-demo.has-inspector:not(.wireframe-standalone) {
     grid-template-columns: 13rem minmax(0, 1fr);
   }
+  .wireframe-demo.wireframe-standalone {
+    grid-template-columns: var(--gem-layout-workspace-sidebar-compact) minmax(0, 1fr) var(--gem-layout-inspector-compact);
+  }
+  .wireframe-demo.wireframe-standalone .wireframe-demo-inspector {
+    min-width: 0;
+    width: auto;
+  }
   .wireframe-demo:not(.wireframe-standalone) .wireframe-demo-inspector {
     grid-column: 1 / -1;
     border-top: 1px solid #dfe6e3;
@@ -1334,7 +1372,32 @@ dialog::backdrop {
     display: none;
   }
 }
-@media (max-width: 760px) { .wireframe-demo { display: block; margin: -1.5rem; } .wireframe-mobile-nav-toggle { display: inline-flex; position: relative; z-index: 3; align-items: center; gap: .5rem; margin: .8rem; padding: .55rem .7rem; border: 1px solid #dfe6e3; border-radius: .5rem; background: #fff; color: #173d45; } .wireframe-mobile-nav { display: none; } .wireframe-mobile-nav.is-open { display: block; } .wireframe-mobile-nav .wireframe-demo-sidebar { display: block; } .wireframe-demo-main { padding: 1.3rem; } .demo-gallery { grid-template-columns: repeat(2, minmax(0, 1fr)); } .demo-toolbar { flex-wrap: wrap; } .demo-collection-search { order: 3; width: 100%; margin-left: 0; } .wireframe-demo-inspector { padding: 1.3rem; max-height: none; } }
+@media (max-width: 900px) {
+  .wireframe-demo.wireframe-standalone {
+    grid-template-columns: var(--gem-layout-workspace-sidebar-compact) minmax(0, 1fr);
+  }
+  .wireframe-demo.wireframe-standalone .wireframe-demo-inspector {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    min-width: 0;
+    width: auto;
+    border-top: 1px solid var(--gem-wireframe-border);
+    border-left: 0;
+  }
+}
+@media (max-width: 760px) {
+  .wireframe-demo { display: block; margin: -1.5rem; }
+  .wireframe-demo.wireframe-standalone { width: 100%; margin: 0; }
+  .wireframe-mobile-nav-toggle { display: inline-flex; position: relative; z-index: 3; align-items: center; gap: .5rem; margin: .8rem; padding: .55rem .7rem; border: 1px solid #dfe6e3; border-radius: .5rem; background: #fff; color: #173d45; }
+  .wireframe-mobile-nav { display: none; }
+  .wireframe-mobile-nav.is-open { display: block; }
+  .wireframe-mobile-nav .wireframe-demo-sidebar { display: block; }
+  .wireframe-demo-main { padding: 1.3rem; }
+  .demo-gallery { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .demo-toolbar { flex-wrap: wrap; }
+  .demo-collection-search { order: 3; width: 100%; margin-left: 0; }
+  .wireframe-demo-inspector { box-sizing: border-box; width: 100%; min-width: 0; padding: 1.3rem; max-height: none; }
+}
 @media (max-width: 900px) {
   .create-form-grid--address-location {
     grid-template-columns: repeat(2, minmax(0, 1fr));

@@ -30,6 +30,8 @@ export interface GDateFieldProps extends Omit<
   displayFormat?: GemDateFormat;
   includeTime?: boolean;
   onDateConfigChange?: (config: { displayFormat: GemDateFormat; includeTime: boolean }) => void;
+  /** Uses the light workspace surface for controls and portaled calendar content. */
+  wireframe?: boolean;
 }
 
 function parseDate(value: string | undefined, format: string): Dayjs | null {
@@ -55,6 +57,7 @@ export function GDateField({
   displayFormat = "iso",
   includeTime = false,
   onDateConfigChange,
+  wireframe = false,
 }: GDateFieldProps) {
   const selectedDate = parseDate(value, format);
   const [open, setOpen] = useState(false);
@@ -133,6 +136,7 @@ export function GDateField({
           <Button
             id={id}
             className={`create-form-control create-form-control--${width}`}
+            data-wireframe-field={wireframe ? "true" : undefined}
             aria-invalid={Boolean(error)}
             aria-describedby={error ? errorID : undefined}
             aria-required={required}
@@ -148,7 +152,13 @@ export function GDateField({
               : `Select ${label.toLowerCase()}…`}
           </Button>
         </Popover.Trigger>
-        <Popover.Content className="gem-date-popover" padding="$3" borderWidth={1} minWidth={280}>
+        <Popover.Content
+          className="gem-date-popover"
+          data-wireframe-date={wireframe ? "true" : undefined}
+          padding="$3"
+          borderWidth={1}
+          minWidth={280}
+        >
           <YStack gap="$3">
             <XStack alignItems="center" justifyContent="space-between">
               <Button
@@ -203,7 +213,12 @@ export function GDateField({
                       {formatLabels[selectedFormat]} ›
                     </Button>
                   </Popover.Trigger>
-                  <Popover.Content className="gem-date-format-popover" padding="$2" borderWidth={1}>
+                  <Popover.Content
+                    className="gem-date-format-popover"
+                    data-wireframe-date={wireframe ? "true" : undefined}
+                    padding="$2"
+                    borderWidth={1}
+                  >
                     <YStack>
                       {(["local", "iso", "relative"] as GemDateFormat[]).map((option) => (
                         <Button
