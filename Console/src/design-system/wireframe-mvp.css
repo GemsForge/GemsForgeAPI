@@ -537,6 +537,17 @@
     padding: 0.35rem;
   }
 
+  .wireframe-demo.wireframe-standalone .demo-results.demo-gallery {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .wireframe-demo.wireframe-standalone .demo-results.demo-gallery .demo-place-card {
+    width: 100%;
+    max-width: 100%;
+    flex: 0 0 100%;
+  }
+
   .wireframe-demo.wireframe-standalone .demo-toolbar .record-utilities-compact {
     min-width: 0;
     justify-content: flex-start;
