@@ -6,6 +6,7 @@ import { App } from "./App";
 import { tamaguiConfig } from "@gemsforge/ui";
 import { queryClient } from "./data/queryClient";
 import "./styles.css";
+import "./design-system/global-density.css";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

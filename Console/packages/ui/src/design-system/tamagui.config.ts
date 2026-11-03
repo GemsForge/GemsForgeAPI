@@ -61,8 +61,8 @@ export const gemFontFamily =
 
 const bodyFont = createFont({
   family: gemFontFamily,
-  size: { 1: 12, 2: 14, 3: 16, 4: 20, 5: 28, 6: 36, true: 16 },
-  lineHeight: { 1: 18, 2: 21, 3: 24, 4: 28, 5: 36, 6: 44, true: 24 },
+  size: { 1: 12, 2: 13, 3: 14, 4: 16, 5: 22, 6: 30, true: 14 },
+  lineHeight: { 1: 16, 2: 18, 3: 20, 4: 24, 5: 28, 6: 38, true: 20 },
   weight: { 1: "400", 2: "500", 3: "600", 4: "700", 5: "700", 6: "800", true: "400" },
   letterSpacing: { 1: 0, 2: 0, 3: 0, 4: -0.2, 5: -0.5, 6: -1, true: 0 },
 });

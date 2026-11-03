@@ -43,10 +43,11 @@ colors must retain their text/icon cue; color alone does not communicate state.
 
 `gemFontFamily` prefers Avenir Next when installed, then Avenir, Inter, and the
 platform UI fonts. No font is downloaded at runtime. The configured size scale
-is 12/14/16/20/28/36px with 18/21/24/28/36/44px line heights. Use the shared
+is 12/13/14/16/22/30px with 16/18/20/24/28/38px line heights. The default
+body size is 14px. Use the shared
 roles from `packages/ui/src/components/ui/GemTypography.tsx` for page, section, record, body,
-and caption text. Section headings use 28px through tablet widths and step up to
-36px at the desktop breakpoint.
+and caption text. Section headings use 22px through tablet widths and step up to
+30px at the desktop breakpoint.
 
 ```tsx
 import { GemBody, GemPageTitle, GemSectionHeading } from "@gemsforge/ui";
@@ -84,22 +85,24 @@ Keep inspector sizing in these semantic components. The inspector layout may set
 color and wrapping, but should not assign separate font sizes to labels and values.
 Use `density="compact"` for inspector and inline pagination controls: it sets a
 36px desktop minimum height, removes field margins, and retains a 44px minimum
-height on touch devices.
+height on touch devices. Shared buttons default to the compact `sm` size; icon
+controls retain their dedicated 44px target where needed.
 
 Keep heading levels in document order. A visual size does not justify skipping
 the semantic heading level.
 
 ## Spacing, sizing, and shape
 
-| Token family                                               | Values          | Intended use                                      |
-| ---------------------------------------------------------- | --------------- | ------------------------------------------------- |
-| `gemCompact`, `gemControl`, `gemSection`, `gemPage`        | 8, 12, 24, 32px | Common gaps and padding                           |
-| `wireframePane`, `wireframeContent`, `wireframeCard`       | 16, 28, 12px    | Existing workspace pane, content, and card rhythm |
-| `gemControl`, `gemCard` radii                              | 8, 16px         | Shared controls and cards                         |
-| `wireframeControl`, `wireframeCard`, `wireframePill` radii | 8, 12, pill     | Workspace controls, cards, and status pills       |
-| `fieldControl`, `gemTouchTarget`                           | 44px            | Standard control and touch target height          |
-| `gemBorderHairline`, `gemBorderEmphasis`                   | 1, 2px          | Separators and emphasized outlines                |
-| `gemElevation.card`, `gemElevation.floating`               | shared shadows  | Raised cards and floating surfaces                |
+| Token family                                               | Values                   | Intended use                                      |
+| ---------------------------------------------------------- | ------------------------ | ------------------------------------------------- |
+| `gemCompact`, `gemControl`, `gemSection`, `gemPage`        | 8, 12, 24, 32px          | Common gaps and padding                           |
+| `wireframePane`, `wireframeContent`, `wireframeCard`       | 16, 28, 12px             | Existing workspace pane, content, and card rhythm |
+| `gemControl`, `gemCard` radii                              | 8, 16px                  | Shared controls and cards                         |
+| `wireframeControl`, `wireframeCard`, `wireframePill` radii | 8, 12, pill              | Workspace controls, cards, and status pills       |
+| `fieldControl`, `gemTouchTarget`                           | 44px                     | Standard field and touch target height            |
+| Shared button minimum                                      | 36px desktop; 44px touch | Compact action controls with touch-sized targets  |
+| `gemBorderHairline`, `gemBorderEmphasis`                   | 1, 2px                   | Separators and emphasized outlines                |
+| `gemElevation.card`, `gemElevation.floating`               | shared shadows           | Raised cards and floating surfaces                |
 
 Use semantic theme roles (`action`, `actionText`, `focus`, `success`,
 `warning`, and `danger`) in shared components. CSS compatibility styles map the

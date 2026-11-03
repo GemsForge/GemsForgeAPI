@@ -67,7 +67,8 @@ contracts are documented in [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md).
 
 Semantic spacing is gemCompact 8, gemControl 12, gemSection 24, gemPage 32;
 radii are gemControl 8 and gemCard 16. Typography uses the system-font stack
-with 12/14/16/20/28/36px sizes and matching line heights. Inter is a preferred
+with 12/13/14/16/22/30px sizes and matching line heights; body text defaults
+to 14px. Inter is a preferred
 local font, not a required remote download. Do not add one-off tokens without
 checking whether an existing role fits.
 
