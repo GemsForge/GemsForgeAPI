@@ -1,5 +1,5 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
-import type { ReactElement } from "react";
+import { act, fireEvent, render as rtlRender, screen } from "@testing-library/react";
+import type { ReactNode } from "react";
 import { TamaguiProvider } from "tamagui";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { tamaguiConfig } from "../../design-system";
@@ -10,8 +10,8 @@ import {
   type GeoapifySuggestion,
 } from "./GeoapifyAddressSearch";
 
-function renderWithTamagui(ui: ReactElement) {
-  return render(
+function render(ui: ReactNode) {
+  return rtlRender(
     <TamaguiProvider config={tamaguiConfig} defaultTheme="dark">
       {ui}
     </TamaguiProvider>,

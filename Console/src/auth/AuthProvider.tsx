@@ -8,6 +8,7 @@ import {
   saveSession,
   SESSION_EXPIRED_EVENT,
   type BrowserSession,
+  inspectionBypassEnabled,
 } from "./session";
 
 interface AuthContextValue {
@@ -23,7 +24,11 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [session, setSession] = useState<BrowserSession | null>(() => readSession());
+  const [session, setSession] = useState<BrowserSession | null>(() =>
+    inspectionBypassEnabled
+      ? (readSession() ?? { token: "local-inspection-bypass", expiresAt: "2999-01-01T00:00:00.000Z" })
+      : readSession(),
+  );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(() =>
     consumeExpiredSessionNotice() ? "Your sign-in expired or was revoked. Sign in again to continue." : null,

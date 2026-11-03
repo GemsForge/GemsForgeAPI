@@ -7,18 +7,14 @@ import {
 import { QueryFeedback } from "../../components/QueryFeedback";
 import type { ExpenseTransaction } from "../../types";
 import { AttachmentControl } from "../../components/AttachmentControl";
-import { GemEmptyState } from "../../components/ui";
-import {
-  EditableRecordFields,
-  formatRecordCurrency,
-  formatRecordDate,
-  formatRecordTimestamp,
-} from "../../components/EditableRecordFields";
+import { GemEmptyState, GemStatusPill } from "../../components/ui";
+import { EditableRecordFields } from "../../components/EditableRecordFields";
+import { transactionEditableFields } from "./transactionRecordFields";
 import { useExpenseCategoriesQuery, useExpenseSubcategoriesQuery, useMerchantsQuery } from "../../data/lifeQueries";
 import { RecordImport } from "../../components/RecordImport";
 import { useRecordUtilities } from "../../hooks/useRecordUtilities";
 import { DatabaseRecordCollection } from "../../components/DatabaseRecordCollection";
-import { transactionTableAdapter } from "../database/recordTableAdapters";
+import { createTransactionTableAdapter } from "../database/recordTableAdapters";
 import { useTransactionRecordActions } from "./useTransactionRecordActions";
 
 interface TransactionsViewProps {
@@ -43,8 +39,11 @@ export function TransactionsView({ records }: TransactionsViewProps) {
   const detail = useTransactionQuery(selectedID);
   const attachment = useTransactionImageMutation();
   const patch = useTransactionPatchMutation();
-  const selectedRecord = detail.data;
+  const categories = useExpenseCategoriesQuery(true);
+  const subcategories = useExpenseSubcategoriesQuery(null, true);
   const merchants = useMerchantsQuery(true);
+  const transactionAdapter = createTransactionTableAdapter(categories.data ?? [], subcategories.data ?? [], merchants.data ?? []);
+  const selectedRecord = detail.data;
   const [creating, setCreating] = useState(false);
   const [importing, setImporting] = useState(false);
   const { publish, importConfig, actions, createForm } = useTransactionRecordActions({
@@ -91,7 +90,7 @@ export function TransactionsView({ records }: TransactionsViewProps) {
             label="Transactions"
             records={records}
             utilities={utilities}
-            adapter={transactionTableAdapter}
+            adapter={transactionAdapter}
             sortOptions={[
               { value: "date", label: "Transaction date" },
               { value: "item", label: "Item" },
@@ -107,6 +106,9 @@ export function TransactionsView({ records }: TransactionsViewProps) {
             detailId={selectedID}
             onDetailChange={setSelectedID}
             actions={actions}
+            onRecordPatch={async (record, field, value) => {
+              await patch.mutateAsync({ id: record.id, patch: { [field]: value } as Partial<ExpenseTransaction> });
+            }}
             detail={
               selectedID ? (
                 <>
@@ -155,128 +157,13 @@ function TransactionDetail({
           <h3>{record.item}</h3>
           <p className="transaction-code">{record.id}</p>
         </div>
-        <span className="status-pill">
+        <GemStatusPill>
           Category {categories.data?.find((category) => category.id === record.categoryID)?.name ?? record.categoryID}
-        </span>
+        </GemStatusPill>
       </div>
       <EditableRecordFields
         className="transaction-fields"
-        fields={[
-          {
-            label: "Item",
-            value: record.item,
-            required: true,
-            onSave: async (value) => onPatch({ item: value as string }),
-          },
-          {
-            label: "Receipt",
-            value: record.receiptID,
-            nullable: true,
-            onSave: async (value) => onPatch({ receiptID: value as string | null }),
-          },
-          {
-            label: "First receipt item",
-            value: record.firstReceiptItem,
-            inputType: "boolean",
-            onSave: async (value) => onPatch({ firstReceiptItem: value as boolean }),
-          },
-          {
-            label: "Merchant",
-            value: record.merchantCode,
-            inputType: "select",
-            nullable: true,
-            options: merchants.map((merchant) => ({ value: merchant.id, label: merchantDisplayName(merchant.name) })),
-            displayValue: merchantDisplayName(merchants.find((merchant) => merchant.id === record.merchantCode)?.name),
-            onSave: async (value) => onPatch({ merchantCode: value as string | null }),
-          },
-          {
-            label: "Transaction date",
-            value: record.transactionDate,
-            inputType: "date",
-            nullable: true,
-            displayValue: formatRecordDate(record.transactionDate),
-            onSave: async (value) => onPatch({ transactionDate: value as string | null }),
-          },
-          {
-            label: "Category",
-            value: record.categoryID,
-            inputType: "select",
-            options: (categories.data ?? []).map((category) => ({ value: String(category.id), label: category.name })),
-            required: true,
-            displayValue: categories.data?.find((category) => category.id === record.categoryID)?.name ?? "—",
-            onSave: async (value) => onPatch({ categoryID: Number(value) }),
-          },
-          {
-            label: "Subcategory",
-            value: record.subcategoryID,
-            inputType: "select",
-            nullable: true,
-            options: (subcategories.data ?? []).map((subcategory) => ({
-              value: String(subcategory.id),
-              label: subcategory.name,
-            })),
-            displayValue:
-              subcategories.data?.find((subcategory) => subcategory.id === record.subcategoryID)?.name ?? "—",
-            onSave: async (value) => onPatch({ subcategoryID: value == null || value === "" ? null : Number(value) }),
-          },
-          {
-            label: "Quantity",
-            value: record.quantity,
-            inputType: "number",
-            step: "0.01",
-            onSave: async (value) => onPatch({ quantity: value as number }),
-          },
-          {
-            label: "Regular price",
-            value: record.regularPrice,
-            inputType: "number",
-            step: "0.01",
-            nullable: true,
-            displayValue: formatRecordCurrency(record.regularPrice),
-            onSave: async (value) => onPatch({ regularPrice: value as number | null }),
-          },
-          {
-            label: "Paid price",
-            value: record.paidPrice,
-            inputType: "number",
-            step: "0.01",
-            nullable: true,
-            displayValue: formatRecordCurrency(record.paidPrice),
-            onSave: async (value) => onPatch({ paidPrice: value as number | null }),
-          },
-          {
-            label: "Total",
-            value: record.total,
-            inputType: "number",
-            step: "0.01",
-            nullable: true,
-            displayValue: formatRecordCurrency(record.total),
-            onSave: async (value) => onPatch({ total: value as number | null }),
-          },
-          {
-            label: "Discount",
-            value: record.discount,
-            inputType: "number",
-            step: "0.01",
-            nullable: true,
-            displayValue: formatRecordCurrency(record.discount),
-            onSave: async (value) => onPatch({ discount: value as number | null }),
-          },
-          {
-            label: "Notes",
-            value: record.notes,
-            inputType: "longText",
-            nullable: true,
-            className: "record-notes",
-            onSave: async (value) => onPatch({ notes: value as string | null }),
-          },
-          {
-            label: "Last updated",
-            value: record.updatedAt ?? null,
-            readOnlyReason: "Server managed",
-            displayValue: formatRecordTimestamp(record.updatedAt),
-          },
-        ]}
+        fields={transactionEditableFields(record, categories.data ?? [], subcategories.data ?? [], merchants, onPatch)}
       />
       <AttachmentControl
         fileMetadataID={record.image}
@@ -287,9 +174,4 @@ function TransactionDetail({
       />
     </article>
   );
-}
-
-function merchantDisplayName(name?: string) {
-  if (!name) return "—";
-  return name.replace(/^[\p{Extended_Pictographic}\p{Emoji_Presentation}\p{So}\p{Sk}\s]+/u, "").trim() || name;
 }

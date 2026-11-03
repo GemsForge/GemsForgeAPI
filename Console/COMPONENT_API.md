@@ -30,6 +30,137 @@ These components own reusable visual and semantic building blocks:
 - `GemEmptyState`
 - `GemSectionHeader`
 
+Shared field controls such as `GDateField`, `GSelectField`, `GCheckboxField`,
+`GSwitch`, and `GSearchField` own their label association, interaction
+semantics, and field-level error presentation. Prefer them over feature-local
+input markup.
+
+### Workspace and table-kit components
+
+The schema-driven workspace is the standard composition for table-backed
+features. `WorkspaceView` owns the shell, while `WireframeLeftPane`,
+`WireframeCollectionView`, and `WireframeRecordInspector` provide the shared
+navigation, collection, and semantic property surfaces. The `src/table-kit`
+modules provide table configuration, record contracts, property renderers,
+selection, imports, and query/cache adapters.
+
+Feature components provide schema metadata, typed records, query wiring, and
+mutation intent. They should not copy the workspace shell, collection, or
+inspector layout. A bespoke feature view is appropriate only when the shared
+workspace cannot express the required behavior; document that exception.
+
+#### Inspector interaction components
+
+`WireframeSchemaInspector` adapts typed record property definitions to the
+shared `WireframeRecordInspector`. The inspector owns semantic property rows;
+`WireframeEditableValue` owns inline editing and save feedback; feature
+adapters provide values, editor kinds, options, and save handlers.
+
+| Component | Consumer provides | Component behavior |
+| --- | --- | --- |
+| `WireframeSchemaInspector` | A record and its property definitions | Formats values, derives property metadata, and connects editable properties to save handlers. |
+| `WireframeRecordInspector` | `WireframeInspectorField[]` | Renders labeled property rows and composes property editors. |
+| `WireframeEditableValue` | `value`, `label`, `kind`, optional `options`, `nullable`, `displayValue`, and `onCommit` | Ordinary values enter editing on click; select/status values commit through their control; save failures remain visible. |
+| `WireframeImagePreview` | Optional `src`, `alt`, optional `className`, optional async `onEdit(file)` | Clicking an image opens the larger preview. With `onEdit`, a separate Edit button chooses an image and reports progress or failure. Without `src`, it shows an empty state while allowing image selection if `onEdit` exists. |
+
+URL and email values preserve their primary link action. URLs open in a new
+tab; email addresses use `mailto:`. Editing uses a separate, labeled pencil
+button so clicking the value does not replace navigation with text input. The
+button is keyboard reachable, appears on hover/focus, and remains visible on
+touch layouts. Image previews follow the same action rule: the image opens the
+lightbox, and the adjacent button starts replacement.
+
+Image-edit callbacks receive a browser `File`. The feature owns upload and
+record association: upload through the shared API client, save the returned
+`FileMetadataID` through the record API contract, then refresh the preview.
+The preview component does not construct API URLs or decide record ownership.
+For Gem Hues, the association endpoint is `PATCH /gemhues/:id/image`; image
+bytes continue to load through the authenticated image route.
+
+Table View and per-record presentation state are server state. Use the hooks in
+`src/data/presentationQueries.ts`; do not mirror persisted state in browser
+storage. See [Table Views](../docs/Table-Views.md) for persistence semantics.
+
+Example: define an editable property in a feature adapter, then pass the
+definitions to the shared inspector. The adapter owns the mutation:
+
+```tsx
+import type { RecordPropertyDefinition } from "../../table-kit";
+import { WireframeSchemaInspector } from "../workspace/WireframeSchemaInspector";
+
+type SampleRecord = { id: string; colorName: string; website: string | null };
+type SaveRecord = (id: string, patch: Partial<SampleRecord>) => Promise<void>;
+
+function RecordInspector({ record, saveRecord }: { record: SampleRecord; saveRecord: SaveRecord }) {
+  const properties: RecordPropertyDefinition<SampleRecord>[] = [
+    {
+      id: "colorName",
+      label: "Color name",
+      kind: "text",
+      getValue: (record) => ({ raw: record.colorName, display: record.colorName }),
+      edit: {
+        onSave: async (source, value) => {
+          const selectedRecord = source as SampleRecord;
+          await saveRecord(selectedRecord.id, { colorName: String(value ?? "") });
+        },
+      },
+    },
+    {
+      id: "website",
+      label: "Website",
+      kind: "url",
+      getValue: (record) => ({ raw: record.website, display: record.website ?? "" }),
+      edit: {
+        inputType: "text",
+        nullable: true,
+        onSave: async (source, value) => {
+          const selectedRecord = source as SampleRecord;
+          await saveRecord(selectedRecord.id, { website: value ? String(value) : null });
+        },
+      },
+    },
+  ];
+
+  return <WireframeSchemaInspector record={record} properties={properties} />;
+}
+```
+
+In a real feature, implement `saveRecord` with that feature's TanStack Query
+mutation (for example, call `mutateAsync` and return `Promise<void>` after
+success).
+
+The URL remains clickable in display mode. Its pencil opens the inline field;
+`onSave` is still the feature's responsibility.
+
+Example: attach an image picker without taking the preview's enlarge behavior
+away. The upload and association happen in the feature callback:
+
+```tsx
+<WireframeImagePreview
+  src={imageURL}
+  alt={`${hue.colorName} reference`}
+  onEdit={async (file) => {
+    const metadata = await api.uploadImage(file, "image");
+    await api.patchGemHueImage(hue.id, metadata.id);
+    setImageRevision((revision) => revision + 1);
+  }}
+/>
+```
+
+Omit `src` to show the empty image state; keep `onEdit` to allow adding the
+first image. Omit `onEdit` when the image is intentionally read-only.
+
+```mermaid
+flowchart LR
+  Feature[Feature adapter] -->|record + property definitions| SchemaInspector[WireframeSchemaInspector]
+  SchemaInspector --> RecordInspector[WireframeRecordInspector]
+  RecordInspector --> Editable[WireframeEditableValue]
+  Editable -->|onCommit| Mutation[Feature mutation]
+  Feature -->|image File| Upload[POST /file-uploads]
+  Upload -->|FileMetadataID| Reference[PATCH owner image route]
+  Reference --> Refresh[Refresh image preview]
+```
+
 ### Shared application components
 
 These components compose primitives into recurring application patterns:
@@ -41,6 +172,10 @@ These components compose primitives into recurring application patterns:
 - `GemFieldGroup`
 - `GemErrorState`
 - `GemAttachmentSection`
+
+`GemDataTable`, `GemRecordList`, and `GemRecordCard` may remain as compatibility
+components during migration. New table-backed screens should use the shared
+workspace and table-kit contracts rather than introducing another table layout.
 
 ### Feature components
 

@@ -60,6 +60,12 @@ export { RecordGallery, RecordList, RecordTable } from "./renderers";
 export type { TableRendererProps } from "./renderers";
 export { GalleryViewControls } from "./GalleryViewControls";
 export type { GalleryCardSize, GalleryViewControlsProps } from "./GalleryViewControls";
+export { TableSettingsMenu } from "./TableSettings";
+export type { TableSettingsMenuProps } from "./TableSettings";
+export { primitiveTypeDefaults, primitiveTypeDescriptions } from "./primitiveTypes";
+export { inferRecordPropertyKind, normalizeStorageType } from "./storageTypes";
+export { createTableWorkspaceDefinition } from "./workspaceContracts";
+export { createLiveSchemaProperties } from "./liveSchemaWorkspace";
 export { useTableSelection } from "./selection";
 export type {
   TableSelection,
@@ -69,17 +75,24 @@ export type {
   UseTableSelectionOptions,
 } from "./selection";
 export { getPrimaryRecordProperty, orderRecordProperties } from "./recordContracts";
+export { formatRecordNumber, inferRecordNumberFormat } from "./numberFormatters";
 export type {
   RecordAdapter,
   RecordExpansionHandlers,
   RecordExpansionState,
   RecordImage,
   RecordPropertyDefinition,
+  RecordStorageType,
   RecordPropertyKind,
   RecordPropertyValue,
+  RecordSelectOption,
+  RecordColorToken,
+  RecordDateFormat,
+  RecordNumberFormat,
   RecordSelectionHandlers,
   RecordSelectionState,
   RecordStatus,
   TableRecord,
   TableRecordId,
 } from "./recordContracts";
+export type { TableWorkspaceDefinition } from "./workspaceContracts";

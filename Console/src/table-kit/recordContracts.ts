@@ -5,7 +5,26 @@ export type TableRecordId = string;
 
 /** Supported semantic hints for a record property renderer. */
 export type RecordPropertyKind =
-  "title" | "text" | "number" | "date" | "select" | "status" | "image" | "relation" | "formula";
+  | "title"
+  | "text"
+  | "url"
+  | "email"
+  | "number"
+  | "date"
+  | "select"
+  | "status"
+  | "checkbox"
+  | "image"
+  | "media"
+  | "relation"
+  | "formula";
+
+/** Database storage categories remain separate from the UI editing primitive. */
+export type RecordStorageType = "text" | "integer" | "real" | "boolean" | "blob" | "date" | "unknown";
+
+export type RecordNumberFormat = "decimal" | "currency" | "percent";
+export type RecordDateFormat = "iso" | "local" | "relative";
+export type RecordColorToken = "mint" | "gold" | "blue" | "green" | "purple" | "orange" | "red" | "gray";
 
 /** Image metadata that an adapter can provide without coupling the renderer to a domain. */
 export interface RecordImage {
@@ -26,19 +45,51 @@ export interface RecordPropertyValue {
   display: ReactNode;
   image?: RecordImage;
   status?: RecordStatus;
+  href?: string;
+  checked?: boolean;
+  colorToken?: RecordColorToken;
 }
 
 /** Domain-neutral property metadata consumed by every Table Kit view. */
 export interface RecordPropertyDefinition<Record> {
   id: string;
   label: string;
+  /** Physical database type, when known. A date may still be stored as text. */
+  storageType?: RecordStorageType;
   kind?: RecordPropertyKind;
+  numberFormat?: RecordNumberFormat;
+  dateFormat?: RecordDateFormat;
+  /** Explicit inspector type override when the inferred type is not suitable. */
+  propertyType?: string;
+  /** Explicit icon catalog name for this property. */
+  iconName?: string;
+  colorToken?: RecordColorToken;
   order?: number;
   visible?: boolean;
   primary?: boolean;
+  /** Backing record field when this property uses a presentation alias. */
+  sourceField?: string;
   sortable?: boolean;
   filterable?: boolean;
   getValue: (record: Record) => RecordPropertyValue;
+  /** Optional inline editor used by views that support live property editing. */
+  edit?: RecordPropertyEdit;
+}
+
+export interface RecordPropertyEdit {
+  inputType?: "text" | "date" | "number" | "select" | "longText";
+  nullable?: boolean;
+  options?: RecordSelectOption[];
+  onSave: (record: unknown, value: string | number | null) => Promise<void>;
+}
+
+/** A selectable value with optional visual metadata for status/select primitives. */
+export interface RecordSelectOption {
+  label: string;
+  value: string;
+  colorToken?: RecordColorToken;
+  isDefault?: boolean;
+  group?: string;
 }
 
 /** A normalized record identity and optional presentation metadata for a view adapter. */
@@ -51,6 +102,8 @@ export interface TableRecord<Record> {
   icon?: ReactNode;
   image?: RecordImage;
   status?: RecordStatus;
+  /** Optional editor for the primary title slot in editable views. */
+  titleEdit?: RecordPropertyEdit;
 }
 
 /** Adapter boundary for turning a domain record into shared Table Kit metadata. */
@@ -88,10 +141,26 @@ export interface RecordExpansionHandlers<Record> {
 export function orderRecordProperties<Record>(
   properties: readonly RecordPropertyDefinition<Record>[],
 ): readonly RecordPropertyDefinition<Record>[] {
+  const seen = new Set<string>();
   return properties
     .map((property, index) => ({ property, index }))
-    .sort((left, right) => (left.property.order ?? left.index) - (right.property.order ?? right.index))
-    .map(({ property }) => property);
+    .sort((left, right) => {
+      if (left.property.id === "id" || left.property.primary) {
+        if (right.property.id !== "id" && !right.property.primary) return -1;
+      }
+      if (right.property.id === "id" || right.property.primary) {
+        if (left.property.id !== "id" && !left.property.primary) return 1;
+      }
+      if (left.property.id === "id" && right.property.id !== "id") return -1;
+      if (right.property.id === "id" && left.property.id !== "id") return 1;
+      return (left.property.order ?? left.index) - (right.property.order ?? right.index);
+    })
+    .map(({ property }) => property)
+    .filter((property) => {
+      if (seen.has(property.id)) return false;
+      seen.add(property.id);
+      return true;
+    });
 }
 
 /** Return the explicitly primary property, or the first property in stable display order. */

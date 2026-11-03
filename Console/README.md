@@ -57,6 +57,8 @@ Vite proxies API paths to Vapor so the browser can use same-origin requests:
 /service-accounts
 /expense-categories
 /expense-subcategories
+/table-views
+/record-presentations
 /schema-builder
 /live-database
 ```
@@ -71,15 +73,31 @@ src/
 └── features/
     ├── domains/                   stable domain navigation
     ├── forgekeeper/               page reads and PATCH testing
-    ├── gem-hues/                  hue reads and image previews
+    ├── gem-hues/                  hue reads, image previews, and image updates
     ├── education/                 Life-area education reads
     ├── employment/                Life-area employment reads
     ├── addresses/                 Life-area address reads
-    └── transactions/              Life-area expense transaction reads
+    ├── transactions/              Life-area expense transaction reads
+    └── workspace/                 shared collection, views, and inspector
 ```
 
-The console currently preserves the prototype's styling and behavior while
-separating API access and feature UI into maintainable modules.
+The schema-driven workspace composes the Table Kit collection and the record
+inspector. Table, List, and Gallery views share the same record selection and
+schema-backed properties. The API persists each view's workspace state and
+per-record presentation state within the authenticated Hub; TanStack Query
+loads and updates that server state. See [Table Views](../docs/Table-Views.md)
+for the saved-state contract.
+
+```mermaid
+flowchart LR
+  User[User] --> Views[Table / List / Gallery]
+  Views -->|selection + settings| Query[TanStack Query]
+  Query -->|PUT workspace state| API[Vapor API]
+  API -->|Hub-scoped Table View| DB[(SQLite)]
+  Views --> Inspector[Record inspector]
+  Inspector -->|property edits| RecordAPI[Record API]
+  Inspector -->|image upload + reference| FileAPI[File service + owner route]
+```
 
 ## Record collections
 
@@ -116,6 +134,24 @@ these primitives instead of repeating buttons, cards, and labelled fields.
 Server data uses TanStack Query through `src/data`. Query keys and caching
 policies belong there; feature components should consume query hooks instead
 of issuing raw requests during rendering.
+
+### Workspace and inspector
+
+`WorkspaceView` owns the workspace shell. Feature adapters provide records,
+property definitions, and save handlers; `WireframeCollectionView` and
+`DatabaseRecordCollection` coordinate the available presentations, collection
+utilities, selected record, and inspector. Saved workspace state includes the
+active view, selected record, search, sort and direction, filter, grouping,
+pagination, and supported gallery/property display settings. It is loaded before
+local changes are saved and stored on the matching Hub-scoped Table View.
+
+`WireframeSchemaInspector` maps schema property definitions into
+`WireframeRecordInspector`. Ordinary editable values enter edit mode on click.
+URLs and email addresses retain their link action and expose a separate Edit
+button; image previews retain their enlarge action and expose a separate image
+picker. Image updates upload through `/file-uploads`, then save the returned
+file metadata reference through the owning API route. See
+[`COMPONENT_API.md`](COMPONENT_API.md) for the component contracts.
 
 ### Create-form standard
 
@@ -154,8 +190,8 @@ changing the database. Duplicate table names are reported in the builder and
 require choosing a different name.
 
 The console is intentionally a local testing client, not the official Gem Life
-product UI. It currently exposes read workflows for existing data and the
-ForgeKeeper PATCH workflow. It is not an authorization boundary or a
+product UI. It supports record editing and workspace presentation workflows
+where the API exposes them. It is not an authorization boundary or a
 replacement for API tests.
 
 ## Build

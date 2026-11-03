@@ -45,8 +45,9 @@ final class AddressRouteTests: XCTestCase {
                 let summaries = try response.content.decode([AddressSummaryResponse].self)
                 XCTAssertEqual(summaries.count, 1)
                 XCTAssertEqual(summaries[0].city, "Atlanta")
+                XCTAssertEqual(summaries[0].addressLine1, "123 Test Street")
                 let responseText = String(buffer: response.body)
-                XCTAssertFalse(responseText.contains("123 Test Street"))
+                XCTAssertFalse(responseText.contains("Unit 4"))
                 XCTAssertFalse(responseText.contains("30301"))
             }
 

@@ -168,19 +168,26 @@ export function GeoapifyAddressSearch({
         variant="address"
         value={query}
         onChange={changeQuery}
+        placeholder="Start typing an address or place"
+        autoComplete="off"
         disabled={!enabled}
         loading={loading}
-        suggestions={suggestions.map((suggestion, index) => ({
-          value: `${suggestionLabel(suggestion)}-${index}`,
-          label: suggestionLabel(suggestion),
-        }))}
-        onSelectSuggestion={(selected) => {
-          const index = Number(selected.value.slice(selected.value.lastIndexOf("-") + 1));
-          const suggestion = suggestions[index];
-          if (suggestion) choose(suggestion);
-        }}
+        error={error ?? undefined}
       />
-      {error && <p role="alert">{error}</p>}
+      {suggestions.length > 0 && (
+        <ul className="address-search-results" aria-label="Address suggestions">
+          {suggestions.map((suggestion, index) => {
+            const label = suggestionLabel(suggestion);
+            return (
+              <li key={`${label}-${index}`}>
+                <button type="button" className="secondary-button" onClick={() => choose(suggestion)}>
+                  {label}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
       {hasSearched && !loading && !error && suggestions.length === 0 && (
         <p role="status">No address matches found. You can enter the address manually.</p>
       )}

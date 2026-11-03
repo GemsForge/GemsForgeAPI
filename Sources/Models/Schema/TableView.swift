@@ -13,6 +13,7 @@ final class TableView: Model, @unchecked Sendable {
     @Field(key: "IsDefault") var isDefault: Bool
     @Field(key: "SortOrder") var sortOrder: Int
     @Field(key: "ConfigurationVersion") var configurationVersion: Int
+    @OptionalField(key: "WorkspaceState") var workspaceState: String?
     @Timestamp(key: "CreatedAt", on: .create) var createdAt: Date?
     @Timestamp(key: "UpdatedAt", on: .update) var updatedAt: Date?
 
@@ -26,7 +27,8 @@ final class TableView: Model, @unchecked Sendable {
         viewType: TableViewType,
         isDefault: Bool = false,
         sortOrder: Int = 0,
-        configurationVersion: Int = 1
+        configurationVersion: Int = 1,
+        workspaceState: String? = nil
     ) {
         self.id = id
         self.hubID = hubID
@@ -36,6 +38,7 @@ final class TableView: Model, @unchecked Sendable {
         self.isDefault = isDefault
         self.sortOrder = sortOrder
         self.configurationVersion = configurationVersion
+        self.workspaceState = workspaceState
     }
 
     /// Returns the closed-contract view type, or `nil` for unsupported stored values.
@@ -52,7 +55,8 @@ extension TableViewResponse {
         }
         self.init(viewID: viewID, hubID: model.hubID, tableName: model.tableName, name: model.name,
                   viewType: viewType, isDefault: model.isDefault, sortOrder: model.sortOrder,
-                  configurationVersion: model.configurationVersion, createdAt: model.createdAt,
+                  configurationVersion: model.configurationVersion, workspaceState: model.workspaceState,
+                  createdAt: model.createdAt,
                   updatedAt: model.updatedAt)
     }
 }

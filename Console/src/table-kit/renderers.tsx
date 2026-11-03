@@ -1,6 +1,7 @@
 import {
   useContext,
   useEffect,
+  isValidElement,
   useRef,
   useState,
   type KeyboardEvent,
@@ -15,17 +16,20 @@ import {
   type ColDef,
   type ICellRendererParams,
 } from "ag-grid-community";
-import { Avatar, H3, ListItem, Paragraph, SizableText, Text, XStack, YGroup, YStack } from "tamagui";
-import { GCheckboxField, GemButton } from "../components/ui";
+import { Avatar, H3, ListItem, Paragraph, Separator, SizableText, Text, XStack, YGroup, YStack } from "tamagui";
+import { GCheckboxField, GemButton, GemStatusPill } from "../components/ui";
+import { EditableRecordFields } from "../components/EditableRecordFields";
 import { TableContext } from "./context";
 import { GalleryViewControls, type GalleryCardSize } from "./GalleryViewControls";
 import {
+  getPrimaryRecordProperty,
   orderRecordProperties,
   type RecordPropertyDefinition,
   type RecordPropertyValue,
   type TableRecord,
   type TableRecordId,
 } from "./recordContracts";
+import { formatRecordNumber } from "./numberFormatters";
 
 // Register the free Community modules once so every Table Kit grid shares the same engine setup.
 ModuleRegistry.registerModules([AllCommunityModule]);
@@ -41,6 +45,7 @@ export interface TableRendererProps<Record> {
   onRecordSelect?: (id: TableRecordId) => void;
   onExpansionChange?: (id: TableRecordId | undefined) => void;
   renderExpanded?: (record: Record) => ReactNode;
+  onRecordPatch?: (record: Record, field: string, value: string | number | null) => Promise<void>;
 }
 
 interface RendererSelection {
@@ -120,11 +125,12 @@ function listPropertiesFor<Record>(
   properties: readonly RecordPropertyDefinition<Record>[],
   propertyIds?: readonly string[],
 ) {
-  return propertiesFor(properties, propertyIds)
+  const candidates = propertiesFor(properties, propertyIds)
     .filter((property) => {
       const label = property.label.trim().toLowerCase();
       const id = property.id.trim().toLowerCase();
       return (
+        !property.primary &&
         property.kind !== "title" &&
         property.kind !== "image" &&
         label !== "name" &&
@@ -132,8 +138,12 @@ function listPropertiesFor<Record>(
         id !== "name" &&
         id !== "image"
       );
-    })
-    .slice(0, 2);
+    });
+  const priority = candidates.filter((property) => {
+    const searchable = `${property.id} ${property.label}`.toLowerCase();
+    return property.kind === "status" || /(amount|price|total|cost|rate|balance|status)/.test(searchable);
+  });
+  return [...priority, ...candidates.filter((property) => !priority.includes(property))].slice(0, 3);
 }
 
 function propertyValue<Record>(
@@ -143,7 +153,25 @@ function propertyValue<Record>(
   return property.getValue(record.source);
 }
 
-function displayValue(value: RecordPropertyValue): ReactNode {
+function galleryText(value: ReactNode): string {
+  if (typeof value === "string" || typeof value === "number") return String(value);
+  if (Array.isArray(value)) return value.map(galleryText).filter(Boolean).join(" ");
+  if (isValidElement<{ children?: ReactNode }>(value)) return galleryText(value.props.children);
+  return "";
+}
+
+function galleryDuplicateKeys(value: string | undefined): string[] {
+  if (!value) return [];
+  return [value, ...value.split(/\s*[·•|]\s*/)].map((part) => part.trim().toLocaleLowerCase()).filter(Boolean);
+}
+
+function displayValue<Record>(
+  value: RecordPropertyValue,
+  property?: RecordPropertyDefinition<Record>,
+): ReactNode {
+  if (typeof value.raw === "number" && property?.numberFormat) {
+    return formatRecordNumber(value.raw, property.numberFormat);
+  }
   return value.display || "unconfigured";
 }
 
@@ -188,7 +216,7 @@ function RecordAvatar<Record>({ record }: { record: TableRecord<Record> }) {
   const image = record.image?.src?.trim() ? record.image : undefined;
   return (
     <Avatar
-      size={64}
+      size={32}
       accessibilityLabel={`${String(record.title ?? record.id)} icon`}
       backgroundColor="$gemPanelLight"
       borderRadius="$4"
@@ -196,7 +224,7 @@ function RecordAvatar<Record>({ record }: { record: TableRecord<Record> }) {
       {image && <Avatar.Image src={image.src} accessibilityLabel={image.alt} objectFit={image.fit ?? "cover"} />}
       {!image && (
         <Avatar.Fallback backgroundColor="$gemPanelLight" alignItems="center" justifyContent="center">
-          <SizableText fontSize="$9" lineHeight={1} color="$gemMint">
+          <SizableText fontSize="$5" lineHeight={1} color="$gemMint">
             {record.icon}
           </SizableText>
         </Avatar.Fallback>
@@ -205,8 +233,22 @@ function RecordAvatar<Record>({ record }: { record: TableRecord<Record> }) {
   );
 }
 
-function PropertyValue({ value }: { value: RecordPropertyValue }) {
-  return <Paragraph color="$gemMuted">{displayValue(value)}</Paragraph>;
+function PropertyValue({ property, value }: { property: RecordPropertyDefinition<unknown>; value: RecordPropertyValue }) {
+  const text = displayValue(value, property);
+  if (property.kind === "status") {
+    const tone = value.status?.tone ?? (property.colorToken === "green" ? "success" : property.colorToken === "red" ? "danger" : "default");
+    return <GemStatusPill tone={tone}>{text}</GemStatusPill>;
+  }
+  if ((property.kind === "url" || property.kind === "email") && value.href) {
+    return <a className="primitive-value-link" href={value.href}>{text}</a>;
+  }
+  if (property.kind === "checkbox") {
+    return <input className="primitive-checkbox" type="checkbox" checked={Boolean(value.checked ?? value.raw)} readOnly aria-label={property.label} />;
+  }
+  if ((property.kind === "image" || property.kind === "media") && value.image) {
+    return <img className="primitive-media-preview" src={value.image.src} alt={value.image.alt} />;
+  }
+  return <Paragraph color="$gemMuted">{text}</Paragraph>;
 }
 
 /** Render a property value through AG Grid without changing the record contract. */
@@ -222,10 +264,28 @@ export function RecordList<Record>({
   selectedIds,
   onRecordSelect,
   onExpansionChange,
+  onRecordPatch,
 }: TableRendererProps<Record>) {
   const effectiveRecords = useRendererRecords(records);
   const selection = useRendererSelection(selectedIds, onRecordSelect);
   const visibleProperties = listPropertiesFor(properties, propertyIds);
+  const editableProperties: readonly RecordPropertyDefinition<Record>[] = onRecordPatch
+    ? visibleProperties.map((property) => ({
+        ...property,
+        edit: property.edit ?? {
+          inputType:
+            property.kind === "select"
+              ? "select"
+              : property.kind === "date"
+                ? "date"
+                : property.kind === "number"
+                  ? "number"
+                  : "text",
+          onSave: (source: unknown, value: string | number | null) =>
+            onRecordPatch(source as Record, property.id, value),
+        },
+      }))
+    : visibleProperties;
   const openTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(
     () => () => {
@@ -234,7 +294,7 @@ export function RecordList<Record>({
     [],
   );
   return (
-    <YGroup className="table-kit-record-list" role="list" gap="$2">
+    <YGroup className="table-kit-record-list" role="list" gap="$0">
       {effectiveRecords.map((record) => {
         const selected = selection.selectedIds.has(record.id);
         return (
@@ -243,23 +303,60 @@ export function RecordList<Record>({
               aria-label={`Open ${String(record.title ?? record.id)}${selected ? ", selected" : ""}`}
               data-selected={selected}
               tabIndex={0}
-              gap="$3"
-              padding="$4"
-              minHeight={104}
-              borderWidth={1}
-              borderColor={selected ? "$gemMint" : "$gemPanelLight"}
-              borderRadius="$4"
-              backgroundColor="$gemPanel"
-              title={record.title ?? record.subtitle ?? record.id}
-              subTitle={
-                record.subtitle ?? (
-                  <YStack gap="$1">
-                    {visibleProperties.slice(0, 2).map((property) => (
-                      <PropertyValue key={property.id} value={propertyValue(property, record)} />
-                    ))}
-                  </YStack>
-                )
-              }
+              title={<div className="table-kit-list-row-content">
+                <span className="table-kit-list-row-title" onClick={(event) => event.stopPropagation()}>
+                  {record.titleEdit || onRecordPatch ? (
+                    <EditableRecordFields
+                      className="table-kit-inline-editable-title"
+                      fields={[{
+                        label: "Title",
+                        value: record.title ?? record.id,
+                        editable: true,
+                        hideLabel: true,
+                        onSave: async (value) => {
+                          const next = typeof value === "string" || typeof value === "number" ? String(value) : "";
+                          if (record.titleEdit) await record.titleEdit.onSave(record.source, next);
+                          else await onRecordPatch?.(record.source, "title", next);
+                        },
+                      }]}
+                    />
+                  ) : record.title ?? record.subtitle ?? record.id}
+                </span>
+                <span className="table-kit-list-row-properties">
+                  {editableProperties.slice(0, 3).map((property) => {
+                    const edit = property.edit;
+                    const rawValue = propertyValue(property, record).raw;
+                    const value = typeof rawValue === "string" || typeof rawValue === "number" ? rawValue : null;
+                    return edit ? (
+                      <span key={property.id} onClick={(event) => event.stopPropagation()}>
+                        <EditableRecordFields
+                          className="table-kit-inline-editable-property"
+                          fields={[{
+                            label: property.label,
+                            value,
+                            inputType: edit.inputType,
+                            nullable: edit.nullable,
+                            options: edit.options,
+                            editable: true,
+                            onSave: async (nextValue) => {
+                              const next = typeof nextValue === "string" || typeof nextValue === "number"
+                                ? nextValue
+                                : nextValue == null
+                                  ? null
+                                  : String(nextValue);
+                              await edit.onSave(record.source, next);
+                            },
+                          }]}
+                        />
+                      </span>
+                    ) : (
+                      <span key={property.id}>
+                        <PropertyValue property={property as RecordPropertyDefinition<unknown>} value={propertyValue(property, record)} />
+                      </span>
+                    );
+                  })}
+                </span>
+              </div>}
               icon={() => <RecordAvatar record={record} />}
               iconAfter={
                 // The chevron is decorative; keep it out of the accessibility tree.
@@ -283,9 +380,15 @@ export function RecordList<Record>({
                 if (event.shiftKey && selection.isSelectable(record.id)) selection.onRecordSelect?.(record.id);
                 else if (!event.shiftKey) onExpansionChange?.(record.id);
               }}
-            >
-              {record.status && <SizableText aria-label={record.status.label}>{record.status.label}</SizableText>}
-            </ListItem>
+            />
+            {record.id !== effectiveRecords[effectiveRecords.length - 1]?.id && (
+              <Separator
+                className="table-kit-list-separator"
+                vertical={false}
+                borderColor="$gemLine"
+                opacity={0.7}
+              />
+            )}
           </YGroup.Item>
         );
       })}
@@ -538,24 +641,16 @@ export function RecordGallery<Record>({
                       {record.subtitle}
                     </Text>
                   )}
-                  {record.status && <Text className="table-kit-gallery-status">{record.status.label}</Text>}
                   <YStack className="table-kit-gallery-properties" aria-label="Visible properties" gap="$1">
-                    {visibleProperties
-                      .filter((property) => !property.primary && property.kind !== "image" && property.id !== "logo")
-                      .slice(0, 6)
-                      .map((property) => {
-                        const value = propertyValue(property, record);
-                        const text = String(value.display || "unconfigured");
-                        return (
-                          <Text
-                            key={property.id}
-                            className="table-kit-gallery-property"
-                            aria-label={`${property.label}: ${text}`}
-                          >
-                            {text}
-                          </Text>
-                        );
-                      })}
+                    {galleryPropertiesFor(record, visibleProperties).map(({ property, text }) => (
+                      <Text
+                        key={property.id}
+                        className="table-kit-gallery-property"
+                        aria-label={`${property.label}: ${text}`}
+                      >
+                        {text}
+                      </Text>
+                    ))}
                   </YStack>
                 </YStack>
               </YStack>
@@ -566,6 +661,29 @@ export function RecordGallery<Record>({
       </XStack>
     </div>
   );
+}
+
+function galleryPropertiesFor<Record>(
+  record: TableRecord<Record>,
+  properties: readonly RecordPropertyDefinition<Record>[],
+): { property: RecordPropertyDefinition<Record>; text: string }[] {
+  const seen = new Set([
+    ...galleryDuplicateKeys(record.title),
+    ...galleryDuplicateKeys(record.subtitle),
+  ]);
+  const result: { property: RecordPropertyDefinition<Record>; text: string }[] = [];
+  for (const property of properties) {
+    if (property.primary || property.kind === "title" || property.kind === "image" || property.kind === "media" || property.id === "logo") {
+      continue;
+    }
+    const text = galleryText(propertyValue(property, record).display).trim();
+    const key = text.toLocaleLowerCase();
+    if (!key || key === "—" || key === "unconfigured" || seen.has(key)) continue;
+    seen.add(key);
+    result.push({ property, text });
+    if (result.length === 6) break;
+  }
+  return result;
 }
 
 /** Renders records with AG Grid while keeping the Table Kit contract engine-neutral. */
@@ -580,8 +698,8 @@ export function RecordTable<Record>({
   const effectiveRecords = useRendererRecords(records);
   const selection = useRendererSelection(selectedIds, onRecordSelect);
   const visibleProperties = propertiesFor(properties, propertyIds);
-  const hasStatus = effectiveRecords.some((record) => record.status !== undefined);
-  const primaryProperty = properties.find((property) => property.primary) ?? visibleProperties[0];
+  const primaryProperty = getPrimaryRecordProperty(visibleProperties);
+  const hasTitleProperty = visibleProperties.some((property) => property.primary || property.kind === "title" || property.id === "title");
   const hasLogo = visibleProperties.some((property) => property.kind === "image" || property.id === "logo");
   const columnDefs: ColDef<TableRecord<Record>>[] = [];
 
@@ -600,6 +718,19 @@ export function RecordTable<Record>({
     });
   }
 
+  if (!hasTitleProperty) {
+    columnDefs.push({
+      colId: "title",
+      headerName: "Title",
+      flex: 1,
+      minWidth: 180,
+      pinned: "left",
+      sortable: true,
+      valueGetter: ({ data }) => data?.title ?? data?.subtitle ?? data?.id ?? "Untitled",
+      cellRenderer: GridPropertyCell,
+    });
+  }
+
   columnDefs.push(
     ...visibleProperties.map<ColDef<TableRecord<Record>>>((property) => ({
       colId: property.id,
@@ -611,20 +742,10 @@ export function RecordTable<Record>({
           ? "left"
           : undefined,
       sortable: property.sortable ?? false,
-      valueGetter: ({ data }) => (data ? displayValue(propertyValue(property, data)) : ""),
+      valueGetter: ({ data }) => (data ? displayValue(propertyValue(property, data), property) : ""),
       cellRenderer: GridPropertyCell,
     })),
   );
-
-  if (hasStatus) {
-    columnDefs.push({
-      colId: "status",
-      headerName: "Status",
-      flex: 1,
-      minWidth: 120,
-      valueGetter: ({ data }) => data?.status?.label ?? "—",
-    });
-  }
 
   return (
     <YStack

@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { Button, Tooltip, type TamaguiElement } from "tamagui";
+import { SlidersHorizontal } from "lucide-react";
 import { GCheckboxField, GSearchField } from "../components/ui";
 import { filterTableProperties, type TablePropertyConfigurationState, type TablePropertyOption } from "./configuration";
 
@@ -14,6 +15,8 @@ export interface TablePropertyControlsProps {
   resetLabel?: string;
   /** Maximum number of visible properties for a constrained renderer. */
   maxVisibleProperties?: number;
+  wireframe?: boolean;
+  inline?: boolean;
 }
 
 /** Render searchable, reorderable xs property controls without changing record data. */
@@ -26,8 +29,10 @@ export function TablePropertyControls({
   hideAllLabel = "Hide all",
   resetLabel = "Reset properties",
   maxVisibleProperties,
+  wireframe = false,
+  inline = false,
 }: TablePropertyControlsProps) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(inline);
   const [search, setSearch] = useState("");
   const triggerRef = useRef<TamaguiElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -36,6 +41,23 @@ export function TablePropertyControls({
   const previousOpen = useRef(open);
   const filteredProperties = filterTableProperties(properties, search);
   const propertyById = new Map(properties.map((property) => [property.id, property]));
+  const atVisibilityLimit =
+    maxVisibleProperties !== undefined && configuration.visibleIds.length >= maxVisibleProperties;
+  const controlColor = wireframe ? "$gemCanvas" : "$gemInk";
+  const controlBackground = wireframe ? "$wireframePanelLight" : "$gemPanel";
+  const controlBorder = wireframe ? "$wireframeMint" : "$gemPanelLight";
+  const showAllVisibleProperties = () => {
+    if (maxVisibleProperties === undefined) {
+      configuration.showAll();
+      return;
+    }
+
+    const visibleIds = new Set(properties.slice(0, maxVisibleProperties).map((property) => property.id));
+    configuration.setConfiguration((current) => ({
+      ...current,
+      hiddenIds: current.order.filter((propertyId) => !visibleIds.has(propertyId)),
+    }));
+  };
 
   useEffect(() => {
     if (open) {
@@ -48,7 +70,7 @@ export function TablePropertyControls({
 
   /** Close the transient popover when focus moves to another feature or the page. */
   useEffect(() => {
-    if (!open) return;
+    if (!open || inline) return;
 
     const handlePointerDown = (event: PointerEvent) => {
       const target = event.target;
@@ -60,36 +82,51 @@ export function TablePropertyControls({
 
     document.addEventListener("pointerdown", handlePointerDown);
     return () => document.removeEventListener("pointerdown", handlePointerDown);
-  }, [open]);
+  }, [inline, open]);
+
+  useEffect(() => {
+    if (maxVisibleProperties === undefined || configuration.visibleIds.length <= maxVisibleProperties) return;
+    const limitedVisibleIds = new Set(configuration.visibleIds.slice(0, maxVisibleProperties));
+    configuration.setConfiguration((current) => ({
+      ...current,
+      hiddenIds: current.order.filter((propertyId) => !limitedVisibleIds.has(propertyId)),
+    }));
+  }, [configuration.visibleIds, configuration.setConfiguration, maxVisibleProperties]);
 
   return (
     <div className="table-kit-property-controls" role="group" aria-label="Property configuration">
-      <Tooltip placement="top" delay={300}>
+      {!inline && <Tooltip placement="top" delay={300}>
         <Tooltip.Trigger asChild>
           <Button
             ref={triggerRef}
             type="button"
             size="xs"
-            color="$gemInk"
-            backgroundColor="$gemPanel"
-            borderColor="$gemPanelLight"
+            color={controlColor}
+            backgroundColor={controlBackground}
+            borderColor={controlBorder}
             borderWidth={1}
-            borderRadius="$gemControl"
+            borderRadius={wireframe ? "$wireframeControl" : "$gemControl"}
+            opacity={1}
             className="table-kit-property-button compact-icon-button"
             aria-controls={dialogId}
             aria-haspopup="dialog"
             aria-expanded={open}
             onClick={() => setOpen((current) => !current)}
           >
-            <span aria-hidden="true">⚙</span>
+            <SlidersHorizontal size={16} aria-hidden="true" />
             <span className="sr-only">{label}</span>
           </Button>
         </Tooltip.Trigger>
-        <Tooltip.Content className="table-kit-tooltip">
+        <Tooltip.Content
+          className="table-kit-tooltip"
+          color={wireframe ? "$gemCanvas" : undefined}
+          backgroundColor={wireframe ? "$wireframePanel" : undefined}
+          borderColor={wireframe ? "$wireframeLine" : undefined}
+        >
           <Tooltip.Arrow />
           <span>{label}</span>
         </Tooltip.Content>
-      </Tooltip>
+      </Tooltip>}
       {open && (
         <div
           ref={dialogRef}
@@ -107,7 +144,8 @@ export function TablePropertyControls({
           <h2 id={dialogTitleId}>{label}</h2>
           {maxVisibleProperties !== undefined && (
             <p className="table-kit-property-limit" role="status">
-              You can select up to {maxVisibleProperties} properties at a time.
+              {configuration.visibleIds.length} of {maxVisibleProperties} properties selected. You can select up to{" "}
+              {maxVisibleProperties}.
             </p>
           )}
           <GSearchField
@@ -117,28 +155,33 @@ export function TablePropertyControls({
             onChange={setSearch}
             placeholder={searchLabel}
             width="short"
+            color={wireframe ? "$gemCanvas" : undefined}
+            backgroundColor={wireframe ? "$wireframePanel" : undefined}
+            borderColor={wireframe ? "$wireframeLine" : undefined}
           />
           <div role="toolbar" aria-label="Property actions">
             <Button
               size="xs"
-              color="$gemInk"
-              backgroundColor="$gemPanel"
-              borderColor="$gemPanelLight"
+              color={controlColor}
+              backgroundColor={controlBackground}
+              borderColor={controlBorder}
               borderWidth={1}
-              borderRadius="$gemControl"
+              borderRadius={wireframe ? "$wireframeControl" : "$gemControl"}
+              opacity={1}
               type="button"
               aria-label={showAllLabel}
-              onClick={configuration.showAll}
+              onClick={showAllVisibleProperties}
             >
               {showAllLabel}
             </Button>
             <Button
               size="xs"
-              color="$gemInk"
-              backgroundColor="$gemPanel"
-              borderColor="$gemPanelLight"
+              color={controlColor}
+              backgroundColor={controlBackground}
+              borderColor={controlBorder}
               borderWidth={1}
-              borderRadius="$gemControl"
+              borderRadius={wireframe ? "$wireframeControl" : "$gemControl"}
+              opacity={1}
               type="button"
               onClick={configuration.hideAll}
             >
@@ -146,11 +189,12 @@ export function TablePropertyControls({
             </Button>
             <Button
               size="xs"
-              color="$gemInk"
-              backgroundColor="$gemPanel"
-              borderColor="$gemPanelLight"
+              color={controlColor}
+              backgroundColor={controlBackground}
+              borderColor={controlBorder}
               borderWidth={1}
-              borderRadius="$gemControl"
+              borderRadius={wireframe ? "$wireframeControl" : "$gemControl"}
+              opacity={1}
               type="button"
               onClick={configuration.reset}
             >
@@ -169,6 +213,7 @@ export function TablePropertyControls({
                     label={property.label}
                     value={visible}
                     onChange={(checked) => configuration.setVisibility(property.id, checked)}
+                    disabled={!visible && atVisibilityLimit}
                     width="long"
                   />
                 </li>

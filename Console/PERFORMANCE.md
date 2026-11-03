@@ -19,9 +19,10 @@ preview, without runtime errors. Recheck sizes using npm run build after changes
 
 `usePagedRecords` bounds list/table DOM work to 50 records and memoizes each page.
 Gem Hues, Education, Employment, Addresses, Transactions and ForgeKeeper use it;
-GemDataTable shares the same behavior. Paging controls announce the visible range
-and clamp when data shrinks. Tests cover a 10,000-record slice and the actual
-1,000-row table rendering only 50 rows (95% fewer data-row elements).
+the shared table-kit collection and compatibility `GemDataTable` follow the same
+behavior. Paging controls announce the visible range and clamp when data shrinks.
+Tests cover a 10,000-record slice and the actual 1,000-row table rendering only
+50 rows (95% fewer data-row elements).
 
 This is client-side paging: existing API endpoints still return full lists. It
 does not reduce SQL work or response payloads. Add server pagination only with

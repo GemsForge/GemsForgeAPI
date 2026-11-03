@@ -4,6 +4,7 @@ import type { Domain } from "../../types";
 
 const resources = [
   ["/", "Home", "Gem Life", "⌂"],
+  ["/workspace", "Workspace", "Pages, tables, and links", "✧"],
   ["/domains", "Domains", "ForgeKeeper organization", "◈"],
   ["/forgekeeper", "ForgeKeeper", "All root pages", "⌁"],
   ["/gemhues", "Gem Hues", "Foundation palette", "●"],
@@ -14,6 +15,7 @@ const resources = [
   ["/service-accounts", "Services", "Recurring accounts", "◎"],
   ["/local-databases", "Local Databases", "Safe test database creation", "⌘"],
   ["/schema-builder", "Schema Builder", "Build, import, and inspect", "▦"],
+  ["/wireframe-demo", "Wireframe Demo", "Visual layout prototype", "▤"],
   ["/live-database", "Live Database", "Preview and apply migrations", "⇄"],
 ] as const;
 

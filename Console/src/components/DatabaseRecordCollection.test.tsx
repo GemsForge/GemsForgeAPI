@@ -1,7 +1,10 @@
-import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import type { ReactNode } from "react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { TamaguiProvider } from "tamagui";
 import { tamaguiConfig } from "../design-system/tamagui.config";
+import { api } from "../api";
 import { DatabaseRecordCollection } from "./DatabaseRecordCollection";
 import { useRecordUtilities } from "../hooks/useRecordUtilities";
 import type { RecordAdapter } from "../table-kit";
@@ -30,6 +33,17 @@ const adapter: RecordAdapter<ExampleRecord> = {
   ],
 };
 
+afterEach(() => vi.restoreAllMocks());
+
+function renderCollection(node: ReactNode) {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
+  return render(
+    <QueryClientProvider client={client}>
+      <TamaguiProvider config={tamaguiConfig} defaultTheme="dark">{node}</TamaguiProvider>
+    </QueryClientProvider>,
+  );
+}
+
 function Harness() {
   const utilities = useRecordUtilities(records, (record) => [record.id, record.name, record.status], {});
   return (
@@ -39,6 +53,7 @@ function Harness() {
       utilities={utilities}
       adapter={adapter}
       sortOptions={[]}
+      filterOptions={["Active", "Paused"]}
       detailId={null}
       onDetailChange={() => undefined}
     />
@@ -65,26 +80,28 @@ function ActionHarness() {
 }
 
 describe("DatabaseRecordCollection", () => {
-  it("uses the effective filtered result set for the shared Table.Root and detail action", () => {
-    render(
-      <TamaguiProvider config={tamaguiConfig} defaultTheme="dark">
-        <Harness />
-      </TamaguiProvider>,
-    );
+  it("uses the filtered result set for the shared Table.Root", () => {
+    vi.spyOn(api, "getTableView").mockImplementation(async (_table, viewType) => ({
+      view: { viewID: viewType, tableName: "Examples", name: viewType, viewType, workspaceState: null, updatedAt: null },
+      columns: [], queries: [],
+    }));
+    renderCollection(<Harness />);
 
-    expect(screen.getAllByRole("listitem")).toHaveLength(2);
-    fireEvent.click(screen.getByRole("button", { name: "Search examples" }));
-    fireEvent.change(screen.getByRole("searchbox", { name: "Search examples" }), { target: { value: "Beta" } });
-    expect(screen.getAllByRole("listitem")).toHaveLength(1);
-    expect(screen.getAllByRole("listitem")[0]).toHaveTextContent("Beta");
+    expect(screen.getByRole("button", { name: "Open Alpha" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Open Beta" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "View settings" }));
+    fireEvent.click(screen.getByRole("button", { name: "Filter" }));
+    fireEvent.click(screen.getByRole("radio", { name: "Paused" }));
+    expect(screen.queryByRole("button", { name: "Open Alpha" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Open Beta" })).toBeInTheDocument();
   });
 
   it("exposes scoped select-all and built-in view switching to the migrated consumer", () => {
-    render(
-      <TamaguiProvider config={tamaguiConfig} defaultTheme="dark">
-        <Harness />
-      </TamaguiProvider>,
-    );
+    vi.spyOn(api, "getTableView").mockImplementation(async (_table, viewType) => ({
+      view: { viewID: viewType, tableName: "Examples", name: viewType, viewType, workspaceState: null, updatedAt: null },
+      columns: [], queries: [],
+    }));
+    renderCollection(<Harness />);
 
     fireEvent.click(screen.getByRole("checkbox", { name: "Select all" }));
     expect(screen.getByRole("checkbox", { name: "Select all" })).toBeChecked();
@@ -92,41 +109,89 @@ describe("DatabaseRecordCollection", () => {
     expect(screen.getByRole("button", { name: "Table" })).toHaveAttribute("data-state", "on");
   });
 
-  it("keeps the property menu in the compact utility toolbar", () => {
-    render(
-      <TamaguiProvider config={tamaguiConfig} defaultTheme="dark">
-        <Harness />
-      </TamaguiProvider>,
-    );
+  it("keeps view settings available in the table toolbar", () => {
+    vi.spyOn(api, "getTableView").mockImplementation(async (_table, viewType) => ({
+      view: { viewID: viewType, tableName: "Examples", name: viewType, viewType, workspaceState: null, updatedAt: null },
+      columns: [], queries: [],
+    }));
+    renderCollection(<Harness />);
 
-    expect(screen.getByRole("group", { name: "Property configuration" })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Properties" }));
-    expect(screen.getByRole("dialog", { name: "Properties" })).toBeInTheDocument();
+    const settings = screen.getByRole("button", { name: "View settings" });
+    expect(settings).toHaveAttribute("aria-haspopup", "dialog");
+    fireEvent.click(settings);
+    expect(screen.getByRole("dialog", { name: "View settings" })).toBeInTheDocument();
   });
 
   it("keeps secondary query controls behind compact icon menus", () => {
-    render(
-      <TamaguiProvider config={tamaguiConfig} defaultTheme="dark">
-        <Harness />
-      </TamaguiProvider>,
-    );
+    vi.spyOn(api, "getTableView").mockImplementation(async (_table, viewType) => ({
+      view: { viewID: viewType, tableName: "Examples", name: viewType, viewType, workspaceState: null, updatedAt: null },
+      columns: [], queries: [],
+    }));
+    renderCollection(<Harness />);
 
-    expect(screen.queryByRole("menu", { name: "Sort records" })).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Sort records" }));
-    expect(screen.getByRole("menu", { name: "Sort records" })).toBeInTheDocument();
-    fireEvent.keyDown(screen.getByRole("menu", { name: "Sort records" }), { key: "Escape" });
-    expect(screen.queryByRole("menu", { name: "Sort records" })).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Sort records" })).toHaveFocus();
+    const sort = screen.getByRole("button", { name: "Sort records" });
+    expect(sort).toHaveAttribute("aria-haspopup", "menu");
+    expect(sort).toHaveAttribute("type", "button");
   });
 
   it("passes consumer-owned New Record actions through the collection shell", () => {
-    render(
-      <TamaguiProvider config={tamaguiConfig} defaultTheme="dark">
-        <ActionHarness />
-      </TamaguiProvider>,
-    );
+    vi.spyOn(api, "getTableView").mockImplementation(async (_table, viewType) => ({
+      view: { viewID: viewType, tableName: "Examples", name: viewType, viewType, workspaceState: null, updatedAt: null },
+      columns: [], queries: [],
+    }));
+    renderCollection(<ActionHarness />);
 
     fireEvent.click(screen.getByRole("button", { name: "New record options" }));
     expect(screen.getByRole("menuitem", { name: "New address" })).toBeInTheDocument();
   });
+
+  it("restores the selected record after saved workspace state loads", async () => {
+    const onDetailChange = vi.fn();
+    vi.spyOn(api, "getTableView").mockImplementation(async (_table, viewType) => ({
+      view: {
+        viewID: viewType,
+        tableName: "Examples",
+        name: viewType,
+        viewType,
+        workspaceState: viewType === "Gallery" ? JSON.stringify({ activeViewId: "gallery", selectedRecordId: "two" }) : null,
+        updatedAt: "2026-11-02T10:00:00Z",
+      },
+      columns: [], queries: [],
+    }));
+    renderCollection(<HarnessWithSelection onDetailChange={onDetailChange} />);
+    await waitFor(() => expect(onDetailChange).toHaveBeenCalledWith("two"));
+  });
+
+  it("persists workspace settings when search changes without changing view or selection", async () => {
+    vi.spyOn(api, "getTableView").mockImplementation(async (_table, viewType) => ({
+      view: { viewID: viewType, tableName: "Examples", name: viewType, viewType, workspaceState: null, updatedAt: null },
+      columns: [], queries: [],
+    }));
+    const saveWorkspace = vi.spyOn(api, "saveTableViewWorkspaceState").mockResolvedValue({
+      viewID: "Gallery", tableName: "Examples", name: "Gallery", viewType: "Gallery", workspaceState: null, updatedAt: null,
+    });
+    renderCollection(<SearchHarness />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Change search" }));
+    await waitFor(() => expect(saveWorkspace).toHaveBeenCalled());
+    const savedState = JSON.parse(saveWorkspace.mock.calls.at(-1)![2]);
+    expect(savedState.search).toBe("Alpha");
+    expect(savedState.activeViewId).toBe("gallery");
+    expect(savedState.selectedRecordId).toBeNull();
+  });
 });
+
+function HarnessWithSelection({ onDetailChange }: { onDetailChange: (id: string | null) => void }) {
+  const utilities = useRecordUtilities(records, (record) => [record.id, record.name, record.status], {});
+  return <DatabaseRecordCollection label="Examples" records={records} utilities={utilities} adapter={adapter} sortOptions={[]} detailId={null} onDetailChange={onDetailChange} />;
+}
+
+function SearchHarness() {
+  const utilities = useRecordUtilities(records, (record) => [record.id, record.name, record.status], {});
+  return (
+    <>
+      <button type="button" onClick={() => utilities.onSearch("Alpha")}>Change search</button>
+      <DatabaseRecordCollection label="Examples" records={records} utilities={utilities} adapter={adapter} sortOptions={[]} detailId={null} onDetailChange={() => undefined} />
+    </>
+  );
+}

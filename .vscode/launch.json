@@ -1,0 +1,64 @@
+{
+  "configurations": [
+    {
+      "type": "swift",
+      "request": "launch",
+      "args": [],
+      "cwd": "${workspaceFolder:GemsForgeAPI}",
+      "name": "Debug GemsForgeAPI",
+      "target": "GemsForgeAPI",
+      "configuration": "debug",
+      "preLaunchTask": "swift: Build Debug GemsForgeAPI"
+    },
+    {
+      "type": "swift",
+      "request": "launch",
+      "args": [],
+      "cwd": "${workspaceFolder:GemsForgeAPI}",
+      "name": "Release GemsForgeAPI",
+      "target": "GemsForgeAPI",
+      "configuration": "release",
+      "preLaunchTask": "swift: Build Release GemsForgeAPI"
+    },
+    {
+      "type": "swift",
+      "request": "launch",
+      "args": [],
+      "cwd": "${workspaceFolder:GemsForgeAPI}",
+      "name": "Debug GemLifeHost",
+      "target": "GemLifeHost",
+      "configuration": "debug",
+      "preLaunchTask": "swift: Build Debug GemLifeHost"
+    },
+    {
+      "type": "swift",
+      "request": "launch",
+      "args": [],
+      "cwd": "${workspaceFolder:GemsForgeAPI}",
+      "name": "Release GemLifeHost",
+      "target": "GemLifeHost",
+      "configuration": "release",
+      "preLaunchTask": "swift: Build Release GemLifeHost"
+    },
+    {
+      "type": "swift",
+      "request": "launch",
+      "args": [],
+      "cwd": "${workspaceFolder:GemsForgeAPI}",
+      "name": "Debug GemLife",
+      "target": "GemLife",
+      "configuration": "debug",
+      "preLaunchTask": "swift: Build Debug GemLife"
+    },
+    {
+      "type": "swift",
+      "request": "launch",
+      "args": [],
+      "cwd": "${workspaceFolder:GemsForgeAPI}",
+      "name": "Release GemLife",
+      "target": "GemLife",
+      "configuration": "release",
+      "preLaunchTask": "swift: Build Release GemLife"
+    }
+  ]
+}

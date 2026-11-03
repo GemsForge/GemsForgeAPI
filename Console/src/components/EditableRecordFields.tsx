@@ -1,8 +1,11 @@
-import { useId, type ChangeEvent, type ReactNode } from "react";
-import { Dialog, Form, Tooltip } from "tamagui";
-import { GCheckboxField, GDate, GemButton, GemTextField, GSelectField } from "./ui";
+import { useId, type ChangeEvent, type FocusEvent, type ReactNode } from "react";
+import { Form } from "tamagui";
+import { GCheckboxField, GDate, GemField, GSelectField } from "./ui";
 import type { GemTextFieldWidth } from "./ui/GemTextField";
 import { useRecordEditor } from "../hooks/useRecordEditor";
+import { GemPrimitiveField } from "./ui/GemPrimitiveField";
+import type { GemPrimitiveType } from "./ui/primitiveFieldContracts";
+import type { RecordColorToken, RecordDateFormat, RecordSelectOption } from "../table-kit/recordContracts";
 
 export type EditableValue = string | number | boolean | null | undefined;
 export type RecordInputType = "text" | "date" | "email" | "url" | "tel" | "number" | "boolean" | "select" | "longText";
@@ -10,17 +13,27 @@ export type RecordInputType = "text" | "date" | "email" | "url" | "tel" | "numbe
 export interface EditableRecordField {
   label: string;
   value: EditableValue;
+  /** Hides the display-mode label when the value occupies a title or other named slot. */
+  hideLabel?: boolean;
+  /** Explicitly declares whether this field may be edited in the current context. */
+  editable?: boolean;
   onSave?: (value: EditableValue) => Promise<void>;
+  onMediaChange?: (file: File | null) => Promise<void> | void;
   inputType?: RecordInputType;
   required?: boolean;
   nullable?: boolean;
-  options?: Array<{ label: string; value: string }>;
+  options?: RecordSelectOption[];
   step?: string;
   placeholder?: string;
   width?: GemTextFieldWidth;
   displayValue?: ReactNode;
   readOnlyReason?: string;
   className?: string;
+  primitive?: GemPrimitiveType;
+  colorToken?: RecordColorToken;
+  dateFormat?: RecordDateFormat;
+  includeTime?: boolean;
+  onDateConfigChange?: (config: { displayFormat: RecordDateFormat; includeTime: boolean }) => void;
 }
 
 export function formatRecordTimestamp(value?: string | null): string {
@@ -51,95 +64,143 @@ export function formatRecordPercentage(value?: number | null): string {
 /** Shared field behavior with a resource-controlled semantic layout. */
 export function EditableRecordFields({ fields, className }: { fields: EditableRecordField[]; className?: string }) {
   return (
-    <dl className={className ? `record-fields ${className}` : "record-fields"}>
+    <div className={className ? `record-fields ${className}` : "record-fields"}>
       {fields.map((field) => (
         <EditableField field={field} key={field.label} />
       ))}
-    </dl>
+    </div>
   );
 }
 
+/** Renders one logical record field, switching its value region between display and inline edit modes. */
 function EditableField({ field }: { field: EditableRecordField }) {
+  const isEditable = field.editable ?? Boolean(field.onSave);
   const instanceID = useId();
   const value = field.value ?? null;
   const initialValue =
     value === null ? "" : field.inputType === "date" ? normalizeDateInput(String(value)) : String(value);
   const editor = useRecordEditor(initialValue, async (draft) => {
-    if (!field.onSave) return;
+    if (!isEditable || !field.onSave) return;
     await field.onSave(parseValue(draft, field));
   });
   const id = `edit-${instanceID}-${field.label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
   const labelID = `${id}-label`;
   const onTextChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     editor.setDraft(event.currentTarget.value);
+  const onEditorBlur = (event: FocusEvent<HTMLElement>) => {
+    const nextTarget = event.relatedTarget as HTMLElement | null;
+    if (nextTarget?.closest(".gem-date-popover, .gem-date-format-popover")) return;
+    if (!event.currentTarget.contains(nextTarget)) {
+      window.setTimeout(() => {
+        const activeElement = document.activeElement as HTMLElement | null;
+        if (activeElement?.closest(".gem-date-popover, .gem-date-format-popover")) return;
+        void editor.save();
+      }, 0);
+    }
+  };
+
+  if (field.primitive) {
+    return (
+      <div
+        className={field.className}
+        data-editing={editor.editing || undefined}
+        onBlur={field.primitive === "date" || field.primitive === "select" || field.primitive === "status" ? onEditorBlur : undefined}
+      >
+        <GemPrimitiveField
+          primitive={field.primitive}
+          label={field.label}
+          value={(editor.editing ? editor.draft : field.value) as string | number | boolean | null}
+          editing={editor.editing}
+          displayValue={field.displayValue ?? (field.primitive === "date" ? formatRecordDateValue(value, field.dateFormat) : undefined)}
+          colorToken={field.colorToken}
+          dateFormat={field.dateFormat}
+          includeTime={field.includeTime}
+          onDateConfigChange={field.onDateConfigChange}
+          onDisplayClick={editor.begin}
+          options={field.options}
+          required={field.required}
+          nullable={field.nullable}
+          error={editor.error ?? undefined}
+          onSave={async (next) => {
+            editor.setDraft(String(next ?? ""));
+            await editor.save(String(next ?? ""));
+          }}
+          onChange={(next) => editor.setDraft(String(next ?? ""))}
+          onMediaChange={field.onMediaChange}
+        />
+      </div>
+    );
+  }
 
   return (
-    <Dialog open={editor.editing} onOpenChange={(open) => !open && editor.cancel()} modal>
-      <div className={field.className}>
-        {!editor.editing && (
+      <div className={field.className} data-editing={editor.editing || undefined}>
+        {!editor.editing && !field.hideLabel && field.inputType !== "select" && (
           <dt className="editable-record-label" id={labelID}>
-            {field.onSave ? (
-              <Dialog.Trigger asChild>
-                <button type="button" className="editable-record-label-button" onClick={editor.begin}>
-                  {field.label}
-                </button>
-              </Dialog.Trigger>
-            ) : (
-              field.label
-            )}
+            {field.label}
           </dt>
         )}
         <dd>
-          {!field.onSave || !editor.editing ? (
-            <>
-              {field.inputType === "boolean" ? (
-                <input
-                  type="checkbox"
-                  className="field-checkbox field-checkbox-display"
-                  checked={String(value).toLowerCase() === "true"}
-                  disabled
-                  aria-label={`${field.label}: ${String(value).toLowerCase() === "true" ? "checked" : "unchecked"}`}
-                  readOnly
+          {!isEditable || !field.onSave || !editor.editing ? (
+            isEditable && field.onSave ? (
+              field.inputType === "select" ? (
+                <GSelectField
+                  label={field.label}
+                  value={String(value ?? "")}
+                  options={field.options ?? []}
+                  editing={false}
+                  displayValue={field.displayValue ?? presentValue(value)}
+                  onDisplayClick={editor.begin}
                 />
-              ) : (
-                (field.displayValue ?? presentValue(value))
-              )}
-              {field.readOnlyReason && <small className="field-readonly-reason">{field.readOnlyReason}</small>}
-            </>
+              ) : <button
+                  type="button"
+                  className="editable-record-value-button"
+                  aria-label={`${field.label}: ${presentValue(value)}`}
+                  onClick={editor.begin}
+                >
+                  {field.inputType === "boolean" ? (
+                    <span
+                      className="field-checkbox field-checkbox-display"
+                      role="img"
+                      aria-label={String(value).toLowerCase() === "true" ? "checked" : "unchecked"}
+                    />
+                  ) : (
+                    (field.displayValue ?? (field.inputType === "date" ? formatRecordDateValue(value, field.dateFormat) : presentValue(value)))
+                  )}
+                  {field.readOnlyReason && <small className="field-readonly-reason">{field.readOnlyReason}</small>}
+                </button>
+            ) : (
+              <>
+                {field.inputType === "boolean" ? (
+                  <input
+                    type="checkbox"
+                    className="field-checkbox field-checkbox-display"
+                    checked={String(value).toLowerCase() === "true"}
+                    disabled
+                    aria-label={`${field.label}: ${String(value).toLowerCase() === "true" ? "checked" : "unchecked"}`}
+                    readOnly
+                  />
+                ) : (
+                  (field.displayValue ?? (field.inputType === "date" ? formatRecordDateValue(value, field.dateFormat) : presentValue(value)))
+                )}
+                {field.readOnlyReason && <small className="field-readonly-reason">{field.readOnlyReason}</small>}
+              </>
+            )
           ) : (
-            <Dialog.Portal>
-              <Dialog.Overlay className="table-kit-utility-backdrop" />
-              <Dialog.Content className="table-kit-new-record-utility editable-record-dialog">
-                <div className="table-kit-new-record-heading">
-                  <div>
-                    <Dialog.Title>Edit {field.label}</Dialog.Title>
-                    <div className="table-kit-new-record-description">
-                      <Dialog.Description>Make changes to this field, then save when you’re done.</Dialog.Description>
-                    </div>
-                  </div>
-                  <Dialog.Close asChild>
-                    <GemButton
-                      tone="secondary"
-                      type="button"
-                      variant="quiet"
-                      size="sm"
-                      aria-label={`Close edit ${field.label.toLowerCase()}`}
-                      disabled={editor.saving}
-                      onClick={editor.cancel}
-                    >
-                      ×
-                    </GemButton>
-                  </Dialog.Close>
-                </div>
-                <Form className="edit-form editable-field-form" onSubmit={() => void editor.save()}>
+            <Form className="edit-form editable-field-form" onSubmit={(event) => { event.preventDefault(); void editor.save(); }} onBlur={onEditorBlur}>
                   <div className="editable-field-control-row">
                     {field.inputType === "date" ? (
                       <GDate
                         label={field.label}
                         value={editor.draft}
-                        onChange={editor.setDraft}
+                        onChange={(next) => {
+                          editor.setDraft(next);
+                          void editor.save(next);
+                        }}
                         required={field.required}
                         width={field.width ?? "medium"}
+                        displayFormat={field.dateFormat}
+                        includeTime={field.includeTime}
+                        onDateConfigChange={field.onDateConfigChange}
                         error={editor.error ?? undefined}
                       />
                     ) : field.inputType === "select" ? (
@@ -147,7 +208,10 @@ function EditableField({ field }: { field: EditableRecordField }) {
                         label={field.label}
                         value={editor.draft}
                         options={(field.options ?? []).concat(field.nullable ? [{ value: "", label: "—" }] : [])}
-                        onChange={editor.setDraft}
+                        onChange={(next) => {
+                          editor.setDraft(next);
+                          void editor.save(next);
+                        }}
                         required={field.required}
                         width={field.width ?? "medium"}
                         error={editor.error ?? undefined}
@@ -156,17 +220,20 @@ function EditableField({ field }: { field: EditableRecordField }) {
                       <GCheckboxField
                         label={field.label}
                         value={editor.draft === "true"}
-                        onChange={(checked) => editor.setDraft(String(checked))}
+                        onChange={(checked) => {
+                          const next = String(checked);
+                          editor.setDraft(next);
+                          void editor.save(next);
+                        }}
                         required={field.required}
                         width={field.width ?? "medium"}
                         error={editor.error ?? undefined}
                       />
                     ) : (
-                      <GemTextField
+                      <GemField
                         label={field.label}
                         value={editor.draft}
                         onChange={onTextChange}
-                        onBlur={() => undefined}
                         type={field.inputType === "longText" ? undefined : (field.inputType ?? "text")}
                         step={field.step}
                         placeholder={field.placeholder}
@@ -181,52 +248,11 @@ function EditableField({ field }: { field: EditableRecordField }) {
                         Clear value
                       </button>
                     )}
-                    <div className="button-row editable-field-actions">
-                      <Tooltip placement="top" delay={300}>
-                        <Tooltip.Trigger asChild>
-                          <GemButton
-                            type="submit"
-                            variant="quiet"
-                            size="sm"
-                            aria-label={`Save ${field.label.toLowerCase()}`}
-                            disabled={editor.saving || !editor.dirty}
-                          >
-                            <span aria-hidden="true">✎</span>
-                          </GemButton>
-                        </Tooltip.Trigger>
-                        <Tooltip.Content className="table-kit-tooltip">
-                          <Tooltip.Arrow />
-                          <span>{editor.saving ? "Saving…" : `Save ${field.label.toLowerCase()}`}</span>
-                        </Tooltip.Content>
-                      </Tooltip>
-                      <Tooltip placement="top" delay={300}>
-                        <Tooltip.Trigger asChild>
-                          <GemButton
-                            tone="secondary"
-                            type="button"
-                            variant="quiet"
-                            size="sm"
-                            aria-label={`Cancel editing ${field.label.toLowerCase()}`}
-                            disabled={editor.saving}
-                            onClick={editor.cancel}
-                          >
-                            <span aria-hidden="true">×</span>
-                          </GemButton>
-                        </Tooltip.Trigger>
-                        <Tooltip.Content className="table-kit-tooltip">
-                          <Tooltip.Arrow />
-                          <span>Cancel editing</span>
-                        </Tooltip.Content>
-                      </Tooltip>
-                    </div>
                   </div>
-                </Form>
-              </Dialog.Content>
-            </Dialog.Portal>
+            </Form>
           )}
         </dd>
       </div>
-    </Dialog>
   );
 }
 
@@ -254,4 +280,20 @@ function normalizeDateInput(value?: string | null): string {
 function presentValue(value: EditableValue): string {
   if (value == null || value === "") return "—";
   return String(value);
+}
+
+function formatRecordDateValue(value: EditableValue, format: RecordDateFormat = "local"): string {
+  const normalized = normalizeDateInput(value == null ? null : String(value));
+  if (!normalized) return "—";
+  const date = new Date(`${normalized}T00:00:00`);
+  if (format === "iso") return normalized;
+  if (format === "relative") {
+    const today = new Date();
+    const startToday = new Date(today.getFullYear(), today.getMonth(), today.getDate()).valueOf();
+    const difference = Math.round((date.valueOf() - startToday) / 86400000);
+    if (difference === 0) return "Today";
+    if (difference === -1) return "Yesterday";
+    if (difference === 1) return "Tomorrow";
+  }
+  return date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
 }

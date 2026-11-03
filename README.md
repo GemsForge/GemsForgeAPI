@@ -52,12 +52,18 @@ The project currently includes:
 - A local React + TypeScript testing console for domains, ForgeKeeper pages,
   Gem Hues, Education, Employment, and Addresses, with the original HTML prototype retained as a
   fallback.
+- A schema-driven Table Kit workspace with Table, List, and Gallery views,
+  searchable/sortable/filterable/grouped collections, and a record inspector.
+- Hub-scoped saved view state for collection selection and settings, plus
+  per-record presentation state for covers and gallery images.
 - A reusable local attachment lifecycle for uploading, safely retrieving,
   previewing, replacing, and removing image references on owner records.
 - Automated route, service, model, and integration-focused tests using isolated
   in-memory databases.
 
-Authentication, production hosting, and remote private-network access remain planned work.
+Production hosting and remote private-network access remain planned work.
+Authentication is owner-only through the Supabase session contract; keep the
+API private until deployment security and ownership migration are complete.
 
 ## Requirements
 
@@ -76,6 +82,9 @@ GemsForgeAPI/
 ├── Console/
 │   ├── package.json
 │   ├── src/
+│   │   ├── features/workspace/
+│   │   ├── table-kit/
+│   │   └── components/ui/
 │   └── README.md
 ├── Public/
 │   ├── index.html
@@ -116,7 +125,7 @@ current Notes-import boundary.
 
 ### Entry file
 
-`Sources/main.swift` is the application entry point. It creates the Vapor application, registers the database, defines the initial health route, starts the server, and handles asynchronous shutdown.
+`Sources/ApplicationEntryPoint.swift` is the Vapor application entry point. It creates the application, configures the database and authentication middleware, registers routes, starts the server, and handles asynchronous shutdown. `Sources/GemLife/main.swift` is the separate local launcher that coordinates the API, Console, and native host.
 
 ### Dependency registry
 
@@ -168,18 +177,21 @@ current Notes-import boundary.
 - [`docs/Live-Schema-Inspection.md`](docs/Live-Schema-Inspection.md) documents
   the read-only live schema endpoint and its safety boundary.
 - [`docs/Table-Views.md`](docs/Table-Views.md) documents the Hub-scoped Table
-  View metadata contracts, query grammar, schema-drift policy, and migration
-  order.
-- [`docs/Table-View-Metadata-Architecture.md`](docs/Table-View-Metadata-Architecture.md)
-  is the canonical finalized architecture for the five logical contracts,
-  three normalized persistence tables, ownership boundary, responsibilities,
-  query tree, and migration decisions.
+  View metadata contracts, saved workspace state, record presentations, query
+  grammar, schema-drift policy, and migration order.
 - [`docs/Milestone-5-Implementation-Ledger.md`](docs/Milestone-5-Implementation-Ledger.md)
   records the M5 issue, test, and pull-request ledger.
 
 The current operational workflow is documented in docs/Workflow-Operations.md.
 It covers local configuration, live migrations, attachment relationships,
 GitHub Actions, commit policy, story creation, and verification commands.
+
+For the active Console-specific workflow, see [`Console/README.md`](Console/README.md).
+It documents the React/Vite development server, Supabase owner-session
+configuration, API proxy paths, persistent Table Kit workspace and inspector,
+shared form and attachment conventions, and the local schema-builder boundary.
+See [`Console/COMPONENT_API.md`](Console/COMPONENT_API.md) for shared workspace
+component responsibilities and inspector editing interactions.
 
 ## Dependencies
 
@@ -234,6 +246,18 @@ swift build
 swift test
 ```
 
+The Console has its own focused checks. From `Console/`, run:
+
+```bash
+npm ci
+npm run lint
+npm test
+npm run build
+```
+
+Use `npm run format:check` when reviewing formatting-only changes. These checks
+validate the Console bundle and do not replace the Swift API test suite.
+
 To run the API against a selected database:
 
 ```bash
@@ -287,6 +311,13 @@ See [`docs/Architecture.md`](docs/Architecture.md) and
 architecture and development workflow. Route handlers coordinate requests and
 responses, while database access belongs in services so it can be tested,
 changed, and reused independently.
+
+The repository's security and operational boundaries are documented in
+[`docs/Deployment-Security.md`](docs/Deployment-Security.md),
+[`docs/Workflow-Operations.md`](docs/Workflow-Operations.md), and
+[`docs/Live-Schema-Management.md`](docs/Live-Schema-Management.md). Keep the
+API private and use the reviewed backup and migration workflow before changing
+the configured personal database.
 
 ## Privacy and hosting direction
 

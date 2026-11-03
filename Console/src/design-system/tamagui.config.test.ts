@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { gemBreakpoints, gemColors, gemRadii, gemSpacing, tamaguiConfig } from "./tamagui.config";
+import { gemBreakpoints, gemColors, gemFontFamily, gemRadii, gemSpacing, tamaguiConfig } from "./tamagui.config";
 
 describe("Gem Life design foundation", () => {
   it("preserves the established palette and defines ordered responsive thresholds", () => {
@@ -11,8 +11,11 @@ describe("Gem Life design foundation", () => {
   it("exposes typography, semantic spacing, radii, and both themes", () => {
     expect(tamaguiConfig.fonts.body).toBeDefined();
     expect(tamaguiConfig.fonts.heading).toBeDefined();
+    expect(gemFontFamily).toMatch(/^"Avenir Next"/);
     expect(gemSpacing.section).toBeGreaterThan(gemSpacing.control);
     expect(gemRadii.card).toBeGreaterThan(gemRadii.control);
+    expect(gemColors.lightCanvas).toBe("#f3f8f7");
+    expect(tamaguiConfig.themes.light.background.val).toBe("$lightCanvas");
     expect(tamaguiConfig.themes.dark).toBeDefined();
     expect(tamaguiConfig.themes.light).toBeDefined();
   });

@@ -46,7 +46,8 @@ export function useRecordUtilities<T>(
     sort,
     onSort: setSort,
     direction,
-    onDirection: () => setDirection((value) => (value === "asc" ? "desc" : "asc")),
+    onDirection: (direction?: RecordSortDirection) =>
+      setDirection((value) => direction ?? (value === "asc" ? "desc" : "asc")),
     filter,
     onFilter: setFilter,
   };

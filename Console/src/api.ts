@@ -35,6 +35,37 @@ import type {
 } from "./types";
 import { getBearerToken, notifySessionExpired } from "./auth/session";
 
+export interface SavedTableView {
+  view: {
+    viewID: string;
+    tableName: string;
+    name: string;
+    viewType: "Table" | "List" | "Gallery" | "Grid";
+    workspaceState: string | null;
+    updatedAt: string | null;
+  };
+  columns: Array<{
+    columnName: string;
+    isVisible: boolean;
+    sortOrder: number;
+    width: number | null;
+  }>;
+  queries: unknown[];
+}
+
+export interface SavedTableViewInput {
+  viewType: "Table" | "List" | "Gallery" | "Grid";
+  name: string;
+  columns: Array<{
+    columnName: string;
+    isVisible: boolean;
+    sortOrder: number;
+    width: number | null;
+  }>;
+  queries: unknown[];
+  workspaceState: string;
+}
+
 export interface APIAuthenticationSession {
   sessionToken: string;
   expiresAt: string;
@@ -81,6 +112,32 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 }
 
 export const api = {
+  getTableView: (tableName: string, viewType: SavedTableViewInput["viewType"], signal?: AbortSignal) =>
+    request<SavedTableView>(`/table-views/${encodeURIComponent(tableName)}/${encodeURIComponent(viewType)}`, {
+      signal,
+    }),
+  saveTableView: (tableName: string, viewType: SavedTableViewInput["viewType"], payload: SavedTableViewInput) =>
+    request<SavedTableView>(`/table-views/${encodeURIComponent(tableName)}/${encodeURIComponent(viewType)}`, {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    }),
+  saveTableViewWorkspaceState: (
+    tableName: string,
+    viewType: SavedTableViewInput["viewType"],
+    workspaceState: string,
+  ) =>
+    request<SavedTableView["view"]>(
+      `/table-views/${encodeURIComponent(tableName)}/${encodeURIComponent(viewType)}/workspace-state`,
+      { method: "PUT", body: JSON.stringify({ workspaceState }) },
+    ),
+  saveTableViewColumns: (
+    tableName: string,
+    viewType: SavedTableViewInput["viewType"],
+    columns: SavedTableViewInput["columns"],
+  ) => request<SavedTableView>(`/table-views/${encodeURIComponent(tableName)}/${encodeURIComponent(viewType)}/columns`, {
+    method: "PUT",
+    body: JSON.stringify({ columns }),
+  }),
   listMerchants: (signal?: AbortSignal) => request<Merchant[]>("/merchants", { signal }),
   getHealth: async (signal?: AbortSignal) => {
     const response = await checkedFetch("/health", { signal });
@@ -133,6 +190,11 @@ export const api = {
     request<GemHue>(`/gemhues/${encodeURIComponent(hueID)}`, { method: "PATCH", body: JSON.stringify(patch) }),
   getGemHueImage: (hueID: string, signal?: AbortSignal) =>
     checkedFetch(`/gemhues/${encodeURIComponent(hueID)}/image`, { signal }),
+  patchGemHueImage: (hueID: string, fileMetadataID: string | null) =>
+    request<{ fileMetadataID: string | null }>(`/gemhues/${encodeURIComponent(hueID)}/image`, {
+      method: "PATCH",
+      body: JSON.stringify({ fileMetadataID }),
+    }),
   listEducation: (signal?: AbortSignal) => request<Education[]>("/education", { signal }),
   createEducation: (payload: EducationCreate) =>
     request<Education>("/education", { method: "POST", body: JSON.stringify(payload) }),
@@ -188,15 +250,26 @@ export const api = {
       method: "PATCH",
       body: JSON.stringify(patch),
     }),
-  uploadImage: async (file: File, fileKind: string, ownerType: string, ownerID: string) => {
+  uploadImage: async (file: File, fileKind: string, ownerType?: string, ownerID?: string) => {
     const form = new FormData();
     form.append("file", file);
     form.append("fileKind", fileKind);
-    form.append("ownerType", ownerType);
-    form.append("ownerID", ownerID);
+    if (ownerType && ownerID) {
+      form.append("ownerType", ownerType);
+      form.append("ownerID", ownerID);
+    }
     const response = await checkedFetch("/file-uploads", { method: "POST", body: form });
     return (await response.json()) as FileMetadata;
   },
+  listRecordPresentations: (tableName: string, signal?: AbortSignal) =>
+    request<{ recordID: string; presentation: string }[]>(`/record-presentations/${encodeURIComponent(tableName)}`, { signal }),
+  saveRecordPresentation: (tableName: string, recordID: string, presentation: string) =>
+    request<{ recordID: string; presentation: string }>(`/record-presentations/${encodeURIComponent(tableName)}/${encodeURIComponent(recordID)}`, {
+      method: "PUT",
+      body: JSON.stringify({ presentation }),
+    }),
+  deleteRecordPresentation: (tableName: string, recordID: string) =>
+    request<void>(`/record-presentations/${encodeURIComponent(tableName)}/${encodeURIComponent(recordID)}`, { method: "DELETE" }),
   listServiceLogos: (signal?: AbortSignal) => request<ServiceLogo[]>("/service-logos", { signal }),
   getServiceLogoImage: async (id: number, signal?: AbortSignal) => {
     const response = await checkedFetch(`/service-logos/${id}/image`, { signal });

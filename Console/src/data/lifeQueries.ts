@@ -35,7 +35,9 @@ export function useExpenseSubcategoriesQuery(categoryID: number | null, enabled:
   return useQuery({
     queryKey: lifeQueryKeys.expenseSubcategories(categoryID),
     queryFn: ({ signal }) => api.listExpenseSubcategories(categoryID, signal),
-    enabled: enabled && categoryID !== null,
+    // A null category requests the complete catalog, used to resolve IDs in
+    // collection views. Pass a category ID to load only dependent options.
+    enabled,
   });
 }
 

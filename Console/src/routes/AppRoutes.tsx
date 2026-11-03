@@ -40,6 +40,24 @@ const GemHuesView = lazy(() =>
 const EducationView = lazy(() =>
   import("../features/education/EducationView").then((module) => ({ default: module.EducationView })),
 );
+const EducationWireframeView = lazy(() =>
+  import("../features/education/EducationWireframeView").then((module) => ({ default: module.EducationWireframeView })),
+);
+const EmploymentWireframeView = lazy(() =>
+  import("../features/employment/EmploymentWireframeView").then((module) => ({ default: module.EmploymentWireframeView })),
+);
+const AddressesWireframeView = lazy(() =>
+  import("../features/addresses/AddressesWireframeView").then((module) => ({ default: module.AddressesWireframeView })),
+);
+const TransactionsWireframeView = lazy(() =>
+  import("../features/transactions/TransactionsWireframeView").then((module) => ({ default: module.TransactionsWireframeView })),
+);
+const GemHuesWireframeView = lazy(() =>
+  import("../features/gem-hues/GemHuesWireframeView").then((module) => ({ default: module.GemHuesWireframeView })),
+);
+const ServiceCatalogWireframeView = lazy(() =>
+  import("../features/service-accounts/ServiceCatalogWireframeView").then((module) => ({ default: module.ServiceCatalogWireframeView })),
+);
 const EmploymentView = lazy(() =>
   import("../features/employment/EmploymentView").then((module) => ({ default: module.EmploymentView })),
 );
@@ -64,6 +82,12 @@ const LiveDatabaseMigrationView = lazy(() =>
   import("../features/schema/LiveDatabaseMigrationView").then((module) => ({
     default: module.LiveDatabaseMigrationView,
   })),
+);
+const WorkspaceView = lazy(() =>
+  import("../features/workspace/WorkspaceView").then((module) => ({ default: module.WorkspaceView })),
+);
+const WireframeDemoView = lazy(() =>
+  import("../features/workspace/WireframeDemoView").then((module) => ({ default: module.WireframeDemoView })),
 );
 
 type Notifications = { onError: (error: unknown) => void; onSuccess: (message: string) => void };
@@ -129,6 +153,24 @@ function Layout() {
   );
 }
 
+function WireframeCanvas() {
+  const location = useLocation();
+  useEffect(() => {
+    document.title = "Gem Life · " + (location.pathname.split("/")[1] || "Wireframe");
+    document.getElementById("main-content")?.focus();
+  }, [location.pathname]);
+
+  return (
+    <main className="wireframe-canvas" id="main-content" tabIndex={-1} aria-label="Wireframe screen">
+      <ScreenBoundary key={location.pathname}>
+        <Suspense fallback={<p role="status">Loading wireframe…</p>}>
+          <Outlet />
+        </Suspense>
+      </ScreenBoundary>
+    </main>
+  );
+}
+
 function QueryScreen<T>({ query, children }: { query: UseQueryResult<T, Error>; children: (data: T) => ReactNode }) {
   return (
     <>
@@ -139,21 +181,7 @@ function QueryScreen<T>({ query, children }: { query: UseQueryResult<T, Error>; 
 }
 
 function Home() {
-  return (
-    <section>
-      <p className="eyebrow">Your local workspace</p>
-      <h2>Welcome to Gem Life</h2>
-      <p>Explore your structured records or manage your local database.</p>
-      <div className="button-row">
-        <Link className="primary-button" to="/domains">
-          Explore domains
-        </Link>
-        <Link className="secondary-button" to="/schema-builder">
-          Open Schema Builder
-        </Link>
-      </div>
-    </section>
-  );
+  return <Workspace />;
 }
 function Domains() {
   const query = useDomainsQuery();
@@ -231,6 +259,30 @@ function Education() {
   const query = useEducationQuery(true);
   return <QueryScreen query={query}>{(records) => <EducationView records={records} />}</QueryScreen>;
 }
+function EducationWireframe() {
+  const query = useEducationQuery(true);
+  return <QueryScreen query={query}>{(records) => <EducationWireframeView records={records} />}</QueryScreen>;
+}
+function EmploymentWireframe() {
+  const query = useEmploymentQuery(true);
+  return <QueryScreen query={query}>{(records) => <EmploymentWireframeView records={records} />}</QueryScreen>;
+}
+function AddressesWireframe() {
+  const query = useAddressesQuery(true);
+  return <QueryScreen query={query}>{(records) => <AddressesWireframeView records={records} />}</QueryScreen>;
+}
+function TransactionsWireframe() {
+  const query = useTransactionsQuery(true);
+  return <QueryScreen query={query}>{(records) => <TransactionsWireframeView records={records} />}</QueryScreen>;
+}
+function GemHuesWireframe() {
+  const query = useGemHuesQuery(true);
+  return <QueryScreen query={query}>{(records) => <GemHuesWireframeView records={records} />}</QueryScreen>;
+}
+function ServiceCatalogWireframe() {
+  const query = useServiceAccountsQuery(true);
+  return <QueryScreen query={query}>{(records) => <ServiceCatalogWireframeView records={records} />}</QueryScreen>;
+}
 function Employment() {
   const query = useEmploymentQuery(true);
   return <QueryScreen query={query}>{(records) => <EmploymentView records={records} />}</QueryScreen>;
@@ -249,6 +301,12 @@ function ServiceAccounts() {
 }
 function Databases() {
   return <LocalDatabaseView {...useOutletContext<Notifications>()} />;
+}
+function Workspace() {
+  return <WorkspaceView onSuccess={useOutletContext<Notifications>().onSuccess} />;
+}
+function WireframeDemo() {
+  return <WireframeDemoView />;
 }
 function Schema() {
   return <SchemaBuilderView {...useOutletContext<Notifications>()} />;
@@ -274,6 +332,14 @@ export function AppRoutes() {
       <Route path="reset-password" element={<ResetPasswordPage />} />
       <Route path="/" element={isRecoveryLink() ? <ResetPasswordPage /> : <Navigate to="/login" replace />} />
       <Route element={<RequireAuth />}>
+        <Route element={<LocalSession><WireframeCanvas /></LocalSession>}>
+          <Route path="education-wireframe/*" element={<EducationWireframe />} />
+          <Route path="employment-wireframe/*" element={<EmploymentWireframe />} />
+          <Route path="addresses-wireframe/*" element={<AddressesWireframe />} />
+          <Route path="transactions-wireframe/*" element={<TransactionsWireframe />} />
+          <Route path="gemhues-wireframe/*" element={<GemHuesWireframe />} />
+          <Route path="service-catalog-wireframe/*" element={<ServiceCatalogWireframe />} />
+        </Route>
         <Route
           element={
             <LocalSession>
@@ -283,6 +349,8 @@ export function AppRoutes() {
         >
           <Route index element={<Home />} />
           <Route path="domains" element={<Domains />} />
+          <Route path="workspace" element={<Workspace />} />
+          <Route path="wireframe-demo" element={<WireframeDemo />} />
           <Route path="domains/:domainID" element={<Pages kind="domain" />} />
           <Route path="forgekeeper" element={<Pages kind="roots" />} />
           <Route path="forgekeeper/:pageID/children" element={<Pages kind="children" />} />

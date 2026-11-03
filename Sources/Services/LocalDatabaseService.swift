@@ -46,7 +46,9 @@ enum LocalDatabaseProfile: String, Codable, CaseIterable, Sendable {
             "MakeAuthenticationProviderAgnostic",
             "CreateTableViews",
             "CreateViewColumnConfigurations",
-            "CreateViewQueryConfigurations"
+            "CreateViewQueryConfigurations",
+            "AddTableViewWorkspaceState",
+            "CreateRecordPresentations"
         ]
     }
 
@@ -92,6 +94,8 @@ enum LocalDatabaseProfile: String, Codable, CaseIterable, Sendable {
             app.migrations.add(CreateTableViews())
             app.migrations.add(CreateViewColumnConfigurations())
             app.migrations.add(CreateViewQueryConfigurations())
+            app.migrations.add(AddTableViewWorkspaceState())
+            app.migrations.add(CreateRecordPresentations())
         }
     }
 }

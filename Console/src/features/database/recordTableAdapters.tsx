@@ -1,12 +1,38 @@
 import type { ReactNode } from "react";
-import type { Address, Education, Employment, ExpenseTransaction, GemHue, ServiceAccount } from "../../types";
+import type { Address, Education, Employment, ExpenseCategory, ExpenseSubcategory, ExpenseTransaction, GemHue, Merchant, ServiceAccount } from "../../types";
 import type { RecordAdapter, RecordImage, RecordPropertyDefinition } from "../../table-kit";
+import { formatRecordNumber } from "../../table-kit";
+import { formatAddress } from "../addresses/formatAddress";
 
 const display = (value: unknown) => ({ raw: value, display: value == null || value === "" ? "—" : String(value) });
+const url = (value: string | null | undefined) => ({ ...display(value), href: value || undefined });
+const email = (value: string | null | undefined) => ({
+  ...display(value),
+  href: value ? `mailto:${value}` : undefined,
+});
+const currency = (value: number | null | undefined) => ({
+  raw: value,
+  display: formatRecordNumber(value, "currency"),
+});
+const percent = (value: number | null | undefined) => ({ raw: value, display: formatRecordNumber(value, "percent") });
+const hueOptions = [
+  "Red",
+  "Orange",
+  "Yellow",
+  "Green",
+  "Blue",
+  "Purple",
+  "Pink",
+  "Brown",
+  "Gray",
+  "Black",
+  "White",
+].map((value) => ({ value, label: value }));
 
 /** Adapt Gem Hue records to the shared Table Kit record/property contract. */
 export function createGemHueTableAdapter(
   getImage?: (record: GemHue) => RecordImage | undefined,
+  onSave?: (record: GemHue, field: keyof GemHue, value: string | number | null) => Promise<void>,
 ): RecordAdapter<GemHue> {
   return {
     toTableRecord: (record) => ({
@@ -16,6 +42,7 @@ export function createGemHueTableAdapter(
       subtitle: `${record.hexCode} · ${record.colorFamily || "Unclassified"}`,
       icon: "✦",
       image: getImage?.(record),
+      titleEdit: onSave ? { onSave: (_record, value) => onSave(record, "colorName", value) } : undefined,
     }),
     getPropertyDefinitions: () =>
       [
@@ -25,12 +52,63 @@ export function createGemHueTableAdapter(
           kind: "text",
           primary: true,
           getValue: (record) => display(record.colorName),
+          edit: onSave ? { onSave: (record, value) => onSave(record as GemHue, "colorName", value) } : undefined,
         },
-        { id: "colorFamily", label: "Color family", kind: "select", getValue: (record) => display(record.colorFamily) },
-        { id: "hexCode", label: "Hex code", kind: "text", getValue: (record) => display(record.hexCode) },
-        { id: "mood", label: "Mood", kind: "select", getValue: (record) => display(record.mood) },
-        { id: "palette", label: "Palette", kind: "select", getValue: (record) => display(record.palette) },
-        { id: "description", label: "Description", kind: "text", getValue: (record) => display(record.description) },
+        {
+          id: "colorFamily",
+          label: "Color family",
+          kind: "select",
+          getValue: (record) => display(record.colorFamily),
+          edit: onSave
+            ? {
+                inputType: "select",
+                options: hueOptions,
+                onSave: (record, value) => onSave(record as GemHue, "colorFamily", value),
+              }
+            : undefined,
+        },
+        {
+          id: "hexCode",
+          label: "Hex code",
+          kind: "text",
+          getValue: (record) => display(record.hexCode),
+          edit: onSave ? { onSave: (record, value) => onSave(record as GemHue, "hexCode", value) } : undefined,
+        },
+        {
+          id: "mood",
+          label: "Mood",
+          kind: "select",
+          getValue: (record) => display(record.mood),
+          edit: onSave
+            ? {
+                inputType: "select",
+                options: hueOptions,
+                onSave: (record, value) => onSave(record as GemHue, "mood", value),
+              }
+            : undefined,
+        },
+        {
+          id: "palette",
+          label: "Palette",
+          kind: "select",
+          getValue: (record) => display(record.palette),
+          edit: onSave
+            ? {
+                inputType: "select",
+                options: hueOptions,
+                onSave: (record, value) => onSave(record as GemHue, "palette", value),
+              }
+            : undefined,
+        },
+        {
+          id: "description",
+          label: "Description",
+          kind: "text",
+          getValue: (record) => display(record.description),
+          edit: onSave
+            ? { inputType: "longText", onSave: (record, value) => onSave(record as GemHue, "description", value) }
+            : undefined,
+        },
         { id: "createdDate", label: "Created date", kind: "date", getValue: (record) => display(record.createdDate) },
         { id: "notes", label: "Notes", kind: "text", getValue: (record) => display(record.notes) },
         { id: "id", label: "Item ID", kind: "text", getValue: (record) => display(record.id) },
@@ -43,7 +121,7 @@ export const addressTableAdapter: RecordAdapter<Address> = {
   toTableRecord: (record) => ({
     id: record.id,
     source: record,
-    title: record.city || record.addressType,
+    title: record.addressLine1 || record.city || record.addressType,
     subtitle: `${record.addressType} · ${record.id}`,
     icon: "⌂",
     status: { label: record.addressStatus },
@@ -57,8 +135,20 @@ export const addressTableAdapter: RecordAdapter<Address> = {
       { id: "state", label: "State", kind: "text", getValue: (record) => display(record.state) },
       { id: "postalCode", label: "Postal code", kind: "text", getValue: (record) => display(record.postalCode) },
       { id: "country", label: "Country", kind: "text", getValue: (record) => display(record.country) },
-      { id: "startDate", label: "Start date", kind: "date", getValue: (record) => display(record.startDate) },
-      { id: "endDate", label: "End date", kind: "date", getValue: (record) => display(record.endDate) },
+      {
+        id: "startDate",
+        label: "Start date",
+        storageType: "text",
+        kind: "date",
+        getValue: (record) => display(record.startDate),
+      },
+      {
+        id: "endDate",
+        label: "End date",
+        storageType: "text",
+        kind: "date",
+        getValue: (record) => display(record.endDate),
+      },
       { id: "addressStatus", label: "Status", kind: "status", getValue: (record) => display(record.addressStatus) },
       { id: "notes", label: "Notes", kind: "text", getValue: (record) => display(record.notes) },
       {
@@ -89,6 +179,7 @@ export const educationTableAdapter: RecordAdapter<Education> = {
         label: "Institution",
         kind: "text",
         primary: true,
+        sourceField: "institutionName",
         getValue: (record) => display(record.institutionName),
       },
       {
@@ -101,17 +192,28 @@ export const educationTableAdapter: RecordAdapter<Education> = {
       { id: "fieldOfStudy", label: "Field of study", kind: "text", getValue: (record) => display(record.fieldOfStudy) },
       { id: "credential", label: "Credential", kind: "text", getValue: (record) => display(record.credential) },
       { id: "credentialID", label: "Credential ID", kind: "text", getValue: (record) => display(record.credentialID) },
-      { id: "startDate", label: "Start date", kind: "date", getValue: (record) => display(record.startDate) },
-      { id: "endDate", label: "End date", kind: "date", getValue: (record) => display(record.endDate) },
+      {
+        id: "startDate",
+        label: "Start date",
+        storageType: "text",
+        kind: "date",
+        getValue: (record) => display(record.startDate),
+      },
+      {
+        id: "endDate",
+        label: "End date",
+        storageType: "text",
+        kind: "date",
+        getValue: (record) => display(record.endDate),
+      },
       { id: "awardedDate", label: "Awarded date", kind: "date", getValue: (record) => display(record.awardedDate) },
-      { id: "educationStatus", label: "Status", kind: "status", getValue: (record) => display(record.status) },
       {
         id: "locationAddressID",
         label: "Location address",
-        kind: "text",
-        getValue: (record) => display(record.locationAddressID),
+        kind: "relation",
+        getValue: (record) => ({ raw: record.locationAddressID ?? record.address?.id, display: formatAddress(record.address) }),
       },
-      { id: "website", label: "Website", kind: "text", getValue: (record) => display(record.website) },
+      { id: "website", label: "Website", kind: "url", getValue: (record) => url(record.website) },
       { id: "notes", label: "Notes", kind: "text", getValue: (record) => display(record.notes) },
       {
         id: "documentFileMetadataID",
@@ -142,6 +244,7 @@ export const employmentTableAdapter: RecordAdapter<Employment> = {
         label: "Employer",
         kind: "text",
         primary: true,
+        sourceField: "employerName",
         getValue: (record) => display(record.employerName),
       },
       {
@@ -151,17 +254,29 @@ export const employmentTableAdapter: RecordAdapter<Employment> = {
         getValue: (record) => display(record.employerType),
       },
       { id: "industry", label: "Industry", kind: "text", getValue: (record) => display(record.industry) },
-      { id: "position", label: "Position", kind: "text", getValue: (record) => display(record.positionTitle) },
+      { id: "position", label: "Position", kind: "text", sourceField: "positionTitle", getValue: (record) => display(record.positionTitle) },
       {
         id: "employmentType",
         label: "Employment type",
         kind: "select",
         getValue: (record) => display(record.employmentType),
       },
-      { id: "startDate", label: "Start date", kind: "date", getValue: (record) => display(record.startDate) },
-      { id: "endDate", label: "End date", kind: "date", getValue: (record) => display(record.endDate) },
-      { id: "workAddressID", label: "Work address", kind: "text", getValue: (record) => display(record.workAddressID) },
-      { id: "website", label: "Website", kind: "text", getValue: (record) => display(record.website) },
+      {
+        id: "startDate",
+        label: "Start date",
+        storageType: "text",
+        kind: "date",
+        getValue: (record) => display(record.startDate),
+      },
+      {
+        id: "endDate",
+        label: "End date",
+        storageType: "text",
+        kind: "date",
+        getValue: (record) => display(record.endDate),
+      },
+      { id: "workAddressID", label: "Work address", kind: "relation", getValue: (record) => ({ raw: record.workAddressID ?? record.address?.id, display: formatAddress(record.address) }) },
+      { id: "website", label: "Website", kind: "url", getValue: (record) => url(record.website) },
       { id: "employerContact", label: "Contact", kind: "text", getValue: (record) => display(record.employerContact) },
       {
         id: "employerContactNumber",
@@ -172,18 +287,26 @@ export const employmentTableAdapter: RecordAdapter<Employment> = {
       {
         id: "employerContactEmail",
         label: "Contact email",
-        kind: "text",
-        getValue: (record) => display(record.employerContactEmail),
+        kind: "email",
+        getValue: (record) => email(record.employerContactEmail),
       },
       { id: "notes", label: "Notes", kind: "text", getValue: (record) => display(record.notes) },
       { id: "updatedAt", label: "Last updated", kind: "date", getValue: (record) => display(record.updatedAt) },
       { id: "id", label: "Item ID", kind: "text", getValue: (record) => display(record.id) },
-      { id: "status", label: "Status", kind: "status", getValue: (record) => display(record.employmentStatus) },
+      { id: "status", label: "Status", kind: "status", sourceField: "employmentStatus", getValue: (record) => display(record.employmentStatus) },
     ] satisfies readonly RecordPropertyDefinition<Employment>[],
 };
 
-/** Shared adapter for expense transaction records. */
-export const transactionTableAdapter: RecordAdapter<ExpenseTransaction> = {
+/** Shared adapter for expense transaction records, resolving stored category IDs to labels. */
+export function createTransactionTableAdapter(
+  categories: readonly ExpenseCategory[] = [],
+  subcategories: readonly ExpenseSubcategory[] = [],
+  merchants: readonly Merchant[] = [],
+): RecordAdapter<ExpenseTransaction> {
+  const categoryNames = new Map(categories.map(({ id, name }) => [id, name]));
+  const subcategoryNames = new Map(subcategories.map(({ id, name }) => [id, name]));
+  const merchantNames = new Map(merchants.map(({ id, name }) => [id, name]));
+  return {
   toTableRecord: (record) => ({
     id: record.id,
     source: record,
@@ -200,33 +323,57 @@ export const transactionTableAdapter: RecordAdapter<ExpenseTransaction> = {
         id: "firstReceiptItem",
         label: "First receipt item",
         kind: "status",
-        getValue: (record) => display(record.firstReceiptItem),
+        getValue: (record) => ({ raw: record.firstReceiptItem, display: record.firstReceiptItem ? "Yes" : "No" }),
       },
-      { id: "category", label: "Category", kind: "number", getValue: (record) => display(record.categoryID) },
+      { id: "category", label: "Category", kind: "select", sourceField: "categoryID", getValue: (record) => ({ raw: record.categoryID, display: categoryNames.get(record.categoryID) ?? String(record.categoryID) }) },
       { id: "id", label: "Item ID", kind: "text", getValue: (record) => display(record.id) },
-      { id: "date", label: "Date", kind: "date", getValue: (record) => display(record.transactionDate) },
+      { id: "date", label: "Date", kind: "date", sourceField: "transactionDate", getValue: (record) => display(record.transactionDate) },
       {
-        id: "subcategoryID",
+        id: "subcategory",
         label: "Subcategory",
-        kind: "number",
-        getValue: (record) => display(record.subcategoryID),
+        kind: "select",
+        sourceField: "subcategoryID",
+        getValue: (record) => ({ raw: record.subcategoryID, display: record.subcategoryID == null ? "—" : subcategoryNames.get(record.subcategoryID) ?? String(record.subcategoryID) }),
       },
-      { id: "merchantCode", label: "Merchant code", kind: "text", getValue: (record) => display(record.merchantCode) },
+      { id: "merchantCode", label: "Merchant", kind: "select", sourceField: "merchantCode", getValue: (record) => ({ raw: record.merchantCode, display: record.merchantCode == null ? "—" : merchantNames.get(record.merchantCode) ?? record.merchantCode }) },
       { id: "quantity", label: "Quantity", kind: "number", getValue: (record) => display(record.quantity) },
       {
         id: "regularPrice",
         label: "Regular price",
         kind: "number",
-        getValue: (record) => display(record.regularPrice),
+        numberFormat: "currency",
+        getValue: (record) => currency(record.regularPrice),
       },
-      { id: "paidPrice", label: "Paid price", kind: "number", getValue: (record) => display(record.paidPrice) },
-      { id: "total", label: "Total", kind: "number", getValue: (record) => display(record.total) },
-      { id: "discount", label: "Discount", kind: "number", getValue: (record) => display(record.discount) },
+      {
+        id: "paidPrice",
+        label: "Paid price",
+        kind: "number",
+        numberFormat: "currency",
+        getValue: (record) => currency(record.paidPrice),
+      },
+      {
+        id: "total",
+        label: "Total",
+        kind: "number",
+        numberFormat: "currency",
+        getValue: (record) => currency(record.total),
+      },
+      {
+        id: "discount",
+        label: "Discount",
+        kind: "number",
+        numberFormat: "currency",
+        getValue: (record) => currency(record.discount),
+      },
       { id: "notes", label: "Notes", kind: "text", getValue: (record) => display(record.notes) },
       { id: "image", label: "Image", kind: "image", getValue: (record) => display(record.image) },
       { id: "updatedAt", label: "Last updated", kind: "date", getValue: (record) => display(record.updatedAt) },
     ] satisfies readonly RecordPropertyDefinition<ExpenseTransaction>[],
-};
+  };
+}
+
+/** Default adapter retained for MVP consumers that do not provide lookups. */
+export const transactionTableAdapter = createTransactionTableAdapter();
 
 /** Create the service adapter while retaining the existing logo lookup and preview behavior. */
 export function createServiceAccountTableAdapter(
@@ -247,27 +394,30 @@ export function createServiceAccountTableAdapter(
       [
         { id: "logo", label: "Logo", kind: "image", getValue: (record) => ({ display: renderLogo(record) }) },
         { id: "service", label: "Service", kind: "text", primary: true, getValue: (record) => display(record.service) },
+        { id: "status", label: "Status", kind: "status", getValue: (record) => display(record.status) },
         { id: "type", label: "Category", kind: "select", getValue: (record) => display(record.type || "Service") },
         { id: "id", label: "Item ID", kind: "number", getValue: (record) => display(record.id) },
-        { id: "group", label: "Group", kind: "text", getValue: (record) => display(record.expenseGroup) },
+        { id: "group", label: "Group", kind: "text", sourceField: "expenseGroup", getValue: (record) => display(record.expenseGroup) },
         { id: "logoKey", label: "Logo key", kind: "text", getValue: (record) => display(record.logoKey) },
         {
           id: "monthlyAmount",
           label: "Monthly amount",
           kind: "number",
-          getValue: (record) => display(record.monthlyAmount),
+          numberFormat: "currency",
+          getValue: (record) => currency(record.monthlyAmount),
         },
         {
           id: "interestRate",
           label: "Interest rate",
           kind: "number",
-          getValue: (record) => display(record.interestRate),
+          numberFormat: "percent",
+          getValue: (record) => percent(record.interestRate),
         },
-        { id: "apr", label: "APR", kind: "number", getValue: (record) => display(record.apr) },
+        { id: "apr", label: "APR", kind: "number", numberFormat: "percent", getValue: (record) => percent(record.apr) },
         { id: "due", label: "Due", kind: "text", getValue: (record) => display(record.due) },
         { id: "occurrence", label: "Occurrence", kind: "text", getValue: (record) => display(record.occurrence) },
         { id: "since", label: "Since", kind: "date", getValue: (record) => display(record.since) },
-        { id: "website", label: "Website", kind: "text", getValue: (record) => display(record.website) },
+        { id: "website", label: "Website", kind: "url", getValue: (record) => url(record.website) },
         { id: "notes", label: "Notes", kind: "text", getValue: (record) => display(record.notes) },
         { id: "notionPage", label: "Notion page", kind: "text", getValue: (record) => display(record.notionPage) },
         {

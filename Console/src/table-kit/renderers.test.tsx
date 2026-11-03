@@ -85,6 +85,18 @@ describe("Table Kit record renderers", () => {
     expect(screen.getByText("Service")).toBeInTheDocument();
   });
 
+  it("keeps the established three-property summary in the list view", () => {
+    const allProperties = Array.from({ length: 7 }, (_, index) => ({
+      id: `property-${index}`,
+      label: `Property ${index}`,
+      getValue: () => ({ display: `value-${index}` }),
+    }));
+    renderWithTheme(<RecordList records={records} properties={allProperties} />);
+
+    expect(screen.getByText("value-2")).toBeInTheDocument();
+    expect(screen.queryByText("value-3")).not.toBeInTheDocument();
+  });
+
   it("opens a Tamagui list item on single click without selecting it", async () => {
     const onExpand = vi.fn();
     const twoRecords = [records[0], { id: "2", source: { name: "Beta", kind: "Service" }, title: "Beta" }];
@@ -169,7 +181,7 @@ describe("Table Kit record renderers", () => {
     expect(screen.getByLabelText("Alpha image preview")).toBeInTheDocument();
   });
 
-  it("limits gallery cards to six visible property values", () => {
+  it("keeps the established six-property Table Kit gallery card density", () => {
     const galleryProperties = Array.from({ length: 8 }, (_, index) => ({
       id: `property-${index}`,
       label: `Property ${index}`,

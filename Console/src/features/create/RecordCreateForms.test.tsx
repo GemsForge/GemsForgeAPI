@@ -1,10 +1,11 @@
 import { act, fireEvent, render as rtlRender, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { GeoapifySearchClient } from "../addresses/GeoapifyAddressSearch";
-import { AddressCreateForm, EmploymentCreateForm } from "./RecordCreateForms";
+import { AddressCreateForm, EducationCreateForm, EmploymentCreateForm } from "./RecordCreateForms";
 import { TamaguiProvider } from "tamagui";
 import { tamaguiConfig } from "../../design-system";
 import type { Address } from "../../types";
+import dayjs from "dayjs";
 
 function render(ui: React.ReactElement) {
   return rtlRender(
@@ -14,12 +15,49 @@ function render(ui: React.ReactElement) {
   );
 }
 
+function selectCalendarDate(label: string, value: string) {
+  const target = dayjs(value);
+  fireEvent.click(screen.getByLabelText(label));
+  const monthOffset = target.startOf("month").diff(dayjs().startOf("month"), "month");
+  const navigationLabel = monthOffset < 0 ? "Previous month" : "Next month";
+  for (let month = 0; month < Math.abs(monthOffset); month += 1) {
+    fireEvent.click(screen.getByRole("button", { name: navigationLabel }));
+  }
+  fireEvent.click(screen.getByRole("button", { name: target.format("dddd, MMMM D, YYYY") }));
+}
+
+const invalidEmploymentStartDate = dayjs().startOf("month").add(2, "day").format("YYYY-MM-DD");
+const invalidEmploymentEndDate = dayjs().startOf("month").add(1, "day").format("YYYY-MM-DD");
+
 afterEach(() => {
   vi.useRealTimers();
   vi.restoreAllMocks();
 });
 
 describe("shared create form workflow", () => {
+  it("uses the Education editor's property controls in the new-record form", async () => {
+    const onCreate = vi.fn().mockResolvedValue(undefined);
+    render(<EducationCreateForm addresses={[]} onCreate={onCreate} onCancel={vi.fn()} />);
+
+    const properties = document.querySelector(".create-education-properties");
+    expect(properties).toHaveClass("record-fields", "education-fields");
+    expect(properties?.children).toHaveLength(14);
+    expect(screen.getByLabelText("ID *")).toHaveAttribute("type", "text");
+    expect(screen.getByRole("combobox", { name: "Status *" })).toHaveTextContent("Completed");
+    expect(screen.getByLabelText("Start date")).toHaveAttribute("aria-haspopup", "dialog");
+    expect(screen.getByLabelText("Website")).toHaveAttribute("type", "url");
+    expect(screen.getByLabelText("Notes").tagName).toBe("TEXTAREA");
+
+    fireEvent.change(screen.getByLabelText("ID *"), { target: { value: "EDU-101" } });
+    fireEvent.change(screen.getByLabelText("Institution *"), { target: { value: "Test Academy" } });
+    fireEvent.click(screen.getByRole("combobox", { name: "Type *" }));
+    fireEvent.keyDown(screen.getByRole("option", { name: "Elementary School" }), { key: "Enter" });
+    fireEvent.click(screen.getByRole("button", { name: "Create record" }));
+    await waitFor(() => expect(onCreate).toHaveBeenCalledWith(expect.objectContaining({
+      id: "EDU-101", educationType: "Elementary School", institutionName: "Test Academy", status: "Completed",
+    })));
+  });
+
   it("validates address location fields before submitting", async () => {
     const onCreate = vi.fn();
     render(<AddressCreateForm onCreate={onCreate} onCancel={vi.fn()} />);
@@ -68,12 +106,12 @@ describe("shared create form workflow", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: suggestion.properties.formatted }));
 
-    expect(screen.getByLabelText("Address line 1")).toHaveValue("1600 Pennsylvania Avenue NW");
+    expect(screen.getByLabelText("Address Line 1")).toHaveValue("1600 Pennsylvania Avenue NW");
     expect(screen.getByLabelText("City")).toHaveValue("Washington");
-    expect(screen.getByLabelText("State / region")).toHaveValue("DC");
-    expect(screen.getByLabelText("Postal code")).toHaveValue("20500");
+    expect(screen.getByLabelText("State / Region")).toHaveValue("DC");
+    expect(screen.getByLabelText("Postal Code")).toHaveValue("20500");
     expect(screen.getByLabelText("Country *")).toHaveValue("US");
-    expect(screen.getByLabelText("Address type *")).toHaveTextContent("Residence");
+    expect(screen.getByLabelText("Address Type *")).toHaveTextContent("Residence");
 
     vi.useRealTimers();
     fireEvent.click(screen.getByRole("button", { name: "Create record" }));
@@ -114,14 +152,18 @@ describe("shared create form workflow", () => {
     render(<AddressCreateForm onCreate={vi.fn().mockResolvedValue(undefined)} onCancel={vi.fn()} />);
 
     expect(screen.queryByLabelText("Stable address ID *")).not.toBeInTheDocument();
-    expect(screen.getByLabelText("Address type *")).toHaveAttribute("aria-haspopup", "listbox");
+    expect(screen.getByLabelText("Address Type *")).toHaveAttribute("aria-haspopup", "listbox");
+    expect(screen.getByText("Address Type *", { selector: ".g-field-label" })).toBeInTheDocument();
+    expect(screen.getByText("Address Line 1", { selector: ".g-field-label" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Address Line 1")).toBeInTheDocument();
+    expect(screen.getByLabelText("Address Line 2")).toBeInTheDocument();
     expect(screen.getByLabelText("Status *")).toHaveAttribute("aria-haspopup", "listbox");
     expect(screen.getByLabelText("City")).toHaveClass("create-form-control--short");
-    expect(screen.getByLabelText("State / region")).toHaveClass("create-form-control--short");
-    expect(screen.getByLabelText("Postal code")).toHaveClass("create-form-control--short");
-    expect(screen.getByLabelText("Start date")).toHaveAttribute("type", "date");
-    expect(screen.getByLabelText("Start date")).toHaveClass("create-form-control--short");
-    expect(screen.getByLabelText("End date")).toHaveClass("create-form-control--short");
+    expect(screen.getByLabelText("State / Region")).toHaveClass("create-form-control--short");
+    expect(screen.getByLabelText("Postal Code")).toHaveClass("create-form-control--short");
+    expect(screen.getByLabelText("Start Date")).toHaveAttribute("aria-haspopup", "dialog");
+    expect(screen.getByLabelText("Start Date")).toHaveClass("create-form-control--short");
+    expect(screen.getByLabelText("End Date")).toHaveClass("create-form-control--short");
     expect(screen.getByLabelText("Country *")).toHaveClass("create-form-control--medium");
     expect(screen.getByLabelText("Notes")).toHaveClass("create-form-control--long");
   });
@@ -163,9 +205,9 @@ describe("shared create form workflow", () => {
     expect(screen.getByLabelText("Website")).toHaveClass("create-form-control--medium");
     expect(screen.getByLabelText("Employer name *")).toHaveAttribute("placeholder", "Enter employer name…");
     expect(screen.getByLabelText("Website")).toHaveAttribute("placeholder", "Enter website…");
-    expect(screen.getByLabelText("Start date")).toHaveAttribute("type", "date");
+    expect(screen.getByLabelText("Start date")).toHaveAttribute("aria-haspopup", "dialog");
     expect(screen.getByLabelText("Start date")).toHaveClass("create-form-control--short");
-    expect(screen.getByLabelText("End date")).toHaveAttribute("type", "date");
+    expect(screen.getByLabelText("End date")).toHaveAttribute("aria-haspopup", "dialog");
     expect(screen.getByLabelText("End date")).toHaveClass("create-form-control--short");
     expect(screen.getByLabelText("Contact")).toHaveAttribute("type", "text");
     expect(screen.getByLabelText("Contact number")).toHaveAttribute("type", "tel");
@@ -195,8 +237,8 @@ describe("shared create form workflow", () => {
     fireEvent.change(screen.getByLabelText("Employer name *"), { target: { value: "Acme" } });
     fireEvent.change(screen.getByLabelText("Position title *"), { target: { value: "Engineer" } });
     fireEvent.change(screen.getByLabelText("Website"), { target: { value: "acme.example" } });
-    fireEvent.change(screen.getByLabelText("Start date"), { target: { value: "2025-02-01" } });
-    fireEvent.change(screen.getByLabelText("End date"), { target: { value: "2025-01-01" } });
+    selectCalendarDate("Start date", invalidEmploymentStartDate);
+    selectCalendarDate("End date", invalidEmploymentEndDate);
     fireEvent.change(screen.getByLabelText("Contact number"), { target: { value: "fdfafr" } });
     fireEvent.change(screen.getByLabelText("Contact email"), { target: { value: "not-an-email" } });
     fireEvent.click(screen.getByRole("button", { name: "Create record" }));
@@ -227,8 +269,8 @@ describe("shared create form workflow", () => {
     fireEvent.change(screen.getByLabelText("Website"), { target: { value: "acme.example" } });
     fireEvent.change(screen.getByLabelText("Contact number"), { target: { value: "+44 20 7946 0958" } });
     fireEvent.change(screen.getByLabelText("Contact email"), { target: { value: "not-an-email" } });
-    fireEvent.change(screen.getByLabelText("Start date"), { target: { value: "2025-02-01" } });
-    fireEvent.change(screen.getByLabelText("End date"), { target: { value: "2025-01-01" } });
+    selectCalendarDate("Start date", invalidEmploymentStartDate);
+    selectCalendarDate("End date", invalidEmploymentEndDate);
     fireEvent.click(screen.getByRole("button", { name: "Create record" }));
 
     expect(await screen.findByText("Enter a valid URL starting with http:// or https://.")).toBeInTheDocument();

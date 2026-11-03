@@ -5,6 +5,10 @@ visible label or a specific accessible name. Do not use color as the only
 status signal. Shared fields generate stable IDs when one is not supplied.
 
 Keyboard: the skip link targets Current screen; route changes move focus there.
+The schema-driven workspace keeps the table/view list, record collection, and
+record inspector as distinct named regions. Every schema field must retain its
+visible label and semantic control type; table-kit renderers must not replace a
+select, checkbox, date, or link with an unlabeled generic control.
 Keep a visible 3px focus outline. Controls have a minimum 44px height. Scrollable
 tables are named, keyboard-focusable regions with captions and column headers.
 Use native dialog focus trapping/restoration, a named heading, Escape dismissal,

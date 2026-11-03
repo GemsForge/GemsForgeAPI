@@ -63,6 +63,8 @@ export default defineConfig(({ mode }) => {
           "/service-logos",
           "/file-metadata",
           "/file-uploads",
+          "/record-presentations",
+          "/table-views",
           "/forgekeeper",
           "/gemhues",
           "/health",
