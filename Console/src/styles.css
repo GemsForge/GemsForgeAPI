@@ -891,7 +891,8 @@ dialog::backdrop {
   font-size: 0.84rem;
 }
 .create-form-control.gem-field-control--compact {
-  min-height: 2.25rem !important;
+  min-height: 2rem !important;
+  padding: 0 0.25rem !important;
 }
 .create-form-field.gem-field-density--compact,
 .gem-field-display.gem-field-density--compact {
@@ -1264,7 +1265,7 @@ dialog::backdrop {
 @media (hover: none) { .wireframe-cover-actions { opacity: 1; pointer-events: auto; transform: none; } }
 @media (max-width: 760px) { .wireframe-demo-inspector > .wireframe-cover { width: calc(100% + 2.6rem); max-width: none; margin-left: -1.3rem; } }
 .demo-secondary-button { margin: .6rem 0 1rem; padding: .5rem .7rem; border: 1px solid #dfe6e3; border-radius: .5rem; background: white; color: #52636a; }
-.wireframe-demo-inspector dl { display: grid; gap: .65rem; }
+.wireframe-demo-inspector dl { display: grid; gap: .5rem; }
 .wireframe-demo-inspector dl > div { display: grid; grid-template-columns: minmax(7rem, 34%) minmax(0, 1fr); gap: .8rem; align-items: baseline; }
 .wireframe-demo-inspector dt { color: #68777c; }
 .wireframe-demo-inspector dd { min-width: 0; margin: 0; color: #233c42; overflow-wrap: anywhere; }
