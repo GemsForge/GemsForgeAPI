@@ -1107,6 +1107,7 @@ dialog::backdrop {
 .demo-sidebar-settings .demo-trash { width: 100%; }
 .demo-sidebar-settings .demo-settings-panel { top: auto; right: auto; bottom: calc(100% + .5rem); left: 0; }
 .wireframe-demo-main { min-width: 0; padding: 2.2rem 1.8rem; }
+.wireframe-standalone .wireframe-demo-main { font-size: 0.875rem; }
 .demo-collection-header, .demo-toolbar, .demo-inspector-heading { display: flex; align-items: center; gap: .8rem; }
 .demo-collection-header { justify-content: space-between; margin-bottom: 1.5rem; }
 .demo-collection-title { display: flex; align-items: center; gap: 1rem; }
@@ -1207,6 +1208,7 @@ dialog::backdrop {
 .demo-place-image { display: block; }
 .demo-place-copy { display: grid; gap: .3rem; padding: .7rem .8rem; }
 .demo-place-copy strong { font-family: inherit; font-size: 1rem; font-weight: 700; }
+.wireframe-standalone .demo-place-copy strong { font-size: inherit; }
 .demo-place-copy small { color: #738187; font-size: .78rem; }
 .demo-place-copy em { justify-self: start; padding: .25rem .45rem; border-radius: 999px; background: #e8f1ef; color: #39736d; font-size: .68rem; font-style: normal; }
 .demo-place-properties { display: grid; gap: .2rem; margin-top: .1rem; }

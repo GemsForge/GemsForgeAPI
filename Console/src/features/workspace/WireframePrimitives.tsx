@@ -37,6 +37,8 @@ export const WireframeIcon = styled(YStack, {
 
 export const WireframeHeading = styled(GemSectionHeading, {
   color: "$wireframeHeading",
+  fontSize: "$5",
+  lineHeight: "$5",
 });
 
 export const WireframeDescription = styled(GemBody, {
