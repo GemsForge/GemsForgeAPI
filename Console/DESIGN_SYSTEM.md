@@ -145,8 +145,8 @@ flowchart LR
   to available space; card content scrolls or truncates within its region.
 - At 1100px and below, navigation opens in a drawer and the inspector overlays
   the collection. At 640px and below, the inspector becomes a bottom sheet,
-  list properties stack below each title, and view controls keep touch-sized
-  targets.
+  list properties stack below each title, view modes move into a touch-sized
+  dropdown, and the remaining collection actions keep room in the toolbar.
 - The selected record uses the same quiet mint surface in list, table, and
   gallery views. Property labels and values share a compact readable size.
 

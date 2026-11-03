@@ -1,5 +1,5 @@
 import React, { cloneElement, isValidElement, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { ChevronLeft, Expand, GalleryHorizontal, GripVertical, List, Menu, Table2, X } from "lucide-react";
+import { ChevronDown, ChevronLeft, Expand, GalleryHorizontal, GripVertical, List, Menu as MenuIcon, Table2, X } from "lucide-react";
 import { AgGridReact } from "ag-grid-react";
 import { themeQuartz, type ColDef, type ColDefField, type ICellRendererParams } from "ag-grid-community";
 import { useLiveSchemaQuery } from "../../data/workflowQueries";
@@ -18,7 +18,7 @@ import { GemTextField } from "@gemsforge/ui";
 import { GemButton } from "@gemsforge/ui";
 import { GemStatusPill } from "@gemsforge/ui";
 import { GemSectionHeading } from "@gemsforge/ui";
-import { SizableText, Theme } from "tamagui";
+import { Button, Menu as DropdownMenu, SizableText, Theme } from "tamagui";
 import { inferRecordPropertyKind, normalizeStorageType } from "../../table-kit/storageTypes";
 import { formatAddress } from "../addresses/formatAddress";
 import { inferWireframePropertyMetadata, WIREFRAME_PROPERTY_TYPES } from "./propertyMetadata";
@@ -86,6 +86,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
   const recordPageID = location.pathname.match(/\/record\/([^/]+)$/)?.[1];
   const tableIconStorageKey = `gemsforge:table-icon:${config.tableName ?? config.title}`;
   const [view, setView] = useState<"table" | "list" | "gallery">("gallery");
+  const [mobileViewMenuOpen, setMobileViewMenuOpen] = useState(false);
   const [galleryCardSize, setGalleryCardSize] = useState<GalleryCardSize>("small");
   const [galleryFillMedia, setGalleryFillMedia] = useState(true);
   const [galleryImageSelection, setGalleryImageSelection] = useState("__canvas");
@@ -425,7 +426,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
         aria-controls="wireframe-navigation"
         onClick={() => setMobileNavigationOpen((open) => !open)}
       >
-        {mobileNavigationOpen ? <X size={17} aria-hidden="true" /> : <Menu size={17} aria-hidden="true" />}
+        {mobileNavigationOpen ? <X size={17} aria-hidden="true" /> : <MenuIcon size={17} aria-hidden="true" />}
         <span>{mobileNavigationOpen ? "Close" : "Navigation"}</span>
       </button>
       <div
@@ -501,6 +502,44 @@ export function WireframeCollectionView<T extends WireframeRecord>({
               </button>
             ))}
           </div>
+          <DropdownMenu
+            open={mobileViewMenuOpen}
+            onOpenChange={setMobileViewMenuOpen}
+            placement="bottom-start"
+            modal={false}
+          >
+            <DropdownMenu.Trigger asChild>
+              <Button
+                type="button"
+                size="xs"
+                className="wireframe-mobile-view-trigger"
+                aria-label={`Current view: ${view[0].toUpperCase() + view.slice(1)}`}
+              >
+                {view === "table" ? <Table2 size={16} aria-hidden="true" /> : view === "list" ? <List size={16} aria-hidden="true" /> : <GalleryHorizontal size={16} aria-hidden="true" />}
+                <span>{view[0].toUpperCase() + view.slice(1)}</span>
+                <ChevronDown size={14} aria-hidden="true" />
+              </Button>
+            </DropdownMenu.Trigger>
+            <DropdownMenu.Portal zIndex={20}>
+              <DropdownMenu.Content className="record-utilities-menu wireframe-mobile-view-menu" aria-label="Choose collection view" loop>
+                <DropdownMenu.Label>View as</DropdownMenu.Label>
+                <DropdownMenu.RadioGroup
+                  value={view}
+                  onValueChange={(value) => {
+                    setView(value as typeof view);
+                    setMobileViewMenuOpen(false);
+                  }}
+                >
+                  {(["table", "list", "gallery"] as const).map((mode) => (
+                    <DropdownMenu.RadioItem key={mode} value={mode} textValue={`${mode} view`}>
+                      <DropdownMenu.ItemIndicator />
+                      <DropdownMenu.ItemTitle>{mode[0].toUpperCase() + mode.slice(1)}</DropdownMenu.ItemTitle>
+                    </DropdownMenu.RadioItem>
+                  ))}
+                </DropdownMenu.RadioGroup>
+              </DropdownMenu.Content>
+            </DropdownMenu.Portal>
+          </DropdownMenu>
           <RecordUtilities label={config.title} search={query} onSearch={(value) => { setQuery(value); resetPage(); }} sort={sort} onSort={(value) => { setSort(value); resetPage(); }} direction={direction} onDirection={() => setDirection((value) => value === "asc" ? "desc" : "asc")} filter={filter} onFilter={(value) => { setFilter(value); resetPage(); }} sortOptions={[{ value: "title", label: "Name" }, { value: "status", label: "Status" }, { value: "meta", label: "Metadata" }]} filterOptions={[...new Set(config.records.map((record) => config.cardStatus(record)))]} totalCount={config.records.length} visibleCount={matchingRecords.length} compact />
           <TableSettingsMenu
             viewId={view}

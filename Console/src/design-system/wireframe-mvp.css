@@ -115,6 +115,10 @@
   box-shadow: 0 2px 8px rgb(25 47 49 / 4%);
 }
 
+.wireframe-demo.wireframe-standalone .wireframe-mobile-view-trigger {
+  display: none !important;
+}
+
 .wireframe-demo.wireframe-standalone .demo-view-tabs {
   gap: 0.15rem;
   padding: 0.2rem;
@@ -520,21 +524,60 @@
   .wireframe-demo.wireframe-standalone .demo-toolbar {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "views settings"
+      "queries queries"
+      "search search"
+      "actions actions";
     gap: 0.5rem;
     margin-bottom: 0.85rem;
     padding: 0.5rem;
   }
 
   .wireframe-demo.wireframe-standalone .demo-view-tabs {
-    grid-column: 1 / -1;
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    display: none;
   }
 
-  .wireframe-demo.wireframe-standalone .demo-view-tabs button {
+  .wireframe-demo.wireframe-standalone .wireframe-mobile-view-trigger {
+    display: flex !important;
+    grid-area: views;
+    width: 8rem;
+    max-width: 100%;
     min-width: 0;
     min-height: 44px;
-    padding: 0.35rem;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.55rem;
+    padding: 0.45rem 0.6rem;
+    border: 1px solid var(--wireframe-border);
+    border-radius: 0.5rem;
+    color: var(--gem-wireframe-ink);
+    background: var(--gem-wireframe-surface);
+  }
+
+  .wireframe-demo.wireframe-standalone .wireframe-mobile-view-trigger span {
+    flex: 1;
+    text-align: left;
+  }
+
+  .wireframe-demo.wireframe-standalone .demo-toolbar > .table-kit-settings {
+    grid-area: settings;
+    justify-self: end;
+  }
+
+  .wireframe-demo.wireframe-standalone .demo-toolbar .record-utilities-query-controls {
+    grid-area: queries;
+    justify-content: flex-start;
+    gap: 0.5rem;
+  }
+
+  .wireframe-demo.wireframe-standalone .demo-toolbar .record-utilities-search-controls {
+    grid-area: search;
+  }
+
+  .wireframe-demo.wireframe-standalone .demo-toolbar .table-kit-actions {
+    grid-area: actions;
+    justify-self: end;
   }
 
   .wireframe-demo.wireframe-standalone .demo-results.demo-gallery {
