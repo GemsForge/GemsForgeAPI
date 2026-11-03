@@ -890,6 +890,16 @@ dialog::backdrop {
   color: var(--ink);
   font-size: 0.84rem;
 }
+.create-form-control.gem-field-control--compact {
+  min-height: 2.25rem !important;
+}
+.create-form-field.gem-field-density--compact,
+.gem-field-display.gem-field-density--compact {
+  margin-bottom: 0;
+}
+@media (hover: none) {
+  .create-form-control.gem-field-control--compact { min-height: 2.75rem !important; }
+}
 .g-status-select-trigger {
   padding: 0.5rem 0.75rem;
 }

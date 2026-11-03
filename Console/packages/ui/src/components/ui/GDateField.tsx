@@ -6,7 +6,7 @@ import type { GemTextFieldWidth } from "./GemTextField";
 import type { GemDateFormat } from "../../presentationTypes";
 import { GSwitch } from "./GSwitch";
 import { GemFieldDisplayValue } from "./fieldPrimitives";
-import type { GemFieldTextRole } from "./fieldPrimitives";
+import type { GemFieldDensity, GemFieldTextRole } from "./fieldPrimitives";
 import { GemCaption } from "./GemTypography";
 
 dayjs.extend(customParseFormat);
@@ -23,6 +23,7 @@ export interface GDateFieldProps extends Omit<
   editing?: boolean;
   displayValue?: string;
   valueTextRole?: GemFieldTextRole;
+  density?: GemFieldDensity;
   onDisplayClick?: () => void;
   format?: string;
   error?: string;
@@ -51,6 +52,7 @@ export function GDateField({
   editing = true,
   displayValue,
   valueTextRole = "body",
+  density = "standard",
   onDisplayClick,
   format = "YYYY-MM-DD",
   error,
@@ -100,7 +102,7 @@ export function GDateField({
 
   if (!editing) {
     return (
-      <YStack className="gem-field-display" gap="$1">
+      <YStack className={`gem-field-display${density === "compact" ? " gem-field-density--compact" : ""}`} gap="$1">
         <Label
           id={`${id}-display-label`}
           className={showLabel ? "g-field-label" : "sr-only"}
@@ -123,7 +125,7 @@ export function GDateField({
   }
 
   return (
-    <YStack className="create-form-field" gap="$1">
+    <YStack className={`create-form-field${density === "compact" ? " gem-field-density--compact" : ""}`} gap="$1">
       {showLabel ? (
         <Label
           className="g-field-label"
@@ -141,7 +143,7 @@ export function GDateField({
         <Popover.Trigger asChild>
           <Button
             id={id}
-            className={`create-form-control create-form-control--${width}`}
+            className={`create-form-control create-form-control--${width}${density === "compact" ? " gem-field-control--compact" : ""}`}
             data-wireframe-field={wireframe ? "true" : undefined}
             aria-invalid={Boolean(error)}
             aria-describedby={error ? errorID : undefined}
@@ -151,6 +153,8 @@ export function GDateField({
             onBlur={onBlur}
             justifyContent="space-between"
             width="100%"
+            paddingVertical={density === "compact" ? "$1" : undefined}
+            paddingHorizontal={density === "compact" ? "$2" : undefined}
           >
             {valueTextRole === "caption" ? <GemCaption>{displayDateText}</GemCaption> : displayDateText}
           </Button>

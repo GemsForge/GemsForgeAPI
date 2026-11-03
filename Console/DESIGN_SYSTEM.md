@@ -77,6 +77,8 @@ import { GemCaption, GemPrimitiveField } from "@gemsforge/ui";
 
 Keep inspector sizing in these semantic components. The inspector layout may set
 color and wrapping, but should not assign separate font sizes to labels and values.
+Use `density="compact"` for inspector controls: it sets a 36px desktop minimum height,
+removes field margins, and retains a 44px minimum height on touch devices.
 
 Keep heading levels in document order. A visual size does not justify skipping
 the semantic heading level.

@@ -17,6 +17,7 @@ export const GemFieldLabel = styled(Label, {
 });
 
 export type GemFieldTextRole = "body" | "caption";
+export type GemFieldDensity = "standard" | "compact";
 
 const gemFieldDisplayStyles = {
   width: "100%",
@@ -102,6 +103,13 @@ const fieldControlStyles = {
     borderColor: "$fieldFocus",
   },
   variants: {
+    fieldDensity: {
+      standard: {},
+      compact: {
+        paddingVertical: "$1",
+        paddingHorizontal: "$2",
+      },
+    },
     fieldWidth: {
       short: { maxWidth: "$fieldShort" },
       medium: { maxWidth: "$fieldMedium" },

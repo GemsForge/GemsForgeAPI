@@ -4,7 +4,7 @@ import type { GemTextFieldWidth } from "./GemTextField";
 import type { GemColorToken } from "../../presentationTypes";
 import type { GemPrimitiveType } from "./primitiveFieldContracts";
 import { GemFieldDisplayValue } from "./fieldPrimitives";
-import type { GemFieldTextRole } from "./fieldPrimitives";
+import type { GemFieldDensity, GemFieldTextRole } from "./fieldPrimitives";
 
 const statusPillColors: Record<string, { backgroundColor: string; color: string }> = {
   mint: { backgroundColor: "#78d1bd", color: "#06231e" },
@@ -40,6 +40,7 @@ export interface GSelectFieldProps extends Omit<
   editing?: boolean;
   displayValue?: ReactNode;
   valueTextRole?: GemFieldTextRole;
+  density?: GemFieldDensity;
   onDisplayClick?: () => void;
   value?: string;
   options: GSelectOption[];
@@ -60,6 +61,7 @@ export function GSelectField({
   editing = true,
   displayValue,
   valueTextRole = "body",
+  density = "standard",
   onDisplayClick,
   value = "",
   options,
@@ -90,7 +92,7 @@ export function GSelectField({
 
   if (!editing) {
     return (
-      <YStack className="gem-field-display" gap="$1">
+      <YStack className={`gem-field-display${density === "compact" ? " gem-field-density--compact" : ""}`} gap="$1">
         <Label
           id={`${id}-display-label`}
           className={showLabel ? "g-field-label" : "sr-only"}
@@ -119,7 +121,10 @@ export function GSelectField({
   }
 
   return (
-    <YStack className={`create-form-field${containerClassName ? ` ${containerClassName}` : ""}`} gap="$1">
+    <YStack
+      className={`create-form-field${containerClassName ? ` ${containerClassName}` : ""}${density === "compact" ? " gem-field-density--compact" : ""}`}
+      gap="$1"
+    >
       {showLabel ? (
         <Label
           className="g-field-label"
@@ -141,12 +146,15 @@ export function GSelectField({
             "create-form-control",
             `create-form-control--${width}`,
             wireframe ? "gem-field-control--wireframe" : "",
+            density === "compact" ? "gem-field-control--compact" : "",
             primitive === "status" ? "g-status-select-trigger" : "",
             triggerClassName,
           ]
             .filter(Boolean)
             .join(" ")}
           width="100%"
+          paddingVertical={density === "compact" ? "$1" : undefined}
+          paddingHorizontal={density === "compact" ? "$2" : undefined}
           data-wireframe-field={wireframe ? "true" : undefined}
           aria-invalid={Boolean(error)}
           aria-describedby={error ? errorID : undefined}

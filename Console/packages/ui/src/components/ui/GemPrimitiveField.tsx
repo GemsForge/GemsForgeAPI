@@ -8,7 +8,7 @@ import { GemStatusPill } from "./GemStatusPill";
 import type { GemFieldWidth } from "./GemField";
 import type { GemPrimitiveType } from "./primitiveFieldContracts";
 import type { GemColorToken, GemDateFormat, GemNumberFormat, GemSelectOption } from "../../presentationTypes";
-import type { GemFieldTextRole } from "./fieldPrimitives";
+import type { GemFieldDensity, GemFieldTextRole } from "./fieldPrimitives";
 
 export interface GemPrimitiveFieldProps {
   primitive: GemPrimitiveType;
@@ -18,6 +18,7 @@ export interface GemPrimitiveFieldProps {
   editing?: boolean;
   displayValue?: ReactNode;
   valueTextRole?: GemFieldTextRole;
+  density?: GemFieldDensity;
   onDisplayClick?: () => void;
   onChange?: (value: string | number | boolean | null) => void;
   onBlur?: () => void;
@@ -72,6 +73,7 @@ export function GemPrimitiveField({
   editing = true,
   displayValue,
   valueTextRole = "body",
+  density = "standard",
   onDisplayClick,
   onChange,
   onBlur,
@@ -139,6 +141,7 @@ export function GemPrimitiveField({
           ) : undefined)
         }
         valueTextRole={valueTextRole}
+        density={density}
         onDisplayClick={onDisplayClick}
         onChange={emit}
         onBlur={onBlur}
@@ -158,6 +161,7 @@ export function GemPrimitiveField({
         editing={false}
         displayValue={displayValue ?? String(value ?? "—")}
         valueTextRole={valueTextRole}
+        density={density}
         primitive="text"
         type="text"
         width={width}
@@ -173,6 +177,7 @@ export function GemPrimitiveField({
         editing={editing}
         displayValue={typeof displayValue === "string" ? displayValue : undefined}
         valueTextRole={valueTextRole}
+        density={density}
         onDisplayClick={onDisplayClick}
         format="YYYY-MM-DD"
         displayFormat={_dateFormat}
@@ -219,6 +224,7 @@ export function GemPrimitiveField({
       editing={editing}
       displayValue={displayValue}
       valueTextRole={valueTextRole}
+      density={density}
       onDisplayClick={onDisplayClick}
       primitive={
         primitive === "number" || primitive === "url" || primitive === "email" || primitive === "phone"
