@@ -37,18 +37,18 @@ export const WireframeIcon = styled(YStack, {
 
 export const WireframeHeading = styled(GemSectionHeading, {
   color: "$wireframeHeading",
-  fontSize: "$5",
-  lineHeight: "$5",
+  fontSize: "$4",
+  lineHeight: "$4",
 });
 
 export const WireframeDescription = styled(GemBody, {
   color: "$wireframeMuted",
-  fontSize: "$2",
-  lineHeight: "$2",
+  fontSize: "$1",
+  lineHeight: "$1",
 });
 
 export const WireframeCount = styled(GemCaption, {
   color: "$wireframeMuted",
-  fontSize: "$2",
-  lineHeight: "$2",
+  fontSize: "$1",
+  lineHeight: "$1",
 });
