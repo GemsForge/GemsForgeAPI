@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { TamaguiProvider } from "tamagui";
 import { describe, expect, it } from "vitest";
-import { tamaguiConfig } from "../../design-system";
+import { tamaguiConfig } from "@gemsforge/ui";
 import { WireframePropertyEditor } from "./WireframePropertyEditor";
 
 describe("WireframePropertyEditor metadata", () => {

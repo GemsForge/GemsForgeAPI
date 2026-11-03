@@ -16,7 +16,7 @@ import { useTableSelection, type TableSelectionScope } from "./selection";
 import { TablePropertyControls } from "./PropertyControls";
 import { TableSettingsMenu } from "./TableSettings";
 import { NewRecordUtility } from "./NewRecordUtility";
-import { GemButton } from "../components/ui";
+import { GemButton } from "@gemsforge/ui";
 
 function Root<Row>({
   rows,

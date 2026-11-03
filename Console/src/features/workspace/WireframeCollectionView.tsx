@@ -13,10 +13,11 @@ import { RecordList, Table, TableSettingsMenu, type RecordPropertyDefinition, ty
 import { RecordUtilities } from "../../components/RecordUtilities";
 import { type GalleryCardSize } from "../../table-kit";
 import { useLocation, useNavigate } from "react-router-dom";
-import { GSelectField } from "../../components/ui/GSelectField";
-import { GemTextField } from "../../components/ui/GemTextField";
-import { GemButton } from "../../components/ui/GemButton";
-import { GemStatusPill } from "../../components/ui/GemStatusPill";
+import { GSelectField } from "@gemsforge/ui";
+import { GemTextField } from "@gemsforge/ui";
+import { GemButton } from "@gemsforge/ui";
+import { GemStatusPill } from "@gemsforge/ui";
+import { GemSectionHeading } from "@gemsforge/ui";
 import { SizableText, Theme } from "tamagui";
 import { inferRecordPropertyKind, normalizeStorageType } from "../../table-kit/storageTypes";
 import { formatAddress } from "../addresses/formatAddress";
@@ -337,7 +338,6 @@ export function WireframeCollectionView<T extends WireframeRecord>({
   });
   const visiblePropertyIds = propertyConfiguration.visibleIds;
   const imagePropertyOptions = propertyOptions.filter((property) => isImageProperty(property.id, (config.records[0] as Record<string, unknown> | undefined)?.[property.id]) || property.id === "image");
-  const galleryImageProperty = imagePropertyOptions[0]?.id ?? "";
   const galleryImageOptions = useMemo(
     () => [
       { value: "__canvas", label: "Canvas fallback" },
@@ -419,11 +419,11 @@ export function WireframeCollectionView<T extends WireframeRecord>({
           onClose={closeInspector}
           cover={<WireframeCover recordKey={selected.id} value={selectedCover} onChange={(cover) => persistCover(selected, cover)} onUpload={(file) => uploadCover(selected, file)} />}
         >
-          <button
-            type="button"
+          <div
             className="wireframe-inspector-resizer"
             aria-label="Resize record inspector"
             role="separator"
+            tabIndex={0}
             aria-orientation="vertical"
             aria-valuemin={280}
             aria-valuemax={520}
@@ -591,9 +591,16 @@ export function WireframeCollectionView<T extends WireframeRecord>({
           </div>
           <WireframeCover recordKey={selected.id} value={selectedCover} onChange={(cover) => persistCover(selected, cover)} onUpload={(file) => uploadCover(selected, file)} />
           <div className="wireframe-inspector-record-title">
-            <h2 id="wireframe-inspector-title">{config.cardTitle(selected)}</h2>
+            <GemSectionHeading
+              id="wireframe-inspector-title"
+              fontSize="$4"
+              lineHeight="$4"
+              color="$wireframeHeading"
+            >
+              {config.cardTitle(selected)}
+            </GemSectionHeading>
           </div>
-          {renderInspector(config.inspector(selected, schemaProperties), openPropertyDetails)}
+          {renderInspector(config.inspector(selected, schemaProperties), openPropertyDetails, propertyIcons)}
         </aside>
       ) : null}
       {propertyDetails ? (

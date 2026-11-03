@@ -1,16 +1,20 @@
 import dayjs, { type Dayjs } from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat";
-import { useEffect, useMemo, useRef, useState, type ComponentProps } from "react";
+import { useEffect, useId, useMemo, useRef, useState, type ComponentProps } from "react";
 import { Button, Input, Label, Popover, SizableText, XStack, YStack } from "tamagui";
 import type { GemTextFieldWidth } from "./GemTextField";
-import type { RecordDateFormat } from "../../table-kit/recordContracts";
+import type { GemDateFormat } from "../../presentationTypes";
 import { GSwitch } from "./GSwitch";
+import { GemFieldDisplayValue } from "./fieldPrimitives";
 
 dayjs.extend(customParseFormat);
 const calendarDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 /** Props for the standard GemsForge calendar picker. */
-export interface GDateFieldProps extends Omit<ComponentProps<typeof Input>, "value" | "defaultValue" | "onChange" | "onBlur"> {
+export interface GDateFieldProps extends Omit<
+  ComponentProps<typeof Input>,
+  "value" | "defaultValue" | "onChange" | "onBlur"
+> {
   label: string;
   showLabel?: boolean;
   value?: string;
@@ -23,9 +27,9 @@ export interface GDateFieldProps extends Omit<ComponentProps<typeof Input>, "val
   width?: GemTextFieldWidth;
   onBlur?: () => void;
   onChange?: (value: string) => void;
-  displayFormat?: RecordDateFormat;
+  displayFormat?: GemDateFormat;
   includeTime?: boolean;
-  onDateConfigChange?: (config: { displayFormat: RecordDateFormat; includeTime: boolean }) => void;
+  onDateConfigChange?: (config: { displayFormat: GemDateFormat; includeTime: boolean }) => void;
 }
 
 function parseDate(value: string | undefined, format: string): Dayjs | null {
@@ -55,14 +59,14 @@ export function GDateField({
   const selectedDate = parseDate(value, format);
   const [open, setOpen] = useState(false);
   const [formatMenuOpen, setFormatMenuOpen] = useState(false);
-  const [selectedFormat, setSelectedFormat] = useState<RecordDateFormat>(displayFormat);
+  const [selectedFormat, setSelectedFormat] = useState<GemDateFormat>(displayFormat);
   const [selectedIncludeTime, setSelectedIncludeTime] = useState(includeTime);
   const previousDisplayFormat = useRef(displayFormat);
   const previousIncludeTime = useRef(includeTime);
   const [visibleMonth, setVisibleMonth] = useState(() => selectedDate ?? dayjs());
-  const id = `g-date-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+  const id = `g-date-${useId()}-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
   const errorID = `${id}-error`;
-  const formatLabels: Record<RecordDateFormat, string> = {
+  const formatLabels: Record<GemDateFormat, string> = {
     iso: "Year/Month/Day",
     local: "Full date",
     relative: "Relative",
@@ -87,19 +91,24 @@ export function GDateField({
   if (!editing) {
     return (
       <YStack className="gem-field-display" gap="$1">
-        {showLabel ? (
-          <Label className="g-field-label" color="$gemGold" fontSize="$2" fontWeight="800" textTransform="uppercase">
-            {label}
-          </Label>
-        ) : null}
-        <button type="button" className="gem-field-display-value" onClick={onDisplayClick}>
+        <Label
+          id={`${id}-display-label`}
+          className={showLabel ? "g-field-label" : "sr-only"}
+          color="$gemGold"
+          fontSize="$2"
+          fontWeight="800"
+          textTransform="uppercase"
+        >
+          {label}
+        </Label>
+        <GemFieldDisplayValue aria-describedby={`${id}-display-label`} onClick={onDisplayClick}>
           {displayValue ??
             (selectedDate
               ? selectedDate.format(
                   selectedFormat === "local" ? "MMM D, YYYY" : selectedFormat === "relative" ? "MMM D" : format,
                 )
               : "—")}
-        </button>
+        </GemFieldDisplayValue>
       </YStack>
     );
   }
@@ -196,7 +205,7 @@ export function GDateField({
                   </Popover.Trigger>
                   <Popover.Content className="gem-date-format-popover" padding="$2" borderWidth={1}>
                     <YStack>
-                      {(["local", "iso", "relative"] as RecordDateFormat[]).map((option) => (
+                      {(["local", "iso", "relative"] as GemDateFormat[]).map((option) => (
                         <Button
                           key={option}
                           size="sm"

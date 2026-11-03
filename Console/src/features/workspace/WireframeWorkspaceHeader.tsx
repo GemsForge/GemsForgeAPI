@@ -1,4 +1,4 @@
-import { GemLogo } from "../../components/ui/GemLogo";
+import { GemLogo } from "@gemsforge/ui";
 
 export function WireframeWorkspaceHeader({ compact = false }: { compact?: boolean }) {
   return (

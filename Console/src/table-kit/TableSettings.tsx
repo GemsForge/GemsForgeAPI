@@ -5,6 +5,7 @@ import type { GalleryCardSize } from "./GalleryViewControls";
 import type { TablePropertyConfigurationState, TablePropertyOption } from "./configuration";
 import { TablePropertyControls } from "./PropertyControls";
 import type { TableViewId } from "./types";
+import { GemButton } from "@gemsforge/ui";
 
 export interface TableSettingsMenuProps {
   viewId: TableViewId;
@@ -126,9 +127,9 @@ export function TableSettingsMenu({
           }}
         >
           <div className="table-kit-settings-heading">
-            {panel !== "root" && <Button type="button" size="$2" chromeless aria-label="Back to view settings" onClick={() => setPanel("root")}><ArrowLeft size={18} aria-hidden="true" /></Button>}
+            {panel !== "root" && <GemButton size="xs" variant="quiet" tone="secondary" aria-label="Back to view settings" onClick={() => setPanel("root")}><ArrowLeft size={18} aria-hidden="true" /></GemButton>}
             <h2>{title}</h2>
-            <Button type="button" size="$2" chromeless aria-label="Close view settings" onClick={close}>×</Button>
+            <GemButton size="xs" variant="quiet" tone="secondary" aria-label="Close view settings" onClick={close}>×</GemButton>
           </div>
           {panel === "root" ? (
             <>

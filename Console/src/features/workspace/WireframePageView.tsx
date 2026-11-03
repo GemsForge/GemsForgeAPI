@@ -15,15 +15,15 @@ export function WireframePageView({ title, description, recordCount, tableIcon, 
     <WireframeMain asChild>
       <main className="wireframe-demo-main" aria-labelledby="wireframe-page-title">
         <WireframeHeader asChild>
-          <header>
-            <WireframeTitleGroup>
+          <header className="wireframe-page-header">
+            <WireframeTitleGroup className="wireframe-page-title-group">
               <WireframeIcon>{tableIcon ?? <Text>✦</Text>}</WireframeIcon>
               <YStack minWidth={0}>
                 <WireframeHeading id="wireframe-page-title">{title}</WireframeHeading>
-                <WireframeDescription>{description}</WireframeDescription>
+                <WireframeDescription className="wireframe-page-description">{description}</WireframeDescription>
               </YStack>
             </WireframeTitleGroup>
-            <XStack alignItems="center" gap="$wireframeCard">
+            <XStack className="wireframe-page-count-group" alignItems="center" gap="$wireframeCard">
               <WireframeCount>{recordCount} records</WireframeCount>
             </XStack>
           </header>

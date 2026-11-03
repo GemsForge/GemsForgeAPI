@@ -4,7 +4,7 @@ import { TamaguiProvider } from "tamagui";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { api } from "../../api";
 import { useAddressesQuery } from "../../data/lifeQueries";
-import { tamaguiConfig } from "../../design-system";
+import { tamaguiConfig } from "@gemsforge/ui";
 import { AddressesView } from "./AddressesView";
 import type { Address } from "../../types";
 

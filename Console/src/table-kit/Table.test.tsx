@@ -2,7 +2,7 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import { useState, type ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { TamaguiProvider } from "tamagui";
-import { tamaguiConfig } from "../design-system/tamagui.config";
+import { tamaguiConfig } from "@gemsforge/ui";
 import { CreateFormFrame } from "../components/forms/CreateForm";
 import { Table, useTableContext } from "./index";
 

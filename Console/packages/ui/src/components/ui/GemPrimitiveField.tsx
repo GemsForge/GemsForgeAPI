@@ -7,12 +7,7 @@ import { GSelectField } from "./GSelectField";
 import { GemStatusPill } from "./GemStatusPill";
 import type { GemFieldWidth } from "./GemField";
 import type { GemPrimitiveType } from "./primitiveFieldContracts";
-import type {
-  RecordColorToken,
-  RecordDateFormat,
-  RecordNumberFormat,
-  RecordSelectOption,
-} from "../../table-kit/recordContracts";
+import type { GemColorToken, GemDateFormat, GemNumberFormat, GemSelectOption } from "../../presentationTypes";
 
 export interface GemPrimitiveFieldProps {
   primitive: GemPrimitiveType;
@@ -26,12 +21,12 @@ export interface GemPrimitiveFieldProps {
   onBlur?: () => void;
   onSave?: (value: string | number | boolean | null) => Promise<void> | void;
   onMediaChange?: (file: File | null) => void;
-  options?: RecordSelectOption[];
-  colorToken?: RecordColorToken;
-  numberFormat?: RecordNumberFormat;
-  dateFormat?: RecordDateFormat;
+  options?: GemSelectOption[];
+  colorToken?: GemColorToken;
+  numberFormat?: GemNumberFormat;
+  dateFormat?: GemDateFormat;
   includeTime?: boolean;
-  onDateConfigChange?: (config: { displayFormat: RecordDateFormat; includeTime: boolean }) => void;
+  onDateConfigChange?: (config: { displayFormat: GemDateFormat; includeTime: boolean }) => void;
   required?: boolean;
   nullable?: boolean;
   min?: number;

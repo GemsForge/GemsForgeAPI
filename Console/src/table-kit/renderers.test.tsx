@@ -11,7 +11,7 @@ import {
   type RecordPropertyDefinition,
   type TableRecord,
 } from "./index";
-import { tamaguiConfig } from "../design-system/tamagui.config";
+import { tamaguiConfig } from "@gemsforge/ui";
 
 interface Service {
   name: string;
@@ -169,7 +169,7 @@ describe("Table Kit record renderers", () => {
     screen.getByRole("button", { name: "Open Alpha" }).click();
     await waitFor(() => expect(onExpand).toHaveBeenCalledWith(records[0]));
     expect(screen.queryByRole("button", { name: "View" })).not.toBeInTheDocument();
-    expect(screen.getByText("unconfigured")).toBeInTheDocument();
+    expect(screen.queryByText("unconfigured")).not.toBeInTheDocument();
   });
 
   it("keeps the gallery image region blank when no valid image is configured", () => {

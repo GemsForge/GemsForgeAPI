@@ -1,7 +1,7 @@
 import type { Education } from "../../types";
 import { useEducationPatchMutation } from "../../data/recordQueries";
 import { useAddressesQuery } from "../../data/lifeQueries";
-import { GemButton } from "../../components/ui/GemButton";
+import { GemButton } from "@gemsforge/ui";
 import { educationTableAdapter } from "../database/recordTableAdapters";
 import { formatAddress } from "../addresses/formatAddress";
 import { WireframeCollectionView } from "../workspace/WireframeCollectionView";

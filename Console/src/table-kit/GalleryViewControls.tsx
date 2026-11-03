@@ -1,5 +1,5 @@
 import { XStack } from "tamagui";
-import { GSelectField, GSwitch } from "../components/ui";
+import { GSelectField, GSwitch } from "@gemsforge/ui";
 
 export type GalleryCardSize = "small" | "medium" | "large";
 

@@ -1,5 +1,5 @@
 import { Text } from "tamagui";
-import { GemButton } from "../../components/ui/GemButton";
+import { GemButton } from "@gemsforge/ui";
 
 export function WireframeUtilityLinks() {
   return (

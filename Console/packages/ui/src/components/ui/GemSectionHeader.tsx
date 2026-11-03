@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { XStack, YStack } from "tamagui";
+import { GemBody, GemSectionHeading } from "./GemTypography";
 
 export interface GemSectionHeaderProps {
   eyebrow?: string;
@@ -14,8 +15,8 @@ export function GemSectionHeader({ eyebrow, title, description, trailing }: GemS
     <XStack className="content-heading" justifyContent="space-between" alignItems="flex-end" gap="$4">
       <YStack>
         {eyebrow ? <p className="eyebrow">{eyebrow}</p> : null}
-        <h2>{title}</h2>
-        {description ? <p className="muted">{description}</p> : null}
+        <GemSectionHeading marginBottom="$1">{title}</GemSectionHeading>
+        {description ? <GemBody className="muted">{description}</GemBody> : null}
       </YStack>
       {trailing}
     </XStack>

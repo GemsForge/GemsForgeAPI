@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { GemButton } from "./ui/GemButton";
-import { GemTextArea } from "./ui/fieldPrimitives";
+import { GemButton } from "@gemsforge/ui";
+import { GemTextArea } from "@gemsforge/ui";
 
 type Row = Record<string, unknown>;
 

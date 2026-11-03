@@ -1,8 +1,9 @@
 import { useId, type ComponentProps, type ReactNode } from "react";
 import { Select, Label, SizableText, YStack } from "tamagui";
 import type { GemTextFieldWidth } from "./GemTextField";
-import type { RecordColorToken } from "../../table-kit/recordContracts";
+import type { GemColorToken } from "../../presentationTypes";
 import type { GemPrimitiveType } from "./primitiveFieldContracts";
+import { GemFieldDisplayValue } from "./fieldPrimitives";
 
 const statusPillColors: Record<string, { backgroundColor: string; color: string }> = {
   mint: { backgroundColor: "#78d1bd", color: "#06231e" },
@@ -23,7 +24,7 @@ export interface GSelectOption {
   editing?: boolean;
   displayValue?: ReactNode;
   onDisplayClick?: () => void;
-  colorToken?: RecordColorToken;
+  colorToken?: GemColorToken;
   isDefault?: boolean;
   group?: string;
 }
@@ -87,15 +88,28 @@ export function GSelectField({
   if (!editing) {
     return (
       <YStack className="gem-field-display" gap="$1">
-        {showLabel ? (
-          <Label className="g-field-label" color="$gemGold" fontSize="$2" fontWeight="800" textTransform="uppercase">
-            {label}
-          </Label>
-        ) : null}
-        <button type="button" className="gem-field-display-value" onClick={onDisplayClick} aria-invalid={Boolean(error)}>
+        <Label
+          id={`${id}-display-label`}
+          className={showLabel ? "g-field-label" : "sr-only"}
+          color="$gemGold"
+          fontSize="$2"
+          fontWeight="800"
+          textTransform="uppercase"
+        >
+          {label}
+        </Label>
+        <GemFieldDisplayValue
+          aria-describedby={`${id}-display-label`}
+          onClick={onDisplayClick}
+          aria-invalid={Boolean(error)}
+        >
           {displayValue ?? options.find((option) => option.value === value)?.label ?? "—"}
-        </button>
-        {error && <SizableText role="alert" color="$gemDanger" fontSize="$1">{error}</SizableText>}
+        </GemFieldDisplayValue>
+        {error && (
+          <SizableText role="alert" color="$gemDanger" fontSize="$1">
+            {error}
+          </SizableText>
+        )}
       </YStack>
     );
   }

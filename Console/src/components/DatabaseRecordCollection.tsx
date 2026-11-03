@@ -21,7 +21,7 @@ import { usePagedRecords } from "../hooks/usePagedRecords";
 import type { TablePropertyConfigurationInput } from "../table-kit/configuration";
 import type { ReactNode } from "react";
 import { Dialog } from "tamagui";
-import { GemButton } from "./ui";
+import { GemButton } from "@gemsforge/ui";
 import { useSaveTableViewColumnsMutation, useSaveTableViewWorkspaceStateMutation, useTableViewsQuery } from "../data/presentationQueries";
 
 /** The existing domain utility state shared by each database consumer adapter. */

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { api, APIError } from "../api";
 import { useFileMetadataQuery } from "../data/fileQueries";
 import type { FileMetadata } from "../types";
-import { GemButton, GemEmptyState, GemLoadingState } from "./ui";
+import { GemButton, GemEmptyState, GemLoadingState } from "@gemsforge/ui";
 
 export interface FilePresentationProps {
   fileMetadataID?: string | null;

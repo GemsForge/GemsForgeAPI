@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { PROPERTY_ICON_LIBRARY, getPropertyIconByName } from "./propertyIcons";
-import { GemButton } from "../../components/ui/GemButton";
-import { GemTextField } from "../../components/ui/GemTextField";
+import { GemButton } from "@gemsforge/ui";
+import { GemTextField } from "@gemsforge/ui";
 
 export function PropertyIconPicker({ value, onChange }: { value: string; onChange: (value: string) => void }) {
   const [query, setQuery] = useState("");

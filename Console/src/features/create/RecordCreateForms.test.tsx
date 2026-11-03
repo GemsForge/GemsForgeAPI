@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type { GeoapifySearchClient } from "../addresses/GeoapifyAddressSearch";
 import { AddressCreateForm, EducationCreateForm, EmploymentCreateForm } from "./RecordCreateForms";
 import { TamaguiProvider } from "tamagui";
-import { tamaguiConfig } from "../../design-system";
+import { tamaguiConfig } from "@gemsforge/ui";
 import type { Address } from "../../types";
 import dayjs from "dayjs";
 

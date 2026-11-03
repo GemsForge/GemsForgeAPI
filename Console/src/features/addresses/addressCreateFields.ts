@@ -1,6 +1,6 @@
 import { z } from "zod";
 import type { CreateFieldWidth } from "../../components/forms/CreateForm";
-import type { GemPrimitiveType } from "../../components/ui/primitiveFieldContracts";
+import type { GemPrimitiveType } from "@gemsforge/ui";
 import type { RecordSelectOption } from "../../table-kit/recordContracts";
 
 /** Raw Address values owned by React Hook Form before API normalization. */

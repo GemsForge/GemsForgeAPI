@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState, type ChangeEvent } from "react";
 import { Dialog, Input, SizableText, XStack, YStack } from "tamagui";
-import { GemButton } from "../../components/ui/GemButton";
+import { GemButton } from "@gemsforge/ui";
 import { api } from "../../api";
 import addressesCover from "../../assets/covers/addresses.png";
 import educationCover from "../../assets/covers/education.png";
@@ -144,7 +144,7 @@ export function WireframeCover({ value, onChange, onUpload, recordKey, label = "
   };
   return <YStack className="wireframe-cover" gap="$2" aria-label={label}>
     <div className={`wireframe-cover-visual${repositioning ? " is-repositioning" : ""}`} style={{ background: style.background }} onPointerDown={handlePointerDown} onPointerMove={handlePointerMove} onPointerUp={(event) => void handlePointerUp(event)} onPointerCancel={() => { drag.current = null; }}>
-      {style.image ? <img className="wireframe-cover-image" src={style.image} alt={`${label} image`} style={{ objectPosition: `${position.x}% ${position.y}%` }} /> : null}
+      {style.image ? <img className="wireframe-cover-image" src={style.image} alt={label} style={{ objectPosition: `${position.x}% ${position.y}%` }} /> : null}
       <XStack className="wireframe-cover-actions" gap={0} role="group" aria-label="Cover actions"><GemButton className="wireframe-cover-action" size="xs" tone="secondary" aria-label="Change cover" onClick={() => { setTab("gallery"); setOpen(true); }}>Change</GemButton><GemButton className="wireframe-cover-action" size="xs" tone="secondary" aria-label={repositioning ? "Finish repositioning cover" : "Reposition cover"} aria-pressed={repositioning} onClick={reposition}>{repositioning ? "Done" : "Reposition"}</GemButton>{currentCover ? <GemButton className="wireframe-cover-action" size="xs" tone="secondary" aria-label="Remove cover" onClick={() => void save(null)}>Remove</GemButton> : null}</XStack>
       {repositioning ? <div className="wireframe-cover-reposition-hint" role="status">Drag the image to reposition it</div> : null}
     </div>

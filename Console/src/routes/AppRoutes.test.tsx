@@ -5,7 +5,7 @@ import { TamaguiProvider } from "tamagui";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { AppRoutes, ScreenBoundary } from "./AppRoutes";
 import { api } from "../api";
-import { tamaguiConfig } from "../design-system";
+import { tamaguiConfig } from "@gemsforge/ui";
 import { AuthProvider } from "../auth/AuthProvider";
 import { clearSession, saveSession } from "../auth/session";
 
@@ -95,7 +95,8 @@ describe("Gem Life navigation", () => {
     expect(screen.getByRole("link", { name: /Gem Hues/ })).toHaveAttribute("href", "/gemhues-wireframe");
     expect(screen.getByRole("link", { name: /Employment/ })).toHaveAttribute("href", "/employment-wireframe");
     expect(screen.getByRole("link", { name: /Expense Tracker/ })).toHaveAttribute("href", "/transactions-wireframe");
-    expect(screen.getByRole("complementary", { name: "Record inspector" })).toHaveClass("wireframe-demo-inspector");
+    // The inspector is record-scoped and stays closed when the collection is empty.
+    expect(screen.queryByRole("complementary", { name: "Record inspector" })).not.toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Gem Life Console" })).not.toBeInTheDocument();
   });
   it("renders home without requesting feature data", async () => {

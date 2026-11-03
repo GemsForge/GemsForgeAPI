@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { APIError } from "../api";
 import { PropertyEditor } from "./PropertyEditor";
 import { TamaguiProvider } from "tamagui";
-import { tamaguiConfig } from "../design-system";
+import { tamaguiConfig } from "@gemsforge/ui";
 
 function render(ui: React.ReactElement) {
   return rtlRender(

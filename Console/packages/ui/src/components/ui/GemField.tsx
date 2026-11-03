@@ -1,7 +1,14 @@
 import { forwardRef, useId, type ComponentProps, type ReactNode } from "react";
 import { Input } from "tamagui";
 import type { GemPrimitiveType } from "./primitiveFieldContracts";
-import { GemFieldError, GemFieldLabel, GemFieldRoot, GemInput, GemTextArea } from "./fieldPrimitives";
+import {
+  GemFieldDisplayValue,
+  GemFieldError,
+  GemFieldLabel,
+  GemFieldRoot,
+  GemInput,
+  GemTextArea,
+} from "./fieldPrimitives";
 
 /** Standard reusable field widths shared by generic and feature forms. */
 export type GemFieldWidth = "xs" | "short" | "medium" | "long";
@@ -52,10 +59,12 @@ export const GemField = forwardRef<HTMLInputElement | HTMLTextAreaElement, GemFi
   if (!editing) {
     return (
       <GemFieldRoot className="gem-field-display">
-        {showLabel ? <GemFieldLabel className="g-field-label">{label}</GemFieldLabel> : null}
-        <button type="button" className="gem-field-display-value" onClick={onDisplayClick}>
+        <GemFieldLabel id={`${inputID}-display-label`} className={showLabel ? "g-field-label" : "sr-only"}>
+          {label}
+        </GemFieldLabel>
+        <GemFieldDisplayValue aria-describedby={`${inputID}-display-label`} onClick={onDisplayClick}>
           {displayValue ?? props.value ?? "—"}
-        </button>
+        </GemFieldDisplayValue>
       </GemFieldRoot>
     );
   }

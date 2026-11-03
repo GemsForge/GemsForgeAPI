@@ -4,6 +4,10 @@ This document defines how React components expose structure and behavior in the 
 
 The standard is based on React's [Thinking in React](https://react.dev/learn/thinking-in-react) and [Rules of React](https://react.dev/reference/rules), adapted to the GemsForge design system and application architecture.
 
+For the authoritative canvas, token, layout, motion, and responsive contracts,
+see [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md). This document describes how consumers
+compose and extend its shared components.
+
 ## Core principle
 
 Feature code provides values and user intent. Components provide structure, styling, accessibility, and repeated behavior.
@@ -16,6 +20,25 @@ Prefer:
 
 over rebuilding the same empty-state markup in every feature.
 
+## Public UI library entry point
+
+Use `@gemsforge/ui` as the supported import surface for shared components and
+design values. This keeps feature code independent of the current file layout:
+
+```tsx
+import { GemButton, GemStatusPill, GemPageTitle } from "@gemsforge/ui";
+```
+
+The public surface may depend on React, Tamagui, and browser presentation APIs.
+It must not depend on feature modules, API transport, TanStack Query, Hub data,
+or application-specific record models. Keep workflow and domain adapters in
+their owning feature folders. `src/styles.css` remains Console-owned and is
+loaded once by `main.tsx`; the private package currently relies on some of its
+compatibility selectors and is not ready for an independent consumer.
+
+Legacy table/list/card renderers are compatibility-only and live in
+`src/components/ui/legacy.ts`; do not add them to the supported public barrel.
+
 ## Component layers
 
 ### Design-system primitives
@@ -24,11 +47,55 @@ These components own reusable visual and semantic building blocks:
 
 - `GemButton`
 - `GemField`
+- `GemFieldDisplayValue` — theme-aware read-mode value button with visible keyboard focus.
 - `GemCard`
 - `GemStatusPill`
 - `GemLoadingState`
 - `GemEmptyState`
 - `GemSectionHeader`
+
+`GemButton`, `GemCard`, and `GemStatusPill` consume semantic action, surface,
+border, and status roles. Use the button's `tone`, the card's `interactive`, and
+the status pill's `tone` props to express intent; avoid setting palette colors
+or shadows in feature wrappers.
+
+### Styled components are components
+
+Tamagui's `styled` function returns a React component. It does not need to be
+wrapped in a separate function that returns JSX. This is the preferred pattern
+for shared visual roles such as typography because the semantic element and its
+design tokens stay together:
+
+```tsx
+import { SizableText, styled } from "tamagui";
+
+export const GemSectionHeading = styled(SizableText, {
+  render: "h2",
+  fontSize: "$5",
+  lineHeight: "$5",
+  fontWeight: "700",
+});
+```
+
+Consumers render it exactly like any other React component:
+
+```tsx
+<GemSectionHeading>Record properties</GemSectionHeading>
+```
+
+The function form is also valid, but is more useful when the component needs
+behavior or conditional rendering:
+
+```tsx
+export function GemSectionHeading({ children }: { children: React.ReactNode }) {
+  return <SizableText render="h2">{children}</SizableText>;
+}
+```
+
+Use the shared GemsForge typography components (`GemPageTitle`,
+`GemSectionHeading`, `GemRecordTitle`, `GemBody`, and `GemCaption`) before
+creating a new heading style. They centralize font size, line height, weight,
+and letter spacing while still accepting normal Tamagui props such as `color`.
 
 Shared field controls such as `GDateField`, `GSelectField`, `GCheckboxField`,
 `GSwitch`, and `GSearchField` own their label association, interaction
@@ -56,12 +123,12 @@ shared `WireframeRecordInspector`. The inspector owns semantic property rows;
 `WireframeEditableValue` owns inline editing and save feedback; feature
 adapters provide values, editor kinds, options, and save handlers.
 
-| Component | Consumer provides | Component behavior |
-| --- | --- | --- |
-| `WireframeSchemaInspector` | A record and its property definitions | Formats values, derives property metadata, and connects editable properties to save handlers. |
-| `WireframeRecordInspector` | `WireframeInspectorField[]` | Renders labeled property rows and composes property editors. |
-| `WireframeEditableValue` | `value`, `label`, `kind`, optional `options`, `nullable`, `displayValue`, and `onCommit` | Ordinary values enter editing on click; select/status values commit through their control; save failures remain visible. |
-| `WireframeImagePreview` | Optional `src`, `alt`, optional `className`, optional async `onEdit(file)` | Clicking an image opens the larger preview. With `onEdit`, a separate Edit button chooses an image and reports progress or failure. Without `src`, it shows an empty state while allowing image selection if `onEdit` exists. |
+| Component                  | Consumer provides                                                                        | Component behavior                                                                                                                                                                                                            |
+| -------------------------- | ---------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `WireframeSchemaInspector` | A record and its property definitions                                                    | Formats values, derives property metadata, and connects editable properties to save handlers.                                                                                                                                 |
+| `WireframeRecordInspector` | `WireframeInspectorField[]`                                                              | Renders labeled property rows and composes property editors.                                                                                                                                                                  |
+| `WireframeEditableValue`   | `value`, `label`, `kind`, optional `options`, `nullable`, `displayValue`, and `onCommit` | Ordinary values enter editing on click; select/status values commit through their control; save failures remain visible.                                                                                                      |
+| `WireframeImagePreview`    | Optional `src`, `alt`, optional `className`, optional async `onEdit(file)`               | Clicking an image opens the larger preview. With `onEdit`, a separate Edit button chooses an image and reports progress or failure. Without `src`, it shows an empty state while allowing image selection if `onEdit` exists. |
 
 URL and email values preserve their primary link action. URLs open in a new
 tab; email addresses use `mailto:`. Editing uses a separate, labeled pencil

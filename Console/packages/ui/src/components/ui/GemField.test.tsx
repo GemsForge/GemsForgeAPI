@@ -26,4 +26,15 @@ describe("GemField", () => {
 
     expect(screen.getByLabelText("Table name")).toHaveAttribute("id", "table-name");
   });
+
+  it("renders read-only display values without a dead button", () => {
+    render(
+      <TamaguiProvider config={tamaguiConfig} defaultTheme="dark">
+        <GemField label="Record ID" value="REC-001" editing={false} />
+      </TamaguiProvider>,
+    );
+
+    expect(screen.getByText("REC-001")).not.toHaveAttribute("role", "button");
+    expect(screen.queryByRole("button", { name: "REC-001" })).not.toBeInTheDocument();
+  });
 });

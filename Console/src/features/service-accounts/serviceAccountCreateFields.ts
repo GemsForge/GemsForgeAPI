@@ -30,8 +30,9 @@ export type ServiceAccountFieldDefinition = {
   step?: string;
   width?: CreateFieldWidth;
   multiline?: boolean;
+  options?: readonly RecordSelectOption[];
+  primitive?: "status";
 };
-export type ServiceAccountFieldDefinition = { name: keyof ServiceAccountCreateFormValues; label: string; schema: z.ZodTypeAny; required?: boolean; type?: "text" | "number" | "date" | "url"; width?: CreateFieldWidth; multiline?: boolean; options?: readonly RecordSelectOption[]; primitive?: "status" };
 const required = (label: string) => z.string().trim().min(1, `${label} is required.`);
 const optional = z.string();
 const amount = z.string().refine((value) => value === "" || (/^\d+(\.\d+)?$/.test(value) && Number(value) >= 0), "Enter a non-negative number.");

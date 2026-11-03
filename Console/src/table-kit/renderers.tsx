@@ -17,7 +17,7 @@ import {
   type ICellRendererParams,
 } from "ag-grid-community";
 import { Avatar, H3, ListItem, Paragraph, Separator, SizableText, Text, XStack, YGroup, YStack } from "tamagui";
-import { GCheckboxField, GemButton, GemStatusPill } from "../components/ui";
+import { GCheckboxField, GemButton, GemStatusPill } from "@gemsforge/ui";
 import { EditableRecordFields } from "../components/EditableRecordFields";
 import { TableContext } from "./context";
 import { GalleryViewControls, type GalleryCardSize } from "./GalleryViewControls";

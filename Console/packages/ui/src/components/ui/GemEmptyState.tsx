@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { YStack } from "tamagui";
+import { GemBody, GemRecordTitle } from "./GemTypography";
 
 export interface GemEmptyStateProps {
   icon?: ReactNode;
@@ -14,8 +15,8 @@ export function GemEmptyState({ icon = "⌁", title, description }: GemEmptyStat
       <span className="empty-icon" aria-hidden="true">
         {icon}
       </span>
-      <h3>{title}</h3>
-      <p>{description}</p>
+      <GemRecordTitle>{title}</GemRecordTitle>
+      <GemBody>{description}</GemBody>
     </YStack>
   );
 }

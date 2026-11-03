@@ -6,7 +6,7 @@ import {
   CreateFormFrame,
 } from "../../components/forms/CreateForm";
 import { CreateFormCheckbox as Checkbox, CreateFormSelect as Select, CreateFormText as Text } from "../../components/forms/CreateFormField";
-import { GemPrimitiveField } from "../../components/ui/GemPrimitiveField";
+import { GemPrimitiveField } from "@gemsforge/ui";
 import {
   GeoapifyAddressSearch,
   type AddressSearchValues,
@@ -74,7 +74,7 @@ function FormShell<T extends FieldValues>({
 }: {
   title: string;
   className?: string;
-  schema: z.ZodType<T>;
+  schema: z.ZodTypeAny;
   defaultValues: T;
   onCreate: (values: T) => Promise<void>;
   onCancel: () => void;
@@ -228,7 +228,7 @@ function renderServiceAccountField(form: UseFormReturn<ServiceAccountCreateFormV
   return field.options ? (
     <Select key={field.name} form={form} name={field.name} label={field.label} options={[...field.options]} required={field.required} />
   ) : (
-    <Text key={field.name} form={form} name={field.name} label={field.label} required={field.required} type={field.type} multiline={field.multiline} width={field.width} />
+    <Text key={field.name} form={form} name={field.name} label={field.label} required={field.required} type={field.type} step={field.step} multiline={field.multiline} width={field.width} />
   );
 }
 

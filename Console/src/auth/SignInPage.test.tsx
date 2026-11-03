@@ -7,7 +7,7 @@ import { queryClient } from "../data/queryClient";
 import { AuthProvider } from "./AuthProvider";
 import { SignInPage } from "./SignInPage";
 import { TamaguiProvider } from "tamagui";
-import { tamaguiConfig } from "../design-system";
+import { tamaguiConfig } from "@gemsforge/ui";
 
 function render(ui: React.ReactElement) {
   return rtlRender(

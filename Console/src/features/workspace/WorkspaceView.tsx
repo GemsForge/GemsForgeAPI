@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Dialog, Form, SizableText } from "tamagui";
 import { QueryFeedback } from "../../components/QueryFeedback";
-import { GemButton, GemCard, GemSectionHeader, GemStatusPill, GemTextField } from "../../components/ui";
+import { GemButton, GemCard, GemSectionHeader, GemStatusPill, GemTextField } from "@gemsforge/ui";
 import { usePagesQuery, usePageMutation } from "../../data/workflowQueries";
 import type { ForgeKeeperPage, ForgeKeeperPatch } from "../../types";
 

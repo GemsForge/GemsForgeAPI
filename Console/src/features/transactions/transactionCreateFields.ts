@@ -14,7 +14,7 @@ export function transactionMerchantOptions(merchants: readonly Merchant[]): Opti
     label: merchant.name.replace(/^[\p{Extended_Pictographic}\p{Emoji_Presentation}\p{So}\p{Sk}\s]+/u, "").trim() || merchant.name,
   }));
 }
-export type TransactionFieldDefinition = { name: keyof TransactionCreateFormValues; label: string; schema: z.ZodTypeAny; required?: boolean; type?: "text" | "date" | "number"; width?: CreateFieldWidth; multiline?: boolean; options?: readonly Option[]; primitive?: "checkbox" };
+export type TransactionFieldDefinition = { name: keyof TransactionCreateFormValues; label: string; schema: z.ZodTypeAny; required?: boolean; type?: "text" | "date" | "number"; step?: string; width?: CreateFieldWidth; multiline?: boolean; options?: readonly Option[]; primitive?: "checkbox" };
 const required = (label: string) => z.string().trim().min(1, `${label} is required.`);
 const optional = z.string();
 const number = z

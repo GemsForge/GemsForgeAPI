@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { TamaguiProvider } from "tamagui";
 import { describe, expect, it, vi } from "vitest";
-import { tamaguiConfig } from "../../design-system";
+import { tamaguiConfig } from "@gemsforge/ui";
 import { TransactionCreateForm } from "./RecordCreateForms";
 
 vi.mock("../../data/lifeQueries", () => ({

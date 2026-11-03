@@ -102,7 +102,7 @@ export function GemHuesWireframeView({ records }: { records: readonly GemHue[] }
                   edit: field
                     ? {
                         ...property.edit,
-                        options: optionsByProperty.get(property.id as keyof GemHue) ?? property.edit?.options,
+                        options: [...(optionsByProperty.get(property.id as keyof GemHue) ?? property.edit?.options ?? [])],
                         inputType: property.edit?.inputType ?? (property.kind === "date" ? "date" : property.id === "notes" || property.id === "description" ? "longText" : "text"),
                         onSave: property.edit?.onSave ?? ((_record: unknown, value: string | number | null) =>
                           patch.mutateAsync({ id: record.id, patch: { [field]: value || null } }).then(() => undefined)),

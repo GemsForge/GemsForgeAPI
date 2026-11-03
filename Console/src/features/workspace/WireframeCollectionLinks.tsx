@@ -1,7 +1,7 @@
 import { Text } from "tamagui";
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { GemButton } from "../../components/ui/GemButton";
+import { GemButton } from "@gemsforge/ui";
 import { useTableIconPreferences } from "../../data/presentationQueries";
 import { getPropertyIconByName } from "./propertyIcons";
 

@@ -33,6 +33,29 @@ export const gemRadii = { control: 8, card: 16 } as const;
 export const wireframeSpacing = { pane: 16, content: 28, card: 12 } as const;
 export const wireframeRadii = { control: 8, card: 12, pill: 999 } as const;
 
+/** Stable shell geometry shared by the application frame and workspace recipes. */
+export const gemLayout = {
+  appHeader: 72,
+  appSidebarExpanded: 288,
+  appSidebarCollapsed: 68,
+  appSidebarMaximum: 360,
+  appContentMinimum: 420,
+  appSidebarLabelThreshold: 160,
+  workspaceSidebar: 256,
+  workspaceSidebarCompact: 208,
+  inspector: 384,
+  inspectorCompact: 320,
+} as const;
+
+/** Timing roles for small transitions; reduced motion disables nonessential motion. */
+export const gemMotion = { quick: 120, standard: 180, emphasized: 240 } as const;
+
+/** Shared surface depth for cards and floating content across both canvases. */
+export const gemElevation = {
+  card: "0 3px 12px rgba(0, 0, 0, 0.08)",
+  floating: "0 12px 32px rgba(0, 0, 0, 0.18)",
+} as const;
+
 export const gemFontFamily =
   '"Avenir Next", Avenir, Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif';
 
@@ -66,12 +89,25 @@ export const tamaguiConfig = createTamagui({
       wireframePane: wireframeSpacing.pane,
       wireframeContent: wireframeSpacing.content,
       wireframeCard: wireframeSpacing.card,
+      gemBorderHairline: 1,
+      gemBorderEmphasis: 2,
     },
     size: {
       ...defaultConfig.tokens.size,
       fieldShort: 192,
       fieldMedium: 320,
       fieldControl: 44,
+      gemAppHeader: gemLayout.appHeader,
+      gemAppSidebarExpanded: gemLayout.appSidebarExpanded,
+      gemAppSidebarCollapsed: gemLayout.appSidebarCollapsed,
+      gemAppSidebarMaximum: gemLayout.appSidebarMaximum,
+      gemAppContentMinimum: gemLayout.appContentMinimum,
+      gemAppSidebarLabelThreshold: gemLayout.appSidebarLabelThreshold,
+      gemWorkspaceSidebar: gemLayout.workspaceSidebar,
+      gemWorkspaceSidebarCompact: gemLayout.workspaceSidebarCompact,
+      gemInspector: gemLayout.inspector,
+      gemInspectorCompact: gemLayout.inspectorCompact,
+      gemTouchTarget: 44,
     },
     radius: {
       ...defaultConfig.tokens.radius,
@@ -80,6 +116,14 @@ export const tamaguiConfig = createTamagui({
       wireframeControl: wireframeRadii.control,
       wireframeCard: wireframeRadii.card,
       wireframePill: wireframeRadii.pill,
+    },
+    zIndex: {
+      ...defaultConfig.tokens.zIndex,
+      gemContent: 0,
+      gemSticky: 10,
+      gemFloating: 100,
+      gemDialog: 200,
+      gemNotification: 300,
     },
   },
   themes: {
@@ -97,6 +141,16 @@ export const tamaguiConfig = createTamagui({
       fieldMenuBackground: "$gemPanel",
       fieldMenuHover: "$gemPanelLight",
       fieldMenuText: "$gemInk",
+      surface: "$gemPanel",
+      surfaceRaised: "$gemPanelLight",
+      textMuted: "$gemMuted",
+      action: "$gemMint",
+      actionHover: "$gemMintDark",
+      actionText: "$gemCanvas",
+      focus: "$gemMint",
+      danger: "$gemDanger",
+      success: "$gemMint",
+      warning: "$gemGold",
     },
     light: {
       ...defaultConfig.themes.light,
@@ -111,6 +165,16 @@ export const tamaguiConfig = createTamagui({
       fieldMenuBackground: "$wireframePanel",
       fieldMenuHover: "$wireframePanelLight",
       fieldMenuText: "$lightInk",
+      surface: "$wireframePanel",
+      surfaceRaised: "$wireframePanelLight",
+      textMuted: "$wireframeMuted",
+      action: "$wireframeMint",
+      actionHover: "$wireframeHeading",
+      actionText: "$wireframePanel",
+      focus: "$wireframeMint",
+      danger: "$gemDanger",
+      success: "$wireframeMint",
+      warning: "$wireframeGold",
     },
   },
 });

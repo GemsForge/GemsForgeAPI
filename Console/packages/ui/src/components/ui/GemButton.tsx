@@ -14,11 +14,13 @@ export function GemButton({ tone = "primary", variant = "outlined", children, ..
       type="button"
       {...props}
       variant={variant}
-      backgroundColor={isQuiet ? "transparent" : isWireframe ? "$wireframePanel" : tone === "primary" ? "$gemMint" : "transparent"}
-      borderColor={isQuiet ? "transparent" : isWireframe ? "$wireframeLine" : tone === "primary" ? "$gemMint" : "$borderColor"}
+      backgroundColor={isQuiet || tone === "secondary" ? "transparent" : isWireframe ? "$surface" : "$action"}
+      borderColor={
+        isQuiet ? "transparent" : tone === "secondary" ? "$borderColor" : isWireframe ? "$borderColor" : "$action"
+      }
       borderWidth={1}
-      borderRadius={isWireframe ? "$wireframeControl" : undefined}
-      color={isWireframe ? "$wireframeInk" : tone === "primary" ? "$gemCanvas" : "$color"}
+      borderRadius="$gemControl"
+      color={isWireframe || tone === "secondary" ? "$color" : isQuiet ? "$action" : "$actionText"}
     >
       {children}
     </Button>

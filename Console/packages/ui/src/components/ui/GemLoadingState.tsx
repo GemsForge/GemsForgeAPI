@@ -1,4 +1,5 @@
 import { YStack } from "tamagui";
+import { GemBody } from "./GemTypography";
 
 export interface GemLoadingStateProps {
   label?: string;
@@ -8,7 +9,7 @@ export interface GemLoadingStateProps {
 export function GemLoadingState({ label = "Loading…" }: GemLoadingStateProps) {
   return (
     <YStack className="empty-state" role="status" aria-live="polite">
-      <p>{label}</p>
+      <GemBody>{label}</GemBody>
     </YStack>
   );
 }

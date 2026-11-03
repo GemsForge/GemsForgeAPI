@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Pencil } from "lucide-react";
-import { GemPrimitiveField } from "../../components/ui/GemPrimitiveField";
-import { GemStatusPill } from "../../components/ui/GemStatusPill";
+import { GemPrimitiveField } from "@gemsforge/ui";
+import { GemStatusPill } from "@gemsforge/ui";
 
 type EditableValueProps = {
   value: string;

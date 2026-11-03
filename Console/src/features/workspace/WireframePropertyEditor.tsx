@@ -3,9 +3,9 @@ import { SizableText, Theme } from "tamagui";
 import { getPropertyIconByName } from "./propertyIcons";
 import { inferWireframePropertyMetadata, WIREFRAME_PROPERTY_TYPES } from "./propertyMetadata";
 import { PropertyIconPicker } from "./PropertyIconPicker";
-import { GemButton } from "../../components/ui/GemButton";
-import { GemTextField } from "../../components/ui/GemTextField";
-import { GSelectField } from "../../components/ui/GSelectField";
+import { GemButton } from "@gemsforge/ui";
+import { GemTextField } from "@gemsforge/ui";
+import { GSelectField } from "@gemsforge/ui";
 
 export const WireframePropertyIconContext = createContext<((propertyID: string, icon: string) => void) | null>(null);
 
@@ -20,6 +20,7 @@ export function WireframePropertyEditor({
   numberFormat,
   propertyType,
   iconName,
+  propertyID,
 }: {
   label: string;
   value: string;

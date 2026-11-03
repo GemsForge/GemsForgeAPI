@@ -1,4 +1,4 @@
-import type { RecordColorToken, RecordDateFormat, RecordNumberFormat, RecordSelectOption } from "../../table-kit/recordContracts";
+import type { GemColorToken, GemDateFormat, GemNumberFormat, GemSelectOption } from "../../presentationTypes";
 
 /** Primitive field kinds supported by the shared G field layer. */
 export type GemPrimitiveType =
@@ -9,6 +9,7 @@ export type GemPrimitiveType =
   | "email"
   | "phone"
   | "date"
+  | "image"
   | "select"
   | "status"
   | "checkbox"
@@ -27,7 +28,7 @@ export interface GemTextPrimitiveContract extends GemPrimitiveBaseContract {
 
 export interface GemNumberPrimitiveContract extends GemPrimitiveBaseContract {
   primitive: "number";
-  numberFormat?: RecordNumberFormat;
+  numberFormat?: GemNumberFormat;
   min?: number;
   max?: number;
   step?: number | string;
@@ -35,13 +36,13 @@ export interface GemNumberPrimitiveContract extends GemPrimitiveBaseContract {
 
 export interface GemDatePrimitiveContract extends GemPrimitiveBaseContract {
   primitive: "date";
-  dateFormat?: RecordDateFormat;
+  dateFormat?: GemDateFormat;
 }
 
 export interface GemSelectPrimitiveContract extends GemPrimitiveBaseContract {
   primitive: "select" | "status";
-  options: RecordSelectOption[];
-  colorToken?: RecordColorToken;
+  options: GemSelectOption[];
+  colorToken?: GemColorToken;
 }
 
 export type GemPrimitiveFieldContract =

@@ -1,6 +1,7 @@
 import type { CSSProperties, KeyboardEvent, PointerEvent, ReactNode } from "react";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "../../auth/AuthProvider";
+import { gemBreakpoints, gemLayout } from "@gemsforge/ui";
 
 interface GemLifeShellProps {
   children: ReactNode;
@@ -20,11 +21,11 @@ export function useGemLifeShell() {
   return useContext(GemLifeShellContext);
 }
 
-const COLLAPSED_SIDEBAR_WIDTH = 68;
-const EXPANDED_SIDEBAR_WIDTH = 288;
-const SIDEBAR_LABEL_THRESHOLD = 160;
-const MAX_SIDEBAR_WIDTH = 360;
-const MIN_CONTENT_WIDTH = 420;
+const COLLAPSED_SIDEBAR_WIDTH = gemLayout.appSidebarCollapsed;
+const EXPANDED_SIDEBAR_WIDTH = gemLayout.appSidebarExpanded;
+const SIDEBAR_LABEL_THRESHOLD = gemLayout.appSidebarLabelThreshold;
+const MAX_SIDEBAR_WIDTH = gemLayout.appSidebarMaximum;
+const MIN_CONTENT_WIDTH = gemLayout.appContentMinimum;
 
 /** Shared application frame for the Gem Life interface. */
 export function GemLifeShell({ children, sidebar }: GemLifeShellProps) {
@@ -33,8 +34,10 @@ export function GemLifeShell({ children, sidebar }: GemLifeShellProps) {
   const resizingRef = useRef(false);
   const manuallyResizedRef = useRef(false);
   const utilityPreviousWidthRef = useRef<number | null>(null);
-  const [sidebarWidth, setSidebarWidth] = useState(() =>
-    typeof window !== "undefined" && window.innerWidth <= 900 ? COLLAPSED_SIDEBAR_WIDTH : EXPANDED_SIDEBAR_WIDTH,
+  const [sidebarWidth, setSidebarWidth] = useState<number>(() =>
+    typeof window !== "undefined" && window.innerWidth <= gemBreakpoints.tablet
+      ? COLLAPSED_SIDEBAR_WIDTH
+      : EXPANDED_SIDEBAR_WIDTH,
   );
 
   const resizeSidebar = (width: number) => {
@@ -50,7 +53,8 @@ export function GemLifeShell({ children, sidebar }: GemLifeShellProps) {
       const availableWidth = workspaceRef.current?.clientWidth ?? MAX_SIDEBAR_WIDTH + MIN_CONTENT_WIDTH;
       const responsiveMaximum = Math.min(MAX_SIDEBAR_WIDTH, availableWidth - MIN_CONTENT_WIDTH);
       const maximum = Math.max(COLLAPSED_SIDEBAR_WIDTH, responsiveMaximum);
-      const defaultWidth = window.innerWidth <= 900 ? COLLAPSED_SIDEBAR_WIDTH : EXPANDED_SIDEBAR_WIDTH;
+      const defaultWidth =
+        window.innerWidth <= gemBreakpoints.tablet ? COLLAPSED_SIDEBAR_WIDTH : EXPANDED_SIDEBAR_WIDTH;
 
       setSidebarWidth((currentWidth) => Math.min(maximum, manuallyResizedRef.current ? currentWidth : defaultWidth));
     };

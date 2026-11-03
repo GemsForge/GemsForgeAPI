@@ -1,10 +1,10 @@
 import { useId, type ChangeEvent, type FocusEvent, type ReactNode } from "react";
 import { Form } from "tamagui";
-import { GCheckboxField, GDate, GemField, GSelectField } from "./ui";
-import type { GemTextFieldWidth } from "./ui/GemTextField";
+import { GCheckboxField, GDate, GemField, GSelectField } from "@gemsforge/ui";
+import type { GemTextFieldWidth } from "@gemsforge/ui";
 import { useRecordEditor } from "../hooks/useRecordEditor";
-import { GemPrimitiveField } from "./ui/GemPrimitiveField";
-import type { GemPrimitiveType } from "./ui/primitiveFieldContracts";
+import { GemPrimitiveField } from "@gemsforge/ui";
+import type { GemPrimitiveType } from "@gemsforge/ui";
 import type { RecordColorToken, RecordDateFormat, RecordSelectOption } from "../table-kit/recordContracts";
 
 export type EditableValue = string | number | boolean | null | undefined;

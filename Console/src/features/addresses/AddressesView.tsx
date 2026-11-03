@@ -4,7 +4,7 @@ import { useAddressQuery, useAddressAttachmentMutation, useAddressPatchMutation 
 import { QueryFeedback } from "../../components/QueryFeedback";
 import type { Address } from "../../types";
 import { AttachmentControl } from "../../components/AttachmentControl";
-import { GemEmptyState, GemStatusPill } from "../../components/ui";
+import { GemEmptyState, GemStatusPill } from "@gemsforge/ui";
 import { EditableRecordFields } from "../../components/EditableRecordFields";
 import { addressEditableFields } from "./addressRecordFields";
 import { RecordImport } from "../../components/RecordImport";

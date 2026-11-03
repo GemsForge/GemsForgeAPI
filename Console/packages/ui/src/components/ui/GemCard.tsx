@@ -1,5 +1,6 @@
 import type { ComponentProps } from "react";
 import { YStack } from "tamagui";
+import { gemElevation } from "../../design-system/tamagui.config";
 
 export interface GemCardProps extends ComponentProps<typeof YStack> {
   interactive?: boolean;
@@ -10,12 +11,13 @@ export function GemCard({ interactive = false, children, ...props }: GemCardProp
   return (
     <YStack
       {...props}
-      gap="$3"
-      padding="$4"
+      gap="$gemControl"
+      padding="$wireframePane"
       borderWidth={1}
-      borderRadius="$4"
-      backgroundColor="$gemPanel"
-      borderColor={interactive ? "$gemMint" : "$gemPanelLight"}
+      borderRadius="$gemCard"
+      backgroundColor="$surface"
+      borderColor={interactive ? "$action" : "$borderColor"}
+      boxShadow={gemElevation.card}
     >
       {children}
     </YStack>

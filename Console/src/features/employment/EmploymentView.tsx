@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useEmploymentPatchMutation, useEmploymentRecordQuery } from "../../data/recordQueries";
 import { QueryFeedback } from "../../components/QueryFeedback";
 import type { Employment } from "../../types";
-import { GemEmptyState, GemStatusPill } from "../../components/ui";
+import { GemEmptyState, GemStatusPill } from "@gemsforge/ui";
 import { EditableRecordFields } from "../../components/EditableRecordFields";
 import { useAddressesQuery } from "../../data/lifeQueries";
 import { RecordImport } from "../../components/RecordImport";

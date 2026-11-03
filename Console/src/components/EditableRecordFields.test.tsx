@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import { APIError } from "../api";
 import { EditableRecordFields, formatRecordDate } from "./EditableRecordFields";
 import { TamaguiProvider } from "tamagui";
-import { tamaguiConfig } from "../design-system";
+import { tamaguiConfig } from "@gemsforge/ui";
 
 function renderFields(fields: ComponentProps<typeof EditableRecordFields>["fields"]) {
   return render(

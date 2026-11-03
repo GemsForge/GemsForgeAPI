@@ -1,4 +1,4 @@
-import type { GemPrimitiveType } from "../../components/ui/primitiveFieldContracts";
+import type { GemPrimitiveType } from "@gemsforge/ui";
 import type { RecordSelectOption } from "../../table-kit/recordContracts";
 import type { GemHueCreate } from "../../types";
 

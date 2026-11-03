@@ -6,18 +6,19 @@ route contracts, visual palette, and native/web boundary when extending it.
 
 ## Documentation map
 
-| Concern                                    | Source                                                 |
-| ------------------------------------------ | ------------------------------------------------------ |
-| Architecture and state ownership           | [ARCHITECTURE.md](ARCHITECTURE.md)                     |
-| Component API conventions                  | [COMPONENT_API.md](COMPONENT_API.md)                   |
-| Labels, keyboard, focus, contrast          | [ACCESSIBILITY.md](ACCESSIBILITY.md)                   |
-| Breakpoints and browser fixture            | [RESPONSIVE_TESTING.md](RESPONSIVE_TESTING.md)         |
-| Caching, pagination, bundle measurements   | [PERFORMANCE.md](PERFORMANCE.md)                       |
-| Device-local session scope                 | [LOCAL_ACCESS.md](LOCAL_ACCESS.md)                     |
-| Native security and production packaging   | [Host README](../GemLifeHost/README.md)                |
-| Attachment lifecycle                       | [Attachment contract](../docs/Attachment-Lifecycle.md) |
-| Commit types and push checks               | [Commit policy](../docs/Commit-Policy.md)              |
-| Issues, relationships, PRs, project Status | [Issue workflow](../.github/ISSUE_WORKFLOW.md)         |
+| Concern                                         | Source                                                 |
+| ----------------------------------------------- | ------------------------------------------------------ |
+| Canvas, tokens, layout, motion, component roles | [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md)                   |
+| Architecture and state ownership                | [ARCHITECTURE.md](ARCHITECTURE.md)                     |
+| Component API conventions                       | [COMPONENT_API.md](COMPONENT_API.md)                   |
+| Labels, keyboard, focus, contrast               | [ACCESSIBILITY.md](ACCESSIBILITY.md)                   |
+| Breakpoints and browser fixture                 | [RESPONSIVE_TESTING.md](RESPONSIVE_TESTING.md)         |
+| Caching, pagination, bundle measurements        | [PERFORMANCE.md](PERFORMANCE.md)                       |
+| Device-local session scope                      | [LOCAL_ACCESS.md](LOCAL_ACCESS.md)                     |
+| Native security and production packaging        | [Host README](../GemLifeHost/README.md)                |
+| Attachment lifecycle                            | [Attachment contract](../docs/Attachment-Lifecycle.md) |
+| Commit types and push checks                    | [Commit policy](../docs/Commit-Policy.md)              |
+| Issues, relationships, PRs, project Status      | [Issue workflow](../.github/ISSUE_WORKFLOW.md)         |
 
 ## Names and folders
 
@@ -50,8 +51,10 @@ window, WebKit and native capability code belongs in GemLifeHost.
 
 ## Visual system
 
-`src/design-system/tamagui.config.ts` is the token definition. It extends the
-installed Tamagui configuration export `@tamagui/config/v5`.
+`packages/ui/src/design-system/tamagui.config.ts` is the token definition. It extends the
+installed Tamagui configuration export `@tamagui/config/v5`. The complete
+canvas, typography, spacing, sizing, layout, layering, motion, and component
+contracts are documented in [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md).
 
 | Token                    | Role                                          |
 | ------------------------ | --------------------------------------------- |
@@ -68,11 +71,11 @@ with 12/14/16/20/28/36px sizes and matching line heights. Inter is a preferred
 local font, not a required remote download. Do not add one-off tokens without
 checking whether an existing role fits.
 
-Dark is the application default. A light Tamagui theme is defined, but the
-legacy feature CSS is still dark and there is no complete light-mode toggle.
-Existing CSS variables remain a compatibility layer; palette changes must keep
-them aligned with the token definitions until those features migrate. Do not
-claim all legacy markup is already composed of Tamagui primitives.
+Dark is the persistent Console shell. The table workspace intentionally uses
+the light canvas for its navigation, collection, and inspector surfaces; it is
+not a theme toggle. Existing CSS variables remain a compatibility layer and
+must map to the same semantic roles until each feature migrates. Do not claim
+all legacy markup is already composed of Tamagui primitives.
 
 Use GemButton, GemField, GemCard, GemSectionHeader, GemStatusPill,
 GemEmptyState, GemLoadingState, and the shared field controls for reusable

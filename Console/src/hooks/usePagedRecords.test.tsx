@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { usePagedRecords } from "./usePagedRecords";
 import { GemDataTable } from "../components/ui/GemDataTable--LEGACY";
 import { TamaguiProvider } from "tamagui";
-import { tamaguiConfig } from "../design-system";
+import { tamaguiConfig } from "@gemsforge/ui";
 afterEach(cleanup);
 describe("bounded large-list rendering", () => {
   it("only selects one page from 10,000 records and clamps shrinking data", () => {

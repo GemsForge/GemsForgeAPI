@@ -1,4 +1,5 @@
 import { useId, useRef, type ReactNode } from "react";
+import { GemFieldDisplayValue } from "./fieldPrimitives";
 
 const IMAGE_ACCEPT = "image/jpeg,image/png";
 
@@ -18,9 +19,9 @@ export function GImageField({ label = "Image", value, editing = true, displayVal
   if (!editing) {
     return (
       <div className="gem-image-field gem-field-display">
-        <button type="button" className="gem-field-display-value" onClick={onDisplayClick} aria-label={`Edit ${label}`}>
+        <GemFieldDisplayValue onClick={onDisplayClick} aria-label={onDisplayClick ? `Edit ${label}` : undefined}>
           {displayValue ?? (value ? <img className="wireframe-property-image" src={value} alt={`${label} preview`} /> : "—")}
-        </button>
+        </GemFieldDisplayValue>
       </div>
     );
   }

@@ -9,7 +9,7 @@ import { QueryFeedback } from "../../components/QueryFeedback";
 import type { GemHue, GemHueCreate } from "../../types";
 import { EditableRecordFields } from "../../components/EditableRecordFields";
 import { CreateFormFrame, CreateSelectField } from "../../components/forms/CreateForm";
-import { GDate as GDateField, GemTextField } from "../../components/ui";
+import { GDate as GDateField, GemTextField } from "@gemsforge/ui";
 import { api } from "../../api";
 import { DatabaseRecordCollection } from "../../components/DatabaseRecordCollection";
 import { useRecordUtilities } from "../../hooks/useRecordUtilities";

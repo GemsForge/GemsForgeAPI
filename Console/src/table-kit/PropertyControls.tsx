@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { Button, Tooltip, type TamaguiElement } from "tamagui";
 import { SlidersHorizontal } from "lucide-react";
-import { GCheckboxField, GSearchField } from "../components/ui";
+import { GCheckboxField, GSearchField } from "@gemsforge/ui";
 import { filterTableProperties, type TablePropertyConfigurationState, type TablePropertyOption } from "./configuration";
 
 /** Accessible property menu backed by the consumer-owned configuration state. */

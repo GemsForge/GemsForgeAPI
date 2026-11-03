@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { TamaguiProvider } from "tamagui";
-import { tamaguiConfig } from "../../design-system";
+import { tamaguiConfig } from "@gemsforge/ui";
 import { validateCoverImageURL, WireframeCover } from "./WireframeCover";
 import { api } from "../../api";
 

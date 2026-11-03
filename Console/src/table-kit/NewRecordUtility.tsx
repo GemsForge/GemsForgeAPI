@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useId, useRef, useState, type KeyboardEvent, type RefObject } from "react";
 import { Dialog, SizableText, Tooltip, YStack, type TamaguiElement } from "tamagui";
-import { GemButton } from "../components/ui/GemButton";
+import { GemButton } from "@gemsforge/ui";
 import type { TableNewRecordUtilityProps } from "./types";
 
 interface NewRecordUtilityComponentProps extends TableNewRecordUtilityProps {

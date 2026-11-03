@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { TamaguiProvider } from "tamagui";
-import { tamaguiConfig } from "../design-system/tamagui.config";
+import { tamaguiConfig } from "@gemsforge/ui";
 import { api } from "../api";
 import { DatabaseRecordCollection } from "./DatabaseRecordCollection";
 import { useRecordUtilities } from "../hooks/useRecordUtilities";

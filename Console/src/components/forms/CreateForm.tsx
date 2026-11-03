@@ -1,11 +1,10 @@
 import { useState, type ReactNode } from "react";
 import type { UseFormRegisterReturn } from "react-hook-form";
 import { Form, SizableText, YStack } from "tamagui";
-import { GemField } from "../ui/GemField";
-import { GemButton } from "../ui/GemButton";
-import { GSearchField } from "../ui/GSearchField";
-import { GSelectField } from "../ui/GSelectField";
-import { GemFieldError, GemFieldLabel } from "../ui/fieldPrimitives";
+import { GemButton } from "@gemsforge/ui";
+import { GSearchField } from "@gemsforge/ui";
+import { GSelectField } from "@gemsforge/ui";
+import { GemFieldError, GemFieldLabel, GemTextField } from "@gemsforge/ui";
 
 interface CreateFieldFrameProps {
   id: string;
@@ -111,11 +110,10 @@ export function CreateTextField({
       error={error}
       required={required}
       type={type}
-      step={type === "number" ? "any" : undefined}
+      step={step ?? (type === "number" ? "any" : undefined)}
       multiline={multiline}
       placeholder={inputPlaceholder}
       width={width}
-      className={controlClassName}
     />
   );
 }
