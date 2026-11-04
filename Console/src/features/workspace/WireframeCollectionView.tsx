@@ -24,7 +24,7 @@ import { inferRecordPropertyKind, normalizeStorageType } from "../../table-kit/s
 import { formatAddress } from "../addresses/formatAddress";
 import { inferWireframePropertyMetadata, WIREFRAME_PROPERTY_TYPES } from "./propertyMetadata";
 import { WireframeCover, WireframeCoverCardImage, type WireframeCover as WireframeCoverValue } from "./WireframeCover";
-import { WireframePropertyIconProvider } from "./WireframePropertyEditor";
+import { keepDialogTabFocus, WireframePropertyIconProvider } from "./WireframePropertyEditor";
 import { useWireframeNavigation } from "./WireframeAppHeader";
 import { api } from "../../api";
 import { useUploadImageMutation } from "../../data/workflowQueries";
@@ -439,6 +439,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
   };
   const inspectorRenderOptions = {
     onDetails: openPropertyDetails,
+    propertyDetailsID: propertyDetails?.id ?? null,
     propertyIcons,
     propertyOrder: inspectorPropertyOrder,
     onReorder: reorderInspectorProperties,
@@ -758,6 +759,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
             aria-modal="true"
             aria-labelledby="wireframe-property-details-title"
             tabIndex={-1}
+            onKeyDown={(event) => keepDialogTabFocus(event, event.currentTarget)}
           >
             <GemButton type="button" variant="quiet" tone="secondary" aria-label="Close property details" onClick={() => setPropertyDetails(null)}>
               ×
@@ -1055,6 +1057,7 @@ function formatWireframeTableValue(field: string, value: unknown): string {
 }
 type InspectorRenderOptions = {
   onDetails: (details: { id: string; label: string; value: string; type?: string; icon?: string }, trigger: HTMLButtonElement) => void;
+  propertyDetailsID: string | null;
   propertyIcons: Readonly<Record<string, string>>;
   propertyOrder?: readonly string[];
   onReorder: (order: string[], announcement: string) => void;
@@ -1179,6 +1182,8 @@ function WireframeInspector({ node, options }: { node: ReactNode; options: Inspe
               type="button"
               className="wireframe-property-details-trigger"
               aria-label={`Open details for ${labelText}`}
+              aria-haspopup="dialog"
+              aria-expanded={options.propertyDetailsID === propertyID}
               onClick={(event) => options.onDetails({
                 label: labelText,
                 value: valueText,

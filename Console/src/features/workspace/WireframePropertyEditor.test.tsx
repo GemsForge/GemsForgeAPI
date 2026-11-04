@@ -12,9 +12,35 @@ describe("WireframePropertyEditor metadata", () => {
       </TamaguiProvider>,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Edit Monthly amount property" }));
+    const trigger = screen.getByRole("button", { name: "Edit Monthly amount property" });
+    fireEvent.click(trigger);
 
+    expect(screen.getByRole("textbox", { name: "Property name" })).toHaveFocus();
     expect(screen.getByRole("combobox", { name: "Primitive type" })).toHaveTextContent("Currency");
     expect(screen.getByRole("radio", { name: "Currency" })).toHaveAttribute("aria-checked", "true");
+
+    const closeButton = screen.getByRole("button", { name: "Close property editor" });
+    closeButton.focus();
+    fireEvent.keyDown(closeButton, { key: "Tab", shiftKey: true });
+    expect(screen.getByRole("button", { name: "Save property settings" })).toHaveFocus();
+
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(screen.queryByRole("dialog", { name: "Edit property" })).not.toBeInTheDocument();
+    expect(trigger).toHaveFocus();
+  });
+
+  it("closes on backdrop click and returns focus to its trigger", () => {
+    render(
+      <TamaguiProvider config={tamaguiConfig} defaultTheme="light">
+        <WireframePropertyEditor label="Monthly amount" value="$125.00" kind="number" />
+      </TamaguiProvider>,
+    );
+
+    const trigger = screen.getByRole("button", { name: "Edit Monthly amount property" });
+    fireEvent.click(trigger);
+    fireEvent.click(screen.getByRole("presentation"));
+
+    expect(screen.queryByRole("dialog", { name: "Edit property" })).not.toBeInTheDocument();
+    expect(trigger).toHaveFocus();
   });
 });
