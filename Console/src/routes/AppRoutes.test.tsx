@@ -100,6 +100,7 @@ describe("Gem Life navigation", () => {
     expect(screen.queryByRole("heading", { name: "Gem Life Console" })).not.toBeInTheDocument();
   });
   it("renders the wireframe home from live collection counts", async () => {
+    vi.spyOn(api, "listRootPages").mockResolvedValue([]);
     vi.spyOn(api, "listEducation").mockResolvedValue([]);
     vi.spyOn(api, "listEmployment").mockResolvedValue([]);
     vi.spyOn(api, "listAddresses").mockResolvedValue([]);
@@ -115,6 +116,28 @@ describe("Gem Life navigation", () => {
         .some((link) => link.getAttribute("href") === "/education-wireframe"),
     ).toBe(true);
     expect(screen.getByRole("link", { name: /Local Databases/ })).toHaveAttribute("href", "/local-databases-wireframe");
+  });
+  it("renders the wireframe domain catalog with ForgeKeeper destinations", async () => {
+    setup("/domains-wireframe");
+
+    expect(await screen.findByRole("heading", { name: "Domains" })).toBeInTheDocument();
+    expect(await screen.findByRole("link", { name: "Open ForgeKeeper pages in Life domain" })).toHaveAttribute(
+      "href",
+      "/forgekeeper-wireframe/domain/Life",
+    );
+  });
+  it("renders root ForgeKeeper pages inside the wireframe workspace", async () => {
+    vi.spyOn(api, "listRootPages").mockResolvedValue([
+      { id: 7, parentID: null, domainID: "Life", title: "Family plan", description: "Shared priorities" },
+    ]);
+    setup("/forgekeeper-wireframe");
+
+    expect(await screen.findByRole("heading", { name: "ForgeKeeper" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Family plan" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Life domain" })).toHaveAttribute(
+      "href",
+      "/forgekeeper-wireframe/domain/Life",
+    );
   });
   it("renders the wireframe list of safe local databases", async () => {
     vi.spyOn(api, "getLocalDatabases").mockResolvedValue([{ databaseName: "GemLife_Dev.sqlite", fileSizeBytes: 2048 }]);

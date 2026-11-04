@@ -108,6 +108,16 @@ const WireframeSettingsPage = lazy(() =>
 const WireframeTrashPage = lazy(() =>
   import("../features/workspace/WireframeSystemPages").then((module) => ({ default: module.WireframeTrashPage })),
 );
+const WireframeDomainsPage = lazy(() =>
+  import("../features/workspace/WireframeMvpWorkflowPages").then((module) => ({
+    default: module.WireframeDomainsPage,
+  })),
+);
+const WireframeForgeKeeperPage = lazy(() =>
+  import("../features/workspace/WireframeMvpWorkflowPages").then((module) => ({
+    default: module.WireframeForgeKeeperPage,
+  })),
+);
 
 type Notifications = { onError: (error: unknown) => void; onSuccess: (message: string) => void };
 
@@ -367,6 +377,10 @@ export function AppRoutes() {
           <Route path="local-databases-wireframe" element={<WireframeDatabasesPage />} />
           <Route path="application-settings-wireframe" element={<WireframeSettingsPage />} />
           <Route path="trash-wireframe" element={<WireframeTrashPage />} />
+          <Route path="domains-wireframe" element={<WireframeDomainsPage />} />
+          <Route path="forgekeeper-wireframe" element={<WireframeForgeKeeperPage kind="roots" />} />
+          <Route path="forgekeeper-wireframe/domain/:domainID" element={<WireframeForgeKeeperPage kind="domain" />} />
+          <Route path="forgekeeper-wireframe/:pageID/children" element={<WireframeForgeKeeperPage kind="children" />} />
           <Route path="education-wireframe/*" element={<EducationWireframe />} />
           <Route path="employment-wireframe/*" element={<EmploymentWireframe />} />
           <Route path="addresses-wireframe/*" element={<AddressesWireframe />} />

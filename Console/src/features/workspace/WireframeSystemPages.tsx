@@ -8,11 +8,13 @@ import {
   Gem,
   ReceiptText,
   Wrench,
+  BookOpenText,
   Settings2,
   Trash2,
 } from "lucide-react";
 import { QueryFeedback } from "../../components/QueryFeedback";
-import { useLocalDatabasesQuery } from "../../data/workflowQueries";
+import { useLocalDatabasesQuery, usePagesQuery } from "../../data/workflowQueries";
+import { useDomainsQuery } from "../../data/domainQueries";
 import {
   usePermanentlyDeleteTrashEntryMutation,
   useRestoreTrashEntryMutation,
@@ -30,7 +32,7 @@ import { WireframeLeftPane } from "./WireframeLeftPane";
 import { WireframePageView } from "./WireframePageView";
 import { useWireframeNavigation } from "./WireframeAppHeader";
 
-function WireframeSystemPage({
+export function WireframeSystemPage({
   children,
   title,
   description,
@@ -82,6 +84,8 @@ const collectionCards = [
 ] as const;
 
 export function WireframeHomePage() {
+  const domains = useDomainsQuery();
+  const rootPages = usePagesQuery({ kind: "roots" });
   const education = useEducationQuery(true);
   const employment = useEmploymentQuery(true);
   const addresses = useAddressesQuery(true);
@@ -125,6 +129,30 @@ export function WireframeHomePage() {
           <span className="wireframe-system-card-copy">
             <strong>Local Databases</strong>
             <small>Development tools</small>
+          </span>
+          <span className="wireframe-system-card-arrow" aria-hidden="true">
+            ↗
+          </span>
+        </Link>
+        <Link className="wireframe-system-card" to="/domains-wireframe">
+          <span className="wireframe-system-card-icon">
+            <Settings2 size={20} aria-hidden="true" />
+          </span>
+          <span className="wireframe-system-card-copy">
+            <strong>Domains</strong>
+            <small>{domains.data?.length ?? "—"} domains</small>
+          </span>
+          <span className="wireframe-system-card-arrow" aria-hidden="true">
+            ↗
+          </span>
+        </Link>
+        <Link className="wireframe-system-card" to="/forgekeeper-wireframe">
+          <span className="wireframe-system-card-icon">
+            <BookOpenText size={20} aria-hidden="true" />
+          </span>
+          <span className="wireframe-system-card-copy">
+            <strong>ForgeKeeper</strong>
+            <small>{rootPages.data?.length ?? "—"} root pages</small>
           </span>
           <span className="wireframe-system-card-arrow" aria-hidden="true">
             ↗

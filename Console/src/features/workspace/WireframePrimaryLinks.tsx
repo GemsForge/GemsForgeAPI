@@ -5,8 +5,8 @@ import { GemButton } from "@gemsforge/ui";
 const primaryNavigation = [
   { label: "Home", icon: House, to: "/home-wireframe" },
   { label: "Workspace", icon: Boxes, to: "/workspace" },
-  { label: "Domains", icon: Network, to: "/domains" },
-  { label: "ForgeKeeper", icon: ShieldCheck, to: "/forgekeeper" },
+  { label: "Domains", icon: Network, to: "/domains-wireframe" },
+  { label: "ForgeKeeper", icon: ShieldCheck, to: "/forgekeeper-wireframe" },
 ] as const;
 
 export function WireframePrimaryLinks({ search }: { search: string }) {

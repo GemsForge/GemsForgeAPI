@@ -226,6 +226,107 @@
   margin-top: 0.5rem;
 }
 
+.wireframe-system-domain-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+  gap: 0.8rem;
+  margin-top: 1rem;
+}
+
+.wireframe-system-domain-card {
+  min-width: 0;
+  background: var(--gem-wireframe-surface, #fff);
+}
+
+.wireframe-system-domain-card .wireframe-system-card-copy small {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.wireframe-system-domain-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin: 0.5rem 0 1rem;
+}
+
+.wireframe-system-scope-link {
+  display: inline-flex;
+  min-height: 2.25rem;
+  align-items: center;
+  padding: 0.4rem 0.7rem;
+  border: 1px solid var(--gem-wireframe-border, #d9dfdc);
+  border-radius: 999px;
+  background: var(--gem-wireframe-surface, #fff);
+  color: var(--gem-wireframe-text, #233c42);
+  font-size: 0.78rem;
+  text-decoration: none;
+}
+
+.wireframe-system-scope-link.is-active {
+  border-color: var(--gem-wireframe-action, #287ca5);
+  background: var(--gem-wireframe-selected, #e8f3f6);
+  font-weight: 700;
+}
+
+.wireframe-system-success {
+  margin: 0.7rem 0;
+  color: #286b42;
+  font-size: 0.8rem;
+}
+
+.wireframe-standalone .content-heading {
+  margin: 1rem 0;
+}
+
+.wireframe-standalone .page-list {
+  gap: 0.6rem;
+}
+
+.wireframe-standalone .page-card {
+  min-width: 0;
+  padding: 0.85rem;
+  border-color: var(--gem-wireframe-border, #d9dfdc);
+  border-radius: 0.75rem;
+  background: var(--gem-wireframe-surface, #fff);
+  color: var(--gem-wireframe-text, #233c42);
+}
+
+.wireframe-standalone .page-card h3 {
+  color: var(--gem-wireframe-heading, #173d45);
+}
+
+.wireframe-standalone .page-card p,
+.wireframe-standalone .page-meta {
+  color: var(--gem-wireframe-muted, #65767b);
+}
+
+.wireframe-standalone .page-id {
+  color: var(--gem-wireframe-action, #287ca5);
+}
+
+.wireframe-standalone .empty-state {
+  padding: 2rem 1rem;
+  border-color: var(--gem-wireframe-border, #d9dfdc);
+  color: var(--gem-wireframe-muted, #65767b);
+}
+
+.wireframe-standalone .empty-state h3 {
+  color: var(--gem-wireframe-heading, #173d45);
+}
+
+.wireframe-standalone .import-card {
+  border-color: var(--gem-wireframe-border, #d9dfdc);
+  background: var(--gem-wireframe-surface, #fff);
+}
+
+.wireframe-standalone .import-card p:not(.eyebrow),
+.wireframe-standalone .upload-placeholder {
+  color: var(--gem-wireframe-muted, #65767b);
+}
+
 .wireframe-system-action {
   display: inline-flex;
   min-height: 2.5rem;
