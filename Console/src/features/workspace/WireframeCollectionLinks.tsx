@@ -60,7 +60,7 @@ export function WireframeCollectionLinks({
           className={`wireframe-collection-link${item.label === activeCollection ? " active" : ""}`}
           key={item.label}
         >
-          <Link to={item.to} aria-current={item.label === activeCollection ? "page" : undefined}>
+          <Link to={item.to} title={item.label} aria-current={item.label === activeCollection ? "page" : undefined}>
             <span className="wireframe-collection-link-name">
               <span className="wireframe-collection-link-icon" aria-hidden="true">
                 {item.label === activeCollection && activeCollectionIcon
