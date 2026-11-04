@@ -15,7 +15,7 @@ type WireframePageViewProps = {
   title: string;
   description: string;
   recordCount: number;
-  countLabel?: string;
+  countLabel?: { singular: string; plural: string };
   showCount?: boolean;
   children: ReactNode;
   tableIcon?: ReactNode;
@@ -27,7 +27,7 @@ export function WireframePageView({
   title,
   description,
   recordCount,
-  countLabel = "records",
+  countLabel = { singular: "record", plural: "records" },
   showCount = true,
   tableIcon,
   onTitleChange,
@@ -158,7 +158,7 @@ export function WireframePageView({
             {showCount ? (
               <XStack className="wireframe-page-count-group" alignItems="center" gap="$wireframeCard">
                 <WireframeCount>
-                  {recordCount} {countLabel}
+                  {recordCount} {recordCount === 1 ? countLabel.singular : countLabel.plural}
                 </WireframeCount>
               </XStack>
             ) : null}

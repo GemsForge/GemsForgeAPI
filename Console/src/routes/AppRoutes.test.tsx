@@ -173,6 +173,7 @@ describe("Gem Life navigation", () => {
     setup("/trash-wireframe");
 
     expect(await screen.findByRole("heading", { name: "Trash" })).toBeInTheDocument();
+    expect(await screen.findByText("1 record")).toBeInTheDocument();
     expect(await screen.findByRole("heading", { name: "Northview School" })).toBeInTheDocument();
     expect(screen.getByText("Education · EDU-001")).toBeInTheDocument();
     fireEvent.click(screen.getByText("Record details"));

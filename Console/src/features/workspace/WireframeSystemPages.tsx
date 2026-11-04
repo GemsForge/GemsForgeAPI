@@ -44,7 +44,7 @@ export function WireframeSystemPage({
   title: string;
   description: string;
   count: number;
-  countLabel?: string;
+  countLabel?: { singular: string; plural: string };
   showCount?: boolean;
 }) {
   const [collapsed, setCollapsed] = useState(false);
@@ -188,7 +188,7 @@ export function WireframeDatabasesPage() {
       title="Local Databases"
       description="Development databases available in the configured safe folder. The personal database is excluded."
       count={databases.length}
-      countLabel="databases"
+      countLabel={{ singular: "database", plural: "databases" }}
     >
       <div className="wireframe-system-page-actions">
         <Link className="wireframe-system-action" to="/local-database-wireframe">
@@ -229,7 +229,7 @@ export function WireframeSettingsPage() {
       title="Application Settings"
       description="Workspace tools and local development configuration."
       count={4}
-      countLabel="tools"
+      countLabel={{ singular: "tool", plural: "tools" }}
     >
       <section className="wireframe-system-card-grid" aria-label="Application tools">
         <Link className="wireframe-system-card" to="/local-databases-wireframe">
@@ -316,7 +316,7 @@ export function WireframeTrashPage() {
       title="Trash"
       description="Restore archived records or permanently remove them."
       count={entries.length}
-      countLabel="records"
+      countLabel={{ singular: "record", plural: "records" }}
     >
       <QueryFeedback query={query} />
       {actionError ? (

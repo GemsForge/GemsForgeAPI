@@ -22,7 +22,7 @@ export function WireframeDomainsPage() {
       title="Domains"
       description="Organize and open the ForgeKeeper pages in each part of your workspace."
       count={records.length}
-      countLabel="domains"
+      countLabel={{ singular: "domain", plural: "domains" }}
     >
       <div className="wireframe-system-page-actions">
         <button
@@ -104,7 +104,7 @@ export function WireframeForgeKeeperPage({ kind }: { kind: ForgeKeeperScope }) {
       title="ForgeKeeper"
       description="Browse and update the pages stored in your workspace."
       count={pages.data?.length ?? 0}
-      countLabel="pages"
+      countLabel={{ singular: "page", plural: "pages" }}
     >
       <section className="wireframe-system-domain-picker" aria-label="ForgeKeeper scope">
         <Link
