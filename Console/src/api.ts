@@ -300,6 +300,13 @@ export const api = {
     request<LocalDatabaseCapabilities>("/local-databases/capabilities", { signal }),
   getLocalDatabases: (signal?: AbortSignal) =>
     request<import("./types").LocalDatabaseSummary[]>("/local-databases", { signal }),
+  listTrash: (signal?: AbortSignal) => request<import("./types").TrashEntry[]>("/trash", { signal }),
+  archiveRecord: (input: import("./types").TrashEntryInput) =>
+    request<import("./types").TrashEntry>("/trash", { method: "POST", body: JSON.stringify(input) }),
+  restoreTrashEntry: (entryID: string) =>
+    request<void>(`/trash/${encodeURIComponent(entryID)}/restore`, { method: "POST" }),
+  permanentlyDeleteTrashEntry: (entryID: string) =>
+    request<void>(`/trash/${encodeURIComponent(entryID)}`, { method: "DELETE" }),
   createLocalDatabase: (payload: { databaseName: string; profile: string; confirmCreation: boolean }) =>
     request<LocalDatabaseCreationResult>("/local-databases", {
       method: "POST",

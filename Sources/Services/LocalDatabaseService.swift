@@ -48,7 +48,8 @@ enum LocalDatabaseProfile: String, Codable, CaseIterable, Sendable {
             "CreateViewColumnConfigurations",
             "CreateViewQueryConfigurations",
             "AddTableViewWorkspaceState",
-            "CreateRecordPresentations"
+            "CreateRecordPresentations",
+            "CreateTrashEntries"
         ]
     }
 
@@ -96,6 +97,7 @@ enum LocalDatabaseProfile: String, Codable, CaseIterable, Sendable {
             app.migrations.add(CreateViewQueryConfigurations())
             app.migrations.add(AddTableViewWorkspaceState())
             app.migrations.add(CreateRecordPresentations())
+            app.migrations.add(CreateTrashEntries())
         }
     }
 }

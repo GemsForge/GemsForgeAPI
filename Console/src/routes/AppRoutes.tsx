@@ -102,6 +102,12 @@ const WireframeHomePage = lazy(() =>
 const WireframeDatabasesPage = lazy(() =>
   import("../features/workspace/WireframeSystemPages").then((module) => ({ default: module.WireframeDatabasesPage })),
 );
+const WireframeSettingsPage = lazy(() =>
+  import("../features/workspace/WireframeSystemPages").then((module) => ({ default: module.WireframeSettingsPage })),
+);
+const WireframeTrashPage = lazy(() =>
+  import("../features/workspace/WireframeSystemPages").then((module) => ({ default: module.WireframeTrashPage })),
+);
 
 type Notifications = { onError: (error: unknown) => void; onSuccess: (message: string) => void };
 
@@ -359,6 +365,8 @@ export function AppRoutes() {
         >
           <Route path="home-wireframe" element={<WireframeHomePage />} />
           <Route path="local-databases-wireframe" element={<WireframeDatabasesPage />} />
+          <Route path="application-settings-wireframe" element={<WireframeSettingsPage />} />
+          <Route path="trash-wireframe" element={<WireframeTrashPage />} />
           <Route path="education-wireframe/*" element={<EducationWireframe />} />
           <Route path="employment-wireframe/*" element={<EmploymentWireframe />} />
           <Route path="addresses-wireframe/*" element={<AddressesWireframe />} />

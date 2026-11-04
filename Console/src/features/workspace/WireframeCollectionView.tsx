@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import {
   ChevronDown,
   ChevronLeft,
+  Archive,
   Expand,
   GalleryHorizontal,
   GripVertical,
@@ -47,6 +48,7 @@ import { keepDialogTabFocus, WireframePropertyIconProvider } from "./WireframePr
 import { useWireframeNavigation } from "./WireframeAppHeader";
 import { api } from "../../api";
 import { useUploadImageMutation } from "../../data/workflowQueries";
+import { useArchiveRecordMutation, useTrashEntriesQuery } from "../../data/trashQueries";
 import {
   useDeleteRecordPresentationMutation,
   useRecordPresentationsQuery,
@@ -166,6 +168,22 @@ export function WireframeCollectionView<T extends WireframeRecord>({
   const propertyDetailsDialogRef = useRef<HTMLElement | null>(null);
   const propertyDetailsTriggerRef = useRef<HTMLButtonElement | null>(null);
   const presentationTableName = config.tableName ?? config.title;
+  const trashEntriesQuery = useTrashEntriesQuery();
+  const archiveRecord = useArchiveRecordMutation();
+  const [archiveError, setArchiveError] = useState<string | null>(null);
+  const archivedRecordIDs = useMemo(
+    () =>
+      new Set(
+        (trashEntriesQuery.data ?? [])
+          .filter((entry) => entry.tableName === presentationTableName)
+          .map((entry) => entry.recordID),
+      ),
+    [presentationTableName, trashEntriesQuery.data],
+  );
+  const activeRecords = useMemo(
+    () => config.records.filter((record) => !archivedRecordIDs.has(record.id)),
+    [archivedRecordIDs, config.records],
+  );
   const savedViewsQuery = useTableViewsQuery(presentationTableName);
   const { mutateAsync: saveWorkspaceStateAsync } = useSaveTableViewWorkspaceStateMutation(presentationTableName);
   const workspaceHydrated = useRef(false);
@@ -246,7 +264,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
     if (!pendingID) return;
     pendingSelectedID.current = null;
     skipWorkspaceSaveOnce.current = true;
-    if (config.records.some((record) => record.id === pendingID)) {
+    if (activeRecords.some((record) => record.id === pendingID)) {
       setSelectedID(pendingID);
       return;
     }
@@ -254,7 +272,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
     // selection and trigger a follow-up save after hydration updates settle.
     setSelectedID(null);
     setWorkspaceSelectionRevision((revision) => revision + 1);
-  }, [config.records, savedViewsQuery.isSuccess]);
+  }, [activeRecords, savedViewsQuery.isSuccess]);
   useEffect(() => {
     if (!workspaceHydrated.current || pendingSelectedID.current) return;
     if (skipWorkspaceSaveOnce.current) {
@@ -332,7 +350,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
   const selectedCardRef = useRef<HTMLButtonElement | null>(null);
   const inspectorExpanded = Boolean(recordPageID);
   const selected =
-    config.records.find((record) => record.id === (recordPageID ? decodeURIComponent(recordPageID) : selectedID)) ??
+    activeRecords.find((record) => record.id === (recordPageID ? decodeURIComponent(recordPageID) : selectedID)) ??
     null;
   const selectedCover = selected ? (config.cover?.(selected) ?? storedCovers[selected.id]) : undefined;
   const TableIcon = getPropertyIconByName(tableIcon).icon;
@@ -360,12 +378,12 @@ export function WireframeCollectionView<T extends WireframeRecord>({
   };
   const schema = schemaQuery.data?.tables.find((table) => table.name === (config.tableName ?? config.title));
   const schemaProperties = useMemo(
-    () => (schema ? createWireframeSchemaProperties<T>(schema.columns, config.records) : []),
-    [config.records, schema],
+    () => (schema ? createWireframeSchemaProperties<T>(schema.columns, activeRecords) : []),
+    [activeRecords, schema],
   );
   const matchingRecords = useMemo(
     () =>
-      config.records.filter(
+      activeRecords.filter(
         (record) =>
           config.searchValues(record).some((value) => value.toLowerCase().includes(query.trim().toLowerCase())) &&
           (!filter || config.cardStatus(record) === filter),
@@ -390,7 +408,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
   const pageCount = Math.max(1, Math.ceil(sortedRecords.length / pageSize));
   const visibleRecords = sortedRecords.slice(pageIndex * pageSize, (pageIndex + 1) * pageSize);
   const propertyOptions = useMemo(() => {
-    const first = config.records[0] as Record<string, unknown> | undefined;
+    const first = activeRecords[0] as Record<string, unknown> | undefined;
     const ids = new Set(
       first
         ? Object.entries(first)
@@ -398,12 +416,12 @@ export function WireframeCollectionView<T extends WireframeRecord>({
             .map(([id]) => id)
         : [],
     );
-    for (const record of config.records) {
+    for (const record of activeRecords) {
       for (const [id, value] of Object.entries(record)) if (isImageProperty(id, value)) ids.add(id);
     }
     for (const property of config.properties ?? []) ids.add(property.sourceField ?? property.id);
     if (config.cardImage) ids.add("image");
-    for (const column of schema?.columns ?? []) ids.add(schemaColumnSourceField(column, config.records));
+    for (const column of schema?.columns ?? []) ids.add(schemaColumnSourceField(column, activeRecords));
     return [...ids].map((id) => ({
       id,
       label:
@@ -411,7 +429,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
         propertyLabel(id),
       defaultVisible: id !== "id",
     }));
-  }, [config, schema]);
+  }, [activeRecords, config, schema]);
   const groupProperty = groupBy
     ? (config.properties?.find((property) => property.id === groupBy || property.sourceField === groupBy) ??
       schemaProperties.find((property) => property.id === groupBy || property.sourceField === groupBy))
@@ -451,7 +469,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
   const visiblePropertyIds = propertyConfiguration.visibleIds;
   const imagePropertyOptions = propertyOptions.filter(
     (property) =>
-      isImageProperty(property.id, (config.records[0] as Record<string, unknown> | undefined)?.[property.id]) ||
+      isImageProperty(property.id, (activeRecords[0] as Record<string, unknown> | undefined)?.[property.id]) ||
       property.id === "image",
   );
   const galleryImageOptions = useMemo(
@@ -472,6 +490,21 @@ export function WireframeCollectionView<T extends WireframeRecord>({
     setSelectedID(null);
     if (inspectorExpanded) navigate(location.pathname.replace(/\/record\/[^/]+$/, ""));
     requestAnimationFrame(() => selectedCardRef.current?.focus());
+  };
+  const moveSelectedToTrash = async () => {
+    if (!selected) return;
+    setArchiveError(null);
+    try {
+      await archiveRecord.mutateAsync({
+        tableName: presentationTableName,
+        recordID: selected.id,
+        title: config.cardTitle(selected),
+        snapshot: JSON.stringify(selected),
+      });
+      closeInspector();
+    } catch (error) {
+      setArchiveError(error instanceof Error ? error.message : "The record could not be moved to Trash.");
+    }
   };
   useEffect(() => {
     const move = (event: PointerEvent) => {
@@ -596,7 +629,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
           </>
         ) : null}
         <WireframeLeftPane
-          recordCount={config.records.length}
+          recordCount={activeRecords.length}
           activeCollection={config.activeCollection}
           activeCollectionIcon={<TableIcon size={16} aria-hidden="true" />}
           collapsed={mobileNavigationOpen ? false : navigationCollapsed}
@@ -751,8 +784,8 @@ export function WireframeCollectionView<T extends WireframeRecord>({
                 { value: "status", label: "Status" },
                 { value: "meta", label: "Metadata" },
               ]}
-              filterOptions={[...new Set(config.records.map((record) => config.cardStatus(record)))]}
-              totalCount={config.records.length}
+              filterOptions={[...new Set(activeRecords.map((record) => config.cardStatus(record)))]}
+              totalCount={activeRecords.length}
               visibleCount={matchingRecords.length}
               compact
             />
@@ -779,7 +812,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
                 setFilter(value);
                 resetPage();
               }}
-              filterOptions={[...new Set(config.records.map((record) => config.cardStatus(record)))]}
+              filterOptions={[...new Set(activeRecords.map((record) => config.cardStatus(record)))]}
               groupBy={groupBy}
               onGroupBy={(value) => {
                 setGroupBy(value);
@@ -1030,11 +1063,28 @@ export function WireframeCollectionView<T extends WireframeRecord>({
                       <Expand size={15} aria-hidden="true" />
                     </button>
                   )}
+                  <GemButton
+                    type="button"
+                    className="wireframe-inspector-trash-button"
+                    size="xs"
+                    variant="quiet"
+                    tone="secondary"
+                    aria-label="Move record to Trash"
+                    disabled={archiveRecord.isPending}
+                    onClick={() => void moveSelectedToTrash()}
+                  >
+                    <Archive size={15} aria-hidden="true" />
+                  </GemButton>
                   <button type="button" aria-label="Close inspector" title="Close inspector" onClick={closeInspector}>
                     ×
                   </button>
                 </div>
               </div>
+              {archiveError ? (
+                <p className="wireframe-system-error" role="alert">
+                  {archiveError}
+                </p>
+              ) : null}
               <WireframeCover
                 recordKey={selected.id}
                 value={selectedCover}

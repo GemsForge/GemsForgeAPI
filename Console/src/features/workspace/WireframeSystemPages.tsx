@@ -1,8 +1,23 @@
 import { useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { Database, GraduationCap, MapPin, BriefcaseBusiness, Gem, ReceiptText, Wrench } from "lucide-react";
+import {
+  Database,
+  GraduationCap,
+  MapPin,
+  BriefcaseBusiness,
+  Gem,
+  ReceiptText,
+  Wrench,
+  Settings2,
+  Trash2,
+} from "lucide-react";
 import { QueryFeedback } from "../../components/QueryFeedback";
 import { useLocalDatabasesQuery } from "../../data/workflowQueries";
+import {
+  usePermanentlyDeleteTrashEntryMutation,
+  useRestoreTrashEntryMutation,
+  useTrashEntriesQuery,
+} from "../../data/trashQueries";
 import {
   useAddressesQuery,
   useEducationQuery,
@@ -74,12 +89,12 @@ export function WireframeHomePage() {
   const hues = useGemHuesQuery(true);
   const services = useServiceAccountsQuery(true);
   const recordCounts = {
-    Education: education.data?.length,
-    Employment: employment.data?.length,
-    Addresses: addresses.data?.length,
-    "Expense Tracker": transactions.data?.length,
-    "Gem Hues": hues.data?.length,
-    Services: services.data?.length,
+    Education: education.data?.length ?? 0,
+    Employment: employment.data?.length ?? 0,
+    Addresses: addresses.data?.length ?? 0,
+    "Expense Tracker": transactions.data?.length ?? 0,
+    "Gem Hues": hues.data?.length ?? 0,
+    Services: services.data?.length ?? 0,
   };
   const total = Object.values(recordCounts).reduce((sum, count) => sum + (count ?? 0), 0);
 
@@ -162,6 +177,138 @@ export function WireframeDatabasesPage() {
           <section className="wireframe-empty-state">
             <strong>No development databases yet</strong>
             <p>Create an isolated SQLite database to start a development workspace.</p>
+          </section>
+        )
+      ) : null}
+    </WireframeSystemPage>
+  );
+}
+
+export function WireframeSettingsPage() {
+  return (
+    <WireframeSystemPage
+      title="Application Settings"
+      description="Workspace tools and local development configuration."
+      count={3}
+    >
+      <section className="wireframe-system-card-grid" aria-label="Application tools">
+        <Link className="wireframe-system-card" to="/local-databases-wireframe">
+          <span className="wireframe-system-card-icon">
+            <Database size={20} aria-hidden="true" />
+          </span>
+          <span className="wireframe-system-card-copy">
+            <strong>Local Databases</strong>
+            <small>Inspect safe development databases</small>
+          </span>
+          <span className="wireframe-system-card-arrow" aria-hidden="true">
+            ↗
+          </span>
+        </Link>
+        <Link className="wireframe-system-card" to="/schema-builder">
+          <span className="wireframe-system-card-icon">
+            <Settings2 size={20} aria-hidden="true" />
+          </span>
+          <span className="wireframe-system-card-copy">
+            <strong>Schema Builder</strong>
+            <small>Review supported table tools</small>
+          </span>
+          <span className="wireframe-system-card-arrow" aria-hidden="true">
+            ↗
+          </span>
+        </Link>
+        <Link className="wireframe-system-card" to="/live-database">
+          <span className="wireframe-system-card-icon">
+            <Database size={20} aria-hidden="true" />
+          </span>
+          <span className="wireframe-system-card-copy">
+            <strong>Live Database</strong>
+            <small>Inspect the configured schema</small>
+          </span>
+          <span className="wireframe-system-card-arrow" aria-hidden="true">
+            ↗
+          </span>
+        </Link>
+      </section>
+    </WireframeSystemPage>
+  );
+}
+
+export function WireframeTrashPage() {
+  const query = useTrashEntriesQuery();
+  const restore = useRestoreTrashEntryMutation();
+  const permanentlyDelete = usePermanentlyDeleteTrashEntryMutation();
+  const [actionError, setActionError] = useState<string | null>(null);
+  const entries = query.data ?? [];
+
+  const permanentlyDeleteEntry = async (entryID: string, title: string) => {
+    if (!window.confirm(`Permanently delete “${title}”? This cannot be undone.`)) return;
+    setActionError(null);
+    try {
+      await permanentlyDelete.mutateAsync(entryID);
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : "The record could not be deleted.");
+    }
+  };
+
+  const restoreEntry = async (entryID: string) => {
+    setActionError(null);
+    try {
+      await restore.mutateAsync(entryID);
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : "The record could not be restored.");
+    }
+  };
+
+  return (
+    <WireframeSystemPage
+      title="Trash"
+      description="Restore archived records or permanently remove them."
+      count={entries.length}
+    >
+      <QueryFeedback query={query} />
+      {actionError ? (
+        <p className="wireframe-system-error" role="alert">
+          {actionError}
+        </p>
+      ) : null}
+      {query.data ? (
+        entries.length ? (
+          <section className="wireframe-system-trash-list" aria-label="Archived records">
+            {entries.map((entry) => (
+              <article className="wireframe-system-trash-card" key={entry.entryID}>
+                <span className="wireframe-system-card-icon">
+                  <Trash2 size={20} aria-hidden="true" />
+                </span>
+                <div className="wireframe-system-trash-copy">
+                  <h3>{entry.title}</h3>
+                  <p>
+                    {entry.tableName} · {entry.recordID}
+                  </p>
+                  <details>
+                    <summary>Record details</summary>
+                    <pre>{entry.snapshot}</pre>
+                  </details>
+                </div>
+                <div className="wireframe-system-trash-actions">
+                  <button type="button" disabled={restore.isPending} onClick={() => void restoreEntry(entry.entryID)}>
+                    Restore
+                  </button>
+                  <button
+                    type="button"
+                    className="is-danger"
+                    disabled={permanentlyDelete.isPending}
+                    onClick={() => void permanentlyDeleteEntry(entry.entryID, entry.title)}
+                  >
+                    Delete permanently
+                  </button>
+                </div>
+              </article>
+            ))}
+          </section>
+        ) : (
+          <section className="wireframe-empty-state">
+            <strong>Trash is empty</strong>
+            <p>Records moved to Trash will appear here.</p>
           </section>
         )
       ) : null}
