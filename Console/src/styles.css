@@ -6058,6 +6058,9 @@ dialog {
   .content {
     padding: 1.5rem 1rem;
   }
+  .wireframe-collection-page {
+    margin-inline: -1rem;
+  }
   .hue-list {
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
   }
