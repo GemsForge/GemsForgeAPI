@@ -287,6 +287,11 @@ export interface LocalDatabaseCreationResult {
   status: string;
 }
 
+export interface LocalDatabaseSummary {
+  databaseName: string;
+  fileSizeBytes: number;
+}
+
 export interface LiveSchemaColumn {
   name: string;
   dataType: string;

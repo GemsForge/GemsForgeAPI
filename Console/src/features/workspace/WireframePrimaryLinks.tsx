@@ -2,7 +2,7 @@ import { NavLink } from "react-router-dom";
 import { GemButton } from "@gemsforge/ui";
 
 const primaryNavigation = [
-  { label: "Home", icon: "⌂", to: "/" },
+  { label: "Home", icon: "⌂", to: "/home-wireframe" },
   { label: "Workspace", icon: "✦", to: "/workspace" },
   { label: "Domains", icon: "◇", to: "/domains" },
   { label: "ForgeKeeper", icon: "⌁", to: "/forgekeeper" },
@@ -16,7 +16,7 @@ export function WireframePrimaryLinks({ search }: { search: string }) {
     <nav aria-label="Primary navigation" className="demo-nav">
       {visibleLinks.map((item) => (
         <GemButton asChild variant="quiet" tone="secondary" className="wireframe-primary-link" key={item.label}>
-          <NavLink to={item.to} end={item.to === "/"} title={item.label}>
+          <NavLink to={item.to} end={item.label === "Home"} title={item.label}>
             <span className="wireframe-primary-link-name">
               <span aria-hidden="true">{item.icon}</span>
               {item.label}

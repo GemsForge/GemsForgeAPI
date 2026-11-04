@@ -8,6 +8,14 @@ func registerLocalDatabaseRoutes(_ app: Application, configuration: LocalDatabas
         LocalDatabaseService(configuration: configuration).capabilities()
     }
 
+    databases.get { request async throws -> [LocalDatabaseSummaryResponse] in
+        do {
+            return try LocalDatabaseService(configuration: configuration).listExisting()
+        } catch let error as LocalDatabaseError {
+            throw Abort(.forbidden, reason: error.description)
+        }
+    }
+
     databases.post { request async throws -> LocalDatabaseCreationResponse in
         let input = try request.content.decode(LocalDatabaseCreationRequest.self)
         do {

@@ -126,6 +126,11 @@ struct LocalDatabaseCreationResponse: Content {
     let status: String
 }
 
+struct LocalDatabaseSummaryResponse: Content {
+    let databaseName: String
+    let fileSizeBytes: Int
+}
+
 /// Creates isolated local SQLite databases and applies only approved migrations.
 struct LocalDatabaseService: Sendable {
     private let configuration: LocalDatabaseConfiguration
@@ -149,6 +154,32 @@ struct LocalDatabaseService: Sendable {
                 "This feature is disabled unless explicitly enabled for local development."
             ]
         )
+    }
+
+    func listExisting() throws -> [LocalDatabaseSummaryResponse] {
+        guard configuration.isReady, let rootDirectory = configuration.rootDirectory else {
+            throw LocalDatabaseError.disabled
+        }
+
+        return try FileManager.default.contentsOfDirectory(
+            at: rootDirectory.standardizedFileURL,
+            includingPropertiesForKeys: [.isRegularFileKey, .isSymbolicLinkKey, .fileSizeKey]
+        )
+        .compactMap { url in
+            let values = try url.resourceValues(forKeys: [.isRegularFileKey, .isSymbolicLinkKey, .fileSizeKey])
+            guard values.isRegularFile == true,
+                  values.isSymbolicLink != true,
+                  url.pathExtension.lowercased() == "sqlite",
+                  url.deletingLastPathComponent().standardizedFileURL == rootDirectory.standardizedFileURL,
+                  url.standardizedFileURL != configuration.protectedDatabaseURL?.standardizedFileURL
+            else { return nil }
+
+            return LocalDatabaseSummaryResponse(
+                databaseName: url.lastPathComponent,
+                fileSizeBytes: values.fileSize ?? 0
+            )
+        }
+        .sorted { $0.databaseName.localizedCaseInsensitiveCompare($1.databaseName) == .orderedAscending }
     }
 
     func create(request: LocalDatabaseCreationRequest) async throws -> LocalDatabaseCreationResponse {

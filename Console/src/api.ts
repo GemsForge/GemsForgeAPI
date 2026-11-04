@@ -298,6 +298,8 @@ export const api = {
   },
   getLocalDatabaseCapabilities: (signal?: AbortSignal) =>
     request<LocalDatabaseCapabilities>("/local-databases/capabilities", { signal }),
+  getLocalDatabases: (signal?: AbortSignal) =>
+    request<import("./types").LocalDatabaseSummary[]>("/local-databases", { signal }),
   createLocalDatabase: (payload: { databaseName: string; profile: string; confirmCreation: boolean }) =>
     request<LocalDatabaseCreationResult>("/local-databases", {
       method: "POST",

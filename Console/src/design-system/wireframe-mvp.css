@@ -151,6 +151,117 @@
   background: var(--gem-wireframe-surface-raised, #f4f7f5);
 }
 
+.wireframe-system-card-grid,
+.wireframe-system-database-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+  gap: 0.8rem;
+  margin-top: 1rem;
+}
+
+.wireframe-system-card,
+.wireframe-system-database-card {
+  display: flex;
+  min-width: 0;
+  min-height: 5.5rem;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 1rem;
+  border: 1px solid var(--gem-wireframe-border, #d9dfdc);
+  border-radius: 0.8rem;
+  background: var(--gem-wireframe-surface, #fff);
+  color: var(--gem-wireframe-text, #233c42);
+  text-decoration: none;
+  transition:
+    border-color var(--gem-motion-quick) ease,
+    transform var(--gem-motion-quick) ease;
+}
+
+.wireframe-system-card:hover,
+.wireframe-system-card:focus-visible {
+  transform: translateY(-1px);
+  border-color: var(--gem-wireframe-action, #287ca5);
+  outline: none;
+}
+
+.wireframe-system-card-icon {
+  display: grid;
+  width: 2.5rem;
+  height: 2.5rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 0.7rem;
+  background: var(--gem-wireframe-surface-raised, #f4f7f5);
+  color: var(--gem-wireframe-action, #287ca5);
+}
+
+.wireframe-system-card-copy {
+  display: grid;
+  min-width: 0;
+  gap: 0.25rem;
+}
+
+.wireframe-system-card-copy strong,
+.wireframe-system-database-card h3 {
+  overflow: hidden;
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wireframe-system-card-copy small,
+.wireframe-system-database-card p {
+  margin: 0;
+  color: var(--gem-wireframe-muted, #65767b);
+  font-size: 0.78rem;
+}
+
+.wireframe-system-card-arrow {
+  margin-left: auto;
+  color: var(--gem-wireframe-muted, #65767b);
+}
+
+.wireframe-system-page-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.5rem;
+}
+
+.wireframe-system-action {
+  display: inline-flex;
+  min-height: 2.5rem;
+  align-items: center;
+  padding: 0.45rem 0.85rem;
+  border-radius: 0.55rem;
+  background: var(--gem-wireframe-action, #287ca5);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.wireframe-system-database-card {
+  min-height: 4.5rem;
+}
+
+.wireframe-system-database-card > div {
+  min-width: 0;
+}
+
+.wireframe-system-database-status {
+  margin-left: auto;
+  color: var(--gem-wireframe-muted, #65767b);
+  font-size: 0.75rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wireframe-system-card {
+    transition: none;
+  }
+}
+
 .wireframe-demo.wireframe-standalone .wireframe-demo-main {
   min-height: 0;
   padding: clamp(1.25rem, 2.2vw, 2rem);

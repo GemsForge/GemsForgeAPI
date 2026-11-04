@@ -63,6 +63,33 @@ final class LocalDatabaseRouteTests: XCTestCase {
         }
     }
 
+    func testLocalDatabaseListingReturnsOnlySafeSQLiteNamesAndMetadata() async throws {
+        let rootDirectory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("GemsForgeAPI-LocalDatabaseListingTests-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: rootDirectory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: rootDirectory) }
+
+        try Data([0x01, 0x02, 0x03]).write(to: rootDirectory.appendingPathComponent("Dev.sqlite"))
+        try Data([0x04]).write(to: rootDirectory.appendingPathComponent("notes.txt"))
+        try Data([0x05]).write(to: rootDirectory.appendingPathComponent("personal.sqlite"))
+        let configuration = LocalDatabaseConfiguration(
+            enabled: true,
+            rootDirectory: rootDirectory,
+            protectedDatabaseURL: rootDirectory.appendingPathComponent("personal.sqlite")
+        )
+
+        try await withApp(configure: { app in
+            registerLocalDatabaseRoutes(app, configuration: configuration)
+        }) { app in
+            try await app.test(.GET, "local-databases") { response async throws in
+                XCTAssertEqual(response.status, .ok)
+                let databases = try response.content.decode([LocalDatabaseSummaryResponse].self)
+                XCTAssertEqual(databases.map(\.databaseName), ["Dev.sqlite"])
+                XCTAssertEqual(databases[0].fileSizeBytes, 3)
+            }
+        }
+    }
+
     func testLocalDatabaseCreationProtectsPathsAndCanBeDisabled() async throws {
         let rootDirectory = FileManager.default.temporaryDirectory
             .appendingPathComponent("GemsForgeAPI-LocalDatabaseSafetyTests-\(UUID().uuidString)")

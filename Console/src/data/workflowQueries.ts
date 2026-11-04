@@ -10,6 +10,7 @@ export const workflowQueryKeys = {
   schema: ["live-schema"] as const,
   guidance: ["schema-guidance"] as const,
   capabilities: ["database-capabilities"] as const,
+  localDatabases: ["local-databases"] as const,
 };
 
 export function usePagesQuery(scope: PageScope, enabled = true) {
@@ -54,6 +55,12 @@ export function useDatabaseCapabilitiesQuery() {
   return useQuery({
     queryKey: workflowQueryKeys.capabilities,
     queryFn: ({ signal }) => api.getLocalDatabaseCapabilities(signal),
+  });
+}
+export function useLocalDatabasesQuery() {
+  return useQuery({
+    queryKey: workflowQueryKeys.localDatabases,
+    queryFn: ({ signal }) => api.getLocalDatabases(signal),
   });
 }
 export function useCreateDatabaseMutation() {

@@ -99,6 +99,37 @@ describe("Gem Life navigation", () => {
     expect(screen.queryByRole("complementary", { name: "Record inspector" })).not.toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Gem Life Console" })).not.toBeInTheDocument();
   });
+  it("renders the wireframe home from live collection counts", async () => {
+    vi.spyOn(api, "listEducation").mockResolvedValue([]);
+    vi.spyOn(api, "listEmployment").mockResolvedValue([]);
+    vi.spyOn(api, "listAddresses").mockResolvedValue([]);
+    vi.spyOn(api, "listTransactions").mockResolvedValue([]);
+    vi.spyOn(api, "listGemHues").mockResolvedValue([]);
+    vi.spyOn(api, "listServiceAccounts").mockResolvedValue([]);
+    setup("/home-wireframe");
+
+    expect(await screen.findByRole("heading", { name: "Home" })).toBeInTheDocument();
+    expect(
+      screen
+        .getAllByRole("link", { name: /Education/ })
+        .some((link) => link.getAttribute("href") === "/education-wireframe"),
+    ).toBe(true);
+    expect(screen.getByRole("link", { name: /Local Databases/ })).toHaveAttribute("href", "/local-databases-wireframe");
+  });
+  it("renders the wireframe list of safe local databases", async () => {
+    vi.spyOn(api, "getLocalDatabases").mockResolvedValue([{ databaseName: "GemLife_Dev.sqlite", fileSizeBytes: 2048 }]);
+    vi.spyOn(api, "listEducation").mockResolvedValue([]);
+    vi.spyOn(api, "listEmployment").mockResolvedValue([]);
+    vi.spyOn(api, "listAddresses").mockResolvedValue([]);
+    vi.spyOn(api, "listTransactions").mockResolvedValue([]);
+    vi.spyOn(api, "listGemHues").mockResolvedValue([]);
+    vi.spyOn(api, "listServiceAccounts").mockResolvedValue([]);
+    setup("/local-databases-wireframe");
+
+    expect(await screen.findByRole("heading", { name: "Local Databases" })).toBeInTheDocument();
+    expect(await screen.findByText("GemLife_Dev.sqlite")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Create database" })).toHaveAttribute("href", "/local-databases");
+  });
   it("closes mobile workspace navigation from the pane footer using header state", async () => {
     vi.spyOn(api, "listEducation").mockResolvedValue([]);
     setup("/education-wireframe");

@@ -78,6 +78,15 @@ describe("standardized API failures", () => {
 });
 
 describe("resource create contracts", () => {
+  it("lists safe local database summaries without exposing filesystem paths", async () => {
+    const fetch = vi
+      .fn()
+      .mockResolvedValue(new Response(JSON.stringify([{ databaseName: "Dev.sqlite", fileSizeBytes: 42 }])));
+    vi.stubGlobal("fetch", fetch);
+    await expect(api.getLocalDatabases()).resolves.toEqual([{ databaseName: "Dev.sqlite", fileSizeBytes: 42 }]);
+    expect(fetch.mock.calls[0][0]).toBe("/local-databases");
+  });
+
   it("posts only the explicit resource payload to each create route", async () => {
     const fetch = vi
       .fn()
