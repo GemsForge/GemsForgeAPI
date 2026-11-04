@@ -1,4 +1,4 @@
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TamaguiProvider } from "tamagui";
 import { tamaguiConfig } from "@gemsforge/ui";
@@ -43,6 +43,14 @@ describe("SchemaTablePage", () => {
       columns: [],
       queries: [],
     }));
+    const saveWorkspace = vi.spyOn(api, "saveTableViewWorkspaceState").mockResolvedValue({
+      viewID: "List",
+      tableName: "FamilyGoals",
+      name: "List",
+      viewType: "List",
+      workspaceState: null,
+      updatedAt: "2026-11-04T10:01:00Z",
+    });
     const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
 
     render(
@@ -61,6 +69,11 @@ describe("SchemaTablePage", () => {
     await waitFor(() => expect(screen.getByText("Goal")).toBeInTheDocument());
     expect(screen.getAllByText("Read together").length).toBeGreaterThanOrEqual(2);
     expect(screen.getByText("Records from your Hub in the configured live database.")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "List" }));
+    await waitFor(() => expect(saveWorkspace).toHaveBeenCalledWith("FamilyGoals", "List", expect.any(String)));
+    const savedWorkspaceState = JSON.parse(saveWorkspace.mock.calls.at(-1)![2]);
+    expect(savedWorkspaceState.activeViewId).toBe("list");
+    expect(savedWorkspaceState.selectedRecordId).toBe("goal-1");
   });
 
   it("keeps Table Kit view controls available and explains an empty schema page", async () => {

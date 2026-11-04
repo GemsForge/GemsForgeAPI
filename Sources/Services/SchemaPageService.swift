@@ -138,7 +138,30 @@ struct SchemaPageService: Sendable {
         )
     }
 
-    private static func isSchemaPageTable(_ table: LiveSchemaTableResponse) -> Bool {
+    /// Confirms a record identifier belongs to this Hub before it is persisted as workspace selection.
+    func containsRecord(_ recordID: String, in tableName: String) async throws -> Bool {
+        guard let sql = database as? SQLDatabase else { throw SchemaPageError.unavailableDatabase }
+        let schema = try await LiveSchemaService(database: database).inspect()
+        guard let table = schema.tables.first(where: { $0.name == tableName }),
+              Self.isSchemaPageTable(table),
+              let primaryKey = table.columns.first(where: \.primaryKey)
+        else { return false }
+
+        let query: SQLQueryString
+        if primaryKey.dataType.uppercased().contains("INT") {
+            guard let integerID = Int64(recordID) else { return false }
+            query = SQLQueryString(
+                "SELECT 1 AS \(ident: "present") FROM \(ident: table.name) WHERE \(ident: primaryKey.name) = \(bind: integerID) AND \(ident: "HubID") = \(bind: hubID) LIMIT 1"
+            )
+        } else {
+            query = SQLQueryString(
+                "SELECT 1 AS \(ident: "present") FROM \(ident: table.name) WHERE \(ident: primaryKey.name) = \(bind: recordID) AND \(ident: "HubID") = \(bind: hubID) LIMIT 1"
+            )
+        }
+        return try await sql.raw(query).first() != nil
+    }
+
+    static func isSchemaPageTable(_ table: LiveSchemaTableResponse) -> Bool {
         guard HubOwnedCustomTablePolicy.isEligible(table) else { return false }
         let primaryKeys = table.columns.filter(\.primaryKey)
         guard primaryKeys.count == 1,
