@@ -102,7 +102,12 @@ export function TableCSVImportWorkflow({ onComplete, onCancel }: { onComplete: (
       {tables.data?.tables.length ? (
         <label className="table-csv-import-field">
           Target table
-          <select className="create-form-control" value={tableName} onChange={(event) => setTable(event.target.value)}>
+          <select
+            className="create-form-control"
+            value={tableName}
+            disabled={busy}
+            onChange={(event) => setTable(event.target.value)}
+          >
             <option value="">Choose a table</option>
             {tables.data.tables.map((table) => (
               <option key={table.name} value={table.name}>
@@ -118,13 +123,14 @@ export function TableCSVImportWorkflow({ onComplete, onCancel }: { onComplete: (
           className="create-form-control"
           rows={5}
           value={text}
+          disabled={busy}
           onChange={(event) => setInput(event.target.value)}
           placeholder={'Name,Quantity\n"Dining table",2'}
         />
       </label>
       <label className="table-csv-import-field">
         Choose CSV file
-        <input type="file" accept=".csv,text/csv" onChange={(event) => void readFile(event)} />
+        <input type="file" accept=".csv,text/csv" disabled={busy} onChange={(event) => void readFile(event)} />
       </label>
       {text && parsedHeaders.length === 0 && <p role="status">Add a valid CSV header row to map its columns.</p>}
       {selectedTable && parsedHeaders.length > 0 && (
@@ -138,6 +144,7 @@ export function TableCSVImportWorkflow({ onComplete, onCancel }: { onComplete: (
                 <select
                   className="create-form-control"
                   value={column}
+                  disabled={busy}
                   onChange={(event) => {
                     setMapping((current) => ({ ...current, [header]: event.target.value }));
                     previewMutation.reset();

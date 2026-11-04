@@ -107,4 +107,33 @@ describe("Table CSV import workflow", () => {
     await waitFor(() => expect(preview).toHaveBeenCalledTimes(2));
     await waitFor(() => expect(screen.getByRole("button", { name: "Confirm and import" })).toBeEnabled());
   });
+
+  it("locks the table, CSV, and mapping controls while previewing", async () => {
+    vi.spyOn(api, "getImportableSQLTables").mockResolvedValue(availableTables);
+    let finishPreview: ((value: typeof validPreview) => void) | undefined;
+    vi.spyOn(api, "previewTableCSVImport").mockImplementation(
+      () => new Promise((resolve) => (finishPreview = resolve)),
+    );
+    renderWorkflow();
+
+    fireEvent.change(await screen.findByRole("combobox", { name: "Target table" }), {
+      target: { value: "CustomInventory" },
+    });
+    fireEvent.change(screen.getByRole("textbox", { name: "Paste CSV" }), {
+      target: { value: "Name,Quantity\nDesk,1" },
+    });
+    await waitFor(() => expect(screen.getAllByRole("combobox")).toHaveLength(3));
+    fireEvent.click(screen.getByRole("button", { name: "Preview import" }));
+
+    await waitFor(() =>
+      expect(screen.getByRole("region", { name: "Import CSV into SQL table" })).toHaveAttribute("aria-busy", "true"),
+    );
+    expect(screen.getAllByRole("combobox")).toHaveLength(3);
+    screen.getAllByRole("combobox").forEach((control) => expect(control).toBeDisabled());
+    expect(screen.getByRole("textbox", { name: "Paste CSV" })).toBeDisabled();
+    expect(screen.getByLabelText("Choose CSV file")).toBeDisabled();
+
+    finishPreview?.(validPreview);
+    await screen.findByText(/1 rows · ready to import/);
+  });
 });
