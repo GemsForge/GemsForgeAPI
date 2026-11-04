@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type ChangeEvent } from "react";
 import { parseCsv } from "./import";
 import type { TableNewRecordUtilityOption } from "./types";
-import { GemButton } from "../components/ui/GemButton";
+import { GemButton } from "@gemsforge/ui";
 import {
   useCommitTableCSVImportMutation,
   useImportableSQLTablesQuery,

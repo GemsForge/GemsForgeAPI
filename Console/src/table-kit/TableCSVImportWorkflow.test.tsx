@@ -4,7 +4,7 @@ import { TamaguiProvider } from "tamagui";
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { api } from "../api";
-import { tamaguiConfig } from "../design-system/tamagui.config";
+import { tamaguiConfig } from "@gemsforge/ui";
 import { ensureTableCSVImportOption, TableCSVImportWorkflow } from "./TableCSVImportWorkflow";
 
 afterEach(() => vi.restoreAllMocks());
