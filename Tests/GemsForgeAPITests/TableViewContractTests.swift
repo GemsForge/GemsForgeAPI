@@ -11,7 +11,7 @@ final class TableViewContractTests: XCTestCase {
     func testTableViewServiceScopesDefaultConflictsPerHubAndTable() async throws {
         try await withApp(configure: { app in
             app.databases.use(.sqlite(.memory), as: .sqlite)
-            app.migrations.add(CreateAuthenticationSchema()); app.migrations.add(CreateHubs()); app.migrations.add(CreateTableViews())
+            app.migrations.add(CreateAuthenticationSchema()); app.migrations.add(CreateHubs()); app.migrations.add(CreateTableViews()); app.migrations.add(AddTableViewWorkspaceState())
             try await app.autoMigrate()
         }) { app in
             let database = app.db(.sqlite); let sql = try XCTUnwrap(database as? SQLDatabase)
@@ -33,7 +33,7 @@ final class TableViewContractTests: XCTestCase {
     func testTableViewServicePromotesLowestSortOrderOnPromotionAndDeletion() async throws {
         try await withApp(configure: { app in
             app.databases.use(.sqlite(.memory), as: .sqlite)
-            app.migrations.add(CreateAuthenticationSchema()); app.migrations.add(CreateHubs()); app.migrations.add(CreateTableViews())
+            app.migrations.add(CreateAuthenticationSchema()); app.migrations.add(CreateHubs()); app.migrations.add(CreateTableViews()); app.migrations.add(AddTableViewWorkspaceState())
             try await app.autoMigrate()
         }) { app in
             let database = app.db(.sqlite); let sql = try XCTUnwrap(database as? SQLDatabase)
@@ -64,6 +64,7 @@ final class TableViewContractTests: XCTestCase {
             app.migrations.add(CreateAuthenticationSchema())
             app.migrations.add(CreateHubs())
             app.migrations.add(CreateTableViews())
+            app.migrations.add(AddTableViewWorkspaceState())
             app.migrations.add(CreateViewColumnConfigurations())
             try await app.autoMigrate()
         }) { app in
@@ -94,6 +95,7 @@ final class TableViewContractTests: XCTestCase {
             app.migrations.add(CreateAuthenticationSchema())
             app.migrations.add(CreateHubs())
             app.migrations.add(CreateTableViews())
+            app.migrations.add(AddTableViewWorkspaceState())
             app.migrations.add(CreateViewColumnConfigurations())
             try await app.autoMigrate()
         }) { app in
@@ -205,9 +207,9 @@ final class TableViewContractTests: XCTestCase {
             app.migrations.add(CreateAuthenticationSchema())
             app.migrations.add(CreateHubs())
             app.migrations.add(CreateTableViews())
+            app.migrations.add(AddTableViewWorkspaceState())
             app.migrations.add(CreateViewColumnConfigurations())
             app.migrations.add(CreateViewQueryConfigurations())
-            app.migrations.add(AddTableViewWorkspaceState())
             app.migrations.add(CreateRecordPresentations())
             try await app.autoMigrate()
         }) { app in
@@ -298,6 +300,7 @@ final class TableViewContractTests: XCTestCase {
             app.migrations.add(CreateAuthenticationSchema())
             app.migrations.add(CreateHubs())
             app.migrations.add(CreateTableViews())
+            app.migrations.add(AddTableViewWorkspaceState())
             app.migrations.add(CreateViewColumnConfigurations())
             app.migrations.add(CreateViewQueryConfigurations())
             try await app.autoMigrate()

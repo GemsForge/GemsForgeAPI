@@ -1,8 +1,14 @@
 import Fluent
+import SQLKit
 
 /// Adds the optional image reference used by Addresses.
 struct AddAddressAttachmentReference: AsyncMigration {
     func prepare(on database: any Database) async throws {
+        guard let sql = database as? SQLDatabase else { return }
+        let columns = try await sql.raw(SQLQueryString(stringLiteral: "PRAGMA table_info(\"Addresses\")")).all()
+        guard !columns.contains(where: { (try? $0.decode(column: "name", as: String.self)) == "ImageFileMetadataID" }) else {
+            return
+        }
         try await database.schema(Address.schema)
             .field("ImageFileMetadataID", .string, .references(
                 FileMetadata.schema, "FileMetadataID", onDelete: .setNull, onUpdate: .cascade

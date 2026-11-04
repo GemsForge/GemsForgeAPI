@@ -6,6 +6,19 @@ import SQLKit
 struct AllowSchoolAddressType: AsyncMigration {
     func prepare(on database: any Database) async throws {
         guard let sql = database as? SQLDatabase else { return }
+        let sourceColumns = try await sql.raw(
+            SQLQueryString(stringLiteral: "PRAGMA table_info(\"Addresses\")")
+        ).all().compactMap { try? $0.decode(column: "name", as: String.self) }
+        let preservedColumns = [
+            "AddressID", "AddressType", "AddressLine1", "AddressLine2", "City", "State",
+            "PostalCode", "Country", "StartDate", "EndDate", "AddressStatus", "Notes",
+            "ImageFileMetadataID", "HubID", "DateUpdated",
+        ].filter(sourceColumns.contains)
+        let requiredColumns = ["AddressID", "AddressType", "Country", "AddressStatus"]
+        guard requiredColumns.allSatisfy(preservedColumns.contains) else {
+            throw AddressTypeMigrationError.missingRequiredColumns
+        }
+
         try await sql.raw(SQLQueryString(stringLiteral: "PRAGMA foreign_keys = OFF")).run()
         try await sql.raw(SQLQueryString(stringLiteral: "ALTER TABLE \"Addresses\" RENAME TO \"Addresses_AddressTypeLegacy\"")).run()
         try await sql.raw(SQLQueryString(stringLiteral: """
@@ -22,7 +35,11 @@ struct AllowSchoolAddressType: AsyncMigration {
                 FOREIGN KEY ("ImageFileMetadataID") REFERENCES "FileMetadata" ("FileMetadataID") ON DELETE SET NULL ON UPDATE CASCADE
             )
             """)).run()
-        try await sql.raw(SQLQueryString(stringLiteral: "INSERT INTO \"Addresses\" SELECT * FROM \"Addresses_AddressTypeLegacy\"")).run()
+        let columnsSQL = preservedColumns.map { "\"\($0)\"" }.joined(separator: ", ")
+        try await sql.raw(SQLQueryString("""
+            INSERT INTO "Addresses" (\(unsafeRaw: columnsSQL))
+            SELECT \(unsafeRaw: columnsSQL) FROM "Addresses_AddressTypeLegacy"
+            """)).run()
         try await sql.raw(SQLQueryString(stringLiteral: "DROP TABLE \"Addresses_AddressTypeLegacy\"")).run()
         try await sql.raw(SQLQueryString(stringLiteral: "CREATE INDEX idx_Addresses_Status ON Addresses(AddressStatus)")).run()
         try await sql.raw(SQLQueryString(stringLiteral: "CREATE INDEX idx_Addresses_CityState ON Addresses(City, State)")).run()
@@ -30,4 +47,8 @@ struct AllowSchoolAddressType: AsyncMigration {
     }
 
     func revert(on database: any Database) async throws {}
+}
+
+private enum AddressTypeMigrationError: Error {
+    case missingRequiredColumns
 }
