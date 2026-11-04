@@ -27,6 +27,7 @@ enum EntryPoint {
         registerSupabaseAuthenticationRoutes(app)
         registerLocalDatabaseRoutes(app, configuration: .fromEnvironment())
         registerLiveSchemaRoutes(app)
+        registerTableCSVImportRoutes(app)
         registerLiveMigrationRoutes(app, backupConfiguration: .fromEnvironment())
         registerSchemaBuilderGuidanceRoutes(app)
 

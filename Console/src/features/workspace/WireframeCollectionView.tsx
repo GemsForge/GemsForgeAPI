@@ -24,6 +24,7 @@ import { inferWireframePropertyMetadata, WIREFRAME_PROPERTY_TYPES } from "./prop
 import { WireframeCover, WireframeCoverCardImage, type WireframeCover as WireframeCoverValue } from "./WireframeCover";
 import { WireframePropertyIconProvider } from "./WireframePropertyEditor";
 import { api } from "../../api";
+import { createTableCSVImportOption } from "../../table-kit/TableCSVImportWorkflow";
 import { useUploadImageMutation } from "../../data/workflowQueries";
 import {
   useDeleteRecordPresentationMutation,
@@ -485,7 +486,12 @@ export function WireframeCollectionView<T extends WireframeRecord>({
             <Table.Actions
               onNew={config.onCreateRecord}
               {...config.recordActions}
-              newRecordUtility={config.newRecordUtility}
+              newRecordUtility={config.newRecordUtility ? {
+                ...config.newRecordUtility,
+                options: config.newRecordUtility.options.some((option) => option.id === "table-csv-import")
+                  ? config.newRecordUtility.options
+                  : [...config.newRecordUtility.options, createTableCSVImportOption()],
+              } : config.newRecordUtility}
               newOptionsLabel="New record options"
               newLabel="New record"
             />

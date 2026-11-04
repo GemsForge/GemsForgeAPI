@@ -22,6 +22,7 @@ import type { TablePropertyConfigurationInput } from "../table-kit/configuration
 import type { ReactNode } from "react";
 import { Dialog } from "tamagui";
 import { GemButton } from "./ui";
+import { createTableCSVImportOption } from "../table-kit/TableCSVImportWorkflow";
 import { useSaveTableViewColumnsMutation, useSaveTableViewWorkspaceStateMutation, useTableViewsQuery } from "../data/presentationQueries";
 
 /** The existing domain utility state shared by each database consumer adapter. */
@@ -385,6 +386,9 @@ function DatabaseRecordTableShell<Record>({
         ...actions,
         newRecordUtility: {
           ...utilityConfig,
+          options: utilityConfig.options.some((option) => option.id === "table-csv-import")
+            ? utilityConfig.options
+            : [...utilityConfig.options, createTableCSVImportOption()],
           open: utilityOpen,
           onOpenChange: handleUtilityChange,
         },

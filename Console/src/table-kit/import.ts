@@ -17,13 +17,65 @@ export interface ImportColumn {
   parse?: (value: string, row: number) => unknown;
 }
 
-/** Parses comma-separated records into trimmed cells. */
+/** Parses RFC-4180-style CSV, preserving embedded delimiters and line breaks. */
 export function parseCsv(text: string): string[][] {
-  return text
-    .trim()
-    .split(/\r?\n/)
-    .filter(Boolean)
-    .map((line) => line.split(",").map((cell) => cell.trim()));
+  const rows: string[][] = [];
+  let row: string[] = [];
+  let cell = "";
+  let quoted = false;
+  let afterQuote = false;
+  let lineHasContent = false;
+
+  const finishCell = () => {
+    row.push(cell);
+    cell = "";
+    afterQuote = false;
+  };
+  const finishRow = () => {
+    finishCell();
+    if (lineHasContent || row.some((value) => value.length > 0)) rows.push(row);
+    row = [];
+    lineHasContent = false;
+  };
+
+  for (let index = 0; index < text.length; index += 1) {
+    const character = text[index]!;
+    if (quoted) {
+      if (character === '"') {
+        if (text[index + 1] === '"') {
+          cell += '"';
+          index += 1;
+        } else {
+          quoted = false;
+          afterQuote = true;
+        }
+      } else {
+        cell += character;
+      }
+      continue;
+    }
+
+    if (afterQuote && character !== "," && character !== "\r" && character !== "\n" && character.trim() !== "") {
+      throw new Error(`Unexpected character after closing quote at row ${rows.length + 1}`);
+    }
+    if (character === '"') {
+      if (cell.length > 0) throw new Error(`Unexpected quote in unquoted field at row ${rows.length + 1}`);
+      quoted = true;
+      lineHasContent = true;
+    } else if (character === ",") {
+      finishCell();
+      lineHasContent = true;
+    } else if (character === "\n" || character === "\r") {
+      if (character === "\r" && text[index + 1] === "\n") index += 1;
+      finishRow();
+    } else {
+      cell += character;
+      if (character.trim() !== "") lineHasContent = true;
+    }
+  }
+  if (quoted) throw new Error(`Unclosed quoted field at row ${rows.length + 1}`);
+  if (row.length > 0 || cell.length > 0 || lineHasContent || afterQuote) finishRow();
+  return rows;
 }
 
 /** Parses and validates a JSON array whose entries are objects. */
@@ -37,7 +89,13 @@ export function parseJson(text: string): unknown[] {
 
 /** Parses CSV text and applies the table schema to each record. */
 export function previewCsv<Row>(text: string, columns: readonly ImportColumn[]): ImportPreview<Row> {
-  const [header = [], ...records] = parseCsv(text);
+  let parsed: string[][];
+  try {
+    parsed = parseCsv(text);
+  } catch (error) {
+    return { rows: [], errors: [{ row: 0, message: error instanceof Error ? error.message : "Malformed CSV" }] };
+  }
+  const [header = [], ...records] = parsed;
   const errors: ImportFieldError[] = [];
   const rows: Row[] = [];
   records.forEach((record, index) => {
