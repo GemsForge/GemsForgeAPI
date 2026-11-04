@@ -110,14 +110,11 @@
 .wireframe-demo.wireframe-standalone .wireframe-demo-sidebar.is-collapsed .wireframe-collection-link-name,
 .wireframe-demo.wireframe-standalone .wireframe-demo-sidebar.is-collapsed .wireframe-utility-link-label {
   justify-content: center;
-  font-size: 0;
+  gap: 0;
 }
 
-.wireframe-demo.wireframe-standalone .wireframe-demo-sidebar.is-collapsed .wireframe-primary-link-name > span,
-.wireframe-demo.wireframe-standalone .wireframe-demo-sidebar.is-collapsed .wireframe-collection-link-name > span,
-.wireframe-demo.wireframe-standalone .wireframe-demo-sidebar.is-collapsed .wireframe-utility-link-label > span {
-  flex: 0 0 auto;
-  font-size: 1rem;
+.wireframe-demo.wireframe-standalone .wireframe-demo-sidebar.is-collapsed .wireframe-navigation-label {
+  display: none;
 }
 
 .wireframe-demo.wireframe-standalone .wireframe-demo-sidebar.is-collapsed .wireframe-collection-link > a > small,

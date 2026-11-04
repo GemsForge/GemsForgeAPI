@@ -60,7 +60,12 @@ export function WireframeCollectionLinks({
           className={`wireframe-collection-link${item.label === activeCollection ? " active" : ""}`}
           key={item.label}
         >
-          <Link to={item.to} title={item.label} aria-current={item.label === activeCollection ? "page" : undefined}>
+          <Link
+            to={item.to}
+            title={item.label}
+            aria-label={item.label}
+            aria-current={item.label === activeCollection ? "page" : undefined}
+          >
             <span className="wireframe-collection-link-name">
               <span className="wireframe-collection-link-icon" aria-hidden="true">
                 {item.label === activeCollection && activeCollectionIcon
@@ -76,7 +81,7 @@ export function WireframeCollectionLinks({
                       return <Icon size={16} />;
                     })()}
               </span>
-              {item.label}
+              <span className="wireframe-navigation-label">{item.label}</span>
             </span>
             <Text asChild>
               <small>{item.label === activeCollection ? recordCount : (counts[item.label] ?? "—")}</small>
