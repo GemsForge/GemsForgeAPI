@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { api } from "../api";
 import { tamaguiConfig } from "../design-system/tamagui.config";
-import { TableCSVImportWorkflow } from "./TableCSVImportWorkflow";
+import { ensureTableCSVImportOption, TableCSVImportWorkflow } from "./TableCSVImportWorkflow";
 
 afterEach(() => vi.restoreAllMocks());
 
@@ -45,6 +45,16 @@ const validPreview = {
 };
 
 describe("Table CSV import workflow", () => {
+  it("adds the shared import option once and preserves existing consumer options", () => {
+    const consumerOption = { id: "manual", label: "Manual", render: () => null };
+    const options = [consumerOption];
+    const withImporter = ensureTableCSVImportOption(options);
+
+    expect(withImporter.map((option) => option.id)).toEqual(["manual", "table-csv-import"]);
+    expect(withImporter[0]).toBe(consumerOption);
+    expect(ensureTableCSVImportOption(withImporter)).toBe(withImporter);
+  });
+
   it("suggests property matches, previews, confirms, and reports the imported table", async () => {
     vi.spyOn(api, "getImportableSQLTables").mockResolvedValue(availableTables);
     const preview = vi.spyOn(api, "previewTableCSVImport").mockResolvedValue(validPreview);
