@@ -343,6 +343,23 @@ export interface LiveSchema {
   tables: LiveSchemaTable[];
 }
 
+export type ImportableSQLColumn = LiveSchemaColumn;
+export interface ImportableSQLTable {
+  name: string;
+  columns: ImportableSQLColumn[];
+}
+export interface ImportableSQLTables { tables: ImportableSQLTable[] }
+export interface TableCSVImportPreview {
+  table: string;
+  columns: ImportableSQLColumn[];
+  headers: string[];
+  rows: { rowNumber: number; values: Record<string, string>; errors: string[] }[];
+  confirmationToken: string | null;
+  expiresAt: string | null;
+  readyToImport: boolean;
+}
+export interface TableCSVImportResult { table: string; importedCount: number; status: string }
+
 export interface LiveRepositoryMigrationPreview {
   migrationNames: string[];
   confirmationToken: string;
