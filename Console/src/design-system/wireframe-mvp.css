@@ -278,7 +278,19 @@
 .wireframe-demo.wireframe-standalone .demo-place-copy strong,
 .wireframe-demo.wireframe-standalone .table-kit-gallery-title {
   color: var(--gem-wireframe-heading);
-  font-size: 0.875rem;
+  font-size: 0.875rem !important;
+  line-height: 1.3;
+}
+
+.wireframe-demo.wireframe-standalone .table-kit-gallery-title {
+  margin: 0;
+}
+
+.wireframe-demo.wireframe-standalone .demo-place-copy small,
+.wireframe-demo.wireframe-standalone .table-kit-gallery-subtitle,
+.wireframe-demo.wireframe-standalone .table-kit-gallery-property {
+  font-size: 0.75rem !important;
+  line-height: 1.35;
 }
 
 .wireframe-demo.wireframe-standalone .demo-place-copy small,
