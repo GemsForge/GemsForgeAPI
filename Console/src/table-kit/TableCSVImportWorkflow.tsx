@@ -18,6 +18,15 @@ export function createTableCSVImportOption(): TableNewRecordUtilityOption {
   };
 }
 
+/** Add the importer to consumer options once, preserving the original array when already present. */
+export function ensureTableCSVImportOption(
+  options: readonly TableNewRecordUtilityOption[],
+): readonly TableNewRecordUtilityOption[] {
+  return options.some((option) => option.id === "table-csv-import")
+    ? options
+    : [...options, createTableCSVImportOption()];
+}
+
 export function TableCSVImportWorkflow({ onComplete, onCancel }: { onComplete: () => void; onCancel: () => void }) {
   const tables = useImportableSQLTablesQuery();
   const previewMutation = usePreviewTableCSVImportMutation();
