@@ -142,7 +142,7 @@ function SchemaTableDetail({
           {isCreating ? "Creating page…" : "Create page from this table"}
         </button>
       ) : (
-        <p className="muted">This table is not an eligible Hub-owned custom table for a schema page.</p>
+        <p className="muted">This table is not eligible for a Hub-scoped schema page.</p>
       )}
       <div className="schema-columns">
         {table.columns.map((column) => (

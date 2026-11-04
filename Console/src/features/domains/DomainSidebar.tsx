@@ -60,7 +60,7 @@ export function DomainSidebar({ domains, onRefresh }: { domains: Domain[]; onRef
         {schemaPages.isPending ? <small role="status">Loading schema pages…</small> : null}
         {schemaPages.isError ? <small role="alert">Schema pages could not be loaded.</small> : null}
         {schemaPages.isSuccess && schemaPages.data.tables.length === 0 ? (
-          <small>No Hub-owned custom tables yet.</small>
+          <small>No schema pages yet.</small>
         ) : null}
         {schemaPages.data?.tables.length ? (
           <nav className="domain-list" aria-label="Schema page navigation">

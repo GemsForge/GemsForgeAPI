@@ -21,9 +21,10 @@ export function SchemaTablePage() {
     setSelectedID(null);
   }, [tableName]);
   const table = result.data?.table ?? tables.data?.tables.find((candidate) => candidate.name === tableName);
+  const primaryKey = table?.columns.find((column) => column.primaryKey)?.name;
   const records = useMemo<SchemaRecord[]>(
-    () => (result.data?.rows ?? []).map((row) => ({ ...row, id: String(row.ID ?? "") })),
-    [result.data?.rows],
+    () => (result.data?.rows ?? []).map((row) => ({ ...row, id: String((primaryKey ? row[primaryKey] : undefined) ?? "") })),
+    [primaryKey, result.data?.rows],
   );
   const properties = useMemo<readonly RecordPropertyDefinition<SchemaRecord>[]>(
     () => (table ? createLiveSchemaProperties<SchemaRecord>(table).filter((property) => property.id !== "HubID") : []),

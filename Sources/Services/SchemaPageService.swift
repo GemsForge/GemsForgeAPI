@@ -32,7 +32,7 @@ enum SchemaPageError: Error, CustomStringConvertible, Equatable {
     }
 }
 
-/// Reads only custom tables that have a stable ID and required text HubID.
+/// Reads Hub-scoped record tables with a stable primary key and text HubID.
 struct SchemaPageService: Sendable {
     private let database: Database
     private let hubID: String
@@ -44,9 +44,12 @@ struct SchemaPageService: Sendable {
 
     func listTables() async throws -> SchemaPageTablesResponse {
         let schema = try await LiveSchemaService(database: database).inspect()
+        let eligibleTables = schema.tables.filter(Self.isSchemaPageTable)
+        for table in eligibleTables where HubOwnedCustomTablePolicy.liveRecordTables.contains(table.name) {
+            try await registerPageIfNeeded(tableName: table.name)
+        }
         let registeredTables = Set(try await TableView.query(on: database)
             .filter(\.$hubID == hubID).all().map(\.tableName))
-        let eligibleTables = schema.tables.filter(Self.isSchemaPageTable)
         return SchemaPageTablesResponse(
             tables: eligibleTables.filter { registeredTables.contains($0.name) }
                 .map { SchemaPageTableResponse(name: $0.name, columns: $0.columns) },
@@ -61,6 +64,11 @@ struct SchemaPageService: Sendable {
         guard let table = schema.tables.first(where: { $0.name == tableName }), Self.isSchemaPageTable(table) else {
             throw SchemaPageError.tableUnavailable
         }
+        try await registerPageIfNeeded(tableName: tableName)
+        return SchemaPageTableResponse(name: table.name, columns: table.columns)
+    }
+
+    private func registerPageIfNeeded(tableName: String) async throws {
         let existing = try await TableView.query(on: database)
             .filter(\.$hubID == hubID)
             .filter(\.$tableName == tableName)
@@ -79,7 +87,6 @@ struct SchemaPageService: Sendable {
                 isDefault: !hasDefault
             ).save(on: database)
         }
-        return SchemaPageTableResponse(name: table.name, columns: table.columns)
     }
 
     func records(tableName: String, limit requestedLimit: Int, offset requestedOffset: Int) async throws -> SchemaPageRecordsResponse {
@@ -165,12 +172,11 @@ struct SchemaPageService: Sendable {
         guard HubOwnedCustomTablePolicy.isEligible(table) else { return false }
         let primaryKeys = table.columns.filter(\.primaryKey)
         guard primaryKeys.count == 1,
-              primaryKeys[0].name == "ID",
               let hubID = table.columns.first(where: { $0.name == "HubID" }),
-              !hubID.nullable,
               !hubID.primaryKey
         else { return false }
         let type = hubID.dataType.uppercased()
-        return type.contains("TEXT") || type.contains("CHAR") || type.contains("CLOB")
+        guard type.contains("TEXT") || type.contains("CHAR") || type.contains("CLOB") else { return false }
+        return HubOwnedCustomTablePolicy.liveRecordTables.contains(table.name) || !hubID.nullable
     }
 }

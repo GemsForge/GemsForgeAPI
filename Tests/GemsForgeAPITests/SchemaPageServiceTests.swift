@@ -24,10 +24,16 @@ struct CreateSchemaPageFixtures: AsyncMigration {
             .field("HubID", .string, .required)
             .field("Name", .string, .required)
             .create()
+        try await database.schema("Education")
+            .field("EducationID", .string, .identifier(auto: false))
+            .field("HubID", .string)
+            .field("InstitutionName", .string, .required)
+            .create()
     }
 
     func revert(on database: Database) async throws {
         try await database.schema("UnscopedFixture").delete()
+        try await database.schema("Education").delete()
         try await database.schema("IntegerSchemaPageFixture").delete()
         try await database.schema("SchemaPageFixture").delete()
     }
@@ -50,20 +56,22 @@ final class SchemaPageServiceTests: XCTestCase {
                 INSERT INTO "SchemaPageFixture" ("ID", "HubID", "Name", "Quantity") VALUES
                 ('a1', 'hub-a', 'Desk', 1), ('a2', 'hub-a', 'Chair', 2), ('b1', 'hub-b', 'Lamp', 3)
                 """).run()
+            try await sql.raw("INSERT INTO Education (EducationID, HubID, InstitutionName) VALUES ('edu-a', 'hub-a', 'Community College'), ('edu-b', 'hub-b', 'Other Hub School')").run()
         }) { app in
             let service = SchemaPageService(database: app.db, hubID: "hub-a")
             let initialTables = try await service.listTables()
-            XCTAssertTrue(initialTables.tables.isEmpty)
+            XCTAssertEqual(initialTables.tables.map(\.name), ["Education"])
             XCTAssertEqual(initialTables.availableTables.map(\.name), ["IntegerSchemaPageFixture", "SchemaPageFixture"])
             _ = try await service.createPage(tableName: "SchemaPageFixture")
             _ = try await service.createPage(tableName: "SchemaPageFixture")
             let tables = try await service.listTables()
-            XCTAssertEqual(tables.tables.map(\.name), ["SchemaPageFixture"])
+            XCTAssertEqual(tables.tables.map(\.name), ["Education", "SchemaPageFixture"])
             XCTAssertEqual(tables.availableTables.map(\.name), ["IntegerSchemaPageFixture"])
             let otherHubTables = try await SchemaPageService(database: app.db, hubID: "hub-b").listTables()
-            XCTAssertTrue(otherHubTables.tables.isEmpty)
+            XCTAssertEqual(otherHubTables.tables.map(\.name), ["Education"])
+            XCTAssertFalse(otherHubTables.availableTables.contains(where: { $0.name == "Education" }))
             let registeredViews = try await TableView.query(on: app.db).filter(\.$hubID == "hub-a").count()
-            XCTAssertEqual(registeredViews, 1)
+            XCTAssertEqual(registeredViews, 2)
 
             let firstPage = try await service.records(tableName: "SchemaPageFixture", limit: 1, offset: 0)
             XCTAssertEqual(firstPage.totalCount, 2)
@@ -72,6 +80,10 @@ final class SchemaPageServiceTests: XCTestCase {
 
             let secondPage = try await service.records(tableName: "SchemaPageFixture", limit: 1, offset: 1)
             XCTAssertEqual(secondPage.rows[0]["Name"]!, "Chair")
+
+            let educationPage = try await service.records(tableName: "Education", limit: 10, offset: 0)
+            XCTAssertEqual(educationPage.totalCount, 1)
+            XCTAssertEqual(educationPage.rows[0]["InstitutionName"]!, "Community College")
 
             do {
                 _ = try await service.records(tableName: "UnscopedFixture", limit: 10, offset: 0)
@@ -127,7 +139,7 @@ final class SchemaPageServiceTests: XCTestCase {
                 $0.headers.bearerAuthorization = .init(token: tokenA)
             }) { response async throws in
                 let pages = try response.content.decode(SchemaPageTablesResponse.self)
-                XCTAssertEqual(pages.tables.map(\.name), ["SchemaPageFixture"])
+                XCTAssertEqual(pages.tables.map(\.name), ["Education", "SchemaPageFixture"])
                 XCTAssertEqual(pages.availableTables.map(\.name), ["IntegerSchemaPageFixture"])
             }
             let workspaceState = #"{"activeViewId":"gallery","selectedRecordId":"fixture-a","search":"goal"}"#
