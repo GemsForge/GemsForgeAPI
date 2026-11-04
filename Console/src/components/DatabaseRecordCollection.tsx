@@ -52,6 +52,8 @@ export interface DatabaseRecordCollectionProps<Record> {
   detailId: string | null;
   onDetailChange: (id: string | null) => void;
   detail?: ReactNode;
+  /** Optional consumer-owned content shown when the collection has no matching rows. */
+  emptyState?: ReactNode;
   /** Optional consumer-owned create and intake actions rendered in the utility row. */
   actions?: TableActionsProps;
   onRecordPatch?: (record: Record, field: string, value: string | number | null) => Promise<void>;
@@ -105,6 +107,7 @@ export function DatabaseRecordCollection<Record>({
   detailId,
   onDetailChange,
   detail,
+  emptyState,
   actions,
   onRecordPatch,
 }: DatabaseRecordCollectionProps<Record>) {
@@ -280,6 +283,7 @@ export function DatabaseRecordCollection<Record>({
         detailId={detailId}
         onDetailChange={handleDetailChange}
         detail={detail}
+        emptyState={emptyState}
         actions={actions}
         onRecordPatch={onRecordPatch}
         viewConfigurations={viewConfigurations}
@@ -303,6 +307,7 @@ function DatabaseRecordTableShell<Record>({
   detailId,
   onDetailChange,
   detail,
+  emptyState,
   actions,
   onRecordPatch,
   viewConfigurations,
@@ -320,6 +325,7 @@ function DatabaseRecordTableShell<Record>({
   detailId: string | null;
   onDetailChange: (id: string | null) => void;
   detail?: ReactNode;
+  emptyState?: ReactNode;
   actions?: TableActionsProps;
   onRecordPatch?: (record: Record, field: string, value: string | number | null) => Promise<void>;
   viewConfigurations: Readonly<globalThis.Record<string, TablePropertyConfigurationInput>>;
@@ -445,6 +451,7 @@ function DatabaseRecordTableShell<Record>({
           detailId={detailId}
           onDetailChange={onDetailChange}
           detail={detail}
+          emptyState={emptyState}
           onRecordPatch={onRecordPatch}
         />
       </Table.Content>
@@ -463,6 +470,7 @@ function DatabaseRecordRenderer<Record>({
   detailId,
   onDetailChange,
   detail,
+  emptyState,
   onRecordPatch,
 }: {
   properties: readonly RecordPropertyDefinition<Record>[];
@@ -472,6 +480,7 @@ function DatabaseRecordRenderer<Record>({
   detailId: string | null;
   onDetailChange: (id: string | null) => void;
   detail?: ReactNode;
+  emptyState?: ReactNode;
   onRecordPatch?: (record: Record, field: string, value: string | number | null) => Promise<void>;
 }) {
   const { viewId, rows } = useTableContext<TableRecord<Record>>();
@@ -509,7 +518,9 @@ function DatabaseRecordRenderer<Record>({
   return (
     <>
       <div className="database-record-renderer" aria-label={`${label} view`}>
-        {groups ? (
+        {rows.length === 0 && emptyState ? (
+          emptyState
+        ) : groups ? (
           <div className="database-record-groups">
             {groups.map((group) => (
               <section className="database-record-group" key={group.label}>

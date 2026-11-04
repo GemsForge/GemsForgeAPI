@@ -78,6 +78,35 @@ describe("standardized API failures", () => {
 });
 
 describe("resource create contracts", () => {
+  it("loads schema-page navigation and Hub-scoped records through the API", async () => {
+    const response = {
+      table: {
+        name: "FamilyGoals",
+        columns: [{ name: "ID", dataType: "TEXT", nullable: false, primaryKey: true, defaultValue: null }],
+      },
+      rows: [{ ID: "goal-1", Goal: "Save for travel" }],
+      totalCount: 1,
+      limit: 100,
+      offset: 0,
+    };
+    const fetch = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify({ tables: [response.table], availableTables: [] })))
+      .mockResolvedValueOnce(new Response(JSON.stringify(response)))
+      .mockResolvedValueOnce(new Response(JSON.stringify(response.table)));
+    vi.stubGlobal("fetch", fetch);
+
+    await api.getSchemaPageTables();
+    await expect(api.getSchemaPageRecords("Family Goals/2026", 100)).resolves.toEqual(response);
+    await expect(api.createSchemaPage("Family Goals/2026")).resolves.toEqual(response.table);
+    expect(fetch.mock.calls.map(([path]) => path)).toEqual([
+      "/schema-builder/tables",
+      "/schema-builder/tables/Family%20Goals%2F2026/records?limit=100&offset=100",
+      "/schema-builder/tables/Family%20Goals%2F2026/page",
+    ]);
+    expect(fetch.mock.calls[2][1]?.method).toBe("POST");
+  });
+
   it("uses the Hub-scoped archive lifecycle routes", async () => {
     const archived = {
       entryID: "entry-1",

@@ -19,6 +19,11 @@ active feature requests its records. Home is `/`; `/domains` lists domains and
 at `/forgekeeper/:pageID/children`. Life routes are `/education`, `/employment`,
 `/addresses`, and `/transactions` (`/expenses` redirects). Reference and developer
 routes are `/gemhues`, `/local-databases`, and `/schema-builder`.
+Hub-owned custom SQL tables with the supported `ID` and required text `HubID`
+columns can be registered as `/schema/:tableName` Table Kit pages. New tables
+are registered after creation; existing tables are added from Live Schema.
+Hub-scoped `TableViews` metadata controls which pages appear in the shared
+sidebar.
 
 Use router links for web navigation. Direct links and history navigation use the
 same query keys. Unknown paths/IDs show not-found; pending requests and failures

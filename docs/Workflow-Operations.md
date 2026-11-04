@@ -77,6 +77,14 @@ The active console routes include /schema-builder and /live-database.
 /live-database is the reviewed interface for inspecting the configured live
 schema and applying the repository migration profile.
 
+New tables created in `/schema-builder` receive server-managed `ID` and
+`HubID` columns, then are registered as schema-backed Table Kit pages. To add
+an existing eligible table, select it under Live Schema and choose **Create
+page from this table**. Registration is stored in the Hub-scoped `TableViews`
+metadata and the page then appears in the Console sidebar. Record reads are
+filtered by the authenticated Hub; existing tables without the ownership
+column are not modified or exposed through this generic page workflow.
+
 ## Live database migration workflow
 
 The live migration flow is intentionally explicit:

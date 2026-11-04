@@ -104,7 +104,7 @@ actor TableCSVImportApprovals {
     func listTables(database: Database) async throws -> ImportableSQLTablesResponse {
         let schema = try await LiveSchemaService(database: database).inspect()
         let tables = schema.tables.compactMap { table -> ImportableSQLTable? in
-            guard Self.isImportableHubOwnedTable(table) else { return nil }
+            guard HubOwnedCustomTablePolicy.isEligible(table) else { return nil }
             return ImportableSQLTable(name: table.name, columns: Self.importColumns(table.columns))
         }
         return ImportableSQLTablesResponse(tables: tables)
@@ -270,7 +270,7 @@ actor TableCSVImportApprovals {
         guard
             let table = try await LiveSchemaService(database: database).inspect().tables.first(
                 where: { $0.name == name }),
-            Self.isImportableHubOwnedTable(table)
+            HubOwnedCustomTablePolicy.isEligible(table)
         else { return nil }
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys]
@@ -290,28 +290,6 @@ actor TableCSVImportApprovals {
                 primaryKey: $0.primaryKey, defaultValue: $0.defaultValue)
         }
     }
-
-    private static func isImportableHubOwnedTable(_ table: LiveSchemaTableResponse) -> Bool {
-        guard !protectedTables.contains(table.name),
-            let hubColumn = table.columns.first(where: { $0.name == "HubID" }),
-            !hubColumn.nullable,
-            !hubColumn.primaryKey
-        else { return false }
-        let type = hubColumn.dataType.uppercased()
-        return type.contains("TEXT") || type.contains("CHAR") || type.contains("CLOB")
-    }
-
-    private static let protectedTables: Set<String> = [
-        "Hubs", "Accounts", "AccountIdentities", "AuthenticationSessions", "AppleAccounts",
-        "AppleAuthChallenges",
-        "TableViews", "ViewColumnConfigurations", "ViewQueryConfigurations", "RecordPresentations",
-        "FileMetadata",
-        "SchemaMigrationAudits", "Domains", "ForgeKeeper", "Addresses", "Education", "Employment",
-        "Transactions",
-        "BudgetCategories", "BudgetSubcategories", "Merchants", "EmojiLabelDefinitions", "GemHues",
-        "GemHueImages",
-        "HomeInventory", "Services", "ServiceLogoAssets",
-    ]
 
     private static func matchesSQLType(_ value: String, type: String) -> Bool {
         let type = type.uppercased()

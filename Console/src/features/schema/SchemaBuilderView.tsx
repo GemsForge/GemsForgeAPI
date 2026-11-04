@@ -100,7 +100,9 @@ export function SchemaBuilderView({ onError, onSuccess, showHeader = true }: Sch
             {tableName && !tableNameIsValid ? (
               <small className="field-hint error-text">Use UpperCamelCase, such as NewTable.</small>
             ) : (
-              <small className="field-hint">The API supplies the ID column automatically.</small>
+              <small className="field-hint">
+                The API supplies ID and HubID automatically. HubID scopes records to your signed-in Hub.
+              </small>
             )}
           </label>
           <div className="builder-columns">
@@ -253,7 +255,7 @@ export function SchemaBuilderView({ onError, onSuccess, showHeader = true }: Sch
           ) : null}
         </section>
       </div>
-      <LiveSchemaView onError={onError} />
+      <LiveSchemaView onError={onError} onSuccess={onSuccess} />
     </>
   );
 }

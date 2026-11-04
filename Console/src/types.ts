@@ -343,6 +343,24 @@ export interface LiveSchema {
   tables: LiveSchemaTable[];
 }
 
+export interface SchemaPageTable {
+  name: string;
+  columns: LiveSchemaColumn[];
+}
+
+export interface SchemaPageTables {
+  tables: SchemaPageTable[];
+  availableTables: SchemaPageTable[];
+}
+
+export interface SchemaPageRecords {
+  table: SchemaPageTable;
+  rows: Record<string, string | null>[];
+  totalCount: number;
+  limit: number;
+  offset: number;
+}
+
 export type ImportableSQLColumn = LiveSchemaColumn;
 export interface ImportableSQLTable {
   name: string;

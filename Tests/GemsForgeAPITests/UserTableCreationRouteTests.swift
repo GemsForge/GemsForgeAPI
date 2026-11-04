@@ -1,3 +1,4 @@
+import Fluent
 import FluentSQLiteDriver
 import VaporTesting
 import XCTest
@@ -20,7 +21,7 @@ final class UserTableCreationRouteTests: XCTestCase {
                 XCTAssertEqual(response.status, .ok)
                 let preview = try response.content.decode(UserTablePreviewResponse.self)
                 XCTAssertEqual(preview.definition.tableName, "HomeInventoryDraft")
-                XCTAssertEqual(preview.definition.columns.count, 3)
+                XCTAssertEqual(preview.definition.columns.count, 4)
                 XCTAssertEqual(preview.status, "preview")
             }
 
@@ -40,6 +41,11 @@ final class UserTableCreationRouteTests: XCTestCase {
         let configuration = LiveDatabaseBackupConfiguration(sourceURL: sourceURL, destinationDirectory: backupDirectory)
         try await withApp(configure: { app in
             app.databases.use(.sqlite(.file(sourceURL.path)), as: .sqlite)
+            app.migrations.add(CreateAuthenticationSchema())
+            app.migrations.add(CreateHubs())
+            app.migrations.add(CreateTableViews())
+            app.migrations.add(AddTableViewWorkspaceState())
+            try await app.autoMigrate()
             registerLiveMigrationRoutes(app, backupConfiguration: configuration)
         }) { app in
             let request = TableBuilderRequest(tableName: "HomeInventoryDraft", columns: [
@@ -65,7 +71,9 @@ final class UserTableCreationRouteTests: XCTestCase {
 
             let schema = try await LiveSchemaService(database: app.db).inspect()
             let table = try XCTUnwrap(schema.tables.first { $0.name == "HomeInventoryDraft" })
-            XCTAssertEqual(table.columns.map { $0.name }, ["ID", "ItemName", "Quantity"])
+            XCTAssertEqual(table.columns.map { $0.name }, ["ID", "HubID", "ItemName", "Quantity"])
+            let schemaPages = try await SchemaPageService(database: app.db, hubID: "hub-a").listTables()
+            XCTAssertTrue(schemaPages.availableTables.contains { $0.name == "HomeInventoryDraft" })
         }
     }
 }

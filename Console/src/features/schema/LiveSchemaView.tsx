@@ -1,20 +1,26 @@
 import { useEffect, useState } from "react";
-import { useLiveSchemaQuery } from "../../data/workflowQueries";
+import { useCreateSchemaPageMutation, useLiveSchemaQuery, useSchemaPageTablesQuery } from "../../data/workflowQueries";
 import { QueryFeedback } from "../../components/QueryFeedback";
 import type { LiveSchemaTable } from "../../types";
 
 interface LiveSchemaViewProps {
   onError: (error: unknown) => void;
+  onSuccess: (message: string) => void;
 }
 
-export function LiveSchemaView({ onError }: LiveSchemaViewProps) {
+export function LiveSchemaView({ onError, onSuccess }: LiveSchemaViewProps) {
   const query = useLiveSchemaQuery();
+  const pages = useSchemaPageTablesQuery();
+  const createPage = useCreateSchemaPageMutation();
   const schema = query.data;
   const [selectedTableName, setSelectedTableName] = useState<string | null>(null);
 
   useEffect(() => {
     if (query.error) onError(query.error);
   }, [query.error, onError]);
+  useEffect(() => {
+    if (pages.error) onError(pages.error);
+  }, [pages.error, onError]);
 
   const selectedTable = schema?.tables.find((table) => table.name === selectedTableName) ?? schema?.tables[0] ?? null;
 
@@ -22,11 +28,11 @@ export function LiveSchemaView({ onError }: LiveSchemaViewProps) {
     <>
       <div className="content-heading">
         <div>
-          <p className="eyebrow">Developer tools · read only</p>
+          <p className="eyebrow">Developer tools · live schema</p>
           <h2>Live Schema</h2>
           <p className="muted">
-            Inspect the configured Gem Life database before we allow any schema changes. This view does not create,
-            alter, or delete anything.
+            Inspect the configured Gem Life database. Creating a page saves a Hub-scoped view and leaves the table
+            schema unchanged.
           </p>
         </div>
         <span className="record-count ready">{schema?.tableCount ?? 0} tables</span>
@@ -63,14 +69,45 @@ export function LiveSchemaView({ onError }: LiveSchemaViewProps) {
               ))}
             </div>
           </section>
-          <SchemaTableDetail table={selectedTable} />
+          <SchemaTableDetail
+            table={selectedTable}
+            isPage={Boolean(pages.data?.tables.some((table) => table.name === selectedTable?.name))}
+            isPageStatusPending={pages.isPending}
+            isPageStatusError={pages.isError}
+            canCreatePage={Boolean(pages.data?.availableTables.some((table) => table.name === selectedTable?.name))}
+            isCreating={createPage.isPending}
+            onCreatePage={async (table) => {
+              try {
+                await createPage.mutateAsync(table.name);
+                onSuccess(`${table.name} is now available in navigation as a schema page.`);
+              } catch (error) {
+                onError(error);
+              }
+            }}
+          />
         </div>
       )}
     </>
   );
 }
 
-function SchemaTableDetail({ table }: { table: LiveSchemaTable | null }) {
+function SchemaTableDetail({
+  table,
+  isPage,
+  isPageStatusPending,
+  isPageStatusError,
+  canCreatePage,
+  isCreating,
+  onCreatePage,
+}: {
+  table: LiveSchemaTable | null;
+  isPage: boolean;
+  isPageStatusPending: boolean;
+  isPageStatusError: boolean;
+  canCreatePage: boolean;
+  isCreating: boolean;
+  onCreatePage: (table: LiveSchemaTable) => Promise<void>;
+}) {
   if (!table)
     return (
       <div className="detail-placeholder">
@@ -88,6 +125,25 @@ function SchemaTableDetail({ table }: { table: LiveSchemaTable | null }) {
         </div>
         <span className="record-count">{table.columns.length} columns</span>
       </div>
+      {isPage ? (
+        <p className="muted" role="status">
+          This table is a schema page in navigation.
+        </p>
+      ) : isPageStatusPending ? (
+        <p className="muted" role="status">
+          Checking whether this table can become a schema page…
+        </p>
+      ) : isPageStatusError ? (
+        <p className="error-text" role="alert">
+          Page availability could not be checked. Try again after the schema page list loads.
+        </p>
+      ) : canCreatePage ? (
+        <button className="primary-button" disabled={isCreating} onClick={() => void onCreatePage(table)}>
+          {isCreating ? "Creating page…" : "Create page from this table"}
+        </button>
+      ) : (
+        <p className="muted">This table is not an eligible Hub-owned custom table for a schema page.</p>
+      )}
       <div className="schema-columns">
         {table.columns.map((column) => (
           <div className="schema-column" key={column.name}>

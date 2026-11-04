@@ -19,7 +19,7 @@ flowchart LR
 
 ## Eligible tables
 
-The authenticated API lists existing custom SQLite tables with a non-null text `HubID` column. When creating a custom table through the schema builder, add `HubID` as a required text property. The importer supplies the authenticated HubID and never allows CSV mapping to target that property. Feature-owned tables, authentication and schema-management tables, file metadata, and presentation state are excluded because their routes enforce additional invariants.
+The authenticated API lists existing custom SQLite tables with a non-null text `HubID` column. The schema builder adds `HubID` as a required, server-managed text property to new tables. The importer supplies the authenticated HubID and never allows CSV mapping to target that property. Feature-owned tables, authentication and schema-management tables, file metadata, and presentation state are excluded because their routes enforce additional invariants.
 
 Tables without a required text `HubID` are not importable. Create or alter tables only through the reviewed schema-management workflow; import does not add ownership columns or change the schema.
 

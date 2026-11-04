@@ -329,8 +329,7 @@ describe("Gem Life navigation", () => {
     setup("/education");
     expect(screen.getByText("Loading records…")).toBeInTheDocument();
     await act(async () => reject(new Error("API unavailable")));
-    const alert = await screen.findByRole("alert");
-    expect(alert.textContent).toMatch(/something went wrong|api unavailable/i);
+    expect(await screen.findByText(/something went wrong|api unavailable/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Try again" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Try again" }));
     await screen.findByRole("heading", { name: "No education records" });

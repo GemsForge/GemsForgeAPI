@@ -25,6 +25,9 @@ import type {
   ImportableSQLTables,
   TableCSVImportPreview,
   TableCSVImportResult,
+  SchemaPageTables,
+  SchemaPageTable,
+  SchemaPageRecords,
   LocalDatabaseCapabilities,
   LocalDatabaseCreationResult,
   SchemaBuilderGuidance,
@@ -335,6 +338,14 @@ export const api = {
     }),
   getSchemaBuilderGuidance: (signal?: AbortSignal) =>
     request<SchemaBuilderGuidance>("/schema-builder/metadata", { signal }),
+  getSchemaPageTables: (signal?: AbortSignal) => request<SchemaPageTables>("/schema-builder/tables", { signal }),
+  createSchemaPage: (tableName: string) =>
+    request<SchemaPageTable>(`/schema-builder/tables/${encodeURIComponent(tableName)}/page`, { method: "POST" }),
+  getSchemaPageRecords: (tableName: string, offset = 0, signal?: AbortSignal) =>
+    request<SchemaPageRecords>(
+      `/schema-builder/tables/${encodeURIComponent(tableName)}/records?limit=100&offset=${Math.max(0, offset)}`,
+      { signal },
+    ),
   previewUserTable: (definition: TableBuilderRequest) =>
     request<UserTablePreview>("/live-database/tables/preview", { method: "POST", body: JSON.stringify(definition) }),
   createUserTable: (confirmationToken: string) =>

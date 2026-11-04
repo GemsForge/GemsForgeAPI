@@ -30,6 +30,7 @@ enum EntryPoint {
         registerTableCSVImportRoutes(app)
         registerLiveMigrationRoutes(app, backupConfiguration: .fromEnvironment())
         registerSchemaBuilderGuidanceRoutes(app)
+        registerSchemaPageRoutes(app)
 
         app.get("health") { _ async in
             "ok"

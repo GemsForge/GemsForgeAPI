@@ -3,6 +3,7 @@ import {
   useSchemaGuidanceQuery,
   usePreviewTableMutation,
   useCreateTableMutation,
+  useCreateSchemaPageMutation,
   usePreviewCSVMutation,
   useImportCSVMutation,
 } from "../data/workflowQueries";
@@ -84,6 +85,7 @@ export function useSchemaBuilder({ onError, onSuccess }: Options) {
   const guidanceQuery = useSchemaGuidanceQuery();
   const tablePreview = usePreviewTableMutation();
   const tableCreation = useCreateTableMutation();
+  const schemaPageCreation = useCreateSchemaPageMutation();
   const csvPreviewMutation = usePreviewCSVMutation();
   const csvImport = useImportCSVMutation();
   const definition: TableBuilderRequest = { tableName: state.tableName, columns: state.columns };
@@ -133,7 +135,17 @@ export function useSchemaBuilder({ onError, onSuccess }: Options) {
       if (!state.preview) return;
       const result = await tableCreation.mutateAsync(state.preview.confirmationToken);
       dispatch({ type: "created" });
-      onSuccess(`${result.table} created and verified.`);
+      try {
+        await schemaPageCreation.mutateAsync(result.table);
+        onSuccess(`${result.table} created, verified, and added to navigation.`);
+      } catch (error) {
+        onError(
+          new Error(
+            `${result.table} was created, but its page could not be registered. Open Live Schema to retry page creation.`,
+            { cause: error },
+          ),
+        );
+      }
     }, true);
   const previewImport = () =>
     run(async () => {

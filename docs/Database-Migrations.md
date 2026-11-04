@@ -74,6 +74,14 @@ while normal API startup must preserve the existing database baseline.
 
 ## What the schema builder means
 
+The Console schema builder creates reviewed tables in the configured live
+database. The API adds a text `ID` primary key and a required text `HubID`
+ownership column to each new table, then registers it as a navigable page.
+Existing tables with that supported ownership shape can be registered from
+Live Schema with **Create page from this table**. Registration is stored in
+the Hub-scoped `TableViews` metadata; record reads are filtered to the signed-in
+Hub. Existing database tables are never altered to add ownership implicitly.
+
 ```swift
 database.schema("domains")
     .field("name", .string, .required)

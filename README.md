@@ -49,6 +49,9 @@ The project currently includes:
   database.
 - A read-only Live Schema view in the React testing console for inspecting the
   configured database before schema changes.
+- A preview-and-backup schema builder for new Hub-owned tables, with automatic
+  page registration and a Live Schema action to add existing eligible tables
+  as saved Table Kit pages in Console navigation.
 - A local React + TypeScript testing console for domains, ForgeKeeper pages,
   Gem Hues, Education, Employment, and Addresses, with the original HTML prototype retained as a
   fallback.
