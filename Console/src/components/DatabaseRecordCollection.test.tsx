@@ -33,6 +33,16 @@ const adapter: RecordAdapter<ExampleRecord> = {
   ],
 };
 
+const sevenPropertyAdapter: RecordAdapter<ExampleRecord> = {
+  toTableRecord: adapter.toTableRecord,
+  getPropertyDefinitions: () =>
+    Array.from({ length: 7 }, (_, index) => ({
+      id: `property-${index}`,
+      label: `Property ${index}`,
+      getValue: (record: ExampleRecord) => ({ display: `${record.name} ${index}` }),
+    })),
+};
+
 afterEach(() => vi.restoreAllMocks());
 
 function renderCollection(node: ReactNode) {
@@ -148,6 +158,30 @@ describe("DatabaseRecordCollection", () => {
     expect(screen.getByRole("dialog", { name: "View settings" })).toBeInTheDocument();
   });
 
+  it("limits List visibility settings to the five properties rendered", async () => {
+    vi.spyOn(api, "getTableView").mockImplementation(async (_table, viewType) => ({
+      view: {
+        viewID: viewType,
+        tableName: "Examples",
+        name: viewType,
+        viewType,
+        workspaceState: null,
+        updatedAt: null,
+      },
+      columns: [],
+      queries: [],
+    }));
+    renderCollection(<ManyPropertiesHarness />);
+
+    fireEvent.click(screen.getByRole("button", { name: "List" }));
+    fireEvent.click(screen.getByRole("button", { name: "View settings" }));
+    fireEvent.click(screen.getByRole("button", { name: "Layout" }));
+
+    await waitFor(() => expect(screen.getByText(/5 of 5 properties selected/)).toBeInTheDocument());
+    expect(screen.getByLabelText("Property 5")).toBeDisabled();
+    expect(screen.getByLabelText("Property 6")).toBeDisabled();
+  });
+
   it("keeps secondary query controls behind compact icon menus", () => {
     vi.spyOn(api, "getTableView").mockImplementation(async (_table, viewType) => ({
       view: {
@@ -249,6 +283,21 @@ function HarnessWithSelection({ onDetailChange }: { onDetailChange: (id: string 
       sortOptions={[]}
       detailId={null}
       onDetailChange={onDetailChange}
+    />
+  );
+}
+
+function ManyPropertiesHarness() {
+  const utilities = useRecordUtilities(records, (record) => [record.id, record.name, record.status], {});
+  return (
+    <DatabaseRecordCollection
+      label="Examples"
+      records={records}
+      utilities={utilities}
+      adapter={sevenPropertyAdapter}
+      sortOptions={[]}
+      detailId={null}
+      onDetailChange={() => undefined}
     />
   );
 }

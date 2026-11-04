@@ -406,6 +406,7 @@ function DatabaseRecordTableShell<Record>({
               onViewChange={setViewId}
               properties={propertyOptions}
               propertyConfiguration={galleryConfiguration}
+              maxVisibleProperties={viewId === "list" ? 5 : undefined}
               sort={utilities.sort}
               sortOptions={sortOptions}
               onSort={utilities.onSort}
