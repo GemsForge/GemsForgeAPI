@@ -141,6 +141,16 @@
   display: none;
 }
 
+.wireframe-property-details {
+  border-color: var(--gem-wireframe-border, #d9dfdc);
+  background: var(--gem-wireframe-surface, #fff);
+  color: var(--gem-wireframe-text, #233c42);
+}
+
+.wireframe-property-details-preview {
+  background: var(--gem-wireframe-surface-raised, #f4f7f5);
+}
+
 .wireframe-demo.wireframe-standalone .wireframe-demo-main {
   min-height: 0;
   padding: clamp(1.25rem, 2.2vw, 2rem);
