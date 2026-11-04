@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState, type ChangeEvent } from "react";
+import { useEffect, useId, useRef, useState, type ChangeEvent, type KeyboardEvent } from "react";
 import { Dialog, Input, SizableText, XStack, YStack } from "tamagui";
 import { GemButton } from "@gemsforge/ui";
 import { api } from "../../api";
@@ -81,6 +81,7 @@ function fileAsDataURL(file: File): Promise<string> {
 
 export function WireframeCover({ value, onChange, onUpload, recordKey, label = "Record cover" }: Props) {
   const inputId = useId();
+  const tabListId = useId();
   const fileInput = useRef<HTMLInputElement>(null);
   const [open, setOpen] = useState(false);
   const [localCover, setLocalCover] = useState<WireframeCover | null | undefined>(undefined);
@@ -96,6 +97,20 @@ export function WireframeCover({ value, onChange, onUpload, recordKey, label = "
   const positionRef = useRef(position);
   const drag = useRef<{ startX: number; startY: number; originX: number; originY: number } | null>(null);
   const currentCover = value !== undefined ? value : localCover;
+  const coverTabIds = ["gallery", "upload", "link"] as const;
+  const handleTabKeyDown = (event: KeyboardEvent<HTMLButtonElement>, currentTab: (typeof coverTabIds)[number]) => {
+    const currentIndex = coverTabIds.indexOf(currentTab);
+    let nextIndex: number | null = null;
+    if (event.key === "ArrowRight") nextIndex = (currentIndex + 1) % coverTabIds.length;
+    else if (event.key === "ArrowLeft") nextIndex = (currentIndex + coverTabIds.length - 1) % coverTabIds.length;
+    else if (event.key === "Home") nextIndex = 0;
+    else if (event.key === "End") nextIndex = coverTabIds.length - 1;
+    if (nextIndex === null) return;
+    event.preventDefault();
+    const nextTab = coverTabIds[nextIndex];
+    setTab(nextTab);
+    document.getElementById(`${tabListId}-tab-${nextTab}`)?.focus();
+  };
   useEffect(() => {
     setLocalCover(undefined);
     const nextPosition = { x: positionX, y: positionY };
@@ -280,35 +295,31 @@ export function WireframeCover({ value, onChange, onUpload, recordKey, label = "
               Change cover
             </Dialog.Title>
             <XStack className="wireframe-cover-tabs" role="tablist" aria-label="Cover source">
-              <GemButton
-                size="sm"
-                variant={tab === "gallery" ? "outlined" : "quiet"}
-                role="tab"
-                aria-selected={tab === "gallery"}
-                onClick={() => setTab("gallery")}
-              >
-                Gallery
-              </GemButton>
-              <GemButton
-                size="sm"
-                variant={tab === "upload" ? "outlined" : "quiet"}
-                role="tab"
-                aria-selected={tab === "upload"}
-                onClick={() => setTab("upload")}
-              >
-                Upload
-              </GemButton>
-              <GemButton
-                size="sm"
-                variant={tab === "link" ? "outlined" : "quiet"}
-                role="tab"
-                aria-selected={tab === "link"}
-                onClick={() => setTab("link")}
-              >
-                Link
-              </GemButton>
+              {coverTabIds.map((tabId) => (
+                <button
+                  key={tabId}
+                  id={`${tabListId}-tab-${tabId}`}
+                  role="tab"
+                  type="button"
+                  className="wireframe-cover-source-tab"
+                  tabIndex={tab === tabId ? 0 : -1}
+                  aria-selected={tab === tabId}
+                  aria-controls={`${tabListId}-panel-${tabId}`}
+                  onClick={() => setTab(tabId)}
+                  onKeyDown={(event) => handleTabKeyDown(event, tabId)}
+                >
+                  {tabId === "gallery" ? "Gallery" : tabId === "upload" ? "Upload" : "Link"}
+                </button>
+              ))}
             </XStack>
-            <YStack gap="$3" className="wireframe-cover-picker">
+            <YStack
+              id={`${tabListId}-panel-${tab}`}
+              role="tabpanel"
+              aria-labelledby={`${tabListId}-tab-${tab}`}
+              tabIndex={0}
+              gap="$3"
+              className="wireframe-cover-picker"
+            >
               {tab === "gallery" ? (
                 <>
                   <SizableText className="wireframe-cover-section-label">Record cover gallery</SizableText>

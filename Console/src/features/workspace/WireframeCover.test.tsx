@@ -30,6 +30,25 @@ describe("WireframeCover", () => {
     fireEvent.click(document.querySelector('[aria-label="Use Mint cover"]')!);
     await waitFor(() => expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ presetId: "mint" })));
   });
+  it("uses linked tab panels and arrow-key navigation for cover sources", async () => {
+    renderCover();
+    fireEvent.click(screen.getByRole("button", { name: "Change cover" }));
+
+    const galleryTab = await screen.findByRole("tab", { name: "Gallery", hidden: true });
+    fireEvent.keyDown(galleryTab, { key: "ArrowRight" });
+
+    const uploadTab = screen.getByRole("tab", { name: "Upload", hidden: true });
+    expect(uploadTab).toHaveAttribute("aria-selected", "true");
+    expect(uploadTab).toHaveFocus();
+    expect(screen.getByRole("tabpanel", { name: "Upload", hidden: true })).toHaveAttribute(
+      "id",
+      uploadTab.getAttribute("aria-controls"),
+    );
+    expect(galleryTab).toHaveAttribute("tabindex", "-1");
+
+    fireEvent.keyDown(uploadTab, { key: "End" });
+    expect(screen.getByRole("tab", { name: "Link", hidden: true })).toHaveAttribute("aria-selected", "true");
+  });
   it("supports keyboard removal", async () => {
     const onChange = vi.fn();
     renderCover({ value: { source: "gradient", presetId: "mint" }, onChange });

@@ -2565,6 +2565,26 @@ dialog::backdrop {
   padding: 0 1rem;
   border-bottom: 1px solid var(--border-color, #dfe6e3);
 }
+.wireframe-cover-source-tab {
+  min-height: 2.5rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid transparent;
+  border-radius: 0.5rem 0.5rem 0 0;
+  color: #173d45;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+}
+.wireframe-cover-source-tab[aria-selected="true"] {
+  border-color: #dfe6e3;
+  border-bottom-color: #ffffff;
+  background: #ffffff;
+  font-weight: 700;
+}
+.wireframe-cover-source-tab:focus-visible {
+  outline: 2px solid var(--gem-wireframe-action, #287ca5);
+  outline-offset: 1px;
+}
 .wireframe-cover-picker {
   padding: 1rem 1.25rem 1.25rem;
 }
