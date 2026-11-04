@@ -19,10 +19,16 @@ struct CreateSchemaPageFixtures: AsyncMigration {
             .field("ID", .string, .identifier(auto: false))
             .field("Name", .string, .required)
             .create()
+        try await database.schema("IntegerSchemaPageFixture")
+            .field("ID", .int, .identifier(auto: false))
+            .field("HubID", .string, .required)
+            .field("Name", .string, .required)
+            .create()
     }
 
     func revert(on database: Database) async throws {
         try await database.schema("UnscopedFixture").delete()
+        try await database.schema("IntegerSchemaPageFixture").delete()
         try await database.schema("SchemaPageFixture").delete()
     }
 }
@@ -48,12 +54,12 @@ final class SchemaPageServiceTests: XCTestCase {
             let service = SchemaPageService(database: app.db, hubID: "hub-a")
             let initialTables = try await service.listTables()
             XCTAssertTrue(initialTables.tables.isEmpty)
-            XCTAssertEqual(initialTables.availableTables.map(\.name), ["SchemaPageFixture"])
+            XCTAssertEqual(initialTables.availableTables.map(\.name), ["IntegerSchemaPageFixture", "SchemaPageFixture"])
             _ = try await service.createPage(tableName: "SchemaPageFixture")
             _ = try await service.createPage(tableName: "SchemaPageFixture")
             let tables = try await service.listTables()
             XCTAssertEqual(tables.tables.map(\.name), ["SchemaPageFixture"])
-            XCTAssertTrue(tables.availableTables.isEmpty)
+            XCTAssertEqual(tables.availableTables.map(\.name), ["IntegerSchemaPageFixture"])
             let otherHubTables = try await SchemaPageService(database: app.db, hubID: "hub-b").listTables()
             XCTAssertTrue(otherHubTables.tables.isEmpty)
             let registeredViews = try await TableView.query(on: app.db).filter(\.$hubID == "hub-a").count()
@@ -109,6 +115,7 @@ final class SchemaPageServiceTests: XCTestCase {
             let tokenA = try await self.seedSession(on: app.db, accountID: "account-a", hubID: "hub-a")
             guard let sql = app.db as? SQLDatabase else { return XCTFail("Expected SQLite SQL database.") }
             try await sql.raw("INSERT INTO SchemaPageFixture (ID, HubID, Name, Quantity) VALUES ('fixture-a', 'hub-a', 'Saved goal', 1), ('fixture-b', 'hub-b', 'Other Hub goal', 2)").run()
+            try await sql.raw("INSERT INTO IntegerSchemaPageFixture (ID, HubID, Name) VALUES (12, 'hub-a', 'Integer keyed record')").run()
 
             try await app.test(.POST, "schema-builder/tables/SchemaPageFixture/page", beforeRequest: {
                 $0.headers.bearerAuthorization = .init(token: tokenA)
@@ -121,7 +128,7 @@ final class SchemaPageServiceTests: XCTestCase {
             }) { response async throws in
                 let pages = try response.content.decode(SchemaPageTablesResponse.self)
                 XCTAssertEqual(pages.tables.map(\.name), ["SchemaPageFixture"])
-                XCTAssertTrue(pages.availableTables.isEmpty)
+                XCTAssertEqual(pages.availableTables.map(\.name), ["IntegerSchemaPageFixture"])
             }
             let workspaceState = #"{"activeViewId":"gallery","selectedRecordId":"fixture-a","search":"goal"}"#
             try await app.test(.PUT, "table-views/SchemaPageFixture/Gallery/workspace-state", beforeRequest: { request in
@@ -144,6 +151,19 @@ final class SchemaPageServiceTests: XCTestCase {
                 XCTAssertEqual(response.status, .ok)
                 let saved = try response.content.decode(SavedTableViewResponse.self)
                 XCTAssertEqual(saved.view.workspaceState, workspaceState)
+            }
+            try await app.test(.POST, "schema-builder/tables/IntegerSchemaPageFixture/page", beforeRequest: {
+                $0.headers.bearerAuthorization = .init(token: tokenA)
+            }) { response in
+                XCTAssertEqual(response.status, .ok)
+            }
+            try await app.test(.PUT, "table-views/IntegerSchemaPageFixture/Gallery/workspace-state", beforeRequest: { request in
+                request.headers.bearerAuthorization = .init(token: tokenA)
+                try request.content.encode(TableViewWorkspaceStateRequest(
+                    workspaceState: #"{"activeViewId":"gallery","selectedRecordId":"12"}"#
+                ))
+            }) { response in
+                XCTAssertEqual(response.status, .ok)
             }
             try await app.test(.POST, "schema-builder/tables/UnscopedFixture/page", beforeRequest: {
                 $0.headers.bearerAuthorization = .init(token: tokenA)
