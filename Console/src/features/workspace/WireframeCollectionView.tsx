@@ -1,5 +1,4 @@
 import React, { cloneElement, isValidElement, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { createPortal } from "react-dom";
 import {
   ChevronDown,
   ChevronLeft,
@@ -18,7 +17,7 @@ import { useLiveSchemaQuery } from "../../data/workflowQueries";
 import { WireframeLeftPane } from "./WireframeLeftPane";
 import { WireframePageView } from "./WireframePageView";
 import { WireframeRecordPageView } from "./WireframeRecordPageView";
-import { PropertyIcon, PropertyIconPicker } from "./PropertyIconPicker";
+import { PropertyIcon } from "./PropertyIconPicker";
 import { PROPERTY_ICON_LIBRARY, getPropertyIconByName } from "./propertyIcons";
 import { formatRecordNumber, inferRecordNumberFormat } from "../../table-kit";
 import {
@@ -35,16 +34,16 @@ import { RecordUtilities } from "../../components/RecordUtilities";
 import { type GalleryCardSize } from "../../table-kit";
 import { useLocation, useNavigate } from "react-router-dom";
 import { GSelectField } from "@gemsforge/ui";
-import { GemTextField } from "@gemsforge/ui";
 import { GemButton } from "@gemsforge/ui";
 import { GemStatusPill } from "@gemsforge/ui";
 import { GemSectionHeading } from "@gemsforge/ui";
-import { Button, Menu as DropdownMenu, SizableText, Theme } from "tamagui";
+import { Button, Menu as DropdownMenu, Theme } from "tamagui";
 import { inferRecordPropertyKind, normalizeStorageType } from "../../table-kit/storageTypes";
 import { formatAddress } from "../addresses/formatAddress";
-import { inferWireframePropertyMetadata, WIREFRAME_PROPERTY_TYPES } from "./propertyMetadata";
+import { inferWireframePropertyMetadata } from "./propertyMetadata";
 import { WireframeCover, WireframeCoverCardImage, type WireframeCover as WireframeCoverValue } from "./WireframeCover";
-import { keepDialogTabFocus, WireframePropertyIconProvider } from "./WireframePropertyEditor";
+import { WireframePropertyIconProvider } from "./WireframePropertyEditor";
+import { WireframePropertySettingsDialog, type WireframePropertyDetails } from "./WireframePropertySettingsDialog";
 import { useWireframeNavigation } from "./WireframeAppHeader";
 import { api } from "../../api";
 import { useUploadImageMutation } from "../../data/workflowQueries";
@@ -155,15 +154,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
   const [navigationCollapsed, setNavigationCollapsed] = useState(false);
   const [inspectorWidth, setInspectorWidth] = useState(384);
   const inspectorResizeRef = useRef<{ startX: number; startWidth: number } | null>(null);
-  const [propertyDetails, setPropertyDetails] = useState<{
-    id: string;
-    label: string;
-    value: string;
-    type: string;
-    icon: string;
-    statusText: string;
-    colorToken: string;
-  } | null>(null);
+  const [propertyDetails, setPropertyDetails] = useState<WireframePropertyDetails | null>(null);
   const propertyDetailsOpen = propertyDetails !== null;
   const propertyDetailsDialogRef = useRef<HTMLElement | null>(null);
   const propertyDetailsTriggerRef = useRef<HTMLButtonElement | null>(null);
@@ -1109,126 +1100,18 @@ export function WireframeCollectionView<T extends WireframeRecord>({
           </>
         )
       ) : null}
-      {propertyDetails
-        ? createPortal(
-            <Theme name="light">
-              <div
-                className="wireframe-property-details-backdrop"
-                role="presentation"
-                onClick={(event) => {
-                  if (event.target === event.currentTarget) setPropertyDetails(null);
-                }}
-              >
-                <section
-                  ref={propertyDetailsDialogRef}
-                  className="wireframe-property-details"
-                  role="dialog"
-                  aria-modal="true"
-                  aria-labelledby="wireframe-property-details-title"
-                  tabIndex={-1}
-                  onKeyDown={(event) => keepDialogTabFocus(event, event.currentTarget)}
-                >
-                  <GemButton
-                    type="button"
-                    variant="quiet"
-                    tone="secondary"
-                    aria-label="Close property details"
-                    onClick={() => setPropertyDetails(null)}
-                  >
-                    ×
-                  </GemButton>
-                  <div className="wireframe-property-details-heading">
-                    <span className="wireframe-property-details-icon" aria-hidden="true">
-                      <PropertyIcon name={propertyDetails.icon} />
-                    </span>
-                    <div>
-                      <SizableText
-                        id="wireframe-property-details-title"
-                        className="wireframe-property-dialog-title"
-                        size="$3"
-                        fontWeight="700"
-                        role="heading"
-                        aria-level={2}
-                      >
-                        Property settings
-                      </SizableText>
-                      <p>{propertyDetails.label}</p>
-                    </div>
-                  </div>
-                  <div className="wireframe-property-details-preview">
-                    <strong>Current value</strong>
-                    <p>{propertyDetails.value || "No value recorded."}</p>
-                  </div>
-                  <GemTextField
-                    id="wireframe-property-name"
-                    label="Property name"
-                    value={propertyDetails.label}
-                    readOnly={isIdentityProperty(propertyDetails.label)}
-                    onChange={(event) => setPropertyDetails({ ...propertyDetails, label: event.currentTarget.value })}
-                  />
-                  <GSelectField
-                    id="wireframe-property-type"
-                    label="Primitive type"
-                    value={propertyDetails.type}
-                    options={[...new Set([...WIREFRAME_PROPERTY_TYPES, propertyDetails.type])].map((type) => ({
-                      value: type,
-                      label: type,
-                    }))}
-                    onChange={(type) => setPropertyDetails({ ...propertyDetails, type })}
-                    wireframe
-                  />
-                  <fieldset className="wireframe-property-icon-fieldset">
-                    <legend>Icon</legend>
-                    <PropertyIconPicker
-                      value={propertyDetails.icon}
-                      onChange={(icon) => setPropertyDetails({ ...propertyDetails, icon })}
-                    />
-                  </fieldset>
-                  <GemTextField
-                    id="wireframe-property-status-text"
-                    label="Status text"
-                    value={propertyDetails.statusText}
-                    onChange={(event) =>
-                      setPropertyDetails({ ...propertyDetails, statusText: event.currentTarget.value })
-                    }
-                  />
-                  <GSelectField
-                    id="wireframe-property-color"
-                    label="Pill color"
-                    value={propertyDetails.colorToken}
-                    options={["mint", "gold", "blue", "green", "purple", "orange", "red", "gray"].map((color) => ({
-                      value: color,
-                      label: color[0].toUpperCase() + color.slice(1),
-                    }))}
-                    onChange={(colorToken) => setPropertyDetails({ ...propertyDetails, colorToken })}
-                    wireframe
-                  />
-                  <div className="wireframe-property-details-actions">
-                    <GemButton
-                      type="button"
-                      variant="outlined"
-                      tone="secondary"
-                      onClick={() => setPropertyDetails(null)}
-                    >
-                      Cancel
-                    </GemButton>
-                    <GemButton
-                      type="button"
-                      aria-label="Save property settings"
-                      onClick={() => {
-                        savePropertyIcon(propertyDetails.id, propertyDetails.icon);
-                        setPropertyDetails(null);
-                      }}
-                    >
-                      Save
-                    </GemButton>
-                  </div>
-                </section>
-              </div>
-            </Theme>,
-            document.body,
-          )
-        : null}
+      {propertyDetails ? (
+        <WireframePropertySettingsDialog
+          property={propertyDetails}
+          dialogRef={propertyDetailsDialogRef}
+          onChange={setPropertyDetails}
+          onClose={() => setPropertyDetails(null)}
+          onSave={() => {
+            savePropertyIcon(propertyDetails.id, propertyDetails.icon);
+            setPropertyDetails(null);
+          }}
+        />
+      ) : null}
     </section>
   );
 }
@@ -1743,8 +1626,4 @@ function WireframeInspector({ node, options }: { node: ReactNode; options: Inspe
       </span>
     </>
   );
-}
-
-function isIdentityProperty(label: string): boolean {
-  return /^(id|item id|record id|primary key)$/i.test(label.trim());
 }
