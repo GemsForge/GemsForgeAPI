@@ -30,11 +30,17 @@ export type ServiceAccountFieldDefinition = {
   step?: string;
   width?: CreateFieldWidth;
   multiline?: boolean;
+  options?: readonly RecordSelectOption[];
+  primitive?: "status";
 };
-export type ServiceAccountFieldDefinition = { name: keyof ServiceAccountCreateFormValues; label: string; schema: z.ZodTypeAny; required?: boolean; type?: "text" | "number" | "date" | "url"; width?: CreateFieldWidth; multiline?: boolean; options?: readonly RecordSelectOption[]; primitive?: "status" };
 const required = (label: string) => z.string().trim().min(1, `${label} is required.`);
 const optional = z.string();
-const amount = z.string().refine((value) => value === "" || (/^\d+(\.\d+)?$/.test(value) && Number(value) >= 0), "Enter a non-negative number.");
+const amount = z
+  .string()
+  .refine(
+    (value) => value === "" || (/^\d+(\.\d+)?$/.test(value) && Number(value) >= 0),
+    "Enter a non-negative number.",
+  );
 const options = (values: readonly string[]): RecordSelectOption[] => values.map((value) => ({ value, label: value }));
 const typeOptions = options(["Utility", "Subscription", "Credit", "Loan", "Insurance", "Membership", "Other"]);
 const expenseGroupOptions = options(["Fixed Bills (Obligations)", "Variable Bills", "Home", "Lifestyle", "Other"]);
@@ -42,9 +48,15 @@ const dueOptions = options(["1st", "5th", "10th", "15th", "20th", "25th", "Last 
 const occurrenceOptions = options(["Monthly", "Quarterly", "Annually", "One-time", "As needed"]);
 const paymentMethodOptions = options(["Apple", "Bank transfer", "Credit card", "Debit card", "PayPal", "Other"]);
 const statusOptions: RecordSelectOption[] = [
-  ["Active", "green"], ["Paused", "gold"], ["Closed", "gray"], ["Cancelled", "red"], ["Pending", "blue"],
+  ["Active", "green"],
+  ["Paused", "gold"],
+  ["Closed", "gray"],
+  ["Cancelled", "red"],
+  ["Pending", "blue"],
 ].map(([value, colorToken]) => ({
-  label: value, value, group: value === "Active" || value === "Pending" ? "Open" : "Closed",
+  label: value,
+  value,
+  group: value === "Active" || value === "Pending" ? "Open" : "Closed",
   colorToken: colorToken as "green" | "gold" | "gray" | "red" | "blue",
 }));
 
@@ -69,9 +81,11 @@ export const serviceAccountFieldDefinitions: readonly ServiceAccountFieldDefinit
 ];
 
 export function serviceAccountFieldsWithDue(due: string | null | undefined): readonly ServiceAccountFieldDefinition[] {
-  return serviceAccountFieldDefinitions.map((field) => field.name === "due" && due && !field.options?.some((option) => option.value === due)
-    ? { ...field, options: [...(field.options ?? []), { value: due, label: due }] }
-    : field);
+  return serviceAccountFieldDefinitions.map((field) =>
+    field.name === "due" && due && !field.options?.some((option) => option.value === due)
+      ? { ...field, options: [...(field.options ?? []), { value: due, label: due }] }
+      : field,
+  );
 }
 
 /** Build the Service Account schema from the same field contract used to render it. */

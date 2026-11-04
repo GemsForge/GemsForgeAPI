@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useEmploymentPatchMutation, useEmploymentRecordQuery } from "../../data/recordQueries";
 import { QueryFeedback } from "../../components/QueryFeedback";
 import type { Employment } from "../../types";
-import { GemEmptyState, GemStatusPill } from "../../components/ui";
+import { GemEmptyState, GemStatusPill } from "@gemsforge/ui";
 import { EditableRecordFields } from "../../components/EditableRecordFields";
 import { useAddressesQuery } from "../../data/lifeQueries";
 import { RecordImport } from "../../components/RecordImport";
@@ -140,7 +140,6 @@ function EmploymentDetail({
   definitions: ReturnType<typeof createEmploymentFieldDefinitions>;
   onPatch: (values: Partial<Employment>) => Promise<void>;
 }) {
-
   return (
     <article className="employment-detail">
       <div className="detail-heading">
@@ -151,7 +150,10 @@ function EmploymentDetail({
         </div>
         <GemStatusPill>{record.employmentStatus}</GemStatusPill>
       </div>
-      <EditableRecordFields className="employment-fields" fields={employmentEditableFields(record, definitions, onPatch)} />
+      <EditableRecordFields
+        className="employment-fields"
+        fields={employmentEditableFields(record, definitions, onPatch)}
+      />
     </article>
   );
 }

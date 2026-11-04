@@ -1,7 +1,7 @@
 import { Text } from "tamagui";
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { GemButton } from "../../components/ui/GemButton";
+import { GemButton } from "@gemsforge/ui";
 import { useTableIconPreferences } from "../../data/presentationQueries";
 import { getPropertyIconByName } from "./propertyIcons";
 
@@ -37,11 +37,17 @@ export function WireframeCollectionLinks({
   const visibleCollections = collections.filter((item) => {
     if (searchTerms.length === 0) return true;
     if (searchTerms.every((term) => item.label.toLowerCase().includes(term))) return true;
-    return recordsByCollection[item.label]?.some((record) => {
-      let searchable = "";
-      try { searchable = JSON.stringify(record).toLowerCase(); } catch { searchable = ""; }
-      return searchTerms.every((term) => searchable.includes(term));
-    }) ?? false;
+    return (
+      recordsByCollection[item.label]?.some((record) => {
+        let searchable = "";
+        try {
+          searchable = JSON.stringify(record).toLowerCase();
+        } catch {
+          searchable = "";
+        }
+        return searchTerms.every((term) => searchable.includes(term));
+      }) ?? false
+    );
   });
 
   return (
@@ -56,13 +62,20 @@ export function WireframeCollectionLinks({
         >
           <Link to={item.to} aria-current={item.label === activeCollection ? "page" : undefined}>
             <span className="wireframe-collection-link-name">
-              <span className="wireframe-collection-link-icon" aria-hidden="true">{item.label === activeCollection && activeCollectionIcon ? activeCollectionIcon : (() => {
-                const saved = typeof iconPreferences[item.tableName] === "string"
-                  ? iconPreferences[item.tableName] as string
-                  : (typeof window !== "undefined" ? window.localStorage.getItem(`gemsforge:table-icon:${item.tableName}`) : null);
-                const Icon = getPropertyIconByName(saved || "Folder").icon;
-                return <Icon size={16} />;
-              })()}</span>
+              <span className="wireframe-collection-link-icon" aria-hidden="true">
+                {item.label === activeCollection && activeCollectionIcon
+                  ? activeCollectionIcon
+                  : (() => {
+                      const saved =
+                        typeof iconPreferences[item.tableName] === "string"
+                          ? (iconPreferences[item.tableName] as string)
+                          : typeof window !== "undefined"
+                            ? window.localStorage.getItem(`gemsforge:table-icon:${item.tableName}`)
+                            : null;
+                      const Icon = getPropertyIconByName(saved || "Folder").icon;
+                      return <Icon size={16} />;
+                    })()}
+              </span>
               {item.label}
             </span>
             <Text asChild>

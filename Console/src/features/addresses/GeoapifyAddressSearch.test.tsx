@@ -2,7 +2,7 @@ import { act, fireEvent, render as rtlRender, screen } from "@testing-library/re
 import type { ReactNode } from "react";
 import { TamaguiProvider } from "tamagui";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { tamaguiConfig } from "../../design-system";
+import { tamaguiConfig } from "@gemsforge/ui";
 import {
   addressValuesFromGeoapify,
   createGeoapifySearchClient,
@@ -58,7 +58,7 @@ describe("Geoapify address search", () => {
     };
     const client = { autocomplete: vi.fn().mockResolvedValue([suggestion]) };
     const onSelect = vi.fn();
-    renderWithTamagui(<GeoapifyAddressSearch client={client} onSelect={onSelect} />);
+    render(<GeoapifyAddressSearch client={client} onSelect={onSelect} />);
 
     fireEvent.change(screen.getByLabelText("Search places or addresses"), { target: { value: "1600 Pennsylvania" } });
     await act(async () => {
@@ -87,7 +87,7 @@ describe("Geoapify address search", () => {
   it("debounces eligible queries and does not request blank or short input", async () => {
     vi.useFakeTimers();
     const client = { autocomplete: vi.fn().mockResolvedValue([]) };
-    renderWithTamagui(<GeoapifyAddressSearch client={client} onSelect={vi.fn()} />);
+    render(<GeoapifyAddressSearch client={client} onSelect={vi.fn()} />);
     const input = screen.getByLabelText("Search places or addresses");
 
     fireEvent.change(input, { target: { value: "  " } });
@@ -114,7 +114,7 @@ describe("Geoapify address search", () => {
 
   it("explains missing provider configuration and keeps the search unavailable", () => {
     vi.stubEnv("VITE_GEOAPIFY_API_KEY", "");
-    renderWithTamagui(<GeoapifyAddressSearch onSelect={vi.fn()} />);
+    render(<GeoapifyAddressSearch onSelect={vi.fn()} />);
 
     expect(screen.getByLabelText("Search places or addresses")).toBeDisabled();
     expect(screen.getByLabelText("Address search")).toHaveTextContent("Configure VITE_GEOAPIFY_API_KEY");
@@ -132,7 +132,7 @@ describe("Geoapify address search", () => {
           }),
       ),
     };
-    renderWithTamagui(<GeoapifyAddressSearch client={client} onSelect={vi.fn()} />);
+    render(<GeoapifyAddressSearch client={client} onSelect={vi.fn()} />);
     fireEvent.change(screen.getByLabelText("Search places or addresses"), { target: { value: "Seattle" } });
 
     await act(async () => {
@@ -153,7 +153,7 @@ describe("Geoapify address search", () => {
   ])("shows understandable feedback for %s", async (_case, message) => {
     vi.useFakeTimers();
     const client = { autocomplete: vi.fn().mockRejectedValue(new Error(message)) };
-    renderWithTamagui(<GeoapifyAddressSearch client={client} onSelect={vi.fn()} />);
+    render(<GeoapifyAddressSearch client={client} onSelect={vi.fn()} />);
     fireEvent.change(screen.getByLabelText("Search places or addresses"), { target: { value: "Boston" } });
 
     await act(async () => {

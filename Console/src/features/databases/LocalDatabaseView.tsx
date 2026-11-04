@@ -1,5 +1,5 @@
 import { useLocalDatabaseForm } from "../../hooks/useLocalDatabaseForm";
-import { GemEmptyState, GemSectionHeader, GemStatusPill } from "../../components/ui";
+import { GemEmptyState, GemSectionHeader, GemStatusPill } from "@gemsforge/ui";
 
 interface LocalDatabaseViewProps {
   onError: (error: unknown) => void;

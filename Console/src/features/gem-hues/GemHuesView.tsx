@@ -9,7 +9,7 @@ import { QueryFeedback } from "../../components/QueryFeedback";
 import type { GemHue, GemHueCreate } from "../../types";
 import { EditableRecordFields } from "../../components/EditableRecordFields";
 import { CreateFormFrame, CreateSelectField } from "../../components/forms/CreateForm";
-import { GDate as GDateField, GemTextField } from "../../components/ui";
+import { GDate as GDateField, GemTextField } from "@gemsforge/ui";
 import { api } from "../../api";
 import { DatabaseRecordCollection } from "../../components/DatabaseRecordCollection";
 import { useRecordUtilities } from "../../hooks/useRecordUtilities";
@@ -55,38 +55,40 @@ export function GemHueCreateForm({
       onCancel={onCancel}
       onSubmit={() => onCreate(values)}
     >
-      {gemHueFieldDefinitions.map((field) => field.options ? (
-        <CreateSelectField
-          key={field.name}
-          name={field.name}
-          label={field.label}
-          value={values[field.name] ?? ""}
-          onValueChange={(value) => setValues((current) => ({ ...current, [field.name]: value }))}
-          onBlur={() => undefined}
-          options={[...field.options!]}
-          required={field.required}
-        />
-      ) : field.name === "createdDate" ? (
-        <GDateField
-          key={field.name}
-          label={field.label}
-          value={values[field.name] ?? ""}
-          onChange={(value) => setValues((current) => ({ ...current, [field.name]: value }))}
-          required={field.required}
-          width="medium"
-        />
-      ) : (
-        <GemTextField
-          key={field.name}
-          label={field.label}
-          value={values[field.name] ?? ""}
-          onChange={update(field.name)}
-          required={field.required}
-          multiline={field.multiline}
-          type={field.primitive === "date" ? "date" : "text"}
-          width={field.multiline ? "long" : "medium"}
-        />
-      ))}
+      {gemHueFieldDefinitions.map((field) =>
+        field.options ? (
+          <CreateSelectField
+            key={field.name}
+            name={field.name}
+            label={field.label}
+            value={values[field.name] ?? ""}
+            onValueChange={(value) => setValues((current) => ({ ...current, [field.name]: value }))}
+            onBlur={() => undefined}
+            options={[...field.options!]}
+            required={field.required}
+          />
+        ) : field.name === "createdDate" ? (
+          <GDateField
+            key={field.name}
+            label={field.label}
+            value={values[field.name] ?? ""}
+            onChange={(value) => setValues((current) => ({ ...current, [field.name]: value }))}
+            required={field.required}
+            width="medium"
+          />
+        ) : (
+          <GemTextField
+            key={field.name}
+            label={field.label}
+            value={values[field.name] ?? ""}
+            onChange={update(field.name)}
+            required={field.required}
+            multiline={field.multiline}
+            type={field.primitive === "date" ? "date" : "text"}
+            width={field.multiline ? "long" : "medium"}
+          />
+        ),
+      )}
     </CreateFormFrame>
   );
 }
@@ -172,12 +174,15 @@ export function GemHuesView({ hues }: GemHuesViewProps) {
 
   const tableAdapter = useMemo(
     () =>
-      createGemHueTableAdapter((hue) => {
-        const src = galleryImages[hue.id];
-        return src ? { src, alt: `${hue.colorName} logo`, fit: "contain" } : undefined;
-      }, async (hue, field, value) => {
-        await patch.mutateAsync({ id: hue.id, patch: { [field]: value } });
-      }),
+      createGemHueTableAdapter(
+        (hue) => {
+          const src = galleryImages[hue.id];
+          return src ? { src, alt: `${hue.colorName} logo`, fit: "contain" } : undefined;
+        },
+        async (hue, field, value) => {
+          await patch.mutateAsync({ id: hue.id, patch: { [field]: value } });
+        },
+      ),
     [galleryImages, patch],
   );
 

@@ -5,7 +5,7 @@ import { TamaguiProvider } from "tamagui";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { AppRoutes, ScreenBoundary } from "./AppRoutes";
 import { api } from "../api";
-import { tamaguiConfig } from "../design-system";
+import { tamaguiConfig } from "@gemsforge/ui";
 import { AuthProvider } from "../auth/AuthProvider";
 import { clearSession, saveSession } from "../auth/session";
 
@@ -90,13 +90,52 @@ describe("Gem Life navigation", () => {
     vi.spyOn(api, "listEducation").mockResolvedValue([]);
     setup("/education-wireframe");
     expect(await screen.findByRole("heading", { name: "Education" })).toBeInTheDocument();
-    expect(screen.getByRole("main", { name: "Wireframe screen" })).toHaveClass("wireframe-canvas");
+    expect(screen.getByRole("main", { name: "Wireframe screen" })).toHaveClass("wireframe-canvas-content");
     expect(screen.getByRole("navigation", { name: "Workspace navigation" })).toHaveClass("wireframe-demo-sidebar");
     expect(screen.getByRole("link", { name: /Gem Hues/ })).toHaveAttribute("href", "/gemhues-wireframe");
     expect(screen.getByRole("link", { name: /Employment/ })).toHaveAttribute("href", "/employment-wireframe");
     expect(screen.getByRole("link", { name: /Expense Tracker/ })).toHaveAttribute("href", "/transactions-wireframe");
-    expect(screen.getByRole("complementary", { name: "Record inspector" })).toHaveClass("wireframe-demo-inspector");
+    // The inspector is record-scoped and stays closed when the collection is empty.
+    expect(screen.queryByRole("complementary", { name: "Record inspector" })).not.toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Gem Life Console" })).not.toBeInTheDocument();
+  });
+  it("closes mobile workspace navigation from the pane footer using header state", async () => {
+    vi.spyOn(api, "listEducation").mockResolvedValue([]);
+    setup("/education-wireframe");
+
+    await screen.findByRole("heading", { name: "Education" });
+    const headerToggle = await screen.findByRole("button", { name: "Open navigation" });
+    fireEvent.click(headerToggle);
+    expect(headerToggle).toHaveAttribute("aria-expanded", "true");
+
+    const mobileClose = document.querySelector<HTMLButtonElement>(".demo-sidebar-toggle-mobile");
+    expect(mobileClose).not.toBeNull();
+    expect(mobileClose).toHaveAccessibleName("Close navigation");
+    fireEvent.click(mobileClose!);
+
+    expect(headerToggle).toHaveAttribute("aria-expanded", "false");
+  });
+  it("closes the mobile drawer and restores desktop pane focus when the viewport widens", async () => {
+    const originalWidth = window.innerWidth;
+    Object.defineProperty(window, "innerWidth", { configurable: true, value: 900 });
+    try {
+      vi.spyOn(api, "listEducation").mockResolvedValue([]);
+      setup("/education-wireframe");
+
+      await screen.findByRole("heading", { name: "Education" });
+      const headerToggle = await screen.findByRole("button", { name: "Open navigation" });
+      fireEvent.click(headerToggle);
+      expect(headerToggle).toHaveAttribute("aria-expanded", "true");
+
+      Object.defineProperty(window, "innerWidth", { configurable: true, value: 1200 });
+      act(() => window.dispatchEvent(new Event("resize")));
+
+      await waitFor(() => expect(headerToggle).toHaveAttribute("aria-expanded", "false"));
+      const desktopToggle = document.querySelector<HTMLButtonElement>(".demo-sidebar-toggle-desktop");
+      await waitFor(() => expect(desktopToggle).toHaveFocus());
+    } finally {
+      Object.defineProperty(window, "innerWidth", { configurable: true, value: originalWidth });
+    }
   });
   it("renders home without requesting feature data", async () => {
     const education = vi.spyOn(api, "listEducation");

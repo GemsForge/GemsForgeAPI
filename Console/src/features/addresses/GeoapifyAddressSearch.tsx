@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { GSearchField } from "../../components/ui/GSearchField";
+import { GSearchField } from "@gemsforge/ui";
 
 export interface GeoapifyAddress {
   address_line1?: string;

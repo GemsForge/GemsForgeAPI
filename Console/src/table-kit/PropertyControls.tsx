@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { Button, Tooltip, type TamaguiElement } from "tamagui";
 import { SlidersHorizontal } from "lucide-react";
-import { GCheckboxField, GSearchField } from "../components/ui";
+import { GCheckboxField, GSearchField } from "@gemsforge/ui";
 import { filterTableProperties, type TablePropertyConfigurationState, type TablePropertyOption } from "./configuration";
 
 /** Accessible property menu backed by the consumer-owned configuration state. */
@@ -46,6 +46,8 @@ export function TablePropertyControls({
   const controlColor = wireframe ? "$gemCanvas" : "$gemInk";
   const controlBackground = wireframe ? "$wireframePanelLight" : "$gemPanel";
   const controlBorder = wireframe ? "$wireframeMint" : "$gemPanelLight";
+  const visibleIds = configuration.visibleIds;
+  const setConfiguration = configuration.setConfiguration;
   const showAllVisibleProperties = () => {
     if (maxVisibleProperties === undefined) {
       configuration.showAll();
@@ -85,48 +87,50 @@ export function TablePropertyControls({
   }, [inline, open]);
 
   useEffect(() => {
-    if (maxVisibleProperties === undefined || configuration.visibleIds.length <= maxVisibleProperties) return;
-    const limitedVisibleIds = new Set(configuration.visibleIds.slice(0, maxVisibleProperties));
-    configuration.setConfiguration((current) => ({
+    if (maxVisibleProperties === undefined || visibleIds.length <= maxVisibleProperties) return;
+    const limitedVisibleIds = new Set(visibleIds.slice(0, maxVisibleProperties));
+    setConfiguration((current) => ({
       ...current,
       hiddenIds: current.order.filter((propertyId) => !limitedVisibleIds.has(propertyId)),
     }));
-  }, [configuration.visibleIds, configuration.setConfiguration, maxVisibleProperties]);
+  }, [visibleIds, setConfiguration, maxVisibleProperties]);
 
   return (
     <div className="table-kit-property-controls" role="group" aria-label="Property configuration">
-      {!inline && <Tooltip placement="top" delay={300}>
-        <Tooltip.Trigger asChild>
-          <Button
-            ref={triggerRef}
-            type="button"
-            size="xs"
-            color={controlColor}
-            backgroundColor={controlBackground}
-            borderColor={controlBorder}
-            borderWidth={1}
-            borderRadius={wireframe ? "$wireframeControl" : "$gemControl"}
-            opacity={1}
-            className="table-kit-property-button compact-icon-button"
-            aria-controls={dialogId}
-            aria-haspopup="dialog"
-            aria-expanded={open}
-            onClick={() => setOpen((current) => !current)}
+      {!inline && (
+        <Tooltip placement="top" delay={300}>
+          <Tooltip.Trigger asChild>
+            <Button
+              ref={triggerRef}
+              type="button"
+              size="xs"
+              color={controlColor}
+              backgroundColor={controlBackground}
+              borderColor={controlBorder}
+              borderWidth={1}
+              borderRadius={wireframe ? "$wireframeControl" : "$gemControl"}
+              opacity={1}
+              className="table-kit-property-button compact-icon-button"
+              aria-controls={dialogId}
+              aria-haspopup="dialog"
+              aria-expanded={open}
+              onClick={() => setOpen((current) => !current)}
+            >
+              <SlidersHorizontal size={16} aria-hidden="true" />
+              <span className="sr-only">{label}</span>
+            </Button>
+          </Tooltip.Trigger>
+          <Tooltip.Content
+            className="table-kit-tooltip"
+            color={wireframe ? "$gemCanvas" : undefined}
+            backgroundColor={wireframe ? "$wireframePanel" : undefined}
+            borderColor={wireframe ? "$wireframeLine" : undefined}
           >
-            <SlidersHorizontal size={16} aria-hidden="true" />
-            <span className="sr-only">{label}</span>
-          </Button>
-        </Tooltip.Trigger>
-        <Tooltip.Content
-          className="table-kit-tooltip"
-          color={wireframe ? "$gemCanvas" : undefined}
-          backgroundColor={wireframe ? "$wireframePanel" : undefined}
-          borderColor={wireframe ? "$wireframeLine" : undefined}
-        >
-          <Tooltip.Arrow />
-          <span>{label}</span>
-        </Tooltip.Content>
-      </Tooltip>}
+            <Tooltip.Arrow />
+            <span>{label}</span>
+          </Tooltip.Content>
+        </Tooltip>
+      )}
       {open && (
         <div
           ref={dialogRef}

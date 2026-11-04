@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type { GeoapifySearchClient } from "../addresses/GeoapifyAddressSearch";
 import { AddressCreateForm, EducationCreateForm, EmploymentCreateForm } from "./RecordCreateForms";
 import { TamaguiProvider } from "tamagui";
-import { tamaguiConfig } from "../../design-system";
+import { tamaguiConfig } from "@gemsforge/ui";
 import type { Address } from "../../types";
 import dayjs from "dayjs";
 
@@ -53,9 +53,16 @@ describe("shared create form workflow", () => {
     fireEvent.click(screen.getByRole("combobox", { name: "Type *" }));
     fireEvent.keyDown(screen.getByRole("option", { name: "Elementary School" }), { key: "Enter" });
     fireEvent.click(screen.getByRole("button", { name: "Create record" }));
-    await waitFor(() => expect(onCreate).toHaveBeenCalledWith(expect.objectContaining({
-      id: "EDU-101", educationType: "Elementary School", institutionName: "Test Academy", status: "Completed",
-    })));
+    await waitFor(() =>
+      expect(onCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: "EDU-101",
+          educationType: "Elementary School",
+          institutionName: "Test Academy",
+          status: "Completed",
+        }),
+      ),
+    );
   });
 
   it("validates address location fields before submitting", async () => {

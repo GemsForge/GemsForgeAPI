@@ -3,7 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { TamaguiProvider } from "tamagui";
-import { tamaguiConfig } from "../design-system/tamagui.config";
+import { tamaguiConfig } from "@gemsforge/ui";
 import { api } from "../api";
 import { DatabaseRecordCollection } from "./DatabaseRecordCollection";
 import { useRecordUtilities } from "../hooks/useRecordUtilities";
@@ -39,7 +39,9 @@ function renderCollection(node: ReactNode) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
   return render(
     <QueryClientProvider client={client}>
-      <TamaguiProvider config={tamaguiConfig} defaultTheme="dark">{node}</TamaguiProvider>
+      <TamaguiProvider config={tamaguiConfig} defaultTheme="dark">
+        {node}
+      </TamaguiProvider>
     </QueryClientProvider>,
   );
 }
@@ -82,8 +84,16 @@ function ActionHarness() {
 describe("DatabaseRecordCollection", () => {
   it("uses the filtered result set for the shared Table.Root", () => {
     vi.spyOn(api, "getTableView").mockImplementation(async (_table, viewType) => ({
-      view: { viewID: viewType, tableName: "Examples", name: viewType, viewType, workspaceState: null, updatedAt: null },
-      columns: [], queries: [],
+      view: {
+        viewID: viewType,
+        tableName: "Examples",
+        name: viewType,
+        viewType,
+        workspaceState: null,
+        updatedAt: null,
+      },
+      columns: [],
+      queries: [],
     }));
     renderCollection(<Harness />);
 
@@ -98,8 +108,16 @@ describe("DatabaseRecordCollection", () => {
 
   it("exposes scoped select-all and built-in view switching to the migrated consumer", () => {
     vi.spyOn(api, "getTableView").mockImplementation(async (_table, viewType) => ({
-      view: { viewID: viewType, tableName: "Examples", name: viewType, viewType, workspaceState: null, updatedAt: null },
-      columns: [], queries: [],
+      view: {
+        viewID: viewType,
+        tableName: "Examples",
+        name: viewType,
+        viewType,
+        workspaceState: null,
+        updatedAt: null,
+      },
+      columns: [],
+      queries: [],
     }));
     renderCollection(<Harness />);
 
@@ -111,8 +129,16 @@ describe("DatabaseRecordCollection", () => {
 
   it("keeps view settings available in the table toolbar", () => {
     vi.spyOn(api, "getTableView").mockImplementation(async (_table, viewType) => ({
-      view: { viewID: viewType, tableName: "Examples", name: viewType, viewType, workspaceState: null, updatedAt: null },
-      columns: [], queries: [],
+      view: {
+        viewID: viewType,
+        tableName: "Examples",
+        name: viewType,
+        viewType,
+        workspaceState: null,
+        updatedAt: null,
+      },
+      columns: [],
+      queries: [],
     }));
     renderCollection(<Harness />);
 
@@ -124,8 +150,16 @@ describe("DatabaseRecordCollection", () => {
 
   it("keeps secondary query controls behind compact icon menus", () => {
     vi.spyOn(api, "getTableView").mockImplementation(async (_table, viewType) => ({
-      view: { viewID: viewType, tableName: "Examples", name: viewType, viewType, workspaceState: null, updatedAt: null },
-      columns: [], queries: [],
+      view: {
+        viewID: viewType,
+        tableName: "Examples",
+        name: viewType,
+        viewType,
+        workspaceState: null,
+        updatedAt: null,
+      },
+      columns: [],
+      queries: [],
     }));
     renderCollection(<Harness />);
 
@@ -136,8 +170,16 @@ describe("DatabaseRecordCollection", () => {
 
   it("passes consumer-owned New Record actions through the collection shell", () => {
     vi.spyOn(api, "getTableView").mockImplementation(async (_table, viewType) => ({
-      view: { viewID: viewType, tableName: "Examples", name: viewType, viewType, workspaceState: null, updatedAt: null },
-      columns: [], queries: [],
+      view: {
+        viewID: viewType,
+        tableName: "Examples",
+        name: viewType,
+        viewType,
+        workspaceState: null,
+        updatedAt: null,
+      },
+      columns: [],
+      queries: [],
     }));
     renderCollection(<ActionHarness />);
 
@@ -153,10 +195,12 @@ describe("DatabaseRecordCollection", () => {
         tableName: "Examples",
         name: viewType,
         viewType,
-        workspaceState: viewType === "Gallery" ? JSON.stringify({ activeViewId: "gallery", selectedRecordId: "two" }) : null,
+        workspaceState:
+          viewType === "Gallery" ? JSON.stringify({ activeViewId: "gallery", selectedRecordId: "two" }) : null,
         updatedAt: "2026-11-02T10:00:00Z",
       },
-      columns: [], queries: [],
+      columns: [],
+      queries: [],
     }));
     renderCollection(<HarnessWithSelection onDetailChange={onDetailChange} />);
     await waitFor(() => expect(onDetailChange).toHaveBeenCalledWith("two"));
@@ -164,11 +208,24 @@ describe("DatabaseRecordCollection", () => {
 
   it("persists workspace settings when search changes without changing view or selection", async () => {
     vi.spyOn(api, "getTableView").mockImplementation(async (_table, viewType) => ({
-      view: { viewID: viewType, tableName: "Examples", name: viewType, viewType, workspaceState: null, updatedAt: null },
-      columns: [], queries: [],
+      view: {
+        viewID: viewType,
+        tableName: "Examples",
+        name: viewType,
+        viewType,
+        workspaceState: null,
+        updatedAt: null,
+      },
+      columns: [],
+      queries: [],
     }));
     const saveWorkspace = vi.spyOn(api, "saveTableViewWorkspaceState").mockResolvedValue({
-      viewID: "Gallery", tableName: "Examples", name: "Gallery", viewType: "Gallery", workspaceState: null, updatedAt: null,
+      viewID: "Gallery",
+      tableName: "Examples",
+      name: "Gallery",
+      viewType: "Gallery",
+      workspaceState: null,
+      updatedAt: null,
     });
     renderCollection(<SearchHarness />);
 
@@ -183,15 +240,35 @@ describe("DatabaseRecordCollection", () => {
 
 function HarnessWithSelection({ onDetailChange }: { onDetailChange: (id: string | null) => void }) {
   const utilities = useRecordUtilities(records, (record) => [record.id, record.name, record.status], {});
-  return <DatabaseRecordCollection label="Examples" records={records} utilities={utilities} adapter={adapter} sortOptions={[]} detailId={null} onDetailChange={onDetailChange} />;
+  return (
+    <DatabaseRecordCollection
+      label="Examples"
+      records={records}
+      utilities={utilities}
+      adapter={adapter}
+      sortOptions={[]}
+      detailId={null}
+      onDetailChange={onDetailChange}
+    />
+  );
 }
 
 function SearchHarness() {
   const utilities = useRecordUtilities(records, (record) => [record.id, record.name, record.status], {});
   return (
     <>
-      <button type="button" onClick={() => utilities.onSearch("Alpha")}>Change search</button>
-      <DatabaseRecordCollection label="Examples" records={records} utilities={utilities} adapter={adapter} sortOptions={[]} detailId={null} onDetailChange={() => undefined} />
+      <button type="button" onClick={() => utilities.onSearch("Alpha")}>
+        Change search
+      </button>
+      <DatabaseRecordCollection
+        label="Examples"
+        records={records}
+        utilities={utilities}
+        adapter={adapter}
+        sortOptions={[]}
+        detailId={null}
+        onDetailChange={() => undefined}
+      />
     </>
   );
 }

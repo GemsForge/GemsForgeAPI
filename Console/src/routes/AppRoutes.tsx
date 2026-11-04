@@ -31,6 +31,7 @@ import { LocalSession } from "../components/LocalSession";
 import { RequireAuth } from "../auth/RequireAuth";
 import { SignInPage } from "../auth/SignInPage";
 import { isRecoveryLink, ResetPasswordPage } from "../auth/ResetPasswordPage";
+import { WireframeAppHeader, WireframeNavigationProvider } from "../features/workspace/WireframeAppHeader";
 const ForgeKeeperView = lazy(() =>
   import("../features/forgekeeper/ForgeKeeperView").then((module) => ({ default: module.ForgeKeeperView })),
 );
@@ -44,19 +45,25 @@ const EducationWireframeView = lazy(() =>
   import("../features/education/EducationWireframeView").then((module) => ({ default: module.EducationWireframeView })),
 );
 const EmploymentWireframeView = lazy(() =>
-  import("../features/employment/EmploymentWireframeView").then((module) => ({ default: module.EmploymentWireframeView })),
+  import("../features/employment/EmploymentWireframeView").then((module) => ({
+    default: module.EmploymentWireframeView,
+  })),
 );
 const AddressesWireframeView = lazy(() =>
   import("../features/addresses/AddressesWireframeView").then((module) => ({ default: module.AddressesWireframeView })),
 );
 const TransactionsWireframeView = lazy(() =>
-  import("../features/transactions/TransactionsWireframeView").then((module) => ({ default: module.TransactionsWireframeView })),
+  import("../features/transactions/TransactionsWireframeView").then((module) => ({
+    default: module.TransactionsWireframeView,
+  })),
 );
 const GemHuesWireframeView = lazy(() =>
   import("../features/gem-hues/GemHuesWireframeView").then((module) => ({ default: module.GemHuesWireframeView })),
 );
 const ServiceCatalogWireframeView = lazy(() =>
-  import("../features/service-accounts/ServiceCatalogWireframeView").then((module) => ({ default: module.ServiceCatalogWireframeView })),
+  import("../features/service-accounts/ServiceCatalogWireframeView").then((module) => ({
+    default: module.ServiceCatalogWireframeView,
+  })),
 );
 const EmploymentView = lazy(() =>
   import("../features/employment/EmploymentView").then((module) => ({ default: module.EmploymentView })),
@@ -161,13 +168,18 @@ function WireframeCanvas() {
   }, [location.pathname]);
 
   return (
-    <main className="wireframe-canvas" id="main-content" tabIndex={-1} aria-label="Wireframe screen">
-      <ScreenBoundary key={location.pathname}>
-        <Suspense fallback={<p role="status">Loading wireframe…</p>}>
-          <Outlet />
-        </Suspense>
-      </ScreenBoundary>
-    </main>
+    <div className="wireframe-canvas">
+      <WireframeNavigationProvider key={location.pathname}>
+        <WireframeAppHeader />
+        <main className="wireframe-canvas-content" id="main-content" tabIndex={-1} aria-label="Wireframe screen">
+          <ScreenBoundary key={location.pathname}>
+            <Suspense fallback={<p role="status">Loading wireframe…</p>}>
+              <Outlet />
+            </Suspense>
+          </ScreenBoundary>
+        </main>
+      </WireframeNavigationProvider>
+    </div>
   );
 }
 
@@ -332,7 +344,13 @@ export function AppRoutes() {
       <Route path="reset-password" element={<ResetPasswordPage />} />
       <Route path="/" element={isRecoveryLink() ? <ResetPasswordPage /> : <Navigate to="/login" replace />} />
       <Route element={<RequireAuth />}>
-        <Route element={<LocalSession><WireframeCanvas /></LocalSession>}>
+        <Route
+          element={
+            <LocalSession>
+              <WireframeCanvas />
+            </LocalSession>
+          }
+        >
           <Route path="education-wireframe/*" element={<EducationWireframe />} />
           <Route path="employment-wireframe/*" element={<EmploymentWireframe />} />
           <Route path="addresses-wireframe/*" element={<AddressesWireframe />} />

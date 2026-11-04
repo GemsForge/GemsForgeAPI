@@ -3,6 +3,9 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
+  "workspaces": [
+    "packages/ui"
+  ],
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
@@ -14,6 +17,7 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",
+    "@gemsforge/ui": "*",
     "@tamagui/config": "^3.0.3",
     "@tanstack/react-query": "^5.104.2",
     "ag-grid-community": "^36.2.0",

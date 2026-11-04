@@ -46,8 +46,10 @@ The implementation remains in the existing `GemsForgeAPI` repository:
 
 ```text
 Console/
+├── packages/
+│   └── ui/              private @gemsforge/ui workspace package
 ├── src/
-│   ├── components/       shared React components
+│   ├── components/       Console-specific composition and legacy adapters
 │   ├── features/         feature-specific screens
 │   ├── hooks/            reusable state and workflow hooks
 │   ├── data/             API client and query hooks
@@ -97,8 +99,10 @@ These patterns follow [TanStack mutation invalidation guidance](https://tanstack
 
 ## Component rules
 
-The Tamagui source of truth is `src/design-system/tamagui.config.ts`. It defines
-the existing Gem Life palette, system-font typography, semantic spacing
+The Tamagui source of truth is `packages/ui/src/design-system/tamagui.config.ts`; the
+semantic role and layout contract is documented in
+[DESIGN_SYSTEM.md](DESIGN_SYSTEM.md). It defines the existing Gem Life palette,
+system-font typography, semantic spacing
 (`gemCompact`, `gemControl`, `gemSection`, `gemPage`), and control/card radii.
 The dark theme remains the application default; a light theme is available.
 Responsive thresholds are compact 640px, tablet 900px, desktop 1200px; the
@@ -107,7 +111,8 @@ tokens in shared primitives instead of adding one-off visual constants.
 
 Feature screens compose shared components rather than rebuilding markup and styling. Shared components should expose behavior and semantic intent through typed props, preserve accessibility, and receive visual styling from the Gem Life design tokens.
 
-The shared component inventory lives in `Console/src/components/ui`:
+The maintained shared component inventory lives in `Console/packages/ui` and
+is imported through `@gemsforge/ui`:
 
 - `GemButton` — semantic primary and secondary actions.
 - `GemField` — labelled text inputs with a stable accessible association.
@@ -115,7 +120,8 @@ The shared component inventory lives in `Console/src/components/ui`:
 - `GemSectionHeader` — consistent page headings with optional trailing status or actions.
 - `GemStatusPill` — compact success, warning, danger, and default states.
 - `GemEmptyState` and `GemLoadingState` — consistent unavailable and in-flight states.
-- `GemDataTable` — captioned, keyboard-friendly tabular records.
+- Retired table/list/card renderers remain in `Console/src/components/ui` until
+  their app-specific pagination and collection behavior is removed.
 
 Feature-specific controls such as `AttachmentControl` remain outside the shared
 primitive folder because they own API behavior. They should compose the shared

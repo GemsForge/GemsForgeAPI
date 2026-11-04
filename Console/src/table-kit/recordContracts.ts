@@ -1,4 +1,7 @@
 import type { ReactNode } from "react";
+import type { GemColorToken, GemDateFormat, GemNumberFormat, GemSelectOption } from "@gemsforge/ui";
+
+export type { GemColorToken, GemDateFormat, GemNumberFormat, GemSelectOption } from "@gemsforge/ui";
 
 /** Stable identity used by Table Kit selection, expansion, and row keys. */
 export type TableRecordId = string;
@@ -22,9 +25,9 @@ export type RecordPropertyKind =
 /** Database storage categories remain separate from the UI editing primitive. */
 export type RecordStorageType = "text" | "integer" | "real" | "boolean" | "blob" | "date" | "unknown";
 
-export type RecordNumberFormat = "decimal" | "currency" | "percent";
-export type RecordDateFormat = "iso" | "local" | "relative";
-export type RecordColorToken = "mint" | "gold" | "blue" | "green" | "purple" | "orange" | "red" | "gray";
+export type RecordNumberFormat = GemNumberFormat;
+export type RecordDateFormat = GemDateFormat;
+export type RecordColorToken = GemColorToken;
 
 /** Image metadata that an adapter can provide without coupling the renderer to a domain. */
 export interface RecordImage {
@@ -84,13 +87,7 @@ export interface RecordPropertyEdit {
 }
 
 /** A selectable value with optional visual metadata for status/select primitives. */
-export interface RecordSelectOption {
-  label: string;
-  value: string;
-  colorToken?: RecordColorToken;
-  isDefault?: boolean;
-  group?: string;
-}
+export type RecordSelectOption = GemSelectOption;
 
 /** A normalized record identity and optional presentation metadata for a view adapter. */
 export interface TableRecord<Record> {

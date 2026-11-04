@@ -4,7 +4,7 @@ import type { ReactElement } from "react";
 import { TamaguiProvider } from "tamagui";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { api, APIError } from "../api";
-import { tamaguiConfig } from "../design-system";
+import { tamaguiConfig } from "@gemsforge/ui";
 import type { FileMetadata } from "../types";
 import { AttachmentControl } from "./AttachmentControl";
 import { FilePresentation } from "./FilePresentation";

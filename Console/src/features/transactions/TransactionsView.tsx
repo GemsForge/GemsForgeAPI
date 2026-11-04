@@ -7,7 +7,7 @@ import {
 import { QueryFeedback } from "../../components/QueryFeedback";
 import type { ExpenseTransaction } from "../../types";
 import { AttachmentControl } from "../../components/AttachmentControl";
-import { GemEmptyState, GemStatusPill } from "../../components/ui";
+import { GemEmptyState, GemStatusPill } from "@gemsforge/ui";
 import { EditableRecordFields } from "../../components/EditableRecordFields";
 import { transactionEditableFields } from "./transactionRecordFields";
 import { useExpenseCategoriesQuery, useExpenseSubcategoriesQuery, useMerchantsQuery } from "../../data/lifeQueries";
@@ -42,7 +42,11 @@ export function TransactionsView({ records }: TransactionsViewProps) {
   const categories = useExpenseCategoriesQuery(true);
   const subcategories = useExpenseSubcategoriesQuery(null, true);
   const merchants = useMerchantsQuery(true);
-  const transactionAdapter = createTransactionTableAdapter(categories.data ?? [], subcategories.data ?? [], merchants.data ?? []);
+  const transactionAdapter = createTransactionTableAdapter(
+    categories.data ?? [],
+    subcategories.data ?? [],
+    merchants.data ?? [],
+  );
   const selectedRecord = detail.data;
   const [creating, setCreating] = useState(false);
   const [importing, setImporting] = useState(false);

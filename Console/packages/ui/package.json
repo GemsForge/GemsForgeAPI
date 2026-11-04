@@ -1,0 +1,22 @@
+{
+  "name": "@gemsforge/ui",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "peerDependencies": {
+    "@tamagui/config": "^3.0.0",
+    "dayjs": "^1.11.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "tamagui": "^3.0.0"
+  }
+}

@@ -1,4 +1,5 @@
-import { styled, Text, XStack, YStack } from "tamagui";
+import { styled, XStack, YStack } from "tamagui";
+import { GemBody, GemCaption, GemSectionHeading } from "@gemsforge/ui";
 
 export const WireframeMain = styled(YStack, {
   flex: 1,
@@ -34,23 +35,20 @@ export const WireframeIcon = styled(YStack, {
   color: "$wireframePanelLight",
 });
 
-export const WireframeHeading = styled(Text, {
-  render: "h2",
-  margin: 0,
+export const WireframeHeading = styled(GemSectionHeading, {
   color: "$wireframeHeading",
-  fontSize: "$5",
-  fontWeight: "700",
-  letterSpacing: -0.8,
+  fontSize: "$4",
+  lineHeight: "$4",
 });
 
-export const WireframeDescription = styled(Text, {
-  render: "p",
-  marginTop: "$1",
+export const WireframeDescription = styled(GemBody, {
   color: "$wireframeMuted",
-  fontSize: "$2",
+  fontSize: "$1",
+  lineHeight: "$1",
 });
 
-export const WireframeCount = styled(Text, {
+export const WireframeCount = styled(GemCaption, {
   color: "$wireframeMuted",
-  fontSize: "$2",
+  fontSize: "$1",
+  lineHeight: "$1",
 });

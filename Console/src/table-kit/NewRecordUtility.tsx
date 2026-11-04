@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useId, useRef, useState, type KeyboardEvent, type RefObject } from "react";
 import { Dialog, SizableText, Tooltip, YStack, type TamaguiElement } from "tamagui";
-import { GemButton } from "../components/ui/GemButton";
+import { GemButton } from "@gemsforge/ui";
 import type { TableNewRecordUtilityProps } from "./types";
 
 interface NewRecordUtilityComponentProps extends TableNewRecordUtilityProps {
@@ -146,7 +146,14 @@ export function NewRecordUtility({
                   {activeDescription}
                 </SizableText>
               </div>
-              <GemButton type="button" size="xs" tone="secondary" variant="quiet" aria-label="Close new record utility" onClick={() => setOpen(false)}>
+              <GemButton
+                type="button"
+                size="xs"
+                tone="secondary"
+                variant="quiet"
+                aria-label="Close new record utility"
+                onClick={() => setOpen(false)}
+              >
                 ×
               </GemButton>
             </div>

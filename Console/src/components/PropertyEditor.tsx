@@ -1,6 +1,6 @@
 import { Form } from "tamagui";
 import { useRecordEditor } from "../hooks/useRecordEditor";
-import { GemTextField } from "./ui";
+import { GemTextField } from "@gemsforge/ui";
 
 /**
  * Renders the compact edit affordance for a scalar record property and swaps

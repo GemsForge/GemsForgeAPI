@@ -33,10 +33,17 @@ export function WireframeImagePreview({
     <>
       <span className="wireframe-image-preview-row">
         {src ? (
-          <button type="button" className="wireframe-image-preview-trigger" aria-label={`View larger ${alt}`} onClick={() => setOpen(true)}>
+          <button
+            type="button"
+            className="wireframe-image-preview-trigger"
+            aria-label={`View larger ${alt}`}
+            onClick={() => setOpen(true)}
+          >
             <img className={className} src={src} alt={alt} />
           </button>
-        ) : <span className="wireframe-image-empty">No image</span>}
+        ) : (
+          <span className="wireframe-image-empty">No image</span>
+        )}
         {onEdit ? (
           <>
             <input
@@ -61,12 +68,27 @@ export function WireframeImagePreview({
           </>
         ) : null}
       </span>
-      {busy ? <span className="wireframe-image-edit-status" role="status">Saving image…</span> : null}
-      {error ? <span className="wireframe-image-edit-error" role="alert">{error}</span> : null}
+      {busy ? (
+        <span className="wireframe-image-edit-status" role="status">
+          Saving image…
+        </span>
+      ) : null}
+      {error ? (
+        <span className="wireframe-image-edit-error" role="alert">
+          {error}
+        </span>
+      ) : null}
       {open && src ? (
         <div className="wireframe-image-lightbox" role="presentation" onClick={() => setOpen(false)}>
-          <section role="dialog" aria-modal="true" aria-label={`${alt} enlarged`} onClick={(event) => event.stopPropagation()}>
-            <button type="button" aria-label="Close enlarged image" onClick={() => setOpen(false)}>×</button>
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-label={`${alt} enlarged`}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button type="button" aria-label="Close enlarged image" onClick={() => setOpen(false)}>
+              ×
+            </button>
             <img src={src} alt={alt} />
           </section>
         </div>

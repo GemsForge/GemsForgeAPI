@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { GemStatusPill } from "./GemStatusPill";
+import { GemStatusPill } from "@gemsforge/ui";
 
 function statusTone(status: ReactNode): "default" | "success" | "warning" | "danger" {
   if (typeof status !== "string") return "default";

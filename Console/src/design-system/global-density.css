@@ -1,0 +1,23 @@
+body {
+  font-size: 14px;
+}
+
+button,
+.primary-button,
+.secondary-button,
+.icon-button {
+  min-height: 36px;
+}
+
+.icon-button {
+  min-width: 44px;
+}
+
+@media (max-width: 640px), (pointer: coarse) {
+  button,
+  .primary-button,
+  .secondary-button,
+  .icon-button {
+    min-height: 44px;
+  }
+}

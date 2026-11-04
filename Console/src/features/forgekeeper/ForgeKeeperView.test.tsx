@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ForgeKeeperView } from "./ForgeKeeperView";
 import type { ForgeKeeperPage } from "../../types";
 import { TamaguiProvider } from "tamagui";
-import { tamaguiConfig } from "../../design-system";
+import { tamaguiConfig } from "@gemsforge/ui";
 
 function render(ui: React.ReactElement) {
   return rtlRender(

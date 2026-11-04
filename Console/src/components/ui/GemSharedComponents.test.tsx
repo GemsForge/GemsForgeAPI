@@ -2,12 +2,21 @@ import { render, screen } from "@testing-library/react";
 import type { ReactElement } from "react";
 import { describe, expect, it } from "vitest";
 import { GemDataTable } from "./GemDataTable--LEGACY";
-import { GemEmptyState } from "./GemEmptyState";
-import { GemLoadingState } from "./GemLoadingState";
-import { GemSectionHeader } from "./GemSectionHeader";
-import { GemStatusPill } from "./GemStatusPill";
+import {
+  GemBody,
+  GemButton,
+  GemCard,
+  GemCaption,
+  GemEmptyState,
+  GemLoadingState,
+  GemPageTitle,
+  GemRecordTitle,
+  GemSectionHeader,
+  GemSectionHeading,
+  GemStatusPill,
+  tamaguiConfig,
+} from "@gemsforge/ui";
 import { TamaguiProvider } from "tamagui";
-import { tamaguiConfig } from "../../design-system";
 
 function renderWithTheme(element: ReactElement) {
   return render(
@@ -29,6 +38,42 @@ describe("shared Gem Life components", () => {
     );
     expect(screen.getByRole("heading", { name: "Education" })).toBeInTheDocument();
     expect(screen.getByText("2 records")).toBeInTheDocument();
+  });
+
+  it("renders typography roles with their semantic heading levels", () => {
+    renderWithTheme(
+      <>
+        <GemPageTitle>Workspace</GemPageTitle>
+        <GemSectionHeading>Records</GemSectionHeading>
+        <GemRecordTitle>Education record</GemRecordTitle>
+        <GemBody>Supporting details</GemBody>
+        <GemCaption>Updated today</GemCaption>
+      </>,
+    );
+
+    expect(screen.getByRole("heading", { level: 1, name: "Workspace" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 2, name: "Records" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 3, name: "Education record" })).toBeInTheDocument();
+    expect(screen.getByText("Supporting details").tagName).toBe("P");
+    expect(screen.getByText("Updated today")).toBeInTheDocument();
+  });
+
+  it("composes cards and exposes each semantic status tone", () => {
+    renderWithTheme(
+      <>
+        <GemCard>Workspace summary</GemCard>
+        <GemStatusPill tone="success">Saved</GemStatusPill>
+        <GemStatusPill tone="warning">Needs review</GemStatusPill>
+        <GemStatusPill tone="danger">Failed</GemStatusPill>
+        <GemButton>Continue</GemButton>
+      </>,
+    );
+
+    expect(screen.getByText("Workspace summary")).toBeInTheDocument();
+    expect(screen.getByText("Saved")).toHaveClass("status-success");
+    expect(screen.getByText("Needs review")).toHaveClass("status-warning");
+    expect(screen.getByText("Failed")).toHaveClass("status-danger");
+    expect(screen.getByRole("button", { name: "Continue" })).toBeInTheDocument();
   });
 
   it("renders empty and loading states with accessible status", () => {

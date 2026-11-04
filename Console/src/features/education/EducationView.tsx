@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useEducationPatchMutation, useEducationRecordQuery } from "../../data/recordQueries";
 import { QueryFeedback } from "../../components/QueryFeedback";
 import type { Education } from "../../types";
-import { GemEmptyState, GemStatusPill } from "../../components/ui";
+import { GemEmptyState, GemStatusPill } from "@gemsforge/ui";
 import { AttachmentControl } from "../../components/AttachmentControl";
 import { EditableRecordFields } from "../../components/EditableRecordFields";
 import { useAddressesQuery } from "../../data/lifeQueries";
@@ -13,7 +13,7 @@ import { educationTableAdapter } from "../database/recordTableAdapters";
 import { useEducationRecordActions } from "./useEducationRecordActions";
 import { educationFieldDefinitions } from "./educationCreateFields";
 import { educationEditableFields } from "./educationRecordFields";
-import { GemPrimitiveField, GemField } from "../../components/ui";
+import { GemPrimitiveField, GemField } from "@gemsforge/ui";
 import { useRecordEditor } from "../../hooks/useRecordEditor";
 
 interface EducationViewProps {
@@ -169,8 +169,9 @@ function EducationDetail({
       </div>
       <EditableRecordFields
         className="education-fields"
-        fields={educationEditableFields(record, addresses.data ?? [], onPatch)
-          .filter((field) => field.label !== titleProperty.label)}
+        fields={educationEditableFields(record, addresses.data ?? [], onPatch).filter(
+          (field) => field.label !== titleProperty.label,
+        )}
       />
       <AttachmentControl
         fileMetadataID={record.documentFileMetadataID}

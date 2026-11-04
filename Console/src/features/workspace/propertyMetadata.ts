@@ -15,7 +15,21 @@ export type WireframePropertyMetadata = {
 };
 
 export const WIREFRAME_PROPERTY_TYPES = [
-  "Name", "ID", "Text", "Select", "Multi-select", "Tags", "Status", "Number", "Currency", "Percent", "Date", "URL", "Notes", "Image", "Media",
+  "Name",
+  "ID",
+  "Text",
+  "Select",
+  "Multi-select",
+  "Tags",
+  "Status",
+  "Number",
+  "Currency",
+  "Percent",
+  "Date",
+  "URL",
+  "Notes",
+  "Image",
+  "Media",
 ] as const;
 
 /** Resolve inspector type and icon once for every schema-driven wireframe. */
@@ -31,6 +45,6 @@ export function inferWireframePropertyMetadata({
     ? getPropertyIconByName(iconName)
     : /^(id|item id|record id|primary key)$/i.test(label.trim())
       ? getPropertyIconByName("Lock")
-    : getPropertyIconDefinition(label, kind, propertyType?.trim() || (type === "Text" ? undefined : type));
+      : getPropertyIconDefinition(label, kind, propertyType?.trim() || (type === "Text" ? undefined : type));
   return { type, iconName: icon.name };
 }

@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { ChevronLeft, X } from "lucide-react";
+import { GemPageTitle } from "@gemsforge/ui";
 
 type WireframeRecordPageViewProps = {
   collectionTitle: string;
@@ -33,13 +34,17 @@ export function WireframeRecordPageView({
       </header>
       {cover}
       <nav className="demo-expanded-breadcrumb wireframe-record-page-breadcrumb" aria-label="Record location">
-        <button type="button" onClick={onBack}>{collectionTitle}</button>
+        <button type="button" onClick={onBack}>
+          {collectionTitle}
+        </button>
         <span aria-hidden="true">›</span>
         <span>{recordTitle}</span>
       </nav>
       <div className="wireframe-record-page-heading">
         <p>Record page</p>
-        <h1 id="wireframe-record-page-title">{recordTitle}</h1>
+        <GemPageTitle id="wireframe-record-page-title" color="$wireframeHeading">
+          {recordTitle}
+        </GemPageTitle>
       </div>
       <div className="wireframe-record-page-content">{children}</div>
     </main>

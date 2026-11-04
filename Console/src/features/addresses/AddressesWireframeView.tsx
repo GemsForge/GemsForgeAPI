@@ -32,11 +32,11 @@ export function AddressesWireframeView({ records }: { records: readonly Address[
           record.addressType,
           record.addressStatus,
         ],
-        cardTitle: (record) => record.addressLine1?.trim() || addressTableAdapter.toTableRecord(record, 0).title || record.id,
+        cardTitle: (record) =>
+          record.addressLine1?.trim() || addressTableAdapter.toTableRecord(record, 0).title || record.id,
         cardSubtitle: (record) =>
-          [record.city, record.state, record.postalCode, record.country]
-            .filter(Boolean)
-            .join(", ") || record.addressType,
+          [record.city, record.state, record.postalCode, record.country].filter(Boolean).join(", ") ||
+          record.addressType,
         cardStatus: (record) => record.addressStatus,
         cardMeta: (record) => record.startDate ?? "No start date",
         inspector: (record, schemaProperties) => (
@@ -95,24 +95,30 @@ function AddressWireframeInspector({
                 : property.id === "notes"
                   ? "longText"
                   : "text",
-            nullable: property.id === "addressLine1" || property.id === "addressLine2" || property.id === "postalCode" || property.id === "notes",
+            nullable:
+              property.id === "addressLine1" ||
+              property.id === "addressLine2" ||
+              property.id === "postalCode" ||
+              property.id === "notes",
             options: selectProperty
-              ? optionsByProperty[property.id as keyof typeof optionsByProperty].map((value): RecordSelectOption => ({ value, label: value }))
+              ? optionsByProperty[property.id as keyof typeof optionsByProperty].map((value): RecordSelectOption => ({
+                  value,
+                  label: value,
+                }))
               : undefined,
             onSave: (_source: unknown, value: string | number | null) =>
-              patch.mutateAsync({
-                id: detail.data.id,
-                patch: { [field]: value === "" ? null : value },
-              }).then(() => undefined),
+              patch
+                .mutateAsync({
+                  id: detail.data.id,
+                  patch: { [field]: value === "" ? null : value },
+                })
+                .then(() => undefined),
           }
         : undefined,
     };
   });
 
   return (
-    <WireframeSchemaInspector
-      record={detail.data}
-      properties={[...inspectorProperties, ...(schemaProperties ?? [])]}
-    />
+    <WireframeSchemaInspector record={detail.data} properties={[...inspectorProperties, ...(schemaProperties ?? [])]} />
   );
 }

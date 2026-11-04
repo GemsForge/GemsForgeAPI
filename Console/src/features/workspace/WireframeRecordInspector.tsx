@@ -1,3 +1,4 @@
+import { GemCaption } from "@gemsforge/ui";
 import { WireframeEditableValue } from "./WireframeEditableValue";
 import { WireframePropertyEditor } from "./WireframePropertyEditor";
 import type { ReactNode } from "react";
@@ -53,12 +54,12 @@ export function WireframeRecordInspector({ fields }: { fields: readonly Wirefram
                 nullable={field.nullable}
                 onCommit={field.onCommit}
               />
+            ) : field.kind === "url" && field.value ? (
+              <a className="primitive-value-link" href={field.value} target="_blank" rel="noreferrer">
+                <GemCaption>{field.display ?? field.value}</GemCaption>
+              </a>
             ) : (
-              field.kind === "url" && field.value ? (
-                <a className="primitive-value-link" href={field.value} target="_blank" rel="noreferrer">{field.display ?? field.value}</a>
-              ) : (
-                (field.display ?? field.value) || "—"
-              )
+              <GemCaption>{(field.display ?? field.value) || "—"}</GemCaption>
             )}
           </dd>
         </div>

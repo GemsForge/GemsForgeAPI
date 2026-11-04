@@ -1,11 +1,10 @@
 import { useState, type ReactNode } from "react";
 import type { UseFormRegisterReturn } from "react-hook-form";
 import { Form, SizableText, YStack } from "tamagui";
-import { GemField } from "../ui/GemField";
-import { GemButton } from "../ui/GemButton";
-import { GSearchField } from "../ui/GSearchField";
-import { GSelectField } from "../ui/GSelectField";
-import { GemFieldError, GemFieldLabel } from "../ui/fieldPrimitives";
+import { GemButton } from "@gemsforge/ui";
+import { GSearchField } from "@gemsforge/ui";
+import { GSelectField } from "@gemsforge/ui";
+import { GemFieldError, GemFieldLabel, GemTextField } from "@gemsforge/ui";
 
 interface CreateFieldFrameProps {
   id: string;
@@ -61,11 +60,19 @@ export function CreateFormFrame({
   children: ReactNode;
 }) {
   return (
-    <Form className={`edit-form create-record-form${className ? ` ${className}` : ""}`} aria-label={title} onSubmit={onSubmit}>
+    <Form
+      className={`edit-form create-record-form${className ? ` ${className}` : ""}`}
+      aria-label={title}
+      onSubmit={onSubmit}
+    >
       <SizableText className="create-record-form-title" size="$4" fontWeight="700" role="heading" aria-level={3}>
         {title}
       </SizableText>
-      {error && <SizableText role="alert" color="$gemDanger">{error}</SizableText>}
+      {error && (
+        <SizableText role="alert" color="$gemDanger">
+          {error}
+        </SizableText>
+      )}
       {children}
       <div className="button-row">
         <GemButton type="submit" disabled={submitting}>
@@ -111,11 +118,10 @@ export function CreateTextField({
       error={error}
       required={required}
       type={type}
-      step={type === "number" ? "any" : undefined}
+      step={step ?? (type === "number" ? "any" : undefined)}
       multiline={multiline}
       placeholder={inputPlaceholder}
       width={width}
-      className={controlClassName}
     />
   );
 }
@@ -142,7 +148,19 @@ export function CreateSelectField({
   options,
   required = false,
 }: CreateSelectFieldProps) {
-  return <GSelectField id={name} label={label} value={value} onChange={onValueChange} onBlur={onBlur} error={error} options={options} required={required} wireframe />;
+  return (
+    <GSelectField
+      id={name}
+      label={label}
+      value={value}
+      onChange={onValueChange}
+      onBlur={onBlur}
+      error={error}
+      options={options}
+      required={required}
+      wireframe
+    />
+  );
 }
 
 /** Render a searchable existing-record selector while preserving the selected record ID. */
@@ -165,8 +183,24 @@ export function CreateSearchableSelectField({
 
   return (
     <YStack gap="$2">
-      <GSearchField label={`Search ${label}`} value={query} onChange={setQuery} placeholder={searchPlaceholder} width="long" />
-      <GSelectField id={name} label={label} value={value} onChange={onValueChange} onBlur={onBlur} error={error} options={filteredOptions} required={required} wireframe />
+      <GSearchField
+        label={`Search ${label}`}
+        value={query}
+        onChange={setQuery}
+        placeholder={searchPlaceholder}
+        width="long"
+      />
+      <GSelectField
+        id={name}
+        label={label}
+        value={value}
+        onChange={onValueChange}
+        onBlur={onBlur}
+        error={error}
+        options={filteredOptions}
+        required={required}
+        wireframe
+      />
     </YStack>
   );
 }

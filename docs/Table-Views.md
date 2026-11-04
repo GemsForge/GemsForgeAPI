@@ -36,11 +36,15 @@ TableViews
 for a view. Depending on the consuming workspace, this includes the active
 Table/List/Gallery view, search, sort and direction, filter, grouping,
 pagination, gallery sizing/media settings, and supported property display
-settings. The dedicated
+settings, plus the editable collection title and description. The title and
+description are shared across the Table, List, and Gallery workspace by
+restoring the most recently updated saved view state. The dedicated
 `PUT /table-views/:tableName/:viewType/workspace-state` route updates this
 field without replacing saved columns or query settings. Selection restoration
 waits for the corresponding records to load; stale selections are reconciled
-before later workspace changes are saved.
+before later workspace changes are saved. Inspector property order is also
+saved per table and can be changed by dragging a row or focusing its grip and
+pressing Up or Down.
 
 For example, a saved Table view can retain the selected record and the
 collection controls together:

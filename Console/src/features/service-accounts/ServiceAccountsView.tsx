@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { QueryFeedback } from "../../components/QueryFeedback";
 import { AttachmentControl } from "../../components/AttachmentControl";
-import { GemEmptyState } from "../../components/ui";
+import { GemEmptyState } from "@gemsforge/ui";
 import { useServiceAccountPatchMutation, useServiceAccountQuery } from "../../data/recordQueries";
 import type { ServiceAccount } from "../../types";
 import { EditableRecordFields } from "../../components/EditableRecordFields";

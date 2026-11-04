@@ -6,8 +6,9 @@ the finished Gem Life product UI. Its M3 foundations now include routing,
 server-state hooks, a design system, native capabilities, local sessions,
 production asset packaging, accessibility and responsive/performance checks.
 
-Start with [UI standards](UI_STANDARDS.md) for the implemented conventions and
-documentation index. Protected Console routes require the Supabase Auth
+Start with [UI standards](UI_STANDARDS.md) for implementation conventions and
+[the design system](DESIGN_SYSTEM.md) for canvas, tokens, layout, and component
+roles. Protected Console routes require the Supabase Auth
 session described in [Console authentication](../docs/Console-Authentication-299.md).
 This does not make the API public; see the deployment security gate before
 changing its private deployment posture. Live database attachment-column
@@ -66,19 +67,12 @@ Vite proxies API paths to Vapor so the browser can use same-origin requests:
 ## Structure
 
 ```text
+packages/ui/                       private @gemsforge/ui workspace package
 src/
 ├── api.ts                         typed API client
 ├── types.ts                       API response and request types
-├── components/                    shared UI components
-└── features/
-    ├── domains/                   stable domain navigation
-    ├── forgekeeper/               page reads and PATCH testing
-    ├── gem-hues/                  hue reads, image previews, and image updates
-    ├── education/                 Life-area education reads
-    ├── employment/                Life-area employment reads
-    ├── addresses/                 Life-area address reads
-    ├── transactions/              Life-area expense transaction reads
-    └── workspace/                 shared collection, views, and inspector
+├── components/                    Console composition and legacy adapters
+└── features/                      domain views and workspace features
 ```
 
 The schema-driven workspace composes the Table Kit collection and the record
@@ -122,14 +116,20 @@ submission behavior.
 
 ## Design system
 
-Tamagui is configured in `src/design-system/tamagui.config.ts`. The existing
+Tamagui is configured in `packages/ui/src/design-system/tamagui.config.ts`. The existing
 Gem Life palette is registered as shared color tokens so reusable components
 can consume the same visual language without copying literal color values.
 The provider is mounted at the application entry point; feature components
 will migrate to Tamagui primitives in focused follow-up issues.
 
-Shared primitives live in `src/components/ui`. Feature views should compose
-these primitives instead of repeating buttons, cards, and labelled fields.
+The private shared UI workspace package lives in `packages/ui` and is imported
+through `@gemsforge/ui`. It exports maintained components and design-system
+values. Feature views should compose these primitives instead of repeating
+buttons, cards, and labelled fields. Feature logic, API/query behavior, and
+global compatibility CSS remain owned by the Console. See
+[Component API](COMPONENT_API.md) for the public boundary and the
+[package README](packages/ui/README.md) for current limits before another app
+can consume it independently.
 
 Server data uses TanStack Query through `src/data`. Query keys and caching
 policies belong there; feature components should consume query hooks instead

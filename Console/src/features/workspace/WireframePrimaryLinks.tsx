@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { GemButton } from "../../components/ui/GemButton";
+import { GemButton } from "@gemsforge/ui";
 
 const primaryNavigation = [
   { label: "Home", icon: "⌂", to: "/" },

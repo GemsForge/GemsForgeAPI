@@ -21,8 +21,12 @@ import { usePagedRecords } from "../hooks/usePagedRecords";
 import type { TablePropertyConfigurationInput } from "../table-kit/configuration";
 import type { ReactNode } from "react";
 import { Dialog } from "tamagui";
-import { GemButton } from "./ui";
-import { useSaveTableViewColumnsMutation, useSaveTableViewWorkspaceStateMutation, useTableViewsQuery } from "../data/presentationQueries";
+import { GemButton } from "@gemsforge/ui";
+import {
+  useSaveTableViewColumnsMutation,
+  useSaveTableViewWorkspaceStateMutation,
+  useTableViewsQuery,
+} from "../data/presentationQueries";
 
 /** The existing domain utility state shared by each database consumer adapter. */
 export interface DatabaseRecordUtilities<Record> {
@@ -123,10 +127,13 @@ export function DatabaseRecordCollection<Record>({
     groupBy: "",
   });
   const workspaceRestored = useRef(false);
-  const handleDetailChange = useCallback((id: string | null) => {
-    setPendingSelectionId(null);
-    onDetailChange(id);
-  }, [onDetailChange]);
+  const handleDetailChange = useCallback(
+    (id: string | null) => {
+      setPendingSelectionId(null);
+      onDetailChange(id);
+    },
+    [onDetailChange],
+  );
   const paging = usePagedRecords(utilities.records);
   const properties = useMemo(() => adapter.getPropertyDefinitions(), [adapter]);
   const pageRecords = useMemo(
@@ -147,53 +154,53 @@ export function DatabaseRecordCollection<Record>({
     [properties],
   );
   useEffect(() => {
-      if (!savedViewsQuery.isSuccess || workspaceRestored.current) return;
-      workspaceRestored.current = true;
-      const savedViews = ([
-        ["list", savedViewsQuery.data?.List ?? null],
-        ["gallery", savedViewsQuery.data?.Gallery ?? null],
-        ["table", savedViewsQuery.data?.Table ?? null],
-      ] as const);
-      setViewConfigurations((current) =>
-        savedViews.reduce(
-          (next, savedView) =>
-            savedView[1]
-              ? {
-                  ...next,
-                  [savedView[0]]: {
-                    order: savedView[1].columns.map((column) => column.columnName),
-                    hiddenIds: savedView[1].columns
-                      .filter((column) => !column.isVisible)
-                      .map((column) => column.columnName),
-                  },
-                }
-              : next,
-          current,
-        ),
-      );
-      const restored = savedViews
-        .filter((savedView) => savedView[1] !== null)
-        .map(([, saved]) => ({ saved: saved!, state: decodeCollectionWorkspaceState(saved!.view.workspaceState) }))
-        .filter((candidate) => candidate.state !== null)
-        .sort(
-          (left, right) => Date.parse(right.saved.view.updatedAt ?? "") - Date.parse(left.saved.view.updatedAt ?? ""),
-        )[0];
-      if (restored?.state) {
-        workspaceStateRef.current = restored.state;
-        setActiveViewId(restored.state.activeViewId);
-        utilities.onSearch(restored.state.search);
-        utilities.onSort(restored.state.sort);
-        utilities.onDirection(restored.state.direction);
-        utilities.onFilter(restored.state.filter);
-        setGroupBy(restored.state.groupBy);
-        if (restored.state.selectedRecordId === null) {
-          setPendingSelectionId(null);
-          onDetailChange(null);
-        } else {
-          setPendingSelectionId(restored.state.selectedRecordId);
-        }
+    if (!savedViewsQuery.isSuccess || workspaceRestored.current) return;
+    workspaceRestored.current = true;
+    const savedViews = [
+      ["list", savedViewsQuery.data?.List ?? null],
+      ["gallery", savedViewsQuery.data?.Gallery ?? null],
+      ["table", savedViewsQuery.data?.Table ?? null],
+    ] as const;
+    setViewConfigurations((current) =>
+      savedViews.reduce(
+        (next, savedView) =>
+          savedView[1]
+            ? {
+                ...next,
+                [savedView[0]]: {
+                  order: savedView[1].columns.map((column) => column.columnName),
+                  hiddenIds: savedView[1].columns
+                    .filter((column) => !column.isVisible)
+                    .map((column) => column.columnName),
+                },
+              }
+            : next,
+        current,
+      ),
+    );
+    const restored = savedViews
+      .filter((savedView) => savedView[1] !== null)
+      .map(([, saved]) => ({ saved: saved!, state: decodeCollectionWorkspaceState(saved!.view.workspaceState) }))
+      .filter((candidate) => candidate.state !== null)
+      .sort(
+        (left, right) => Date.parse(right.saved.view.updatedAt ?? "") - Date.parse(left.saved.view.updatedAt ?? ""),
+      )[0];
+    if (restored?.state) {
+      workspaceStateRef.current = restored.state;
+      setActiveViewId(restored.state.activeViewId);
+      utilities.onSearch(restored.state.search);
+      utilities.onSort(restored.state.sort);
+      utilities.onDirection(restored.state.direction);
+      utilities.onFilter(restored.state.filter);
+      setGroupBy(restored.state.groupBy);
+      if (restored.state.selectedRecordId === null) {
+        setPendingSelectionId(null);
+        onDetailChange(null);
+      } else {
+        setPendingSelectionId(restored.state.selectedRecordId);
       }
-      setWorkspaceLoaded(true);
+    }
+    setWorkspaceLoaded(true);
   }, [savedViewsQuery.data, savedViewsQuery.isSuccess, onDetailChange, utilities]);
 
   useEffect(() => {
@@ -206,18 +213,15 @@ export function DatabaseRecordCollection<Record>({
   }, [adapter, handleDetailChange, pendingSelectionId, records]);
 
   const saveConfiguration = useCallback(
-    async (
-      viewId: string | undefined,
-      configuration: { order: readonly string[]; hiddenIds: readonly string[] },
-    ) => {
+    async (viewId: string | undefined, configuration: { order: readonly string[]; hiddenIds: readonly string[] }) => {
       if (!viewId) return;
       const viewType = viewId === "gallery" ? "Gallery" : viewId === "table" ? "Table" : "List";
       const columns = configuration.order.map((columnName, sortOrder) => ({
-          columnName,
-          sortOrder,
-          isVisible: !configuration.hiddenIds.includes(columnName),
-          width: null,
-        }));
+        columnName,
+        sortOrder,
+        isVisible: !configuration.hiddenIds.includes(columnName),
+        width: null,
+      }));
       setViewConfigurations((current) => ({ ...current, [viewId]: configuration }));
       try {
         await saveColumnsAsync({ viewType, columns });
@@ -507,22 +511,43 @@ function DatabaseRecordRenderer<Record>({
             {groups.map((group) => (
               <section className="database-record-group" key={group.label}>
                 <h3 className="database-record-group-heading">
-                  <span>{groupProperty?.label}: {group.label}</span>
+                  <span>
+                    {groupProperty?.label}: {group.label}
+                  </span>
                   <span className="database-record-group-count">{group.records.length}</span>
                 </h3>
                 {renderView(group.records)}
               </section>
             ))}
           </div>
-        ) : renderView()}
+        ) : (
+          renderView()
+        )}
       </div>
       {detail && detailId !== null && !expanded ? (
         <aside className="database-record-inspector" aria-label={`${label} record inspector`}>
           <div className="database-record-inspector-heading">
-            <div><span className="eyebrow">Record inspector</span><strong>{label}</strong></div>
+            <div>
+              <span className="eyebrow">Record inspector</span>
+              <strong>{label}</strong>
+            </div>
             <div className="database-record-inspector-actions">
-              <button type="button" aria-label="Expand record into page view" title="Expand record into page view" onClick={() => setExpanded(true)}>↗</button>
-              <button type="button" aria-label="Close record inspector" title="Close record inspector" onClick={() => onDetailChange(null)}>×</button>
+              <button
+                type="button"
+                aria-label="Expand record into page view"
+                title="Expand record into page view"
+                onClick={() => setExpanded(true)}
+              >
+                ↗
+              </button>
+              <button
+                type="button"
+                aria-label="Close record inspector"
+                title="Close record inspector"
+                onClick={() => onDetailChange(null)}
+              >
+                ×
+              </button>
             </div>
           </div>
           <div className="database-record-detail">{detail}</div>
@@ -530,11 +555,24 @@ function DatabaseRecordRenderer<Record>({
       ) : null}
       {detail && expanded ? (
         <Dialog open onOpenChange={(open) => !open && setExpanded(false)} modal>
-          <Dialog.Portal><Dialog.Overlay className="table-kit-utility-backdrop" /><Dialog.Content className="table-kit-new-record-utility database-record-detail-dialog">
-            <Dialog.Title className="sr-only">{label} record page</Dialog.Title>
-            <Dialog.Close asChild><GemButton variant="quiet" size="sm" className="database-record-detail-close" aria-label="Close record page" onClick={() => setExpanded(false)}>×</GemButton></Dialog.Close>
-            <div className="database-record-detail database-record-page-view">{detail}</div>
-          </Dialog.Content></Dialog.Portal>
+          <Dialog.Portal>
+            <Dialog.Overlay className="table-kit-utility-backdrop" />
+            <Dialog.Content className="table-kit-new-record-utility database-record-detail-dialog">
+              <Dialog.Title className="sr-only">{label} record page</Dialog.Title>
+              <Dialog.Close asChild>
+                <GemButton
+                  variant="quiet"
+                  size="sm"
+                  className="database-record-detail-close"
+                  aria-label="Close record page"
+                  onClick={() => setExpanded(false)}
+                >
+                  ×
+                </GemButton>
+              </Dialog.Close>
+              <div className="database-record-detail database-record-page-view">{detail}</div>
+            </Dialog.Content>
+          </Dialog.Portal>
         </Dialog>
       ) : null}
     </>

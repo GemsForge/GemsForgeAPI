@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { TamaguiProvider } from "tamagui";
-import { tamaguiConfig } from "../design-system/tamagui.config";
+import { tamaguiConfig } from "@gemsforge/ui";
 import { TableSettingsMenu } from "./TableSettings";
 
 describe("TableSettingsMenu", () => {

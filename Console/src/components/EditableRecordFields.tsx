@@ -1,10 +1,10 @@
 import { useId, type ChangeEvent, type FocusEvent, type ReactNode } from "react";
 import { Form } from "tamagui";
-import { GCheckboxField, GDate, GemField, GSelectField } from "./ui";
-import type { GemTextFieldWidth } from "./ui/GemTextField";
+import { GCheckboxField, GDate, GemCaption, GemField, GSelectField } from "@gemsforge/ui";
+import type { GemTextFieldWidth } from "@gemsforge/ui";
 import { useRecordEditor } from "../hooks/useRecordEditor";
-import { GemPrimitiveField } from "./ui/GemPrimitiveField";
-import type { GemPrimitiveType } from "./ui/primitiveFieldContracts";
+import { GemPrimitiveField } from "@gemsforge/ui";
+import type { GemPrimitiveType } from "@gemsforge/ui";
 import type { RecordColorToken, RecordDateFormat, RecordSelectOption } from "../table-kit/recordContracts";
 
 export type EditableValue = string | number | boolean | null | undefined;
@@ -27,6 +27,7 @@ export interface EditableRecordField {
   placeholder?: string;
   width?: GemTextFieldWidth;
   displayValue?: ReactNode;
+  valueTextRole?: "body" | "caption";
   readOnlyReason?: string;
   className?: string;
   primitive?: GemPrimitiveType;
@@ -85,6 +86,10 @@ function EditableField({ field }: { field: EditableRecordField }) {
   });
   const id = `edit-${instanceID}-${field.label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
   const labelID = `${id}-label`;
+  const displayValue =
+    field.displayValue ??
+    (field.inputType === "date" ? formatRecordDateValue(value, field.dateFormat) : presentValue(value));
+  const displayedValue = field.valueTextRole === "caption" ? <GemCaption>{displayValue}</GemCaption> : displayValue;
   const onTextChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     editor.setDraft(event.currentTarget.value);
   const onEditorBlur = (event: FocusEvent<HTMLElement>) => {
@@ -104,14 +109,22 @@ function EditableField({ field }: { field: EditableRecordField }) {
       <div
         className={field.className}
         data-editing={editor.editing || undefined}
-        onBlur={field.primitive === "date" || field.primitive === "select" || field.primitive === "status" ? onEditorBlur : undefined}
+        onBlur={
+          field.primitive === "date" || field.primitive === "select" || field.primitive === "status"
+            ? onEditorBlur
+            : undefined
+        }
       >
         <GemPrimitiveField
           primitive={field.primitive}
           label={field.label}
           value={(editor.editing ? editor.draft : field.value) as string | number | boolean | null}
           editing={editor.editing}
-          displayValue={field.displayValue ?? (field.primitive === "date" ? formatRecordDateValue(value, field.dateFormat) : undefined)}
+          displayValue={
+            field.displayValue ??
+            (field.primitive === "date" ? formatRecordDateValue(value, field.dateFormat) : undefined)
+          }
+          valueTextRole={field.valueTextRole}
           colorToken={field.colorToken}
           dateFormat={field.dateFormat}
           includeTime={field.includeTime}
@@ -133,126 +146,136 @@ function EditableField({ field }: { field: EditableRecordField }) {
   }
 
   return (
-      <div className={field.className} data-editing={editor.editing || undefined}>
-        {!editor.editing && !field.hideLabel && field.inputType !== "select" && (
-          <dt className="editable-record-label" id={labelID}>
-            {field.label}
-          </dt>
-        )}
-        <dd>
-          {!isEditable || !field.onSave || !editor.editing ? (
-            isEditable && field.onSave ? (
-              field.inputType === "select" ? (
-                <GSelectField
-                  label={field.label}
-                  value={String(value ?? "")}
-                  options={field.options ?? []}
-                  editing={false}
-                  displayValue={field.displayValue ?? presentValue(value)}
-                  onDisplayClick={editor.begin}
-                />
-              ) : <button
-                  type="button"
-                  className="editable-record-value-button"
-                  aria-label={`${field.label}: ${presentValue(value)}`}
-                  onClick={editor.begin}
-                >
-                  {field.inputType === "boolean" ? (
-                    <span
-                      className="field-checkbox field-checkbox-display"
-                      role="img"
-                      aria-label={String(value).toLowerCase() === "true" ? "checked" : "unchecked"}
-                    />
-                  ) : (
-                    (field.displayValue ?? (field.inputType === "date" ? formatRecordDateValue(value, field.dateFormat) : presentValue(value)))
-                  )}
-                  {field.readOnlyReason && <small className="field-readonly-reason">{field.readOnlyReason}</small>}
-                </button>
+    <div className={field.className} data-editing={editor.editing || undefined}>
+      {!editor.editing && !field.hideLabel && field.inputType !== "select" && (
+        <dt className="editable-record-label" id={labelID}>
+          {field.label}
+        </dt>
+      )}
+      <dd>
+        {!isEditable || !field.onSave || !editor.editing ? (
+          isEditable && field.onSave ? (
+            field.inputType === "select" ? (
+              <GSelectField
+                label={field.label}
+                value={String(value ?? "")}
+                options={field.options ?? []}
+                editing={false}
+                displayValue={field.displayValue ?? presentValue(value)}
+                valueTextRole={field.valueTextRole}
+                onDisplayClick={editor.begin}
+              />
             ) : (
-              <>
+              <button
+                type="button"
+                className="editable-record-value-button"
+                aria-label={`${field.label}: ${presentValue(value)}`}
+                onClick={editor.begin}
+              >
                 {field.inputType === "boolean" ? (
-                  <input
-                    type="checkbox"
+                  <span
                     className="field-checkbox field-checkbox-display"
-                    checked={String(value).toLowerCase() === "true"}
-                    disabled
-                    aria-label={`${field.label}: ${String(value).toLowerCase() === "true" ? "checked" : "unchecked"}`}
-                    readOnly
+                    role="img"
+                    aria-label={String(value).toLowerCase() === "true" ? "checked" : "unchecked"}
                   />
                 ) : (
-                  (field.displayValue ?? (field.inputType === "date" ? formatRecordDateValue(value, field.dateFormat) : presentValue(value)))
+                  displayedValue
                 )}
                 {field.readOnlyReason && <small className="field-readonly-reason">{field.readOnlyReason}</small>}
-              </>
+              </button>
             )
           ) : (
-            <Form className="edit-form editable-field-form" onSubmit={(event) => { event.preventDefault(); void editor.save(); }} onBlur={onEditorBlur}>
-                  <div className="editable-field-control-row">
-                    {field.inputType === "date" ? (
-                      <GDate
-                        label={field.label}
-                        value={editor.draft}
-                        onChange={(next) => {
-                          editor.setDraft(next);
-                          void editor.save(next);
-                        }}
-                        required={field.required}
-                        width={field.width ?? "medium"}
-                        displayFormat={field.dateFormat}
-                        includeTime={field.includeTime}
-                        onDateConfigChange={field.onDateConfigChange}
-                        error={editor.error ?? undefined}
-                      />
-                    ) : field.inputType === "select" ? (
-                      <GSelectField
-                        label={field.label}
-                        value={editor.draft}
-                        options={(field.options ?? []).concat(field.nullable ? [{ value: "", label: "—" }] : [])}
-                        onChange={(next) => {
-                          editor.setDraft(next);
-                          void editor.save(next);
-                        }}
-                        required={field.required}
-                        width={field.width ?? "medium"}
-                        error={editor.error ?? undefined}
-                      />
-                    ) : field.inputType === "boolean" ? (
-                      <GCheckboxField
-                        label={field.label}
-                        value={editor.draft === "true"}
-                        onChange={(checked) => {
-                          const next = String(checked);
-                          editor.setDraft(next);
-                          void editor.save(next);
-                        }}
-                        required={field.required}
-                        width={field.width ?? "medium"}
-                        error={editor.error ?? undefined}
-                      />
-                    ) : (
-                      <GemField
-                        label={field.label}
-                        value={editor.draft}
-                        onChange={onTextChange}
-                        type={field.inputType === "longText" ? undefined : (field.inputType ?? "text")}
-                        step={field.step}
-                        placeholder={field.placeholder}
-                        multiline={field.inputType === "longText"}
-                        width={field.width ?? "medium"}
-                        required={field.required}
-                        error={editor.error ?? undefined}
-                      />
-                    )}
-                    {field.nullable && field.inputType !== "boolean" && field.inputType !== "select" && (
-                      <button type="button" className="text-button" onClick={() => editor.setDraft("")}>
-                        Clear value
-                      </button>
-                    )}
-                  </div>
-            </Form>
-          )}
-        </dd>
-      </div>
+            <>
+              {field.inputType === "boolean" ? (
+                <input
+                  type="checkbox"
+                  className="field-checkbox field-checkbox-display"
+                  checked={String(value).toLowerCase() === "true"}
+                  disabled
+                  aria-label={`${field.label}: ${String(value).toLowerCase() === "true" ? "checked" : "unchecked"}`}
+                  readOnly
+                />
+              ) : (
+                displayedValue
+              )}
+              {field.readOnlyReason && <small className="field-readonly-reason">{field.readOnlyReason}</small>}
+            </>
+          )
+        ) : (
+          <Form
+            className="edit-form editable-field-form"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void editor.save();
+            }}
+            onBlur={onEditorBlur}
+          >
+            <div className="editable-field-control-row">
+              {field.inputType === "date" ? (
+                <GDate
+                  label={field.label}
+                  value={editor.draft}
+                  onChange={(next) => {
+                    editor.setDraft(next);
+                    void editor.save(next);
+                  }}
+                  required={field.required}
+                  width={field.width ?? "medium"}
+                  displayFormat={field.dateFormat}
+                  includeTime={field.includeTime}
+                  onDateConfigChange={field.onDateConfigChange}
+                  error={editor.error ?? undefined}
+                />
+              ) : field.inputType === "select" ? (
+                <GSelectField
+                  label={field.label}
+                  value={editor.draft}
+                  options={(field.options ?? []).concat(field.nullable ? [{ value: "", label: "—" }] : [])}
+                  onChange={(next) => {
+                    editor.setDraft(next);
+                    void editor.save(next);
+                  }}
+                  required={field.required}
+                  width={field.width ?? "medium"}
+                  error={editor.error ?? undefined}
+                />
+              ) : field.inputType === "boolean" ? (
+                <GCheckboxField
+                  label={field.label}
+                  value={editor.draft === "true"}
+                  onChange={(checked) => {
+                    const next = String(checked);
+                    editor.setDraft(next);
+                    void editor.save(next);
+                  }}
+                  required={field.required}
+                  width={field.width ?? "medium"}
+                  error={editor.error ?? undefined}
+                />
+              ) : (
+                <GemField
+                  label={field.label}
+                  value={editor.draft}
+                  onChange={onTextChange}
+                  type={field.inputType === "longText" ? undefined : (field.inputType ?? "text")}
+                  step={field.step}
+                  placeholder={field.placeholder}
+                  multiline={field.inputType === "longText"}
+                  width={field.width ?? "medium"}
+                  required={field.required}
+                  error={editor.error ?? undefined}
+                />
+              )}
+              {field.nullable && field.inputType !== "boolean" && field.inputType !== "select" && (
+                <button type="button" className="text-button" onClick={() => editor.setDraft("")}>
+                  Clear value
+                </button>
+              )}
+            </div>
+          </Form>
+        )}
+      </dd>
+    </div>
   );
 }
 
