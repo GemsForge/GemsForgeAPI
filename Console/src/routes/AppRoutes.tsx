@@ -118,6 +118,21 @@ const WireframeForgeKeeperPage = lazy(() =>
     default: module.WireframeForgeKeeperPage,
   })),
 );
+const WireframeLocalDatabaseCreationPage = lazy(() =>
+  import("../features/workspace/WireframeMvpWorkflowPages").then((module) => ({
+    default: module.WireframeLocalDatabaseCreationPage,
+  })),
+);
+const WireframeSchemaBuilderPage = lazy(() =>
+  import("../features/workspace/WireframeMvpWorkflowPages").then((module) => ({
+    default: module.WireframeSchemaBuilderPage,
+  })),
+);
+const WireframeLiveDatabasePage = lazy(() =>
+  import("../features/workspace/WireframeMvpWorkflowPages").then((module) => ({
+    default: module.WireframeLiveDatabasePage,
+  })),
+);
 
 type Notifications = { onError: (error: unknown) => void; onSuccess: (message: string) => void };
 
@@ -381,6 +396,9 @@ export function AppRoutes() {
           <Route path="forgekeeper-wireframe" element={<WireframeForgeKeeperPage kind="roots" />} />
           <Route path="forgekeeper-wireframe/domain/:domainID" element={<WireframeForgeKeeperPage kind="domain" />} />
           <Route path="forgekeeper-wireframe/:pageID/children" element={<WireframeForgeKeeperPage kind="children" />} />
+          <Route path="local-database-wireframe" element={<WireframeLocalDatabaseCreationPage />} />
+          <Route path="schema-builder-wireframe" element={<WireframeSchemaBuilderPage />} />
+          <Route path="live-database-wireframe" element={<WireframeLiveDatabasePage />} />
           <Route path="education-wireframe/*" element={<EducationWireframe />} />
           <Route path="employment-wireframe/*" element={<EmploymentWireframe />} />
           <Route path="addresses-wireframe/*" element={<AddressesWireframe />} />

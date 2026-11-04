@@ -4,9 +4,10 @@ import { LiveSchemaView } from "./LiveSchemaView";
 interface SchemaBuilderViewProps {
   onError: (error: unknown) => void;
   onSuccess: (message: string) => void;
+  showHeader?: boolean;
 }
 
-export function SchemaBuilderView({ onError, onSuccess }: SchemaBuilderViewProps) {
+export function SchemaBuilderView({ onError, onSuccess, showHeader = true }: SchemaBuilderViewProps) {
   const {
     types,
     tableName,
@@ -34,17 +35,19 @@ export function SchemaBuilderView({ onError, onSuccess }: SchemaBuilderViewProps
 
   return (
     <>
-      <div className="content-heading">
-        <div>
-          <p className="eyebrow">Milestone 2 · schema builder</p>
-          <h2>Build & import</h2>
-          <p className="muted">
-            Describe a table, preview the generated schema, then explicitly approve its creation. CSV import follows the
-            same preview-first workflow.
-          </p>
+      {showHeader ? (
+        <div className="content-heading">
+          <div>
+            <p className="eyebrow">Milestone 2 · schema builder</p>
+            <h2>Build & import</h2>
+            <p className="muted">
+              Describe a table, preview the generated schema, then explicitly approve its creation. CSV import follows
+              the same preview-first workflow.
+            </p>
+          </div>
+          <span className="record-count ready">Preview first</span>
         </div>
-        <span className="record-count ready">Preview first</span>
-      </div>
+      ) : null}
 
       <section className="schema-guidance database-panel">
         <div className="database-panel-heading">

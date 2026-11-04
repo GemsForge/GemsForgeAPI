@@ -327,6 +327,69 @@
   color: var(--gem-wireframe-muted, #65767b);
 }
 
+.wireframe-standalone .database-panel,
+.wireframe-standalone .builder-preview {
+  border-color: var(--gem-wireframe-border, #d9dfdc);
+  background: var(--gem-wireframe-surface, #fff);
+  color: var(--gem-wireframe-text, #233c42);
+}
+
+.wireframe-standalone .database-panel-heading h3,
+.wireframe-standalone .builder-preview h4 {
+  color: var(--gem-wireframe-heading, #173d45);
+}
+
+.wireframe-standalone .database-field,
+.wireframe-standalone .database-confirm,
+.wireframe-standalone .migration-list,
+.wireframe-standalone .database-rules,
+.wireframe-standalone .guidance-item,
+.wireframe-standalone .builder-preview p {
+  color: var(--gem-wireframe-muted, #65767b);
+}
+
+.wireframe-standalone .database-field input,
+.wireframe-standalone .database-field select,
+.wireframe-standalone .database-field textarea,
+.wireframe-standalone .builder-column input,
+.wireframe-standalone .builder-column select {
+  border-color: var(--gem-wireframe-border, #d9dfdc);
+  background: var(--gem-wireframe-field, #fff);
+  color: var(--gem-wireframe-text, #233c42);
+}
+
+.wireframe-standalone .database-rules {
+  border-color: var(--gem-wireframe-border, #d9dfdc);
+  background: var(--gem-wireframe-surface-raised, #f4f7f5);
+}
+
+.wireframe-standalone .database-rules strong,
+.wireframe-standalone .guidance-item code {
+  color: var(--gem-wireframe-heading, #173d45);
+}
+
+.wireframe-standalone .database-result,
+.wireframe-standalone .record-count.ready {
+  color: #286b42;
+}
+
+.wireframe-standalone .primary-button {
+  border-color: var(--gem-wireframe-action, #287ca5);
+  background: var(--gem-wireframe-action, #287ca5);
+  color: #fff;
+}
+
+.wireframe-standalone .secondary-button {
+  border-color: var(--gem-wireframe-border, #d9dfdc);
+  color: var(--gem-wireframe-text, #233c42);
+}
+
+.wireframe-standalone .error-text,
+.wireframe-standalone .builder-error,
+.wireframe-standalone .builder-error h4 {
+  color: #9b3030;
+}
+
 .wireframe-system-action {
   display: inline-flex;
   min-height: 2.5rem;
@@ -460,6 +523,13 @@
     width: 100%;
     justify-content: flex-start;
     margin-left: 3.3rem;
+  }
+}
+
+@media (max-width: 800px) {
+  .wireframe-standalone .database-layout,
+  .wireframe-standalone .schema-guidance-grid {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 

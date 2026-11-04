@@ -37,11 +37,15 @@ export function WireframeSystemPage({
   title,
   description,
   count,
+  countLabel,
+  showCount,
 }: {
   children: ReactNode;
   title: string;
   description: string;
   count: number;
+  countLabel?: string;
+  showCount?: boolean;
 }) {
   const [collapsed, setCollapsed] = useState(false);
   const navigation = useWireframeNavigation();
@@ -67,7 +71,13 @@ export function WireframeSystemPage({
           mobileDrawerOpen={mobileOpen}
         />
       </div>
-      <WireframePageView title={title} description={description} recordCount={count}>
+      <WireframePageView
+        title={title}
+        description={description}
+        recordCount={count}
+        countLabel={countLabel}
+        showCount={showCount}
+      >
         {children}
       </WireframePageView>
     </section>
@@ -178,9 +188,10 @@ export function WireframeDatabasesPage() {
       title="Local Databases"
       description="Development databases available in the configured safe folder. The personal database is excluded."
       count={databases.length}
+      countLabel="databases"
     >
       <div className="wireframe-system-page-actions">
-        <Link className="wireframe-system-action" to="/local-databases">
+        <Link className="wireframe-system-action" to="/local-database-wireframe">
           Create database
         </Link>
       </div>
@@ -217,7 +228,8 @@ export function WireframeSettingsPage() {
     <WireframeSystemPage
       title="Application Settings"
       description="Workspace tools and local development configuration."
-      count={3}
+      count={4}
+      countLabel="tools"
     >
       <section className="wireframe-system-card-grid" aria-label="Application tools">
         <Link className="wireframe-system-card" to="/local-databases-wireframe">
@@ -232,7 +244,19 @@ export function WireframeSettingsPage() {
             ↗
           </span>
         </Link>
-        <Link className="wireframe-system-card" to="/schema-builder">
+        <Link className="wireframe-system-card" to="/local-database-wireframe">
+          <span className="wireframe-system-card-icon">
+            <Database size={20} aria-hidden="true" />
+          </span>
+          <span className="wireframe-system-card-copy">
+            <strong>Create database</strong>
+            <small>Create an isolated development database</small>
+          </span>
+          <span className="wireframe-system-card-arrow" aria-hidden="true">
+            ↗
+          </span>
+        </Link>
+        <Link className="wireframe-system-card" to="/schema-builder-wireframe">
           <span className="wireframe-system-card-icon">
             <Settings2 size={20} aria-hidden="true" />
           </span>
@@ -244,7 +268,7 @@ export function WireframeSettingsPage() {
             ↗
           </span>
         </Link>
-        <Link className="wireframe-system-card" to="/live-database">
+        <Link className="wireframe-system-card" to="/live-database-wireframe">
           <span className="wireframe-system-card-icon">
             <Database size={20} aria-hidden="true" />
           </span>
@@ -292,6 +316,7 @@ export function WireframeTrashPage() {
       title="Trash"
       description="Restore archived records or permanently remove them."
       count={entries.length}
+      countLabel="records"
     >
       <QueryFeedback query={query} />
       {actionError ? (

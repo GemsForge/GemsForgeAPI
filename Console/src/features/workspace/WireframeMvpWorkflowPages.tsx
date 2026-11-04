@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { BookOpenText, Network } from "lucide-react";
 import { DomainCreateForm } from "../create/RecordCreateForms";
@@ -6,6 +6,9 @@ import { QueryFeedback } from "../../components/QueryFeedback";
 import { useCreateDomainMutation, useDomainsQuery } from "../../data/domainQueries";
 import { usePageMutation, usePagesQuery, type PageScope } from "../../data/workflowQueries";
 import { ForgeKeeperView } from "../forgekeeper/ForgeKeeperView";
+import { LocalDatabaseView } from "../databases/LocalDatabaseView";
+import { SchemaBuilderView } from "../schema/SchemaBuilderView";
+import { LiveDatabaseMigrationView } from "../schema/LiveDatabaseMigrationView";
 import { WireframeSystemPage } from "./WireframeSystemPages";
 
 export function WireframeDomainsPage() {
@@ -19,6 +22,7 @@ export function WireframeDomainsPage() {
       title="Domains"
       description="Organize and open the ForgeKeeper pages in each part of your workspace."
       count={records.length}
+      countLabel="domains"
     >
       <div className="wireframe-system-page-actions">
         <button
@@ -100,6 +104,7 @@ export function WireframeForgeKeeperPage({ kind }: { kind: ForgeKeeperScope }) {
       title="ForgeKeeper"
       description="Browse and update the pages stored in your workspace."
       count={pages.data?.length ?? 0}
+      countLabel="pages"
     >
       <section className="wireframe-system-domain-picker" aria-label="ForgeKeeper scope">
         <Link
@@ -170,6 +175,82 @@ export function WireframeForgeKeeperPage({ kind }: { kind: ForgeKeeperScope }) {
           <p>Choose a domain or show all root pages.</p>
         </section>
       ) : null}
+    </WireframeSystemPage>
+  );
+}
+
+function useWireframeOperationFeedback() {
+  const [notice, setNotice] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const onError = useCallback((caught: unknown) => {
+    setNotice(null);
+    setError(caught instanceof Error ? caught.message : "The operation could not be completed.");
+  }, []);
+  const onSuccess = useCallback((message: string) => {
+    setError(null);
+    setNotice(message);
+  }, []);
+  return {
+    onError,
+    onSuccess,
+    messages: (
+      <>
+        {notice ? (
+          <p className="wireframe-system-success" role="status">
+            {notice}
+          </p>
+        ) : null}
+        {error ? (
+          <p className="wireframe-system-error" role="alert">
+            {error}
+          </p>
+        ) : null}
+      </>
+    ),
+  };
+}
+
+export function WireframeLocalDatabaseCreationPage() {
+  const feedback = useWireframeOperationFeedback();
+  return (
+    <WireframeSystemPage
+      title="Create local database"
+      description="Create an isolated SQLite database for development and testing."
+      count={0}
+      showCount={false}
+    >
+      {feedback.messages}
+      <LocalDatabaseView onError={feedback.onError} onSuccess={feedback.onSuccess} showHeader={false} />
+    </WireframeSystemPage>
+  );
+}
+
+export function WireframeSchemaBuilderPage() {
+  const feedback = useWireframeOperationFeedback();
+  return (
+    <WireframeSystemPage
+      title="Schema Builder"
+      description="Design a table, review its SQL definition, and approve it for the configured database."
+      count={0}
+      showCount={false}
+    >
+      {feedback.messages}
+      <SchemaBuilderView onError={feedback.onError} onSuccess={feedback.onSuccess} showHeader={false} />
+    </WireframeSystemPage>
+  );
+}
+
+export function WireframeLiveDatabasePage() {
+  const feedback = useWireframeOperationFeedback();
+  return (
+    <WireframeSystemPage
+      title="Live Database"
+      description="Preview repository migrations and review the configured database schema."
+      count={0}
+      showCount={false}
+    >
+      {feedback.messages}
+      <LiveDatabaseMigrationView onError={feedback.onError} onSuccess={feedback.onSuccess} showHeader={false} />
     </WireframeSystemPage>
   );
 }

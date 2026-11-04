@@ -10,9 +10,10 @@ import {
 interface LiveDatabaseMigrationViewProps {
   onError: (error: unknown) => void;
   onSuccess: (message: string) => void;
+  showHeader?: boolean;
 }
 
-export function LiveDatabaseMigrationView({ onError, onSuccess }: LiveDatabaseMigrationViewProps) {
+export function LiveDatabaseMigrationView({ onError, onSuccess, showHeader = true }: LiveDatabaseMigrationViewProps) {
   const schema = useLiveSchemaQuery();
   const preview = usePreviewRepositoryMigrationsMutation();
   const execute = useExecuteRepositoryMigrationsMutation();
@@ -50,17 +51,19 @@ export function LiveDatabaseMigrationView({ onError, onSuccess }: LiveDatabaseMi
   const busy = preview.isPending || execute.isPending;
   return (
     <>
-      <div className="content-heading">
-        <div>
-          <p className="eyebrow">Developer tools · live database</p>
-          <h2>Repository migrations</h2>
-          <p className="muted">
-            Bring the configured live database up to the repository schema with a preview, an explicit confirmation, and
-            a verified backup.
-          </p>
+      {showHeader ? (
+        <div className="content-heading">
+          <div>
+            <p className="eyebrow">Developer tools · live database</p>
+            <h2>Repository migrations</h2>
+            <p className="muted">
+              Bring the configured live database up to the repository schema with a preview, an explicit confirmation,
+              and a verified backup.
+            </p>
+          </div>
+          <span className="record-count ready">Backup first</span>
         </div>
-        <span className="record-count ready">Backup first</span>
-      </div>
+      ) : null}
       <section className="database-panel">
         <div className="database-panel-heading">
           <div>

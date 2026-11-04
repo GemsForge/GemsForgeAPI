@@ -151,7 +151,42 @@ describe("Gem Life navigation", () => {
 
     expect(await screen.findByRole("heading", { name: "Local Databases" })).toBeInTheDocument();
     expect(await screen.findByText("GemLife_Dev.sqlite")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Create database" })).toHaveAttribute("href", "/local-databases");
+    expect(screen.getByRole("link", { name: "Create database" })).toHaveAttribute("href", "/local-database-wireframe");
+  });
+  it("routes application settings tools to their dedicated wireframe pages", async () => {
+    setup("/application-settings-wireframe");
+
+    expect(await screen.findByRole("heading", { name: "Application Settings" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Create database/ })).toHaveAttribute("href", "/local-database-wireframe");
+    expect(screen.getByRole("link", { name: /Schema Builder/ })).toHaveAttribute("href", "/schema-builder-wireframe");
+    expect(screen.getByRole("link", { name: /Live Database/ })).toHaveAttribute("href", "/live-database-wireframe");
+  });
+  it("renders the local database creation form in the wireframe shell", async () => {
+    vi.spyOn(api, "getLocalDatabaseCapabilities").mockResolvedValue({
+      enabled: true,
+      ready: true,
+      profiles: [{ id: "gem-life-development", name: "Development", migrations: ["CreateAddresses"] }],
+      safetyRules: ["Create a new file only."],
+    });
+    setup("/local-database-wireframe");
+
+    expect(await screen.findByRole("heading", { name: "Create local database" })).toBeInTheDocument();
+    expect(screen.getByRole("main", { name: "Wireframe screen" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "New SQLite database" })).toBeInTheDocument();
+  });
+  it("renders the Schema Builder in the wireframe shell", async () => {
+    setup("/schema-builder-wireframe");
+
+    expect(await screen.findByRole("heading", { name: "Schema Builder" })).toBeInTheDocument();
+    expect(screen.getByRole("main", { name: "Wireframe screen" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "New SQLite table" })).toBeInTheDocument();
+  });
+  it("renders Live Database migration tools in the wireframe shell", async () => {
+    setup("/live-database-wireframe");
+
+    expect(await screen.findByRole("heading", { name: "Live Database" })).toBeInTheDocument();
+    expect(screen.getByRole("main", { name: "Wireframe screen" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Apply the repository schema" })).toBeInTheDocument();
   });
   it("closes mobile workspace navigation from the pane footer using header state", async () => {
     vi.spyOn(api, "listEducation").mockResolvedValue([]);
