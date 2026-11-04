@@ -154,18 +154,12 @@ export function TableSettingsMenu({
         >
           <div className="table-kit-settings-heading">
             {panel !== "root" && (
-              <Button
-                type="button"
-                size="$2"
-                chromeless
-                aria-label="Back to view settings"
-                onClick={() => setPanel("root")}
-              >
+              <Button type="button" variant="quiet" aria-label="Back to view settings" onClick={() => setPanel("root")}>
                 <ArrowLeft size={18} aria-hidden="true" />
               </Button>
             )}
             <h2>{title}</h2>
-            <Button type="button" size="$2" chromeless aria-label="Close view settings" onClick={close}>
+            <Button type="button" variant="quiet" aria-label="Close view settings" onClick={close}>
               ×
             </Button>
           </div>

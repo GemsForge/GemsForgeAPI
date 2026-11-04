@@ -34,6 +34,7 @@ export type TransactionFieldDefinition = {
   schema: z.ZodTypeAny;
   required?: boolean;
   type?: "text" | "date" | "number";
+  step?: string;
   width?: CreateFieldWidth;
   multiline?: boolean;
   options?: readonly Option[];

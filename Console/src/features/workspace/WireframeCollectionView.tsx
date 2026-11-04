@@ -865,7 +865,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
             <div className="wireframe-inspector-record-title">
               <h2 id="wireframe-inspector-title">{config.cardTitle(selected)}</h2>
             </div>
-            {renderInspector(config.inspector(selected, schemaProperties), openPropertyDetails)}
+            {renderInspector(config.inspector(selected, schemaProperties), openPropertyDetails, propertyIcons)}
           </aside>
         )
       ) : null}

@@ -83,7 +83,7 @@ describe("Gem Life navigation", () => {
         </TamaguiProvider>
       </QueryClientProvider>,
     );
-    expect(await screen.findByRole("heading", { name: "Education" })).toBeInTheDocument();
+    expect(await screen.findByRole("region", { name: "Education" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Home" })).toHaveAttribute("href", "/app");
   });
   it("renders wireframe routes on their dedicated canvas", async () => {
@@ -95,7 +95,7 @@ describe("Gem Life navigation", () => {
     expect(screen.getByRole("link", { name: /Gem Hues/ })).toHaveAttribute("href", "/gemhues-wireframe");
     expect(screen.getByRole("link", { name: /Employment/ })).toHaveAttribute("href", "/employment-wireframe");
     expect(screen.getByRole("link", { name: /Expense Tracker/ })).toHaveAttribute("href", "/transactions-wireframe");
-    expect(screen.getByRole("complementary", { name: "Record inspector" })).toHaveClass("wireframe-demo-inspector");
+    expect(screen.queryByRole("complementary", { name: "Record inspector" })).not.toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Gem Life Console" })).not.toBeInTheDocument();
   });
   it("renders home without requesting feature data", async () => {

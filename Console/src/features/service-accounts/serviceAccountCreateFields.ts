@@ -30,15 +30,6 @@ export type ServiceAccountFieldDefinition = {
   step?: string;
   width?: CreateFieldWidth;
   multiline?: boolean;
-};
-export type ServiceAccountFieldDefinition = {
-  name: keyof ServiceAccountCreateFormValues;
-  label: string;
-  schema: z.ZodTypeAny;
-  required?: boolean;
-  type?: "text" | "number" | "date" | "url";
-  width?: CreateFieldWidth;
-  multiline?: boolean;
   options?: readonly RecordSelectOption[];
   primitive?: "status";
 };

@@ -58,7 +58,7 @@ describe("ServiceAccountsView", () => {
 
   /** Wait for the renderer's single-click detail gesture to settle before editing a field. */
   async function openDetails() {
-    fireEvent.keyDown(screen.getByRole("listitem", { name: "Open Internet" }), { key: "Enter" });
+    fireEvent.keyDown(screen.getByRole("button", { name: "Open Internet" }), { key: "Enter" });
     await screen.findByRole("button", { name: "Service: Internet", hidden: true });
   }
 

@@ -196,7 +196,7 @@ export function GemPrimitiveField({
       />
     );
   }
-  if (primitive === "image" || primitive === "media") {
+  if (primitive === "media") {
     return (
       <GImageField
         label={label}

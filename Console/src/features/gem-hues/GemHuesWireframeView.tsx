@@ -109,12 +109,13 @@ export function GemHuesWireframeView({ records }: { records: readonly GemHue[] }
             properties={[
               ...properties.map((property): RecordPropertyDefinition<GemHue> => {
                 const field = editableFields[property.id];
+                const options = optionsByProperty.get(property.id as keyof GemHue);
                 return {
                   ...property,
                   edit: field
                     ? {
                         ...property.edit,
-                        options: optionsByProperty.get(property.id as keyof GemHue) ?? property.edit?.options,
+                        options: options ? [...options] : property.edit?.options,
                         inputType:
                           property.edit?.inputType ??
                           (property.kind === "date"

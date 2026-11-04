@@ -83,7 +83,7 @@ function FormShell<T extends FieldValues>({
 }: {
   title: string;
   className?: string;
-  schema: z.ZodType<T>;
+  schema: z.ZodTypeAny;
   defaultValues: T;
   onCreate: (values: T) => Promise<void>;
   onCancel: () => void;

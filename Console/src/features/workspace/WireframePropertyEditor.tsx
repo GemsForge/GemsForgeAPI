@@ -26,6 +26,7 @@ export function WireframePropertyEditor({
   numberFormat,
   propertyType,
   iconName,
+  propertyID,
 }: {
   label: string;
   value: string;
