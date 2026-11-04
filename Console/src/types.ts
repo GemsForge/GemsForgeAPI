@@ -348,7 +348,9 @@ export interface ImportableSQLTable {
   name: string;
   columns: ImportableSQLColumn[];
 }
-export interface ImportableSQLTables { tables: ImportableSQLTable[] }
+export interface ImportableSQLTables {
+  tables: ImportableSQLTable[];
+}
 export interface TableCSVImportPreview {
   table: string;
   columns: ImportableSQLColumn[];
@@ -358,7 +360,11 @@ export interface TableCSVImportPreview {
   expiresAt: string | null;
   readyToImport: boolean;
 }
-export interface TableCSVImportResult { table: string; importedCount: number; status: string }
+export interface TableCSVImportResult {
+  table: string;
+  importedCount: number;
+  status: string;
+}
 
 export interface LiveRepositoryMigrationPreview {
   migrationNames: string[];
