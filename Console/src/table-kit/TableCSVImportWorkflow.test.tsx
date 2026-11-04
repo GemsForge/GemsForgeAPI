@@ -92,6 +92,41 @@ describe("Table CSV import workflow", () => {
     expect(onComplete).toHaveBeenCalledOnce();
   });
 
+  it("shows server row errors and keeps invalid previews from being confirmed", async () => {
+    vi.spyOn(api, "getImportableSQLTables").mockResolvedValue(availableTables);
+    vi.spyOn(api, "previewTableCSVImport").mockResolvedValue({
+      ...validPreview,
+      rows: [
+        {
+          rowNumber: 3,
+          values: { Name: "Desk", Quantity: "not-a-number" },
+          errors: ["Quantity must be a valid INTEGER value."],
+        },
+      ],
+      confirmationToken: null,
+      expiresAt: null,
+      readyToImport: false,
+    });
+    const commit = vi.spyOn(api, "commitTableCSVImport");
+    renderWorkflow();
+
+    fireEvent.change(await screen.findByRole("combobox", { name: "Target table" }), {
+      target: { value: "CustomInventory" },
+    });
+    fireEvent.change(screen.getByRole("textbox", { name: "Paste CSV" }), {
+      target: { value: "Name,Quantity\nDesk,not-a-number" },
+    });
+    await waitFor(() => expect(screen.getAllByRole("combobox")).toHaveLength(3));
+    fireEvent.click(screen.getByRole("button", { name: "Preview import" }));
+
+    expect(await screen.findByText(/fix the listed errors before importing/)).toBeInTheDocument();
+    expect(screen.getByRole("rowheader", { name: "3" })).toBeInTheDocument();
+    expect(screen.getByRole("cell", { name: "Desk" })).toBeInTheDocument();
+    expect(screen.getByText("Quantity must be a valid INTEGER value.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Confirm and import" })).toBeDisabled();
+    expect(commit).not.toHaveBeenCalled();
+  });
+
   it("keeps failure visible and does not report success when commit fails", async () => {
     vi.spyOn(api, "getImportableSQLTables").mockResolvedValue(availableTables);
     const preview = vi.spyOn(api, "previewTableCSVImport").mockResolvedValue(validPreview);
