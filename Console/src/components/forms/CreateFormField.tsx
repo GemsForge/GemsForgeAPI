@@ -2,6 +2,7 @@ import { Controller, type Control, type FieldValues, type Path, type UseFormRetu
 import { Checkbox, Label, XStack, YStack } from "tamagui";
 import { CreateFieldFrame, CreateSearchableSelectField, CreateSelectField, CreateTextField } from "./CreateForm";
 import { GDateField } from "../ui/GDateField";
+import { GCheckboxField } from "../ui/GCheckboxField";
 
 /** Render a reusable text field from any React Hook Form shape. */
 export function CreateFormText<T extends FieldValues>({
