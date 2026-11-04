@@ -3956,10 +3956,28 @@ dialog::backdrop {
 }
 .table-kit-list-row-title {
   min-width: 12rem;
+  overflow: hidden;
   color: var(--ink);
   font-size: 0.95rem;
   font-weight: 700;
   line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.table-kit-list-row-title .editable-record-value-button,
+.table-kit-list-row-title .gem-field-display-value {
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.table-kit-list-row-title [class*="font_body"] {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .table-kit-list-row-properties {
   display: flex;
@@ -3970,8 +3988,27 @@ dialog::backdrop {
   color: var(--muted);
 }
 .table-kit-list-row-properties > span {
+  display: block;
   min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
   text-align: right;
+  white-space: nowrap;
+}
+.table-kit-list-row-properties .editable-record-value-button,
+.table-kit-list-row-properties .gem-field-display-value {
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.table-kit-list-row-properties [class*="font_body"] {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .table-kit-record-list li[tabindex] > [role="listitem"] > * {
   font-size: 0.85rem !important;
