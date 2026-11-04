@@ -1,5 +1,5 @@
 import { styled, Text, YStack } from "tamagui";
-import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { PanelLeftClose, PanelLeftOpen, X } from "lucide-react";
 import { useState } from "react";
 import type { ReactNode } from "react";
 import { GSearchField } from "@gemsforge/ui";
@@ -29,6 +29,8 @@ type WireframeLeftPaneProps = {
   activeCollection?: string;
   collapsed?: boolean;
   onToggleCollapsed?: () => void;
+  onCloseNavigation?: () => void;
+  mobileDrawerOpen?: boolean;
   activeCollectionIcon?: ReactNode;
 };
 
@@ -37,6 +39,8 @@ export function WireframeLeftPane({
   activeCollection = "Education",
   collapsed = false,
   onToggleCollapsed,
+  onCloseNavigation,
+  mobileDrawerOpen = false,
   activeCollectionIcon,
 }: WireframeLeftPaneProps) {
   const [search, setSearch] = useState("");
@@ -57,7 +61,7 @@ export function WireframeLeftPane({
     Services: useServiceAccountsQuery(true).data ?? [],
   };
   return (
-    <WireframeNavigation asChild>
+    <WireframeNavigation asChild paddingVertical={mobileDrawerOpen ? 0 : "$wireframeContent"}>
       <nav className={`wireframe-demo-sidebar ${collapsed ? "is-collapsed" : ""}`} aria-label="Workspace navigation">
         <WireframeWorkspaceHeader compact={collapsed} />
         <div className="demo-search">
@@ -87,7 +91,7 @@ export function WireframeLeftPane({
           {onToggleCollapsed ? (
             <button
               type="button"
-              className="demo-sidebar-toggle demo-sidebar-toggle-bottom"
+              className="demo-sidebar-toggle demo-sidebar-toggle-bottom demo-sidebar-toggle-desktop"
               aria-label={collapsed ? "Expand navigation" : "Collapse navigation"}
               title={collapsed ? "Expand navigation" : "Collapse navigation"}
               aria-expanded={!collapsed}
@@ -99,6 +103,19 @@ export function WireframeLeftPane({
                 <PanelLeftClose size={16} aria-hidden="true" />
               )}
               <span>{collapsed ? "Expand navigation" : "Collapse navigation"}</span>
+            </button>
+          ) : null}
+          {onCloseNavigation ? (
+            <button
+              type="button"
+              className="demo-sidebar-toggle demo-sidebar-toggle-bottom demo-sidebar-toggle-mobile"
+              aria-label="Close navigation"
+              title="Close navigation"
+              aria-expanded="true"
+              onClick={onCloseNavigation}
+            >
+              <X size={16} aria-hidden="true" />
+              <span>Close navigation</span>
             </button>
           ) : null}
         </div>

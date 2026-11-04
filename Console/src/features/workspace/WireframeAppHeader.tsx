@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
 import { Menu, X } from "lucide-react";
 import { GemLogo } from "@gemsforge/ui";
 import "./wireframe-app-header.css";
@@ -15,6 +15,19 @@ const WireframeNavigationContext = createContext<WireframeNavigationContextValue
 export function WireframeNavigationProvider({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
   const toggleRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const closeWhenDesktop = () => {
+      if (window.innerWidth <= 1100) return;
+      setOpen(false);
+      window.requestAnimationFrame(() => {
+        document.querySelector<HTMLButtonElement>(".wireframe-demo-sidebar .demo-sidebar-toggle-desktop")?.focus();
+      });
+    };
+    closeWhenDesktop();
+    window.addEventListener("resize", closeWhenDesktop);
+    return () => window.removeEventListener("resize", closeWhenDesktop);
+  }, [open]);
   const close = () => {
     setOpen(false);
     requestAnimationFrame(() => toggleRef.current?.focus());

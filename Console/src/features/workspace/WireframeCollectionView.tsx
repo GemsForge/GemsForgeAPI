@@ -122,6 +122,15 @@ export function WireframeCollectionView<T extends WireframeRecord>({
   const [fallbackMobileNavigationOpen, setFallbackMobileNavigationOpen] = useState(false);
   const mobileNavigationOpen = wireframeNavigation?.open ?? fallbackMobileNavigationOpen;
   const setMobileNavigationOpen = wireframeNavigation?.setOpen ?? setFallbackMobileNavigationOpen;
+  const fallbackMobileNavigationToggleRef = useRef<HTMLButtonElement>(null);
+  const closeMobileNavigation = () => {
+    if (wireframeNavigation) {
+      wireframeNavigation.close();
+      return;
+    }
+    setFallbackMobileNavigationOpen(false);
+    requestAnimationFrame(() => fallbackMobileNavigationToggleRef.current?.focus());
+  };
   const [navigationCollapsed, setNavigationCollapsed] = useState(false);
   const [inspectorWidth, setInspectorWidth] = useState(384);
   const inspectorResizeRef = useRef<{ startX: number; startWidth: number } | null>(null);
@@ -460,6 +469,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
       {wireframeNavigation === null ? (
         <button
           type="button"
+          ref={fallbackMobileNavigationToggleRef}
           className="wireframe-mobile-nav-toggle"
           aria-label={mobileNavigationOpen ? "Close navigation" : "Open navigation"}
           aria-expanded={mobileNavigationOpen}
@@ -480,24 +490,28 @@ export function WireframeCollectionView<T extends WireframeRecord>({
               type="button"
               className="wireframe-nav-backdrop"
               aria-label="Close navigation"
-              onClick={() => wireframeNavigation ? wireframeNavigation.close() : setMobileNavigationOpen(false)}
+              onClick={closeMobileNavigation}
             />
-            <button
-              type="button"
-              className="wireframe-nav-close"
-              aria-label="Close navigation"
-              onClick={() => wireframeNavigation ? wireframeNavigation.close() : setMobileNavigationOpen(false)}
-            >
-              <X size={17} aria-hidden="true" />
-            </button>
+            {wireframeNavigation === null ? (
+              <button
+                type="button"
+                className="wireframe-nav-close"
+                aria-label="Close navigation"
+                onClick={closeMobileNavigation}
+              >
+                <X size={17} aria-hidden="true" />
+              </button>
+            ) : null}
           </>
         ) : null}
         <WireframeLeftPane
           recordCount={config.records.length}
           activeCollection={config.activeCollection}
           activeCollectionIcon={<TableIcon size={16} aria-hidden="true" />}
-          collapsed={navigationCollapsed}
+          collapsed={mobileNavigationOpen ? false : navigationCollapsed}
           onToggleCollapsed={() => setNavigationCollapsed((collapsed) => !collapsed)}
+          onCloseNavigation={wireframeNavigation ? closeMobileNavigation : undefined}
+          mobileDrawerOpen={mobileNavigationOpen}
         />
       </div>
       {inspectorExpanded && selected ? (
