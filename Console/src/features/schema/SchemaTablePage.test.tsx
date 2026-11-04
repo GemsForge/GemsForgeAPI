@@ -113,4 +113,35 @@ describe("SchemaTablePage", () => {
     expect(screen.getByRole("button", { name: "Gallery" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Table" })).toBeInTheDocument();
   });
+
+  it("shows a schema read error and retries the page request", async () => {
+    const columns = [
+      { name: "ID", dataType: "TEXT", nullable: false, primaryKey: true, defaultValue: null },
+      { name: "HubID", dataType: "TEXT", nullable: false, primaryKey: false, defaultValue: null },
+      { name: "Goal", dataType: "TEXT", nullable: false, primaryKey: false, defaultValue: null },
+    ];
+    const table = { name: "FamilyGoals", columns };
+    vi.spyOn(api, "getSchemaPageTables").mockResolvedValue({ tables: [table], availableTables: [] });
+    vi.spyOn(api, "getSchemaPageRecords")
+      .mockRejectedValueOnce(new APIError("Server error", 500))
+      .mockResolvedValueOnce({ table, rows: [], totalCount: 0, limit: 100, offset: 0 });
+    vi.spyOn(api, "getTableView").mockRejectedValue(new APIError("Not found", 404));
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
+
+    render(
+      <QueryClientProvider client={client}>
+        <TamaguiProvider config={tamaguiConfig} defaultTheme="dark">
+          <MemoryRouter initialEntries={["/schema/FamilyGoals"]}>
+            <Routes>
+              <Route path="/schema/:tableName" element={<SchemaTablePage />} />
+            </Routes>
+          </MemoryRouter>
+        </TamaguiProvider>
+      </QueryClientProvider>,
+    );
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("The local API encountered a problem.");
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    expect(await screen.findByText("No FamilyGoals records yet")).toBeInTheDocument();
+  });
 });
