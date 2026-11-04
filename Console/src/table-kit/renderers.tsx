@@ -200,13 +200,6 @@ function RecordImage<Record>({
 
 type GalleryCardOptions = { dragToReposition: boolean };
 
-/**
- * Keep card-action state and handlers available while the visual menu stays hidden.
- * The menu is blocked until its interaction contract is finalized, but hiding it
- * must not discard the preserved per-card drag behavior.
- */
-const galleryCardActionsVisible = false;
-
 /** Render the shared list icon slot as media when available, with a stable symbol fallback. */
 function RecordAvatar<Record>({ record }: { record: TableRecord<Record> }) {
   const image = record.image?.src?.trim() ? record.image : undefined;
@@ -581,47 +574,46 @@ export function RecordGallery<Record>({
               role="listitem"
               data-gallery-record-id={record.id}
             >
-              {galleryCardActionsVisible && (
-                <div className="table-kit-gallery-card-menu">
-                  <GemButton
-                    type="button"
-                    variant="quiet"
-                    className="table-kit-gallery-card-menu-trigger"
+              <div className="table-kit-gallery-card-menu">
+                <GemButton
+                  type="button"
+                  variant="quiet"
+                  className="table-kit-gallery-card-menu-trigger"
+                  aria-label={`Card options for ${title}`}
+                  aria-expanded={openMenuId === record.id}
+                  onPointerDown={(event) => event.stopPropagation()}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setOpenMenuId((current) => {
+                      if (current === record.id) {
+                        menuCardWasSelectedRef.current = false;
+                        return null;
+                      }
+                      menuCardWasSelectedRef.current = selection.selectedIds.has(record.id);
+                      return record.id;
+                    });
+                  }}
+                >
+                  <Text color="$gemInk" fontSize="$6" lineHeight={1} aria-hidden>
+                    ⋮
+                  </Text>
+                </GemButton>
+                {openMenuId === record.id && (
+                  <div
+                    className="table-kit-gallery-card-menu-panel"
+                    role="group"
                     aria-label={`Card options for ${title}`}
-                    aria-expanded={openMenuId === record.id}
                     onPointerDown={(event) => event.stopPropagation()}
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      setOpenMenuId((current) => {
-                        if (current === record.id) {
-                          menuCardWasSelectedRef.current = false;
-                          return null;
-                        }
-                        menuCardWasSelectedRef.current = selection.selectedIds.has(record.id);
-                        return record.id;
-                      });
-                    }}
                   >
-                    <Text color="$gemInk" fontSize="$6" lineHeight={1} aria-hidden>
-                      ⋮
-                    </Text>
-                  </GemButton>
-                  {openMenuId === record.id && (
-                    <div
-                      className="table-kit-gallery-card-menu-panel"
-                      role="menu"
-                      onPointerDown={(event) => event.stopPropagation()}
-                    >
-                      <GCheckboxField
-                        label="Drag to reposition"
-                        value={options.dragToReposition}
-                        width="medium"
-                        onChange={(checked) => updateCardOption(record.id, "dragToReposition", checked)}
-                      />
-                    </div>
-                  )}
-                </div>
-              )}
+                    <GCheckboxField
+                      label="Drag to reposition"
+                      value={options.dragToReposition}
+                      width="medium"
+                      onChange={(checked) => updateCardOption(record.id, "dragToReposition", checked)}
+                    />
+                  </div>
+                )}
+              </div>
               <YStack
                 className="table-kit-gallery-card-surface"
                 role={onExpansionChange ? "button" : undefined}
