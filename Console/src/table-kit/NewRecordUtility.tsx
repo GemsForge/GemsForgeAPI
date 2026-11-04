@@ -44,7 +44,10 @@ export function NewRecordUtility({
 
   useEffect(() => {
     if (!isOpen) return;
-    setSelectedId(options[0]?.id);
+    setSelectedId((current) => {
+      if (!wasOpen.current) return options[0]?.id;
+      return options.some((option) => option.id === current) ? current : options[0]?.id;
+    });
   }, [isOpen, options]);
 
   useEffect(() => {
