@@ -168,11 +168,33 @@ describe("Geoapify address search", () => {
     const request = vi.fn().mockResolvedValue({
       ok: true,
       status: 200,
-      json: async () => ({ results: [{ properties: { city: "New York" } }] }),
+      json: async () => ({
+        results: [
+          {
+            formatted: "New York, NY, United States",
+            address_line1: "New York",
+            city: "New York",
+            state_code: "NY",
+            country_code: "us",
+            datasource: { attribution: "© OpenStreetMap contributors" },
+          },
+        ],
+      }),
     });
     const client = createGeoapifySearchClient("restricted key", request as unknown as typeof fetch);
 
-    await expect(client.autocomplete("New York")).resolves.toEqual([{ properties: { city: "New York" } }]);
+    await expect(client.autocomplete("New York")).resolves.toEqual([
+      {
+        properties: {
+          formatted: "New York, NY, United States",
+          address_line1: "New York",
+          city: "New York",
+          state_code: "NY",
+          country_code: "us",
+          datasource: { attribution: "© OpenStreetMap contributors" },
+        },
+      },
+    ]);
     const [url] = request.mock.calls[0] as [string];
     const parsed = new URL(url);
     expect(parsed.origin).toBe("https://api.geoapify.com");
@@ -180,6 +202,52 @@ describe("Geoapify address search", () => {
     expect(parsed.searchParams.get("text")).toBe("New York");
     expect(parsed.searchParams.get("apiKey")).toBe("restricted key");
     expect(parsed.searchParams.get("limit")).toBe("5");
+  });
+
+  it("renders and applies address fields from Geoapify's flat JSON results", async () => {
+    vi.useFakeTimers();
+    const request = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        results: [
+          {
+            formatted: "1600 Pennsylvania Avenue NW, Washington, DC 20500, United States",
+            address_line1: "1600 Pennsylvania Avenue NW",
+            city: "Washington",
+            state_code: "DC",
+            postcode: "20500",
+            country_code: "us",
+            datasource: { attribution: "© OpenStreetMap contributors" },
+          },
+        ],
+      }),
+    });
+    const client = createGeoapifySearchClient("key", request as unknown as typeof fetch);
+    const onSelect = vi.fn();
+    render(<GeoapifyAddressSearch client={client} onSelect={onSelect} />);
+
+    fireEvent.change(screen.getByLabelText("Search places or addresses"), {
+      target: { value: "1600 Pennsylvania" },
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(350);
+    });
+
+    const suggestion = screen.getByRole("button", {
+      name: "1600 Pennsylvania Avenue NW, Washington, DC 20500, United States",
+    });
+    expect(suggestion).toBeInTheDocument();
+    expect(screen.getAllByText("© OpenStreetMap contributors")).toHaveLength(1);
+    fireEvent.click(suggestion);
+
+    expect(onSelect).toHaveBeenCalledWith({
+      addressLine1: "1600 Pennsylvania Avenue NW",
+      city: "Washington",
+      state: "DC",
+      postalCode: "20500",
+      country: "US",
+    });
   });
 
   it("ignores results without a structured properties object", async () => {

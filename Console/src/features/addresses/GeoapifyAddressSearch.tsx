@@ -47,10 +47,32 @@ export function addressValuesFromGeoapify(properties: GeoapifyAddress): AddressS
   };
 }
 
-function isGeoapifySuggestion(value: unknown): value is GeoapifySuggestion & { properties: GeoapifyAddress } {
-  if (typeof value !== "object" || value === null || !("properties" in value)) return false;
-  const properties = value.properties;
-  return typeof properties === "object" && properties !== null && !Array.isArray(properties);
+function normalizeGeoapifySuggestion(value: unknown): GeoapifySuggestion | null {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) return null;
+
+  const result = value as Record<string, unknown>;
+  const candidate = result.properties ?? result;
+  if (typeof candidate !== "object" || candidate === null || Array.isArray(candidate)) return null;
+
+  const properties = candidate as Record<string, unknown>;
+  const hasAddressLabel = [
+    properties.formatted,
+    properties.address_line1,
+    properties.housenumber,
+    properties.street,
+    properties.city,
+  ].some((field) => typeof field === "string" && field.trim().length > 0);
+
+  return hasAddressLabel ? { properties: properties as GeoapifyAddress } : null;
+}
+
+function normalizeGeoapifySuggestions(value: unknown): GeoapifySuggestion[] {
+  return Array.isArray(value)
+    ? value.flatMap((item) => {
+        const suggestion = normalizeGeoapifySuggestion(item);
+        return suggestion ? [suggestion] : [];
+      })
+    : [];
 }
 
 export function createGeoapifySearchClient(
@@ -71,7 +93,7 @@ export function createGeoapifySearchClient(
         throw new Error("Address search is temporarily unavailable. You can enter the address manually.");
 
       const payload = (await response.json()) as { results?: unknown };
-      return Array.isArray(payload.results) ? payload.results.filter(isGeoapifySuggestion) : [];
+      return normalizeGeoapifySuggestions(payload.results);
     },
   };
 }
@@ -122,7 +144,7 @@ export function GeoapifyAddressSearch({
         const search = client ?? createGeoapifySearchClient(apiKey);
         const results = await search.autocomplete(value, controller.signal);
         if (active) {
-          setSuggestions(Array.isArray(results) ? results.filter(isGeoapifySuggestion) : []);
+          setSuggestions(normalizeGeoapifySuggestions(results));
           setHasSearched(true);
         }
       } catch (cause) {
@@ -145,9 +167,10 @@ export function GeoapifyAddressSearch({
   }, [apiKey, client, enabled, query, selectedLabel]);
 
   function choose(suggestion: GeoapifySuggestion) {
-    if (!isGeoapifySuggestion(suggestion)) return;
-    onSelect(addressValuesFromGeoapify(suggestion.properties));
-    const label = suggestionLabel(suggestion);
+    const normalized = normalizeGeoapifySuggestion(suggestion);
+    if (!normalized?.properties) return;
+    onSelect(addressValuesFromGeoapify(normalized.properties));
+    const label = suggestionLabel(normalized);
     setSelectedLabel(label);
     setQuery(label);
     setSuggestions([]);
@@ -160,7 +183,7 @@ export function GeoapifyAddressSearch({
 
   const resultAttributions = [
     ...new Set(suggestions.map((item) => item.properties?.datasource?.attribution).filter(Boolean)),
-  ];
+  ].filter((attribution) => attribution?.trim() !== "© OpenStreetMap contributors");
 
   return (
     <section className="address-search-section" aria-label="Address search">
