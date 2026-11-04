@@ -1,5 +1,15 @@
 import type { ReactNode } from "react";
-import type { Address, Education, Employment, ExpenseCategory, ExpenseSubcategory, ExpenseTransaction, GemHue, Merchant, ServiceAccount } from "../../types";
+import type {
+  Address,
+  Education,
+  Employment,
+  ExpenseCategory,
+  ExpenseSubcategory,
+  ExpenseTransaction,
+  GemHue,
+  Merchant,
+  ServiceAccount,
+} from "../../types";
 import type { RecordAdapter, RecordImage, RecordPropertyDefinition } from "../../table-kit";
 import { formatRecordNumber } from "../../table-kit";
 import { formatAddress } from "../addresses/formatAddress";
@@ -211,7 +221,10 @@ export const educationTableAdapter: RecordAdapter<Education> = {
         id: "locationAddressID",
         label: "Location address",
         kind: "relation",
-        getValue: (record) => ({ raw: record.locationAddressID ?? record.address?.id, display: formatAddress(record.address) }),
+        getValue: (record) => ({
+          raw: record.locationAddressID ?? record.address?.id,
+          display: formatAddress(record.address),
+        }),
       },
       { id: "website", label: "Website", kind: "url", getValue: (record) => url(record.website) },
       { id: "notes", label: "Notes", kind: "text", getValue: (record) => display(record.notes) },
@@ -254,7 +267,13 @@ export const employmentTableAdapter: RecordAdapter<Employment> = {
         getValue: (record) => display(record.employerType),
       },
       { id: "industry", label: "Industry", kind: "text", getValue: (record) => display(record.industry) },
-      { id: "position", label: "Position", kind: "text", sourceField: "positionTitle", getValue: (record) => display(record.positionTitle) },
+      {
+        id: "position",
+        label: "Position",
+        kind: "text",
+        sourceField: "positionTitle",
+        getValue: (record) => display(record.positionTitle),
+      },
       {
         id: "employmentType",
         label: "Employment type",
@@ -275,7 +294,15 @@ export const employmentTableAdapter: RecordAdapter<Employment> = {
         kind: "date",
         getValue: (record) => display(record.endDate),
       },
-      { id: "workAddressID", label: "Work address", kind: "relation", getValue: (record) => ({ raw: record.workAddressID ?? record.address?.id, display: formatAddress(record.address) }) },
+      {
+        id: "workAddressID",
+        label: "Work address",
+        kind: "relation",
+        getValue: (record) => ({
+          raw: record.workAddressID ?? record.address?.id,
+          display: formatAddress(record.address),
+        }),
+      },
       { id: "website", label: "Website", kind: "url", getValue: (record) => url(record.website) },
       { id: "employerContact", label: "Contact", kind: "text", getValue: (record) => display(record.employerContact) },
       {
@@ -293,7 +320,13 @@ export const employmentTableAdapter: RecordAdapter<Employment> = {
       { id: "notes", label: "Notes", kind: "text", getValue: (record) => display(record.notes) },
       { id: "updatedAt", label: "Last updated", kind: "date", getValue: (record) => display(record.updatedAt) },
       { id: "id", label: "Item ID", kind: "text", getValue: (record) => display(record.id) },
-      { id: "status", label: "Status", kind: "status", sourceField: "employmentStatus", getValue: (record) => display(record.employmentStatus) },
+      {
+        id: "status",
+        label: "Status",
+        kind: "status",
+        sourceField: "employmentStatus",
+        getValue: (record) => display(record.employmentStatus),
+      },
     ] satisfies readonly RecordPropertyDefinition<Employment>[],
 };
 
@@ -307,68 +340,99 @@ export function createTransactionTableAdapter(
   const subcategoryNames = new Map(subcategories.map(({ id, name }) => [id, name]));
   const merchantNames = new Map(merchants.map(({ id, name }) => [id, name]));
   return {
-  toTableRecord: (record) => ({
-    id: record.id,
-    source: record,
-    title: record.item,
-    subtitle: `${record.transactionDate || "Undated"} · ${record.id}`,
-    icon: "$",
-    status: { label: formatAmount(record.total ?? record.paidPrice) },
-  }),
-  getPropertyDefinitions: () =>
-    [
-      { id: "item", label: "Item", kind: "text", primary: true, getValue: (record) => display(record.item) },
-      { id: "receiptID", label: "Receipt ID", kind: "text", getValue: (record) => display(record.receiptID) },
-      {
-        id: "firstReceiptItem",
-        label: "First receipt item",
-        kind: "status",
-        getValue: (record) => ({ raw: record.firstReceiptItem, display: record.firstReceiptItem ? "Yes" : "No" }),
-      },
-      { id: "category", label: "Category", kind: "select", sourceField: "categoryID", getValue: (record) => ({ raw: record.categoryID, display: categoryNames.get(record.categoryID) ?? String(record.categoryID) }) },
-      { id: "id", label: "Item ID", kind: "text", getValue: (record) => display(record.id) },
-      { id: "date", label: "Date", kind: "date", sourceField: "transactionDate", getValue: (record) => display(record.transactionDate) },
-      {
-        id: "subcategory",
-        label: "Subcategory",
-        kind: "select",
-        sourceField: "subcategoryID",
-        getValue: (record) => ({ raw: record.subcategoryID, display: record.subcategoryID == null ? "—" : subcategoryNames.get(record.subcategoryID) ?? String(record.subcategoryID) }),
-      },
-      { id: "merchantCode", label: "Merchant", kind: "select", sourceField: "merchantCode", getValue: (record) => ({ raw: record.merchantCode, display: record.merchantCode == null ? "—" : merchantNames.get(record.merchantCode) ?? record.merchantCode }) },
-      { id: "quantity", label: "Quantity", kind: "number", getValue: (record) => display(record.quantity) },
-      {
-        id: "regularPrice",
-        label: "Regular price",
-        kind: "number",
-        numberFormat: "currency",
-        getValue: (record) => currency(record.regularPrice),
-      },
-      {
-        id: "paidPrice",
-        label: "Paid price",
-        kind: "number",
-        numberFormat: "currency",
-        getValue: (record) => currency(record.paidPrice),
-      },
-      {
-        id: "total",
-        label: "Total",
-        kind: "number",
-        numberFormat: "currency",
-        getValue: (record) => currency(record.total),
-      },
-      {
-        id: "discount",
-        label: "Discount",
-        kind: "number",
-        numberFormat: "currency",
-        getValue: (record) => currency(record.discount),
-      },
-      { id: "notes", label: "Notes", kind: "text", getValue: (record) => display(record.notes) },
-      { id: "image", label: "Image", kind: "image", getValue: (record) => display(record.image) },
-      { id: "updatedAt", label: "Last updated", kind: "date", getValue: (record) => display(record.updatedAt) },
-    ] satisfies readonly RecordPropertyDefinition<ExpenseTransaction>[],
+    toTableRecord: (record) => ({
+      id: record.id,
+      source: record,
+      title: record.item,
+      subtitle: `${record.transactionDate || "Undated"} · ${record.id}`,
+      icon: "$",
+      status: { label: formatAmount(record.total ?? record.paidPrice) },
+    }),
+    getPropertyDefinitions: () =>
+      [
+        { id: "item", label: "Item", kind: "text", primary: true, getValue: (record) => display(record.item) },
+        { id: "receiptID", label: "Receipt ID", kind: "text", getValue: (record) => display(record.receiptID) },
+        {
+          id: "firstReceiptItem",
+          label: "First receipt item",
+          kind: "status",
+          getValue: (record) => ({ raw: record.firstReceiptItem, display: record.firstReceiptItem ? "Yes" : "No" }),
+        },
+        {
+          id: "category",
+          label: "Category",
+          kind: "select",
+          sourceField: "categoryID",
+          getValue: (record) => ({
+            raw: record.categoryID,
+            display: categoryNames.get(record.categoryID) ?? String(record.categoryID),
+          }),
+        },
+        { id: "id", label: "Item ID", kind: "text", getValue: (record) => display(record.id) },
+        {
+          id: "date",
+          label: "Date",
+          kind: "date",
+          sourceField: "transactionDate",
+          getValue: (record) => display(record.transactionDate),
+        },
+        {
+          id: "subcategory",
+          label: "Subcategory",
+          kind: "select",
+          sourceField: "subcategoryID",
+          getValue: (record) => ({
+            raw: record.subcategoryID,
+            display:
+              record.subcategoryID == null
+                ? "—"
+                : (subcategoryNames.get(record.subcategoryID) ?? String(record.subcategoryID)),
+          }),
+        },
+        {
+          id: "merchantCode",
+          label: "Merchant",
+          kind: "select",
+          sourceField: "merchantCode",
+          getValue: (record) => ({
+            raw: record.merchantCode,
+            display:
+              record.merchantCode == null ? "—" : (merchantNames.get(record.merchantCode) ?? record.merchantCode),
+          }),
+        },
+        { id: "quantity", label: "Quantity", kind: "number", getValue: (record) => display(record.quantity) },
+        {
+          id: "regularPrice",
+          label: "Regular price",
+          kind: "number",
+          numberFormat: "currency",
+          getValue: (record) => currency(record.regularPrice),
+        },
+        {
+          id: "paidPrice",
+          label: "Paid price",
+          kind: "number",
+          numberFormat: "currency",
+          getValue: (record) => currency(record.paidPrice),
+        },
+        {
+          id: "total",
+          label: "Total",
+          kind: "number",
+          numberFormat: "currency",
+          getValue: (record) => currency(record.total),
+        },
+        {
+          id: "discount",
+          label: "Discount",
+          kind: "number",
+          numberFormat: "currency",
+          getValue: (record) => currency(record.discount),
+        },
+        { id: "notes", label: "Notes", kind: "text", getValue: (record) => display(record.notes) },
+        { id: "image", label: "Image", kind: "image", getValue: (record) => display(record.image) },
+        { id: "updatedAt", label: "Last updated", kind: "date", getValue: (record) => display(record.updatedAt) },
+      ] satisfies readonly RecordPropertyDefinition<ExpenseTransaction>[],
   };
 }
 
@@ -397,7 +461,13 @@ export function createServiceAccountTableAdapter(
         { id: "status", label: "Status", kind: "status", getValue: (record) => display(record.status) },
         { id: "type", label: "Category", kind: "select", getValue: (record) => display(record.type || "Service") },
         { id: "id", label: "Item ID", kind: "number", getValue: (record) => display(record.id) },
-        { id: "group", label: "Group", kind: "text", sourceField: "expenseGroup", getValue: (record) => display(record.expenseGroup) },
+        {
+          id: "group",
+          label: "Group",
+          kind: "text",
+          sourceField: "expenseGroup",
+          getValue: (record) => display(record.expenseGroup),
+        },
         { id: "logoKey", label: "Logo key", kind: "text", getValue: (record) => display(record.logoKey) },
         {
           id: "monthlyAmount",

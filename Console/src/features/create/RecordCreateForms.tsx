@@ -1,11 +1,20 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState, type ReactNode } from "react";
-import { Controller, useForm, type DefaultValues, type FieldValues, type Resolver, type UseFormReturn } from "react-hook-form";
-import { z } from "zod";
 import {
-  CreateFormFrame,
-} from "../../components/forms/CreateForm";
-import { CreateFormCheckbox as Checkbox, CreateFormSelect as Select, CreateFormText as Text } from "../../components/forms/CreateFormField";
+  Controller,
+  useForm,
+  type DefaultValues,
+  type FieldValues,
+  type Resolver,
+  type UseFormReturn,
+} from "react-hook-form";
+import { z } from "zod";
+import { CreateFormFrame } from "../../components/forms/CreateForm";
+import {
+  CreateFormCheckbox as Checkbox,
+  CreateFormSelect as Select,
+  CreateFormText as Text,
+} from "../../components/forms/CreateFormField";
 import { GemPrimitiveField } from "@gemsforge/ui";
 import {
   GeoapifyAddressSearch,
@@ -204,11 +213,21 @@ function employmentField(fields: readonly EmploymentFieldDefinition[], name: key
   return definition;
 }
 
-function renderTransactionField(form: UseFormReturn<TransactionCreateFormValues>, field: import("../transactions/transactionCreateFields").TransactionFieldDefinition) {
+function renderTransactionField(
+  form: UseFormReturn<TransactionCreateFormValues>,
+  field: import("../transactions/transactionCreateFields").TransactionFieldDefinition,
+) {
   return field.primitive === "checkbox" ? (
     <Checkbox key={field.name} form={form} name={field.name} label={field.label} required={field.required} />
   ) : field.options ? (
-    <Select key={field.name} form={form} name={field.name} label={field.label} options={[...field.options]} required={field.required} />
+    <Select
+      key={field.name}
+      form={form}
+      name={field.name}
+      label={field.label}
+      options={[...field.options]}
+      required={field.required}
+    />
   ) : (
     <Text
       key={field.name}
@@ -224,11 +243,31 @@ function renderTransactionField(form: UseFormReturn<TransactionCreateFormValues>
   );
 }
 
-function renderServiceAccountField(form: UseFormReturn<ServiceAccountCreateFormValues>, field: ServiceAccountFieldDefinition) {
+function renderServiceAccountField(
+  form: UseFormReturn<ServiceAccountCreateFormValues>,
+  field: ServiceAccountFieldDefinition,
+) {
   return field.options ? (
-    <Select key={field.name} form={form} name={field.name} label={field.label} options={[...field.options]} required={field.required} />
+    <Select
+      key={field.name}
+      form={form}
+      name={field.name}
+      label={field.label}
+      options={[...field.options]}
+      required={field.required}
+    />
   ) : (
-    <Text key={field.name} form={form} name={field.name} label={field.label} required={field.required} type={field.type} step={field.step} multiline={field.multiline} width={field.width} />
+    <Text
+      key={field.name}
+      form={form}
+      name={field.name}
+      label={field.label}
+      required={field.required}
+      type={field.type}
+      step={field.step}
+      multiline={field.multiline}
+      width={field.width}
+    />
   );
 }
 

@@ -36,9 +36,19 @@ export type EducationFieldDefinition = {
 
 const required = (label: string) => z.string().trim().min(1, `${label} is required.`);
 const optional = z.string();
-export const educationTypeOptions = ["Elementary School", "Middle School", "High School", "College", "High school", "Associate", "Bachelor", "Master", "Doctorate", "Certificate", "Other"].map(
-  (value) => ({ value, label: value }),
-);
+export const educationTypeOptions = [
+  "Elementary School",
+  "Middle School",
+  "High School",
+  "College",
+  "High school",
+  "Associate",
+  "Bachelor",
+  "Master",
+  "Doctorate",
+  "Certificate",
+  "Other",
+].map((value) => ({ value, label: value }));
 export const educationStatusOptions: readonly RecordSelectOption[] = [
   { label: "In progress", value: "In progress", colorToken: "blue", group: "In progress" },
   { label: "Completed", value: "Completed", colorToken: "green", group: "Complete" },
@@ -49,8 +59,21 @@ export const educationStatusOptions: readonly RecordSelectOption[] = [
 /** Canonical Education form field metadata and validation contract. */
 export const educationFieldDefinitions: readonly EducationFieldDefinition[] = [
   { name: "id", label: "ID", schema: required("Education ID"), required: true, primitive: "id" },
-  { name: "educationType", label: "Type", schema: required("Education type"), required: true, primitive: "select", options: educationTypeOptions },
-  { name: "institutionName", label: "Institution", schema: required("Institution name"), required: true, primitive: "text" },
+  {
+    name: "educationType",
+    label: "Type",
+    schema: required("Education type"),
+    required: true,
+    primitive: "select",
+    options: educationTypeOptions,
+  },
+  {
+    name: "institutionName",
+    label: "Institution",
+    schema: required("Institution name"),
+    required: true,
+    primitive: "text",
+  },
   { name: "program", label: "Program", schema: optional },
   { name: "fieldOfStudy", label: "Field of study", schema: optional },
   { name: "credential", label: "Credential", schema: optional },
@@ -58,19 +81,33 @@ export const educationFieldDefinitions: readonly EducationFieldDefinition[] = [
   { name: "startDate", label: "Start date", schema: optional, type: "date", primitive: "date" },
   { name: "endDate", label: "End date", schema: optional, type: "date", primitive: "date" },
   { name: "awardedDate", label: "Awarded date", schema: optional, type: "date", primitive: "date" },
-  { name: "status", label: "Status", schema: required("Status"), required: true, primitive: "status", options: educationStatusOptions },
+  {
+    name: "status",
+    label: "Status",
+    schema: required("Status"),
+    required: true,
+    primitive: "status",
+    options: educationStatusOptions,
+  },
   { name: "locationAddressID", label: "Location", schema: optional, primitive: "select", options: [] },
   { name: "website", label: "Website", schema: optional, type: "url", primitive: "url" },
   { name: "notes", label: "Notes", schema: optional, multiline: true },
 ];
 
 export function educationFieldsWithAddresses(addresses: readonly Address[]): readonly EducationFieldDefinition[] {
-  return educationFieldDefinitions.map((field) => field.name === "locationAddressID"
-    ? { ...field, options: addresses.map((address) => ({
-        value: address.id,
-        label: [address.addressLine1, address.city, address.state, address.postalCode].filter(Boolean).join(", ") || address.id,
-      })) }
-    : field);
+  return educationFieldDefinitions.map((field) =>
+    field.name === "locationAddressID"
+      ? {
+          ...field,
+          options: addresses.map((address) => ({
+            value: address.id,
+            label:
+              [address.addressLine1, address.city, address.state, address.postalCode].filter(Boolean).join(", ") ||
+              address.id,
+          })),
+        }
+      : field,
+  );
 }
 
 const educationShape = Object.fromEntries(educationFieldDefinitions.map((field) => [field.name, field.schema]));

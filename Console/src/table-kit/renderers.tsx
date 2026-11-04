@@ -125,20 +125,19 @@ function listPropertiesFor<Record>(
   properties: readonly RecordPropertyDefinition<Record>[],
   propertyIds?: readonly string[],
 ) {
-  const candidates = propertiesFor(properties, propertyIds)
-    .filter((property) => {
-      const label = property.label.trim().toLowerCase();
-      const id = property.id.trim().toLowerCase();
-      return (
-        !property.primary &&
-        property.kind !== "title" &&
-        property.kind !== "image" &&
-        label !== "name" &&
-        label !== "image" &&
-        id !== "name" &&
-        id !== "image"
-      );
-    });
+  const candidates = propertiesFor(properties, propertyIds).filter((property) => {
+    const label = property.label.trim().toLowerCase();
+    const id = property.id.trim().toLowerCase();
+    return (
+      !property.primary &&
+      property.kind !== "title" &&
+      property.kind !== "image" &&
+      label !== "name" &&
+      label !== "image" &&
+      id !== "name" &&
+      id !== "image"
+    );
+  });
   const priority = candidates.filter((property) => {
     const searchable = `${property.id} ${property.label}`.toLowerCase();
     return property.kind === "status" || /(amount|price|total|cost|rate|balance|status)/.test(searchable);
@@ -165,10 +164,7 @@ function galleryDuplicateKeys(value: string | undefined): string[] {
   return [value, ...value.split(/\s*[·•|]\s*/)].map((part) => part.trim().toLocaleLowerCase()).filter(Boolean);
 }
 
-function displayValue<Record>(
-  value: RecordPropertyValue,
-  property?: RecordPropertyDefinition<Record>,
-): ReactNode {
+function displayValue<Record>(value: RecordPropertyValue, property?: RecordPropertyDefinition<Record>): ReactNode {
   if (typeof value.raw === "number" && property?.numberFormat) {
     return formatRecordNumber(value.raw, property.numberFormat);
   }
@@ -234,17 +230,41 @@ function RecordAvatar<Record>({ record }: { record: TableRecord<Record> }) {
   );
 }
 
-function PropertyValue({ property, value }: { property: RecordPropertyDefinition<unknown>; value: RecordPropertyValue }) {
+function PropertyValue({
+  property,
+  value,
+}: {
+  property: RecordPropertyDefinition<unknown>;
+  value: RecordPropertyValue;
+}) {
   const text = displayValue(value, property);
   if (property.kind === "status") {
-    const tone = value.status?.tone ?? (property.colorToken === "green" ? "success" : property.colorToken === "red" ? "danger" : "default");
-    return <GemStatusPill tone={tone} fontSize="$1" lineHeight="$1">{text}</GemStatusPill>;
+    const tone =
+      value.status?.tone ??
+      (property.colorToken === "green" ? "success" : property.colorToken === "red" ? "danger" : "default");
+    return (
+      <GemStatusPill tone={tone} fontSize="$1" lineHeight="$1">
+        {text}
+      </GemStatusPill>
+    );
   }
   if ((property.kind === "url" || property.kind === "email") && value.href) {
-    return <a className="primitive-value-link" href={value.href}><GemCaption>{text}</GemCaption></a>;
+    return (
+      <a className="primitive-value-link" href={value.href}>
+        <GemCaption>{text}</GemCaption>
+      </a>
+    );
   }
   if (property.kind === "checkbox") {
-    return <input className="primitive-checkbox" type="checkbox" checked={Boolean(value.checked ?? value.raw)} readOnly aria-label={property.label} />;
+    return (
+      <input
+        className="primitive-checkbox"
+        type="checkbox"
+        checked={Boolean(value.checked ?? value.raw)}
+        readOnly
+        aria-label={property.label}
+      />
+    );
   }
   if ((property.kind === "image" || property.kind === "media") && value.image) {
     return <img className="primitive-media-preview" src={value.image.src} alt={value.image.alt} />;
@@ -304,61 +324,73 @@ export function RecordList<Record>({
               aria-label={`Open ${String(record.title ?? record.id)}${selected ? ", selected" : ""}`}
               data-selected={selected}
               tabIndex={0}
-              title={<div className="table-kit-list-row-content">
-                <span className="table-kit-list-row-title" onClick={(event) => event.stopPropagation()}>
-                  {record.titleEdit || onRecordPatch ? (
-                    <EditableRecordFields
-                      className="table-kit-inline-editable-title"
-                      fields={[{
-                        label: "Title",
-                        value: record.title ?? record.id,
-                        editable: true,
-                        hideLabel: true,
-                        onSave: async (value) => {
-                          const next = typeof value === "string" || typeof value === "number" ? String(value) : "";
-                          if (record.titleEdit) await record.titleEdit.onSave(record.source, next);
-                          else await onRecordPatch?.(record.source, "title", next);
-                        },
-                      }]}
-                    />
-                  ) : record.title ?? record.subtitle ?? record.id}
-                </span>
-                <span className="table-kit-list-row-properties">
-                  {editableProperties.slice(0, 3).map((property) => {
-                    const edit = property.edit;
-                    const rawValue = propertyValue(property, record).raw;
-                    const value = typeof rawValue === "string" || typeof rawValue === "number" ? rawValue : null;
-                    return edit ? (
-                      <span key={property.id} onClick={(event) => event.stopPropagation()}>
-                        <EditableRecordFields
-                          className="table-kit-inline-editable-property"
-                          fields={[{
-                            label: property.label,
-                            value,
-                            inputType: edit.inputType,
-                            nullable: edit.nullable,
-                            options: edit.options,
-                            valueTextRole: "caption",
+              title={
+                <div className="table-kit-list-row-content">
+                  <span className="table-kit-list-row-title" onClick={(event) => event.stopPropagation()}>
+                    {record.titleEdit || onRecordPatch ? (
+                      <EditableRecordFields
+                        className="table-kit-inline-editable-title"
+                        fields={[
+                          {
+                            label: "Title",
+                            value: record.title ?? record.id,
                             editable: true,
-                            onSave: async (nextValue) => {
-                              const next = typeof nextValue === "string" || typeof nextValue === "number"
-                                ? nextValue
-                                : nextValue == null
-                                  ? null
-                                  : String(nextValue);
-                              await edit.onSave(record.source, next);
+                            hideLabel: true,
+                            onSave: async (value) => {
+                              const next = typeof value === "string" || typeof value === "number" ? String(value) : "";
+                              if (record.titleEdit) await record.titleEdit.onSave(record.source, next);
+                              else await onRecordPatch?.(record.source, "title", next);
                             },
-                          }]}
-                        />
-                      </span>
+                          },
+                        ]}
+                      />
                     ) : (
-                      <span key={property.id}>
-                        <PropertyValue property={property as RecordPropertyDefinition<unknown>} value={propertyValue(property, record)} />
-                      </span>
-                    );
-                  })}
-                </span>
-              </div>}
+                      (record.title ?? record.subtitle ?? record.id)
+                    )}
+                  </span>
+                  <span className="table-kit-list-row-properties">
+                    {editableProperties.slice(0, 3).map((property) => {
+                      const edit = property.edit;
+                      const rawValue = propertyValue(property, record).raw;
+                      const value = typeof rawValue === "string" || typeof rawValue === "number" ? rawValue : null;
+                      return edit ? (
+                        <span key={property.id} onClick={(event) => event.stopPropagation()}>
+                          <EditableRecordFields
+                            className="table-kit-inline-editable-property"
+                            fields={[
+                              {
+                                label: property.label,
+                                value,
+                                inputType: edit.inputType,
+                                nullable: edit.nullable,
+                                options: edit.options,
+                                valueTextRole: "caption",
+                                editable: true,
+                                onSave: async (nextValue) => {
+                                  const next =
+                                    typeof nextValue === "string" || typeof nextValue === "number"
+                                      ? nextValue
+                                      : nextValue == null
+                                        ? null
+                                        : String(nextValue);
+                                  await edit.onSave(record.source, next);
+                                },
+                              },
+                            ]}
+                          />
+                        </span>
+                      ) : (
+                        <span key={property.id}>
+                          <PropertyValue
+                            property={property as RecordPropertyDefinition<unknown>}
+                            value={propertyValue(property, record)}
+                          />
+                        </span>
+                      );
+                    })}
+                  </span>
+                </div>
+              }
               icon={() => <RecordAvatar record={record} />}
               iconAfter={
                 // The chevron is decorative; keep it out of the accessibility tree.
@@ -384,12 +416,7 @@ export function RecordList<Record>({
               }}
             />
             {record.id !== effectiveRecords[effectiveRecords.length - 1]?.id && (
-              <Separator
-                className="table-kit-list-separator"
-                vertical={false}
-                borderColor="$gemLine"
-                opacity={0.7}
-              />
+              <Separator className="table-kit-list-separator" vertical={false} borderColor="$gemLine" opacity={0.7} />
             )}
           </YGroup.Item>
         );
@@ -669,13 +696,16 @@ function galleryPropertiesFor<Record>(
   record: TableRecord<Record>,
   properties: readonly RecordPropertyDefinition<Record>[],
 ): { property: RecordPropertyDefinition<Record>; text: string }[] {
-  const seen = new Set([
-    ...galleryDuplicateKeys(record.title),
-    ...galleryDuplicateKeys(record.subtitle),
-  ]);
+  const seen = new Set([...galleryDuplicateKeys(record.title), ...galleryDuplicateKeys(record.subtitle)]);
   const result: { property: RecordPropertyDefinition<Record>; text: string }[] = [];
   for (const property of properties) {
-    if (property.primary || property.kind === "title" || property.kind === "image" || property.kind === "media" || property.id === "logo") {
+    if (
+      property.primary ||
+      property.kind === "title" ||
+      property.kind === "image" ||
+      property.kind === "media" ||
+      property.id === "logo"
+    ) {
       continue;
     }
     const text = galleryText(propertyValue(property, record).display).trim();
@@ -701,7 +731,9 @@ export function RecordTable<Record>({
   const selection = useRendererSelection(selectedIds, onRecordSelect);
   const visibleProperties = propertiesFor(properties, propertyIds);
   const primaryProperty = getPrimaryRecordProperty(visibleProperties);
-  const hasTitleProperty = visibleProperties.some((property) => property.primary || property.kind === "title" || property.id === "title");
+  const hasTitleProperty = visibleProperties.some(
+    (property) => property.primary || property.kind === "title" || property.id === "title",
+  );
   const hasLogo = visibleProperties.some((property) => property.kind === "image" || property.id === "logo");
   const columnDefs: ColDef<TableRecord<Record>>[] = [];
 

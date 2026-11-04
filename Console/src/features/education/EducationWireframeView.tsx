@@ -15,17 +15,21 @@ export function EducationWireframeView({ records }: { records: readonly Educatio
   const addresses = addressesQuery.data ?? [];
   const patch = useEducationPatchMutation();
   const recordActions = useEducationRecordActions({ addresses, onCreated: () => undefined });
-  const properties: readonly RecordPropertyDefinition<Education>[] = educationTableAdapter.getPropertyDefinitions().map((property) =>
-    property.id === "locationAddressID"
-      ? {
-          ...property,
-          getValue: (record) => ({
-            raw: record.locationAddressID ?? record.address?.id,
-            display: formatAddress(record.address ?? addresses.find((address) => address.id === record.locationAddressID)),
-          }),
-        }
-      : property,
-  );
+  const properties: readonly RecordPropertyDefinition<Education>[] = educationTableAdapter
+    .getPropertyDefinitions()
+    .map((property) =>
+      property.id === "locationAddressID"
+        ? {
+            ...property,
+            getValue: (record) => ({
+              raw: record.locationAddressID ?? record.address?.id,
+              display: formatAddress(
+                record.address ?? addresses.find((address) => address.id === record.locationAddressID),
+              ),
+            }),
+          }
+        : property,
+    );
   const fieldByProperty: Record<string, keyof Education> = {
     institution: "institutionName",
     educationType: "educationType",
@@ -76,19 +80,26 @@ export function EducationWireframeView({ records }: { records: readonly Educatio
                   const field = fieldByProperty[property.id];
                   const isAddress = property.id === "locationAddressID";
                   const isSelect = property.id === "educationType" || property.id === "status" || isAddress;
-                  const options = property.id === "educationType"
-                    ? educationTypeOptions.map(({ value, label }) => ({ value, label }))
-                    : property.id === "status"
-                      ? educationStatusOptions.map(({ value, label }) => ({ value, label }))
-                      : isAddress
-                        ? addressOptions
-                        : undefined;
+                  const options =
+                    property.id === "educationType"
+                      ? educationTypeOptions.map(({ value, label }) => ({ value, label }))
+                      : property.id === "status"
+                        ? educationStatusOptions.map(({ value, label }) => ({ value, label }))
+                        : isAddress
+                          ? addressOptions
+                          : undefined;
                   return {
                     ...property,
                     kind: isSelect ? (property.id === "status" ? "status" : "select") : property.kind,
                     edit: field
                       ? {
-                          inputType: isSelect ? "select" : property.kind === "date" ? "date" : property.id === "notes" ? "longText" : "text",
+                          inputType: isSelect
+                            ? "select"
+                            : property.kind === "date"
+                              ? "date"
+                              : property.id === "notes"
+                                ? "longText"
+                                : "text",
                           nullable: isAddress,
                           options,
                           onSave: async (_source: unknown, value: string | number | null) => {
@@ -107,7 +118,9 @@ export function EducationWireframeView({ records }: { records: readonly Educatio
             <section aria-label="Attachments and page actions">
               <h4>
                 Attachments
-                <GemButton type="button" variant="outlined" tone="secondary" aria-label="Add attachment">+ Add</GemButton>
+                <GemButton type="button" variant="outlined" tone="secondary" aria-label="Add attachment">
+                  + Add
+                </GemButton>
               </h4>
               <ul className="demo-attachments">
                 <li>
@@ -116,7 +129,9 @@ export function EducationWireframeView({ records }: { records: readonly Educatio
                 </li>
               </ul>
               <div className="demo-page-actions">
-                <GemButton type="button" variant="outlined" tone="secondary">Share</GemButton>
+                <GemButton type="button" variant="outlined" tone="secondary">
+                  Share
+                </GemButton>
               </div>
             </section>
           </>

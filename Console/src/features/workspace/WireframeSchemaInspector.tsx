@@ -38,15 +38,16 @@ export function WireframeSchemaInspector<Record extends object>({
       const value = property.getValue(record);
       const edit = property.edit;
       const kind = editorKind(property.kind, edit?.inputType);
-      const metadataKind = property.kind && property.kind !== "text"
-        ? property.kind
-        : edit?.inputType === "select"
-          ? "select"
-          : edit?.inputType === "date"
-            ? "date"
-            : edit?.inputType === "number"
-              ? "number"
-              : property.kind ?? kind;
+      const metadataKind =
+        property.kind && property.kind !== "text"
+          ? property.kind
+          : edit?.inputType === "select"
+            ? "select"
+            : edit?.inputType === "date"
+              ? "date"
+              : edit?.inputType === "number"
+                ? "number"
+                : (property.kind ?? kind);
       const metadata = inferWireframePropertyMetadata({
         label: property.label,
         kind: metadataKind,
@@ -58,9 +59,20 @@ export function WireframeSchemaInspector<Record extends object>({
         metadata.type === "URL" ? "url" : metadata.type === "Email" ? "email" : kind;
       const displayValue = property.getValue(record).display;
       const propertyValue = property.getValue(record);
-      const linkedDisplayValue = (property.kind === "url" || property.kind === "email") && propertyValue.href
-        ? <a className="primitive-value-link" href={propertyValue.href} target="_blank" rel="noreferrer" onClick={(event) => event.stopPropagation()}>{typeof displayValue === "string" ? displayValue : propertyValue.href}</a>
-        : displayValue;
+      const linkedDisplayValue =
+        (property.kind === "url" || property.kind === "email") && propertyValue.href ? (
+          <a
+            className="primitive-value-link"
+            href={propertyValue.href}
+            target="_blank"
+            rel="noreferrer"
+            onClick={(event) => event.stopPropagation()}
+          >
+            {typeof displayValue === "string" ? displayValue : propertyValue.href}
+          </a>
+        ) : (
+          displayValue
+        );
       return {
         id: property.id,
         label: property.label,
@@ -70,10 +82,15 @@ export function WireframeSchemaInspector<Record extends object>({
             : "",
         displayValue:
           property.kind === "number" && typeof value.raw === "number"
-            ? formatRecordNumber(value.raw, property.numberFormat ?? inferRecordNumberFormat(property.id, property.label))
+            ? formatRecordNumber(
+                value.raw,
+                property.numberFormat ?? inferRecordNumberFormat(property.id, property.label),
+              )
             : (property.kind === "url" || property.kind === "email") && propertyValue.href
-              ? typeof displayValue === "string" ? displayValue : propertyValue.href
-            : value.display,
+              ? typeof displayValue === "string"
+                ? displayValue
+                : propertyValue.href
+              : value.display,
         display: linkedDisplayValue,
         kind: resolvedKind,
         propertyKind: property.kind,

@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { Menu, X } from "lucide-react";
 import { GemLogo } from "@gemsforge/ui";
 import "./wireframe-app-header.css";
@@ -7,14 +7,12 @@ interface WireframeNavigationContextValue {
   open: boolean;
   setOpen: (open: boolean) => void;
   close: () => void;
-  toggleRef: RefObject<HTMLButtonElement | null>;
 }
 
 const WireframeNavigationContext = createContext<WireframeNavigationContextValue | null>(null);
 
 export function WireframeNavigationProvider({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
-  const toggleRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     if (!open) return;
     const closeWhenDesktop = () => {
@@ -30,9 +28,9 @@ export function WireframeNavigationProvider({ children }: { children: ReactNode 
   }, [open]);
   const close = () => {
     setOpen(false);
-    requestAnimationFrame(() => toggleRef.current?.focus());
+    requestAnimationFrame(() => document.querySelector<HTMLButtonElement>(".wireframe-app-navigation-toggle")?.focus());
   };
-  const value = useMemo(() => ({ open, setOpen, close, toggleRef }), [open]);
+  const value = useMemo(() => ({ open, setOpen, close }), [open]);
 
   return <WireframeNavigationContext.Provider value={value}>{children}</WireframeNavigationContext.Provider>;
 }
@@ -49,7 +47,6 @@ export function WireframeAppHeader() {
     <header className="wireframe-app-header">
       <button
         type="button"
-        ref={navigation.toggleRef}
         className="wireframe-app-navigation-toggle"
         aria-label={navigation.open ? "Close navigation" : "Open navigation"}
         aria-expanded={navigation.open}
@@ -58,7 +55,9 @@ export function WireframeAppHeader() {
       >
         {navigation.open ? <X size={18} aria-hidden="true" /> : <Menu size={18} aria-hidden="true" />}
       </button>
-      <span className="wireframe-app-header-brand"><GemLogo /></span>
+      <span className="wireframe-app-header-brand">
+        <GemLogo />
+      </span>
     </header>
   );
 }

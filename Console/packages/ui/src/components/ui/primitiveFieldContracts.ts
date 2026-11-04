@@ -2,18 +2,7 @@ import type { GemColorToken, GemDateFormat, GemNumberFormat, GemSelectOption } f
 
 /** Primitive field kinds supported by the shared G field layer. */
 export type GemPrimitiveType =
-  | "id"
-  | "text"
-  | "number"
-  | "url"
-  | "email"
-  | "phone"
-  | "date"
-  | "image"
-  | "select"
-  | "status"
-  | "checkbox"
-  | "media";
+  "id" | "text" | "number" | "url" | "email" | "phone" | "date" | "image" | "select" | "status" | "checkbox" | "media";
 
 export interface GemPrimitiveBaseContract {
   primitive: GemPrimitiveType;

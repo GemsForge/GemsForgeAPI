@@ -1,7 +1,15 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { GemTextField } from "@gemsforge/ui";
 import { Text, XStack, YStack } from "tamagui";
-import { WireframeCount, WireframeDescription, WireframeHeader, WireframeHeading, WireframeIcon, WireframeMain, WireframeTitleGroup } from "./WireframePrimitives";
+import {
+  WireframeCount,
+  WireframeDescription,
+  WireframeHeader,
+  WireframeHeading,
+  WireframeIcon,
+  WireframeMain,
+  WireframeTitleGroup,
+} from "./WireframePrimitives";
 
 type WireframePageViewProps = {
   title: string;
@@ -148,7 +156,7 @@ export function WireframePageView({
             </XStack>
           </header>
         </WireframeHeader>
-      {children}
+        {children}
       </main>
     </WireframeMain>
   );

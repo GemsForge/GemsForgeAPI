@@ -32,12 +32,7 @@ describe("GSelectField", () => {
   it("marks its trigger and menu for the light workspace surface", () => {
     render(
       <TamaguiProvider config={tamaguiConfig} defaultTheme="dark">
-        <GSelectField
-          label="Status"
-          value="Current"
-          options={[{ label: "Current", value: "Current" }]}
-          wireframe
-        />
+        <GSelectField label="Status" value="Current" options={[{ label: "Current", value: "Current" }]} wireframe />
       </TamaguiProvider>,
     );
 

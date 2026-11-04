@@ -169,8 +169,9 @@ function EducationDetail({
       </div>
       <EditableRecordFields
         className="education-fields"
-        fields={educationEditableFields(record, addresses.data ?? [], onPatch)
-          .filter((field) => field.label !== titleProperty.label)}
+        fields={educationEditableFields(record, addresses.data ?? [], onPatch).filter(
+          (field) => field.label !== titleProperty.label,
+        )}
       />
       <AttachmentControl
         fileMetadataID={record.documentFileMetadataID}

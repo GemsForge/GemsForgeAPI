@@ -31,8 +31,20 @@ export function WorkspaceView({ onSuccess }: { onSuccess: (message: string) => v
   const [draftDescription, setDraftDescription] = useState("");
   const [note, setNote] = useState("The best workspace lets structure emerge from thinking.");
   const [rows, setRows] = useState<WorkspaceRow[]>([
-    { id: "chromalock", name: "Chromalock", type: "Project", status: "In progress", nextThought: "Design the co-op map" },
-    { id: "handbook", name: "Database handbook", type: "Writing", status: "Draft", nextThought: "Add migration examples" },
+    {
+      id: "chromalock",
+      name: "Chromalock",
+      type: "Project",
+      status: "In progress",
+      nextThought: "Design the co-op map",
+    },
+    {
+      id: "handbook",
+      name: "Database handbook",
+      type: "Writing",
+      status: "Draft",
+      nextThought: "Add migration examples",
+    },
   ]);
   const [blockEditor, setBlockEditor] = useState<BlockEditor | null>(null);
   const [editingLinks, setEditingLinks] = useState(false);
@@ -54,7 +66,12 @@ export function WorkspaceView({ onSuccess }: { onSuccess: (message: string) => v
   }, [activePage]);
 
   useEffect(() => {
-    setLinkedPageIDs(pages.filter((page) => page.id !== activePage?.id).slice(0, 3).map((page) => page.id));
+    setLinkedPageIDs(
+      pages
+        .filter((page) => page.id !== activePage?.id)
+        .slice(0, 3)
+        .map((page) => page.id),
+    );
   }, [activePage?.id, pages]);
 
   const savePage = async (patch: ForgeKeeperPatch) => {
@@ -84,7 +101,11 @@ export function WorkspaceView({ onSuccess }: { onSuccess: (message: string) => v
           <aside className="workspace-page-tree" aria-label="Workspace pages">
             <div className="workspace-tree-heading">
               <SizableText fontWeight="700">Pages</SizableText>
-              <GemButton variant="quiet" aria-label="Open page manager" onClick={() => (window.location.href = "/forgekeeper")}>
+              <GemButton
+                variant="quiet"
+                aria-label="Open page manager"
+                onClick={() => (window.location.href = "/forgekeeper")}
+              >
                 ＋
               </GemButton>
             </div>
@@ -108,9 +129,13 @@ export function WorkspaceView({ onSuccess }: { onSuccess: (message: string) => v
           </aside>
           <main className="workspace-page-canvas">
             <div className="workspace-page-heading">
-              <span className="workspace-page-icon" aria-hidden="true">{pageIcon(activePage)}</span>
+              <span className="workspace-page-icon" aria-hidden="true">
+                {pageIcon(activePage)}
+              </span>
               <div className="workspace-inline-fields">
-                <SizableText className="eyebrow">{activePage.updatedAt ? "Recently updated" : "Private page"}</SizableText>
+                <SizableText className="eyebrow">
+                  {activePage.updatedAt ? "Recently updated" : "Private page"}
+                </SizableText>
                 <GemTextField
                   label="Page title"
                   value={draftTitle}
@@ -131,28 +156,57 @@ export function WorkspaceView({ onSuccess }: { onSuccess: (message: string) => v
               <SizableText className="eyebrow">A note to self</SizableText>
               <div className="workspace-block-heading">
                 <SizableText className="workspace-note-copy">{note}</SizableText>
-                <GemButton tone="secondary" onClick={() => setBlockEditor({ kind: "note" })}>Edit note</GemButton>
+                <GemButton tone="secondary" onClick={() => setBlockEditor({ kind: "note" })}>
+                  Edit note
+                </GemButton>
               </div>
             </GemCard>
             <GemCard className="workspace-table-block">
               <div className="workspace-block-heading">
                 <div>
                   <SizableText className="eyebrow">Embedded table · editable block</SizableText>
-                  <SizableText className="workspace-block-title" fontSize="$5" fontWeight="700">Things in motion</SizableText>
+                  <SizableText className="workspace-block-title" fontSize="$5" fontWeight="700">
+                    Things in motion
+                  </SizableText>
                 </div>
-                <GemButton tone="secondary" onClick={() => setBlockEditor({ kind: "row", rowID: null })}>＋ Add row</GemButton>
+                <GemButton tone="secondary" onClick={() => setBlockEditor({ kind: "row", rowID: null })}>
+                  ＋ Add row
+                </GemButton>
               </div>
               <div className="workspace-demo-table-wrap">
                 <table className="workspace-demo-table">
                   <caption className="sr-only">Things in motion</caption>
-                  <thead><tr><th>Name</th><th>Type</th><th>Status</th><th>Next thought</th><th><span className="sr-only">Actions</span></th></tr></thead>
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Type</th>
+                      <th>Status</th>
+                      <th>Next thought</th>
+                      <th>
+                        <span className="sr-only">Actions</span>
+                      </th>
+                    </tr>
+                  </thead>
                   <tbody>
                     {rows.map((row) => (
                       <tr key={row.id}>
-                        <td>{row.name}</td><td>{row.type}</td>
-                        <td><GemStatusPill tone={row.status === "In progress" ? "success" : "default"}>{row.status}</GemStatusPill></td>
+                        <td>{row.name}</td>
+                        <td>{row.type}</td>
+                        <td>
+                          <GemStatusPill tone={row.status === "In progress" ? "success" : "default"}>
+                            {row.status}
+                          </GemStatusPill>
+                        </td>
                         <td>{row.nextThought}</td>
-                        <td><GemButton variant="quiet" size="sm" onClick={() => setBlockEditor({ kind: "row", rowID: row.id })}>Edit</GemButton></td>
+                        <td>
+                          <GemButton
+                            variant="quiet"
+                            size="sm"
+                            onClick={() => setBlockEditor({ kind: "row", rowID: row.id })}
+                          >
+                            Edit
+                          </GemButton>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -161,16 +215,59 @@ export function WorkspaceView({ onSuccess }: { onSuccess: (message: string) => v
             </GemCard>
             <div className="workspace-lower-grid">
               <GemCard>
-                <div className="workspace-block-heading"><div><SizableText className="eyebrow">Linked from this page</SizableText><SizableText className="workspace-block-title" fontSize="$5" fontWeight="700">Related thoughts</SizableText></div><GemButton variant="quiet" size="sm" onClick={() => setEditingLinks((value) => !value)}>{editingLinks ? "Done" : "Edit list"}</GemButton></div>
-                {editingLinks ? <ul className="workspace-link-list workspace-link-list-editing">
-                  {pages.filter((page) => page.id !== activePage.id).map((page) => <li key={page.id}><label><input type="checkbox" checked={linkedPageIDs.includes(page.id)} onChange={() => setLinkedPageIDs((current) => current.includes(page.id) ? current.filter((id) => id !== page.id) : [...current, page.id])} />{page.title}</label></li>)}
-                </ul> : <ul className="workspace-link-list">
-                  {pages.filter((page) => linkedPageIDs.includes(page.id)).map((page) => <li key={page.id}><button type="button" onClick={() => setActivePageID(page.id)}>↗ {page.title}</button></li>)}
-                </ul>}
+                <div className="workspace-block-heading">
+                  <div>
+                    <SizableText className="eyebrow">Linked from this page</SizableText>
+                    <SizableText className="workspace-block-title" fontSize="$5" fontWeight="700">
+                      Related thoughts
+                    </SizableText>
+                  </div>
+                  <GemButton variant="quiet" size="sm" onClick={() => setEditingLinks((value) => !value)}>
+                    {editingLinks ? "Done" : "Edit list"}
+                  </GemButton>
+                </div>
+                {editingLinks ? (
+                  <ul className="workspace-link-list workspace-link-list-editing">
+                    {pages
+                      .filter((page) => page.id !== activePage.id)
+                      .map((page) => (
+                        <li key={page.id}>
+                          <label>
+                            <input
+                              type="checkbox"
+                              checked={linkedPageIDs.includes(page.id)}
+                              onChange={() =>
+                                setLinkedPageIDs((current) =>
+                                  current.includes(page.id)
+                                    ? current.filter((id) => id !== page.id)
+                                    : [...current, page.id],
+                                )
+                              }
+                            />
+                            {page.title}
+                          </label>
+                        </li>
+                      ))}
+                  </ul>
+                ) : (
+                  <ul className="workspace-link-list">
+                    {pages
+                      .filter((page) => linkedPageIDs.includes(page.id))
+                      .map((page) => (
+                        <li key={page.id}>
+                          <button type="button" onClick={() => setActivePageID(page.id)}>
+                            ↗ {page.title}
+                          </button>
+                        </li>
+                      ))}
+                  </ul>
+                )}
               </GemCard>
               <GemCard>
                 <SizableText className="eyebrow">Knowledge map</SizableText>
-                <SizableText className="workspace-block-title" fontSize="$5" fontWeight="700">Nearby pages</SizableText>
+                <SizableText className="workspace-block-title" fontSize="$5" fontWeight="700">
+                  Nearby pages
+                </SizableText>
                 <div className="workspace-map" aria-label="Connected root pages">
                   <span className="map-node map-node-main">{pageIcon(activePage)}</span>
                   <span className="map-line map-line-a" />
@@ -185,7 +282,9 @@ export function WorkspaceView({ onSuccess }: { onSuccess: (message: string) => v
         </div>
       ) : !pagesQuery.isLoading && !pagesQuery.error ? (
         <div className="empty-state">
-          <SizableText className="workspace-block-title" fontSize="$6" fontWeight="700">No workspace pages yet</SizableText>
+          <SizableText className="workspace-block-title" fontSize="$6" fontWeight="700">
+            No workspace pages yet
+          </SizableText>
           <SizableText>Create a ForgeKeeper page to start your knowledge hub.</SizableText>
           <GemButton onClick={() => (window.location.href = "/forgekeeper")}>Open page manager</GemButton>
         </div>
@@ -203,11 +302,18 @@ export function WorkspaceView({ onSuccess }: { onSuccess: (message: string) => v
         <BlockEditorDialog
           editor={blockEditor}
           note={note}
-          row={blockEditor.kind === "row" ? rows.find((item) => item.id === blockEditor.rowID) ?? null : null}
+          row={blockEditor.kind === "row" ? (rows.find((item) => item.id === blockEditor.rowID) ?? null) : null}
           onCancel={() => setBlockEditor(null)}
-          onSaveNote={(value) => { setNote(value); setBlockEditor(null); }}
+          onSaveNote={(value) => {
+            setNote(value);
+            setBlockEditor(null);
+          }}
           onSaveRow={(row) => {
-            setRows((current) => row.id ? current.map((item) => item.id === row.id ? row : item) : [...current, { ...row, id: crypto.randomUUID() }]);
+            setRows((current) =>
+              row.id
+                ? current.map((item) => (item.id === row.id ? row : item))
+                : [...current, { ...row, id: crypto.randomUUID() }],
+            );
             setBlockEditor(null);
           }}
         />
@@ -233,21 +339,79 @@ function BlockEditorDialog({
   onSaveRow: (row: WorkspaceRow) => void;
 }) {
   const [noteDraft, setNoteDraft] = useState(note);
-  const [rowDraft, setRowDraft] = useState<WorkspaceRow>(row ?? { id: "", name: "", type: "", status: "Draft", nextThought: "" });
+  const [rowDraft, setRowDraft] = useState<WorkspaceRow>(
+    row ?? { id: "", name: "", type: "", status: "Draft", nextThought: "" },
+  );
   return (
     <Dialog open onOpenChange={(open) => !open && onCancel()} modal>
-      <Dialog.Portal><Dialog.Overlay className="table-kit-utility-backdrop" /><Dialog.Content className="table-kit-new-record-utility workspace-editor-dialog">
-        <div className="table-kit-new-record-heading"><div><SizableText className="eyebrow">Canvas block</SizableText><Dialog.Title>{editor.kind === "note" ? "Edit note" : row ? "Edit table row" : "Add table row"}</Dialog.Title></div><Dialog.Close asChild><GemButton variant="quiet" size="sm" aria-label="Close block editor" onClick={onCancel}>×</GemButton></Dialog.Close></div>
-        <Form className="edit-form" onSubmit={() => editor.kind === "note" ? onSaveNote(noteDraft.trim()) : onSaveRow(rowDraft)}>
-          {editor.kind === "note" ? <GemTextField label="Note" multiline rows={5} value={noteDraft} onChange={(event) => setNoteDraft(event.target.value)} required /> : <>
-            <GemTextField label="Name" value={rowDraft.name} onChange={(event) => setRowDraft({ ...rowDraft, name: event.target.value })} required />
-            <GemTextField label="Type" value={rowDraft.type} onChange={(event) => setRowDraft({ ...rowDraft, type: event.target.value })} required />
-            <GemTextField label="Status" value={rowDraft.status} onChange={(event) => setRowDraft({ ...rowDraft, status: event.target.value })} required />
-            <GemTextField label="Next thought" value={rowDraft.nextThought} onChange={(event) => setRowDraft({ ...rowDraft, nextThought: event.target.value })} required />
-          </>}
-          <div className="dialog-actions"><Dialog.Close asChild><GemButton tone="secondary" type="button" onClick={onCancel}>Cancel</GemButton></Dialog.Close><GemButton type="submit">Save block</GemButton></div>
-        </Form>
-      </Dialog.Content></Dialog.Portal>
+      <Dialog.Portal>
+        <Dialog.Overlay className="table-kit-utility-backdrop" />
+        <Dialog.Content className="table-kit-new-record-utility workspace-editor-dialog">
+          <div className="table-kit-new-record-heading">
+            <div>
+              <SizableText className="eyebrow">Canvas block</SizableText>
+              <Dialog.Title>
+                {editor.kind === "note" ? "Edit note" : row ? "Edit table row" : "Add table row"}
+              </Dialog.Title>
+            </div>
+            <Dialog.Close asChild>
+              <GemButton variant="quiet" size="sm" aria-label="Close block editor" onClick={onCancel}>
+                ×
+              </GemButton>
+            </Dialog.Close>
+          </div>
+          <Form
+            className="edit-form"
+            onSubmit={() => (editor.kind === "note" ? onSaveNote(noteDraft.trim()) : onSaveRow(rowDraft))}
+          >
+            {editor.kind === "note" ? (
+              <GemTextField
+                label="Note"
+                multiline
+                rows={5}
+                value={noteDraft}
+                onChange={(event) => setNoteDraft(event.target.value)}
+                required
+              />
+            ) : (
+              <>
+                <GemTextField
+                  label="Name"
+                  value={rowDraft.name}
+                  onChange={(event) => setRowDraft({ ...rowDraft, name: event.target.value })}
+                  required
+                />
+                <GemTextField
+                  label="Type"
+                  value={rowDraft.type}
+                  onChange={(event) => setRowDraft({ ...rowDraft, type: event.target.value })}
+                  required
+                />
+                <GemTextField
+                  label="Status"
+                  value={rowDraft.status}
+                  onChange={(event) => setRowDraft({ ...rowDraft, status: event.target.value })}
+                  required
+                />
+                <GemTextField
+                  label="Next thought"
+                  value={rowDraft.nextThought}
+                  onChange={(event) => setRowDraft({ ...rowDraft, nextThought: event.target.value })}
+                  required
+                />
+              </>
+            )}
+            <div className="dialog-actions">
+              <Dialog.Close asChild>
+                <GemButton tone="secondary" type="button" onClick={onCancel}>
+                  Cancel
+                </GemButton>
+              </Dialog.Close>
+              <GemButton type="submit">Save block</GemButton>
+            </div>
+          </Form>
+        </Dialog.Content>
+      </Dialog.Portal>
     </Dialog>
   );
 }
@@ -282,7 +446,9 @@ function PageEditorDialog({
               </div>
             </div>
             <Dialog.Close asChild>
-              <GemButton variant="quiet" size="sm" aria-label="Close editor" disabled={saving} onClick={onCancel}>×</GemButton>
+              <GemButton variant="quiet" size="sm" aria-label="Close editor" disabled={saving} onClick={onCancel}>
+                ×
+              </GemButton>
             </Dialog.Close>
           </div>
           <Form
@@ -292,7 +458,12 @@ function PageEditorDialog({
               await onSave({ title: title.trim(), description: description.trim() });
             }}
           >
-            <GemTextField label="Page title" value={title} onChange={(event) => setTitle(event.target.value)} required />
+            <GemTextField
+              label="Page title"
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
+              required
+            />
             <GemTextField
               label="Page description"
               multiline
@@ -304,7 +475,9 @@ function PageEditorDialog({
             {error && <SizableText role="alert">{error.message}</SizableText>}
             <div className="dialog-actions">
               <Dialog.Close asChild>
-                <GemButton tone="secondary" type="button" onClick={onCancel} disabled={saving}>Cancel</GemButton>
+                <GemButton tone="secondary" type="button" onClick={onCancel} disabled={saving}>
+                  Cancel
+                </GemButton>
               </Dialog.Close>
               <GemButton type="submit" disabled={saving || !title.trim() || !description.trim()}>
                 {saving ? "Saving…" : "Save page"}

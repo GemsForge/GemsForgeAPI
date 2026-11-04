@@ -24,22 +24,22 @@ export function PropertyIconPicker({ value, onChange }: { value: string; onChang
         placeholder="Search icons"
       />
       <div className="wireframe-property-icon-grid" role="radiogroup" aria-label="Matching property icons">
-      {filteredIcons.map(({ name, icon: Icon }) => (
-        <GemButton
-          key={name}
-          type="button"
-          className={value === name ? "is-selected" : undefined}
-          size="xs"
-          variant="quiet"
-          tone="secondary"
-          role="radio"
-          aria-checked={value === name}
-          aria-label={name}
-          onClick={() => onChange(name)}
-        >
-          <Icon size={16} strokeWidth={2} aria-hidden="true" />
-        </GemButton>
-      ))}
+        {filteredIcons.map(({ name, icon: Icon }) => (
+          <GemButton
+            key={name}
+            type="button"
+            className={value === name ? "is-selected" : undefined}
+            size="xs"
+            variant="quiet"
+            tone="secondary"
+            role="radio"
+            aria-checked={value === name}
+            aria-label={name}
+            onClick={() => onChange(name)}
+          >
+            <Icon size={16} strokeWidth={2} aria-hidden="true" />
+          </GemButton>
+        ))}
       </div>
       {filteredIcons.length === 0 ? <p className="wireframe-property-icon-empty">No matching icons.</p> : null}
     </div>

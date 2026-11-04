@@ -1,6 +1,16 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Button, Tooltip, type TamaguiElement } from "tamagui";
-import { ArrowLeft, Eye, Filter, LayoutGrid, List, Search, SlidersHorizontal, Table2, type LucideIcon } from "lucide-react";
+import {
+  ArrowLeft,
+  Eye,
+  Filter,
+  LayoutGrid,
+  List,
+  Search,
+  SlidersHorizontal,
+  Table2,
+  type LucideIcon,
+} from "lucide-react";
 import type { GalleryCardSize } from "./GalleryViewControls";
 import type { TablePropertyConfigurationState, TablePropertyOption } from "./configuration";
 import { TablePropertyControls } from "./PropertyControls";
@@ -86,7 +96,20 @@ export function TableSettingsMenu({
     onViewChange(next);
     setPanel(next === "gallery" ? "gallery" : "root");
   };
-  const title = panel === "root" ? "View settings" : panel === "layout" ? "Layout" : panel === "gallery" ? "Gallery layout" : panel === "icon" ? "Table icon" : panel === "sort" ? "Sort" : panel === "filter" ? "Filter" : "Group by";
+  const title =
+    panel === "root"
+      ? "View settings"
+      : panel === "layout"
+        ? "Layout"
+        : panel === "gallery"
+          ? "Gallery layout"
+          : panel === "icon"
+            ? "Table icon"
+            : panel === "sort"
+              ? "Sort"
+              : panel === "filter"
+                ? "Filter"
+                : "Group by";
 
   return (
     <div className="table-kit-settings" role="group" aria-label="Table settings">
@@ -110,7 +133,10 @@ export function TableSettingsMenu({
             <SlidersHorizontal size={16} aria-hidden="true" />
           </Button>
         </Tooltip.Trigger>
-        <Tooltip.Content className="table-kit-tooltip"><Tooltip.Arrow /><span>View settings</span></Tooltip.Content>
+        <Tooltip.Content className="table-kit-tooltip">
+          <Tooltip.Arrow />
+          <span>View settings</span>
+        </Tooltip.Content>
       </Tooltip>
       {open && (
         <div
@@ -122,63 +148,259 @@ export function TableSettingsMenu({
           onKeyDown={(event) => {
             if (event.key === "Escape") {
               event.stopPropagation();
-              if (panel === "root") close(); else setPanel("root");
+              if (panel === "root") close();
+              else setPanel("root");
             }
           }}
         >
           <div className="table-kit-settings-heading">
-            {panel !== "root" && <GemButton size="xs" variant="quiet" tone="secondary" aria-label="Back to view settings" onClick={() => setPanel("root")}><ArrowLeft size={18} aria-hidden="true" /></GemButton>}
+            {panel !== "root" && (
+              <GemButton
+                size="xs"
+                variant="quiet"
+                tone="secondary"
+                aria-label="Back to view settings"
+                onClick={() => setPanel("root")}
+              >
+                <ArrowLeft size={18} aria-hidden="true" />
+              </GemButton>
+            )}
             <h2>{title}</h2>
-            <GemButton size="xs" variant="quiet" tone="secondary" aria-label="Close view settings" onClick={close}>×</GemButton>
+            <GemButton size="xs" variant="quiet" tone="secondary" aria-label="Close view settings" onClick={close}>
+              ×
+            </GemButton>
           </div>
           {panel === "root" ? (
             <>
               <button type="button" className="table-kit-settings-row table-kit-settings-view-name" disabled>
-                <SlidersHorizontal size={18} aria-hidden="true" /><span>Current view</span><strong>{viewLabels[viewId]}</strong>
+                <SlidersHorizontal size={18} aria-hidden="true" />
+                <span>Current view</span>
+                <strong>{viewLabels[viewId]}</strong>
               </button>
-              {onTableIconChange && tableIconOptions.length > 0 && <SettingsRow icon={<SlidersHorizontal size={18} aria-hidden="true" />} label="Table icon" value={tableIcon} onClick={() => setPanel("icon")} />}
-              <SettingsRow icon={<LayoutGrid size={18} aria-hidden="true" />} label="Layout" value={viewLabels[viewId]} onClick={() => setPanel("layout")} />
-              {propertyConfiguration && properties && <SettingsRow icon={<Eye size={18} aria-hidden="true" />} label="Property visibility" value={String(propertyConfiguration.visibleIds.length)} onClick={() => setPanel("layout")} />}
-              {onFilter && <SettingsRow icon={<Filter size={18} aria-hidden="true" />} label="Filter" value={filter ? "Active" : "Add filter"} onClick={() => setPanel("filter")} />}
-              {onSort && <SettingsRow icon={<Search size={18} aria-hidden="true" />} label="Sort" value={sort ? sortOptions.find((option) => option.value === sort)?.label ?? sort : "Default"} onClick={() => setPanel("sort")} />}
-              {onGroupBy && <SettingsRow icon={<List size={18} aria-hidden="true" />} label="Group" value={groupBy ? groupOptions.find((option) => option.value === groupBy)?.label ?? groupBy : "None"} onClick={() => setPanel("group")} />}
+              {onTableIconChange && tableIconOptions.length > 0 && (
+                <SettingsRow
+                  icon={<SlidersHorizontal size={18} aria-hidden="true" />}
+                  label="Table icon"
+                  value={tableIcon}
+                  onClick={() => setPanel("icon")}
+                />
+              )}
+              <SettingsRow
+                icon={<LayoutGrid size={18} aria-hidden="true" />}
+                label="Layout"
+                value={viewLabels[viewId]}
+                onClick={() => setPanel("layout")}
+              />
+              {propertyConfiguration && properties && (
+                <SettingsRow
+                  icon={<Eye size={18} aria-hidden="true" />}
+                  label="Property visibility"
+                  value={String(propertyConfiguration.visibleIds.length)}
+                  onClick={() => setPanel("layout")}
+                />
+              )}
+              {onFilter && (
+                <SettingsRow
+                  icon={<Filter size={18} aria-hidden="true" />}
+                  label="Filter"
+                  value={filter ? "Active" : "Add filter"}
+                  onClick={() => setPanel("filter")}
+                />
+              )}
+              {onSort && (
+                <SettingsRow
+                  icon={<Search size={18} aria-hidden="true" />}
+                  label="Sort"
+                  value={sort ? (sortOptions.find((option) => option.value === sort)?.label ?? sort) : "Default"}
+                  onClick={() => setPanel("sort")}
+                />
+              )}
+              {onGroupBy && (
+                <SettingsRow
+                  icon={<List size={18} aria-hidden="true" />}
+                  label="Group"
+                  value={groupBy ? (groupOptions.find((option) => option.value === groupBy)?.label ?? groupBy) : "None"}
+                  onClick={() => setPanel("group")}
+                />
+              )}
             </>
           ) : panel === "layout" ? (
             <>
               <div className="table-kit-settings-choice-list" role="radiogroup" aria-label="Layout">
-                {(Object.keys(viewLabels) as TableViewId[]).map((id) => <ChoiceRow key={id} label={viewLabels[id]} selected={viewId === id} onClick={() => chooseView(id)} icon={id === "table" ? <Table2 size={18} aria-hidden="true" /> : id === "list" ? <List size={18} aria-hidden="true" /> : <LayoutGrid size={18} aria-hidden="true" />} />)}
+                {(Object.keys(viewLabels) as TableViewId[]).map((id) => (
+                  <ChoiceRow
+                    key={id}
+                    label={viewLabels[id]}
+                    selected={viewId === id}
+                    onClick={() => chooseView(id)}
+                    icon={
+                      id === "table" ? (
+                        <Table2 size={18} aria-hidden="true" />
+                      ) : id === "list" ? (
+                        <List size={18} aria-hidden="true" />
+                      ) : (
+                        <LayoutGrid size={18} aria-hidden="true" />
+                      )
+                    }
+                  />
+                ))}
               </div>
-              {properties && propertyConfiguration && <div className="table-kit-settings-subcontrol"><TablePropertyControls properties={properties} configuration={propertyConfiguration} label="Property visibility" wireframe inline /></div>}
-              {viewId === "gallery" && <SettingsRow icon={<LayoutGrid size={18} aria-hidden="true" />} label="Gallery layout" value="Card preview" onClick={() => setPanel("gallery")} />}
+              {properties && propertyConfiguration && (
+                <div className="table-kit-settings-subcontrol">
+                  <TablePropertyControls
+                    properties={properties}
+                    configuration={propertyConfiguration}
+                    label="Property visibility"
+                    wireframe
+                    inline
+                  />
+                </div>
+              )}
+              {viewId === "gallery" && (
+                <SettingsRow
+                  icon={<LayoutGrid size={18} aria-hidden="true" />}
+                  label="Gallery layout"
+                  value="Card preview"
+                  onClick={() => setPanel("gallery")}
+                />
+              )}
             </>
           ) : panel === "gallery" ? (
             <>
-              {onGalleryImageSourceChange && galleryImageOptions.length > 0 && <label className="table-kit-settings-field">Card image<select aria-label="Card image" value={galleryImageSource} onChange={(event) => onGalleryImageSourceChange(event.target.value)}>{galleryImageOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>}
-              <label className="table-kit-settings-field">Card size<select value={galleryCardSize} onChange={(event) => onGalleryCardSizeChange?.(event.target.value as GalleryCardSize)}><option value="small">Small</option><option value="medium">Medium</option><option value="large">Large</option></select></label>
-              <label className="table-kit-settings-switch"><input type="checkbox" checked={galleryFillMedia} onChange={(event) => onGalleryFillMediaChange?.(event.target.checked)} /> <span>Fit media to card</span></label>
+              {onGalleryImageSourceChange && galleryImageOptions.length > 0 && (
+                <label className="table-kit-settings-field">
+                  Card image
+                  <select
+                    aria-label="Card image"
+                    value={galleryImageSource}
+                    onChange={(event) => onGalleryImageSourceChange(event.target.value)}
+                  >
+                    {galleryImageOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
+              <label className="table-kit-settings-field">
+                Card size
+                <select
+                  value={galleryCardSize}
+                  onChange={(event) => onGalleryCardSizeChange?.(event.target.value as GalleryCardSize)}
+                >
+                  <option value="small">Small</option>
+                  <option value="medium">Medium</option>
+                  <option value="large">Large</option>
+                </select>
+              </label>
+              <label className="table-kit-settings-switch">
+                <input
+                  type="checkbox"
+                  checked={galleryFillMedia}
+                  onChange={(event) => onGalleryFillMediaChange?.(event.target.checked)}
+                />{" "}
+                <span>Fit media to card</span>
+              </label>
             </>
           ) : panel === "icon" ? (
             <div className="table-kit-icon-picker" role="radiogroup" aria-label="Table icon">
               {tableIconOptions.map(({ name, icon: Icon }) => (
                 <Tooltip key={name} placement="top" delay={250}>
                   <Tooltip.Trigger asChild>
-                    <button type="button" role="radio" aria-checked={tableIcon === name} aria-label={name} className="table-kit-icon-choice" onClick={() => onTableIconChange?.(name)}>
+                    <button
+                      type="button"
+                      role="radio"
+                      aria-checked={tableIcon === name}
+                      aria-label={name}
+                      className="table-kit-icon-choice"
+                      onClick={() => onTableIconChange?.(name)}
+                    >
                       <Icon size={18} aria-hidden="true" />
                     </button>
                   </Tooltip.Trigger>
-                  <Tooltip.Content className="table-kit-tooltip"><Tooltip.Arrow /><span>{name}</span></Tooltip.Content>
+                  <Tooltip.Content className="table-kit-tooltip">
+                    <Tooltip.Arrow />
+                    <span>{name}</span>
+                  </Tooltip.Content>
                 </Tooltip>
               ))}
             </div>
           ) : (
             <div className="table-kit-settings-choice-list" role="radiogroup" aria-label={title}>
-              {panel === "sort" && <ChoiceRow label="Default order" selected={!sort} onClick={() => { onSort?.(""); setPanel("root"); }} />}
-              {panel === "sort" && sortOptions.map((option) => <ChoiceRow key={option.value} label={option.label} selected={sort === option.value} onClick={() => { onSort?.(option.value); setPanel("root"); }} />)}
-              {panel === "sort" && sort && <ChoiceRow label={direction === "asc" ? "Ascending" : "Descending"} selected={false} onClick={onDirection} />}
-              {panel === "filter" && <ChoiceRow label="All records" selected={!filter} onClick={() => { onFilter?.(""); setPanel("root"); }} />}
-              {panel === "filter" && filterOptions.map((option) => <ChoiceRow key={option} label={option} selected={filter === option} onClick={() => { onFilter?.(option); setPanel("root"); }} />)}
-              {panel === "group" && <ChoiceRow label="None" selected={!groupBy} onClick={() => { onGroupBy?.(""); setPanel("root"); }} />}
-              {panel === "group" && groupOptions.map((option) => <ChoiceRow key={option.value} label={option.label} selected={groupBy === option.value} onClick={() => { onGroupBy?.(option.value); setPanel("root"); }} />)}
+              {panel === "sort" && (
+                <ChoiceRow
+                  label="Default order"
+                  selected={!sort}
+                  onClick={() => {
+                    onSort?.("");
+                    setPanel("root");
+                  }}
+                />
+              )}
+              {panel === "sort" &&
+                sortOptions.map((option) => (
+                  <ChoiceRow
+                    key={option.value}
+                    label={option.label}
+                    selected={sort === option.value}
+                    onClick={() => {
+                      onSort?.(option.value);
+                      setPanel("root");
+                    }}
+                  />
+                ))}
+              {panel === "sort" && sort && (
+                <ChoiceRow
+                  label={direction === "asc" ? "Ascending" : "Descending"}
+                  selected={false}
+                  onClick={onDirection}
+                />
+              )}
+              {panel === "filter" && (
+                <ChoiceRow
+                  label="All records"
+                  selected={!filter}
+                  onClick={() => {
+                    onFilter?.("");
+                    setPanel("root");
+                  }}
+                />
+              )}
+              {panel === "filter" &&
+                filterOptions.map((option) => (
+                  <ChoiceRow
+                    key={option}
+                    label={option}
+                    selected={filter === option}
+                    onClick={() => {
+                      onFilter?.(option);
+                      setPanel("root");
+                    }}
+                  />
+                ))}
+              {panel === "group" && (
+                <ChoiceRow
+                  label="None"
+                  selected={!groupBy}
+                  onClick={() => {
+                    onGroupBy?.("");
+                    setPanel("root");
+                  }}
+                />
+              )}
+              {panel === "group" &&
+                groupOptions.map((option) => (
+                  <ChoiceRow
+                    key={option.value}
+                    label={option.label}
+                    selected={groupBy === option.value}
+                    onClick={() => {
+                      onGroupBy?.(option.value);
+                      setPanel("root");
+                    }}
+                  />
+                ))}
             </div>
           )}
         </div>
@@ -187,10 +409,43 @@ export function TableSettingsMenu({
   );
 }
 
-function SettingsRow({ icon, label, value, onClick }: { icon: ReactNode; label: string; value?: string; onClick: () => void }) {
-  return <button type="button" aria-label={label} className="table-kit-settings-row" onClick={onClick}>{icon}<span>{label}</span>{value && <strong>{value}</strong>}<span aria-hidden="true">›</span></button>;
+function SettingsRow({
+  icon,
+  label,
+  value,
+  onClick,
+}: {
+  icon: ReactNode;
+  label: string;
+  value?: string;
+  onClick: () => void;
+}) {
+  return (
+    <button type="button" aria-label={label} className="table-kit-settings-row" onClick={onClick}>
+      {icon}
+      <span>{label}</span>
+      {value && <strong>{value}</strong>}
+      <span aria-hidden="true">›</span>
+    </button>
+  );
 }
 
-function ChoiceRow({ icon, label, selected, onClick }: { icon?: ReactNode; label: string; selected: boolean; onClick?: () => void }) {
-  return <button type="button" role="radio" aria-checked={selected} className="table-kit-settings-choice" onClick={onClick}>{icon}<span>{label}</span><span aria-hidden="true">{selected ? "✓" : ""}</span></button>;
+function ChoiceRow({
+  icon,
+  label,
+  selected,
+  onClick,
+}: {
+  icon?: ReactNode;
+  label: string;
+  selected: boolean;
+  onClick?: () => void;
+}) {
+  return (
+    <button type="button" role="radio" aria-checked={selected} className="table-kit-settings-choice" onClick={onClick}>
+      {icon}
+      <span>{label}</span>
+      <span aria-hidden="true">{selected ? "✓" : ""}</span>
+    </button>
+  );
 }

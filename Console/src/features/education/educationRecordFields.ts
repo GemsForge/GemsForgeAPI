@@ -14,12 +14,20 @@ export function educationEditableFields(
     .filter((field) => field.name !== "id")
     .map((field) => ({
       label: field.label,
-      value: field.name === "locationAddressID" ? record.address?.id ?? record.locationAddressID ?? null : record[field.name],
-      inputType: field.options ? "select" : field.multiline ? "longText" : field.type ?? "text",
+      value:
+        field.name === "locationAddressID"
+          ? (record.address?.id ?? record.locationAddressID ?? null)
+          : record[field.name],
+      inputType: field.options ? "select" : field.multiline ? "longText" : (field.type ?? "text"),
       primitive: field.primitive === "text" ? undefined : field.primitive,
-      options: field.options ? withCurrentRecordOption(field.options,
-        field.name === "locationAddressID" ? record.address?.id ?? record.locationAddressID : record[field.name] as string | null,
-      ) : undefined,
+      options: field.options
+        ? withCurrentRecordOption(
+            field.options,
+            field.name === "locationAddressID"
+              ? (record.address?.id ?? record.locationAddressID)
+              : (record[field.name] as string | null),
+          )
+        : undefined,
       required: field.required,
       nullable: !field.required,
       className: field.name === "notes" ? "record-notes" : undefined,

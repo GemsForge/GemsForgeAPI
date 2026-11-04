@@ -34,8 +34,17 @@ describe("TransactionCreateForm", () => {
     fireEvent.keyDown(screen.getByRole("option", { name: "Shop", hidden: true }), { key: "Enter" });
     fireEvent.click(screen.getByRole("button", { name: "Create record" }));
 
-    await waitFor(() => expect(onCreate).toHaveBeenCalledWith(expect.objectContaining({
-      id: "TX-1", item: "Coffee", categoryID: 3, merchantCode: "SHOP", firstReceiptItem: true, paidPrice: 1.25,
-    })));
+    await waitFor(() =>
+      expect(onCreate).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: "TX-1",
+          item: "Coffee",
+          categoryID: 3,
+          merchantCode: "SHOP",
+          firstReceiptItem: true,
+          paidPrice: 1.25,
+        }),
+      ),
+    );
   });
 });

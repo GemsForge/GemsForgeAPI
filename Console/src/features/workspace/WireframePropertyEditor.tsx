@@ -1,4 +1,12 @@
-import { createContext, useContext, useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type ReactNode,
+} from "react";
 import { createPortal } from "react-dom";
 import { SizableText, Theme, type TamaguiElement } from "tamagui";
 import { getPropertyIconByName } from "./propertyIcons";
@@ -12,9 +20,11 @@ export const WireframePropertyIconContext = createContext<((propertyID: string, 
 
 export function keepDialogTabFocus(event: ReactKeyboardEvent<HTMLElement>, dialog: HTMLElement) {
   if (event.key !== "Tab") return;
-  const focusable = [...dialog.querySelectorAll<HTMLElement>(
-    'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
-  )].filter((element) => element.getAttribute("aria-hidden") !== "true");
+  const focusable = [
+    ...dialog.querySelectorAll<HTMLElement>(
+      'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+    ),
+  ].filter((element) => element.getAttribute("aria-hidden") !== "true");
   if (focusable.length === 0) {
     event.preventDefault();
     dialog.focus();
@@ -31,7 +41,13 @@ export function keepDialogTabFocus(event: ReactKeyboardEvent<HTMLElement>, dialo
   }
 }
 
-export function WireframePropertyIconProvider({ children, onSave }: { children: ReactNode; onSave: (propertyID: string, icon: string) => void }) {
+export function WireframePropertyIconProvider({
+  children,
+  onSave,
+}: {
+  children: ReactNode;
+  onSave: (propertyID: string, icon: string) => void;
+}) {
   return <WireframePropertyIconContext.Provider value={onSave}>{children}</WireframePropertyIconContext.Provider>;
 }
 
@@ -69,6 +85,7 @@ export function WireframePropertyEditor({
 
   useEffect(() => {
     if (!open) return;
+    const triggerElement = triggerRef.current;
     dialogRef.current?.querySelector<HTMLInputElement>("input")?.focus();
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape" && !event.defaultPrevented) {
@@ -79,16 +96,31 @@ export function WireframePropertyEditor({
     document.addEventListener("keydown", handleKeyDown);
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
-      if (triggerRef.current?.isConnected) triggerRef.current.focus();
+      if (triggerElement?.isConnected) triggerElement.focus();
     };
   }, [open]);
 
   return (
     <>
-      <GemButton ref={triggerRef} type="button" variant="quiet" tone="secondary" className="wireframe-property-details-trigger" aria-label={`Edit ${label} property`} aria-haspopup="dialog" aria-expanded={open} onClick={() => setOpen(true)}>
-        {(() => { const Icon = getPropertyIconByName(icon).icon; return <Icon size={13} strokeWidth={2} />; })()}
+      <GemButton
+        ref={triggerRef}
+        type="button"
+        variant="quiet"
+        tone="secondary"
+        className="wireframe-property-details-trigger"
+        aria-label={`Edit ${label} property`}
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        onClick={() => setOpen(true)}
+      >
+        {(() => {
+          const Icon = getPropertyIconByName(icon).icon;
+          return <Icon size={13} strokeWidth={2} />;
+        })()}
       </GemButton>
-      <GemCaption className="wireframe-inspector-label" fontWeight="700">{label}</GemCaption>
+      <GemCaption className="wireframe-inspector-label" fontWeight="700">
+        {label}
+      </GemCaption>
       {open && typeof document !== "undefined"
         ? createPortal(
             <Theme name="light">
@@ -108,13 +140,61 @@ export function WireframePropertyEditor({
                   tabIndex={-1}
                   onKeyDown={(event) => keepDialogTabFocus(event, event.currentTarget)}
                 >
-                  <GemButton type="button" variant="quiet" tone="secondary" aria-label="Close property editor" onClick={() => setOpen(false)}>×</GemButton>
-                  <SizableText className="wireframe-property-dialog-title" size="$3" fontWeight="700" role="heading" aria-level={2}>Edit property</SizableText>
-                  <div className="wireframe-property-details-preview"><strong>Current value</strong><p>{value || "No value recorded."}</p></div>
-                  <GemTextField label="Property name" value={name} readOnly={/^(id|item id|record id|primary key)$/i.test(label.trim())} onChange={(event) => setName(event.currentTarget.value)} />
-                  <GSelectField label="Primitive type" value={type} options={[...new Set([...WIREFRAME_PROPERTY_TYPES, type])].map((item) => ({ value: item, label: item }))} onChange={setType} wireframe />
-                  <fieldset className="wireframe-property-icon-fieldset"><legend>Icon</legend><PropertyIconPicker value={icon} onChange={setIcon} /></fieldset>
-                  <div className="wireframe-property-details-actions"><GemButton type="button" variant="outlined" aria-label="Save property settings" onClick={() => { if (propertyID) savePropertyIcon?.(propertyID, icon); setOpen(false); }}>Save</GemButton></div>
+                  <GemButton
+                    type="button"
+                    variant="quiet"
+                    tone="secondary"
+                    aria-label="Close property editor"
+                    onClick={() => setOpen(false)}
+                  >
+                    ×
+                  </GemButton>
+                  <SizableText
+                    className="wireframe-property-dialog-title"
+                    size="$3"
+                    fontWeight="700"
+                    role="heading"
+                    aria-level={2}
+                  >
+                    Edit property
+                  </SizableText>
+                  <div className="wireframe-property-details-preview">
+                    <strong>Current value</strong>
+                    <p>{value || "No value recorded."}</p>
+                  </div>
+                  <GemTextField
+                    label="Property name"
+                    value={name}
+                    readOnly={/^(id|item id|record id|primary key)$/i.test(label.trim())}
+                    onChange={(event) => setName(event.currentTarget.value)}
+                  />
+                  <GSelectField
+                    label="Primitive type"
+                    value={type}
+                    options={[...new Set([...WIREFRAME_PROPERTY_TYPES, type])].map((item) => ({
+                      value: item,
+                      label: item,
+                    }))}
+                    onChange={setType}
+                    wireframe
+                  />
+                  <fieldset className="wireframe-property-icon-fieldset">
+                    <legend>Icon</legend>
+                    <PropertyIconPicker value={icon} onChange={setIcon} />
+                  </fieldset>
+                  <div className="wireframe-property-details-actions">
+                    <GemButton
+                      type="button"
+                      variant="outlined"
+                      aria-label="Save property settings"
+                      onClick={() => {
+                        if (propertyID) savePropertyIcon?.(propertyID, icon);
+                        setOpen(false);
+                      }}
+                    >
+                      Save
+                    </GemButton>
+                  </div>
                 </section>
               </div>
             </Theme>,

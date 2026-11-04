@@ -146,7 +146,14 @@ export function NewRecordUtility({
                   {activeDescription}
                 </SizableText>
               </div>
-              <GemButton type="button" size="xs" tone="secondary" variant="quiet" aria-label="Close new record utility" onClick={() => setOpen(false)}>
+              <GemButton
+                type="button"
+                size="xs"
+                tone="secondary"
+                variant="quiet"
+                aria-label="Close new record utility"
+                onClick={() => setOpen(false)}
+              >
                 ×
               </GemButton>
             </div>

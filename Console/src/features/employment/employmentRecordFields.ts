@@ -1,4 +1,8 @@
-import { formatRecordDate, formatRecordTimestamp, type EditableRecordField } from "../../components/EditableRecordFields";
+import {
+  formatRecordDate,
+  formatRecordTimestamp,
+  type EditableRecordField,
+} from "../../components/EditableRecordFields";
 import type { Employment } from "../../types";
 import type { EmploymentFieldDefinition } from "./employmentCreateFields";
 import { withCurrentRecordOption } from "../../components/recordFieldOptions";
@@ -11,23 +15,33 @@ export function employmentEditableFields(
   onPatch: (values: Partial<Employment>) => Promise<void>,
 ): EditableRecordField[] {
   return [
-    ...definitions.filter((field) => field.name !== "id").map((field): EditableRecordField => ({
-      label: field.label,
-      value: field.name === "workAddressID" ? record.address?.id ?? record.workAddressID ?? null : record[field.name],
-      inputType: field.options ? "select" : field.multiline ? "longText" : field.type ?? "text",
-      primitive: field.name === "employmentStatus" ? "status" : undefined,
-      options: field.options ? withCurrentRecordOption(field.options,
-        field.name === "workAddressID" ? record.address?.id ?? record.workAddressID : record[field.name] as string | null,
-      ) : undefined,
-      required: field.required,
-      nullable: !field.required,
-      className: field.name === "notes" ? "record-notes" : undefined,
-      displayValue: field.type === "date" ? formatRecordDate(record[field.name] as string | null)
-        : field.name === "workAddressID"
-          ? formatAddress(record.address)
+    ...definitions
+      .filter((field) => field.name !== "id")
+      .map((field): EditableRecordField => ({
+        label: field.label,
+        value:
+          field.name === "workAddressID" ? (record.address?.id ?? record.workAddressID ?? null) : record[field.name],
+        inputType: field.options ? "select" : field.multiline ? "longText" : (field.type ?? "text"),
+        primitive: field.name === "employmentStatus" ? "status" : undefined,
+        options: field.options
+          ? withCurrentRecordOption(
+              field.options,
+              field.name === "workAddressID"
+                ? (record.address?.id ?? record.workAddressID)
+                : (record[field.name] as string | null),
+            )
           : undefined,
-      onSave: async (value) => onPatch({ [field.name]: value } as Partial<Employment>),
-    })),
+        required: field.required,
+        nullable: !field.required,
+        className: field.name === "notes" ? "record-notes" : undefined,
+        displayValue:
+          field.type === "date"
+            ? formatRecordDate(record[field.name] as string | null)
+            : field.name === "workAddressID"
+              ? formatAddress(record.address)
+              : undefined,
+        onSave: async (value) => onPatch({ [field.name]: value } as Partial<Employment>),
+      })),
     {
       label: "Last updated",
       value: record.updatedAt ?? null,

@@ -772,7 +772,9 @@
     min-width: 0;
   }
 
-  .wireframe-demo.wireframe-standalone .demo-toolbar .record-utilities-search-controls:has(.record-utilities-search-field) {
+  .wireframe-demo.wireframe-standalone
+    .demo-toolbar
+    .record-utilities-search-controls:has(.record-utilities-search-field) {
     grid-column: 1 / 3;
     grid-row: 2;
   }
