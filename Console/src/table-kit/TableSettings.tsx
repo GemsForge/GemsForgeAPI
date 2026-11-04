@@ -22,6 +22,7 @@ export interface TableSettingsMenuProps {
   onViewChange: (viewId: TableViewId) => void;
   properties?: readonly TablePropertyOption[];
   propertyConfiguration?: TablePropertyConfigurationState;
+  maxVisibleProperties?: number;
   sort?: string;
   sortOptions?: readonly { value: string; label: string }[];
   onSort?: (value: string) => void;
@@ -54,6 +55,7 @@ export function TableSettingsMenu({
   onViewChange,
   properties,
   propertyConfiguration,
+  maxVisibleProperties,
   sort = "",
   sortOptions = [],
   onSort,
@@ -267,6 +269,7 @@ export function TableSettingsMenu({
                     properties={properties}
                     configuration={propertyConfiguration}
                     label="Property visibility"
+                    maxVisibleProperties={maxVisibleProperties}
                     wireframe
                     inline
                   />

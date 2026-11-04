@@ -85,7 +85,7 @@ describe("Table Kit record renderers", () => {
     expect(screen.getByText("Service")).toBeInTheDocument();
   });
 
-  it("keeps the established three-property summary in the list view", () => {
+  it("renders up to five configured properties in the list view", () => {
     const allProperties = Array.from({ length: 7 }, (_, index) => ({
       id: `property-${index}`,
       label: `Property ${index}`,
@@ -93,8 +93,23 @@ describe("Table Kit record renderers", () => {
     }));
     renderWithTheme(<RecordList records={records} properties={allProperties} />);
 
-    expect(screen.getByText("value-2")).toBeInTheDocument();
-    expect(screen.queryByText("value-3")).not.toBeInTheDocument();
+    expect(screen.getByText("value-4")).toBeInTheDocument();
+    expect(screen.queryByText("value-5")).not.toBeInTheDocument();
+  });
+
+  it("renders only properties selected by the visibility configuration", () => {
+    const allProperties = Array.from({ length: 7 }, (_, index) => ({
+      id: `property-${index}`,
+      label: `Property ${index}`,
+      getValue: () => ({ display: `value-${index}` }),
+    }));
+    renderWithTheme(
+      <RecordList records={records} properties={allProperties} propertyIds={["property-1", "property-4"]} />,
+    );
+
+    expect(screen.getByText("value-1")).toBeInTheDocument();
+    expect(screen.getByText("value-4")).toBeInTheDocument();
+    expect(screen.queryByText("value-0")).not.toBeInTheDocument();
   });
 
   it("opens a Tamagui list item on single click without selecting it", async () => {

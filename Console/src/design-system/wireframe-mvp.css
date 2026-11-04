@@ -235,21 +235,27 @@
 }
 
 .wireframe-demo.wireframe-standalone .table-kit-list-row-content {
-  gap: 1rem;
+  display: grid;
+  grid-template-columns: minmax(8rem, 1fr) minmax(0, 2.2fr);
+  gap: 0.75rem;
   font-size: 0.875rem !important;
 }
 
 .wireframe-demo.wireframe-standalone .table-kit-list-row-title {
-  flex: 1 1 12rem;
   min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   color: var(--gem-wireframe-heading);
   font-size: 0.875rem;
   font-weight: 650;
 }
 
 .wireframe-demo.wireframe-standalone .table-kit-list-row-properties {
-  flex: 0 1 52%;
-  gap: 0.85rem;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  min-width: 0;
+  gap: 0.5rem;
   color: var(--gem-wireframe-muted);
   font-size: 0.75rem;
 }
@@ -684,23 +690,21 @@
   }
 
   .wireframe-demo.wireframe-standalone .table-kit-list-row-content {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 0.25rem;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+    gap: 0.35rem;
   }
 
   .wireframe-demo.wireframe-standalone .table-kit-list-row-title {
-    flex-basis: auto;
     width: 100%;
     font-size: 0.8125rem;
   }
 
   .wireframe-demo.wireframe-standalone .table-kit-list-row-properties {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     width: 100%;
-    flex-basis: auto;
-    justify-content: flex-start;
-    flex-wrap: wrap;
-    gap: 0.25rem 0.65rem;
+    justify-content: stretch;
+    gap: 0.25rem 0.5rem;
   }
 
   .wireframe-demo.wireframe-standalone .table-kit-list-row-properties > span {

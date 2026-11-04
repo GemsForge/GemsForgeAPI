@@ -761,6 +761,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
               onViewChange={setView}
               properties={propertyOptions}
               propertyConfiguration={propertyConfiguration}
+              maxVisibleProperties={view === "list" ? 5 : undefined}
               sort={sort}
               onSort={(value) => {
                 setSort(value);

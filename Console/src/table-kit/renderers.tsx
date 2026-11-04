@@ -142,7 +142,7 @@ function listPropertiesFor<Record>(
     const searchable = `${property.id} ${property.label}`.toLowerCase();
     return property.kind === "status" || /(amount|price|total|cost|rate|balance|status)/.test(searchable);
   });
-  return [...priority, ...candidates.filter((property) => !priority.includes(property))].slice(0, 3);
+  return [...priority, ...candidates.filter((property) => !priority.includes(property))].slice(0, 5);
 }
 
 function propertyValue<Record>(
@@ -349,7 +349,7 @@ export function RecordList<Record>({
                     )}
                   </span>
                   <span className="table-kit-list-row-properties">
-                    {editableProperties.slice(0, 3).map((property) => {
+                    {editableProperties.slice(0, 5).map((property) => {
                       const edit = property.edit;
                       const rawValue = propertyValue(property, record).raw;
                       const value = typeof rawValue === "string" || typeof rawValue === "number" ? rawValue : null;
