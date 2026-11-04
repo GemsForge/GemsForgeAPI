@@ -287,6 +287,27 @@ export interface LocalDatabaseCreationResult {
   status: string;
 }
 
+export interface LocalDatabaseSummary {
+  databaseName: string;
+  fileSizeBytes: number;
+}
+
+export interface TrashEntry {
+  entryID: string;
+  tableName: string;
+  recordID: string;
+  title: string;
+  snapshot: string;
+  trashedAt: string | null;
+}
+
+export interface TrashEntryInput {
+  tableName: string;
+  recordID: string;
+  title: string;
+  snapshot: string;
+}
+
 export interface LiveSchemaColumn {
   name: string;
   dataType: string;

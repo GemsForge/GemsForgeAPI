@@ -78,6 +78,49 @@ describe("standardized API failures", () => {
 });
 
 describe("resource create contracts", () => {
+  it("uses the Hub-scoped archive lifecycle routes", async () => {
+    const archived = {
+      entryID: "entry-1",
+      tableName: "Education",
+      recordID: "EDU-1",
+      title: "School",
+      snapshot: '{"id":"EDU-1"}',
+      trashedAt: null,
+    };
+    const fetch = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify(archived)))
+      .mockResolvedValueOnce(new Response(null, { status: 204 }))
+      .mockResolvedValueOnce(new Response(null, { status: 204 }));
+    vi.stubGlobal("fetch", fetch);
+
+    await expect(
+      api.archiveRecord({
+        tableName: "Education",
+        recordID: "EDU-1",
+        title: "School",
+        snapshot: '{"id":"EDU-1"}',
+      }),
+    ).resolves.toEqual(archived);
+    await api.restoreTrashEntry("entry-1");
+    await api.permanentlyDeleteTrashEntry("entry-1");
+
+    expect(fetch.mock.calls.map(([path, options]) => [path, options?.method])).toEqual([
+      ["/trash", "POST"],
+      ["/trash/entry-1/restore", "POST"],
+      ["/trash/entry-1", "DELETE"],
+    ]);
+  });
+
+  it("lists safe local database summaries without exposing filesystem paths", async () => {
+    const fetch = vi
+      .fn()
+      .mockResolvedValue(new Response(JSON.stringify([{ databaseName: "Dev.sqlite", fileSizeBytes: 42 }])));
+    vi.stubGlobal("fetch", fetch);
+    await expect(api.getLocalDatabases()).resolves.toEqual([{ databaseName: "Dev.sqlite", fileSizeBytes: 42 }]);
+    expect(fetch.mock.calls[0][0]).toBe("/local-databases");
+  });
+
   it("posts only the explicit resource payload to each create route", async () => {
     const fetch = vi
       .fn()

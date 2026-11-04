@@ -96,6 +96,43 @@ const WorkspaceView = lazy(() =>
 const WireframeDemoView = lazy(() =>
   import("../features/workspace/WireframeDemoView").then((module) => ({ default: module.WireframeDemoView })),
 );
+const WireframeHomePage = lazy(() =>
+  import("../features/workspace/WireframeSystemPages").then((module) => ({ default: module.WireframeHomePage })),
+);
+const WireframeDatabasesPage = lazy(() =>
+  import("../features/workspace/WireframeSystemPages").then((module) => ({ default: module.WireframeDatabasesPage })),
+);
+const WireframeSettingsPage = lazy(() =>
+  import("../features/workspace/WireframeSystemPages").then((module) => ({ default: module.WireframeSettingsPage })),
+);
+const WireframeTrashPage = lazy(() =>
+  import("../features/workspace/WireframeSystemPages").then((module) => ({ default: module.WireframeTrashPage })),
+);
+const WireframeDomainsPage = lazy(() =>
+  import("../features/workspace/WireframeMvpWorkflowPages").then((module) => ({
+    default: module.WireframeDomainsPage,
+  })),
+);
+const WireframeForgeKeeperPage = lazy(() =>
+  import("../features/workspace/WireframeMvpWorkflowPages").then((module) => ({
+    default: module.WireframeForgeKeeperPage,
+  })),
+);
+const WireframeLocalDatabaseCreationPage = lazy(() =>
+  import("../features/workspace/WireframeMvpWorkflowPages").then((module) => ({
+    default: module.WireframeLocalDatabaseCreationPage,
+  })),
+);
+const WireframeSchemaBuilderPage = lazy(() =>
+  import("../features/workspace/WireframeMvpWorkflowPages").then((module) => ({
+    default: module.WireframeSchemaBuilderPage,
+  })),
+);
+const WireframeLiveDatabasePage = lazy(() =>
+  import("../features/workspace/WireframeMvpWorkflowPages").then((module) => ({
+    default: module.WireframeLiveDatabasePage,
+  })),
+);
 
 type Notifications = { onError: (error: unknown) => void; onSuccess: (message: string) => void };
 
@@ -351,6 +388,17 @@ export function AppRoutes() {
             </LocalSession>
           }
         >
+          <Route path="home-wireframe" element={<WireframeHomePage />} />
+          <Route path="local-databases-wireframe" element={<WireframeDatabasesPage />} />
+          <Route path="application-settings-wireframe" element={<WireframeSettingsPage />} />
+          <Route path="trash-wireframe" element={<WireframeTrashPage />} />
+          <Route path="domains-wireframe" element={<WireframeDomainsPage />} />
+          <Route path="forgekeeper-wireframe" element={<WireframeForgeKeeperPage kind="roots" />} />
+          <Route path="forgekeeper-wireframe/domain/:domainID" element={<WireframeForgeKeeperPage kind="domain" />} />
+          <Route path="forgekeeper-wireframe/:pageID/children" element={<WireframeForgeKeeperPage kind="children" />} />
+          <Route path="local-database-wireframe" element={<WireframeLocalDatabaseCreationPage />} />
+          <Route path="schema-builder-wireframe" element={<WireframeSchemaBuilderPage />} />
+          <Route path="live-database-wireframe" element={<WireframeLiveDatabasePage />} />
           <Route path="education-wireframe/*" element={<EducationWireframe />} />
           <Route path="employment-wireframe/*" element={<EmploymentWireframe />} />
           <Route path="addresses-wireframe/*" element={<AddressesWireframe />} />

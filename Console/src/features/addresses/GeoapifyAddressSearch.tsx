@@ -17,7 +17,7 @@ export interface GeoapifyAddress {
 }
 
 export interface GeoapifySuggestion {
-  properties: GeoapifyAddress;
+  properties?: GeoapifyAddress;
 }
 
 export interface GeoapifySearchClient {
@@ -47,6 +47,34 @@ export function addressValuesFromGeoapify(properties: GeoapifyAddress): AddressS
   };
 }
 
+function normalizeGeoapifySuggestion(value: unknown): GeoapifySuggestion | null {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) return null;
+
+  const result = value as Record<string, unknown>;
+  const candidate = result.properties ?? result;
+  if (typeof candidate !== "object" || candidate === null || Array.isArray(candidate)) return null;
+
+  const properties = candidate as Record<string, unknown>;
+  const hasAddressLabel = [
+    properties.formatted,
+    properties.address_line1,
+    properties.housenumber,
+    properties.street,
+    properties.city,
+  ].some((field) => typeof field === "string" && field.trim().length > 0);
+
+  return hasAddressLabel ? { properties: properties as GeoapifyAddress } : null;
+}
+
+function normalizeGeoapifySuggestions(value: unknown): GeoapifySuggestion[] {
+  return Array.isArray(value)
+    ? value.flatMap((item) => {
+        const suggestion = normalizeGeoapifySuggestion(item);
+        return suggestion ? [suggestion] : [];
+      })
+    : [];
+}
+
 export function createGeoapifySearchClient(
   apiKey = import.meta.env.VITE_GEOAPIFY_API_KEY,
   request: typeof fetch = fetch,
@@ -64,14 +92,15 @@ export function createGeoapifySearchClient(
       if (!response.ok)
         throw new Error("Address search is temporarily unavailable. You can enter the address manually.");
 
-      const payload = (await response.json()) as { results?: GeoapifySuggestion[] };
-      return Array.isArray(payload.results) ? payload.results : [];
+      const payload = (await response.json()) as { results?: unknown };
+      return normalizeGeoapifySuggestions(payload.results);
     },
   };
 }
 
 function suggestionLabel(suggestion: GeoapifySuggestion): string {
-  const { properties } = suggestion;
+  const properties = suggestion.properties;
+  if (!properties) return "";
   return (
     properties.formatted ||
     properties.address_line1 ||
@@ -115,7 +144,7 @@ export function GeoapifyAddressSearch({
         const search = client ?? createGeoapifySearchClient(apiKey);
         const results = await search.autocomplete(value, controller.signal);
         if (active) {
-          setSuggestions(results);
+          setSuggestions(normalizeGeoapifySuggestions(results));
           setHasSearched(true);
         }
       } catch (cause) {
@@ -138,8 +167,10 @@ export function GeoapifyAddressSearch({
   }, [apiKey, client, enabled, query, selectedLabel]);
 
   function choose(suggestion: GeoapifySuggestion) {
-    onSelect(addressValuesFromGeoapify(suggestion.properties));
-    const label = suggestionLabel(suggestion);
+    const normalized = normalizeGeoapifySuggestion(suggestion);
+    if (!normalized?.properties) return;
+    onSelect(addressValuesFromGeoapify(normalized.properties));
+    const label = suggestionLabel(normalized);
     setSelectedLabel(label);
     setQuery(label);
     setSuggestions([]);
@@ -151,8 +182,8 @@ export function GeoapifyAddressSearch({
   }
 
   const resultAttributions = [
-    ...new Set(suggestions.map((item) => item.properties.datasource?.attribution).filter(Boolean)),
-  ];
+    ...new Set(suggestions.map((item) => item.properties?.datasource?.attribution).filter(Boolean)),
+  ].filter((attribution) => attribution?.trim() !== "© OpenStreetMap contributors");
 
   return (
     <section className="address-search-section" aria-label="Address search">
@@ -178,6 +209,7 @@ export function GeoapifyAddressSearch({
         <ul className="address-search-results" aria-label="Address suggestions">
           {suggestions.map((suggestion, index) => {
             const label = suggestionLabel(suggestion);
+            if (!label) return null;
             return (
               <li key={`${label}-${index}`}>
                 <button type="button" className="secondary-button" onClick={() => choose(suggestion)}>

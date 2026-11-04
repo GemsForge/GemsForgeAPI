@@ -1,11 +1,12 @@
 import { NavLink } from "react-router-dom";
+import { Boxes, House, Network, ShieldCheck } from "lucide-react";
 import { GemButton } from "@gemsforge/ui";
 
 const primaryNavigation = [
-  { label: "Home", icon: "⌂", to: "/" },
-  { label: "Workspace", icon: "✦", to: "/workspace" },
-  { label: "Domains", icon: "◇", to: "/domains" },
-  { label: "ForgeKeeper", icon: "⌁", to: "/forgekeeper" },
+  { label: "Home", icon: House, to: "/home-wireframe" },
+  { label: "Workspace", icon: Boxes, to: "/workspace" },
+  { label: "Domains", icon: Network, to: "/domains-wireframe" },
+  { label: "ForgeKeeper", icon: ShieldCheck, to: "/forgekeeper-wireframe" },
 ] as const;
 
 export function WireframePrimaryLinks({ search }: { search: string }) {
@@ -16,10 +17,10 @@ export function WireframePrimaryLinks({ search }: { search: string }) {
     <nav aria-label="Primary navigation" className="demo-nav">
       {visibleLinks.map((item) => (
         <GemButton asChild variant="quiet" tone="secondary" className="wireframe-primary-link" key={item.label}>
-          <NavLink to={item.to} end={item.to === "/"}>
+          <NavLink to={item.to} end={item.label === "Home"} title={item.label} aria-label={item.label}>
             <span className="wireframe-primary-link-name">
-              <span aria-hidden="true">{item.icon}</span>
-              {item.label}
+              <item.icon size={17} aria-hidden="true" />
+              <span className="wireframe-navigation-label">{item.label}</span>
             </span>
           </NavLink>
         </GemButton>

@@ -55,6 +55,7 @@ enum EntryPoint {
         registerForgeKeeperRoutes(app)
         registerTableViewRoutes(app)
         registerRecordPresentationRoutes(app)
+        registerTrashRoutes(app)
         registerGemHueRoutes(app, imageConfiguration: imageConfiguration)
         registerHomeInventoryRoutes(app)
         registerHomeInventoryCSVRoutes(app)

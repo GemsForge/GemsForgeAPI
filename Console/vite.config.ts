@@ -43,6 +43,7 @@ export default defineConfig(({ mode }) => {
       environment: "jsdom",
       setupFiles: "./src/test/setup.ts",
       globals: true,
+      maxWorkers: 2,
     },
     server: {
       // Use the same explicit loopback address as GemLifeHost. Resolving
@@ -64,6 +65,7 @@ export default defineConfig(({ mode }) => {
           "/file-metadata",
           "/file-uploads",
           "/record-presentations",
+          "/trash",
           "/table-views",
           "/forgekeeper",
           "/gemhues",

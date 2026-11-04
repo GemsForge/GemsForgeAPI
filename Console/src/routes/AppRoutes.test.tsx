@@ -99,6 +99,152 @@ describe("Gem Life navigation", () => {
     expect(screen.queryByRole("complementary", { name: "Record inspector" })).not.toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Gem Life Console" })).not.toBeInTheDocument();
   });
+  it("renders the wireframe home from live collection counts", async () => {
+    vi.spyOn(api, "listRootPages").mockResolvedValue([]);
+    vi.spyOn(api, "listEducation").mockResolvedValue([]);
+    vi.spyOn(api, "listEmployment").mockResolvedValue([]);
+    vi.spyOn(api, "listAddresses").mockResolvedValue([]);
+    vi.spyOn(api, "listTransactions").mockResolvedValue([]);
+    vi.spyOn(api, "listGemHues").mockResolvedValue([]);
+    vi.spyOn(api, "listServiceAccounts").mockResolvedValue([]);
+    setup("/home-wireframe");
+
+    expect(await screen.findByRole("heading", { name: "Home" })).toBeInTheDocument();
+    expect(
+      screen
+        .getAllByRole("link", { name: /Education/ })
+        .some((link) => link.getAttribute("href") === "/education-wireframe"),
+    ).toBe(true);
+    expect(screen.getByRole("link", { name: /Local Databases/ })).toHaveAttribute("href", "/local-databases-wireframe");
+  });
+  it("renders the wireframe domain catalog with ForgeKeeper destinations", async () => {
+    setup("/domains-wireframe");
+
+    expect(await screen.findByRole("heading", { name: "Domains" })).toBeInTheDocument();
+    expect(await screen.findByRole("link", { name: "Open ForgeKeeper pages in Life domain" })).toHaveAttribute(
+      "href",
+      "/forgekeeper-wireframe/domain/Life",
+    );
+  });
+  it("renders root ForgeKeeper pages inside the wireframe workspace", async () => {
+    vi.spyOn(api, "listRootPages").mockResolvedValue([
+      { id: 7, parentID: null, domainID: "Life", title: "Family plan", description: "Shared priorities" },
+    ]);
+    setup("/forgekeeper-wireframe");
+
+    expect(await screen.findByRole("heading", { name: "ForgeKeeper" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Family plan" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Life domain" })).toHaveAttribute(
+      "href",
+      "/forgekeeper-wireframe/domain/Life",
+    );
+  });
+  it("renders the wireframe list of safe local databases", async () => {
+    vi.spyOn(api, "getLocalDatabases").mockResolvedValue([{ databaseName: "GemLife_Dev.sqlite", fileSizeBytes: 2048 }]);
+    vi.spyOn(api, "listEducation").mockResolvedValue([]);
+    vi.spyOn(api, "listEmployment").mockResolvedValue([]);
+    vi.spyOn(api, "listAddresses").mockResolvedValue([]);
+    vi.spyOn(api, "listTransactions").mockResolvedValue([]);
+    vi.spyOn(api, "listGemHues").mockResolvedValue([]);
+    vi.spyOn(api, "listServiceAccounts").mockResolvedValue([]);
+    setup("/local-databases-wireframe");
+
+    expect(await screen.findByRole("heading", { name: "Local Databases" })).toBeInTheDocument();
+    expect(await screen.findByText("GemLife_Dev.sqlite")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Create database" })).toHaveAttribute("href", "/local-database-wireframe");
+  });
+  it("renders archived records and restores them from the Trash wireframe", async () => {
+    const archived = {
+      entryID: "trash-entry-1",
+      tableName: "Education",
+      recordID: "EDU-001",
+      title: "Northview School",
+      snapshot: '{"id":"EDU-001","schoolName":"Northview"}',
+      trashedAt: "2026-11-04T12:00:00Z",
+    };
+    vi.spyOn(api, "listTrash").mockResolvedValue([archived]);
+    const restore = vi.spyOn(api, "restoreTrashEntry").mockResolvedValue(undefined);
+    vi.spyOn(api, "listEducation").mockResolvedValue([]);
+    vi.spyOn(api, "listEmployment").mockResolvedValue([]);
+    vi.spyOn(api, "listAddresses").mockResolvedValue([]);
+    vi.spyOn(api, "listTransactions").mockResolvedValue([]);
+    vi.spyOn(api, "listGemHues").mockResolvedValue([]);
+    vi.spyOn(api, "listServiceAccounts").mockResolvedValue([]);
+    setup("/trash-wireframe");
+
+    expect(await screen.findByRole("heading", { name: "Trash" })).toBeInTheDocument();
+    expect(await screen.findByText("1 record")).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Northview School" })).toBeInTheDocument();
+    expect(screen.getByText("Education · EDU-001")).toBeInTheDocument();
+    fireEvent.click(screen.getByText("Record details"));
+    expect(screen.getByText(archived.snapshot)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Restore" }));
+
+    await waitFor(() => expect(restore).toHaveBeenCalledWith("trash-entry-1"));
+    expect(screen.getByRole("heading", { name: "Northview School" })).toBeInTheDocument();
+  });
+  it("confirms permanent deletion and refreshes the Trash list", async () => {
+    const archived = {
+      entryID: "trash-entry-2",
+      tableName: "Addresses",
+      recordID: "ADDR-001",
+      title: "Harbor home",
+      snapshot: '{"id":"ADDR-001","city":"Boston"}',
+      trashedAt: null,
+    };
+    vi.spyOn(api, "listTrash").mockResolvedValueOnce([archived]).mockResolvedValue([]);
+    const permanentlyDelete = vi.spyOn(api, "permanentlyDeleteTrashEntry").mockResolvedValue(undefined);
+    const confirm = vi.spyOn(window, "confirm").mockReturnValue(true);
+    vi.spyOn(api, "listEducation").mockResolvedValue([]);
+    vi.spyOn(api, "listEmployment").mockResolvedValue([]);
+    vi.spyOn(api, "listAddresses").mockResolvedValue([]);
+    vi.spyOn(api, "listTransactions").mockResolvedValue([]);
+    vi.spyOn(api, "listGemHues").mockResolvedValue([]);
+    vi.spyOn(api, "listServiceAccounts").mockResolvedValue([]);
+    setup("/trash-wireframe");
+
+    fireEvent.click(await screen.findByRole("button", { name: "Delete permanently" }));
+
+    await waitFor(() => expect(permanentlyDelete).toHaveBeenCalledWith("trash-entry-2"));
+    expect(confirm).toHaveBeenCalledWith("Permanently delete “Harbor home”? This cannot be undone.");
+    expect(await screen.findByText("Trash is empty")).toBeInTheDocument();
+  });
+  it("routes application settings tools to their dedicated wireframe pages", async () => {
+    setup("/application-settings-wireframe");
+
+    expect(await screen.findByRole("heading", { name: "Application Settings" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Create database/ })).toHaveAttribute("href", "/local-database-wireframe");
+    expect(screen.getByRole("link", { name: /Schema Builder/ })).toHaveAttribute("href", "/schema-builder-wireframe");
+    expect(screen.getByRole("link", { name: /Live Database/ })).toHaveAttribute("href", "/live-database-wireframe");
+  });
+  it("renders the local database creation form in the wireframe shell", async () => {
+    vi.spyOn(api, "getLocalDatabaseCapabilities").mockResolvedValue({
+      enabled: true,
+      ready: true,
+      profiles: [{ id: "gem-life-development", name: "Development", migrations: ["CreateAddresses"] }],
+      safetyRules: ["Create a new file only."],
+    });
+    setup("/local-database-wireframe");
+
+    expect(await screen.findByRole("heading", { name: "Create local database" })).toBeInTheDocument();
+    expect(screen.getByRole("main", { name: "Wireframe screen" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "New SQLite database" })).toBeInTheDocument();
+  });
+  it("renders the Schema Builder in the wireframe shell", async () => {
+    setup("/schema-builder-wireframe");
+
+    expect(await screen.findByRole("heading", { name: "Schema Builder" })).toBeInTheDocument();
+    expect(screen.getByRole("main", { name: "Wireframe screen" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "New SQLite table" })).toBeInTheDocument();
+  });
+  it("renders Live Database migration tools in the wireframe shell", async () => {
+    setup("/live-database-wireframe");
+
+    expect(await screen.findByRole("heading", { name: "Live Database" })).toBeInTheDocument();
+    expect(screen.getByRole("main", { name: "Wireframe screen" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Apply the repository schema" })).toBeInTheDocument();
+  });
   it("closes mobile workspace navigation from the pane footer using header state", async () => {
     vi.spyOn(api, "listEducation").mockResolvedValue([]);
     setup("/education-wireframe");

@@ -4,9 +4,10 @@ import { GemEmptyState, GemSectionHeader, GemStatusPill } from "@gemsforge/ui";
 interface LocalDatabaseViewProps {
   onError: (error: unknown) => void;
   onSuccess: (message: string) => void;
+  showHeader?: boolean;
 }
 
-export function LocalDatabaseView({ onError, onSuccess }: LocalDatabaseViewProps) {
+export function LocalDatabaseView({ onError, onSuccess, showHeader = true }: LocalDatabaseViewProps) {
   const {
     capabilities,
     databaseName,
@@ -23,16 +24,18 @@ export function LocalDatabaseView({ onError, onSuccess }: LocalDatabaseViewProps
 
   return (
     <>
-      <GemSectionHeader
-        eyebrow="Developer tools"
-        title="Local Databases"
-        description="Create an isolated SQLite database for development and testing. The personal Gem Life database is never a browser target."
-        trailing={
-          <GemStatusPill tone={capabilities?.ready ? "success" : "warning"}>
-            {capabilities?.ready ? "Local creation ready" : "Creation disabled"}
-          </GemStatusPill>
-        }
-      />
+      {showHeader ? (
+        <GemSectionHeader
+          eyebrow="Developer tools"
+          title="Local Databases"
+          description="Create an isolated SQLite database for development and testing. The personal Gem Life database is never a browser target."
+          trailing={
+            <GemStatusPill tone={capabilities?.ready ? "success" : "warning"}>
+              {capabilities?.ready ? "Local creation ready" : "Creation disabled"}
+            </GemStatusPill>
+          }
+        />
+      ) : null}
 
       {!capabilities?.enabled || !capabilities.ready ? (
         <GemEmptyState

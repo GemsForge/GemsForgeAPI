@@ -85,7 +85,7 @@ describe("Table Kit record renderers", () => {
     expect(screen.getByText("Service")).toBeInTheDocument();
   });
 
-  it("keeps the established three-property summary in the list view", () => {
+  it("renders up to five configured properties in the list view", () => {
     const allProperties = Array.from({ length: 7 }, (_, index) => ({
       id: `property-${index}`,
       label: `Property ${index}`,
@@ -93,8 +93,23 @@ describe("Table Kit record renderers", () => {
     }));
     renderWithTheme(<RecordList records={records} properties={allProperties} />);
 
-    expect(screen.getByText("value-2")).toBeInTheDocument();
-    expect(screen.queryByText("value-3")).not.toBeInTheDocument();
+    expect(screen.getByText("value-4")).toBeInTheDocument();
+    expect(screen.queryByText("value-5")).not.toBeInTheDocument();
+  });
+
+  it("renders only properties selected by the visibility configuration", () => {
+    const allProperties = Array.from({ length: 7 }, (_, index) => ({
+      id: `property-${index}`,
+      label: `Property ${index}`,
+      getValue: () => ({ display: `value-${index}` }),
+    }));
+    renderWithTheme(
+      <RecordList records={records} properties={allProperties} propertyIds={["property-1", "property-4"]} />,
+    );
+
+    expect(screen.getByText("value-1")).toBeInTheDocument();
+    expect(screen.getByText("value-4")).toBeInTheDocument();
+    expect(screen.queryByText("value-0")).not.toBeInTheDocument();
   });
 
   it("opens a Tamagui list item on single click without selecting it", async () => {
@@ -193,6 +208,42 @@ describe("Table Kit record renderers", () => {
     expect(screen.getByText("value-5")).toBeInTheDocument();
     expect(screen.queryByText("value-6")).not.toBeInTheDocument();
     expect(screen.queryByText("value-7")).not.toBeInTheDocument();
+  });
+
+  it("shows per-card options and repositions an image when enabled", () => {
+    const galleryRecords = [records[0], { id: "2", source: { name: "Beta", kind: "Service" }, title: "Beta" }];
+    const onExpand = vi.fn();
+    const onSelect = vi.fn();
+    renderWithTheme(
+      <RecordGallery
+        records={galleryRecords}
+        properties={properties}
+        onExpansionChange={onExpand}
+        onRecordSelect={onSelect}
+      />,
+    );
+
+    const optionsButton = screen.getByRole("button", { name: "Card options for Alpha" });
+    fireEvent.click(optionsButton);
+
+    expect(screen.getByRole("group", { name: "Card options for Alpha" })).toBeInTheDocument();
+    const reposition = screen.getByRole("checkbox", { name: "Drag to reposition" });
+    expect(reposition).not.toBeChecked();
+    fireEvent.click(reposition);
+    expect(reposition).toBeChecked();
+    expect(optionsButton).toHaveAttribute("aria-expanded", "true");
+    expect(onExpand).not.toHaveBeenCalled();
+    expect(onSelect).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Card options for Beta" }));
+    expect(screen.getByRole("checkbox", { name: "Drag to reposition" })).not.toBeChecked();
+    fireEvent.click(screen.getByRole("button", { name: "Card options for Beta" }));
+
+    const imageRegion = screen.getByLabelText("Alpha image preview");
+    fireEvent.pointerDown(imageRegion, { button: 0, pointerId: 1, clientX: 20, clientY: 40 });
+    fireEvent.pointerMove(imageRegion, { pointerId: 1, clientX: 50, clientY: 70 });
+    fireEvent.pointerUp(imageRegion, { pointerId: 1, clientX: 50, clientY: 70 });
+    expect(screen.getByRole("img", { name: "Alpha logo" })).toHaveStyle({ objectPosition: "40% 40%" });
   });
 
   it("supports a labeled card size control and keyboard card activation", () => {
