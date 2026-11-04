@@ -2588,6 +2588,9 @@ dialog::backdrop {
 .wireframe-cover-picker {
   padding: 1rem 1.25rem 1.25rem;
 }
+.wireframe-cover-picker[hidden] {
+  display: none !important;
+}
 .wireframe-cover-section-label {
   font-weight: 700;
 }

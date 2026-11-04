@@ -312,81 +312,86 @@ export function WireframeCover({ value, onChange, onUpload, recordKey, label = "
                 </button>
               ))}
             </XStack>
-            <YStack
-              id={`${tabListId}-panel-${tab}`}
-              role="tabpanel"
-              aria-labelledby={`${tabListId}-tab-${tab}`}
-              tabIndex={0}
-              gap="$3"
-              className="wireframe-cover-picker"
-            >
-              {tab === "gallery" ? (
-                <>
-                  <SizableText className="wireframe-cover-section-label">Record cover gallery</SizableText>
-                  <div className="wireframe-cover-presets" aria-label="Record cover gallery">
-                    {COVER_GALLERY.map((cover) => (
-                      <button
-                        className="wireframe-cover-preset"
-                        key={cover.id}
-                        type="button"
-                        aria-label={`Use ${cover.label} cover`}
-                        style={{
-                          backgroundImage: `url(${cover.imageUrl})`,
-                          backgroundPosition: "center",
-                          backgroundSize: "cover",
-                        }}
-                        onClick={() => void save({ source: "gallery", presetId: cover.id, position })}
-                      />
-                    ))}
-                  </div>
-                  <SizableText className="wireframe-cover-section-label">Color &amp; gradient</SizableText>
-                  <div className="wireframe-cover-presets" aria-label="Cover presets">
-                    {COVER_PRESETS.map((preset) => (
-                      <button
-                        className="wireframe-cover-preset"
-                        key={preset.id}
-                        type="button"
-                        aria-label={`Use ${preset.label} cover`}
-                        style={{ background: preset.value }}
-                        onClick={() =>
-                          void save({
-                            source: preset.id === "sandstone" ? "gallery" : "gradient",
-                            presetId: preset.id,
-                            position,
-                          })
-                        }
-                      />
-                    ))}
-                  </div>
-                </>
-              ) : null}
-              {tab === "upload" ? (
-                <>
-                  <SizableText>Upload an image from your device.</SizableText>
-                  <input id={inputId} ref={fileInput} hidden type="file" accept="image/*" onChange={upload} />
-                  <GemButton
-                    alignSelf="flex-start"
-                    onClick={() => fileInput.current?.click()}
-                    aria-label="Upload cover image"
-                  >
-                    Choose image
-                  </GemButton>
-                </>
-              ) : null}
-              {tab === "link" ? (
-                <>
-                  <SizableText>Use an image URL.</SizableText>
-                  <XStack gap="$2">
-                    <Input aria-label="Image URL" placeholder="https://…" value={link} onChangeText={setLink} />
-                    <GemButton onClick={useLink} aria-label="Use image link">
-                      Use link
-                    </GemButton>
-                  </XStack>
-                </>
-              ) : null}
-              {busy ? <div role="status">Saving cover…</div> : null}
-              {error ? <div role="alert">{error}</div> : null}
-            </YStack>
+            {coverTabIds.map((tabId) => (
+              <div
+                key={tabId}
+                id={`${tabListId}-panel-${tabId}`}
+                role="tabpanel"
+                aria-labelledby={`${tabListId}-tab-${tabId}`}
+                tabIndex={0}
+                hidden={tab !== tabId}
+                className="wireframe-cover-picker"
+              >
+                <YStack gap="$3">
+                  {tabId === "gallery" ? (
+                    <>
+                      <SizableText className="wireframe-cover-section-label">Record cover gallery</SizableText>
+                      <div className="wireframe-cover-presets" aria-label="Record cover gallery">
+                        {COVER_GALLERY.map((cover) => (
+                          <button
+                            className="wireframe-cover-preset"
+                            key={cover.id}
+                            type="button"
+                            aria-label={`Use ${cover.label} cover`}
+                            style={{
+                              backgroundImage: `url(${cover.imageUrl})`,
+                              backgroundPosition: "center",
+                              backgroundSize: "cover",
+                            }}
+                            onClick={() => void save({ source: "gallery", presetId: cover.id, position })}
+                          />
+                        ))}
+                      </div>
+                      <SizableText className="wireframe-cover-section-label">Color &amp; gradient</SizableText>
+                      <div className="wireframe-cover-presets" aria-label="Cover presets">
+                        {COVER_PRESETS.map((preset) => (
+                          <button
+                            className="wireframe-cover-preset"
+                            key={preset.id}
+                            type="button"
+                            aria-label={`Use ${preset.label} cover`}
+                            style={{ background: preset.value }}
+                            onClick={() =>
+                              void save({
+                                source: preset.id === "sandstone" ? "gallery" : "gradient",
+                                presetId: preset.id,
+                                position,
+                              })
+                            }
+                          />
+                        ))}
+                      </div>
+                    </>
+                  ) : null}
+                  {tabId === "upload" ? (
+                    <>
+                      <SizableText>Upload an image from your device.</SizableText>
+                      <input id={inputId} ref={fileInput} hidden type="file" accept="image/*" onChange={upload} />
+                      <GemButton
+                        alignSelf="flex-start"
+                        onClick={() => fileInput.current?.click()}
+                        aria-label="Upload cover image"
+                      >
+                        Choose image
+                      </GemButton>
+                    </>
+                  ) : null}
+                  {tabId === "link" ? (
+                    <>
+                      <SizableText>Use an image URL.</SizableText>
+                      <XStack gap="$2">
+                        <Input aria-label="Image URL" placeholder="https://…" value={link} onChangeText={setLink} />
+                        <GemButton onClick={useLink} aria-label="Use image link">
+                          Use link
+                        </GemButton>
+                      </XStack>
+                    </>
+                  ) : null}
+                  {tabId === tab && busy ? <div role="status">Saving cover…</div> : null}
+                  {tabId === tab && error ? <div role="alert">{error}</div> : null}
+                </YStack>
+              </div>
+            ))}
             <Dialog.Close asChild>
               <GemButton alignSelf="flex-start" margin="$4" marginTop={0} aria-label="Close change cover dialog">
                 Cancel

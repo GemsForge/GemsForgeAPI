@@ -35,6 +35,14 @@ describe("WireframeCover", () => {
     fireEvent.click(screen.getByRole("button", { name: "Change cover" }));
 
     const galleryTab = await screen.findByRole("tab", { name: "Gallery", hidden: true });
+    const tabs = screen.getAllByRole("tab", { hidden: true });
+    for (const sourceTab of tabs) {
+      const controlledPanel = document.getElementById(sourceTab.getAttribute("aria-controls")!);
+      expect(controlledPanel).toHaveAttribute("role", "tabpanel");
+      expect(controlledPanel).toHaveAttribute("aria-labelledby", sourceTab.id);
+      expect(controlledPanel).toHaveProperty("hidden", sourceTab !== galleryTab);
+    }
+
     fireEvent.keyDown(galleryTab, { key: "ArrowRight" });
 
     const uploadTab = screen.getByRole("tab", { name: "Upload", hidden: true });
@@ -44,6 +52,7 @@ describe("WireframeCover", () => {
       "id",
       uploadTab.getAttribute("aria-controls"),
     );
+    expect(document.getElementById(galleryTab.getAttribute("aria-controls")!)).toHaveProperty("hidden", true);
     expect(galleryTab).toHaveAttribute("tabindex", "-1");
 
     fireEvent.keyDown(uploadTab, { key: "End" });
