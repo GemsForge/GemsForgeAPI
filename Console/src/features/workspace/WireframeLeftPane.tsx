@@ -2,7 +2,6 @@ import { styled, Text, YStack } from "tamagui";
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { useState } from "react";
 import type { ReactNode } from "react";
-import { GemButton } from "../../components/ui/GemButton";
 import { GSearchField } from "../../components/ui/GSearchField";
 import { WireframeCollectionLinks } from "./WireframeCollectionLinks";
 import { WireframePrimaryLinks } from "./WireframePrimaryLinks";

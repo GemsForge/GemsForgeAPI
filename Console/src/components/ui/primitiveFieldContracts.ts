@@ -1,18 +1,13 @@
-import type { RecordColorToken, RecordDateFormat, RecordNumberFormat, RecordSelectOption } from "../../table-kit/recordContracts";
+import type {
+  RecordColorToken,
+  RecordDateFormat,
+  RecordNumberFormat,
+  RecordSelectOption,
+} from "../../table-kit/recordContracts";
 
 /** Primitive field kinds supported by the shared G field layer. */
 export type GemPrimitiveType =
-  | "id"
-  | "text"
-  | "number"
-  | "url"
-  | "email"
-  | "phone"
-  | "date"
-  | "select"
-  | "status"
-  | "checkbox"
-  | "media";
+  "id" | "text" | "number" | "url" | "email" | "phone" | "date" | "select" | "status" | "checkbox" | "media";
 
 export interface GemPrimitiveBaseContract {
   primitive: GemPrimitiveType;

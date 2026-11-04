@@ -53,12 +53,12 @@ export function WireframeRecordInspector({ fields }: { fields: readonly Wirefram
                 nullable={field.nullable}
                 onCommit={field.onCommit}
               />
+            ) : field.kind === "url" && field.value ? (
+              <a className="primitive-value-link" href={field.value} target="_blank" rel="noreferrer">
+                {field.display ?? field.value}
+              </a>
             ) : (
-              field.kind === "url" && field.value ? (
-                <a className="primitive-value-link" href={field.value} target="_blank" rel="noreferrer">{field.display ?? field.value}</a>
-              ) : (
-                (field.display ?? field.value) || "—"
-              )
+              (field.display ?? field.value) || "—"
             )}
           </dd>
         </div>

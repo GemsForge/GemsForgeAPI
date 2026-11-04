@@ -1,11 +1,6 @@
 import { Controller, type Control, type FieldValues, type Path, type UseFormReturn } from "react-hook-form";
 import { Checkbox, Label, XStack, YStack } from "tamagui";
-import {
-  CreateFieldFrame,
-  CreateSearchableSelectField,
-  CreateSelectField,
-  CreateTextField,
-} from "./CreateForm";
+import { CreateFieldFrame, CreateSearchableSelectField, CreateSelectField, CreateTextField } from "./CreateForm";
 import { GDateField } from "../ui/GDateField";
 
 /** Render a reusable text field from any React Hook Form shape. */

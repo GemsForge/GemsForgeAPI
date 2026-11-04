@@ -61,11 +61,19 @@ export function CreateFormFrame({
   children: ReactNode;
 }) {
   return (
-    <Form className={`edit-form create-record-form${className ? ` ${className}` : ""}`} aria-label={title} onSubmit={onSubmit}>
+    <Form
+      className={`edit-form create-record-form${className ? ` ${className}` : ""}`}
+      aria-label={title}
+      onSubmit={onSubmit}
+    >
       <SizableText className="create-record-form-title" size="$4" fontWeight="700" role="heading" aria-level={3}>
         {title}
       </SizableText>
-      {error && <SizableText role="alert" color="$gemDanger">{error}</SizableText>}
+      {error && (
+        <SizableText role="alert" color="$gemDanger">
+          {error}
+        </SizableText>
+      )}
       {children}
       <div className="button-row">
         <GemButton type="submit" disabled={submitting}>
@@ -141,7 +149,19 @@ export function CreateSelectField({
   options,
   required = false,
 }: CreateSelectFieldProps) {
-  return <GSelectField id={name} label={label} value={value} onChange={onValueChange} onBlur={onBlur} error={error} options={options} required={required} wireframe />;
+  return (
+    <GSelectField
+      id={name}
+      label={label}
+      value={value}
+      onChange={onValueChange}
+      onBlur={onBlur}
+      error={error}
+      options={options}
+      required={required}
+      wireframe
+    />
+  );
 }
 
 /** Render a searchable existing-record selector while preserving the selected record ID. */
@@ -164,8 +184,24 @@ export function CreateSearchableSelectField({
 
   return (
     <YStack gap="$2">
-      <GSearchField label={`Search ${label}`} value={query} onChange={setQuery} placeholder={searchPlaceholder} width="long" />
-      <GSelectField id={name} label={label} value={value} onChange={onValueChange} onBlur={onBlur} error={error} options={filteredOptions} required={required} wireframe />
+      <GSearchField
+        label={`Search ${label}`}
+        value={query}
+        onChange={setQuery}
+        placeholder={searchPlaceholder}
+        width="long"
+      />
+      <GSelectField
+        id={name}
+        label={label}
+        value={value}
+        onChange={onValueChange}
+        onBlur={onBlur}
+        error={error}
+        options={filteredOptions}
+        required={required}
+        wireframe
+      />
     </YStack>
   );
 }

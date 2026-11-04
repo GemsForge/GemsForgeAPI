@@ -1,6 +1,14 @@
 import type { ReactNode } from "react";
 import { Text, XStack, YStack } from "tamagui";
-import { WireframeCount, WireframeDescription, WireframeHeader, WireframeHeading, WireframeIcon, WireframeMain, WireframeTitleGroup } from "./WireframePrimitives";
+import {
+  WireframeCount,
+  WireframeDescription,
+  WireframeHeader,
+  WireframeHeading,
+  WireframeIcon,
+  WireframeMain,
+  WireframeTitleGroup,
+} from "./WireframePrimitives";
 
 type WireframePageViewProps = {
   title: string;
@@ -28,7 +36,7 @@ export function WireframePageView({ title, description, recordCount, tableIcon, 
             </XStack>
           </header>
         </WireframeHeader>
-      {children}
+        {children}
       </main>
     </WireframeMain>
   );

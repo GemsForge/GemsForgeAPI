@@ -34,7 +34,9 @@ export function EmploymentWireframeView({ records }: { records: readonly Employm
     status: toOptions(employmentOptions.status),
     workAddressID: (addresses.data ?? []).map((address) => ({
       value: address.id,
-      label: [address.addressLine1, address.city, address.state, address.postalCode].filter(Boolean).join(", ") || address.id,
+      label:
+        [address.addressLine1, address.city, address.state, address.postalCode].filter(Boolean).join(", ") ||
+        address.id,
     })),
   };
   const properties = employmentTableAdapter.getPropertyDefinitions();
@@ -62,31 +64,39 @@ export function EmploymentWireframeView({ records }: { records: readonly Employm
         inspector: (record, schemaProperties) => (
           <WireframeSchemaInspector
             record={record}
-            properties={[...properties.map((property): RecordPropertyDefinition<Employment> => {
-              const field = propertyFields[property.id];
-              const selectProperty =
-                property.id === "employerType" || property.id === "industry" || property.id === "employmentType" ||
-                property.id === "status" || property.id === "workAddressID";
-              return {
-                ...property,
-                kind: selectProperty ? (property.id === "status" ? "status" : "select") : property.kind,
-                edit: field
-                  ? {
-                      inputType: selectProperty
-                        ? "select"
-                        : property.kind === "date"
-                          ? "date"
-                          : property.id === "notes"
-                            ? "longText"
-                            : "text",
-                      nullable: property.id === "workAddressID",
-                      options: selectProperty ? optionsByProperty[property.id] : undefined,
-                      onSave: (_record: unknown, value: string | number | null) =>
-                        patch.mutateAsync({ id: record.id, patch: { [field]: value === "" ? null : value } }).then(() => undefined),
-                    }
-                  : undefined,
-              };
-            }), ...(schemaProperties ?? [])]}
+            properties={[
+              ...properties.map((property): RecordPropertyDefinition<Employment> => {
+                const field = propertyFields[property.id];
+                const selectProperty =
+                  property.id === "employerType" ||
+                  property.id === "industry" ||
+                  property.id === "employmentType" ||
+                  property.id === "status" ||
+                  property.id === "workAddressID";
+                return {
+                  ...property,
+                  kind: selectProperty ? (property.id === "status" ? "status" : "select") : property.kind,
+                  edit: field
+                    ? {
+                        inputType: selectProperty
+                          ? "select"
+                          : property.kind === "date"
+                            ? "date"
+                            : property.id === "notes"
+                              ? "longText"
+                              : "text",
+                        nullable: property.id === "workAddressID",
+                        options: selectProperty ? optionsByProperty[property.id] : undefined,
+                        onSave: (_record: unknown, value: string | number | null) =>
+                          patch
+                            .mutateAsync({ id: record.id, patch: { [field]: value === "" ? null : value } })
+                            .then(() => undefined),
+                      }
+                    : undefined,
+                };
+              }),
+              ...(schemaProperties ?? []),
+            ]}
           />
         ),
       }}

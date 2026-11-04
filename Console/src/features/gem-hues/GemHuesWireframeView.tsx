@@ -18,17 +18,26 @@ export function GemHuesWireframeView({ records }: { records: readonly GemHue[] }
   useEffect(() => {
     const controller = new AbortController();
     const objectURLs: string[] = [];
-    void Promise.all(records.map(async (record) => {
-      try {
-        const response = await api.getGemHueImage(record.id, controller.signal);
-        const blob = await response.blob();
-        if (!blob.type.startsWith("image/") || blob.size === 0) return null;
-        const url = URL.createObjectURL(blob);
-        objectURLs.push(url);
-        return [record.id, url] as const;
-      } catch { return null; }
-    })).then((entries) => setImageURLs(Object.fromEntries(entries.filter((entry): entry is readonly [string, string] => entry !== null))));
-    return () => { controller.abort(); objectURLs.forEach((url) => URL.revokeObjectURL(url)); };
+    void Promise.all(
+      records.map(async (record) => {
+        try {
+          const response = await api.getGemHueImage(record.id, controller.signal);
+          const blob = await response.blob();
+          if (!blob.type.startsWith("image/") || blob.size === 0) return null;
+          const url = URL.createObjectURL(blob);
+          objectURLs.push(url);
+          return [record.id, url] as const;
+        } catch {
+          return null;
+        }
+      }),
+    ).then((entries) =>
+      setImageURLs(Object.fromEntries(entries.filter((entry): entry is readonly [string, string] => entry !== null))),
+    );
+    return () => {
+      controller.abort();
+      objectURLs.forEach((url) => URL.revokeObjectURL(url));
+    };
   }, [records, imageRevision]);
   const adapter = createGemHueTableAdapter(
     (record) => {
@@ -62,22 +71,24 @@ export function GemHuesWireframeView({ records }: { records: readonly GemHue[] }
         records,
         properties,
         newRecordUtility: {
-          options: [{
-            id: "new-gem-hue",
-            label: "Input Form",
-            description: "Create a Gem Hue record.",
-            render: ({ close }) => (
-              <GemHueCreateForm
-                submitting={create.isPending}
-                error={create.error instanceof Error ? create.error.message : null}
-                onCancel={close}
-                onCreate={async (payload) => {
-                  await create.mutateAsync(payload);
-                  close();
-                }}
-              />
-            ),
-          }],
+          options: [
+            {
+              id: "new-gem-hue",
+              label: "Input Form",
+              description: "Create a Gem Hue record.",
+              render: ({ close }) => (
+                <GemHueCreateForm
+                  submitting={create.isPending}
+                  error={create.error instanceof Error ? create.error.message : null}
+                  onCancel={close}
+                  onCreate={async (payload) => {
+                    await create.mutateAsync(payload);
+                    close();
+                  }}
+                />
+              ),
+            },
+          ],
         },
         searchValues: (record) => [
           record.colorName,
@@ -90,7 +101,8 @@ export function GemHuesWireframeView({ records }: { records: readonly GemHue[] }
         cardSubtitle: (record) => record.colorFamily ?? "Color family",
         cardStatus: (record) => record.hexCode,
         cardMeta: (record) => record.mood ?? "No mood recorded",
-        cardImage: (record) => imageURLs[record.id] ? { src: imageURLs[record.id], alt: `${record.colorName} reference` } : undefined,
+        cardImage: (record) =>
+          imageURLs[record.id] ? { src: imageURLs[record.id], alt: `${record.colorName} reference` } : undefined,
         inspector: (record, schemaProperties) => (
           <WireframeSchemaInspector
             record={record}
@@ -103,9 +115,19 @@ export function GemHuesWireframeView({ records }: { records: readonly GemHue[] }
                     ? {
                         ...property.edit,
                         options: optionsByProperty.get(property.id as keyof GemHue) ?? property.edit?.options,
-                        inputType: property.edit?.inputType ?? (property.kind === "date" ? "date" : property.id === "notes" || property.id === "description" ? "longText" : "text"),
-                        onSave: property.edit?.onSave ?? ((_record: unknown, value: string | number | null) =>
-                          patch.mutateAsync({ id: record.id, patch: { [field]: value || null } }).then(() => undefined)),
+                        inputType:
+                          property.edit?.inputType ??
+                          (property.kind === "date"
+                            ? "date"
+                            : property.id === "notes" || property.id === "description"
+                              ? "longText"
+                              : "text"),
+                        onSave:
+                          property.edit?.onSave ??
+                          ((_record: unknown, value: string | number | null) =>
+                            patch
+                              .mutateAsync({ id: record.id, patch: { [field]: value || null } })
+                              .then(() => undefined)),
                       }
                     : undefined,
                 };

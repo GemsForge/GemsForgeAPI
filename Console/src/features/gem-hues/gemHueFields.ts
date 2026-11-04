@@ -17,10 +17,25 @@ export interface GemHueFieldDefinition {
 export const gemHueFieldDefinitions: readonly GemHueFieldDefinition[] = [
   { name: "id", label: "ID", required: true, primitive: "id" },
   { name: "colorName", label: "Color name", required: true, primitive: "text" },
-  { name: "colorFamily", label: "Color family", primitive: "select", options: options(["Red", "Orange", "Yellow", "Green", "Blue", "Purple", "Pink", "Brown", "Gray", "Black", "White"]) },
+  {
+    name: "colorFamily",
+    label: "Color family",
+    primitive: "select",
+    options: options(["Red", "Orange", "Yellow", "Green", "Blue", "Purple", "Pink", "Brown", "Gray", "Black", "White"]),
+  },
   { name: "hexCode", label: "Hex code", required: true, primitive: "text" },
-  { name: "mood", label: "Mood", primitive: "select", options: options(["Calm", "Warm", "Cool", "Energizing", "Grounding", "Romantic", "Playful", "Focused"]) },
-  { name: "palette", label: "Palette", primitive: "select", options: options(["Monochromatic", "Analogous", "Complementary", "Triadic", "Neutral", "Pastel", "Earth tones"]) },
+  {
+    name: "mood",
+    label: "Mood",
+    primitive: "select",
+    options: options(["Calm", "Warm", "Cool", "Energizing", "Grounding", "Romantic", "Playful", "Focused"]),
+  },
+  {
+    name: "palette",
+    label: "Palette",
+    primitive: "select",
+    options: options(["Monochromatic", "Analogous", "Complementary", "Triadic", "Neutral", "Pastel", "Earth tones"]),
+  },
   { name: "description", label: "Description", multiline: true },
   { name: "createdDate", label: "Created date", primitive: "date" },
   { name: "notes", label: "Notes", multiline: true },

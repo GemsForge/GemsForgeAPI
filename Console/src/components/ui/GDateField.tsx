@@ -10,7 +10,10 @@ dayjs.extend(customParseFormat);
 const calendarDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 /** Props for the standard GemsForge calendar picker. */
-export interface GDateFieldProps extends Omit<ComponentProps<typeof Input>, "value" | "defaultValue" | "onChange" | "onBlur"> {
+export interface GDateFieldProps extends Omit<
+  ComponentProps<typeof Input>,
+  "value" | "defaultValue" | "onChange" | "onBlur"
+> {
   label: string;
   showLabel?: boolean;
   value?: string;

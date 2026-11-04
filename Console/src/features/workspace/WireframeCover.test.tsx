@@ -6,7 +6,11 @@ import { validateCoverImageURL, WireframeCover } from "./WireframeCover";
 import { api } from "../../api";
 
 function renderCover(props: React.ComponentProps<typeof WireframeCover> = {}) {
-  return render(<TamaguiProvider config={tamaguiConfig} defaultTheme="light"><WireframeCover {...props} /></TamaguiProvider>);
+  return render(
+    <TamaguiProvider config={tamaguiConfig} defaultTheme="light">
+      <WireframeCover {...props} />
+    </TamaguiProvider>,
+  );
 }
 
 describe("WireframeCover", () => {
@@ -18,7 +22,8 @@ describe("WireframeCover", () => {
     expect(document.querySelectorAll(".wireframe-cover-preset").length).toBeGreaterThan(0);
   });
   it("validates links and persists a preset", async () => {
-    const onChange = vi.fn(); renderCover({ onChange });
+    const onChange = vi.fn();
+    renderCover({ onChange });
     expect(validateCoverImageURL("nope")).toBeNull();
     expect(validateCoverImageURL("https://example.com/cover.jpg")).toBe("https://example.com/cover.jpg");
     fireEvent.click(screen.getByRole("button", { name: "Change cover" }));
@@ -37,7 +42,11 @@ describe("WireframeCover", () => {
     fireEvent.click(screen.getByRole("button", { name: "Change cover" }));
     fireEvent.click(document.querySelector('[aria-label="Use Mint cover"]')!);
     await waitFor(() => expect(screen.getByRole("button", { name: "Remove cover" })).toBeInTheDocument());
-    view.rerender(<TamaguiProvider config={tamaguiConfig} defaultTheme="light"><WireframeCover recordKey="two" onChange={onChange} /></TamaguiProvider>);
+    view.rerender(
+      <TamaguiProvider config={tamaguiConfig} defaultTheme="light">
+        <WireframeCover recordKey="two" onChange={onChange} />
+      </TamaguiProvider>,
+    );
     expect(screen.queryByRole("button", { name: "Remove cover" })).not.toBeInTheDocument();
   });
   it("persists uploaded covers by FileMetadataID and loads bytes through the authenticated API", async () => {
@@ -49,11 +58,15 @@ describe("WireframeCover", () => {
     fireEvent.click(screen.getByText("Upload"));
     const file = new File(["image"], "cover.png", { type: "image/png" });
     fireEvent.change(document.querySelector('input[type="file"]')!, { target: { files: [file] } });
-    await waitFor(() => expect(onChange).toHaveBeenCalledWith(expect.objectContaining({
-      source: "upload",
-      fileMetadataID: "FILE-COVER-1",
-      imageUrl: undefined,
-    })));
+    await waitFor(() =>
+      expect(onChange).toHaveBeenCalledWith(
+        expect.objectContaining({
+          source: "upload",
+          fileMetadataID: "FILE-COVER-1",
+          imageUrl: undefined,
+        }),
+      ),
+    );
     await waitFor(() => expect(api.getFileContent).toHaveBeenCalledWith("FILE-COVER-1", expect.any(AbortSignal)));
   });
   it("restores a saved image focal point when cover state hydrates", async () => {
@@ -69,6 +82,8 @@ describe("WireframeCover", () => {
         />
       </TamaguiProvider>,
     );
-    await waitFor(() => expect(document.querySelector(".wireframe-cover-image")).toHaveStyle({ objectPosition: "45% 65%" }));
+    await waitFor(() =>
+      expect(document.querySelector(".wireframe-cover-image")).toHaveStyle({ objectPosition: "45% 65%" }),
+    );
   });
 });

@@ -33,7 +33,9 @@ export function WireframeRecordPageView({
       </header>
       {cover}
       <nav className="demo-expanded-breadcrumb wireframe-record-page-breadcrumb" aria-label="Record location">
-        <button type="button" onClick={onBack}>{collectionTitle}</button>
+        <button type="button" onClick={onBack}>
+          {collectionTitle}
+        </button>
         <span aria-hidden="true">›</span>
         <span>{recordTitle}</span>
       </nav>

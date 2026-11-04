@@ -23,12 +23,14 @@ describe("wireframe property metadata", () => {
   });
 
   it("uses explicit metadata before label fallbacks", () => {
-    expect(inferWireframePropertyMetadata({
-      label: "Website",
-      kind: "url",
-      propertyType: "Text",
-      iconName: "Lock",
-    })).toEqual({ type: "Text", iconName: "Lock" });
+    expect(
+      inferWireframePropertyMetadata({
+        label: "Website",
+        kind: "url",
+        propertyType: "Text",
+        iconName: "Lock",
+      }),
+    ).toEqual({ type: "Text", iconName: "Lock" });
     expect(inferWireframePropertyType("Monthly amount", "number", "decimal")).toBe("Number");
     expect(inferWireframePropertyMetadata({ label: "Address", kind: "relation" }).iconName).toBe("Address");
     expect(inferWireframePropertyType("Logo", "image")).toBe("Image");

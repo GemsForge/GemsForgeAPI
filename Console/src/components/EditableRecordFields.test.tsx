@@ -97,7 +97,9 @@ describe("EditableRecordFields", () => {
 
   it("keeps a primitive URL input controlled and saves its edited value on blur", async () => {
     const save = vi.fn().mockResolvedValue(undefined);
-    renderFields([{ label: "Website", value: "https://example.com", primitive: "url", inputType: "url", onSave: save }]);
+    renderFields([
+      { label: "Website", value: "https://example.com", primitive: "url", inputType: "url", onSave: save },
+    ]);
 
     fireEvent.click(screen.getByRole("button", { name: "https://example.com" }));
     const input = screen.getByLabelText("Website");

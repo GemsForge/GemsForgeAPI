@@ -9,7 +9,13 @@ import { GSelectField } from "../../components/ui/GSelectField";
 
 export const WireframePropertyIconContext = createContext<((propertyID: string, icon: string) => void) | null>(null);
 
-export function WireframePropertyIconProvider({ children, onSave }: { children: ReactNode; onSave: (propertyID: string, icon: string) => void }) {
+export function WireframePropertyIconProvider({
+  children,
+  onSave,
+}: {
+  children: ReactNode;
+  onSave: (propertyID: string, icon: string) => void;
+}) {
   return <WireframePropertyIconContext.Provider value={onSave}>{children}</WireframePropertyIconContext.Provider>;
 }
 
@@ -44,23 +50,87 @@ export function WireframePropertyEditor({
 
   return (
     <>
-      <GemButton type="button" variant="quiet" tone="secondary" className="wireframe-property-details-trigger" aria-label={`Edit ${label} property`} onClick={() => setOpen(true)}>
-        {(() => { const Icon = getPropertyIconByName(icon).icon; return <Icon size={13} strokeWidth={2} />; })()}
+      <GemButton
+        type="button"
+        variant="quiet"
+        tone="secondary"
+        className="wireframe-property-details-trigger"
+        aria-label={`Edit ${label} property`}
+        onClick={() => setOpen(true)}
+      >
+        {(() => {
+          const Icon = getPropertyIconByName(icon).icon;
+          return <Icon size={13} strokeWidth={2} />;
+        })()}
       </GemButton>
       {label}
       {open ? (
         <Theme name="light">
-        <div className="wireframe-property-details-backdrop" role="presentation" onClick={() => setOpen(false)}>
-          <section className="wireframe-property-details" role="dialog" aria-modal="true" aria-label="Edit property" onClick={(event) => event.stopPropagation()}>
-            <GemButton type="button" variant="quiet" tone="secondary" aria-label="Close property editor" onClick={() => setOpen(false)}>×</GemButton>
-            <SizableText className="wireframe-property-dialog-title" size="$3" fontWeight="700" role="heading" aria-level={2}>Edit property</SizableText>
-            <div className="wireframe-property-details-preview"><strong>Current value</strong><p>{value || "No value recorded."}</p></div>
-            <GemTextField label="Property name" value={name} readOnly={/^(id|item id|record id|primary key)$/i.test(label.trim())} onChange={(event) => setName(event.currentTarget.value)} />
-            <GSelectField label="Primitive type" value={type} options={[...new Set([...WIREFRAME_PROPERTY_TYPES, type])].map((item) => ({ value: item, label: item }))} onChange={setType} wireframe />
-            <fieldset className="wireframe-property-icon-fieldset"><legend>Icon</legend><PropertyIconPicker value={icon} onChange={setIcon} /></fieldset>
-            <div className="wireframe-property-details-actions"><GemButton type="button" variant="outlined" aria-label="Save property settings" onClick={() => { if (propertyID) savePropertyIcon?.(propertyID, icon); setOpen(false); }}>Save</GemButton></div>
-          </section>
-        </div>
+          <div className="wireframe-property-details-backdrop" role="presentation" onClick={() => setOpen(false)}>
+            <section
+              className="wireframe-property-details"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Edit property"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <GemButton
+                type="button"
+                variant="quiet"
+                tone="secondary"
+                aria-label="Close property editor"
+                onClick={() => setOpen(false)}
+              >
+                ×
+              </GemButton>
+              <SizableText
+                className="wireframe-property-dialog-title"
+                size="$3"
+                fontWeight="700"
+                role="heading"
+                aria-level={2}
+              >
+                Edit property
+              </SizableText>
+              <div className="wireframe-property-details-preview">
+                <strong>Current value</strong>
+                <p>{value || "No value recorded."}</p>
+              </div>
+              <GemTextField
+                label="Property name"
+                value={name}
+                readOnly={/^(id|item id|record id|primary key)$/i.test(label.trim())}
+                onChange={(event) => setName(event.currentTarget.value)}
+              />
+              <GSelectField
+                label="Primitive type"
+                value={type}
+                options={[...new Set([...WIREFRAME_PROPERTY_TYPES, type])].map((item) => ({
+                  value: item,
+                  label: item,
+                }))}
+                onChange={setType}
+                wireframe
+              />
+              <fieldset className="wireframe-property-icon-fieldset">
+                <legend>Icon</legend>
+                <PropertyIconPicker value={icon} onChange={setIcon} />
+              </fieldset>
+              <div className="wireframe-property-details-actions">
+                <GemButton
+                  type="button"
+                  variant="outlined"
+                  aria-label="Save property settings"
+                  onClick={() => {
+                    if (propertyID) savePropertyIcon?.(propertyID, icon);
+                    setOpen(false);
+                  }}
+                >
+                  Save
+                </GemButton>
+              </div>
+            </section>
+          </div>
         </Theme>
       ) : null}
     </>

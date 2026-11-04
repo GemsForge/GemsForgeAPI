@@ -1,6 +1,57 @@
 import type { LucideIcon } from "lucide-react";
 import type { RecordNumberFormat, RecordPropertyKind } from "../../table-kit/recordContracts";
-import { Asterisk, Badge, Bell, BellRing, BriefcaseBusiness, Building2, CalendarDays, CalendarClock, CheckSquare, CircleCheck, CircleDot, Clock3, CreditCard, DollarSign, File, FileText, Fingerprint, Folder, Globe2, GraduationCap, Hash, Heart, House, Image, Landmark, Link, Link2, List, ListChecks, ListFilter, Lock, LockKeyhole, Mail, MapPin, Palette, Paperclip, Percent, Phone, Settings2, ShieldCheck, Star, Tag, Tags, ToggleLeft, Type, Upload, User, Users, WalletCards, Zap } from "lucide-react";
+import {
+  Asterisk,
+  Badge,
+  Bell,
+  BellRing,
+  BriefcaseBusiness,
+  Building2,
+  CalendarDays,
+  CalendarClock,
+  CheckSquare,
+  CircleCheck,
+  CircleDot,
+  Clock3,
+  CreditCard,
+  DollarSign,
+  File,
+  FileText,
+  Fingerprint,
+  Folder,
+  Globe2,
+  GraduationCap,
+  Hash,
+  Heart,
+  House,
+  Image,
+  Landmark,
+  Link,
+  Link2,
+  List,
+  ListChecks,
+  ListFilter,
+  Lock,
+  LockKeyhole,
+  Mail,
+  MapPin,
+  Palette,
+  Paperclip,
+  Percent,
+  Phone,
+  Settings2,
+  ShieldCheck,
+  Star,
+  Tag,
+  Tags,
+  ToggleLeft,
+  Type,
+  Upload,
+  User,
+  Users,
+  WalletCards,
+  Zap,
+} from "lucide-react";
 
 export type PropertyIconDefinition = {
   name: string;
@@ -103,7 +154,8 @@ export function inferWireframePropertyType(
 }
 
 export function getPropertyIconDefinition(label: string, kind?: string, propertyType?: string): PropertyIconDefinition {
-  const exactType = propertyType && PROPERTY_ICON_LIBRARY.find((icon) => icon.name.toLowerCase() === propertyType.toLowerCase());
+  const exactType =
+    propertyType && PROPERTY_ICON_LIBRARY.find((icon) => icon.name.toLowerCase() === propertyType.toLowerCase());
   if (exactType) return exactType;
   const inferredType = inferWireframePropertyType(label, kind);
   const inferredIcon = PROPERTY_ICON_LIBRARY.find((icon) => icon.name === inferredType);

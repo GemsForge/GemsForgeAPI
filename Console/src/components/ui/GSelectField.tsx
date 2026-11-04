@@ -92,10 +92,14 @@ export function GSelectField({
             {label}
           </Label>
         ) : null}
-        <button type="button" className="gem-field-display-value" onClick={onDisplayClick} aria-invalid={Boolean(error)}>
+        <button type="button" className="gem-field-display-value" onClick={onDisplayClick}>
           {displayValue ?? options.find((option) => option.value === value)?.label ?? "—"}
         </button>
-        {error && <SizableText role="alert" color="$gemDanger" fontSize="$1">{error}</SizableText>}
+        {error && (
+          <SizableText role="alert" color="$gemDanger" fontSize="$1">
+            {error}
+          </SizableText>
+        )}
       </YStack>
     );
   }

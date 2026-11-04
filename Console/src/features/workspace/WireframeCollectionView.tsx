@@ -9,7 +9,16 @@ import { WireframeRecordPageView } from "./WireframeRecordPageView";
 import { PropertyIcon, PropertyIconPicker } from "./PropertyIconPicker";
 import { PROPERTY_ICON_LIBRARY, getPropertyIconByName } from "./propertyIcons";
 import { formatRecordNumber, inferRecordNumberFormat } from "../../table-kit";
-import { RecordList, Table, TableSettingsMenu, type RecordPropertyDefinition, type TableActionsProps, type TablePropertyConfiguration, type TableRecord, useTablePropertyConfiguration } from "../../table-kit";
+import {
+  RecordList,
+  Table,
+  TableSettingsMenu,
+  type RecordPropertyDefinition,
+  type TableActionsProps,
+  type TablePropertyConfiguration,
+  type TableRecord,
+  useTablePropertyConfiguration,
+} from "../../table-kit";
 import { RecordUtilities } from "../../components/RecordUtilities";
 import { type GalleryCardSize } from "../../table-kit";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -128,16 +137,23 @@ export function WireframeCollectionView<T extends WireframeRecord>({
   useEffect(() => {
     if (!savedViewsQuery.isSuccess || workspaceHydrated.current) return;
     workspaceHydrated.current = true;
-    const candidates = ([
-      ["List", savedViewsQuery.data.List],
-      ["Gallery", savedViewsQuery.data.Gallery],
-      ["Table", savedViewsQuery.data.Table],
-    ] as const)
+    const candidates = (
+      [
+        ["List", savedViewsQuery.data.List],
+        ["Gallery", savedViewsQuery.data.Gallery],
+        ["Table", savedViewsQuery.data.Table],
+      ] as const
+    )
       .filter((entry) => entry[1]?.view.workspaceState)
       .map((entry) => {
         try {
-          return { updatedAt: Date.parse(entry[1]!.view.updatedAt ?? ""), state: JSON.parse(entry[1]!.view.workspaceState!) as WireframeWorkspaceState };
-        } catch { return null; }
+          return {
+            updatedAt: Date.parse(entry[1]!.view.updatedAt ?? ""),
+            state: JSON.parse(entry[1]!.view.workspaceState!) as WireframeWorkspaceState,
+          };
+        } catch {
+          return null;
+        }
       })
       .filter((entry): entry is { updatedAt: number; state: WireframeWorkspaceState } => entry !== null)
       .sort((left, right) => right.updatedAt - left.updatedAt);
@@ -163,14 +179,18 @@ export function WireframeCollectionView<T extends WireframeRecord>({
       window.localStorage.setItem(tableIconStorageKey, state.tableIcon);
     }
     if (state.propertyIcons && typeof state.propertyIcons === "object") {
-      setPropertyIcons(Object.fromEntries(
-        Object.entries(state.propertyIcons).filter((entry): entry is [string, string] => typeof entry[1] === "string"),
-      ));
+      setPropertyIcons(
+        Object.fromEntries(
+          Object.entries(state.propertyIcons).filter(
+            (entry): entry is [string, string] => typeof entry[1] === "string",
+          ),
+        ),
+      );
     }
     if (state.propertyConfigurations && typeof state.propertyConfigurations === "object") {
       setPropertyConfigurations(state.propertyConfigurations);
     }
-  }, [savedViewsQuery.data, savedViewsQuery.isSuccess, presentationTableName]);
+  }, [savedViewsQuery.data, savedViewsQuery.isSuccess, presentationTableName, tableIconStorageKey]);
   useEffect(() => {
     const pendingID = pendingSelectedID.current;
     if (!pendingID) return;
@@ -218,7 +238,26 @@ export function WireframeCollectionView<T extends WireframeRecord>({
       });
     }, 250);
     return () => window.clearTimeout(timer);
-  }, [view, workspaceSelectedID, galleryCardSize, galleryFillMedia, galleryImageSelection, query, sort, direction, filter, groupBy, pageIndex, pageSize, tableIcon, propertyIcons, propertyConfigurations, workspaceSelectionRevision, presentationTableName, saveWorkspaceStateAsync]);
+  }, [
+    view,
+    workspaceSelectedID,
+    galleryCardSize,
+    galleryFillMedia,
+    galleryImageSelection,
+    query,
+    sort,
+    direction,
+    filter,
+    groupBy,
+    pageIndex,
+    pageSize,
+    tableIcon,
+    propertyIcons,
+    propertyConfigurations,
+    workspaceSelectionRevision,
+    presentationTableName,
+    saveWorkspaceStateAsync,
+  ]);
   const presentationsQuery = useRecordPresentationsQuery(presentationTableName);
   const savePresentation = useSaveRecordPresentationMutation(presentationTableName);
   const deletePresentation = useDeleteRecordPresentationMutation(presentationTableName);
@@ -226,15 +265,20 @@ export function WireframeCollectionView<T extends WireframeRecord>({
   const storedCovers = useMemo(() => {
     const covers: Record<string, WireframeCoverValue | null> = {};
     for (const item of presentationsQuery.data ?? []) {
-      try { covers[item.recordID] = JSON.parse(item.presentation) as WireframeCoverValue | null; }
-      catch { /* ignore malformed persisted presentation */ }
+      try {
+        covers[item.recordID] = JSON.parse(item.presentation) as WireframeCoverValue | null;
+      } catch {
+        /* ignore malformed persisted presentation */
+      }
     }
     return covers;
   }, [presentationsQuery.data]);
   const selectedCardRef = useRef<HTMLButtonElement | null>(null);
   const inspectorExpanded = Boolean(recordPageID);
-  const selected = config.records.find((record) => record.id === (recordPageID ? decodeURIComponent(recordPageID) : selectedID)) ?? null;
-  const selectedCover = selected ? config.cover?.(selected) ?? storedCovers[selected.id] : undefined;
+  const selected =
+    config.records.find((record) => record.id === (recordPageID ? decodeURIComponent(recordPageID) : selectedID)) ??
+    null;
+  const selectedCover = selected ? (config.cover?.(selected) ?? storedCovers[selected.id]) : undefined;
   const TableIcon = getPropertyIconByName(tableIcon).icon;
   const updateTableIcon = (value: string) => {
     tableIconDirty.current = true;
@@ -260,22 +304,29 @@ export function WireframeCollectionView<T extends WireframeRecord>({
   };
   const schema = schemaQuery.data?.tables.find((table) => table.name === (config.tableName ?? config.title));
   const schemaProperties = useMemo(
-    () => schema ? createWireframeSchemaProperties<T>(schema.columns, config.records) : [],
+    () => (schema ? createWireframeSchemaProperties<T>(schema.columns, config.records) : []),
     [config.records, schema],
   );
   const matchingRecords = useMemo(
     () =>
-      config.records.filter((record) =>
-        config.searchValues(record).some((value) => value.toLowerCase().includes(query.trim().toLowerCase())) &&
-        (!filter || config.cardStatus(record) === filter),
+      config.records.filter(
+        (record) =>
+          config.searchValues(record).some((value) => value.toLowerCase().includes(query.trim().toLowerCase())) &&
+          (!filter || config.cardStatus(record) === filter),
       ),
     [config, filter, query],
   );
   const sortedRecords = useMemo(() => {
     if (!sort) return matchingRecords;
     return [...matchingRecords].sort((left, right) => {
-      const leftValue = sort === "title" ? config.cardTitle(left) : sort === "status" ? config.cardStatus(left) : config.cardMeta(left);
-      const rightValue = sort === "title" ? config.cardTitle(right) : sort === "status" ? config.cardStatus(right) : config.cardMeta(right);
+      const leftValue =
+        sort === "title" ? config.cardTitle(left) : sort === "status" ? config.cardStatus(left) : config.cardMeta(left);
+      const rightValue =
+        sort === "title"
+          ? config.cardTitle(right)
+          : sort === "status"
+            ? config.cardStatus(right)
+            : config.cardMeta(right);
       const result = leftValue.localeCompare(rightValue, undefined, { numeric: true });
       return direction === "asc" ? result : -result;
     });
@@ -284,11 +335,13 @@ export function WireframeCollectionView<T extends WireframeRecord>({
   const visibleRecords = sortedRecords.slice(pageIndex * pageSize, (pageIndex + 1) * pageSize);
   const propertyOptions = useMemo(() => {
     const first = config.records[0] as Record<string, unknown> | undefined;
-    const ids = new Set(first
-      ? Object.entries(first)
-          .filter(([, value]) => value == null || ["string", "number", "boolean"].includes(typeof value))
-          .map(([id]) => id)
-      : []);
+    const ids = new Set(
+      first
+        ? Object.entries(first)
+            .filter(([, value]) => value == null || ["string", "number", "boolean"].includes(typeof value))
+            .map(([id]) => id)
+        : [],
+    );
     for (const record of config.records) {
       for (const [id, value] of Object.entries(record)) if (isImageProperty(id, value)) ids.add(id);
     }
@@ -297,15 +350,18 @@ export function WireframeCollectionView<T extends WireframeRecord>({
     for (const column of schema?.columns ?? []) ids.add(schemaColumnSourceField(column, config.records));
     return [...ids].map((id) => ({
       id,
-      label: config.properties?.find((property) => property.id === id || property.sourceField === id)?.label ?? propertyLabel(id),
+      label:
+        config.properties?.find((property) => property.id === id || property.sourceField === id)?.label ??
+        propertyLabel(id),
       defaultVisible: id !== "id",
     }));
   }, [config, schema]);
   const groupProperty = groupBy
-    ? config.properties?.find((property) => property.id === groupBy || property.sourceField === groupBy) ??
-      schemaProperties.find((property) => property.id === groupBy || property.sourceField === groupBy)
+    ? (config.properties?.find((property) => property.id === groupBy || property.sourceField === groupBy) ??
+      schemaProperties.find((property) => property.id === groupBy || property.sourceField === groupBy))
     : undefined;
-  const groupPropertyLabel = propertyOptions.find((property) => property.id === groupBy)?.label ?? propertyLabel(groupBy);
+  const groupPropertyLabel =
+    propertyOptions.find((property) => property.id === groupBy)?.label ?? propertyLabel(groupBy);
   const visibleRecordGroups = useMemo(() => {
     if (!groupBy) return [{ key: "all", label: "", records: visibleRecords }];
     const groups = new Map<string, { label: string; records: T[] }>();
@@ -337,8 +393,11 @@ export function WireframeCollectionView<T extends WireframeRecord>({
     },
   });
   const visiblePropertyIds = propertyConfiguration.visibleIds;
-  const imagePropertyOptions = propertyOptions.filter((property) => isImageProperty(property.id, (config.records[0] as Record<string, unknown> | undefined)?.[property.id]) || property.id === "image");
-  const galleryImageProperty = imagePropertyOptions[0]?.id ?? "";
+  const imagePropertyOptions = propertyOptions.filter(
+    (property) =>
+      isImageProperty(property.id, (config.records[0] as Record<string, unknown> | undefined)?.[property.id]) ||
+      property.id === "image",
+  );
   const galleryImageOptions = useMemo(
     () => [
       { value: "__canvas", label: "Canvas fallback" },
@@ -365,7 +424,9 @@ export function WireframeCollectionView<T extends WireframeRecord>({
       const nextWidth = resize.startWidth + (resize.startX - event.clientX);
       setInspectorWidth(Math.min(520, Math.max(280, nextWidth)));
     };
-    const end = () => { inspectorResizeRef.current = null; };
+    const end = () => {
+      inspectorResizeRef.current = null;
+    };
     document.addEventListener("pointermove", move);
     document.addEventListener("pointerup", end);
     return () => {
@@ -374,11 +435,22 @@ export function WireframeCollectionView<T extends WireframeRecord>({
     };
   }, []);
   const openRecordPage = () => {
-    if (selected) navigate(`${location.pathname.replace(/\/record\/[^/]+$/, "")}/record/${encodeURIComponent(selected.id)}`);
+    if (selected)
+      navigate(`${location.pathname.replace(/\/record\/[^/]+$/, "")}/record/${encodeURIComponent(selected.id)}`);
   };
   const openPropertyDetails = (details: { id: string; label: string; value: string; type?: string; icon?: string }) => {
-    const metadata = inferWireframePropertyMetadata({ label: details.label, propertyType: details.type, iconName: details.icon });
-    setPropertyDetails({ ...details, type: metadata.type, icon: propertyIcons[details.id] ?? metadata.iconName, statusText: details.value, colorToken: "mint" });
+    const metadata = inferWireframePropertyMetadata({
+      label: details.label,
+      propertyType: details.type,
+      iconName: details.icon,
+    });
+    setPropertyDetails({
+      ...details,
+      type: metadata.type,
+      icon: propertyIcons[details.id] ?? metadata.iconName,
+      statusText: details.value,
+      colorToken: "mint",
+    });
   };
   const savePropertyIcon = (propertyID: string, icon: string) => {
     skipWorkspaceSaveOnce.current = false;
@@ -418,13 +490,20 @@ export function WireframeCollectionView<T extends WireframeRecord>({
           recordTitle={config.cardTitle(selected)}
           onBack={() => navigate(location.pathname.replace(/\/record\/[^/]+$/, ""))}
           onClose={closeInspector}
-          cover={<WireframeCover recordKey={selected.id} value={selectedCover} onChange={(cover) => persistCover(selected, cover)} onUpload={(file) => uploadCover(selected, file)} />}
+          cover={
+            <WireframeCover
+              recordKey={selected.id}
+              value={selectedCover}
+              onChange={(cover) => persistCover(selected, cover)}
+              onUpload={(file) => uploadCover(selected, file)}
+            />
+          }
         >
-          <button
-            type="button"
+          <div
             className="wireframe-inspector-resizer"
             aria-label="Resize record inspector"
             role="separator"
+            tabIndex={0}
             aria-orientation="vertical"
             aria-valuemin={280}
             aria-valuemax={520}
@@ -436,253 +515,464 @@ export function WireframeCollectionView<T extends WireframeRecord>({
             onKeyDown={(event) => {
               if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
                 event.preventDefault();
-                setInspectorWidth((width) => Math.min(520, Math.max(280, width + (event.key === "ArrowLeft" ? 16 : -16))));
+                setInspectorWidth((width) =>
+                  Math.min(520, Math.max(280, width + (event.key === "ArrowLeft" ? 16 : -16))),
+                );
               }
             }}
-          />
+          ></div>
           <WireframePropertyIconProvider onSave={savePropertyIcon}>
             {renderInspector(config.inspector(selected, schemaProperties), openPropertyDetails, propertyIcons)}
           </WireframePropertyIconProvider>
         </WireframeRecordPageView>
       ) : (
-      <WireframePageView title={config.title} description={config.description} recordCount={sortedRecords.length} tableIcon={<TableIcon size={20} aria-hidden="true" />}>
-        <div className="demo-toolbar">
-          <div className="demo-view-tabs" role="tablist" aria-label={`${config.title} view mode`}>
-            {(["table", "list", "gallery"] as const).map((mode) => (
-              <button className={view === mode ? "active" : ""} type="button" role="tab" aria-selected={view === mode} aria-label={`${mode[0].toUpperCase() + mode.slice(1)} view`} title={`${mode[0].toUpperCase() + mode.slice(1)} view`} onClick={() => setView(mode)} key={mode}>
-                {mode === "table" ? <Table2 size={18} aria-hidden="true" /> : mode === "list" ? <List size={18} aria-hidden="true" /> : <GalleryHorizontal size={18} aria-hidden="true" />}
-              </button>
-            ))}
-          </div>
-          <RecordUtilities label={config.title} search={query} onSearch={(value) => { setQuery(value); resetPage(); }} sort={sort} onSort={(value) => { setSort(value); resetPage(); }} direction={direction} onDirection={() => setDirection((value) => value === "asc" ? "desc" : "asc")} filter={filter} onFilter={(value) => { setFilter(value); resetPage(); }} sortOptions={[{ value: "title", label: "Name" }, { value: "status", label: "Status" }, { value: "meta", label: "Metadata" }]} filterOptions={[...new Set(config.records.map((record) => config.cardStatus(record)))]} totalCount={config.records.length} visibleCount={matchingRecords.length} compact />
-          <TableSettingsMenu
-            viewId={view}
-            onViewChange={setView}
-            properties={propertyOptions}
-            propertyConfiguration={propertyConfiguration}
-            sort={sort}
-            onSort={(value) => { setSort(value); resetPage(); }}
-            onDirection={() => setDirection((value) => value === "asc" ? "desc" : "asc")}
-            direction={direction}
-            sortOptions={[{ value: "title", label: "Name" }, { value: "status", label: "Status" }, { value: "meta", label: "Metadata" }]}
-            filter={filter}
-            onFilter={(value) => { setFilter(value); resetPage(); }}
-            filterOptions={[...new Set(config.records.map((record) => config.cardStatus(record)))]}
-            groupBy={groupBy}
-            onGroupBy={(value) => { setGroupBy(value); resetPage(); }}
-            groupOptions={propertyOptions.map((property) => ({ value: property.id, label: property.label }))}
-            galleryCardSize={galleryCardSize}
-            onGalleryCardSizeChange={setGalleryCardSize}
-            galleryFillMedia={galleryFillMedia}
-            onGalleryFillMediaChange={setGalleryFillMedia}
-            galleryImageSource={galleryImageSelection}
-            galleryImageOptions={galleryImageOptions}
-            onGalleryImageSourceChange={setGalleryImageSelection}
-            tableIcon={tableIcon}
-            tableIconOptions={PROPERTY_ICON_LIBRARY}
-            onTableIconChange={updateTableIcon}
-          />
-          <Theme name="light">
-            <Table.Actions
-              onNew={config.onCreateRecord}
-              {...config.recordActions}
-              newRecordUtility={
-                config.newRecordUtility
-                  ? {
-                      ...config.newRecordUtility,
-                      options: ensureTableCSVImportOption(config.newRecordUtility.options),
-                    }
-                  : config.newRecordUtility
-              }
-              newOptionsLabel="New record options"
-              newLabel="New record"
+        <WireframePageView
+          title={config.title}
+          description={config.description}
+          recordCount={sortedRecords.length}
+          tableIcon={<TableIcon size={20} aria-hidden="true" />}
+        >
+          <div className="demo-toolbar">
+            <div className="demo-view-tabs" role="tablist" aria-label={`${config.title} view mode`}>
+              {(["table", "list", "gallery"] as const).map((mode) => (
+                <button
+                  className={view === mode ? "active" : ""}
+                  type="button"
+                  role="tab"
+                  aria-selected={view === mode}
+                  aria-label={`${mode[0].toUpperCase() + mode.slice(1)} view`}
+                  title={`${mode[0].toUpperCase() + mode.slice(1)} view`}
+                  onClick={() => setView(mode)}
+                  key={mode}
+                >
+                  {mode === "table" ? (
+                    <Table2 size={18} aria-hidden="true" />
+                  ) : mode === "list" ? (
+                    <List size={18} aria-hidden="true" />
+                  ) : (
+                    <GalleryHorizontal size={18} aria-hidden="true" />
+                  )}
+                </button>
+              ))}
+            </div>
+            <RecordUtilities
+              label={config.title}
+              search={query}
+              onSearch={(value) => {
+                setQuery(value);
+                resetPage();
+              }}
+              sort={sort}
+              onSort={(value) => {
+                setSort(value);
+                resetPage();
+              }}
+              direction={direction}
+              onDirection={() => setDirection((value) => (value === "asc" ? "desc" : "asc"))}
+              filter={filter}
+              onFilter={(value) => {
+                setFilter(value);
+                resetPage();
+              }}
+              sortOptions={[
+                { value: "title", label: "Name" },
+                { value: "status", label: "Status" },
+                { value: "meta", label: "Metadata" },
+              ]}
+              filterOptions={[...new Set(config.records.map((record) => config.cardStatus(record)))]}
+              totalCount={config.records.length}
+              visibleCount={matchingRecords.length}
+              compact
             />
-          </Theme>
-        </div>
-        {visibleRecords.length === 0 ? (
-          <div className="wireframe-empty-state" role="status">
-            <strong>No {config.title.toLowerCase()} records found</strong>
-            <p>Try a different search.</p>
+            <TableSettingsMenu
+              viewId={view}
+              onViewChange={setView}
+              properties={propertyOptions}
+              propertyConfiguration={propertyConfiguration}
+              sort={sort}
+              onSort={(value) => {
+                setSort(value);
+                resetPage();
+              }}
+              onDirection={() => setDirection((value) => (value === "asc" ? "desc" : "asc"))}
+              direction={direction}
+              sortOptions={[
+                { value: "title", label: "Name" },
+                { value: "status", label: "Status" },
+                { value: "meta", label: "Metadata" },
+              ]}
+              filter={filter}
+              onFilter={(value) => {
+                setFilter(value);
+                resetPage();
+              }}
+              filterOptions={[...new Set(config.records.map((record) => config.cardStatus(record)))]}
+              groupBy={groupBy}
+              onGroupBy={(value) => {
+                setGroupBy(value);
+                resetPage();
+              }}
+              groupOptions={propertyOptions.map((property) => ({ value: property.id, label: property.label }))}
+              galleryCardSize={galleryCardSize}
+              onGalleryCardSizeChange={setGalleryCardSize}
+              galleryFillMedia={galleryFillMedia}
+              onGalleryFillMediaChange={setGalleryFillMedia}
+              galleryImageSource={galleryImageSelection}
+              galleryImageOptions={galleryImageOptions}
+              onGalleryImageSourceChange={setGalleryImageSelection}
+              tableIcon={tableIcon}
+              tableIconOptions={PROPERTY_ICON_LIBRARY}
+              onTableIconChange={updateTableIcon}
+            />
+            <Theme name="light">
+              <Table.Actions
+                onNew={config.onCreateRecord}
+                {...config.recordActions}
+                newRecordUtility={
+                  config.newRecordUtility
+                    ? {
+                        ...config.newRecordUtility,
+                        options: ensureTableCSVImportOption(config.newRecordUtility.options),
+                      }
+                    : config.newRecordUtility
+                }
+                newOptionsLabel="New record options"
+                newLabel="New record"
+              />
+            </Theme>
           </div>
-        ) : (
-          <div className={groupBy ? "wireframe-record-groups" : undefined}>
-            {visibleRecordGroups.map((group) => (
-              <section className={groupBy ? "wireframe-record-group" : undefined} key={group.key}>
-                {groupBy ? (
-                  <h3 className="wireframe-record-group-heading">
-                    <span>{groupPropertyLabel}: {group.label}</span>
-                    <span className="wireframe-record-group-count">{group.records.length}</span>
-                  </h3>
-                ) : null}
-                <div className={`demo-results demo-${view} ${view === "gallery" ? `gallery-size-${galleryCardSize}` : ""} ${galleryFillMedia ? "gallery-fill-media" : "gallery-fit-media"}`} role="group" aria-label={`${config.title}${groupBy ? ` ${groupPropertyLabel}: ${group.label}` : ""} records`}>
-            {view === "table" ? <WireframeAgGrid records={group.records} visiblePropertyIds={visiblePropertyIds} properties={config.properties} cardImage={config.cardImage} onRecordSelect={setSelectedID} /> : view === "list" ? <WireframeMvpList config={config} records={group.records} visiblePropertyIds={visiblePropertyIds} onRecordSelect={setSelectedID} /> : group.records.map((record, index) => (
-              (() => {
-                const subtitleVisible = isGallerySlotVisible(record, config.cardSubtitle(record), visiblePropertyIds, config.properties);
-                const statusVisible = isGallerySlotVisible(record, config.cardStatus(record), visiblePropertyIds, config.properties);
-                const metaVisible = isGallerySlotVisible(record, config.cardMeta(record), visiblePropertyIds, config.properties);
-                const repeatedValues = [
-                  config.cardTitle(record),
-                  ...(subtitleVisible ? [config.cardSubtitle(record)] : []),
-                  ...(statusVisible ? [config.cardStatus(record)] : []),
-                  ...(metaVisible ? [config.cardMeta(record)] : []),
-                ];
-                return (
-              <button
-                ref={selectedID === record.id ? selectedCardRef : undefined}
-                type="button"
-                aria-pressed={selectedID === record.id}
-                className={`demo-place-card ${selectedID === record.id ? "selected" : ""}`}
-                onClick={() => setSelectedID(record.id)}
-                key={record.id}
-              >
-                {galleryImageSelection === "__record-cover" && (config.cover?.(record) ?? storedCovers[record.id]) ? (
-                  <WireframeCoverCardImage cover={(config.cover?.(record) ?? storedCovers[record.id])!} alt={`${config.cardTitle(record)} cover`} />
-                ) : galleryImageSelection !== "__canvas" && galleryImageSelection !== "__record-cover" && (galleryImageSelection === "__record-image" ? config.cardImage?.(record)?.src : galleryImageSource(record, galleryImageSelection)) ? (
-                  <span className="demo-place-image"><img src={galleryImageSelection === "__record-image" ? config.cardImage?.(record)?.src : galleryImageSource(record, galleryImageSelection)} alt={config.cardImage?.(record)?.alt ?? `${config.cardTitle(record)} image`} /></span>
-                ) : (
-                  <span className="demo-place-image" style={{ background: `linear-gradient(135deg, ${cardColors[index % cardColors.length]}, #527b82)` }} aria-hidden="true" />
-                )}
-                <span className="demo-place-copy">
-                  <strong>{config.cardTitle(record)}</strong>
-                  {subtitleVisible ? <small>{config.cardSubtitle(record)}</small> : null}
-                  {statusVisible ? <GemStatusPill wireframe>{config.cardStatus(record)}</GemStatusPill> : null}
-                  <span className="demo-place-properties" aria-label="Visible properties">
-                    {getGalleryCardProperties(record, visiblePropertyIds, config.properties, repeatedValues).map((property) => (
-                      <small className="demo-place-property" aria-label={`${property.label}: ${property.value}`} key={property.id}>
-                        {property.value}
-                      </small>
-                    ))}
-                  </span>
-                  {metaVisible ? <small className="demo-place-meta">{config.cardMeta(record)} · {record.id}</small> : null}
-                </span>
-              </button>
-                );
-              })()
-            ))}
-                </div>
-              </section>
-            ))}
-          </div>
-        )}
-        <nav className="wireframe-pagination" aria-label={`${config.title} pages`}>
-          <GemButton className="wireframe-design-button" type="button" variant="outlined" tone="wireframe" size="xs" aria-label={`Previous page of ${config.title}`} disabled={pageIndex === 0 || sortedRecords.length === 0} onClick={() => setPageIndex((page) => Math.max(0, page - 1))}>Previous</GemButton>
-          <span role="status">{sortedRecords.length === 0 ? "0 records" : `${pageIndex * pageSize + 1}–${Math.min(sortedRecords.length, (pageIndex + 1) * pageSize)} of ${sortedRecords.length}`}</span>
-        <GSelectField
-          label="Records per page"
-          value={String(pageSize)}
-          width="xs"
-          containerClassName="wireframe-pagination-page-size"
-          size="$2"
-          wireframe
-          options={[9, 18, 27].map((size) => ({ value: String(size), label: String(size) }))}
-          onChange={(value) => { setPageSize(Number(value)); resetPage(); }}
-        />
-          <GemButton className="wireframe-design-button" type="button" variant="outlined" tone="wireframe" size="xs" aria-label={`Next page of ${config.title}`} disabled={pageIndex >= pageCount - 1 || sortedRecords.length === 0} onClick={() => setPageIndex((page) => Math.min(pageCount - 1, page + 1))}>Next</GemButton>
-        </nav>
-      </WireframePageView>
+          {visibleRecords.length === 0 ? (
+            <div className="wireframe-empty-state" role="status">
+              <strong>No {config.title.toLowerCase()} records found</strong>
+              <p>Try a different search.</p>
+            </div>
+          ) : (
+            <div className={groupBy ? "wireframe-record-groups" : undefined}>
+              {visibleRecordGroups.map((group) => (
+                <section className={groupBy ? "wireframe-record-group" : undefined} key={group.key}>
+                  {groupBy ? (
+                    <h3 className="wireframe-record-group-heading">
+                      <span>
+                        {groupPropertyLabel}: {group.label}
+                      </span>
+                      <span className="wireframe-record-group-count">{group.records.length}</span>
+                    </h3>
+                  ) : null}
+                  <div
+                    className={`demo-results demo-${view} ${view === "gallery" ? `gallery-size-${galleryCardSize}` : ""} ${galleryFillMedia ? "gallery-fill-media" : "gallery-fit-media"}`}
+                    role="group"
+                    aria-label={`${config.title}${groupBy ? ` ${groupPropertyLabel}: ${group.label}` : ""} records`}
+                  >
+                    {view === "table" ? (
+                      <WireframeAgGrid
+                        records={group.records}
+                        visiblePropertyIds={visiblePropertyIds}
+                        properties={config.properties}
+                        cardImage={config.cardImage}
+                        onRecordSelect={setSelectedID}
+                      />
+                    ) : view === "list" ? (
+                      <WireframeMvpList
+                        config={config}
+                        records={group.records}
+                        visiblePropertyIds={visiblePropertyIds}
+                        onRecordSelect={setSelectedID}
+                      />
+                    ) : (
+                      group.records.map((record, index) =>
+                        (() => {
+                          const subtitleVisible = isGallerySlotVisible(
+                            record,
+                            config.cardSubtitle(record),
+                            visiblePropertyIds,
+                            config.properties,
+                          );
+                          const statusVisible = isGallerySlotVisible(
+                            record,
+                            config.cardStatus(record),
+                            visiblePropertyIds,
+                            config.properties,
+                          );
+                          const metaVisible = isGallerySlotVisible(
+                            record,
+                            config.cardMeta(record),
+                            visiblePropertyIds,
+                            config.properties,
+                          );
+                          const repeatedValues = [
+                            config.cardTitle(record),
+                            ...(subtitleVisible ? [config.cardSubtitle(record)] : []),
+                            ...(statusVisible ? [config.cardStatus(record)] : []),
+                            ...(metaVisible ? [config.cardMeta(record)] : []),
+                          ];
+                          return (
+                            <button
+                              ref={selectedID === record.id ? selectedCardRef : undefined}
+                              type="button"
+                              aria-pressed={selectedID === record.id}
+                              className={`demo-place-card ${selectedID === record.id ? "selected" : ""}`}
+                              onClick={() => setSelectedID(record.id)}
+                              key={record.id}
+                            >
+                              {galleryImageSelection === "__record-cover" &&
+                              (config.cover?.(record) ?? storedCovers[record.id]) ? (
+                                <WireframeCoverCardImage
+                                  cover={(config.cover?.(record) ?? storedCovers[record.id])!}
+                                  alt={`${config.cardTitle(record)} cover`}
+                                />
+                              ) : galleryImageSelection !== "__canvas" &&
+                                galleryImageSelection !== "__record-cover" &&
+                                (galleryImageSelection === "__record-image"
+                                  ? config.cardImage?.(record)?.src
+                                  : galleryImageSource(record, galleryImageSelection)) ? (
+                                <span className="demo-place-image">
+                                  <img
+                                    src={
+                                      galleryImageSelection === "__record-image"
+                                        ? config.cardImage?.(record)?.src
+                                        : galleryImageSource(record, galleryImageSelection)
+                                    }
+                                    alt={config.cardImage?.(record)?.alt ?? `${config.cardTitle(record)} image`}
+                                  />
+                                </span>
+                              ) : (
+                                <span
+                                  className="demo-place-image"
+                                  style={{
+                                    background: `linear-gradient(135deg, ${cardColors[index % cardColors.length]}, #527b82)`,
+                                  }}
+                                  aria-hidden="true"
+                                />
+                              )}
+                              <span className="demo-place-copy">
+                                <strong>{config.cardTitle(record)}</strong>
+                                {subtitleVisible ? <small>{config.cardSubtitle(record)}</small> : null}
+                                {statusVisible ? (
+                                  <GemStatusPill wireframe>{config.cardStatus(record)}</GemStatusPill>
+                                ) : null}
+                                <span className="demo-place-properties" aria-label="Visible properties">
+                                  {getGalleryCardProperties(
+                                    record,
+                                    visiblePropertyIds,
+                                    config.properties,
+                                    repeatedValues,
+                                  ).map((property) => (
+                                    <small
+                                      className="demo-place-property"
+                                      aria-label={`${property.label}: ${property.value}`}
+                                      key={property.id}
+                                    >
+                                      {property.value}
+                                    </small>
+                                  ))}
+                                </span>
+                                {metaVisible ? (
+                                  <small className="demo-place-meta">
+                                    {config.cardMeta(record)} · {record.id}
+                                  </small>
+                                ) : null}
+                              </span>
+                            </button>
+                          );
+                        })(),
+                      )
+                    )}
+                  </div>
+                </section>
+              ))}
+            </div>
+          )}
+          <nav className="wireframe-pagination" aria-label={`${config.title} pages`}>
+            <GemButton
+              className="wireframe-design-button"
+              type="button"
+              variant="outlined"
+              tone="wireframe"
+              size="xs"
+              aria-label={`Previous page of ${config.title}`}
+              disabled={pageIndex === 0 || sortedRecords.length === 0}
+              onClick={() => setPageIndex((page) => Math.max(0, page - 1))}
+            >
+              Previous
+            </GemButton>
+            <span role="status">
+              {sortedRecords.length === 0
+                ? "0 records"
+                : `${pageIndex * pageSize + 1}–${Math.min(sortedRecords.length, (pageIndex + 1) * pageSize)} of ${sortedRecords.length}`}
+            </span>
+            <GSelectField
+              label="Records per page"
+              value={String(pageSize)}
+              width="xs"
+              containerClassName="wireframe-pagination-page-size"
+              size="$2"
+              wireframe
+              options={[9, 18, 27].map((size) => ({ value: String(size), label: String(size) }))}
+              onChange={(value) => {
+                setPageSize(Number(value));
+                resetPage();
+              }}
+            />
+            <GemButton
+              className="wireframe-design-button"
+              type="button"
+              variant="outlined"
+              tone="wireframe"
+              size="xs"
+              aria-label={`Next page of ${config.title}`}
+              disabled={pageIndex >= pageCount - 1 || sortedRecords.length === 0}
+              onClick={() => setPageIndex((page) => Math.min(pageCount - 1, page + 1))}
+            >
+              Next
+            </GemButton>
+          </nav>
+        </WireframePageView>
       )}
       {selected ? (
-        inspectorExpanded ? null : <aside
-          className={`wireframe-demo-inspector ${inspectorExpanded ? "is-expanded" : ""}`}
-          aria-labelledby="wireframe-inspector-title"
-        >
-          <div className="demo-inspector-heading">
-            <div aria-hidden="true" />
-            <div className="demo-inspector-actions">
-              {inspectorExpanded ? (
-                <button type="button" aria-label="Back to collection" title="Back to collection" onClick={() => navigate(location.pathname.replace(/\/record\/[^/]+$/, ""))}><ChevronLeft size={16} aria-hidden="true" /></button>
-              ) : (
-                <button type="button" aria-label="Open record page" title="Open record page" onClick={openRecordPage}><Expand size={15} aria-hidden="true" /></button>
-              )}
-              <button type="button" aria-label="Close inspector" title="Close inspector" onClick={closeInspector}>×</button>
+        inspectorExpanded ? null : (
+          <aside
+            className={`wireframe-demo-inspector ${inspectorExpanded ? "is-expanded" : ""}`}
+            aria-labelledby="wireframe-inspector-title"
+          >
+            <div className="demo-inspector-heading">
+              <div aria-hidden="true" />
+              <div className="demo-inspector-actions">
+                {inspectorExpanded ? (
+                  <button
+                    type="button"
+                    aria-label="Back to collection"
+                    title="Back to collection"
+                    onClick={() => navigate(location.pathname.replace(/\/record\/[^/]+$/, ""))}
+                  >
+                    <ChevronLeft size={16} aria-hidden="true" />
+                  </button>
+                ) : (
+                  <button type="button" aria-label="Open record page" title="Open record page" onClick={openRecordPage}>
+                    <Expand size={15} aria-hidden="true" />
+                  </button>
+                )}
+                <button type="button" aria-label="Close inspector" title="Close inspector" onClick={closeInspector}>
+                  ×
+                </button>
+              </div>
             </div>
-          </div>
-          <WireframeCover recordKey={selected.id} value={selectedCover} onChange={(cover) => persistCover(selected, cover)} onUpload={(file) => uploadCover(selected, file)} />
-          <div className="wireframe-inspector-record-title">
-            <h2 id="wireframe-inspector-title">{config.cardTitle(selected)}</h2>
-          </div>
-          {renderInspector(config.inspector(selected, schemaProperties), openPropertyDetails)}
-        </aside>
+            <WireframeCover
+              recordKey={selected.id}
+              value={selectedCover}
+              onChange={(cover) => persistCover(selected, cover)}
+              onUpload={(file) => uploadCover(selected, file)}
+            />
+            <div className="wireframe-inspector-record-title">
+              <h2 id="wireframe-inspector-title">{config.cardTitle(selected)}</h2>
+            </div>
+            {renderInspector(config.inspector(selected, schemaProperties), openPropertyDetails)}
+          </aside>
+        )
       ) : null}
       {propertyDetails ? (
         <Theme name="light">
-        <div className="wireframe-property-details-backdrop" role="presentation" onClick={() => setPropertyDetails(null)}>
-          <section
-            className="wireframe-property-details"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="wireframe-property-details-title"
-            onClick={(event) => event.stopPropagation()}
+          <div
+            className="wireframe-property-details-backdrop"
+            role="presentation"
+            onClick={() => setPropertyDetails(null)}
           >
-            <GemButton type="button" variant="quiet" tone="secondary" aria-label="Close property details" onClick={() => setPropertyDetails(null)}>
-              ×
-            </GemButton>
-            <div className="wireframe-property-details-heading">
-              <span className="wireframe-property-details-icon" aria-hidden="true">
-                <PropertyIcon name={propertyDetails.icon} />
-              </span>
-              <div>
-                <SizableText id="wireframe-property-details-title" className="wireframe-property-dialog-title" size="$3" fontWeight="700" role="heading" aria-level={2}>Property settings</SizableText>
-                <p>{propertyDetails.label}</p>
-              </div>
-            </div>
-            <div className="wireframe-property-details-preview">
-              <strong>Current value</strong>
-              <p>{propertyDetails.value || "No value recorded."}</p>
-            </div>
-            <GemTextField
-              id="wireframe-property-name"
-              label="Property name"
-              value={propertyDetails.label}
-              readOnly={isIdentityProperty(propertyDetails.label)}
-              onChange={(event) => setPropertyDetails({ ...propertyDetails, label: event.currentTarget.value })}
-            />
-            <GSelectField
-              id="wireframe-property-type"
-              label="Primitive type"
-              value={propertyDetails.type}
-              options={[...new Set([...WIREFRAME_PROPERTY_TYPES, propertyDetails.type])].map((type) => ({ value: type, label: type }))}
-              onChange={(type) => setPropertyDetails({ ...propertyDetails, type })}
-              wireframe
-            />
-            <fieldset className="wireframe-property-icon-fieldset">
-              <legend>Icon</legend>
-              <PropertyIconPicker
-                value={propertyDetails.icon}
-                onChange={(icon) => setPropertyDetails({ ...propertyDetails, icon })}
-              />
-            </fieldset>
-            <GemTextField
-              id="wireframe-property-status-text"
-              label="Status text"
-              value={propertyDetails.statusText}
-              onChange={(event) => setPropertyDetails({ ...propertyDetails, statusText: event.currentTarget.value })}
-            />
-            <GSelectField
-              id="wireframe-property-color"
-              label="Pill color"
-              value={propertyDetails.colorToken}
-              options={["mint", "gold", "blue", "green", "purple", "orange", "red", "gray"].map((color) => ({ value: color, label: color[0].toUpperCase() + color.slice(1) }))}
-              onChange={(colorToken) => setPropertyDetails({ ...propertyDetails, colorToken })}
-              wireframe
-            />
-            <div className="wireframe-property-details-actions">
-              <GemButton type="button" variant="outlined" tone="secondary" onClick={() => setPropertyDetails(null)}>
-                Cancel
-              </GemButton>
+            <section
+              className="wireframe-property-details"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="wireframe-property-details-title"
+              onClick={(event) => event.stopPropagation()}
+            >
               <GemButton
                 type="button"
-                aria-label="Save property settings"
-                onClick={() => {
-                  savePropertyIcon(propertyDetails.id, propertyDetails.icon);
-                  setPropertyDetails(null);
-                }}
+                variant="quiet"
+                tone="secondary"
+                aria-label="Close property details"
+                onClick={() => setPropertyDetails(null)}
               >
-                Save
+                ×
               </GemButton>
-            </div>
-          </section>
-        </div>
+              <div className="wireframe-property-details-heading">
+                <span className="wireframe-property-details-icon" aria-hidden="true">
+                  <PropertyIcon name={propertyDetails.icon} />
+                </span>
+                <div>
+                  <SizableText
+                    id="wireframe-property-details-title"
+                    className="wireframe-property-dialog-title"
+                    size="$3"
+                    fontWeight="700"
+                    role="heading"
+                    aria-level={2}
+                  >
+                    Property settings
+                  </SizableText>
+                  <p>{propertyDetails.label}</p>
+                </div>
+              </div>
+              <div className="wireframe-property-details-preview">
+                <strong>Current value</strong>
+                <p>{propertyDetails.value || "No value recorded."}</p>
+              </div>
+              <GemTextField
+                id="wireframe-property-name"
+                label="Property name"
+                value={propertyDetails.label}
+                readOnly={isIdentityProperty(propertyDetails.label)}
+                onChange={(event) => setPropertyDetails({ ...propertyDetails, label: event.currentTarget.value })}
+              />
+              <GSelectField
+                id="wireframe-property-type"
+                label="Primitive type"
+                value={propertyDetails.type}
+                options={[...new Set([...WIREFRAME_PROPERTY_TYPES, propertyDetails.type])].map((type) => ({
+                  value: type,
+                  label: type,
+                }))}
+                onChange={(type) => setPropertyDetails({ ...propertyDetails, type })}
+                wireframe
+              />
+              <fieldset className="wireframe-property-icon-fieldset">
+                <legend>Icon</legend>
+                <PropertyIconPicker
+                  value={propertyDetails.icon}
+                  onChange={(icon) => setPropertyDetails({ ...propertyDetails, icon })}
+                />
+              </fieldset>
+              <GemTextField
+                id="wireframe-property-status-text"
+                label="Status text"
+                value={propertyDetails.statusText}
+                onChange={(event) => setPropertyDetails({ ...propertyDetails, statusText: event.currentTarget.value })}
+              />
+              <GSelectField
+                id="wireframe-property-color"
+                label="Pill color"
+                value={propertyDetails.colorToken}
+                options={["mint", "gold", "blue", "green", "purple", "orange", "red", "gray"].map((color) => ({
+                  value: color,
+                  label: color[0].toUpperCase() + color.slice(1),
+                }))}
+                onChange={(colorToken) => setPropertyDetails({ ...propertyDetails, colorToken })}
+                wireframe
+              />
+              <div className="wireframe-property-details-actions">
+                <GemButton type="button" variant="outlined" tone="secondary" onClick={() => setPropertyDetails(null)}>
+                  Cancel
+                </GemButton>
+                <GemButton
+                  type="button"
+                  aria-label="Save property settings"
+                  onClick={() => {
+                    savePropertyIcon(propertyDetails.id, propertyDetails.icon);
+                    setPropertyDetails(null);
+                  }}
+                >
+                  Save
+                </GemButton>
+              </div>
+            </section>
+          </div>
         </Theme>
       ) : null}
     </section>
@@ -710,23 +1000,56 @@ function WireframeMvpList<T extends WireframeRecord>({
   }));
   const first = records[0] as Record<string, unknown> | undefined;
   const properties: readonly RecordPropertyDefinition<T>[] = first
-    ? visiblePropertyIds.filter((field) => field !== "id").map((field) => {
-        const adapted = config.properties?.find((property) => property.id === field || property.sourceField === field);
-        if (adapted) return adapted;
-        return {
-          id: field,
-          label: field.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/^./, (character) => character.toUpperCase()),
-          kind: isImageProperty(field, first[field]) ? "image" : typeof first[field] === "number" ? "number" : "text",
-          getValue: (record: T) => isImageProperty(field, (record as Record<string, unknown>)[field])
-            ? { raw: (record as Record<string, unknown>)[field], display: "", image: { src: String((record as Record<string, unknown>)[field]), alt: field } }
-            : { raw: (record as Record<string, unknown>)[field], display: (record as Record<string, unknown>)[field] == null ? "—" : String((record as Record<string, unknown>)[field]) },
-        };
-      })
+    ? visiblePropertyIds
+        .filter((field) => field !== "id")
+        .map((field) => {
+          const adapted = config.properties?.find(
+            (property) => property.id === field || property.sourceField === field,
+          );
+          if (adapted) return adapted;
+          return {
+            id: field,
+            label: field.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/^./, (character) => character.toUpperCase()),
+            kind: isImageProperty(field, first[field]) ? "image" : typeof first[field] === "number" ? "number" : "text",
+            getValue: (record: T) =>
+              isImageProperty(field, (record as Record<string, unknown>)[field])
+                ? {
+                    raw: (record as Record<string, unknown>)[field],
+                    display: "",
+                    image: { src: String((record as Record<string, unknown>)[field]), alt: field },
+                  }
+                : {
+                    raw: (record as Record<string, unknown>)[field],
+                    display:
+                      (record as Record<string, unknown>)[field] == null
+                        ? "—"
+                        : String((record as Record<string, unknown>)[field]),
+                  },
+          };
+        })
     : [];
-  return <RecordList records={tableRecords} properties={properties} onExpansionChange={(id) => id && onRecordSelect(String(id))} />;
+  return (
+    <RecordList
+      records={tableRecords}
+      properties={properties}
+      onExpansionChange={(id) => id && onRecordSelect(String(id))}
+    />
+  );
 }
 
-function WireframeAgGrid<T extends WireframeRecord>({ records, visiblePropertyIds, properties = [], cardImage, onRecordSelect }: { records: readonly T[]; visiblePropertyIds: readonly string[]; properties?: readonly RecordPropertyDefinition<T>[]; cardImage?: (record: T) => { src: string; alt: string } | undefined; onRecordSelect: (id: string) => void }) {
+function WireframeAgGrid<T extends WireframeRecord>({
+  records,
+  visiblePropertyIds,
+  properties = [],
+  cardImage,
+  onRecordSelect,
+}: {
+  records: readonly T[];
+  visiblePropertyIds: readonly string[];
+  properties?: readonly RecordPropertyDefinition<T>[];
+  cardImage?: (record: T) => { src: string; alt: string } | undefined;
+  onRecordSelect: (id: string) => void;
+}) {
   const fields = ["id", ...visiblePropertyIds.filter((field) => field !== "id")];
   const columns: ColDef<T>[] = fields.map((field) => {
     const property = properties.find((item) => item.id === field || item.sourceField === field);
@@ -740,38 +1063,82 @@ function WireframeAgGrid<T extends WireframeRecord>({ records, visiblePropertyId
         if (field === "image") return cardImage?.(data)?.src;
         if (!property) return (data as Record<string, unknown>)[field];
         const value = property.getValue(data);
-        return value.raw ?? (typeof value.display === "string" || typeof value.display === "number" ? value.display : undefined);
+        return (
+          value.raw ??
+          (typeof value.display === "string" || typeof value.display === "number" ? value.display : undefined)
+        );
       },
       valueFormatter: (params) => {
         if (!property || !params.data) return formatWireframeTableValue(field, params.value);
         const display = property.getValue(params.data).display;
-        return typeof display === "string" || typeof display === "number" ? String(display) : display == null ? "—" : "";
+        return typeof display === "string" || typeof display === "number"
+          ? String(display)
+          : display == null
+            ? "—"
+            : "";
       },
       cellRenderer: (params: ICellRendererParams<T>) => {
         if (!params.data) return "";
-        const rawValue = field === "image"
-          ? cardImage?.(params.data)?.src
-          : property ? property.getValue(params.data).raw : (params.data as Record<string, unknown>)[field];
+        const rawValue =
+          field === "image"
+            ? cardImage?.(params.data)?.src
+            : property
+              ? property.getValue(params.data).raw
+              : (params.data as Record<string, unknown>)[field];
         if (isImageProperty(field, rawValue)) {
-          return <img className="wireframe-table-image" src={String(rawValue)} alt={field === "image" ? cardImage?.(params.data)?.alt ?? "Record image" : `${field} preview`} />;
+          return (
+            <img
+              className="wireframe-table-image"
+              src={String(rawValue)}
+              alt={field === "image" ? (cardImage?.(params.data)?.alt ?? "Record image") : `${field} preview`}
+            />
+          );
         }
         if (property) {
           const display = property.getValue(params.data).display;
           const value = property.getValue(params.data);
           if ((property.kind === "url" || property.kind === "email") && value.href) {
-            return <a className="primitive-value-link" href={value.href} target="_blank" rel="noreferrer" onClick={(event) => event.stopPropagation()}>{typeof display === "string" ? display : value.href}</a>;
+            return (
+              <a
+                className="primitive-value-link"
+                href={value.href}
+                target="_blank"
+                rel="noreferrer"
+                onClick={(event) => event.stopPropagation()}
+              >
+                {typeof display === "string" ? display : value.href}
+              </a>
+            );
           }
-          return typeof display === "string" || typeof display === "number" ? String(display) : display == null ? "—" : "";
+          return typeof display === "string" || typeof display === "number"
+            ? String(display)
+            : display == null
+              ? "—"
+              : "";
         }
         return formatWireframeTableValue(field, rawValue);
       },
     };
   });
-  return <div className="wireframe-ag-grid"><AgGridReact<T> theme={themeQuartz} rowData={[...records]} columnDefs={columns} getRowId={({ data }) => data.id} onRowClicked={({ data }) => data && onRecordSelect(data.id)} domLayout="autoHeight" /></div>;
+  return (
+    <div className="wireframe-ag-grid">
+      <AgGridReact<T>
+        theme={themeQuartz}
+        rowData={[...records]}
+        columnDefs={columns}
+        getRowId={({ data }) => data.id}
+        onRowClicked={({ data }) => data && onRecordSelect(data.id)}
+        domLayout="autoHeight"
+      />
+    </div>
+  );
 }
 
 function isImageProperty(field: string, value: unknown): boolean {
-  return typeof value === "string" && /(^|_|-)(image|logo|avatar|cover|photo|thumbnail)(s|$)/i.test(field.replace(/([a-z])([A-Z])/g, "$1_$2"));
+  return (
+    typeof value === "string" &&
+    /(^|_|-)(image|logo|avatar|cover|photo|thumbnail)(s|$)/i.test(field.replace(/([a-z])([A-Z])/g, "$1_$2"))
+  );
 }
 
 function propertyLabel(id: string): string {
@@ -799,9 +1166,10 @@ export function createWireframeSchemaProperties<T extends WireframeRecord>(
         const raw = (record as Record<string, unknown>)[sourceField];
         if (/^(location|work)AddressID$/i.test(sourceField)) {
           const address = (record as Record<string, unknown>).address;
-          const formatted = address && typeof address === "object"
-            ? formatAddress(address as Parameters<typeof formatAddress>[0])
-            : "Address unavailable";
+          const formatted =
+            address && typeof address === "object"
+              ? formatAddress(address as Parameters<typeof formatAddress>[0])
+              : "Address unavailable";
           return { raw, display: formatted };
         }
         return { raw, display: raw == null || raw === "" ? "—" : String(raw) };
@@ -836,9 +1204,15 @@ function schemaColumnSourceField<T extends WireframeRecord>(
   if (column.name.toLowerCase() === "dateupdated") return "updatedAt";
   const recordKeys = records.flatMap((record) => Object.keys(record));
   const matchingKey = recordKeys.find((key) => key.toLowerCase() === column.name.toLowerCase());
-  return matchingKey ?? column.name.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/[_-]+/g, " ").split(" ").map((part, index) =>
-    index === 0 ? part.toLowerCase() : `${part[0]?.toUpperCase() ?? ""}${part.slice(1)}`,
-  ).join("");
+  return (
+    matchingKey ??
+    column.name
+      .replace(/([a-z])([A-Z])/g, "$1 $2")
+      .replace(/[_-]+/g, " ")
+      .split(" ")
+      .map((part, index) => (index === 0 ? part.toLowerCase() : `${part[0]?.toUpperCase() ?? ""}${part.slice(1)}`))
+      .join("")
+  );
 }
 
 function galleryImageSource(record: object, property: string): string | undefined {
@@ -857,21 +1231,36 @@ function getGalleryCardProperties<T extends WireframeRecord>(
   repeatedValues: readonly string[] = [],
 ) {
   const values = record as Record<string, unknown>;
-  const seen = new Set(repeatedValues.flatMap((value) => value.split(/[·•|]/).map(normalizeGalleryValue)).filter(Boolean));
+  const seen = new Set(
+    repeatedValues.flatMap((value) => value.split(/[·•|]/).map(normalizeGalleryValue)).filter(Boolean),
+  );
   return visiblePropertyIds
-    .filter((id) => id !== "id" && (Object.hasOwn(values, id) || properties.some((property) => property.id === id || property.sourceField === id)) && !isImageProperty(id, values[id]))
+    .filter(
+      (id) =>
+        id !== "id" &&
+        (Object.hasOwn(values, id) ||
+          properties.some((property) => property.id === id || property.sourceField === id)) &&
+        !isImageProperty(id, values[id]),
+    )
     .map((id) => {
       const property = properties.find((item) => item.id === id || item.sourceField === id);
       const adapted = property?.getValue(record);
       const rawDisplay = adapted?.display;
-      const value = typeof rawDisplay === "string" || typeof rawDisplay === "number"
-        ? String(rawDisplay)
-        : typeof values[id] === "boolean"
-          ? values[id] ? "Yes" : "No"
-          : values[id] && typeof values[id] === "object" ? "—" : formatWireframeTableValue(id, values[id]);
+      const value =
+        typeof rawDisplay === "string" || typeof rawDisplay === "number"
+          ? String(rawDisplay)
+          : typeof values[id] === "boolean"
+            ? values[id]
+              ? "Yes"
+              : "No"
+            : values[id] && typeof values[id] === "object"
+              ? "—"
+              : formatWireframeTableValue(id, values[id]);
       return {
         id,
-        label: property?.label ?? id.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/^./, (character) => character.toUpperCase()),
+        label:
+          property?.label ??
+          id.replace(/([a-z])([A-Z])/g, "$1 $2").replace(/^./, (character) => character.toUpperCase()),
         value,
       };
     })
@@ -892,9 +1281,13 @@ function isGallerySlotVisible<T extends WireframeRecord>(
 ): boolean {
   const normalizedSlotValue = normalizeGalleryValue(slotValue);
   return properties.some((property) => {
-    if (!visiblePropertyIds.includes(property.id) && !visiblePropertyIds.includes(property.sourceField ?? "")) return false;
+    if (!visiblePropertyIds.includes(property.id) && !visiblePropertyIds.includes(property.sourceField ?? ""))
+      return false;
     const value = property.getValue(record).display;
-    return (typeof value === "string" || typeof value === "number") && normalizeGalleryValue(String(value)) === normalizedSlotValue;
+    return (
+      (typeof value === "string" || typeof value === "number") &&
+      normalizeGalleryValue(String(value)) === normalizedSlotValue
+    );
   });
 }
 
@@ -946,13 +1339,15 @@ function renderInspector(
               type="button"
               className="wireframe-property-details-trigger"
               aria-label={`Open details for ${labelText}`}
-              onClick={() => onDetails({
-                label: labelText,
-                value: valueText,
-                type: metadata.type,
-                id: propertyID,
-                icon: metadata.iconName,
-              })}
+              onClick={() =>
+                onDetails({
+                  label: labelText,
+                  value: valueText,
+                  type: metadata.type,
+                  id: propertyID,
+                  icon: metadata.iconName,
+                })
+              }
             >
               <PropertyIcon name={metadata.iconName} size={13} />
             </button>

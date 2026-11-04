@@ -1,5 +1,6 @@
-import { act, fireEvent, render as rtlRender, screen } from "@testing-library/react";
+import { render as rtlRender } from "@testing-library/react";
 import type { ReactNode } from "react";
+import { act, fireEvent, screen } from "@testing-library/react";
 import { TamaguiProvider } from "tamagui";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { tamaguiConfig } from "../../design-system";
@@ -10,18 +11,18 @@ import {
   type GeoapifySuggestion,
 } from "./GeoapifyAddressSearch";
 
-function render(ui: ReactNode) {
+afterEach(() => {
+  vi.useRealTimers();
+  vi.unstubAllEnvs();
+});
+
+function renderWithTamagui(ui: ReactNode) {
   return rtlRender(
     <TamaguiProvider config={tamaguiConfig} defaultTheme="dark">
       {ui}
     </TamaguiProvider>,
   );
 }
-
-afterEach(() => {
-  vi.useRealTimers();
-  vi.unstubAllEnvs();
-});
 
 describe("Geoapify address search", () => {
   it("maps only available structured address fields", () => {

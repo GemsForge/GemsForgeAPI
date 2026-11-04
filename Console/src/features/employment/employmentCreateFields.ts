@@ -37,7 +37,8 @@ export type EmploymentFieldDefinition = {
 export function employmentAddressOptions(addresses: readonly Address[]): RecordSelectOption[] {
   return addresses.map((address) => ({
     value: address.id,
-    label: [address.addressLine1, address.city, address.state, address.postalCode].filter(Boolean).join(", ") || address.id,
+    label:
+      [address.addressLine1, address.city, address.state, address.postalCode].filter(Boolean).join(", ") || address.id,
   }));
 }
 
@@ -107,11 +108,22 @@ export function createEmploymentFieldDefinitions(options: {
     },
     { name: "startDate", label: "Start date", schema: optionalDate, type: "date", width: "short" },
     { name: "endDate", label: "End date", schema: optionalDate, type: "date", width: "short" },
-    { name: "employmentStatus", label: "Status", schema: required("Status"), required: true, options: options.status.map((option) => ({
-      ...option,
-      group: option.value === "Active" || option.value === "Current" ? "Current" : "Past",
-      colorToken: option.value === "Active" || option.value === "Completed" ? "green" : option.value === "Paused" ? "gold" : "gray",
-    })) },
+    {
+      name: "employmentStatus",
+      label: "Status",
+      schema: required("Status"),
+      required: true,
+      options: options.status.map((option) => ({
+        ...option,
+        group: option.value === "Active" || option.value === "Current" ? "Current" : "Past",
+        colorToken:
+          option.value === "Active" || option.value === "Completed"
+            ? "green"
+            : option.value === "Paused"
+              ? "gold"
+              : "gray",
+      })),
+    },
     { name: "employerContact", label: "Contact", schema: optional },
     { name: "employerContactNumber", label: "Contact number", schema: optionalPhone, type: "tel", width: "short" },
     { name: "employerContactEmail", label: "Contact email", schema: optionalEmail, type: "email", width: "medium" },

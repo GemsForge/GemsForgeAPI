@@ -7,7 +7,5 @@ export function withCurrentRecordOption(
 ): RecordSelectOption[] {
   if (current === null || current === undefined || current === "") return [...options];
   const value = String(current);
-  return options.some((option) => option.value === value)
-    ? [...options]
-    : [...options, { value, label: value }];
+  return options.some((option) => option.value === value) ? [...options] : [...options, { value, label: value }];
 }

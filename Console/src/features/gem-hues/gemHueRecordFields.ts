@@ -13,7 +13,13 @@ export function gemHueEditableFields(
       label: field.label,
       value: hue[field.name],
       editable: true,
-      inputType: field.options ? "select" as const : field.multiline ? "longText" as const : field.primitive === "date" ? "date" as const : "text" as const,
+      inputType: field.options
+        ? ("select" as const)
+        : field.multiline
+          ? ("longText" as const)
+          : field.primitive === "date"
+            ? ("date" as const)
+            : ("text" as const),
       primitive: field.primitive === "text" ? undefined : field.primitive,
       options: field.options ? withCurrentRecordOption(field.options, hue[field.name]) : undefined,
       required: field.required,

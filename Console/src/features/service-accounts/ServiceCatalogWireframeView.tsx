@@ -18,25 +18,37 @@ export function ServiceCatalogWireframeView({ records }: { records: readonly Ser
   useEffect(() => {
     const controller = new AbortController();
     const objectURLs: string[] = [];
-    void Promise.all((logos.data ?? []).map(async (logo) => {
-      try {
-        const blob = await api.getServiceLogoImage(logo.id, controller.signal);
-        const url = URL.createObjectURL(blob);
-        objectURLs.push(url);
-        return [logo.id, url] as const;
-      } catch { return null; }
-    })).then((entries) => setLogoURLs(Object.fromEntries(entries.filter((entry): entry is readonly [number, string] => entry !== null))));
-    return () => { controller.abort(); objectURLs.forEach((url) => URL.revokeObjectURL(url)); };
+    void Promise.all(
+      (logos.data ?? []).map(async (logo) => {
+        try {
+          const blob = await api.getServiceLogoImage(logo.id, controller.signal);
+          const url = URL.createObjectURL(blob);
+          objectURLs.push(url);
+          return [logo.id, url] as const;
+        } catch {
+          return null;
+        }
+      }),
+    ).then((entries) =>
+      setLogoURLs(Object.fromEntries(entries.filter((entry): entry is readonly [number, string] => entry !== null))),
+    );
+    return () => {
+      controller.abort();
+      objectURLs.forEach((url) => URL.revokeObjectURL(url));
+    };
   }, [logos.data]);
-  const adapter = createServiceAccountTableAdapter((record) => {
-    const logo = logos.data?.find((item) => item.logoKey === record.logoKey);
-    const src = logo ? logoURLs[logo.id] : undefined;
-    return src ? <WireframeImagePreview src={src} alt={`${record.service} logo`} /> : "No image";
-  }, (record) => {
-    const logo = logos.data?.find((item) => item.logoKey === record.logoKey);
-    const src = logo ? logoURLs[logo.id] : undefined;
-    return src ? { src, alt: `${record.service} logo`, fit: "contain" } : undefined;
-  });
+  const adapter = createServiceAccountTableAdapter(
+    (record) => {
+      const logo = logos.data?.find((item) => item.logoKey === record.logoKey);
+      const src = logo ? logoURLs[logo.id] : undefined;
+      return src ? <WireframeImagePreview src={src} alt={`${record.service} logo`} /> : "No image";
+    },
+    (record) => {
+      const logo = logos.data?.find((item) => item.logoKey === record.logoKey);
+      const src = logo ? logoURLs[logo.id] : undefined;
+      return src ? { src, alt: `${record.service} logo`, fit: "contain" } : undefined;
+    },
+  );
   const fieldByProperty: Record<string, keyof ServiceAccount> = {
     service: "service",
     monthlyAmount: "monthlyAmount",
@@ -46,8 +58,12 @@ export function ServiceCatalogWireframeView({ records }: { records: readonly Ser
   };
   const properties = adapter.getPropertyDefinitions();
   const wireframeRecords = records.map((record) => ({ ...record, id: String(record.id) }));
-  const wireframeProperties = properties as unknown as readonly RecordPropertyDefinition<(typeof wireframeRecords)[number]>[];
-  const serviceStatusOptions = [...new Set(records.map((record) => record.status).filter((value): value is string => Boolean(value)))].map((value) => ({ value, label: value }));
+  const wireframeProperties = properties as unknown as readonly RecordPropertyDefinition<
+    (typeof wireframeRecords)[number]
+  >[];
+  const serviceStatusOptions = [
+    ...new Set(records.map((record) => record.status).filter((value): value is string => Boolean(value))),
+  ].map((value) => ({ value, label: value }));
   return (
     <WireframeCollectionView
       config={{
@@ -76,11 +92,15 @@ export function ServiceCatalogWireframeView({ records }: { records: readonly Ser
               ...(properties.map((property) => {
                 const field = fieldByProperty[property.id];
                 const numeric = property.id === "monthlyAmount";
-                const options = property.id === "status"
-                  ? serviceStatusOptions
-                  : property.id === "emailUpdated"
-                    ? [{ value: "true", label: "Yes" }, { value: "false", label: "No" }]
-                    : undefined;
+                const options =
+                  property.id === "status"
+                    ? serviceStatusOptions
+                    : property.id === "emailUpdated"
+                      ? [
+                          { value: "true", label: "Yes" },
+                          { value: "false", label: "No" },
+                        ]
+                      : undefined;
                 return {
                   ...property,
                   kind: numeric ? "number" : property.kind,
@@ -93,11 +113,14 @@ export function ServiceCatalogWireframeView({ records }: { records: readonly Ser
                             .mutateAsync({
                               id: Number(record.id),
                               patch: {
-                                [field]: property.id === "emailUpdated"
-                                  ? value === "true"
-                                  : numeric
-                                    ? (value === "" ? null : Number(value))
-                                    : value || null,
+                                [field]:
+                                  property.id === "emailUpdated"
+                                    ? value === "true"
+                                    : numeric
+                                      ? value === ""
+                                        ? null
+                                        : Number(value)
+                                      : value || null,
                               },
                             })
                             .then(() => undefined),

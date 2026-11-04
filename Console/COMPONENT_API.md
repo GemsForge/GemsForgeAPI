@@ -56,12 +56,12 @@ shared `WireframeRecordInspector`. The inspector owns semantic property rows;
 `WireframeEditableValue` owns inline editing and save feedback; feature
 adapters provide values, editor kinds, options, and save handlers.
 
-| Component | Consumer provides | Component behavior |
-| --- | --- | --- |
-| `WireframeSchemaInspector` | A record and its property definitions | Formats values, derives property metadata, and connects editable properties to save handlers. |
-| `WireframeRecordInspector` | `WireframeInspectorField[]` | Renders labeled property rows and composes property editors. |
-| `WireframeEditableValue` | `value`, `label`, `kind`, optional `options`, `nullable`, `displayValue`, and `onCommit` | Ordinary values enter editing on click; select/status values commit through their control; save failures remain visible. |
-| `WireframeImagePreview` | Optional `src`, `alt`, optional `className`, optional async `onEdit(file)` | Clicking an image opens the larger preview. With `onEdit`, a separate Edit button chooses an image and reports progress or failure. Without `src`, it shows an empty state while allowing image selection if `onEdit` exists. |
+| Component                  | Consumer provides                                                                        | Component behavior                                                                                                                                                                                                            |
+| -------------------------- | ---------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `WireframeSchemaInspector` | A record and its property definitions                                                    | Formats values, derives property metadata, and connects editable properties to save handlers.                                                                                                                                 |
+| `WireframeRecordInspector` | `WireframeInspectorField[]`                                                              | Renders labeled property rows and composes property editors.                                                                                                                                                                  |
+| `WireframeEditableValue`   | `value`, `label`, `kind`, optional `options`, `nullable`, `displayValue`, and `onCommit` | Ordinary values enter editing on click; select/status values commit through their control; save failures remain visible.                                                                                                      |
+| `WireframeImagePreview`    | Optional `src`, `alt`, optional `className`, optional async `onEdit(file)`               | Clicking an image opens the larger preview. With `onEdit`, a separate Edit button chooses an image and reports progress or failure. Without `src`, it shows an empty state while allowing image selection if `onEdit` exists. |
 
 URL and email values preserve their primary link action. URLs open in a new
 tab; email addresses use `mailto:`. Editing uses a separate, labeled pencil

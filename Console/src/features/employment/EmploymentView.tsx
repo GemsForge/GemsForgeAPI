@@ -140,7 +140,6 @@ function EmploymentDetail({
   definitions: ReturnType<typeof createEmploymentFieldDefinitions>;
   onPatch: (values: Partial<Employment>) => Promise<void>;
 }) {
-
   return (
     <article className="employment-detail">
       <div className="detail-heading">
@@ -151,7 +150,10 @@ function EmploymentDetail({
         </div>
         <GemStatusPill>{record.employmentStatus}</GemStatusPill>
       </div>
-      <EditableRecordFields className="employment-fields" fields={employmentEditableFields(record, definitions, onPatch)} />
+      <EditableRecordFields
+        className="employment-fields"
+        fields={employmentEditableFields(record, definitions, onPatch)}
+      />
     </article>
   );
 }

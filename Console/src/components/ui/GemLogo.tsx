@@ -16,7 +16,11 @@ export function GemLogo({ compact = false }: { compact?: boolean } = {}) {
       <LogoMark aria-hidden>
         <img src={logoSource} width={32} height={32} alt="GemsForge logo" style={{ objectFit: "contain" }} />
       </LogoMark>
-      {!compact ? <Text color="$wireframeHeading" fontSize="$4" fontWeight="700">GemsForge</Text> : null}
+      {!compact ? (
+        <Text color="$wireframeHeading" fontSize="$4" fontWeight="700">
+          GemsForge
+        </Text>
+      ) : null}
     </XStack>
   );
 }

@@ -42,7 +42,11 @@ export function TransactionsView({ records }: TransactionsViewProps) {
   const categories = useExpenseCategoriesQuery(true);
   const subcategories = useExpenseSubcategoriesQuery(null, true);
   const merchants = useMerchantsQuery(true);
-  const transactionAdapter = createTransactionTableAdapter(categories.data ?? [], subcategories.data ?? [], merchants.data ?? []);
+  const transactionAdapter = createTransactionTableAdapter(
+    categories.data ?? [],
+    subcategories.data ?? [],
+    merchants.data ?? [],
+  );
   const selectedRecord = detail.data;
   const [creating, setCreating] = useState(false);
   const [importing, setImporting] = useState(false);
