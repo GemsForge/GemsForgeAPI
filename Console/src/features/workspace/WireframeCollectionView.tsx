@@ -388,7 +388,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
           config.searchValues(record).some((value) => value.toLowerCase().includes(query.trim().toLowerCase())) &&
           (!filter || config.cardStatus(record) === filter),
       ),
-    [config, filter, query],
+    [activeRecords, config, filter, query],
   );
   const sortedRecords = useMemo(() => {
     if (!sort) return matchingRecords;
