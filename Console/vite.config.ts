@@ -65,6 +65,7 @@ export default defineConfig(({ mode }) => {
           "/file-uploads",
           "/record-presentations",
           "/table-views",
+          "/table-import",
           "/forgekeeper",
           "/gemhues",
           "/health",

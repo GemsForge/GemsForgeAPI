@@ -103,7 +103,7 @@ export function CreateTextField({
   const id = registration.name;
   const inputPlaceholder = placeholder ?? defaultTextPlaceholder(label);
   return (
-    <GemTextField
+    <GemField
       {...registration}
       ref={(element) => registration.ref(element)}
       id={id}
@@ -111,11 +111,10 @@ export function CreateTextField({
       error={error}
       required={required}
       type={type}
-      step={type === "number" ? "any" : undefined}
+      step={step ?? (type === "number" ? "any" : undefined)}
       multiline={multiline}
       placeholder={inputPlaceholder}
       width={width}
-      className={controlClassName}
     />
   );
 }
