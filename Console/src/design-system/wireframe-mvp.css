@@ -73,6 +73,74 @@
   font-weight: 700;
 }
 
+/* Keep the workspace destinations reachable in the compact desktop rail. */
+.wireframe-demo.wireframe-standalone .wireframe-demo-sidebar.is-collapsed {
+  align-items: center;
+  padding-inline: 0.45rem;
+}
+
+.wireframe-demo.wireframe-standalone .wireframe-demo-sidebar.is-collapsed > .demo-brand {
+  justify-content: center;
+  padding-inline: 0;
+}
+
+.wireframe-demo.wireframe-standalone .wireframe-demo-sidebar.is-collapsed .demo-search,
+.wireframe-demo.wireframe-standalone .wireframe-demo-sidebar.is-collapsed .demo-sidebar-label {
+  display: none;
+}
+
+.wireframe-demo.wireframe-standalone .wireframe-demo-sidebar.is-collapsed .demo-nav,
+.wireframe-demo.wireframe-standalone .wireframe-demo-sidebar.is-collapsed .demo-collections,
+.wireframe-demo.wireframe-standalone .wireframe-demo-sidebar.is-collapsed .wireframe-utility-links {
+  display: grid;
+  width: 100%;
+  gap: 0.35rem;
+}
+
+.wireframe-demo.wireframe-standalone .wireframe-demo-sidebar.is-collapsed .demo-nav a,
+.wireframe-demo.wireframe-standalone .wireframe-demo-sidebar.is-collapsed .demo-collections a,
+.wireframe-demo.wireframe-standalone .wireframe-demo-sidebar.is-collapsed .wireframe-utility-link {
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+  padding-inline: 0;
+}
+
+.wireframe-demo.wireframe-standalone .wireframe-demo-sidebar.is-collapsed .wireframe-primary-link-name,
+.wireframe-demo.wireframe-standalone .wireframe-demo-sidebar.is-collapsed .wireframe-collection-link-name,
+.wireframe-demo.wireframe-standalone .wireframe-demo-sidebar.is-collapsed .wireframe-utility-link-label {
+  justify-content: center;
+  font-size: 0;
+}
+
+.wireframe-demo.wireframe-standalone .wireframe-demo-sidebar.is-collapsed .wireframe-primary-link-name > span,
+.wireframe-demo.wireframe-standalone .wireframe-demo-sidebar.is-collapsed .wireframe-collection-link-name > span,
+.wireframe-demo.wireframe-standalone .wireframe-demo-sidebar.is-collapsed .wireframe-utility-link-label > span {
+  flex: 0 0 auto;
+  font-size: 1rem;
+}
+
+.wireframe-demo.wireframe-standalone .wireframe-demo-sidebar.is-collapsed .wireframe-collection-link > a > small,
+.wireframe-demo.wireframe-standalone .wireframe-demo-sidebar.is-collapsed .wireframe-utility-link > small {
+  display: none;
+}
+
+.wireframe-demo.wireframe-standalone .wireframe-demo-sidebar.is-collapsed .demo-sidebar-bottom {
+  display: grid;
+  width: 100%;
+  margin-top: auto;
+}
+
+.wireframe-demo.wireframe-standalone .wireframe-demo-sidebar.is-collapsed .demo-sidebar-toggle-bottom {
+  justify-content: center;
+  width: 100%;
+  padding-inline: 0;
+}
+
+.wireframe-demo.wireframe-standalone .wireframe-demo-sidebar.is-collapsed .demo-sidebar-toggle-bottom span {
+  display: none;
+}
+
 .wireframe-demo.wireframe-standalone .wireframe-demo-main {
   min-height: 0;
   padding: clamp(1.25rem, 2.2vw, 2rem);
