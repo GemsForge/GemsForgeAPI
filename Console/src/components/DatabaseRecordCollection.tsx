@@ -22,6 +22,7 @@ import type { TablePropertyConfigurationInput } from "../table-kit/configuration
 import type { ReactNode } from "react";
 import { Dialog } from "tamagui";
 import { GemButton } from "@gemsforge/ui";
+import { ensureTableCSVImportOption } from "../table-kit/TableCSVImportWorkflow";
 import {
   useSaveTableViewColumnsMutation,
   useSaveTableViewWorkspaceStateMutation,
@@ -389,6 +390,7 @@ function DatabaseRecordTableShell<Record>({
         ...actions,
         newRecordUtility: {
           ...utilityConfig,
+          options: ensureTableCSVImportOption(utilityConfig.options),
           open: utilityOpen,
           onOpenChange: handleUtilityChange,
         },

@@ -67,6 +67,7 @@ export default defineConfig(({ mode }) => {
           "/record-presentations",
           "/trash",
           "/table-views",
+          "/table-import",
           "/forgekeeper",
           "/gemhues",
           "/health",

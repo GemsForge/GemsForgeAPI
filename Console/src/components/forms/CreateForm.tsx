@@ -4,7 +4,7 @@ import { Form, SizableText, YStack } from "tamagui";
 import { GemButton } from "@gemsforge/ui";
 import { GSearchField } from "@gemsforge/ui";
 import { GSelectField } from "@gemsforge/ui";
-import { GemFieldError, GemFieldLabel, GemTextField } from "@gemsforge/ui";
+import { GemField, GemFieldError, GemFieldLabel } from "@gemsforge/ui";
 
 interface CreateFieldFrameProps {
   id: string;
@@ -110,7 +110,7 @@ export function CreateTextField({
   const id = registration.name;
   const inputPlaceholder = placeholder ?? defaultTextPlaceholder(label);
   return (
-    <GemTextField
+    <GemField
       {...registration}
       ref={(element) => registration.ref(element)}
       id={id}

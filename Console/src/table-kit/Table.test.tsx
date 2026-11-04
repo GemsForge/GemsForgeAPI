@@ -200,6 +200,35 @@ describe("Table Kit", () => {
     expect(trigger).toHaveFocus();
   });
 
+  it("keeps the selected workflow when parent renders replace option objects", () => {
+    const renderOptions = () => [
+      {
+        id: "create",
+        label: "Input Form",
+        render: () => <p>Create workflow</p>,
+      },
+      {
+        id: "import",
+        label: "Import CSV",
+        render: () => <p>CSV import workflow</p>,
+      },
+    ];
+    const view = renderTable(<Table.Actions newRecordUtility={{ options: renderOptions() }} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "New record" }));
+    fireEvent.click(screen.getByRole("tab", { name: "Import CSV", hidden: true }));
+    expect(screen.getByText("CSV import workflow")).toBeInTheDocument();
+
+    view.rerender(
+      <TamaguiProvider config={tamaguiConfig} defaultTheme="dark">
+        <Table.Actions newRecordUtility={{ options: renderOptions() }} />
+      </TamaguiProvider>,
+    );
+
+    expect(screen.getByRole("tab", { name: "Import CSV", hidden: true })).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByText("CSV import workflow")).toBeInTheDocument();
+  });
+
   it("keeps the create form submit button inside the New Record dialog", () => {
     const onSubmit = vi.fn();
     renderActions(

@@ -53,6 +53,7 @@ export type {
 export { TablePropertyControls } from "./PropertyControls";
 export type { TablePropertyControlsProps } from "./PropertyControls";
 export { TableImportWorkflow } from "./ImportWorkflow";
+export { TableCSVImportWorkflow, createTableCSVImportOption } from "./TableCSVImportWorkflow";
 export type { TableImportWorkflowProps } from "./ImportWorkflow";
 export { parseCsv, parseJson, previewCsv, previewJson } from "./import";
 export type { ImportColumn, ImportFieldError, ImportPreview } from "./import";

@@ -22,6 +22,9 @@ import type {
   HomeInventoryCSVImportResult,
   HomeInventoryCSVPreview,
   LiveSchema,
+  ImportableSQLTables,
+  TableCSVImportPreview,
+  TableCSVImportResult,
   LocalDatabaseCapabilities,
   LocalDatabaseCreationResult,
   SchemaBuilderGuidance,
@@ -313,6 +316,14 @@ export const api = {
       body: JSON.stringify(payload),
     }),
   getLiveSchema: (signal?: AbortSignal) => request<LiveSchema>("/live-database/schema", { signal }),
+  getImportableSQLTables: (signal?: AbortSignal) => request<ImportableSQLTables>("/table-import/tables", { signal }),
+  previewTableCSVImport: (payload: { table: string; csv: string; mapping: Record<string, string> }) =>
+    request<TableCSVImportPreview>("/table-import/preview", { method: "POST", body: JSON.stringify(payload) }),
+  commitTableCSVImport: (confirmationToken: string) =>
+    request<TableCSVImportResult>("/table-import/commit", {
+      method: "POST",
+      body: JSON.stringify({ confirmationToken }),
+    }),
   previewRepositoryMigrations: () =>
     request<import("./types").LiveRepositoryMigrationPreview>("/live-database/repository-migrations/preview", {
       method: "POST",

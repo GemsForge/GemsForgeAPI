@@ -125,6 +125,12 @@ and focus restoration to its trigger. Selecting an operation invokes the
 consumer-owned form or intake view, so domain validation and persistence stay
 with the feature.
 
+The shared database collections attach **Import CSV** to this utility. It loads
+the authenticated API's eligible SQL tables, suggests and edits header mappings,
+previews server validation, then commits with a one-use preview token. See
+[Table Kit CSV import](../../../docs/Table-Kit-CSV-Import.md) for the API
+contract and safety boundary.
+
 ## Compact utility row
 
 The consumer shell keeps the view ToggleGroup and utility header aligned across

@@ -11,6 +11,8 @@ export const workflowQueryKeys = {
   guidance: ["schema-guidance"] as const,
   capabilities: ["database-capabilities"] as const,
   localDatabases: ["local-databases"] as const,
+  importableTables: ["table-import", "tables"] as const,
+  tableRecords: (table: string) => ["table-records", table] as const,
 };
 
 export function usePagesQuery(scope: PageScope, enabled = true) {
@@ -34,6 +36,26 @@ export function usePageMutation() {
 }
 export function useLiveSchemaQuery() {
   return useQuery({ queryKey: workflowQueryKeys.schema, queryFn: ({ signal }) => api.getLiveSchema(signal) });
+}
+export function useImportableSQLTablesQuery() {
+  return useQuery({
+    queryKey: workflowQueryKeys.importableTables,
+    queryFn: ({ signal }) => api.getImportableSQLTables(signal),
+  });
+}
+export function usePreviewTableCSVImportMutation() {
+  return useMutation({ mutationFn: api.previewTableCSVImport });
+}
+export function useCommitTableCSVImportMutation() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: api.commitTableCSVImport,
+    onSuccess: (result) => {
+      void client.invalidateQueries({ queryKey: workflowQueryKeys.importableTables });
+      void client.invalidateQueries({ queryKey: workflowQueryKeys.schema });
+      void client.invalidateQueries({ queryKey: workflowQueryKeys.tableRecords(result.table) });
+    },
+  });
 }
 export function usePreviewRepositoryMigrationsMutation() {
   return useMutation({ mutationFn: api.previewRepositoryMigrations });
