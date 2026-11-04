@@ -73,13 +73,20 @@ export function WireframeHomePage() {
   const transactions = useTransactionsQuery(true);
   const hues = useGemHuesQuery(true);
   const services = useServiceAccountsQuery(true);
-  const counts = [education.data, employment.data, addresses.data, transactions.data, hues.data, services.data];
-  const total = counts.reduce((sum, records) => sum + (records?.length ?? 0), 0);
+  const recordCounts = {
+    Education: education.data?.length,
+    Employment: employment.data?.length,
+    Addresses: addresses.data?.length,
+    "Expense Tracker": transactions.data?.length,
+    "Gem Hues": hues.data?.length,
+    Services: services.data?.length,
+  };
+  const total = Object.values(recordCounts).reduce((sum, count) => sum + (count ?? 0), 0);
 
   return (
     <WireframeSystemPage title="Home" description="Your Gem Life workspace at a glance." count={total}>
       <section className="wireframe-system-card-grid" aria-label="Collections">
-        {collectionCards.map((item, index) => {
+        {collectionCards.map((item) => {
           const Icon = item.icon;
           return (
             <Link className="wireframe-system-card" to={item.href} key={item.label}>
@@ -88,7 +95,7 @@ export function WireframeHomePage() {
               </span>
               <span className="wireframe-system-card-copy">
                 <strong>{item.label}</strong>
-                <small>{counts[index]?.length ?? "—"} records</small>
+                <small>{recordCounts[item.label] ?? "—"} records</small>
               </span>
               <span className="wireframe-system-card-arrow" aria-hidden="true">
                 ↗
