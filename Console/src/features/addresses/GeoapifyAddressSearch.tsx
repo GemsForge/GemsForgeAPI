@@ -17,7 +17,7 @@ export interface GeoapifyAddress {
 }
 
 export interface GeoapifySuggestion {
-  properties: GeoapifyAddress;
+  properties?: GeoapifyAddress;
 }
 
 export interface GeoapifySearchClient {
@@ -47,6 +47,12 @@ export function addressValuesFromGeoapify(properties: GeoapifyAddress): AddressS
   };
 }
 
+function isGeoapifySuggestion(value: unknown): value is GeoapifySuggestion & { properties: GeoapifyAddress } {
+  if (typeof value !== "object" || value === null || !("properties" in value)) return false;
+  const properties = value.properties;
+  return typeof properties === "object" && properties !== null && !Array.isArray(properties);
+}
+
 export function createGeoapifySearchClient(
   apiKey = import.meta.env.VITE_GEOAPIFY_API_KEY,
   request: typeof fetch = fetch,
@@ -64,14 +70,15 @@ export function createGeoapifySearchClient(
       if (!response.ok)
         throw new Error("Address search is temporarily unavailable. You can enter the address manually.");
 
-      const payload = (await response.json()) as { results?: GeoapifySuggestion[] };
-      return Array.isArray(payload.results) ? payload.results : [];
+      const payload = (await response.json()) as { results?: unknown };
+      return Array.isArray(payload.results) ? payload.results.filter(isGeoapifySuggestion) : [];
     },
   };
 }
 
 function suggestionLabel(suggestion: GeoapifySuggestion): string {
-  const { properties } = suggestion;
+  const properties = suggestion.properties;
+  if (!properties) return "";
   return (
     properties.formatted ||
     properties.address_line1 ||
@@ -115,7 +122,7 @@ export function GeoapifyAddressSearch({
         const search = client ?? createGeoapifySearchClient(apiKey);
         const results = await search.autocomplete(value, controller.signal);
         if (active) {
-          setSuggestions(results);
+          setSuggestions(Array.isArray(results) ? results.filter(isGeoapifySuggestion) : []);
           setHasSearched(true);
         }
       } catch (cause) {
@@ -138,6 +145,7 @@ export function GeoapifyAddressSearch({
   }, [apiKey, client, enabled, query, selectedLabel]);
 
   function choose(suggestion: GeoapifySuggestion) {
+    if (!isGeoapifySuggestion(suggestion)) return;
     onSelect(addressValuesFromGeoapify(suggestion.properties));
     const label = suggestionLabel(suggestion);
     setSelectedLabel(label);
@@ -151,7 +159,7 @@ export function GeoapifyAddressSearch({
   }
 
   const resultAttributions = [
-    ...new Set(suggestions.map((item) => item.properties.datasource?.attribution).filter(Boolean)),
+    ...new Set(suggestions.map((item) => item.properties?.datasource?.attribution).filter(Boolean)),
   ];
 
   return (
@@ -178,6 +186,7 @@ export function GeoapifyAddressSearch({
         <ul className="address-search-results" aria-label="Address suggestions">
           {suggestions.map((suggestion, index) => {
             const label = suggestionLabel(suggestion);
+            if (!label) return null;
             return (
               <li key={`${label}-${index}`}>
                 <button type="button" className="secondary-button" onClick={() => choose(suggestion)}>

@@ -5,6 +5,27 @@ import { tamaguiConfig } from "@gemsforge/ui";
 import { TableSettingsMenu } from "./TableSettings";
 
 describe("TableSettingsMenu", () => {
+  it("closes the entire settings panel when the pointer goes outside", () => {
+    render(
+      <TamaguiProvider config={tamaguiConfig} defaultTheme="dark">
+        <>
+          <button type="button">Outside</button>
+          <TableSettingsMenu viewId="gallery" onViewChange={vi.fn()} />
+        </>
+      </TamaguiProvider>,
+    );
+
+    const trigger = screen.getByRole("button", { name: "View settings" });
+    fireEvent.click(trigger);
+    fireEvent.click(screen.getByRole("button", { name: "Layout" }));
+    expect(screen.getByRole("dialog", { name: "Layout" })).toBeInTheDocument();
+
+    fireEvent.pointerDown(screen.getByRole("button", { name: "Outside" }));
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
+  });
+
   it("opens the reference-style settings panel and restores focus", () => {
     render(
       <TamaguiProvider config={tamaguiConfig} defaultTheme="dark">

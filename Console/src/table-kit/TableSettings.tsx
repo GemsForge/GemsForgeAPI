@@ -88,6 +88,22 @@ export function TableSettingsMenu({
     previousOpen.current = open;
   }, [open, panel]);
 
+  useEffect(() => {
+    if (!open) return;
+
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target;
+      const triggerElement = triggerRef.current as unknown as HTMLElement | null;
+      if (target instanceof Node && !dialogRef.current?.contains(target) && !triggerElement?.contains(target)) {
+        setOpen(false);
+        setPanel("root");
+      }
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [open]);
+
   const close = () => {
     setOpen(false);
     setPanel("root");

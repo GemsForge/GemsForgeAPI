@@ -74,7 +74,7 @@ describe("Geoapify address search", () => {
       "href",
       "https://www.openstreetmap.org/copyright",
     );
-    fireEvent.click(screen.getByRole("button", { name: suggestion.properties.formatted }));
+    fireEvent.click(screen.getByRole("button", { name: suggestion.properties?.formatted }));
     expect(onSelect).toHaveBeenCalledWith({
       addressLine1: "1600 Pennsylvania Avenue NW",
       city: "Washington",
@@ -180,6 +180,42 @@ describe("Geoapify address search", () => {
     expect(parsed.searchParams.get("text")).toBe("New York");
     expect(parsed.searchParams.get("apiKey")).toBe("restricted key");
     expect(parsed.searchParams.get("limit")).toBe("5");
+  });
+
+  it("ignores results without a structured properties object", async () => {
+    vi.useFakeTimers();
+    const client = {
+      autocomplete: vi
+        .fn()
+        .mockResolvedValue([
+          undefined,
+          { properties: undefined },
+          { properties: { formatted: "Seattle, WA", city: "Seattle", state: "Washington" } },
+        ]),
+    };
+    const onSelect = vi.fn();
+    render(<GeoapifyAddressSearch client={client} onSelect={onSelect} />);
+
+    fireEvent.change(screen.getByLabelText("Search places or addresses"), { target: { value: "Seattle" } });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(350);
+    });
+
+    expect(screen.getByRole("button", { name: "Seattle, WA" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "undefined" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Seattle, WA" }));
+    expect(onSelect).toHaveBeenCalledWith({ city: "Seattle", state: "Washington" });
+  });
+
+  it("filters malformed provider payload results before returning suggestions", async () => {
+    const request = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ results: [null, {}, { properties: undefined }, { properties: { city: "Seattle" } }] }),
+    });
+    const client = createGeoapifySearchClient("key", request as unknown as typeof fetch);
+
+    await expect(client.autocomplete("Seattle")).resolves.toEqual([{ properties: { city: "Seattle" } }]);
   });
 
   it("reports request limits while leaving manual entry available", async () => {
