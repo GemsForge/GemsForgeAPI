@@ -1055,13 +1055,30 @@
   }
 
   .wireframe-demo.wireframe-standalone .wireframe-page-header {
+    align-items: stretch;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    gap: 0.35rem;
     margin: 0 0 0.55rem;
+    min-width: 0;
     padding-left: 0.1rem;
   }
 
   .wireframe-demo.wireframe-standalone .wireframe-page-title-group {
     align-items: flex-start;
     gap: 0.65rem;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .wireframe-demo.wireframe-standalone .wireframe-page-title-group > :last-child {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .wireframe-demo.wireframe-standalone .wireframe-page-count-group {
+    align-self: flex-start;
+    margin-left: 3.15rem;
   }
 
   .wireframe-demo.wireframe-standalone .demo-toolbar {
