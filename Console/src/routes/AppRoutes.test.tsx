@@ -90,7 +90,7 @@ describe("Gem Life navigation", () => {
     vi.spyOn(api, "listEducation").mockResolvedValue([]);
     setup("/education-wireframe");
     expect(await screen.findByRole("heading", { name: "Education" })).toBeInTheDocument();
-    expect(screen.getByRole("main", { name: "Wireframe screen" })).toHaveClass("wireframe-canvas");
+    expect(screen.getByRole("main", { name: "Wireframe screen" })).toHaveClass("wireframe-canvas-content");
     expect(screen.getByRole("navigation", { name: "Workspace navigation" })).toHaveClass("wireframe-demo-sidebar");
     expect(screen.getByRole("link", { name: /Gem Hues/ })).toHaveAttribute("href", "/gemhues-wireframe");
     expect(screen.getByRole("link", { name: /Employment/ })).toHaveAttribute("href", "/employment-wireframe");

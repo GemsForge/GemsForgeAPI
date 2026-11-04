@@ -102,6 +102,58 @@
   line-height: 1.45;
 }
 
+.wireframe-demo.wireframe-standalone .wireframe-page-copy {
+  width: 100%;
+  gap: 0;
+}
+
+.wireframe-demo.wireframe-standalone .wireframe-page-title-editor .create-form-field,
+.wireframe-demo.wireframe-standalone .wireframe-page-title-editor .gem-field-display,
+.wireframe-demo.wireframe-standalone .wireframe-page-description-editor .create-form-field,
+.wireframe-demo.wireframe-standalone .wireframe-page-description-editor .gem-field-display {
+  min-width: 0;
+  margin: 0 !important;
+  gap: 0;
+}
+
+.wireframe-demo.wireframe-standalone .wireframe-page-title-editor .gem-field-display-value,
+.wireframe-demo.wireframe-standalone .wireframe-page-description-editor .gem-field-display-value {
+  border-radius: 0.35rem;
+  text-align: left;
+}
+
+.wireframe-demo.wireframe-standalone .wireframe-page-title-editor .create-form-control,
+.wireframe-demo.wireframe-standalone .wireframe-page-description-editor .create-form-control {
+  box-sizing: border-box;
+  min-height: 0 !important;
+  margin: 0;
+  padding: 0.1rem 0.2rem !important;
+  border: 1px solid transparent !important;
+  border-radius: 0.35rem;
+  background: transparent !important;
+  box-shadow: none;
+}
+
+.wireframe-demo.wireframe-standalone .wireframe-page-title-editor .create-form-control {
+  color: var(--gem-wireframe-heading) !important;
+}
+
+.wireframe-demo.wireframe-standalone .wireframe-page-description-editor .create-form-control {
+  color: var(--gem-wireframe-muted) !important;
+}
+
+.wireframe-demo.wireframe-standalone .wireframe-page-title-editor .gem-field-display-value:hover,
+.wireframe-demo.wireframe-standalone .wireframe-page-description-editor .gem-field-display-value:hover,
+.wireframe-demo.wireframe-standalone .wireframe-page-title-editor .gem-field-display-value:focus-visible,
+.wireframe-demo.wireframe-standalone .wireframe-page-description-editor .gem-field-display-value:focus-visible,
+.wireframe-demo.wireframe-standalone .wireframe-page-title-editor .create-form-control:focus-visible,
+.wireframe-demo.wireframe-standalone .wireframe-page-description-editor .create-form-control:focus-visible {
+  border-color: var(--wireframe-accent) !important;
+  background: var(--gem-wireframe-surface) !important;
+  outline: 2px solid color-mix(in srgb, var(--wireframe-accent) 20%, transparent);
+  outline-offset: 1px;
+}
+
 .wireframe-demo.wireframe-standalone .demo-toolbar {
   display: flex;
   align-items: center;

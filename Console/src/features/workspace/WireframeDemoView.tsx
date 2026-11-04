@@ -23,7 +23,7 @@ export function WireframeDemoView() {
   return (
     <section className={`wireframe-demo ${expanded ? "is-expanded" : ""}`} aria-labelledby="wireframe-demo-title">
       <aside className="wireframe-demo-sidebar">
-        <div className="demo-brand"><span className="demo-brand-mark">◆</span><strong>GemsForge</strong></div>
+        <div className="demo-brand"><span className="demo-brand-mark">◆</span><strong>GemLife Console</strong></div>
         <label className="demo-search"><span aria-hidden="true">⌕</span><input aria-label="Search workspace" placeholder="Search anything…" /><kbd>⌘ K</kbd></label>
         <nav aria-label="Demo navigation" className="demo-nav">{["⌂ Home", "✉ Inbox", "◷ Today", "☆ Starred", "▣ All collections"].map((item) => <button type="button" key={item}>{item}</button>)}</nav>
         <p className="demo-sidebar-label">My collections <span>＋</span></p>

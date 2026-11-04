@@ -36,7 +36,9 @@ TableViews
 for a view. Depending on the consuming workspace, this includes the active
 Table/List/Gallery view, search, sort and direction, filter, grouping,
 pagination, gallery sizing/media settings, and supported property display
-settings. The dedicated
+settings, plus the editable collection title and description. The title and
+description are shared across the Table, List, and Gallery workspace by
+restoring the most recently updated saved view state. The dedicated
 `PUT /table-views/:tableName/:viewType/workspace-state` route updates this
 field without replacing saved columns or query settings. Selection restoration
 waits for the corresponding records to load; stale selections are reconciled

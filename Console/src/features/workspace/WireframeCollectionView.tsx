@@ -25,6 +25,7 @@ import { formatAddress } from "../addresses/formatAddress";
 import { inferWireframePropertyMetadata, WIREFRAME_PROPERTY_TYPES } from "./propertyMetadata";
 import { WireframeCover, WireframeCoverCardImage, type WireframeCover as WireframeCoverValue } from "./WireframeCover";
 import { WireframePropertyIconProvider } from "./WireframePropertyEditor";
+import { useWireframeNavigation } from "./WireframeAppHeader";
 import { api } from "../../api";
 import { useUploadImageMutation } from "../../data/workflowQueries";
 import {
@@ -37,6 +38,8 @@ import {
 
 export type WireframeRecord = { id: string };
 type WireframeWorkspaceState = {
+  title?: string;
+  description?: string;
   activeViewId?: "table" | "list" | "gallery";
   selectedRecordId?: string | null;
   galleryCardSize?: GalleryCardSize;
@@ -87,6 +90,8 @@ export function WireframeCollectionView<T extends WireframeRecord>({
   const recordPageID = location.pathname.match(/\/record\/([^/]+)$/)?.[1];
   const tableIconStorageKey = `gemsforge:table-icon:${config.tableName ?? config.title}`;
   const [view, setView] = useState<"table" | "list" | "gallery">("gallery");
+  const [tableTitle, setTableTitle] = useState(config.title);
+  const [tableDescription, setTableDescription] = useState(config.description);
   const [mobileViewMenuOpen, setMobileViewMenuOpen] = useState(false);
   const [galleryCardSize, setGalleryCardSize] = useState<GalleryCardSize>("small");
   const [galleryFillMedia, setGalleryFillMedia] = useState(true);
@@ -113,7 +118,10 @@ export function WireframeCollectionView<T extends WireframeRecord>({
   const [groupBy, setGroupBy] = useState("");
   const [pageIndex, setPageIndex] = useState(0);
   const [pageSize, setPageSize] = useState(9);
-  const [mobileNavigationOpen, setMobileNavigationOpen] = useState(false);
+  const wireframeNavigation = useWireframeNavigation();
+  const [fallbackMobileNavigationOpen, setFallbackMobileNavigationOpen] = useState(false);
+  const mobileNavigationOpen = wireframeNavigation?.open ?? fallbackMobileNavigationOpen;
+  const setMobileNavigationOpen = wireframeNavigation?.setOpen ?? setFallbackMobileNavigationOpen;
   const [navigationCollapsed, setNavigationCollapsed] = useState(false);
   const [inspectorWidth, setInspectorWidth] = useState(384);
   const inspectorResizeRef = useRef<{ startX: number; startWidth: number } | null>(null);
@@ -133,6 +141,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
   const savedViewsQuery = useTableViewsQuery(presentationTableName);
   const { mutateAsync: saveWorkspaceStateAsync } = useSaveTableViewWorkspaceStateMutation(presentationTableName);
   const workspaceHydrated = useRef(false);
+  const [workspaceReady, setWorkspaceReady] = useState(false);
   const pendingSelectedID = useRef<string | null>(null);
   const skipWorkspaceSaveOnce = useRef(false);
   const lastSavedWorkspaceState = useRef("");
@@ -153,10 +162,15 @@ export function WireframeCollectionView<T extends WireframeRecord>({
       .filter((entry): entry is { updatedAt: number; state: WireframeWorkspaceState } => entry !== null)
       .sort((left, right) => right.updatedAt - left.updatedAt);
     const state = candidates[0]?.state;
-    if (!state) return;
+    if (!state) {
+      setWorkspaceReady(true);
+      return;
+    }
     // Applying persisted values causes several state updates. Do not let the
     // save effect write the component defaults while those updates settle.
     skipWorkspaceSaveOnce.current = true;
+    if (typeof state.title === "string") setTableTitle(state.title);
+    if (typeof state.description === "string") setTableDescription(state.description);
     if (state.activeViewId) setView(state.activeViewId);
     if (state.selectedRecordId) pendingSelectedID.current = state.selectedRecordId;
     if (state.galleryCardSize) setGalleryCardSize(state.galleryCardSize);
@@ -184,6 +198,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
     if (Array.isArray(state.inspectorPropertyOrder)) {
       setInspectorPropertyOrder([...new Set(state.inspectorPropertyOrder.filter((id): id is string => typeof id === "string"))]);
     }
+    setWorkspaceReady(true);
   }, [savedViewsQuery.data, savedViewsQuery.isSuccess, presentationTableName]);
   useEffect(() => {
     const pendingID = pendingSelectedID.current;
@@ -206,6 +221,8 @@ export function WireframeCollectionView<T extends WireframeRecord>({
       return;
     }
     const state: WireframeWorkspaceState = {
+      title: tableTitle,
+      description: tableDescription,
       activeViewId: view,
       selectedRecordId: workspaceSelectedID,
       galleryCardSize,
@@ -233,7 +250,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
       });
     }, 250);
     return () => window.clearTimeout(timer);
-  }, [view, workspaceSelectedID, galleryCardSize, galleryFillMedia, galleryImageSelection, query, sort, direction, filter, groupBy, pageIndex, pageSize, tableIcon, propertyIcons, propertyConfigurations, inspectorPropertyOrder, workspaceSelectionRevision, presentationTableName, saveWorkspaceStateAsync]);
+  }, [tableTitle, tableDescription, view, workspaceSelectedID, galleryCardSize, galleryFillMedia, galleryImageSelection, query, sort, direction, filter, groupBy, pageIndex, pageSize, tableIcon, propertyIcons, propertyConfigurations, inspectorPropertyOrder, workspaceSelectionRevision, presentationTableName, saveWorkspaceStateAsync]);
   const presentationsQuery = useRecordPresentationsQuery(presentationTableName);
   const savePresentation = useSaveRecordPresentationMutation(presentationTableName);
   const deletePresentation = useDeleteRecordPresentationMutation(presentationTableName);
@@ -439,17 +456,19 @@ export function WireframeCollectionView<T extends WireframeRecord>({
       data-schema-table={schema?.name ?? config.tableName ?? config.title}
       aria-labelledby="wireframe-page-title"
     >
-      <button
-        type="button"
-        className="wireframe-mobile-nav-toggle"
-        aria-label={mobileNavigationOpen ? "Close navigation" : "Open navigation"}
-        aria-expanded={mobileNavigationOpen}
-        aria-controls="wireframe-navigation"
-        onClick={() => setMobileNavigationOpen((open) => !open)}
-      >
-        {mobileNavigationOpen ? <X size={17} aria-hidden="true" /> : <MenuIcon size={17} aria-hidden="true" />}
-        <span>{mobileNavigationOpen ? "Close" : "Navigation"}</span>
-      </button>
+      {wireframeNavigation === null ? (
+        <button
+          type="button"
+          className="wireframe-mobile-nav-toggle"
+          aria-label={mobileNavigationOpen ? "Close navigation" : "Open navigation"}
+          aria-expanded={mobileNavigationOpen}
+          aria-controls="wireframe-navigation"
+          onClick={() => setMobileNavigationOpen(!mobileNavigationOpen)}
+        >
+          {mobileNavigationOpen ? <X size={17} aria-hidden="true" /> : <MenuIcon size={17} aria-hidden="true" />}
+          <span>{mobileNavigationOpen ? "Close" : "Navigation"}</span>
+        </button>
+      ) : null}
       <div
         id="wireframe-navigation"
         className={mobileNavigationOpen ? "wireframe-mobile-nav is-open" : "wireframe-mobile-nav"}
@@ -460,13 +479,13 @@ export function WireframeCollectionView<T extends WireframeRecord>({
               type="button"
               className="wireframe-nav-backdrop"
               aria-label="Close navigation"
-              onClick={() => setMobileNavigationOpen(false)}
+              onClick={() => wireframeNavigation ? wireframeNavigation.close() : setMobileNavigationOpen(false)}
             />
             <button
               type="button"
               className="wireframe-nav-close"
               aria-label="Close navigation"
-              onClick={() => setMobileNavigationOpen(false)}
+              onClick={() => wireframeNavigation ? wireframeNavigation.close() : setMobileNavigationOpen(false)}
             >
               <X size={17} aria-hidden="true" />
             </button>
@@ -482,7 +501,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
       </div>
       {inspectorExpanded && selected ? (
         <WireframeRecordPageView
-          collectionTitle={config.title}
+          collectionTitle={tableTitle}
           recordTitle={config.cardTitle(selected)}
           onBack={() => navigate(location.pathname.replace(/\/record\/[^/]+$/, ""))}
           onClose={closeInspector}
@@ -513,9 +532,16 @@ export function WireframeCollectionView<T extends WireframeRecord>({
           </WireframePropertyIconProvider>
         </WireframeRecordPageView>
       ) : (
-      <WireframePageView title={config.title} description={config.description} recordCount={sortedRecords.length} tableIcon={<TableIcon size={20} aria-hidden="true" />}>
+      <WireframePageView
+        title={tableTitle}
+        description={tableDescription}
+        recordCount={sortedRecords.length}
+        tableIcon={<TableIcon size={20} aria-hidden="true" />}
+        onTitleChange={workspaceReady ? setTableTitle : undefined}
+        onDescriptionChange={workspaceReady ? setTableDescription : undefined}
+      >
         <div className="demo-toolbar">
-          <div className="demo-view-tabs" role="tablist" aria-label={`${config.title} view mode`}>
+          <div className="demo-view-tabs" role="tablist" aria-label={`${tableTitle} view mode`}>
             {(["table", "list", "gallery"] as const).map((mode) => (
               <button className={view === mode ? "active" : ""} type="button" role="tab" aria-selected={view === mode} aria-label={`${mode[0].toUpperCase() + mode.slice(1)} view`} title={`${mode[0].toUpperCase() + mode.slice(1)} view`} onClick={() => setView(mode)} key={mode}>
                 {mode === "table" ? <Table2 size={16} aria-hidden="true" /> : mode === "list" ? <List size={16} aria-hidden="true" /> : <GalleryHorizontal size={16} aria-hidden="true" />}
@@ -561,7 +587,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
               </DropdownMenu.Content>
             </DropdownMenu.Portal>
           </DropdownMenu>
-          <RecordUtilities label={config.title} search={query} onSearch={(value) => { setQuery(value); resetPage(); }} sort={sort} onSort={(value) => { setSort(value); resetPage(); }} direction={direction} onDirection={() => setDirection((value) => value === "asc" ? "desc" : "asc")} filter={filter} onFilter={(value) => { setFilter(value); resetPage(); }} sortOptions={[{ value: "title", label: "Name" }, { value: "status", label: "Status" }, { value: "meta", label: "Metadata" }]} filterOptions={[...new Set(config.records.map((record) => config.cardStatus(record)))]} totalCount={config.records.length} visibleCount={matchingRecords.length} compact />
+          <RecordUtilities label={tableTitle} search={query} onSearch={(value) => { setQuery(value); resetPage(); }} sort={sort} onSort={(value) => { setSort(value); resetPage(); }} direction={direction} onDirection={() => setDirection((value) => value === "asc" ? "desc" : "asc")} filter={filter} onFilter={(value) => { setFilter(value); resetPage(); }} sortOptions={[{ value: "title", label: "Name" }, { value: "status", label: "Status" }, { value: "meta", label: "Metadata" }]} filterOptions={[...new Set(config.records.map((record) => config.cardStatus(record)))]} totalCount={config.records.length} visibleCount={matchingRecords.length} compact />
           <TableSettingsMenu
             viewId={view}
             onViewChange={setView}
@@ -601,7 +627,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
         </div>
         {visibleRecords.length === 0 ? (
           <div className="wireframe-empty-state" role="status">
-            <strong>No {config.title.toLowerCase()} records found</strong>
+            <strong>No {tableTitle.toLowerCase()} records found</strong>
             <p>Try a different search.</p>
           </div>
         ) : (
@@ -614,7 +640,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
                     <span className="wireframe-record-group-count">{group.records.length}</span>
                   </h3>
                 ) : null}
-                <div className={`demo-results demo-${view} ${view === "gallery" ? `gallery-size-${galleryCardSize}` : ""} ${galleryFillMedia ? "gallery-fill-media" : "gallery-fit-media"}`} role="group" aria-label={`${config.title}${groupBy ? ` ${groupPropertyLabel}: ${group.label}` : ""} records`}>
+                <div className={`demo-results demo-${view} ${view === "gallery" ? `gallery-size-${galleryCardSize}` : ""} ${galleryFillMedia ? "gallery-fill-media" : "gallery-fit-media"}`} role="group" aria-label={`${tableTitle}${groupBy ? ` ${groupPropertyLabel}: ${group.label}` : ""} records`}>
             {view === "table" ? <WireframeAgGrid records={group.records} visiblePropertyIds={visiblePropertyIds} properties={config.properties} cardImage={config.cardImage} onRecordSelect={setSelectedID} /> : view === "list" ? <WireframeMvpList config={config} records={group.records} visiblePropertyIds={visiblePropertyIds} onRecordSelect={setSelectedID} /> : group.records.map((record, index) => (
               (() => {
                 const subtitleVisible = isGallerySlotVisible(record, config.cardSubtitle(record), visiblePropertyIds, config.properties);
@@ -664,8 +690,8 @@ export function WireframeCollectionView<T extends WireframeRecord>({
             ))}
           </div>
         )}
-        <nav className="wireframe-pagination" aria-label={`${config.title} pages`}>
-          <GemButton className="wireframe-design-button" type="button" variant="outlined" tone="wireframe" size="xs" aria-label={`Previous page of ${config.title}`} disabled={pageIndex === 0 || sortedRecords.length === 0} onClick={() => setPageIndex((page) => Math.max(0, page - 1))}>Previous</GemButton>
+        <nav className="wireframe-pagination" aria-label={`${tableTitle} pages`}>
+          <GemButton className="wireframe-design-button" type="button" variant="outlined" tone="wireframe" size="xs" aria-label={`Previous page of ${tableTitle}`} disabled={pageIndex === 0 || sortedRecords.length === 0} onClick={() => setPageIndex((page) => Math.max(0, page - 1))}>Previous</GemButton>
           <span role="status">{sortedRecords.length === 0 ? "0 records" : `${pageIndex * pageSize + 1}–${Math.min(sortedRecords.length, (pageIndex + 1) * pageSize)} of ${sortedRecords.length}`}</span>
         <GSelectField
           label="Records per page"
@@ -678,7 +704,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
           options={[9, 18, 27].map((size) => ({ value: String(size), label: String(size) }))}
           onChange={(value) => { setPageSize(Number(value)); resetPage(); }}
         />
-          <GemButton className="wireframe-design-button" type="button" variant="outlined" tone="wireframe" size="xs" aria-label={`Next page of ${config.title}`} disabled={pageIndex >= pageCount - 1 || sortedRecords.length === 0} onClick={() => setPageIndex((page) => Math.min(pageCount - 1, page + 1))}>Next</GemButton>
+          <GemButton className="wireframe-design-button" type="button" variant="outlined" tone="wireframe" size="xs" aria-label={`Next page of ${tableTitle}`} disabled={pageIndex >= pageCount - 1 || sortedRecords.length === 0} onClick={() => setPageIndex((page) => Math.min(pageCount - 1, page + 1))}>Next</GemButton>
         </nav>
       </WireframePageView>
       )}

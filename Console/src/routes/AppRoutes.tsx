@@ -31,6 +31,7 @@ import { LocalSession } from "../components/LocalSession";
 import { RequireAuth } from "../auth/RequireAuth";
 import { SignInPage } from "../auth/SignInPage";
 import { isRecoveryLink, ResetPasswordPage } from "../auth/ResetPasswordPage";
+import { WireframeAppHeader, WireframeNavigationProvider } from "../features/workspace/WireframeAppHeader";
 const ForgeKeeperView = lazy(() =>
   import("../features/forgekeeper/ForgeKeeperView").then((module) => ({ default: module.ForgeKeeperView })),
 );
@@ -161,13 +162,18 @@ function WireframeCanvas() {
   }, [location.pathname]);
 
   return (
-    <main className="wireframe-canvas" id="main-content" tabIndex={-1} aria-label="Wireframe screen">
-      <ScreenBoundary key={location.pathname}>
-        <Suspense fallback={<p role="status">Loading wireframe…</p>}>
-          <Outlet />
-        </Suspense>
-      </ScreenBoundary>
-    </main>
+    <div className="wireframe-canvas">
+      <WireframeNavigationProvider key={location.pathname}>
+        <WireframeAppHeader />
+        <main className="wireframe-canvas-content" id="main-content" tabIndex={-1} aria-label="Wireframe screen">
+          <ScreenBoundary key={location.pathname}>
+            <Suspense fallback={<p role="status">Loading wireframe…</p>}>
+              <Outlet />
+            </Suspense>
+          </ScreenBoundary>
+        </main>
+      </WireframeNavigationProvider>
+    </div>
   );
 }
 

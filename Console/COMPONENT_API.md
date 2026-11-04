@@ -116,6 +116,13 @@ mutation intent. They should not copy the workspace shell, collection, or
 inspector layout. A bespoke feature view is appropriate only when the shared
 workspace cannot express the required behavior; document that exception.
 
+`WireframePageView` owns the shared collection heading. In schema-backed
+collections, clicking the title or description enters the matching
+`GemTextField`; leaving the field saves the trimmed value through the existing
+Hub-scoped Table View workspace-state mutation. The collection restores those
+values from the latest saved view state, so they remain consistent across its
+Table, List, and Gallery views.
+
 #### Inspector interaction components
 
 `WireframeSchemaInspector` adapts typed record property definitions to the

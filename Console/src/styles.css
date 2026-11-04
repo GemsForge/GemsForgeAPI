@@ -4339,6 +4339,23 @@ dialog {
   }
 }
 
+/* Keep wireframe collection status labels compact on phones without shrinking
+ * the interactive controls around them. These pills are display-only. */
+@media (max-width: 640px) {
+  .wireframe-demo .table-kit-record-grid .status-pill,
+  .wireframe-demo .table-kit-record-list .status-pill,
+  .wireframe-demo .table-kit-gallery-card .status-pill,
+  .wireframe-demo .table-kit-gallery-card .status-pill--wireframe,
+  .wireframe-demo .demo-place-card .status-pill,
+  .wireframe-demo .demo-place-card .status-pill--wireframe {
+    box-sizing: border-box;
+    min-height: 1.2rem;
+    padding: 0.1rem 0.4rem;
+    font-size: 0.72rem !important;
+    line-height: 1.15 !important;
+  }
+}
+
 /* Compact workspace layout: keep the header and its actions on a predictable grid. */
 @media (max-width: 640px) {
   .wireframe-page-header {
