@@ -47,15 +47,20 @@ final class TableCSVImportTests: XCTestCase {
 
     func testPreviewParsesAndValidatesWithoutWritingThenCommitPersistsWholeBatch() async throws {
         try await withFixture { app, service in
+            let csv = [
+                "Name,Quantity,Ignored",
+                "\"Oak, dining\",2,x",
+                "\"He said \"\"hello\"\"\nand left\",3,y",
+            ].joined(separator: "\r\n")
             let preview = try await service.preview(
                 .init(
-                    table: "CustomImportFixture",
-                    csv: "Name,Quantity,Ignored\r\n\"Oak, dining\",2,x\r\nDesk,1,y",
+                    table: "CustomImportFixture", csv: csv,
                     mapping: ["Name": "Name", "Quantity": "Quantity"]
                 ), database: app.db, hubID: "hub-a")
             XCTAssertTrue(preview.readyToImport)
             XCTAssertEqual(preview.rows.count, 2)
             XCTAssertEqual(preview.rows[0].values["Name"], "Oak, dining")
+            XCTAssertEqual(preview.rows[1].values["Name"], "He said \"hello\"\nand left")
             let countAfterPreview = try await fixtureCount(app.db)
             XCTAssertEqual(countAfterPreview, 0, "Preview must not write records.")
 
@@ -184,6 +189,61 @@ final class TableCSVImportTests: XCTestCase {
             } catch let error as TableCSVImportError {
                 XCTAssertEqual(
                     error.description, TableCSVImportError.unknownOrProtectedTable.description)
+            }
+        }
+    }
+
+    func testMalformedRowsKeepSourceNumbersAndMissingRequiredFieldsBlockPreview() async throws {
+        try await withFixture { app, service in
+            let malformed = try await service.preview(
+                .init(
+                    table: "CustomImportFixture", csv: "Name,Quantity\nDesk,1\nChair",
+                    mapping: ["Name": "Name", "Quantity": "Quantity"]
+                ), database: app.db, hubID: "hub-a")
+            XCTAssertFalse(malformed.readyToImport)
+            XCTAssertNil(malformed.confirmationToken)
+            XCTAssertEqual(malformed.rows[1].rowNumber, 3)
+            XCTAssertTrue(malformed.rows[1].errors.contains("Expected 2 values but found 1."))
+
+            let missing = try await service.preview(
+                .init(
+                    table: "CustomImportFixture", csv: "Name\nDesk", mapping: ["Name": "Name"]
+                ), database: app.db, hubID: "hub-a")
+            XCTAssertFalse(missing.readyToImport)
+            XCTAssertNil(missing.confirmationToken)
+            XCTAssertTrue(
+                missing.rows[0].errors.contains("Quantity is required and must be mapped."))
+            let countAfterMissing = try await fixtureCount(app.db)
+            XCTAssertEqual(countAfterMissing, 0)
+        }
+    }
+
+    func testDuplicateHeadersAndHubIDMappingsAreRejected() async throws {
+        try await withFixture { app, service in
+            do {
+                _ = try await service.preview(
+                    .init(
+                        table: "CustomImportFixture", csv: "Name,Name\nDesk,Chair",
+                        mapping: ["Name": "Name"]
+                    ), database: app.db, hubID: "hub-a")
+                XCTFail("Duplicate CSV headers must be rejected.")
+            } catch let error as TableCSVImportError {
+                guard case .invalidCSV = error else {
+                    return XCTFail("Unexpected error: \(error)")
+                }
+            }
+
+            do {
+                _ = try await service.preview(
+                    .init(
+                        table: "CustomImportFixture", csv: "Name\nDesk",
+                        mapping: ["Name": "HubID"]
+                    ), database: app.db, hubID: "hub-a")
+                XCTFail("HubID is server-owned and cannot be mapped from CSV.")
+            } catch let error as TableCSVImportError {
+                guard case .invalidMapping = error else {
+                    return XCTFail("Unexpected error: \(error)")
+                }
             }
         }
     }
