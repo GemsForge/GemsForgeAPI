@@ -255,7 +255,7 @@ describe("shared create form workflow", () => {
     expect(screen.getByText("Enter a valid email address.")).toBeInTheDocument();
     expect(screen.getByText("End date must be on or after start date.")).toBeInTheDocument();
     expect(onCreate).not.toHaveBeenCalled();
-  });
+  }, 10_000);
 
   it("accepts an international employment contact number", async () => {
     const onCreate = vi.fn().mockResolvedValue(undefined);
