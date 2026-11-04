@@ -614,6 +614,13 @@
   padding: 0;
 }
 
+.wireframe-demo.wireframe-standalone .wireframe-value-edit-trigger,
+.wireframe-demo.wireframe-standalone .wireframe-cover-actions {
+  opacity: 1;
+  pointer-events: auto;
+  transform: none;
+}
+
 .wireframe-demo.wireframe-standalone .wireframe-record-avatar {
   flex: 0 0 auto;
   border: 1px solid var(--gem-wireframe-border-strong);
