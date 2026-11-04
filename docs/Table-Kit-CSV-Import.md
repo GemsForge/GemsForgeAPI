@@ -61,7 +61,7 @@ The schema builder adds the required text `ID` primary key. For this table, incl
 
 ## CSV and mapping rules
 
-- Select a `.csv` file (maximum 1 MB) or paste CSV content.
+- Select a `.csv` file (maximum 1 MB) or paste CSV content. The preview route allows a 2 MB JSON body to accommodate escaping and request metadata.
 - CSV parsing supports quoted commas, doubled quote escapes, CRLF, and embedded newlines.
 - Headers must be unique and non-empty. Map each selected header to one distinct table property; unmapped headers are ignored.
 - The API reports missing required properties, numeric/boolean type errors, malformed rows, and row numbers before any write.

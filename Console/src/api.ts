@@ -124,11 +124,7 @@ export const api = {
       method: "PUT",
       body: JSON.stringify(payload),
     }),
-  saveTableViewWorkspaceState: (
-    tableName: string,
-    viewType: SavedTableViewInput["viewType"],
-    workspaceState: string,
-  ) =>
+  saveTableViewWorkspaceState: (tableName: string, viewType: SavedTableViewInput["viewType"], workspaceState: string) =>
     request<SavedTableView["view"]>(
       `/table-views/${encodeURIComponent(tableName)}/${encodeURIComponent(viewType)}/workspace-state`,
       { method: "PUT", body: JSON.stringify({ workspaceState }) },
@@ -137,10 +133,11 @@ export const api = {
     tableName: string,
     viewType: SavedTableViewInput["viewType"],
     columns: SavedTableViewInput["columns"],
-  ) => request<SavedTableView>(`/table-views/${encodeURIComponent(tableName)}/${encodeURIComponent(viewType)}/columns`, {
-    method: "PUT",
-    body: JSON.stringify({ columns }),
-  }),
+  ) =>
+    request<SavedTableView>(`/table-views/${encodeURIComponent(tableName)}/${encodeURIComponent(viewType)}/columns`, {
+      method: "PUT",
+      body: JSON.stringify({ columns }),
+    }),
   listMerchants: (signal?: AbortSignal) => request<Merchant[]>("/merchants", { signal }),
   getHealth: async (signal?: AbortSignal) => {
     const response = await checkedFetch("/health", { signal });
@@ -265,14 +262,21 @@ export const api = {
     return (await response.json()) as FileMetadata;
   },
   listRecordPresentations: (tableName: string, signal?: AbortSignal) =>
-    request<{ recordID: string; presentation: string }[]>(`/record-presentations/${encodeURIComponent(tableName)}`, { signal }),
-  saveRecordPresentation: (tableName: string, recordID: string, presentation: string) =>
-    request<{ recordID: string; presentation: string }>(`/record-presentations/${encodeURIComponent(tableName)}/${encodeURIComponent(recordID)}`, {
-      method: "PUT",
-      body: JSON.stringify({ presentation }),
+    request<{ recordID: string; presentation: string }[]>(`/record-presentations/${encodeURIComponent(tableName)}`, {
+      signal,
     }),
+  saveRecordPresentation: (tableName: string, recordID: string, presentation: string) =>
+    request<{ recordID: string; presentation: string }>(
+      `/record-presentations/${encodeURIComponent(tableName)}/${encodeURIComponent(recordID)}`,
+      {
+        method: "PUT",
+        body: JSON.stringify({ presentation }),
+      },
+    ),
   deleteRecordPresentation: (tableName: string, recordID: string) =>
-    request<void>(`/record-presentations/${encodeURIComponent(tableName)}/${encodeURIComponent(recordID)}`, { method: "DELETE" }),
+    request<void>(`/record-presentations/${encodeURIComponent(tableName)}/${encodeURIComponent(recordID)}`, {
+      method: "DELETE",
+    }),
   listServiceLogos: (signal?: AbortSignal) => request<ServiceLogo[]>("/service-logos", { signal }),
   getServiceLogoImage: async (id: number, signal?: AbortSignal) => {
     const response = await checkedFetch(`/service-logos/${id}/image`, { signal });
@@ -307,7 +311,10 @@ export const api = {
   previewTableCSVImport: (payload: { table: string; csv: string; mapping: Record<string, string> }) =>
     request<TableCSVImportPreview>("/table-import/preview", { method: "POST", body: JSON.stringify(payload) }),
   commitTableCSVImport: (confirmationToken: string) =>
-    request<TableCSVImportResult>("/table-import/commit", { method: "POST", body: JSON.stringify({ confirmationToken }) }),
+    request<TableCSVImportResult>("/table-import/commit", {
+      method: "POST",
+      body: JSON.stringify({ confirmationToken }),
+    }),
   previewRepositoryMigrations: () =>
     request<import("./types").LiveRepositoryMigrationPreview>("/live-database/repository-migrations/preview", {
       method: "POST",

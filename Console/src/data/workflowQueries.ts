@@ -37,7 +37,10 @@ export function useLiveSchemaQuery() {
   return useQuery({ queryKey: workflowQueryKeys.schema, queryFn: ({ signal }) => api.getLiveSchema(signal) });
 }
 export function useImportableSQLTablesQuery() {
-  return useQuery({ queryKey: workflowQueryKeys.importableTables, queryFn: ({ signal }) => api.getImportableSQLTables(signal) });
+  return useQuery({
+    queryKey: workflowQueryKeys.importableTables,
+    queryFn: ({ signal }) => api.getImportableSQLTables(signal),
+  });
 }
 export function usePreviewTableCSVImportMutation() {
   return useMutation({ mutationFn: api.previewTableCSVImport });

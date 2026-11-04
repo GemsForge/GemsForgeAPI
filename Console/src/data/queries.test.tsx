@@ -11,7 +11,12 @@ import {
   useTransactionImageMutation,
 } from "./recordQueries";
 import { lifeQueryKeys } from "./lifeQueries";
-import { usePageMutation, useCreateTableMutation, useCommitTableCSVImportMutation, workflowQueryKeys } from "./workflowQueries";
+import {
+  usePageMutation,
+  useCreateTableMutation,
+  useCommitTableCSVImportMutation,
+  workflowQueryKeys,
+} from "./workflowQueries";
 
 afterEach(() => {
   cleanup();
@@ -137,14 +142,20 @@ describe("shared query and mutation layer", () => {
   });
 
   it("invalidates the target table caches only after a CSV batch commits", async () => {
-    vi.spyOn(api, "commitTableCSVImport").mockResolvedValue({ table: "CustomInventory", importedCount: 2, status: "imported" });
+    vi.spyOn(api, "commitTableCSVImport").mockResolvedValue({
+      table: "CustomInventory",
+      importedCount: 2,
+      status: "imported",
+    });
     const { client, wrapper } = setup();
     client.setQueryData(workflowQueryKeys.importableTables, { tables: [] });
     client.setQueryData(workflowQueryKeys.schema, {});
     client.setQueryData(workflowQueryKeys.tableRecords("CustomInventory"), []);
     client.setQueryData(workflowQueryKeys.tableRecords("Other"), []);
     const hook = renderHook(() => useCommitTableCSVImportMutation(), { wrapper });
-    await act(async () => { await hook.result.current.mutateAsync("preview-token"); });
+    await act(async () => {
+      await hook.result.current.mutateAsync("preview-token");
+    });
     expect(client.getQueryState(workflowQueryKeys.importableTables)?.isInvalidated).toBe(true);
     expect(client.getQueryState(workflowQueryKeys.schema)?.isInvalidated).toBe(true);
     expect(client.getQueryState(workflowQueryKeys.tableRecords("CustomInventory"))?.isInvalidated).toBe(true);

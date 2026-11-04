@@ -1,7 +1,10 @@
+import Crypto
 import Fluent
 import FluentSQLiteDriver
+import Vapor
 import VaporTesting
 import XCTest
+
 @testable import GemsForgeAPI
 
 struct CreateCustomImportFixture: AsyncMigration {
@@ -14,7 +17,9 @@ struct CreateCustomImportFixture: AsyncMigration {
             .unique(on: "Name")
             .create()
     }
-    func revert(on database: Database) async throws { try await database.schema("CustomImportFixture").delete() }
+    func revert(on database: Database) async throws {
+        try await database.schema("CustomImportFixture").delete()
+    }
 }
 
 private final class CustomImportFixtureModel: Model, @unchecked Sendable {
@@ -27,7 +32,9 @@ private final class CustomImportFixtureModel: Model, @unchecked Sendable {
 }
 
 final class TableCSVImportTests: XCTestCase {
-    private func withFixture(_ test: (Application, TableCSVImportApprovals) async throws -> Void) async throws {
+    private func withFixture(_ test: (Application, TableCSVImportApprovals) async throws -> Void)
+        async throws
+    {
         try await withApp(configure: { app in
             app.databases.use(.sqlite(.memory), as: .sqlite)
             app.migrations.add(CreateHomeInventory())
@@ -40,18 +47,20 @@ final class TableCSVImportTests: XCTestCase {
 
     func testPreviewParsesAndValidatesWithoutWritingThenCommitPersistsWholeBatch() async throws {
         try await withFixture { app, service in
-            let preview = try await service.preview(.init(
-                table: "CustomImportFixture",
-                csv: "Name,Quantity,Ignored\r\n\"Oak, dining\",2,x\r\nDesk,1,y",
-                mapping: ["Name": "Name", "Quantity": "Quantity"]
-            ), database: app.db, hubID: "hub-a")
+            let preview = try await service.preview(
+                .init(
+                    table: "CustomImportFixture",
+                    csv: "Name,Quantity,Ignored\r\n\"Oak, dining\",2,x\r\nDesk,1,y",
+                    mapping: ["Name": "Name", "Quantity": "Quantity"]
+                ), database: app.db, hubID: "hub-a")
             XCTAssertTrue(preview.readyToImport)
             XCTAssertEqual(preview.rows.count, 2)
             XCTAssertEqual(preview.rows[0].values["Name"], "Oak, dining")
             let countAfterPreview = try await fixtureCount(app.db)
             XCTAssertEqual(countAfterPreview, 0, "Preview must not write records.")
 
-            let result = try await service.commit(token: try XCTUnwrap(preview.confirmationToken), database: app.db, hubID: "hub-a")
+            let result = try await service.commit(
+                token: try XCTUnwrap(preview.confirmationToken), database: app.db, hubID: "hub-a")
             XCTAssertEqual(result.importedCount, 2)
             let importedCount = try await fixtureCount(app.db)
             XCTAssertEqual(importedCount, 2)
@@ -60,14 +69,17 @@ final class TableCSVImportTests: XCTestCase {
 
     func testConstraintFailureRollsBackWholeBatch() async throws {
         try await withFixture { app, service in
-            let preview = try await service.preview(.init(
-                table: "CustomImportFixture",
-                csv: "Name,Quantity\nSame,1\nSame,2",
-                mapping: ["Name": "Name", "Quantity": "Quantity"]
-            ), database: app.db, hubID: "hub-a")
+            let preview = try await service.preview(
+                .init(
+                    table: "CustomImportFixture",
+                    csv: "Name,Quantity\nSame,1\nSame,2",
+                    mapping: ["Name": "Name", "Quantity": "Quantity"]
+                ), database: app.db, hubID: "hub-a")
             XCTAssertTrue(preview.readyToImport)
             do {
-                _ = try await service.commit(token: try XCTUnwrap(preview.confirmationToken), database: app.db, hubID: "hub-a")
+                _ = try await service.commit(
+                    token: try XCTUnwrap(preview.confirmationToken), database: app.db,
+                    hubID: "hub-a")
                 XCTFail("The unique constraint should reject the batch.")
             } catch {
                 let countAfterFailure = try await fixtureCount(app.db)
@@ -78,32 +90,65 @@ final class TableCSVImportTests: XCTestCase {
 
     func testPreviewTokenCannotBeCommittedForAnotherHub() async throws {
         try await withFixture { app, service in
-            let preview = try await service.preview(.init(
-                table: "CustomImportFixture", csv: "Name,Quantity\nDesk,1",
-                mapping: ["Name": "Name", "Quantity": "Quantity"]
-            ), database: app.db, hubID: "hub-a")
+            let preview = try await service.preview(
+                .init(
+                    table: "CustomImportFixture", csv: "Name,Quantity\nDesk,1",
+                    mapping: ["Name": "Name", "Quantity": "Quantity"]
+                ), database: app.db, hubID: "hub-a")
             do {
-                _ = try await service.commit(token: try XCTUnwrap(preview.confirmationToken), database: app.db, hubID: "hub-b")
+                _ = try await service.commit(
+                    token: try XCTUnwrap(preview.confirmationToken), database: app.db,
+                    hubID: "hub-b")
                 XCTFail("A preview token must be bound to its Hub.")
             } catch let error as TableCSVImportError {
                 XCTAssertEqual(error.description, TableCSVImportError.previewExpired.description)
             }
-            let result = try await service.commit(token: try XCTUnwrap(preview.confirmationToken), database: app.db, hubID: "hub-a")
+            let result = try await service.commit(
+                token: try XCTUnwrap(preview.confirmationToken), database: app.db, hubID: "hub-a")
             XCTAssertEqual(result.importedCount, 1)
             let countAfterValidHubCommit = try await fixtureCount(app.db)
             XCTAssertEqual(countAfterValidHubCommit, 1)
         }
     }
 
+    func testPreviewCapacityIsBoundedPerHub() async throws {
+        try await withFixture { app, service in
+            let request = TableCSVImportPreviewRequest(
+                table: "CustomImportFixture",
+                csv: "Name,Quantity\nDesk,1",
+                mapping: ["Name": "Name", "Quantity": "Quantity"]
+            )
+            for _ in 0..<TableCSVImportApprovals.maxActiveApprovalsPerHub {
+                _ = try await service.preview(request, database: app.db, hubID: "hub-a")
+            }
+            do {
+                _ = try await service.preview(request, database: app.db, hubID: "hub-a")
+                XCTFail("A Hub must not exceed its active preview limit.")
+            } catch let error as TableCSVImportError {
+                XCTAssertEqual(error.description, TableCSVImportError.tooManyPreviews.description)
+            }
+
+            let otherHubPreview = try await service.preview(
+                request, database: app.db, hubID: "hub-b")
+            XCTAssertTrue(
+                otherHubPreview.readyToImport,
+                "One Hub must not consume another Hub's preview allowance.")
+        }
+    }
+
     func testSchemaChangeInvalidatesPreviewToken() async throws {
         try await withFixture { app, service in
-            let preview = try await service.preview(.init(
-                table: "CustomImportFixture", csv: "Name,Quantity\nDesk,1",
-                mapping: ["Name": "Name", "Quantity": "Quantity"]
-            ), database: app.db, hubID: "hub-a")
-            try await app.db.schema("CustomImportFixture").field("NewRequired", .string, .required).update()
+            let preview = try await service.preview(
+                .init(
+                    table: "CustomImportFixture", csv: "Name,Quantity\nDesk,1",
+                    mapping: ["Name": "Name", "Quantity": "Quantity"]
+                ), database: app.db, hubID: "hub-a")
+            try await app.db.schema("CustomImportFixture").field("NewRequired", .string, .required)
+                .update()
             do {
-                _ = try await service.commit(token: try XCTUnwrap(preview.confirmationToken), database: app.db, hubID: "hub-a")
+                _ = try await service.commit(
+                    token: try XCTUnwrap(preview.confirmationToken), database: app.db,
+                    hubID: "hub-a")
                 XCTFail("A changed schema must invalidate the preview.")
             } catch let error as TableCSVImportError {
                 XCTAssertEqual(error.description, TableCSVImportError.staleSchema.description)
@@ -118,10 +163,11 @@ final class TableCSVImportTests: XCTestCase {
             let available = try await service.listTables(database: app.db)
             XCTAssertEqual(available.tables.map(\.name), ["CustomImportFixture"])
 
-            let invalid = try await service.preview(.init(
-                table: "CustomImportFixture", csv: "Name,Quantity\nDesk,not-a-number",
-                mapping: ["Name": "Name", "Quantity": "Quantity"]
-            ), database: app.db, hubID: "hub-a")
+            let invalid = try await service.preview(
+                .init(
+                    table: "CustomImportFixture", csv: "Name,Quantity\nDesk,not-a-number",
+                    mapping: ["Name": "Name", "Quantity": "Quantity"]
+                ), database: app.db, hubID: "hub-a")
             XCTAssertFalse(invalid.readyToImport)
             XCTAssertNil(invalid.confirmationToken)
             XCTAssertTrue(invalid.rows[0].errors.contains { $0.contains("Quantity") })
@@ -129,13 +175,62 @@ final class TableCSVImportTests: XCTestCase {
             XCTAssertEqual(countAfterInvalidPreview, 0)
 
             do {
-                _ = try await service.preview(.init(
-                    table: "HomeInventory", csv: "ItemName,Quantity\nDesk,1",
-                    mapping: ["ItemName": "ItemName", "Quantity": "Quantity"]
-                ), database: app.db, hubID: "hub-a")
+                _ = try await service.preview(
+                    .init(
+                        table: "HomeInventory", csv: "ItemName,Quantity\nDesk,1",
+                        mapping: ["ItemName": "ItemName", "Quantity": "Quantity"]
+                    ), database: app.db, hubID: "hub-a")
                 XCTFail("Feature-owned tables must remain behind their dedicated routes.")
             } catch let error as TableCSVImportError {
-                XCTAssertEqual(error.description, TableCSVImportError.unknownOrProtectedTable.description)
+                XCTAssertEqual(
+                    error.description, TableCSVImportError.unknownOrProtectedTable.description)
+            }
+        }
+    }
+
+    func testPreviewRouteAcceptsCSVNearTheAdvertisedSizeLimit() async throws {
+        try await withApp(configure: { app in
+            app.databases.use(.sqlite(.memory), as: .sqlite)
+            app.migrations.add(CreateAuthenticationSchema())
+            app.migrations.add(CreateHubs())
+            app.migrations.add(MakeAuthenticationProviderAgnostic())
+            app.migrations.add(CreateCustomImportFixture())
+            try await app.autoMigrate()
+            app.middleware.use(SessionAuthenticationMiddleware())
+            registerTableCSVImportRoutes(app)
+        }) { app in
+            try await AuthenticationAccount(id: "account-a").save(on: app.db)
+            try await Hub(id: "hub-a", accountID: "account-a").save(on: app.db)
+            let token = "csv-import-large-preview"
+            let tokenHash = SHA256.hash(data: Data(token.utf8)).map { String(format: "%02x", $0) }
+                .joined()
+            try await AuthenticationSession(
+                accountID: "account-a",
+                tokenHash: tokenHash,
+                expiresAt: Date().addingTimeInterval(3_600)
+            ).save(on: app.db)
+
+            try await app.test(.GET, "table-import/tables") { response in
+                XCTAssertEqual(response.status, .unauthorized)
+            }
+
+            let csv = "Name,Quantity\n\(String(repeating: "x", count: 900_000)),1"
+            try await app.test(
+                .POST, "table-import/preview",
+                beforeRequest: { request in
+                    request.headers.bearerAuthorization = .init(token: token)
+                    try request.content.encode(
+                        TableCSVImportPreviewRequest(
+                            table: "CustomImportFixture",
+                            csv: csv,
+                            mapping: ["Name": "Name", "Quantity": "Quantity"]
+                        ))
+                }
+            ) { response async throws in
+                XCTAssertEqual(response.status, .ok)
+                let preview = try response.content.decode(TableCSVImportPreviewResponse.self)
+                XCTAssertTrue(preview.readyToImport)
+                XCTAssertEqual(preview.rows.count, 1)
             }
         }
     }
