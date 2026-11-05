@@ -29,10 +29,16 @@ struct CreateSchemaPageFixtures: AsyncMigration {
             .field("HubID", .string)
             .field("InstitutionName", .string, .required)
             .create()
+        try await database.schema("Transactions")
+            .field("TransactionID", .string, .identifier(auto: false))
+            .field("HubID", .string)
+            .field("Item", .string, .required)
+            .create()
     }
 
     func revert(on database: Database) async throws {
         try await database.schema("UnscopedFixture").delete()
+        try await database.schema("Transactions").delete()
         try await database.schema("Education").delete()
         try await database.schema("IntegerSchemaPageFixture").delete()
         try await database.schema("SchemaPageFixture").delete()
@@ -62,6 +68,14 @@ final class SchemaPageServiceTests: XCTestCase {
             let initialTables = try await service.listTables()
             XCTAssertEqual(initialTables.tables.map(\.name), ["Education"])
             XCTAssertEqual(initialTables.availableTables.map(\.name), ["IntegerSchemaPageFixture", "SchemaPageFixture"])
+            XCTAssertFalse(initialTables.tables.contains(where: { $0.name == "Transactions" }))
+            XCTAssertFalse(initialTables.availableTables.contains(where: { $0.name == "Transactions" }))
+            do {
+                _ = try await service.createPage(tableName: "Transactions")
+                XCTFail("The existing Expense Tracker collection must not get a duplicate schema page.")
+            } catch let error as SchemaPageError {
+                XCTAssertEqual(error, .tableUnavailable)
+            }
             _ = try await service.createPage(tableName: "SchemaPageFixture")
             _ = try await service.createPage(tableName: "SchemaPageFixture")
             let tables = try await service.listTables()
@@ -178,6 +192,11 @@ final class SchemaPageServiceTests: XCTestCase {
                 XCTAssertEqual(response.status, .ok)
             }
             try await app.test(.POST, "schema-builder/tables/UnscopedFixture/page", beforeRequest: {
+                $0.headers.bearerAuthorization = .init(token: tokenA)
+            }) { response in
+                XCTAssertEqual(response.status, .unprocessableEntity)
+            }
+            try await app.test(.POST, "schema-builder/tables/Transactions/page", beforeRequest: {
                 $0.headers.bearerAuthorization = .init(token: tokenA)
             }) { response in
                 XCTAssertEqual(response.status, .unprocessableEntity)

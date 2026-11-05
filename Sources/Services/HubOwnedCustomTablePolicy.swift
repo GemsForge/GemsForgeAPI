@@ -8,6 +8,10 @@ enum HubOwnedCustomTablePolicy {
         "Services", "ServiceLogoAssets",
     ]
 
+    /// Live tables already represented by a purpose-built Wireframe collection.
+    /// Keep these available to CSV import while preventing duplicate generic pages.
+    static let tablesWithDedicatedCollections: Set<String> = ["Transactions"]
+
     static let protectedTables: Set<String> = [
         "Hubs", "Accounts", "AccountIdentities", "AuthenticationSessions", "AppleAccounts",
         "AppleAuthChallenges", "TableViews", "ViewColumnConfigurations", "ViewQueryConfigurations",

@@ -169,6 +169,7 @@ struct SchemaPageService: Sendable {
     }
 
     static func isSchemaPageTable(_ table: LiveSchemaTableResponse) -> Bool {
+        guard !HubOwnedCustomTablePolicy.tablesWithDedicatedCollections.contains(table.name) else { return false }
         guard HubOwnedCustomTablePolicy.isEligible(table) else { return false }
         let primaryKeys = table.columns.filter(\.primaryKey)
         guard primaryKeys.count == 1,
