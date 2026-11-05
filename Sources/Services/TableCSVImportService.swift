@@ -151,9 +151,12 @@ actor TableCSVImportApprovals {
         guard Set(targets).count == targets.count else {
             throw TableCSVImportError.invalidMapping("Each table property can be mapped only once.")
         }
+        let primaryKeyCount = table.columns.filter(\.primaryKey).count
         guard !targets.isEmpty,
             targets.allSatisfy({ target in
-                table.columns.contains(where: { $0.name == target && !Self.isServerManaged($0) })
+                table.columns.contains(where: {
+                    $0.name == target && !Self.isServerManaged($0, primaryKeyCount: primaryKeyCount)
+                })
             })
         else {
             throw TableCSVImportError.invalidMapping(
@@ -163,7 +166,7 @@ actor TableCSVImportApprovals {
         let insertColumns = targets + ["HubID"]
         let requiredColumns = table.columns.filter { column in
             return (column.primaryKey || !column.nullable) && column.defaultValue == nil
-                && !Self.isServerManaged(column)
+                && !Self.isServerManaged(column, primaryKeyCount: primaryKeyCount)
         }
         let missing = requiredColumns.filter { !insertColumns.contains($0.name) }
         var previews: [TableCSVImportPreviewRow] = []
@@ -239,9 +242,8 @@ actor TableCSVImportApprovals {
                 }
                 for row in approval.rows {
                     var values = row
-                    let generatedTextPrimaryKey = current.table.columns.first(where: {
-                        $0.primaryKey && !$0.dataType.uppercased().contains("INT")
-                    })?.name
+                    let generatedTextPrimaryKey = Self.serverGeneratedPrimaryKey(in: current.table.columns)
+                        .flatMap { $0.dataType.uppercased().trimmingCharacters(in: .whitespacesAndNewlines) == "INTEGER" ? nil : $0.name }
                     if let generatedTextPrimaryKey { values[generatedTextPrimaryKey] = UUID().uuidString }
                     let columns = approval.columns + (generatedTextPrimaryKey.map { [$0] } ?? [])
                     var query = SQLQueryString("INSERT INTO \(ident: approval.table) (")
@@ -295,9 +297,18 @@ actor TableCSVImportApprovals {
         }
     }
 
-    private static func isServerManaged(_ column: ImportableSQLColumn) -> Bool {
-        column.name == "HubID"
-            || column.primaryKey
+    private static func isServerManaged(_ column: ImportableSQLColumn, primaryKeyCount: Int) -> Bool {
+        column.name == "HubID" || (primaryKeyCount == 1 && column.primaryKey)
+    }
+
+    private static func serverGeneratedPrimaryKey(in columns: [ImportableSQLColumn]) -> ImportableSQLColumn? {
+        let primaryKeys = columns.filter(\.primaryKey)
+        guard primaryKeys.count == 1, let primaryKey = primaryKeys.first else { return nil }
+        let type = primaryKey.dataType.uppercased().trimmingCharacters(in: .whitespacesAndNewlines)
+        if type == "INTEGER" || type.contains("TEXT") || type.contains("CHAR") || type.contains("CLOB") {
+            return primaryKey
+        }
+        return nil
     }
 
     private static func matchesSQLType(_ value: String, type: String) -> Bool {

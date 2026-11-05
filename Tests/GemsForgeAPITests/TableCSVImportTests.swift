@@ -17,8 +17,16 @@ struct CreateCustomImportFixture: AsyncMigration {
             .field("HubID", .string, .required)
             .unique(on: "Name")
             .create()
+        try await database.schema("CompositeImportFixture")
+            .field("PartA", .string, .required)
+            .field("PartB", .int, .required)
+            .field("Name", .string, .required)
+            .field("HubID", .string, .required)
+            .compositeIdentifier(over: "PartA", "PartB")
+            .create()
     }
     func revert(on database: Database) async throws {
+        try await database.schema("CompositeImportFixture").delete()
         try await database.schema("CustomImportFixture").delete()
     }
 }
@@ -118,6 +126,37 @@ final class TableCSVImportTests: XCTestCase {
         }
     }
 
+    func testCompositePrimaryKeyColumnsRemainRequiredAndMustBeMapped() async throws {
+        try await withFixture { app, service in
+            let missingKeys = try await service.preview(
+                .init(table: "CompositeImportFixture", csv: "Name\nDining table", mapping: ["Name": "Name"]),
+                database: app.db,
+                hubID: "hub-a"
+            )
+            XCTAssertFalse(missingKeys.readyToImport)
+            XCTAssertTrue(missingKeys.rows[0].errors.contains("PartA is required and must be mapped."))
+            XCTAssertTrue(missingKeys.rows[0].errors.contains("PartB is required and must be mapped."))
+
+            let preview = try await service.preview(
+                .init(
+                    table: "CompositeImportFixture",
+                    csv: "PartA,PartB,Name\nDining,1,Table",
+                    mapping: ["PartA": "PartA", "PartB": "PartB", "Name": "Name"]
+                ),
+                database: app.db,
+                hubID: "hub-a"
+            )
+            XCTAssertTrue(preview.readyToImport)
+            _ = try await service.commit(
+                token: try XCTUnwrap(preview.confirmationToken), database: app.db, hubID: "hub-a"
+            )
+            guard let sql = app.db as? SQLDatabase,
+                  let row = try await sql.raw("SELECT \(ident: "Name") FROM \(ident: "CompositeImportFixture") WHERE \(ident: "HubID") = \(bind: "hub-a")").first()
+            else { return XCTFail("Expected the composite-key row to be imported.") }
+            XCTAssertEqual(try row.decode(column: "Name", as: String.self), "Table")
+        }
+    }
+
     func testPreviewTokenCannotBeCommittedForAnotherHub() async throws {
         try await withFixture { app, service in
             let preview = try await service.preview(
@@ -191,7 +230,7 @@ final class TableCSVImportTests: XCTestCase {
     func testOnlyHubOwnedCustomTablesAreOfferedAndInvalidTypedRowsAreRejected() async throws {
         try await withFixture { app, service in
             let available = try await service.listTables(database: app.db)
-            XCTAssertEqual(available.tables.map(\.name), ["CustomImportFixture", "HomeInventory"])
+            XCTAssertEqual(available.tables.map(\.name), ["CompositeImportFixture", "CustomImportFixture", "HomeInventory"])
 
             let invalid = try await service.preview(
                 .init(
