@@ -154,7 +154,6 @@ struct SchemaPageService: Sendable {
 
     /// Creates one row using the inspected table contract and assigns its Hub ownership on the server.
     func createRecord(tableName: String, values: [String: PatchJSONValue]) async throws -> SchemaPageRecordCreationResponse {
-        guard let sql = database as? SQLDatabase else { throw SchemaPageError.unavailableDatabase }
         let schema = try await LiveSchemaService(database: database).inspect()
         guard let table = schema.tables.first(where: { $0.name == tableName }),
               Self.isSchemaPageTable(table),
@@ -175,7 +174,7 @@ struct SchemaPageService: Sendable {
         }
 
         var insertValues = values
-        if generatedPrimaryKey && insertValues[primaryKey.name] != nil {
+        if insertValues[primaryKey.name] != nil {
             throw SchemaPageError.invalidRecord("\(primaryKey.name) is assigned by the server.")
         }
         if generatedPrimaryKey {
@@ -212,16 +211,21 @@ struct SchemaPageService: Sendable {
         if !suppliedColumns.isEmpty { query.appendInterpolation(unsafeRaw: ", ") }
         query.appendInterpolation(bind: hubID)
         query.appendInterpolation(unsafeRaw: ")")
-        try await sql.raw(query).run()
+        let insertQuery = query
+        let generatedIDValue = insertValues[primaryKey.name]
 
-        let recordID: String
-        if let value = insertValues[primaryKey.name] {
-            recordID = try Self.stringValue(value)
-        } else {
-            guard let row = try await sql.raw("SELECT last_insert_rowid() AS id").first() else {
+        let recordID = try await database.transaction { transaction in
+            guard let transactionSQL = transaction as? SQLDatabase else {
+                throw SchemaPageError.unavailableDatabase
+            }
+            try await transactionSQL.raw(insertQuery).run()
+            if let value = generatedIDValue {
+                return try Self.stringValue(value)
+            }
+            guard let row = try await transactionSQL.raw("SELECT last_insert_rowid() AS id").first() else {
                 throw SchemaPageError.invalidRecord("The created record ID could not be read.")
             }
-            recordID = String(try row.decode(column: "id", as: Int64.self))
+            return String(try row.decode(column: "id", as: Int64.self))
         }
         return SchemaPageRecordCreationResponse(table: table.name, recordID: recordID)
     }

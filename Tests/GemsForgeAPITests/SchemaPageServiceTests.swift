@@ -215,12 +215,25 @@ final class SchemaPageServiceTests: XCTestCase {
             try await app.test(.POST, "schema-builder/tables/IntegerSchemaPageFixture/records", beforeRequest: { request in
                 request.headers.bearerAuthorization = .init(token: tokenA)
                 request.headers.contentType = .json
+                request.body = ByteBuffer(string: #"{"ID":4242,"Name":"Client supplied key"}"#)
+            }) { response in
+                XCTAssertEqual(response.status, .unprocessableEntity)
+            }
+
+            try await app.test(.POST, "schema-builder/tables/IntegerSchemaPageFixture/records", beforeRequest: { request in
+                request.headers.bearerAuthorization = .init(token: tokenA)
+                request.headers.contentType = .json
                 request.body = ByteBuffer(string: #"{"Name":"Generated integer key"}"#)
             }) { response async throws in
                 XCTAssertEqual(response.status, .ok)
                 let created = try response.content.decode(SchemaPageRecordCreationResponse.self)
                 XCTAssertEqual(created.table, "IntegerSchemaPageFixture")
-                XCTAssertNotNil(Int64(created.recordID))
+                guard let integerID = Int64(created.recordID), let sql = app.db as? SQLDatabase,
+                      let row = try await sql.raw(SQLQueryString(
+                          "SELECT \(ident: "Name") FROM \(ident: "IntegerSchemaPageFixture") WHERE \(ident: "ID") = \(bind: integerID) AND \(ident: "HubID") = \(bind: "hub-a")"
+                      )).first()
+                else { return XCTFail("The response ID must identify the row created for this Hub.") }
+                XCTAssertEqual(try row.decode(column: "Name", as: String.self), "Generated integer key")
             }
 
             try await app.test(.POST, "schema-builder/tables/SchemaPageFixture/records", beforeRequest: { request in
