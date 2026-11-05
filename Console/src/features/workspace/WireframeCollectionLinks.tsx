@@ -33,7 +33,10 @@ export function WireframeCollectionLinks({
   recordsByCollection,
 }: WireframeCollectionLinksProps) {
   const schemaPages = useSchemaPageTablesQuery();
-  const existingCollectionTables = new Set<string>(collections.flatMap((item) => [item.tableName, item.label]));
+  const existingCollectionTables = new Set<string>([
+    ...collections.flatMap((item) => [item.tableName, item.label]),
+    "Transactions",
+  ]);
   const schemaCollections = (schemaPages.data?.tables ?? [])
     .filter((table) => !existingCollectionTables.has(table.name))
     .map((table) => ({

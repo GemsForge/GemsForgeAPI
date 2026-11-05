@@ -111,6 +111,8 @@ describe("Gem Life navigation", () => {
       tables: [
         { name: "BudgetCategories", columns },
         { name: "Education", columns },
+        { name: "Transactions", columns },
+        { name: "Services", columns },
       ],
       availableTables: [],
     });
@@ -139,6 +141,9 @@ describe("Gem Life navigation", () => {
     const budgetCategoriesLink = await screen.findByRole("link", { name: "BudgetCategories" });
     expect(budgetCategoriesLink).toHaveAttribute("href", "/schema-wireframe/BudgetCategories");
     expect(screen.getAllByRole("link", { name: "Education" })).toHaveLength(1);
+    expect(screen.queryByRole("link", { name: "Transactions" })).not.toBeInTheDocument();
+    expect(screen.getAllByRole("link", { name: "Expense Tracker" })).toHaveLength(1);
+    expect(screen.getAllByRole("link", { name: "Services" })).toHaveLength(1);
 
     fireEvent.click(budgetCategoriesLink);
     expect(await screen.findByRole("heading", { name: "BudgetCategories" })).toBeInTheDocument();
