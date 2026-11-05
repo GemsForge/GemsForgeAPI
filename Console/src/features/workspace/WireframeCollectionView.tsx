@@ -46,7 +46,6 @@ import { WireframePropertyIconProvider } from "./WireframePropertyEditor";
 import { WireframePropertySettingsDialog, type WireframePropertyDetails } from "./WireframePropertySettingsDialog";
 import { useWireframeNavigation } from "./WireframeAppHeader";
 import { api } from "../../api";
-import { ensureTableCSVImportOption } from "../../table-kit/TableCSVImportWorkflow";
 import { useUploadImageMutation } from "../../data/workflowQueries";
 import { useArchiveRecordMutation, useTrashEntriesQuery } from "../../data/trashQueries";
 import {
@@ -830,7 +829,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
                   config.newRecordUtility
                     ? {
                         ...config.newRecordUtility,
-                        options: ensureTableCSVImportOption(config.newRecordUtility.options),
+                        options: config.newRecordUtility.options,
                       }
                     : config.newRecordUtility
                 }

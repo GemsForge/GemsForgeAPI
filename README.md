@@ -59,9 +59,9 @@ The project currently includes:
   searchable/sortable/filterable/grouped collections, and a record inspector.
 - Hub-scoped saved view state for collection selection and settings, plus
   per-record presentation state for covers and gallery images.
-- A schema-aware, Hub-scoped Table Kit CSV import flow with property mapping,
-  validated preview, one-use confirmation, and atomic batch persistence; see
-  [Table Kit CSV import](docs/Table-Kit-CSV-Import.md).
+- Schema-driven Wireframe record creation, plus file and paste import for CSV
+  or JSON with property mapping, server validation, one-use confirmation, and
+  atomic batch persistence; see [schema-backed data import](docs/Table-Kit-CSV-Import.md).
 - A reusable local attachment lifecycle for uploading, safely retrieving,
   previewing, replacing, and removing image references on owner records.
 - Automated route, service, model, and integration-focused tests using isolated

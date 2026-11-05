@@ -65,6 +65,14 @@ export function useSchemaPageRecordsQuery(tableName: string, offset = 0) {
     enabled: Boolean(tableName),
   });
 }
+export function useCreateSchemaPageRecordMutation(tableName: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (values: Record<string, string | number | boolean | null>) =>
+      api.createSchemaPageRecord(tableName, values),
+    onSuccess: () => client.invalidateQueries({ queryKey: workflowQueryKeys.schemaPageRecords(tableName) }),
+  });
+}
 export function useImportableSQLTablesQuery() {
   return useQuery({
     queryKey: workflowQueryKeys.importableTables,

@@ -153,8 +153,9 @@ describe("Gem Life navigation", () => {
     expect(screen.getByRole("main", { name: "Wireframe screen" })).toBeInTheDocument();
     expect(screen.getAllByText("Housing").length).toBeGreaterThan(0);
     fireEvent.click(screen.getByRole("button", { name: "New record" }));
-    expect(await screen.findByRole("dialog")).toBeInTheDocument();
-    expect(await screen.findByRole("combobox", { name: "Target table" })).toHaveValue("BudgetCategories");
+    expect(await screen.findByRole("dialog", { name: "New record" })).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Category" })).toBeRequired();
+    expect(screen.getByRole("button", { name: "Create record" })).toBeInTheDocument();
   });
   it("renders the wireframe home from live collection counts", async () => {
     vi.spyOn(api, "listRootPages").mockResolvedValue([]);

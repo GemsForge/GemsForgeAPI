@@ -28,6 +28,7 @@ import type {
   SchemaPageTables,
   SchemaPageTable,
   SchemaPageRecords,
+  SchemaPageRecordCreation,
   LocalDatabaseCapabilities,
   LocalDatabaseCreationResult,
   SchemaBuilderGuidance,
@@ -346,6 +347,11 @@ export const api = {
       `/schema-builder/tables/${encodeURIComponent(tableName)}/records?limit=100&offset=${Math.max(0, offset)}`,
       { signal },
     ),
+  createSchemaPageRecord: (tableName: string, values: Record<string, string | number | boolean | null>) =>
+    request<SchemaPageRecordCreation>(`/schema-builder/tables/${encodeURIComponent(tableName)}/records`, {
+      method: "POST",
+      body: JSON.stringify(values),
+    }),
   previewUserTable: (definition: TableBuilderRequest) =>
     request<UserTablePreview>("/live-database/tables/preview", { method: "POST", body: JSON.stringify(definition) }),
   createUserTable: (confirmationToken: string) =>

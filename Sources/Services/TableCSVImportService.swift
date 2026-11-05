@@ -153,7 +153,7 @@ actor TableCSVImportApprovals {
         }
         guard !targets.isEmpty,
             targets.allSatisfy({ target in
-                table.columns.contains(where: { $0.name == target && $0.name != "HubID" })
+                table.columns.contains(where: { $0.name == target && !Self.isServerManaged($0) })
             })
         else {
             throw TableCSVImportError.invalidMapping(
@@ -162,10 +162,8 @@ actor TableCSVImportApprovals {
 
         let insertColumns = targets + ["HubID"]
         let requiredColumns = table.columns.filter { column in
-            let generatedIntegerKey =
-                column.primaryKey && column.dataType.uppercased().contains("INT")
             return (column.primaryKey || !column.nullable) && column.defaultValue == nil
-                && !generatedIntegerKey && column.name != "HubID"
+                && !Self.isServerManaged(column)
         }
         let missing = requiredColumns.filter { !insertColumns.contains($0.name) }
         var previews: [TableCSVImportPreviewRow] = []
@@ -240,15 +238,21 @@ actor TableCSVImportApprovals {
                     throw TableCSVImportError.unavailableDatabase
                 }
                 for row in approval.rows {
+                    var values = row
+                    let generatedTextPrimaryKey = current.table.columns.first(where: {
+                        $0.primaryKey && !$0.dataType.uppercased().contains("INT")
+                    })?.name
+                    if let generatedTextPrimaryKey { values[generatedTextPrimaryKey] = UUID().uuidString }
+                    let columns = approval.columns + (generatedTextPrimaryKey.map { [$0] } ?? [])
                     var query = SQLQueryString("INSERT INTO \(ident: approval.table) (")
-                    for (index, column) in approval.columns.enumerated() {
+                    for (index, column) in columns.enumerated() {
                         if index > 0 { query.appendInterpolation(unsafeRaw: ", ") }
                         query.appendInterpolation(ident: column)
                     }
                     query.appendInterpolation(unsafeRaw: ", \"HubID\") VALUES (")
-                    for (index, column) in approval.columns.enumerated() {
+                    for (index, column) in columns.enumerated() {
                         if index > 0 { query.appendInterpolation(unsafeRaw: ", ") }
-                        query.appendInterpolation(bind: row[column] ?? "")
+                        query.appendInterpolation(bind: values[column] ?? "")
                     }
                     query.appendInterpolation(unsafeRaw: ", ")
                     query.appendInterpolation(bind: hubID)
@@ -289,6 +293,11 @@ actor TableCSVImportApprovals {
                 name: $0.name, dataType: $0.dataType, nullable: $0.nullable,
                 primaryKey: $0.primaryKey, defaultValue: $0.defaultValue)
         }
+    }
+
+    private static func isServerManaged(_ column: ImportableSQLColumn) -> Bool {
+        column.name == "HubID"
+            || column.primaryKey
     }
 
     private static func matchesSQLType(_ value: String, type: String) -> Bool {

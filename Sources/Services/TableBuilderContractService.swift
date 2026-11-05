@@ -7,8 +7,8 @@ import Foundation
 /// backup the database, and apply the change transactionally.
 struct TableBuilderContractService: Sendable {
     static let maximumColumns = 50
-    static let minimumUserColumns = 1
-    private static let serverManagedColumnCount = 2
+    static let minimumUserColumns = 0
+    private static let serverManagedColumnCount = 3
     static let maximumIdentifierLength = 128
 
     enum ValidationError: Error, CustomStringConvertible, Equatable {
@@ -26,7 +26,7 @@ struct TableBuilderContractService: Sendable {
             case .emptyTableName: return "A table name is required."
             case .invalidIdentifier(let value): return "The identifier is invalid: \(value)."
             case .noColumns: return "At least one property column is required."
-            case .tooManyColumns: return "A table may contain at most \(TableBuilderContractService.maximumColumns - TableBuilderContractService.serverManagedColumnCount) property columns; the API adds ID and HubID automatically."
+            case .tooManyColumns: return "A table may contain at most \(TableBuilderContractService.maximumColumns - TableBuilderContractService.serverManagedColumnCount) property columns; the API adds ID, HubID, and Title automatically."
             case .duplicateColumn(let name): return "The table contains duplicate column names: \(name)."
             case .reservedColumn(let name): return "The column name is reserved by the API: \(name)."
             case .clientManagedPrimaryKey(let name): return "The API manages the table ID; \(name) cannot be submitted as a primary key."
@@ -44,12 +44,13 @@ struct TableBuilderContractService: Sendable {
         var validatedColumns: [ValidatedTableColumn] = [
             ValidatedTableColumn(name: "ID", dataType: .text, nullable: false, defaultValue: nil, primaryKey: true, unique: true),
             ValidatedTableColumn(name: "HubID", dataType: .text, nullable: false, defaultValue: nil, primaryKey: false, unique: false),
+            ValidatedTableColumn(name: "Title", dataType: .text, nullable: false, defaultValue: nil, primaryKey: false, unique: false),
         ]
 
         for column in request.columns {
             let name = try normalizedIdentifier(column.name)
             let comparisonName = name.lowercased()
-            guard comparisonName != "id", comparisonName != "hubid" else {
+            guard !["id", "hubid", "title"].contains(comparisonName) else {
                 throw ValidationError.reservedColumn(name)
             }
             guard seenNames.insert(comparisonName).inserted else {

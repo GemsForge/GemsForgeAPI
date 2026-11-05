@@ -8,7 +8,8 @@ import {
   usePreviewTableCSVImportMutation,
 } from "../data/workflowQueries";
 
-/** Add the shared schema-aware CSV importer to an existing Table Kit utility. */
+/** @deprecated Schema-backed collections use the shared RecordImport file/paste flow. */
+// TODO: Remove this duplicate CSV workflow after any remaining callers migrate.
 export function createTableCSVImportOption(tableName?: string): TableNewRecordUtilityOption {
   return {
     id: "table-csv-import",

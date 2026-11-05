@@ -20,14 +20,21 @@ struct SchemaPageRecordsResponse: Content, Sendable {
     let offset: Int
 }
 
+struct SchemaPageRecordCreationResponse: Content, Sendable {
+    let table: String
+    let recordID: String
+}
+
 enum SchemaPageError: Error, CustomStringConvertible, Equatable {
     case unavailableDatabase
     case tableUnavailable
+    case invalidRecord(String)
 
     var description: String {
         switch self {
         case .unavailableDatabase: return "Schema pages require the configured SQLite database."
         case .tableUnavailable: return "This table is not available as a Hub-owned schema page."
+        case .invalidRecord(let message): return message
         }
     }
 }
@@ -145,6 +152,80 @@ struct SchemaPageService: Sendable {
         )
     }
 
+    /// Creates one row using the inspected table contract and assigns its Hub ownership on the server.
+    func createRecord(tableName: String, values: [String: PatchJSONValue]) async throws -> SchemaPageRecordCreationResponse {
+        guard let sql = database as? SQLDatabase else { throw SchemaPageError.unavailableDatabase }
+        let schema = try await LiveSchemaService(database: database).inspect()
+        guard let table = schema.tables.first(where: { $0.name == tableName }),
+              Self.isSchemaPageTable(table),
+              let primaryKey = table.columns.first(where: \.primaryKey)
+        else { throw SchemaPageError.tableUnavailable }
+
+        let protected = Set(["HubID"])
+        let generatedPrimaryKey = !primaryKey.dataType.uppercased().contains("INT")
+        let acceptedColumns = table.columns.filter { !protected.contains($0.name) }
+        let knownNames = Set(acceptedColumns.map(\.name))
+        let unknown = Set(values.keys).subtracting(knownNames)
+        guard unknown.isEmpty else {
+            throw SchemaPageError.invalidRecord("Unknown properties: \(unknown.sorted().joined(separator: ", ")).")
+        }
+        let generatedIntegerPrimaryKey = primaryKey.dataType.uppercased().contains("INT")
+        if values.isEmpty && !generatedPrimaryKey && !generatedIntegerPrimaryKey {
+            throw SchemaPageError.invalidRecord("At least one property is required.")
+        }
+
+        var insertValues = values
+        if generatedPrimaryKey && insertValues[primaryKey.name] != nil {
+            throw SchemaPageError.invalidRecord("\(primaryKey.name) is assigned by the server.")
+        }
+        if generatedPrimaryKey {
+            insertValues[primaryKey.name] = .string(UUID().uuidString)
+        }
+        let allowedNames = Set(acceptedColumns.map(\.name))
+        guard Set(insertValues.keys).isSubset(of: allowedNames) else {
+            throw SchemaPageError.invalidRecord("The primary key could not be assigned.")
+        }
+
+        for column in acceptedColumns {
+            if let value = insertValues[column.name] {
+                try Self.validate(value, for: column)
+            } else if column.primaryKey && column.dataType.uppercased().contains("INT") {
+                continue // SQLite assigns integer primary keys.
+            } else if !column.nullable && column.defaultValue == nil {
+                throw SchemaPageError.invalidRecord("\(column.name) is required.")
+            }
+        }
+
+        let suppliedColumns = acceptedColumns.filter { insertValues[$0.name] != nil }
+        var query = SQLQueryString("INSERT INTO \(ident: table.name) (")
+        for (index, column) in suppliedColumns.enumerated() {
+            if index > 0 { query.appendInterpolation(unsafeRaw: ", ") }
+            query.appendInterpolation(ident: column.name)
+        }
+        if !suppliedColumns.isEmpty { query.appendInterpolation(unsafeRaw: ", ") }
+        query.appendInterpolation(ident: "HubID")
+        query.appendInterpolation(unsafeRaw: ") VALUES (")
+        for (index, column) in suppliedColumns.enumerated() {
+            if index > 0 { query.appendInterpolation(unsafeRaw: ", ") }
+            try Self.bind(insertValues[column.name]!, to: &query)
+        }
+        if !suppliedColumns.isEmpty { query.appendInterpolation(unsafeRaw: ", ") }
+        query.appendInterpolation(bind: hubID)
+        query.appendInterpolation(unsafeRaw: ")")
+        try await sql.raw(query).run()
+
+        let recordID: String
+        if let value = insertValues[primaryKey.name] {
+            recordID = try Self.stringValue(value)
+        } else {
+            guard let row = try await sql.raw("SELECT last_insert_rowid() AS id").first() else {
+                throw SchemaPageError.invalidRecord("The created record ID could not be read.")
+            }
+            recordID = String(try row.decode(column: "id", as: Int64.self))
+        }
+        return SchemaPageRecordCreationResponse(table: table.name, recordID: recordID)
+    }
+
     /// Confirms a record identifier belongs to this Hub before it is persisted as workspace selection.
     func containsRecord(_ recordID: String, in tableName: String) async throws -> Bool {
         guard let sql = database as? SQLDatabase else { throw SchemaPageError.unavailableDatabase }
@@ -179,5 +260,50 @@ struct SchemaPageService: Sendable {
         let type = hubID.dataType.uppercased()
         guard type.contains("TEXT") || type.contains("CHAR") || type.contains("CLOB") else { return false }
         return HubOwnedCustomTablePolicy.liveRecordTables.contains(table.name) || !hubID.nullable
+    }
+
+    private static func validate(_ value: PatchJSONValue, for column: LiveSchemaColumnResponse) throws {
+        if case .null = value {
+            guard column.nullable else { throw SchemaPageError.invalidRecord("\(column.name) cannot be empty.") }
+            return
+        }
+        let type = column.dataType.uppercased()
+        if type.contains("INT") {
+            guard let text = try? stringValue(value), Int64(text) != nil else {
+                throw SchemaPageError.invalidRecord("\(column.name) must be a valid \(column.dataType) value.")
+            }
+        } else if ["REAL", "FLOAT", "DOUBLE", "NUMERIC", "DECIMAL"].contains(where: type.contains) {
+            guard let text = try? stringValue(value), Double(text) != nil else {
+                throw SchemaPageError.invalidRecord("\(column.name) must be a valid \(column.dataType) value.")
+            }
+        } else if type.contains("BOOL") {
+            guard let text = try? stringValue(value), ["0", "1", "true", "false"].contains(text.lowercased()) else {
+                throw SchemaPageError.invalidRecord("\(column.name) must be a valid boolean value.")
+            }
+        } else if type.contains("BLOB") {
+            throw SchemaPageError.invalidRecord("\(column.name) does not accept binary data through this endpoint.")
+        } else if case .string(let text) = value, text.isEmpty, !column.nullable, column.defaultValue == nil {
+            throw SchemaPageError.invalidRecord("\(column.name) is required.")
+        }
+    }
+
+    private static func stringValue(_ value: PatchJSONValue) throws -> String {
+        switch value {
+        case .null: return ""
+        case .string(let text): return text
+        case .number(let number):
+            if let integer = Int64(exactly: number) { return String(integer) }
+            return String(number)
+        case .bool(let bool): return bool ? "1" : "0"
+        }
+    }
+
+    private static func bind(_ value: PatchJSONValue, to query: inout SQLQueryString) throws {
+        switch value {
+        case .null: query.appendInterpolation(bind: Optional<String>.none)
+        case .string(let text): query.appendInterpolation(bind: text)
+        case .number(let number): query.appendInterpolation(bind: number)
+        case .bool(let bool): query.appendInterpolation(bind: bool ? 1 : 0)
+        }
     }
 }

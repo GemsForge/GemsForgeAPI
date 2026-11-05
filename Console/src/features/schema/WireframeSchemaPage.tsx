@@ -2,8 +2,8 @@ import { useMemo } from "react";
 import { useParams } from "react-router-dom";
 import { useSchemaPageRecordsQuery, useSchemaPageTablesQuery } from "../../data/workflowQueries";
 import { createLiveSchemaProperties, type RecordPropertyDefinition } from "../../table-kit";
-import { createTableCSVImportOption } from "../../table-kit/TableCSVImportWorkflow";
 import type { SchemaPageRecords } from "../../types";
+import { createSchemaRecordOptions } from "./SchemaRecordActions";
 import { WireframeCollectionView, type WireframeRecord } from "../workspace/WireframeCollectionView";
 import { WireframeSchemaInspector } from "../workspace/WireframeSchemaInspector";
 
@@ -51,7 +51,7 @@ export function WireframeSchemaPage() {
         records,
         properties,
         newRecordUtility: {
-          options: [createTableCSVImportOption(tableName)],
+          options: createSchemaRecordOptions(table),
         },
         searchValues: (record) => Object.values(record).filter((value): value is string => typeof value === "string"),
         cardTitle: (record) => recordText(record, titleProperty?.id) || record.id,

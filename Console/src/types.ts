@@ -360,6 +360,10 @@ export interface SchemaPageRecords {
   limit: number;
   offset: number;
 }
+export interface SchemaPageRecordCreation {
+  table: string;
+  recordID: string;
+}
 
 export type ImportableSQLColumn = LiveSchemaColumn;
 export interface ImportableSQLTable {

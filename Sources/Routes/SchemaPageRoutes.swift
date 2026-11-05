@@ -17,6 +17,7 @@ func registerSchemaPageRoutes(_ app: Application) {
             switch error {
             case .tableUnavailable: throw Abort(.unprocessableEntity, reason: error.description)
             case .unavailableDatabase: throw Abort(.serviceUnavailable, reason: error.description)
+            case .invalidRecord: throw Abort(.unprocessableEntity, reason: error.description)
             }
         }
     }
@@ -33,6 +34,23 @@ func registerSchemaPageRoutes(_ app: Application) {
             switch error {
             case .tableUnavailable: throw Abort(.notFound, reason: error.description)
             case .unavailableDatabase: throw Abort(.serviceUnavailable, reason: error.description)
+            case .invalidRecord: throw Abort(.unprocessableEntity, reason: error.description)
+            }
+        }
+    }
+
+    pages.post(":tableName", "records") { request async throws -> SchemaPageRecordCreationResponse in
+        let hubID = try request.requireAuthenticatedHubID()
+        guard let tableName = request.parameters.get("tableName") else { throw Abort(.badRequest) }
+        let values = try request.content.decode([String: PatchJSONValue].self)
+        do {
+            return try await SchemaPageService(database: request.db, hubID: hubID)
+                .createRecord(tableName: tableName, values: values)
+        } catch let error as SchemaPageError {
+            switch error {
+            case .tableUnavailable: throw Abort(.notFound, reason: error.description)
+            case .unavailableDatabase: throw Abort(.serviceUnavailable, reason: error.description)
+            case .invalidRecord: throw Abort(.unprocessableEntity, reason: error.description)
             }
         }
     }

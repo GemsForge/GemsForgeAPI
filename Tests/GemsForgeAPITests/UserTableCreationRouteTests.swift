@@ -21,7 +21,7 @@ final class UserTableCreationRouteTests: XCTestCase {
                 XCTAssertEqual(response.status, .ok)
                 let preview = try response.content.decode(UserTablePreviewResponse.self)
                 XCTAssertEqual(preview.definition.tableName, "HomeInventoryDraft")
-                XCTAssertEqual(preview.definition.columns.count, 4)
+                XCTAssertEqual(preview.definition.columns.map(\.name), ["ID", "HubID", "Title", "ItemName", "Quantity"])
                 XCTAssertEqual(preview.status, "preview")
             }
 
@@ -71,9 +71,41 @@ final class UserTableCreationRouteTests: XCTestCase {
 
             let schema = try await LiveSchemaService(database: app.db).inspect()
             let table = try XCTUnwrap(schema.tables.first { $0.name == "HomeInventoryDraft" })
-            XCTAssertEqual(table.columns.map { $0.name }, ["ID", "HubID", "ItemName", "Quantity"])
+            XCTAssertEqual(table.columns.map { $0.name }, ["ID", "HubID", "Title", "ItemName", "Quantity"])
+            XCTAssertEqual(table.columns.first(where: { $0.name == "Title" })?.nullable, false)
             let schemaPages = try await SchemaPageService(database: app.db, hubID: "hub-a").listTables()
             XCTAssertTrue(schemaPages.availableTables.contains { $0.name == "HomeInventoryDraft" })
+        }
+    }
+
+    func testTableCanBeCreatedWithOnlyTheRequiredServerManagedColumnsAndTitle() async throws {
+        try await withApp(configure: { app in
+            app.databases.use(.sqlite(.memory), as: .sqlite)
+            registerLiveMigrationRoutes(app)
+        }) { app in
+            try await app.test(.POST, "live-database/tables/preview", beforeRequest: { request in
+                try request.content.encode(TableBuilderRequest(tableName: "Goals", columns: []))
+            }) { response async throws in
+                XCTAssertEqual(response.status, .ok)
+                let preview = try response.content.decode(UserTablePreviewResponse.self)
+                XCTAssertEqual(preview.definition.columns.map(\.name), ["ID", "HubID", "Title"])
+                XCTAssertFalse(preview.definition.columns[2].nullable)
+            }
+        }
+    }
+
+    func testTitleCannotBeRedefinedAsAUserColumn() async throws {
+        try await withApp(configure: { app in
+            app.databases.use(.sqlite(.memory), as: .sqlite)
+            registerLiveMigrationRoutes(app)
+        }) { app in
+            try await app.test(.POST, "live-database/tables/preview", beforeRequest: { request in
+                try request.content.encode(TableBuilderRequest(tableName: "DuplicateTitle", columns: [
+                    TableBuilderColumnRequest(name: "title", dataType: .text, nullable: false, defaultValue: nil, primaryKey: false, unique: false)
+                ]))
+            }) { response in
+                XCTAssertEqual(response.status, .badRequest)
+            }
         }
     }
 }

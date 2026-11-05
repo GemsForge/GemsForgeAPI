@@ -30,7 +30,7 @@ interface State {
 }
 export const initialBuilderState: State = {
   tableName: "HomeInventoryDraft",
-  columns: [newColumn()],
+  columns: [],
   preview: null,
   csv: "",
   csvPreview: null,
@@ -90,8 +90,7 @@ export function useSchemaBuilder({ onError, onSuccess }: Options) {
   const csvImport = useImportCSVMutation();
   const definition: TableBuilderRequest = { tableName: state.tableName, columns: state.columns };
   const tableNameIsValid = /^[A-Z][A-Za-z0-9]*$/.test(state.tableName.trim());
-  const columnsAreValid =
-    state.columns.length >= 1 && state.columns.every((column) => column.name.trim() && column.dataType);
+  const columnsAreValid = state.columns.every((column) => column.name.trim() && column.dataType);
   const setTableName = (value: string) => dispatch({ type: "tableName", value });
   const setCsv = (value: string) => {
     csvRead.current++;
@@ -104,7 +103,7 @@ export function useSchemaBuilder({ onError, onSuccess }: Options) {
       value: state.columns.map((column, i) => (i === index ? { ...column, ...patch } : column)),
     });
   const removeColumn = (index: number) => {
-    if (state.columns.length > 1) dispatch({ type: "columns", value: state.columns.filter((_, i) => i !== index) });
+    dispatch({ type: "columns", value: state.columns.filter((_, i) => i !== index) });
   };
 
   async function run(operation: () => Promise<void>, creation = false) {

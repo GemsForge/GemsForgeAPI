@@ -68,6 +68,21 @@ export function WireframeCollectionLinks({
   return (
     <>
       <nav className="demo-collections" aria-label="Collections">
+        <GemButton
+          asChild
+          variant="quiet"
+          tone="secondary"
+          className="wireframe-collection-link wireframe-collection-create-table"
+        >
+          <Link to="/schema-builder-wireframe" aria-label="Create a new table">
+            <span className="wireframe-collection-link-name">
+              <span className="wireframe-collection-link-icon" aria-hidden="true">
+                ＋
+              </span>
+              <span className="wireframe-navigation-label">New table</span>
+            </span>
+          </Link>
+        </GemButton>
         {visibleCollections.map((item) => {
           const saved =
             typeof iconPreferences[item.tableName] === "string"

@@ -107,6 +107,16 @@ describe("resource create contracts", () => {
     expect(fetch.mock.calls[2][1]?.method).toBe("POST");
   });
 
+  it("creates one schema-backed record through its encoded Hub-scoped route", async () => {
+    const created = { table: "Family Goals", recordID: "generated-id" };
+    const fetch = vi.fn().mockResolvedValue(new Response(JSON.stringify(created)));
+    vi.stubGlobal("fetch", fetch);
+    await expect(api.createSchemaPageRecord("Family Goals", { Title: "Vacation", Count: 2 })).resolves.toEqual(created);
+    expect(fetch.mock.calls[0]?.[0]).toBe("/schema-builder/tables/Family%20Goals/records");
+    expect(fetch.mock.calls[0]?.[1]?.method).toBe("POST");
+    expect(fetch.mock.calls[0]?.[1]?.body).toBe(JSON.stringify({ Title: "Vacation", Count: 2 }));
+  });
+
   it("uses the Hub-scoped archive lifecycle routes", async () => {
     const archived = {
       entryID: "entry-1",
