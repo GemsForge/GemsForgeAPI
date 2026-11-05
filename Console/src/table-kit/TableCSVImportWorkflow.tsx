@@ -9,12 +9,12 @@ import {
 } from "../data/workflowQueries";
 
 /** Add the shared schema-aware CSV importer to an existing Table Kit utility. */
-export function createTableCSVImportOption(): TableNewRecordUtilityOption {
+export function createTableCSVImportOption(tableName?: string): TableNewRecordUtilityOption {
   return {
     id: "table-csv-import",
     label: "Import CSV",
     description: "Choose a SQL table, map CSV headers, preview, then confirm.",
-    render: ({ close }) => <TableCSVImportWorkflow onComplete={close} onCancel={close} />,
+    render: ({ close }) => <TableCSVImportWorkflow initialTableName={tableName} onComplete={close} onCancel={close} />,
   };
 }
 
@@ -27,11 +27,19 @@ export function ensureTableCSVImportOption(
     : [...options, createTableCSVImportOption()];
 }
 
-export function TableCSVImportWorkflow({ onComplete, onCancel }: { onComplete: () => void; onCancel: () => void }) {
+export function TableCSVImportWorkflow({
+  onComplete,
+  onCancel,
+  initialTableName,
+}: {
+  onComplete: () => void;
+  onCancel: () => void;
+  initialTableName?: string;
+}) {
   const tables = useImportableSQLTablesQuery();
   const previewMutation = usePreviewTableCSVImportMutation();
   const commitMutation = useCommitTableCSVImportMutation();
-  const [tableName, setTableName] = useState("");
+  const [tableName, setTableName] = useState(initialTableName ?? "");
   const [text, setText] = useState("");
   const [mapping, setMapping] = useState<Record<string, string>>({});
   const [csvError, setCsvError] = useState<string | null>(null);
@@ -104,9 +112,7 @@ export function TableCSVImportWorkflow({ onComplete, onCancel }: { onComplete: (
       {tables.isPending && <p role="status">Loading importable tables…</p>}
       {tables.isError && <p role="alert">{tables.error.message}</p>}
       {tables.isSuccess && tables.data.tables.length === 0 && (
-        <p role="status">
-          No Hub-owned custom tables are available. Add a required text HubID property when creating a custom table.
-        </p>
+        <p role="status">No live tables are available for import.</p>
       )}
       {tables.data?.tables.length ? (
         <label className="table-csv-import-field">

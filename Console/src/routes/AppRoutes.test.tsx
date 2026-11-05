@@ -123,6 +123,9 @@ describe("Gem Life navigation", () => {
       limit: 100,
       offset: 0,
     });
+    vi.spyOn(api, "getImportableSQLTables").mockResolvedValue({
+      tables: [{ name: "BudgetCategories", columns }],
+    });
     vi.spyOn(api, "getTableView").mockImplementation(async (_table, viewType) => ({
       view: {
         viewID: viewType,
@@ -149,6 +152,9 @@ describe("Gem Life navigation", () => {
     expect(await screen.findByRole("heading", { name: "BudgetCategories" })).toBeInTheDocument();
     expect(screen.getByRole("main", { name: "Wireframe screen" })).toBeInTheDocument();
     expect(screen.getAllByText("Housing").length).toBeGreaterThan(0);
+    fireEvent.click(screen.getByRole("button", { name: "New record" }));
+    expect(await screen.findByRole("dialog")).toBeInTheDocument();
+    expect(await screen.findByRole("combobox", { name: "Target table" })).toHaveValue("BudgetCategories");
   });
   it("renders the wireframe home from live collection counts", async () => {
     vi.spyOn(api, "listRootPages").mockResolvedValue([]);
