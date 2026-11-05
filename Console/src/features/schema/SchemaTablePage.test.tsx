@@ -68,7 +68,7 @@ describe("SchemaTablePage", () => {
     expect(await screen.findByRole("heading", { name: "FamilyGoals" })).toBeInTheDocument();
     await waitFor(() => expect(screen.getByText("Goal")).toBeInTheDocument());
     expect(screen.getAllByText("Read together").length).toBeGreaterThanOrEqual(2);
-    expect(screen.getByText("Records from your Hub in the configured live database.")).toBeInTheDocument();
+    expect(screen.getByText("Records from your live database schema.")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "List" }));
     await waitFor(() => expect(saveWorkspace).toHaveBeenCalledWith("FamilyGoals", "List", expect.any(String)));
     const savedWorkspaceState = JSON.parse(saveWorkspace.mock.calls.at(-1)![2]);

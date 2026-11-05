@@ -10,7 +10,7 @@ import { createLiveSchemaProperties, type RecordAdapter, type RecordPropertyDefi
 
 type SchemaRecord = Record<string, unknown> & { id: string };
 
-export function SchemaTablePage() {
+export function SchemaTablePage({ showHeading = true }: { showHeading?: boolean }) {
   const { tableName = "" } = useParams();
   const tables = useSchemaPageTablesQuery();
   const [offset, setOffset] = useState(0);
@@ -23,7 +23,11 @@ export function SchemaTablePage() {
   const table = result.data?.table ?? tables.data?.tables.find((candidate) => candidate.name === tableName);
   const primaryKey = table?.columns.find((column) => column.primaryKey)?.name;
   const records = useMemo<SchemaRecord[]>(
-    () => (result.data?.rows ?? []).map((row) => ({ ...row, id: String((primaryKey ? row[primaryKey] : undefined) ?? "") })),
+    () =>
+      (result.data?.rows ?? []).map((row) => ({
+        ...row,
+        id: String((primaryKey ? row[primaryKey] : undefined) ?? ""),
+      })),
     [primaryKey, result.data?.rows],
   );
   const properties = useMemo<readonly RecordPropertyDefinition<SchemaRecord>[]>(
@@ -72,14 +76,16 @@ export function SchemaTablePage() {
 
   return (
     <>
-      <div className="content-heading">
-        <div>
-          <p className="eyebrow">Schema page · {table.columns.length} properties</p>
-          <h2>{table.name}</h2>
-          <p className="muted">Records from your Hub in the configured live database.</p>
+      {showHeading ? (
+        <div className="content-heading">
+          <div>
+            <p className="eyebrow">Schema page · {table.columns.length} properties</p>
+            <h2>{table.name}</h2>
+            <p className="muted">Records from your live database schema.</p>
+          </div>
+          <span className="record-count">{result.data.totalCount} records</span>
         </div>
-        <span className="record-count">{result.data.totalCount} records</span>
-      </div>
+      ) : null}
       <DatabaseRecordCollection
         label={table.name}
         records={records}
@@ -93,7 +99,7 @@ export function SchemaTablePage() {
             <GemEmptyState
               icon="▦"
               title={`No ${table.name} records yet`}
-              description="This schema page is ready. Add records through an approved data workflow, then return here to view them."
+              description="This schema page is ready. Add records through the available data workflows, then return here to view them."
             />
           ) : undefined
         }
