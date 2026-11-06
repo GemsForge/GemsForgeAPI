@@ -94,28 +94,31 @@ export function useTableNavigationPreferences(tableNames: readonly string[]) {
             }
           }),
         );
-        return views
-          .filter((view): view is NonNullable<typeof view> => view !== null && Boolean(view.view.workspaceState))
-          .map((view) => {
-            try {
-              const state = JSON.parse(view.view.workspaceState!) as { tableIcon?: unknown; title?: unknown };
-              return {
-                updatedAt: Date.parse(view.view.updatedAt ?? ""),
-                icon: state.tableIcon,
-                title: state.title,
-              };
-            } catch {
-              return null;
-            }
-          })
-          .filter((value): value is { updatedAt: number; icon: unknown; title: unknown } => value !== null)
-          .sort((left, right) => right.updatedAt - left.updatedAt)[0];
+        return (
+          views
+            .filter((view): view is NonNullable<typeof view> => view !== null && Boolean(view.view.workspaceState))
+            .map((view) => {
+              try {
+                const state = JSON.parse(view.view.workspaceState!) as { tableIcon?: unknown; title?: unknown };
+                return {
+                  updatedAt: Date.parse(view.view.updatedAt ?? ""),
+                  icon: state.tableIcon,
+                  title: state.title,
+                };
+              } catch {
+                return null;
+              }
+            })
+            .filter((value): value is { updatedAt: number; icon: unknown; title: unknown } => value !== null)
+            .sort((left, right) => right.updatedAt - left.updatedAt)[0] ?? null
+        );
       },
     })),
   });
-  return Object.fromEntries(
-    tableNames.map((tableName, index) => [tableName, results[index].data]),
-  ) as Record<string, { icon?: unknown; title?: unknown } | undefined>;
+  return Object.fromEntries(tableNames.map((tableName, index) => [tableName, results[index].data])) as Record<
+    string,
+    { icon?: unknown; title?: unknown } | null | undefined
+  >;
 }
 
 export function useSaveTableViewWorkspaceStateMutation(tableName: string) {

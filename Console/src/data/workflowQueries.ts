@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../api";
-import type { ForgeKeeperPatch, TableBuilderRequest } from "../types";
+import type { ForgeKeeperPatch, TableBuilderRequest, TablePropertyDefinitionInput } from "../types";
 import { fileQueryKeys } from "./fileQueries";
 
 export type PageScope = { kind: "domain"; id: string } | { kind: "children"; id: number } | { kind: "roots" };
@@ -13,6 +13,14 @@ export const workflowQueryKeys = {
     offset === undefined
       ? (["schema-page-records", tableName] as const)
       : (["schema-page-records", tableName, offset] as const),
+  schemaPageRecord: (tableName: string, recordID: string | null) =>
+    ["schema-page-record", tableName, recordID] as const,
+  tablePropertyDefinitions: (tableName: string) => ["table-property-definitions", tableName] as const,
+  tablePropertyOptions: (tableName: string, propertyID: string, recordID: string | null, search: string) =>
+    ["table-property-options", tableName, propertyID, recordID, search] as const,
+  tablePropertyValues: (tableName: string, recordID: string | null) =>
+    ["table-property-values", tableName, recordID] as const,
+  tablePropertyValuesForTable: (tableName: string) => ["table-property-values", tableName] as const,
   guidance: ["schema-guidance"] as const,
   capabilities: ["database-capabilities"] as const,
   localDatabases: ["local-databases"] as const,
@@ -63,6 +71,52 @@ export function useSchemaPageRecordsQuery(tableName: string, offset = 0) {
     queryKey: workflowQueryKeys.schemaPageRecords(tableName, offset),
     queryFn: ({ signal }) => api.getSchemaPageRecords(tableName, offset, signal),
     enabled: Boolean(tableName),
+  });
+}
+export function useSchemaPageRecordQuery(tableName: string, recordID: string | null) {
+  return useQuery({
+    queryKey: workflowQueryKeys.schemaPageRecord(tableName, recordID),
+    queryFn: ({ signal }) => api.getSchemaPageRecord(tableName, recordID!, signal),
+    enabled: Boolean(tableName && recordID),
+  });
+}
+export function useTablePropertyDefinitionsQuery(tableName: string, enabled = true) {
+  return useQuery({
+    queryKey: workflowQueryKeys.tablePropertyDefinitions(tableName),
+    queryFn: ({ signal }) => api.getTablePropertyDefinitions(tableName, signal),
+    enabled: Boolean(tableName) && enabled,
+  });
+}
+export function useSaveTablePropertyDefinitionsMutation(tableName: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (definitions: TablePropertyDefinitionInput[]) =>
+      api.saveTablePropertyDefinitions(tableName, definitions),
+    onSuccess: async (definitions) => {
+      client.setQueryData(workflowQueryKeys.tablePropertyDefinitions(tableName), definitions);
+      await client.invalidateQueries({ queryKey: workflowQueryKeys.schemaPageRecords(tableName) });
+      await client.invalidateQueries({ queryKey: workflowQueryKeys.tablePropertyValuesForTable(tableName) });
+    },
+  });
+}
+export function useRelatedRecordOptionsQuery(
+  tableName: string,
+  propertyID: string | null,
+  search: string,
+  recordID: string | null,
+  enabled = true,
+) {
+  return useQuery({
+    queryKey: workflowQueryKeys.tablePropertyOptions(tableName, propertyID ?? "", recordID, search),
+    queryFn: ({ signal }) => api.getRelatedRecordOptions(tableName, propertyID!, search, recordID ?? undefined, signal),
+    enabled: Boolean(tableName && propertyID) && enabled,
+  });
+}
+export function useTablePropertyValuesQuery(tableName: string, recordID: string | null, enabled = true) {
+  return useQuery({
+    queryKey: workflowQueryKeys.tablePropertyValues(tableName, recordID),
+    queryFn: ({ signal }) => api.getTablePropertyValues(tableName, recordID!, signal),
+    enabled: Boolean(tableName && recordID) && enabled,
   });
 }
 export function useCreateSchemaPageRecordMutation(tableName: string) {

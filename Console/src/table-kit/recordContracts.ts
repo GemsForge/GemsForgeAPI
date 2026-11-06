@@ -83,6 +83,11 @@ export interface RecordPropertyEdit {
   inputType?: "text" | "date" | "number" | "select" | "longText";
   nullable?: boolean;
   options?: RecordSelectOption[];
+  renderEditor?: (props: {
+    value: string;
+    onChange: (value: string) => void;
+    onCommit: (value: string) => Promise<void>;
+  }) => ReactNode;
   onSave: (record: unknown, value: string | number | null) => Promise<void>;
 }
 

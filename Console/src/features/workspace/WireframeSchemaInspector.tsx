@@ -8,6 +8,7 @@ function editorKind(
 ): WireframeInspectorField["kind"] {
   if (inputType === "longText") return "textarea";
   if (kind === "select" || kind === "status") return kind;
+  if (kind === "relation") return "relation";
   if (kind === "date" || inputType === "date") return "date";
   if (kind === "number" || inputType === "number") return "number";
   if (kind === "url") return "url";
@@ -60,12 +61,12 @@ export function WireframeSchemaInspector<Record extends object>({
       const displayValue = property.getValue(record).display;
       const propertyValue = property.getValue(record);
       const linkedDisplayValue =
-        (property.kind === "url" || property.kind === "email") && propertyValue.href ? (
+        (property.kind === "url" || property.kind === "email" || property.kind === "relation") && propertyValue.href ? (
           <a
             className="primitive-value-link"
             href={propertyValue.href}
-            target="_blank"
-            rel="noreferrer"
+            target={property.kind === "url" ? "_blank" : undefined}
+            rel={property.kind === "url" ? "noreferrer" : undefined}
             onClick={(event) => event.stopPropagation()}
           >
             {typeof displayValue === "string" ? displayValue : propertyValue.href}
@@ -86,9 +87,10 @@ export function WireframeSchemaInspector<Record extends object>({
                 value.raw,
                 property.numberFormat ?? inferRecordNumberFormat(property.id, property.label),
               )
-            : (property.kind === "url" || property.kind === "email") && propertyValue.href
+            : (property.kind === "url" || property.kind === "email" || property.kind === "relation") &&
+                propertyValue.href
               ? typeof displayValue === "string"
-                ? displayValue
+                ? linkedDisplayValue
                 : propertyValue.href
               : value.display,
         display: linkedDisplayValue,
@@ -100,6 +102,7 @@ export function WireframeSchemaInspector<Record extends object>({
         nullable: edit?.nullable,
         options: edit?.options?.map((option) => ({ value: option.value, label: option.label })),
         onCommit: edit ? async (next: string) => edit.onSave(record, next) : undefined,
+        renderEditor: edit?.renderEditor,
       } satisfies WireframeInspectorField;
     });
 

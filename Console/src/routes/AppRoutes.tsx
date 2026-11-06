@@ -404,7 +404,7 @@ export function AppRoutes() {
           <Route path="forgekeeper-wireframe/:pageID/children" element={<WireframeForgeKeeperPage kind="children" />} />
           <Route path="local-database-wireframe" element={<WireframeLocalDatabaseCreationPage />} />
           <Route path="schema-builder-wireframe" element={<WireframeSchemaBuilderPage />} />
-          <Route path="schema-wireframe/:tableName" element={<WireframeSchemaPage />} />
+          <Route path="schema-wireframe/:tableName/*" element={<WireframeSchemaPage />} />
           <Route path="live-database-wireframe" element={<WireframeLiveDatabasePage />} />
           <Route path="education-wireframe/*" element={<EducationWireframe />} />
           <Route path="employment-wireframe/*" element={<EmploymentWireframe />} />

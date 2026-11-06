@@ -117,6 +117,62 @@ describe("resource create contracts", () => {
     expect(fetch.mock.calls[0]?.[1]?.body).toBe(JSON.stringify({ Title: "Vacation", Count: 2 }));
   });
 
+  it("loads exact related records, saves relation definitions, and requests searchable relation values", async () => {
+    const relation = {
+      id: "transaction-category",
+      tableName: "Transactions",
+      name: "Category",
+      kind: "Relation" as const,
+      sourceColumnName: "CategoryID",
+      targetTableName: "BudgetCategories",
+      targetKeyColumnName: "CategoryID",
+      targetDisplayColumnName: "Category",
+      relationDefinitionID: null,
+      targetColumnName: null,
+      filterByDefinitionID: null,
+      targetFilterColumnName: null,
+      sortOrder: 0,
+    };
+    const fetch = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            table: { name: "BudgetCategories", columns: [] },
+            row: { CategoryID: "1", Category: "Food" },
+          }),
+        ),
+      )
+      .mockResolvedValueOnce(new Response(JSON.stringify([relation])))
+      .mockResolvedValueOnce(new Response(JSON.stringify([{ id: "2", name: "Travel" }])))
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify([{ definitionID: relation.id, recordID: "1", displayValue: "Food", value: "Food" }]),
+        ),
+      );
+    vi.stubGlobal("fetch", fetch);
+
+    await expect(api.getSchemaPageRecord("BudgetCategories", "1")).resolves.toMatchObject({
+      row: { Category: "Food" },
+    });
+    await expect(api.saveTablePropertyDefinitions("Transactions", [relation])).resolves.toEqual([relation]);
+    await expect(api.getRelatedRecordOptions("Transactions", relation.id, "tra", "TRX-1")).resolves.toEqual([
+      { id: "2", name: "Travel" },
+    ]);
+    await expect(api.getTablePropertyValues("Transactions", "TRX-1")).resolves.toMatchObject([
+      { definitionID: relation.id, displayValue: "Food" },
+    ]);
+    expect(fetch.mock.calls.map(([path, options]) => [path, options?.method])).toEqual([
+      ["/schema-builder/tables/BudgetCategories/records/1", undefined],
+      ["/schema-builder/tables/Transactions/properties", "PUT"],
+      [
+        "/schema-builder/tables/Transactions/properties/transaction-category/options?search=tra&limit=50&recordID=TRX-1",
+        undefined,
+      ],
+      ["/schema-builder/tables/Transactions/records/TRX-1/properties", undefined],
+    ]);
+  });
+
   it("uses the Hub-scoped archive lifecycle routes", async () => {
     const archived = {
       entryID: "entry-1",

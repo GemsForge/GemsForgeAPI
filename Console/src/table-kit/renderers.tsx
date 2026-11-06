@@ -241,9 +241,15 @@ function PropertyValue({
       </GemStatusPill>
     );
   }
-  if ((property.kind === "url" || property.kind === "email") && value.href) {
+  if ((property.kind === "url" || property.kind === "email" || property.kind === "relation") && value.href) {
     return (
-      <a className="primitive-value-link" href={value.href}>
+      <a
+        className="primitive-value-link"
+        href={value.href}
+        target={property.kind === "url" ? "_blank" : undefined}
+        rel={property.kind === "url" ? "noreferrer" : undefined}
+        onClick={(event) => event.stopPropagation()}
+      >
         <GemCaption>{text}</GemCaption>
       </a>
     );

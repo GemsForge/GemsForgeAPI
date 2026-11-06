@@ -9,7 +9,7 @@ export type WireframeInspectorField = {
   id: string;
   label: string;
   value: string;
-  kind?: "text" | "select" | "status" | "number" | "date" | "url" | "email" | "textarea";
+  kind?: "text" | "select" | "status" | "number" | "date" | "url" | "email" | "relation" | "textarea";
   propertyKind?: RecordPropertyKind;
   propertyType?: string;
   iconName?: string;
@@ -18,6 +18,11 @@ export type WireframeInspectorField = {
   options?: readonly (string | { value: string; label: string })[];
   display?: ReactNode;
   displayValue?: ReactNode;
+  renderEditor?: (props: {
+    value: string;
+    onChange: (value: string) => void;
+    onCommit: (value: string) => Promise<void>;
+  }) => ReactNode;
   onCommit?: (value: string) => Promise<void>;
 };
 
@@ -52,6 +57,7 @@ export function WireframeRecordInspector({ fields }: { fields: readonly Wirefram
                 kind={field.kind}
                 options={field.options}
                 nullable={field.nullable}
+                renderEditor={field.renderEditor}
                 onCommit={field.onCommit}
               />
             ) : field.kind === "url" && field.value ? (

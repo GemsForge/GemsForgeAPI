@@ -1,4 +1,4 @@
-import type { Ref } from "react";
+import type { ReactNode, Ref } from "react";
 import { createPortal } from "react-dom";
 import { GSelectField, GemButton, GemTextField } from "@gemsforge/ui";
 import { SizableText, Theme } from "tamagui";
@@ -22,12 +22,14 @@ export function WireframePropertySettingsDialog({
   onChange,
   onClose,
   onSave,
+  children,
 }: {
   property: WireframePropertyDetails;
   dialogRef?: Ref<HTMLElement>;
   onChange: (property: WireframePropertyDetails) => void;
   onClose: () => void;
   onSave: () => void;
+  children?: ReactNode;
 }) {
   return createPortal(
     <Theme name="light">
@@ -117,6 +119,7 @@ export function WireframePropertySettingsDialog({
             onChange={(colorToken) => onChange({ ...property, colorToken })}
             wireframe
           />
+          {children}
           <div className="wireframe-property-details-actions">
             <GemButton type="button" variant="outlined" tone="secondary" onClick={onClose}>
               Cancel

@@ -97,6 +97,7 @@ export type WireframeCollectionConfig<T extends WireframeRecord> = {
   newRecordUtility?: TableActionsProps["newRecordUtility"];
   cover?: (record: T) => WireframeCoverValue | null | undefined;
   onCoverChange?: (record: T, cover: WireframeCoverValue | null) => Promise<void> | void;
+  propertySettingsExtension?: (property: WireframePropertyDetails) => ReactNode;
 };
 const cardColors = ["#e8b17d", "#a8d2cf", "#9dc9e0", "#e8b3b7"];
 
@@ -1120,7 +1121,9 @@ export function WireframeCollectionView<T extends WireframeRecord>({
             savePropertyIcon(propertyDetails.id, propertyDetails.icon);
             setPropertyDetails(null);
           }}
-        />
+        >
+          {config.propertySettingsExtension?.(propertyDetails)}
+        </WireframePropertySettingsDialog>
       ) : null}
     </section>
   );

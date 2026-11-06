@@ -349,9 +349,45 @@ export interface SchemaPageRecords {
   limit: number;
   offset: number;
 }
+export interface SchemaPageRecord {
+  table: SchemaPageTable;
+  row: Record<string, string | null>;
+}
 export interface SchemaPageRecordCreation {
   table: string;
   recordID: string;
+}
+
+export type TablePropertyKind = "Relation" | "Lookup";
+export interface TablePropertyDefinition {
+  id: string;
+  tableName: string;
+  name: string;
+  kind: TablePropertyKind;
+  sourceColumnName: string | null;
+  targetTableName: string | null;
+  targetKeyColumnName: string | null;
+  targetDisplayColumnName: string | null;
+  relationDefinitionID: string | null;
+  targetColumnName: string | null;
+  filterByDefinitionID: string | null;
+  targetFilterColumnName: string | null;
+  sortOrder: number;
+}
+export type TablePropertyDefinitionInput = Omit<TablePropertyDefinition, "id" | "tableName" | "sortOrder"> & {
+  id?: string;
+  tableName?: string;
+  sortOrder?: number;
+};
+export interface RelatedRecordOption {
+  id: string;
+  name: string;
+}
+export interface TablePropertyValue {
+  definitionID: string;
+  recordID: string | null;
+  displayValue: string | null;
+  value: string | null;
 }
 
 export type ImportableSQLColumn = LiveSchemaColumn;

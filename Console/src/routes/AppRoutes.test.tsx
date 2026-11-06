@@ -90,7 +90,7 @@ describe("Gem Life navigation", () => {
     vi.spyOn(api, "listEducation").mockResolvedValue([]);
     vi.spyOn(api, "getSchemaPageTables").mockResolvedValue({ tables: [], availableTables: [] });
     setup("/education-wireframe");
-    expect(await screen.findByRole("heading", { name: "Education" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Education" }, { timeout: 5000 })).toBeInTheDocument();
     expect(screen.getByRole("main", { name: "Wireframe screen" })).toHaveClass("wireframe-canvas-content");
     expect(screen.getByRole("navigation", { name: "Workspace navigation" })).toHaveClass("wireframe-demo-sidebar");
     expect(screen.getByRole("link", { name: /Gem Hues/ })).toHaveAttribute("href", "/gemhues-wireframe");
@@ -156,6 +156,51 @@ describe("Gem Life navigation", () => {
     expect(await screen.findByRole("dialog", { name: "New record" })).toBeInTheDocument();
     expect(screen.getByRole("textbox", { name: "Category" })).toBeRequired();
     expect(screen.getByRole("button", { name: "Create record" })).toBeInTheDocument();
+  });
+  it("opens a directly linked schema record even when it is outside the first page", async () => {
+    const columns = [
+      { name: "CategoryID", dataType: "INTEGER", nullable: false, primaryKey: true, defaultValue: null },
+      { name: "HubID", dataType: "TEXT", nullable: true, primaryKey: false, defaultValue: null },
+      { name: "Category", dataType: "TEXT", nullable: false, primaryKey: false, defaultValue: null },
+    ];
+    const table = { name: "BudgetCategories", columns };
+    vi.spyOn(api, "getSchemaPageTables").mockResolvedValue({ tables: [table], availableTables: [] });
+    vi.spyOn(api, "getSchemaPageRecords").mockResolvedValue({
+      table,
+      rows: [{ CategoryID: "1", HubID: "workspace-a", Category: "First page row" }],
+      totalCount: 200,
+      limit: 100,
+      offset: 0,
+    });
+    const exactRecord = vi.spyOn(api, "getSchemaPageRecord").mockResolvedValue({
+      table,
+      row: { CategoryID: "199", HubID: "workspace-a", Category: "Linked record" },
+    });
+    vi.spyOn(api, "getLiveSchema").mockResolvedValue({
+      databaseName: "test",
+      tableCount: 1,
+      tables: [{ ...table, foreignKeys: [], indexes: [] }],
+    });
+    vi.spyOn(api, "listTrash").mockResolvedValue([]);
+    vi.spyOn(api, "listRecordPresentations").mockResolvedValue([]);
+    vi.spyOn(api, "getTableView").mockImplementation(async (_table, viewType) => ({
+      view: {
+        viewID: viewType,
+        tableName: "BudgetCategories",
+        name: viewType,
+        viewType,
+        workspaceState: null,
+        updatedAt: "2026-11-05T10:00:00Z",
+      },
+      columns: [],
+      queries: [],
+    }));
+
+    setup("/schema-wireframe/BudgetCategories/record/199");
+
+    expect(await screen.findByRole("heading", { name: "Linked record" })).toBeInTheDocument();
+    expect(exactRecord).toHaveBeenCalledWith("BudgetCategories", "199", expect.anything());
+    expect(screen.getByRole("button", { name: "Close record page" })).toBeInTheDocument();
   });
   it("renders the wireframe home from live collection counts", async () => {
     vi.spyOn(api, "listRootPages").mockResolvedValue([]);

@@ -6,10 +6,15 @@ import { GemCaption, GemStatusPill } from "@gemsforge/ui";
 type EditableValueProps = {
   value: string;
   label?: string;
-  kind?: "text" | "select" | "status" | "number" | "date" | "url" | "email" | "textarea";
+  kind?: "text" | "select" | "status" | "number" | "date" | "url" | "email" | "relation" | "textarea";
   options?: readonly (string | { value: string; label: string })[];
   nullable?: boolean;
   displayValue?: ReactNode;
+  renderEditor?: (props: {
+    value: string;
+    onChange: (value: string) => void;
+    onCommit: (value: string) => Promise<void>;
+  }) => ReactNode;
   onCommit?: (value: string) => Promise<void>;
 };
 
@@ -21,6 +26,7 @@ export function WireframeEditableValue({
   nullable = false,
   onCommit,
   displayValue,
+  renderEditor,
 }: EditableValueProps) {
   const fieldRef = useRef<HTMLDivElement>(null);
   const [currentValue, setCurrentValue] = useState(value);
@@ -37,10 +43,13 @@ export function WireframeEditableValue({
       setSaveError(undefined);
       try {
         await onCommit(next);
+        return true;
       } catch (error) {
         setSaveError(error instanceof Error ? error.message : "Could not save this property.");
+        return false;
       }
     }
+    return true;
   };
 
   useEffect(() => {
@@ -69,7 +78,22 @@ export function WireframeEditableValue({
 
   return (
     <div ref={fieldRef} className="wireframe-editable-value">
-      {!editing && (kind === "url" || kind === "email") && currentValue ? (
+      {editing && renderEditor ? (
+        <>
+          {renderEditor({
+            value: currentValue,
+            onChange: setCurrentValue,
+            onCommit: async (next) => {
+              if (await commit(next)) setEditing(false);
+            },
+          })}
+          {saveError ? (
+            <p className="wireframe-value-save-error" role="alert">
+              {saveError}
+            </p>
+          ) : null}
+        </>
+      ) : !editing && (kind === "url" || kind === "email") && currentValue ? (
         <span className="wireframe-action-value">
           <a
             className="primitive-value-link"
@@ -80,6 +104,23 @@ export function WireframeEditableValue({
           >
             <GemCaption>{displayValue ?? currentValue}</GemCaption>
           </a>
+          <button
+            type="button"
+            className="wireframe-value-edit-trigger"
+            aria-label={`Edit ${label}`}
+            title={`Edit ${label}`}
+            onClick={(event) => {
+              event.stopPropagation();
+              setSaveError(undefined);
+              setEditing(true);
+            }}
+          >
+            <Pencil size={14} aria-hidden="true" />
+          </button>
+        </span>
+      ) : !editing && kind === "relation" ? (
+        <span className="wireframe-action-value">
+          {displayValue ?? <GemCaption>—</GemCaption>}
           <button
             type="button"
             className="wireframe-value-edit-trigger"
@@ -130,7 +171,9 @@ export function WireframeEditableValue({
             if (typeof next === "string") setCurrentValue(next);
             if (kind === "select" || kind === "status") setEditing(false);
           }}
-          onSave={commit}
+          onSave={async (next) => {
+            await commit(next);
+          }}
           onBlur={returnToReadOnlyOnBlur}
         />
       )}
