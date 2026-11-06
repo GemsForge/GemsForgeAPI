@@ -236,37 +236,73 @@ struct SchemaPageService: Sendable {
         for column in acceptedColumns {
             if let value = insertValues[column.name] {
                 try Self.validate(value, for: column)
-            } else if column.primaryKey && column.dataType.uppercased().contains("INT") {
-                continue // SQLite assigns integer primary keys.
             } else if !column.nullable && column.defaultValue == nil {
+                if column.primaryKey && generatedIntegerPrimaryKey { continue }
                 throw SchemaPageError.invalidRecord("\(column.name) is required.")
             }
         }
 
-        let suppliedColumns = acceptedColumns.filter { insertValues[$0.name] != nil }
-        var query = SQLQueryString("INSERT INTO \(ident: table.name) (")
-        for (index, column) in suppliedColumns.enumerated() {
-            if index > 0 { query.appendInterpolation(unsafeRaw: ", ") }
-            query.appendInterpolation(ident: column.name)
-        }
-        if !suppliedColumns.isEmpty { query.appendInterpolation(unsafeRaw: ", ") }
-        query.appendInterpolation(ident: "HubID")
-        query.appendInterpolation(unsafeRaw: ") VALUES (")
-        for (index, column) in suppliedColumns.enumerated() {
-            if index > 0 { query.appendInterpolation(unsafeRaw: ", ") }
-            try Self.bind(insertValues[column.name]!, to: &query)
-        }
-        if !suppliedColumns.isEmpty { query.appendInterpolation(unsafeRaw: ", ") }
-        query.appendInterpolation(bind: hubID)
-        query.appendInterpolation(unsafeRaw: ")")
-        let insertQuery = query
-        let generatedIDValue = insertValues[primaryKey.name]
-
+        let baseInsertValues = insertValues
         let recordID = try await database.transaction { transaction in
             guard let transactionSQL = transaction as? SQLDatabase else {
                 throw SchemaPageError.unavailableDatabase
             }
-            try await transactionSQL.raw(insertQuery).run()
+            var transactionValues = baseInsertValues
+
+            if generatedIntegerPrimaryKey {
+                let maximumRow = try await transactionSQL.raw(SQLQueryString(
+                    "SELECT MAX(\(ident: primaryKey.name)) AS maximumID FROM \(ident: table.name)"
+                )).first()
+                let maximumID: Int64?
+                if let maximumRow {
+                    maximumID = try maximumRow.decode(column: "maximumID", as: Int64?.self)
+                } else {
+                    maximumID = nil
+                }
+                let definitionRow = try await transactionSQL.raw(SQLQueryString(
+                    "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = \(bind: table.name)"
+                )).first()
+                let definition = try definitionRow?.decode(column: "sql", as: String?.self)?.lowercased() ?? ""
+                let lastAutoincrementID: Int64?
+                if definition.contains("autoincrement") {
+                    let sequenceRow = try await transactionSQL.raw(SQLQueryString(
+                        "SELECT seq FROM sqlite_sequence WHERE name = \(bind: table.name)"
+                    )).first()
+                    if let sequenceRow {
+                        lastAutoincrementID = try sequenceRow.decode(column: "seq", as: Int64.self)
+                    } else {
+                        lastAutoincrementID = nil
+                    }
+                } else {
+                    lastAutoincrementID = nil
+                }
+                let highestID = max(maximumID ?? 0, lastAutoincrementID ?? 0)
+                let (nextID, overflow) = highestID.addingReportingOverflow(1)
+                guard !overflow else {
+                    throw SchemaPageError.invalidRecord("A server-assigned integer ID is unavailable for this table.")
+                }
+                transactionValues[primaryKey.name] = .string(String(nextID))
+            }
+
+            let suppliedColumns = acceptedColumns.filter { transactionValues[$0.name] != nil }
+            var query = SQLQueryString("INSERT INTO \(ident: table.name) (")
+            for (index, column) in suppliedColumns.enumerated() {
+                if index > 0 { query.appendInterpolation(unsafeRaw: ", ") }
+                query.appendInterpolation(ident: column.name)
+            }
+            if !suppliedColumns.isEmpty { query.appendInterpolation(unsafeRaw: ", ") }
+            query.appendInterpolation(ident: "HubID")
+            query.appendInterpolation(unsafeRaw: ") VALUES (")
+            for (index, column) in suppliedColumns.enumerated() {
+                if index > 0 { query.appendInterpolation(unsafeRaw: ", ") }
+                try Self.bind(transactionValues[column.name]!, to: &query)
+            }
+            if !suppliedColumns.isEmpty { query.appendInterpolation(unsafeRaw: ", ") }
+            query.appendInterpolation(bind: hubID)
+            query.appendInterpolation(unsafeRaw: ")")
+            let generatedIDValue = transactionValues[primaryKey.name]
+
+            try await transactionSQL.raw(query).run()
             if let value = generatedIDValue {
                 return try Self.stringValue(value)
             }

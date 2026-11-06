@@ -72,12 +72,18 @@ struct TablePropertyService: Sendable {
 
                 if let filterID = definition.filterByDefinitionID {
                     guard let filterRelation = input.first(where: { $0.id == filterID && $0.kind == .relation }),
-                          filterRelation.targetKeyColumnName != nil,
+                          let filterTargetTableName = filterRelation.targetTableName,
+                          let filterTargetKeyColumnName = filterRelation.targetKeyColumnName,
                           let filterColumnName = definition.targetFilterColumnName,
                           let filterColumn = Self.columnsByName(target)[filterColumnName],
-                          let filterTarget = schema.tables.first(where: { $0.name == filterRelation.targetTableName }),
-                          let filterTargetKey = Self.columnsByName(filterTarget)[filterRelation.targetKeyColumnName ?? ""],
-                          Self.compatible(filterColumn.dataType, filterTargetKey.dataType)
+                          let filterTarget = schema.tables.first(where: { $0.name == filterTargetTableName }),
+                          let filterTargetKey = Self.columnsByName(filterTarget)[filterTargetKeyColumnName],
+                          Self.compatible(filterColumn.dataType, filterTargetKey.dataType),
+                          target.foreignKeys.contains(where: {
+                              $0.column == filterColumnName &&
+                                  $0.referencedTable == filterTargetTableName &&
+                                  $0.referencedColumn == filterTargetKeyColumnName
+                          })
                     else { throw TablePropertyServiceError.invalidDefinition("Relation filter references an invalid relation or target column.") }
                 } else if definition.targetFilterColumnName != nil {
                     throw TablePropertyServiceError.invalidDefinition("A target filter column requires filterByDefinitionID.")

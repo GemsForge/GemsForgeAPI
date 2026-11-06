@@ -145,6 +145,8 @@ final class SchemaPageServiceTests: XCTestCase {
             guard let sql = app.db as? SQLDatabase else { return XCTFail("Expected SQLite SQL database.") }
             try await sql.raw("INSERT INTO SchemaPageFixture (ID, HubID, Name, Quantity) VALUES ('fixture-a', 'hub-a', 'Saved goal', 1), ('fixture-b', 'hub-b', 'Other Hub goal', 2)").run()
             try await sql.raw("INSERT INTO IntegerSchemaPageFixture (ID, HubID, Name) VALUES (12, 'hub-a', 'Integer keyed record'), (13, 'hub-b', 'Other Hub record')").run()
+            try await sql.raw("CREATE TABLE NonRowidIntegerFixture (ID INT NOT NULL PRIMARY KEY, HubID TEXT NOT NULL, Name TEXT NOT NULL)").run()
+            try await sql.raw("INSERT INTO NonRowidIntegerFixture (ID, HubID, Name) VALUES (40, 'hub-a', 'Existing record')").run()
 
             try await app.test(.POST, "schema-builder/tables/SchemaPageFixture/page", beforeRequest: {
                 $0.headers.bearerAuthorization = .init(token: tokenA)
@@ -157,7 +159,7 @@ final class SchemaPageServiceTests: XCTestCase {
             }) { response async throws in
                 let pages = try response.content.decode(SchemaPageTablesResponse.self)
                 XCTAssertEqual(pages.tables.map(\.name), ["Education", "SchemaPageFixture"])
-                XCTAssertEqual(pages.availableTables.map(\.name), ["IntegerSchemaPageFixture"])
+                XCTAssertEqual(pages.availableTables.map(\.name), ["IntegerSchemaPageFixture", "NonRowidIntegerFixture"])
             }
             try await app.test(.GET, "schema-builder/tables/IntegerSchemaPageFixture/records/12", beforeRequest: {
                 $0.headers.bearerAuthorization = .init(token: tokenA)
@@ -246,6 +248,20 @@ final class SchemaPageServiceTests: XCTestCase {
                       )).first()
                 else { return XCTFail("The response ID must identify the row created for this Hub.") }
                 XCTAssertEqual(try row.decode(column: "Name", as: String.self), "Generated integer key")
+            }
+
+            try await app.test(.POST, "schema-builder/tables/NonRowidIntegerFixture/records", beforeRequest: { request in
+                request.headers.bearerAuthorization = .init(token: tokenA)
+                request.headers.contentType = .json
+                request.body = ByteBuffer(string: #"{"Name":"Generated non-rowid key"}"#)
+            }) { response async throws in
+                XCTAssertEqual(response.status, .ok)
+                let created = try response.content.decode(SchemaPageRecordCreationResponse.self)
+                XCTAssertEqual(created.recordID, "41")
+                guard let sql = app.db as? SQLDatabase,
+                      let row = try await sql.raw("SELECT Name FROM NonRowidIntegerFixture WHERE ID = 41 AND HubID = 'hub-a'").first()
+                else { return XCTFail("The server-assigned integer ID must identify the inserted row.") }
+                XCTAssertEqual(try row.decode(column: "Name", as: String.self), "Generated non-rowid key")
             }
 
             try await app.test(.POST, "schema-builder/tables/SchemaPageFixture/records", beforeRequest: { request in
