@@ -120,12 +120,22 @@ export function WireframePropertySettingsDialog({
             wireframe
           />
           {children}
+          {children ? (
+            <p className="wireframe-property-details-save-note">
+              Save relation and lookup changes with the button in that section. This button saves the property icon
+              only.
+            </p>
+          ) : null}
           <div className="wireframe-property-details-actions">
             <GemButton type="button" variant="outlined" tone="secondary" onClick={onClose}>
               Cancel
             </GemButton>
-            <GemButton type="button" aria-label="Save property settings" onClick={onSave}>
-              Save
+            <GemButton
+              type="button"
+              aria-label={children ? "Save property icon" : "Save property settings"}
+              onClick={onSave}
+            >
+              {children ? "Save icon" : "Save"}
             </GemButton>
           </div>
         </section>

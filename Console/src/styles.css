@@ -2908,6 +2908,10 @@ dialog::backdrop {
   margin: 0;
   overflow-wrap: anywhere;
 }
+.wireframe-property-details .wireframe-property-details-save-note {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
 .wireframe-property-menu {
   display: grid;
   gap: 0.35rem;
