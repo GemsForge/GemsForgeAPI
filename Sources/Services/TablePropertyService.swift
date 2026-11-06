@@ -59,6 +59,7 @@ struct TablePropertyService: Sendable {
                       definition.relationDefinitionID == nil,
                       let sourceColumn = Self.columnsByName(sourceTable)[sourceColumnName],
                       let target = schema.tables.first(where: { $0.name == targetTableName }),
+                      SchemaPageService.isSchemaPageTable(target),
                       let targetKey = Self.columnsByName(target)[targetKeyColumnName], targetKey.primaryKey,
                       let targetDisplay = Self.columnsByName(target)[targetDisplayColumnName],
                       let targetHub = Self.columnsByName(target)["HubID"], !targetHub.primaryKey,
@@ -93,6 +94,7 @@ struct TablePropertyService: Sendable {
                       let relationID = definition.relationDefinitionID,
                       let relation = input.first(where: { $0.id == relationID && $0.kind == .relation }),
                       let target = schema.tables.first(where: { $0.name == relation.targetTableName }),
+                      SchemaPageService.isSchemaPageTable(target),
                       let targetColumnName = definition.targetColumnName,
                       let targetColumn = Self.columnsByName(target)[targetColumnName],
                       !targetColumn.dataType.uppercased().contains("BLOB"),
@@ -131,6 +133,7 @@ struct TablePropertyService: Sendable {
         else { throw TablePropertyServiceError.invalidDefinition("The relation property is unavailable.") }
         let schema = try await LiveSchemaService(database: database).inspect()
         guard let target = schema.tables.first(where: { $0.name == targetName }),
+              SchemaPageService.isSchemaPageTable(target),
               Self.columnsByName(target)[keyName] != nil,
               Self.columnsByName(target)[displayName] != nil
         else { throw TablePropertyServiceError.tableUnavailable }
@@ -285,6 +288,7 @@ struct TablePropertyService: Sendable {
         guard let sql = database as? SQLDatabase else { throw TablePropertyServiceError.unavailableDatabase }
         let schema = try await LiveSchemaService(database: database).inspect()
         guard let table = schema.tables.first(where: { $0.name == tableName }),
+              SchemaPageService.isSchemaPageTable(table),
               let key = Self.columnsByName(table)[keyColumn],
               Self.columnsByName(table)[valueColumn] != nil,
               Self.columnsByName(table)["HubID"] != nil

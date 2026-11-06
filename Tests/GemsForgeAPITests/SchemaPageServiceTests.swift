@@ -250,18 +250,31 @@ final class SchemaPageServiceTests: XCTestCase {
                 XCTAssertEqual(try row.decode(column: "Name", as: String.self), "Generated integer key")
             }
 
+            let service = SchemaPageService(database: app.db, hubID: "hub-a")
+            let concurrentIDs = try await withThrowingTaskGroup(of: String.self) { group in
+                for index in 0..<8 {
+                    group.addTask {
+                        let created = try await service.createRecord(
+                            tableName: "IntegerSchemaPageFixture",
+                            values: ["Name": .string("Concurrent record \(index)")]
+                        )
+                        return created.recordID
+                    }
+                }
+                var identifiers: [String] = []
+                for try await identifier in group { identifiers.append(identifier) }
+                return identifiers
+            }
+            XCTAssertEqual(concurrentIDs.count, 8)
+            XCTAssertEqual(Set(concurrentIDs).count, 8, "SQLite must assign distinct IDs to concurrent inserts.")
+
             try await app.test(.POST, "schema-builder/tables/NonRowidIntegerFixture/records", beforeRequest: { request in
                 request.headers.bearerAuthorization = .init(token: tokenA)
                 request.headers.contentType = .json
                 request.body = ByteBuffer(string: #"{"Name":"Generated non-rowid key"}"#)
-            }) { response async throws in
-                XCTAssertEqual(response.status, .ok)
-                let created = try response.content.decode(SchemaPageRecordCreationResponse.self)
-                XCTAssertEqual(created.recordID, "41")
-                guard let sql = app.db as? SQLDatabase,
-                      let row = try await sql.raw("SELECT Name FROM NonRowidIntegerFixture WHERE ID = 41 AND HubID = 'hub-a'").first()
-                else { return XCTFail("The server-assigned integer ID must identify the inserted row.") }
-                XCTAssertEqual(try row.decode(column: "Name", as: String.self), "Generated non-rowid key")
+            }) { response in
+                XCTAssertEqual(response.status, .unprocessableEntity)
+                XCTAssertTrue(response.body.string.contains("INTEGER PRIMARY KEY"))
             }
 
             try await app.test(.POST, "schema-builder/tables/SchemaPageFixture/records", beforeRequest: { request in
