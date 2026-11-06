@@ -271,39 +271,40 @@ export function GDateField({
             <YStack className="gem-date-settings" gap="$1">
               <XStack justifyContent="space-between" alignItems="center">
                 <SizableText>Date format</SizableText>
-                <Popover open={formatMenuOpen} onOpenChange={setFormatMenuOpen} placement="left-start">
-                  <Popover.Trigger asChild>
-                    <Button size="sm" variant="quiet">
-                      {formatLabels[selectedFormat]} ›
-                    </Button>
-                  </Popover.Trigger>
-                  <Popover.Content
-                    className="gem-date-format-popover"
-                    data-wireframe-date={wireframe ? "true" : undefined}
-                    padding="$2"
-                    borderWidth={1}
-                  >
-                    <YStack>
-                      {(["local", "iso", "relative"] as GemDateFormat[]).map((option) => (
-                        <Button
-                          key={option}
-                          size="sm"
-                          justifyContent="space-between"
-                          backgroundColor={selectedFormat === option ? "$gemPanelLight" : "transparent"}
-                          onPress={() => {
-                            setSelectedFormat(option);
-                            onDateConfigChange?.({ displayFormat: option, includeTime: selectedIncludeTime });
-                            setFormatMenuOpen(false);
-                          }}
-                        >
-                          {formatLabels[option]}
-                          {selectedFormat === option ? " ✓" : ""}
-                        </Button>
-                      ))}
-                    </YStack>
-                  </Popover.Content>
-                </Popover>
+                <Button
+                  size="sm"
+                  variant="quiet"
+                  aria-expanded={formatMenuOpen}
+                  onPress={() => setFormatMenuOpen((isOpen) => !isOpen)}
+                >
+                  {formatLabels[selectedFormat]} {formatMenuOpen ? "⌄" : "›"}
+                </Button>
               </XStack>
+              {formatMenuOpen ? (
+                <YStack
+                  className="gem-date-format-options"
+                  data-wireframe-date={wireframe ? "true" : undefined}
+                  gap="$1"
+                >
+                  {(["local", "iso", "relative"] as GemDateFormat[]).map((option) => (
+                    <Button
+                      key={option}
+                      size="sm"
+                      justifyContent="space-between"
+                      aria-pressed={selectedFormat === option}
+                      backgroundColor={selectedFormat === option ? "$gemPanelLight" : "transparent"}
+                      onPress={() => {
+                        setSelectedFormat(option);
+                        onDateConfigChange?.({ displayFormat: option, includeTime: selectedIncludeTime });
+                        setFormatMenuOpen(false);
+                      }}
+                    >
+                      {formatLabels[option]}
+                      {selectedFormat === option ? " ✓" : ""}
+                    </Button>
+                  ))}
+                </YStack>
+              ) : null}
               <XStack justifyContent="space-between" alignItems="center">
                 <SizableText>Include time</SizableText>
                 <GSwitch

@@ -45,4 +45,21 @@ describe("GDateField", () => {
     expect(screen.getByText("May 1990")).toBeInTheDocument();
     expect(dateInput).toHaveValue("5/21/1990");
   });
+
+  it("keeps the calendar open while choosing a date display format", () => {
+    const onDateConfigChange = vi.fn();
+    render(
+      <TamaguiProvider config={tamaguiConfig} defaultTheme="dark">
+        <GDateField label="Start date" value="2026-01-15" onDateConfigChange={onDateConfigChange} />
+      </TamaguiProvider>,
+    );
+
+    fireEvent.click(screen.getByLabelText("Start date"));
+    fireEvent.click(screen.getByRole("button", { name: /Year\/Month\/Day/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Full date/ }));
+
+    expect(onDateConfigChange).toHaveBeenCalledWith({ displayFormat: "local", includeTime: false });
+    expect(document.querySelector(".gem-date-popover")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Full date/ })).toBeInTheDocument();
+  });
 });

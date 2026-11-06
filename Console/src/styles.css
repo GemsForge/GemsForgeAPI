@@ -297,6 +297,35 @@ select {
 .gem-date-format-popover button:focus-visible {
   background: var(--panel-light);
 }
+.gem-date-format-options {
+  padding: 0.35rem;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  background: var(--panel-light);
+  color: var(--ink);
+}
+.gem-date-format-options button {
+  width: 100%;
+  justify-content: space-between;
+  color: var(--ink);
+  background: transparent;
+}
+.gem-date-format-options button:hover,
+.gem-date-format-options button:focus-visible {
+  background: var(--panel);
+}
+.gem-date-format-options[data-wireframe-date="true"] {
+  border-color: var(--gem-wireframe-border-strong);
+  background: var(--gem-wireframe-surface-raised);
+  color: var(--gem-wireframe-text);
+}
+.gem-date-format-options[data-wireframe-date="true"] button {
+  color: var(--gem-wireframe-text);
+}
+.gem-date-format-options[data-wireframe-date="true"] button:hover,
+.gem-date-format-options[data-wireframe-date="true"] button:focus-visible {
+  background: var(--gem-wireframe-surface);
+}
 button {
   cursor: pointer;
 }
