@@ -66,7 +66,6 @@ final class TablePropertyServiceTests: XCTestCase {
             guard let sql = app.db as? SQLDatabase else { return XCTFail("Expected SQLite SQL database.") }
             try await sql.raw("INSERT INTO AppleAccounts (AccountID, AppleSubject) VALUES ('account-a', 'subject-a'), ('account-b', 'subject-b')").run()
             try await sql.raw("INSERT INTO Hubs (HubID, AccountID, Name) VALUES ('hub-a', 'account-a', 'A'), ('hub-b', 'account-b', 'B')").run()
-            try await TableView(hubID: "hub-a", tableName: "Transactions", name: "Transactions", viewType: .table, isDefault: true).save(on: app.db)
             try await TableView(hubID: "hub-a", tableName: "BudgetCategories", name: "Budget Categories", viewType: .table, isDefault: true).save(on: app.db)
             try await TableView(hubID: "hub-a", tableName: "BudgetSubcategories", name: "Budget Subcategories", viewType: .table, isDefault: true).save(on: app.db)
             try await sql.raw("""
@@ -118,12 +117,9 @@ final class TablePropertyServiceTests: XCTestCase {
             XCTAssertEqual(crossHubRelation.recordID, "99")
             XCTAssertNil(crossHubRelation.displayValue)
 
-            do {
-                _ = try await TablePropertyService(database: app.db, hubID: "hub-b").definitions(tableName: "Transactions")
-                XCTFail("A Hub without the source table page must not read another Hub's definitions.")
-            } catch let error as TablePropertyServiceError {
-                XCTAssertEqual(error, .tableUnavailable)
-            }
+            let otherHubDefinitions = try await TablePropertyService(database: app.db, hubID: "hub-b")
+                .definitions(tableName: "Transactions")
+            XCTAssertTrue(otherHubDefinitions.isEmpty, "Dedicated collection properties remain isolated by Hub.")
         }
     }
 
@@ -140,7 +136,6 @@ final class TablePropertyServiceTests: XCTestCase {
             guard let sql = app.db as? SQLDatabase else { return XCTFail("Expected SQLite SQL database.") }
             try await sql.raw("INSERT INTO AppleAccounts (AccountID, AppleSubject) VALUES ('account-a', 'subject-a')").run()
             try await sql.raw("INSERT INTO Hubs (HubID, AccountID, Name) VALUES ('hub-a', 'account-a', 'A')").run()
-            try await TableView(hubID: "hub-a", tableName: "Transactions", name: "Transactions", viewType: .table, isDefault: true).save(on: app.db)
             try await TableView(hubID: "hub-a", tableName: "BudgetCategories", name: "Budget Categories", viewType: .table, isDefault: true).save(on: app.db)
             try await TableView(hubID: "hub-a", tableName: "BudgetSubcategories", name: "Budget Subcategories", viewType: .table, isDefault: true).save(on: app.db)
         }) { app in
