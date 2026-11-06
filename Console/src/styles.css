@@ -2994,16 +2994,10 @@ dialog::backdrop {
   text-decoration: underline;
   text-underline-offset: 0.15em;
 }
-.wireframe-structural-value-trigger:focus-visible,
-.wireframe-structural-value-link:focus-visible {
+.wireframe-structural-value-trigger:focus-visible {
   border-radius: 0.2rem;
   outline: 2px solid var(--gem-focus);
   outline-offset: 2px;
-}
-.wireframe-structural-value-link {
-  margin-left: 0.4rem;
-  color: var(--gem-wireframe-action);
-  font-size: 0.75rem;
 }
 .wireframe-value-save-error {
   margin: 0.25rem 0 0;

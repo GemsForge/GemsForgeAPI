@@ -169,10 +169,10 @@ describe("TransactionsInspector relations and lookups", () => {
         }),
       ]),
     );
-    const categorySearch = await screen.findByRole("button", { name: "Search related Category" });
-    fireEvent.click(categorySearch);
+    const categoryEdit = await screen.findByRole("button", { name: "Edit Category" });
+    fireEvent.click(categoryEdit);
     expect(await screen.findByRole("searchbox", { name: "Search Category records" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Search related Subcategory" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Edit Subcategory" })).toBeInTheDocument();
   });
 
   it("links related records, shows computed lookups, and searches options before saving their IDs", async () => {
@@ -189,15 +189,11 @@ describe("TransactionsInspector relations and lookups", () => {
 
     setup();
 
-    const categoryValue = await screen.findByRole("button", { name: "Search related Category" });
-    expect(categoryValue).toHaveTextContent("Food");
-    expect(screen.getByRole("link", { name: "Open related Category record" })).toHaveAttribute(
-      "href",
-      "/schema-wireframe/BudgetCategories/record/1",
-    );
+    const categoryLink = await screen.findByRole("link", { name: "Food" });
+    expect(categoryLink).toHaveAttribute("href", "/schema-wireframe/BudgetCategories/record/1");
     expect(await screen.findByText("Variable")).toBeInTheDocument();
 
-    fireEvent.click(categoryValue);
+    fireEvent.click(screen.getByRole("button", { name: "Edit Category" }));
     expect(await screen.findByRole("searchbox", { name: "Search Category records" })).toBeInTheDocument();
     await screen.findByRole("option", { name: "Travel" });
     expect(optionSpy).toHaveBeenCalledWith("Transactions", "transaction-category", "", "TRX-1", expect.anything());
@@ -207,12 +203,12 @@ describe("TransactionsInspector relations and lookups", () => {
       expect(patchSpy).toHaveBeenCalledWith("TRX-1", { categoryID: 3, subcategoryID: null });
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "Search related Subcategory" }));
+    fireEvent.click(screen.getByRole("button", { name: "Edit Subcategory" }));
     await screen.findByRole("option", { name: "Travel" });
     expect(optionSpy).toHaveBeenCalledWith("Transactions", "transaction-subcategory", "", "TRX-1", expect.anything());
 
     patchSpy.mockRejectedValueOnce(new Error("Transaction save failed"));
-    fireEvent.click(screen.getByRole("button", { name: "Search related Category" }));
+    fireEvent.click(screen.getByRole("button", { name: "Edit Category" }));
     fireEvent.click(await screen.findAllByRole("option", { name: "Travel" }).then((options) => options[0]));
     expect(await screen.findByRole("alert")).toHaveTextContent("Transaction save failed");
     expect(screen.getByRole("searchbox", { name: "Search Category records" })).toBeInTheDocument();

@@ -120,12 +120,48 @@ export function WireframeEditableValue({
             <Pencil size={14} aria-hidden="true" />
           </button>
         </span>
-      ) : !editing && (kind === "relation" || kind === "lookup") ? (
+      ) : !editing && kind === "relation" ? (
+        <span className="wireframe-action-value">
+          {relatedHref ? (
+            <a className="primitive-value-link" href={relatedHref} onClick={(event) => event.stopPropagation()}>
+              {displayValue ?? (currentValue || <GemCaption>—</GemCaption>)}
+            </a>
+          ) : (
+            <button
+              type="button"
+              className="wireframe-structural-value-trigger"
+              aria-label={`Search related ${label}`}
+              onClick={(event) => {
+                event.stopPropagation();
+                setSaveError(undefined);
+                setEditing(true);
+              }}
+            >
+              {displayValue ?? (currentValue || <GemCaption>—</GemCaption>)}
+            </button>
+          )}
+          {currentValue ? (
+            <button
+              type="button"
+              className="wireframe-value-edit-trigger"
+              aria-label={`Edit ${label}`}
+              title={`Edit ${label}`}
+              onClick={(event) => {
+                event.stopPropagation();
+                setSaveError(undefined);
+                setEditing(true);
+              }}
+            >
+              <Pencil size={14} aria-hidden="true" />
+            </button>
+          ) : null}
+        </span>
+      ) : !editing && kind === "lookup" ? (
         <span className="wireframe-action-value">
           <button
             type="button"
             className="wireframe-structural-value-trigger"
-            aria-label={`${kind === "relation" ? "Search related" : "Search lookup source for"} ${label}`}
+            aria-label={`Search lookup source for ${label}`}
             onClick={(event) => {
               event.stopPropagation();
               setSaveError(undefined);
@@ -134,15 +170,6 @@ export function WireframeEditableValue({
           >
             {displayValue ?? <GemCaption>—</GemCaption>}
           </button>
-          {relatedHref ? (
-            <a
-              className="wireframe-structural-value-link"
-              href={relatedHref}
-              aria-label={`Open related ${label} record`}
-            >
-              Open
-            </a>
-          ) : null}
         </span>
       ) : (
         <GemPrimitiveField
