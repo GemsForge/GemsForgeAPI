@@ -23,6 +23,7 @@ function schemaRecords(data: SchemaPageRecords | undefined): SchemaRecord[] {
 
 export function WireframeSchemaPage() {
   const { tableName = "" } = useParams();
+  const isLegacyServiceLogoAssets = tableName === "ServiceLogoAssets";
   const pages = useSchemaPageTablesQuery();
   const result = useSchemaPageRecordsQuery(tableName);
   const table = result.data?.table ?? pages.data?.tables.find((candidate) => candidate.name === tableName);
@@ -42,26 +43,39 @@ export function WireframeSchemaPage() {
   const dateProperty = properties.find((property) => property.kind === "date");
 
   return (
-    <WireframeCollectionView
-      config={{
-        tableName,
-        title: tableName,
-        description: "Records from this collection in your live database.",
-        activeCollection: tableName,
-        records,
-        properties,
-        newRecordUtility: {
-          options: createSchemaRecordOptions(table),
-        },
-        searchValues: (record) => Object.values(record).filter((value): value is string => typeof value === "string"),
-        cardTitle: (record) => recordText(record, titleProperty?.id) || record.id,
-        cardSubtitle: (record) => recordText(record, subtitleProperty?.id) || tableName,
-        cardStatus: (record) => recordText(record, statusProperty?.id),
-        cardMeta: (record) => recordText(record, dateProperty?.id) || record.id,
-        inspector: (record, schemaProperties) => (
-          <WireframeSchemaInspector record={record} properties={schemaProperties ?? properties} />
-        ),
-      }}
-    />
+    <>
+      {isLegacyServiceLogoAssets ? (
+        <p className="muted" role="note">
+          <strong>Obsolete legacy table.</strong> Service logos now use <code>Services.LogoFileMetadataID</code>.
+          This table is retained only to backfill existing logo references. Do not add new logo assets here; remove
+          this table in a later migration after the backfill is verified in each database.
+        </p>
+      ) : null}
+      <WireframeCollectionView
+        config={{
+          tableName,
+          title: tableName,
+          description: "Records from this collection in your live database.",
+          activeCollection: tableName,
+          records,
+          properties,
+          ...(isLegacyServiceLogoAssets
+            ? {}
+            : {
+                newRecordUtility: {
+                  options: createSchemaRecordOptions(table),
+                },
+              }),
+          searchValues: (record) => Object.values(record).filter((value): value is string => typeof value === "string"),
+          cardTitle: (record) => recordText(record, titleProperty?.id) || record.id,
+          cardSubtitle: (record) => recordText(record, subtitleProperty?.id) || tableName,
+          cardStatus: (record) => recordText(record, statusProperty?.id),
+          cardMeta: (record) => recordText(record, dateProperty?.id) || record.id,
+          inspector: (record, schemaProperties) => (
+            <WireframeSchemaInspector record={record} properties={schemaProperties ?? properties} />
+          ),
+        }}
+      />
+    </>
   );
 }
