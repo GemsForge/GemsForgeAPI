@@ -217,8 +217,22 @@ struct TablePropertyService: Sendable {
     }
 
     private func requireRegisteredTable(_ tableName: String) async throws {
-        guard try await TableView.query(on: database).filter(\.$hubID == hubID)
-            .filter(\.$tableName == tableName).first() != nil else { throw TablePropertyServiceError.tableUnavailable }
+        if try await TableView.query(on: database).filter(\.$hubID == hubID)
+            .filter(\.$tableName == tableName).first() != nil {
+            return
+        }
+
+        // Transactions is a purpose-built Hub-owned collection, not a schema page.
+        // It still needs relation/lookup properties, so validate its live Hub key
+        // instead of requiring a TableView registration that the schema-page flow
+        // intentionally does not create for dedicated collections.
+        guard HubOwnedCustomTablePolicy.tablesWithDedicatedCollections.contains(tableName) else {
+            throw TablePropertyServiceError.tableUnavailable
+        }
+        let schema = try await LiveSchemaService(database: database).inspect()
+        guard let table = schema.tables.first(where: { $0.name == tableName }),
+              table.columns.contains(where: { $0.name == "HubID" })
+        else { throw TablePropertyServiceError.tableUnavailable }
     }
 
     private func sourceRow(tableName: String, recordID: String) async throws -> [String: String] {
