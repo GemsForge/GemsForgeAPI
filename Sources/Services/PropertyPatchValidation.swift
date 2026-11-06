@@ -9,7 +9,7 @@ enum RecordTimestamp {
 
 /// A small heterogeneous JSON scalar used by PATCH handlers to distinguish an
 /// omitted field from an explicitly-cleared nullable field.
-enum PatchJSONValue: Decodable {
+enum PatchJSONValue: Decodable, Sendable {
     case null
     case string(String)
     case number(Double)

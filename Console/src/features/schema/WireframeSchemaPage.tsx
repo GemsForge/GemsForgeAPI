@@ -106,7 +106,9 @@ export function WireframeSchemaPage() {
         inspector: (record, schemaProperties) => (
           <WireframeSchemaInspector
             record={record}
-            properties={schemaProperties ?? properties}
+            // `properties` carries the schema-aware PATCH handlers. The generated
+            // workspace metadata is display-only and would make every field read-only.
+            properties={properties}
             attachmentOwnerType={tableName}
             onAttachmentChange={(record, columnName, fileMetadataID) =>
               patchAttachment.mutateAsync({ recordID: record.id, columnName, fileMetadataID })

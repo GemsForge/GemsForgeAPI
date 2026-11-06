@@ -51,15 +51,6 @@ private struct DynamicCodingKey: CodingKey, Hashable {
     init?(intValue: Int) { return nil }
 }
 
-struct ServiceAccountPatchRequest: Content {
-    let service: String?
-    let monthlyAmount: Double?
-    let status: String?
-    let notes: String?
-    let emailUpdated: Bool?
-    let logoFileMetadataID: String?
-}
-
 private func validate(_ input: ServiceAccountRequest) throws {
     guard !input.service.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
         throw Abort(.badRequest, reason: "Service name is required.")
@@ -160,25 +151,72 @@ func registerServiceAccountRoutes(_ app: Application) {
         }
         try PropertyPatchValidation.requireKnownJSONProperties(
             request,
-            allowed: ["service", "monthlyAmount", "status", "notes", "emailUpdated", "logoFileMetadataID"],
+            allowed: [
+                "service", "type", "expenseGroup", "monthlyAmount", "interestRate", "apr", "due",
+                "occurrence", "status", "since", "website", "notes", "notionPage", "paymentMethod",
+                "accountNumber", "emailUpdated", "associatedAddress", "serviceKey", "logoFileMetadataID"
+            ],
             requireNonEmpty: true,
             emptyReason: "At least one editable field is required."
         )
-        let input = try request.content.decode(ServiceAccountPatchRequest.self)
-        let service = input.service ?? account.service
+        let input = try request.content.decode([String: PatchJSONValue].self)
+        @Sendable func string(_ key: String, _ current: String?) throws -> String? {
+            guard let value = input[key] else { return current }
+            return try value.string()
+        }
+        @Sendable func number(_ key: String, _ current: Double?) throws -> Double? {
+            guard let value = input[key] else { return current }
+            return try value.number()
+        }
+        @Sendable func boolean(_ key: String, _ current: Bool?) throws -> Bool? {
+            guard let value = input[key] else { return current }
+            return try value.bool()
+        }
+        let service = try string("service", account.service) ?? ""
         guard !service.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { throw Abort(.unprocessableEntity, reason: "Service name cannot be empty.") }
-        let monthlyAmount = input.monthlyAmount ?? account.monthlyAmount
-        if let monthlyAmount, monthlyAmount < 0 { throw Abort(.unprocessableEntity, reason: "Monthly amount cannot be negative.") }
-        let logoFileMetadataID = input.logoFileMetadataID ?? account.logoFileMetadataID
-        try await AttachmentReferenceService(database: request.db, hubID: request.authenticatedHubID).replace(oldMetadataID: account.logoFileMetadataID, newMetadataID: logoFileMetadataID, ownerType: "ServiceAccount", ownerID: String(id))
+        let serviceKey = try string("serviceKey", account.serviceKey)
+        if let serviceKey = serviceKey?.trimmingCharacters(in: .whitespacesAndNewlines), !serviceKey.isEmpty {
+            let normalizedKey = serviceKey.lowercased()
+            if try await ServiceAccountService(database: request.db, hubID: request.authenticatedHubID).list().contains(where: {
+                $0.id != id && $0.serviceKey?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == normalizedKey
+            }) {
+                throw Abort(.conflict, reason: "A Service Account with this serviceKey already exists.")
+            }
+        }
+        let monthlyAmount = try number("monthlyAmount", account.monthlyAmount)
+        let interestRate = try number("interestRate", account.interestRate)
+        let apr = try number("apr", account.apr)
+        guard [monthlyAmount, interestRate, apr].compactMap({ $0 }).allSatisfy({ $0 >= 0 }) else {
+            throw Abort(.unprocessableEntity, reason: "Service amounts and rates cannot be negative.")
+        }
+        let oldLogoFileMetadataID = account.logoFileMetadataID
+        let logoFileMetadataID = try string("logoFileMetadataID", oldLogoFileMetadataID)
         account.service = service
+        account.type = try string("type", account.type)
+        account.expenseGroup = try string("expenseGroup", account.expenseGroup)
         account.monthlyAmount = monthlyAmount
-        account.status = input.status ?? account.status
-        account.notes = input.notes ?? account.notes
-        account.emailUpdated = input.emailUpdated ?? account.emailUpdated
+        account.interestRate = interestRate
+        account.apr = apr
+        account.due = try string("due", account.due)
+        account.occurrence = try string("occurrence", account.occurrence)
+        account.status = try string("status", account.status)
+        account.since = try string("since", account.since)
+        account.website = try string("website", account.website)
+        account.notes = try string("notes", account.notes)
+        account.notionPage = try string("notionPage", account.notionPage)
+        account.paymentMethod = try string("paymentMethod", account.paymentMethod)
+        account.accountNumber = try string("accountNumber", account.accountNumber)
+        account.emailUpdated = try boolean("emailUpdated", account.emailUpdated)
+        account.associatedAddress = try string("associatedAddress", account.associatedAddress)
+        account.serviceKey = serviceKey
         account.logoFileMetadataID = logoFileMetadataID
         account.updatedAt = RecordTimestamp.now()
-        try await ServiceAccountService(database: request.db, hubID: request.authenticatedHubID).save(account)
+        let hubID = request.authenticatedHubID
+        try await request.db.transaction { database in
+            try await AttachmentReferenceService(database: database, hubID: hubID)
+                .replace(oldMetadataID: oldLogoFileMetadataID, newMetadataID: logoFileMetadataID, ownerType: "ServiceAccount", ownerID: String(id))
+            try await ServiceAccountService(database: database, hubID: hubID).save(account)
+        }
         return account
     }
 
