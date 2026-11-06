@@ -1,57 +1,26 @@
 # Service Logos
 
-Service Logos are image assets associated with records in the existing
-`Services` table. The current Gem Life database stores them in the separate
-`ServiceLogoAssets` table using legacy image BLOBs and a stable `LogoKey`.
+Service logo images are stored in `FileMetadata`. The Console renders the logo
+referenced directly by `Services.LogoFileMetadataID` and retrieves its bytes
+through the authenticated file-content endpoint.
 
-## Current database mapping
+## Retained legacy table
 
-| Swift property | Database column | Purpose |
-| --- | --- | --- |
-| `id` | `LogoAssetID` | Stable numeric logo asset identifier. |
-| `logo` | `Logo` | Existing legacy image bytes. |
-| `mimeType` | `MimeType` | Stored image content type. |
-| `fileName` | `FileName` | Optional original/display filename. |
-| `fileSizeBytes` | `FileSizeBytes` | Optional stored size; API falls back to the BLOB size. |
-| `createdAt` | `DateCreated` | Existing creation timestamp. |
-| `updatedAt` | `DateUpdated` | Existing update timestamp. |
-| `logoKey` | `LogoKey` | Stable unique lookup/display key. |
+`ServiceLogoAssets` is no longer part of the runtime logo lookup path. Existing
+rows may still hold the old `LogoKey` to `FileMetadataID` association, so the
+`BackfillServiceAccountLogoFileMetadata` migration copies matching IDs to the
+corresponding `Services` rows without replacing an already assigned logo.
+Legacy BLOB migration code remains available for databases that have not yet
+moved those image bytes into `FileMetadata`.
 
-The API maps this existing schema without adding a `FileMetadataID` column or
-altering the personal database. The future storage migration can connect logo
-records to portable local-file metadata after that relationship is explicitly
-designed.
-
-## API contract
-
-The read routes are registered under `/service-logos`:
-
-- `GET /service-logos` returns lightweight logo metadata for all assets.
-- `GET /service-logos/:id` returns metadata for one asset.
-- `GET /service-logos/:id/image` explicitly returns the stored image bytes.
-
-Collection and detail responses never embed the BLOB. The response includes
-an `imagePath` so a client can request the binary only when it needs to render
-the logo. A missing logo identifier or image returns `404 Not Found`; an
-invalid stored MIME type returns `500 Internal Server Error` rather than an
-ambiguous response.
-
-## FileMetadata boundary
-
-Issue #57 establishes the portable local-file bridge. This issue preserves the
-existing BLOB-backed table because it is the schema currently in the real
-database. The service-logo API is therefore compatible with today's data while
-keeping binary delivery explicit.
-
-When the logo relationship is migrated to FileMetadata, the API should resolve
-the relative path through the configured local asset root, report missing files
-as unavailable, and keep absolute machine paths out of responses. That change
-belongs in a separate schema/storage migration and should not be silently
-introduced into this compatibility step.
+The table and `Services.LogoKey` column remain in the database for now. Removing
+them requires a separate reviewed schema migration after the backfill has been
+previewed and verified on the target database. Unowned rows are skipped until
+the explicit Hub ownership assignment runs the backfill again. The API no longer exposes
+`/service-logos` read routes, and the Console no longer requests catalog logos.
 
 ## Verification boundary
 
-`CreateServiceLogoAssets` mirrors the existing table for isolated tests only.
-The route tests verify metadata-only list/detail responses, explicit image
-delivery, MIME type handling, and missing-asset `404` behavior using an
-in-memory SQLite database.
+The backfill migration is tested against an isolated SQLite database. It is
+registered in the development migration profile but has not been applied to the
+personal database by this change.

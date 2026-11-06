@@ -4,7 +4,7 @@ import { inferRecordPropertyKind, normalizeStorageType } from "./storageTypes";
 
 /** Build a domain-neutral property schema from the API's live database metadata. */
 export function createLiveSchemaProperties<Row extends globalThis.Record<string, unknown>>(
-  table: LiveSchemaTable,
+  table: Pick<LiveSchemaTable, "columns">,
 ): readonly RecordPropertyDefinition<Row>[] {
   return table.columns.map((column, index) => ({
     id: column.name,

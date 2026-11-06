@@ -25,11 +25,14 @@ import type {
   ImportableSQLTables,
   TableCSVImportPreview,
   TableCSVImportResult,
+  SchemaPageTables,
+  SchemaPageTable,
+  SchemaPageRecords,
+  SchemaPageRecordCreation,
   LocalDatabaseCapabilities,
   LocalDatabaseCreationResult,
   SchemaBuilderGuidance,
   ServiceAccount,
-  ServiceLogo,
   ServiceAccountCreate,
   TransactionCreate,
   TableBuilderRequest,
@@ -277,11 +280,6 @@ export const api = {
     request<void>(`/record-presentations/${encodeURIComponent(tableName)}/${encodeURIComponent(recordID)}`, {
       method: "DELETE",
     }),
-  listServiceLogos: (signal?: AbortSignal) => request<ServiceLogo[]>("/service-logos", { signal }),
-  getServiceLogoImage: async (id: number, signal?: AbortSignal) => {
-    const response = await checkedFetch(`/service-logos/${id}/image`, { signal });
-    return response.blob();
-  },
   patchAddressAttachment: (addressID: string, fileMetadataID: string | null) =>
     request<Address>(`/addresses/${encodeURIComponent(addressID)}/attachment`, {
       method: "PATCH",
@@ -335,6 +333,19 @@ export const api = {
     }),
   getSchemaBuilderGuidance: (signal?: AbortSignal) =>
     request<SchemaBuilderGuidance>("/schema-builder/metadata", { signal }),
+  getSchemaPageTables: (signal?: AbortSignal) => request<SchemaPageTables>("/schema-builder/tables", { signal }),
+  createSchemaPage: (tableName: string) =>
+    request<SchemaPageTable>(`/schema-builder/tables/${encodeURIComponent(tableName)}/page`, { method: "POST" }),
+  getSchemaPageRecords: (tableName: string, offset = 0, signal?: AbortSignal) =>
+    request<SchemaPageRecords>(
+      `/schema-builder/tables/${encodeURIComponent(tableName)}/records?limit=100&offset=${Math.max(0, offset)}`,
+      { signal },
+    ),
+  createSchemaPageRecord: (tableName: string, values: Record<string, string | number | boolean | null>) =>
+    request<SchemaPageRecordCreation>(`/schema-builder/tables/${encodeURIComponent(tableName)}/records`, {
+      method: "POST",
+      body: JSON.stringify(values),
+    }),
   previewUserTable: (definition: TableBuilderRequest) =>
     request<UserTablePreview>("/live-database/tables/preview", { method: "POST", body: JSON.stringify(definition) }),
   createUserTable: (confirmationToken: string) =>

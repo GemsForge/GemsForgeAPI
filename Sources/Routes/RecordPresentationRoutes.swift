@@ -129,7 +129,16 @@ func validateWorkspaceSelection(_ state: String, tableName: String, hubID: Strin
     guard let recordID = selection as? String, !recordID.isEmpty else {
         throw Abort(.badRequest, reason: "Selected record ID must be a string or null.")
     }
-    try await validateOwnedHubRecord(tableName: tableName, recordID: recordID, hubID: hubID, database: database)
+    let physicalTableName = tableName == "ExpenseTransaction" ? "Transactions" : tableName
+    if AddHubOwnershipFields.ownedTables.contains(physicalTableName) {
+        try await validateOwnedHubRecord(tableName: tableName, recordID: recordID, hubID: hubID, database: database)
+        return
+    }
+
+    let service = SchemaPageService(database: database, hubID: hubID)
+    guard try await service.containsRecord(recordID, in: tableName) else {
+        throw Abort(.notFound, reason: "The record is unavailable in this Hub.")
+    }
 }
 
 private func validateCoverReference(

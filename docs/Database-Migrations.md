@@ -48,7 +48,7 @@ core migrations are registered in this order:
 Fluent runs `revert` in the opposite order so child tables are removed before
 their parent tables.
 
-The full local development profile currently applies these migrations in order:
+The local development profile includes the following table-creation migrations:
 
 ```text
 CreateAddresses
@@ -67,12 +67,25 @@ CreateGemHues
 CreateGemHueImages
 ```
 
+It also applies `BackfillServiceAccountLogoFileMetadata` after Hub ownership
+columns are present. The backfill copies existing logo file references onto
+their matching Service rows, scoped to the same Hub. The profile's full ordered
+migration list is maintained in `LocalDatabaseService.swift`.
+
 This profile is a test/development schema assembled from the repository's
 isolated migrations. It is intentionally different from connecting to the
 existing personal database: creating a new local file may prepare tables,
 while normal API startup must preserve the existing database baseline.
 
 ## What the schema builder means
+
+The Console schema builder creates reviewed tables in the configured live
+database. The API adds a text `ID` primary key and a required text `HubID`
+ownership column to each new table, then registers it as a navigable page.
+Existing tables with that supported ownership shape can be registered from
+Live Schema with **Create page from this table**. Registration is stored in
+the Hub-scoped `TableViews` metadata; record reads are filtered to the signed-in
+Hub. Existing database tables are never altered to add ownership implicitly.
 
 ```swift
 database.schema("domains")

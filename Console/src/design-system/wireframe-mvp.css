@@ -568,8 +568,25 @@
   line-height: 1.45;
 }
 
-.wireframe-demo.wireframe-standalone .wireframe-page-copy {
+.wireframe-page-banner {
   width: 100%;
+  max-width: 58rem;
+  box-sizing: border-box;
+  margin-top: 0.6rem;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--gem-wireframe-border, #d9dfdc);
+  border-left: 3px solid var(--gem-wireframe-action, #287ca5);
+  border-radius: 0.5rem;
+  background: var(--gem-wireframe-surface-raised, #f4f7f5);
+  color: var(--gem-wireframe-text, #233c42);
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
+.wireframe-demo.wireframe-standalone .wireframe-page-copy {
+  width: auto;
+  min-width: 0;
+  flex: 1 1 0;
   gap: 0;
 }
 

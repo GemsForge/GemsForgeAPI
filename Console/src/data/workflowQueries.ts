@@ -8,6 +8,11 @@ export const workflowQueryKeys = {
   pages: ["pages"] as const,
   pageList: (scope: PageScope) => ["pages", scope] as const,
   schema: ["live-schema"] as const,
+  schemaPageTables: ["schema-page-tables"] as const,
+  schemaPageRecords: (tableName: string, offset?: number) =>
+    offset === undefined
+      ? (["schema-page-records", tableName] as const)
+      : (["schema-page-records", tableName, offset] as const),
   guidance: ["schema-guidance"] as const,
   capabilities: ["database-capabilities"] as const,
   localDatabases: ["local-databases"] as const,
@@ -37,6 +42,37 @@ export function usePageMutation() {
 export function useLiveSchemaQuery() {
   return useQuery({ queryKey: workflowQueryKeys.schema, queryFn: ({ signal }) => api.getLiveSchema(signal) });
 }
+export function useSchemaPageTablesQuery() {
+  return useQuery({
+    queryKey: workflowQueryKeys.schemaPageTables,
+    queryFn: ({ signal }) => api.getSchemaPageTables(signal),
+  });
+}
+export function useCreateSchemaPageMutation() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: api.createSchemaPage,
+    onSuccess: (table) => {
+      void client.invalidateQueries({ queryKey: workflowQueryKeys.schemaPageTables });
+      void client.invalidateQueries({ queryKey: workflowQueryKeys.schemaPageRecords(table.name) });
+    },
+  });
+}
+export function useSchemaPageRecordsQuery(tableName: string, offset = 0) {
+  return useQuery({
+    queryKey: workflowQueryKeys.schemaPageRecords(tableName, offset),
+    queryFn: ({ signal }) => api.getSchemaPageRecords(tableName, offset, signal),
+    enabled: Boolean(tableName),
+  });
+}
+export function useCreateSchemaPageRecordMutation(tableName: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (values: Record<string, string | number | boolean | null>) =>
+      api.createSchemaPageRecord(tableName, values),
+    onSuccess: () => client.invalidateQueries({ queryKey: workflowQueryKeys.schemaPageRecords(tableName) }),
+  });
+}
 export function useImportableSQLTablesQuery() {
   return useQuery({
     queryKey: workflowQueryKeys.importableTables,
@@ -54,6 +90,7 @@ export function useCommitTableCSVImportMutation() {
       void client.invalidateQueries({ queryKey: workflowQueryKeys.importableTables });
       void client.invalidateQueries({ queryKey: workflowQueryKeys.schema });
       void client.invalidateQueries({ queryKey: workflowQueryKeys.tableRecords(result.table) });
+      void client.invalidateQueries({ queryKey: workflowQueryKeys.schemaPageRecords(result.table) });
     },
   });
 }
@@ -64,7 +101,10 @@ export function useExecuteRepositoryMigrationsMutation() {
   const client = useQueryClient();
   return useMutation({
     mutationFn: api.executeRepositoryMigrations,
-    onSuccess: () => client.invalidateQueries({ queryKey: workflowQueryKeys.schema }),
+    onSuccess: () => {
+      void client.invalidateQueries({ queryKey: workflowQueryKeys.schema });
+      void client.invalidateQueries({ queryKey: workflowQueryKeys.schemaPageTables });
+    },
   });
 }
 export function useSchemaGuidanceQuery() {
@@ -95,7 +135,10 @@ export function useCreateTableMutation() {
   const client = useQueryClient();
   return useMutation({
     mutationFn: api.createUserTable,
-    onSuccess: () => client.invalidateQueries({ queryKey: workflowQueryKeys.schema }),
+    onSuccess: () => {
+      void client.invalidateQueries({ queryKey: workflowQueryKeys.schema });
+      void client.invalidateQueries({ queryKey: workflowQueryKeys.schemaPageTables });
+    },
   });
 }
 export function usePreviewCSVMutation() {

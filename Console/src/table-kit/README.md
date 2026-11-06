@@ -125,10 +125,11 @@ and focus restoration to its trigger. Selecting an operation invokes the
 consumer-owned form or intake view, so domain validation and persistence stay
 with the feature.
 
-The shared database collections attach **Import CSV** to this utility. It loads
-the authenticated API's eligible SQL tables, suggests and edits header mappings,
-previews server validation, then commits with a one-use preview token. See
-[Table Kit CSV import](../../../docs/Table-Kit-CSV-Import.md) for the API
+Schema-backed Wireframe collections use the shared **Import File** and
+**Paste data** choices. They map CSV headers or JSON object keys to the live
+table schema, preview server validation, and commit with a one-use token. The
+older standalone Table Kit CSV workflow is obsolete and disconnected; see
+[schema-backed data import](../../../docs/Table-Kit-CSV-Import.md) for the active
 contract and safety boundary.
 
 ## Compact utility row

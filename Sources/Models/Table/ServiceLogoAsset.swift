@@ -1,14 +1,7 @@
 import Foundation
 import Fluent
-import Vapor
 
-/// Maps one logo asset from the existing `ServiceLogoAssets` table.
-///
-/// The table currently stores legacy image bytes. The model keeps those bytes
-/// available for an explicit image endpoint but does not make the model
-/// `Content`, so collection and detail responses cannot accidentally embed a
-/// binary blob. The future FileMetadata migration can replace that storage
-/// relationship with a portable local-file reference.
+/// Maps a retained legacy catalog row for logo-reference backfill and BLOB migration.
 final class ServiceLogoAsset: Model, @unchecked Sendable {
     static let schema = "ServiceLogoAssets"
 
@@ -44,29 +37,4 @@ final class ServiceLogoAsset: Model, @unchecked Sendable {
     var fileMetadataID: String?
 
     init() {}
-}
-
-/// Safe response metadata for a service logo.
-struct ServiceLogoAssetSummary: Content {
-    let id: Int
-    let logoKey: String?
-    let mimeType: String
-    let fileName: String?
-    let fileSizeBytes: Int?
-    let fileMetadataID: String?
-    let imagePath: String
-
-    init(_ asset: ServiceLogoAsset) throws {
-        guard let id = asset.id else {
-            throw Abort(.internalServerError, reason: "Service logo is missing its identifier.")
-        }
-
-        self.id = id
-        self.logoKey = asset.logoKey
-        self.mimeType = asset.mimeType
-        self.fileName = asset.fileName
-        self.fileSizeBytes = asset.fileSizeBytes ?? asset.logo.count
-        self.fileMetadataID = asset.fileMetadataID
-        self.imagePath = "/service-logos/\(id)/image"
-    }
 }

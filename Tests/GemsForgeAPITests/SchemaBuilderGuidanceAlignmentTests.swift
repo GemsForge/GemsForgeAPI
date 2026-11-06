@@ -18,7 +18,9 @@ final class SchemaBuilderGuidanceAlignmentTests: XCTestCase {
 
             XCTAssertEqual(definition.columns[0].name, "ID")
             XCTAssertTrue(definition.columns[0].primaryKey)
-            XCTAssertEqual(definition.columns[1].dataType, type)
+            XCTAssertEqual(definition.columns[1].name, "HubID")
+            XCTAssertFalse(definition.columns[1].nullable)
+            XCTAssertEqual(definition.columns[2].dataType, type)
         }
     }
 

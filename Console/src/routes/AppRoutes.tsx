@@ -85,6 +85,12 @@ const LocalDatabaseView = lazy(() =>
 const SchemaBuilderView = lazy(() =>
   import("../features/schema/SchemaBuilderView").then((module) => ({ default: module.SchemaBuilderView })),
 );
+const SchemaTablePage = lazy(() =>
+  import("../features/schema/SchemaTablePage").then((module) => ({ default: module.SchemaTablePage })),
+);
+const WireframeSchemaPage = lazy(() =>
+  import("../features/schema/WireframeSchemaPage").then((module) => ({ default: module.WireframeSchemaPage })),
+);
 const LiveDatabaseMigrationView = lazy(() =>
   import("../features/schema/LiveDatabaseMigrationView").then((module) => ({
     default: module.LiveDatabaseMigrationView,
@@ -398,6 +404,7 @@ export function AppRoutes() {
           <Route path="forgekeeper-wireframe/:pageID/children" element={<WireframeForgeKeeperPage kind="children" />} />
           <Route path="local-database-wireframe" element={<WireframeLocalDatabaseCreationPage />} />
           <Route path="schema-builder-wireframe" element={<WireframeSchemaBuilderPage />} />
+          <Route path="schema-wireframe/:tableName" element={<WireframeSchemaPage />} />
           <Route path="live-database-wireframe" element={<WireframeLiveDatabasePage />} />
           <Route path="education-wireframe/*" element={<EducationWireframe />} />
           <Route path="employment-wireframe/*" element={<EmploymentWireframe />} />
@@ -429,6 +436,7 @@ export function AppRoutes() {
           <Route path="expenses" element={<Navigate to="/transactions" replace />} />
           <Route path="local-databases" element={<Databases />} />
           <Route path="schema-builder" element={<Schema />} />
+          <Route path="schema/:tableName" element={<SchemaTablePage />} />
           <Route path="live-database" element={<LiveDatabase />} />
           <Route path="*" element={<NotFound />} />
         </Route>

@@ -46,7 +46,6 @@ import { WireframePropertyIconProvider } from "./WireframePropertyEditor";
 import { WireframePropertySettingsDialog, type WireframePropertyDetails } from "./WireframePropertySettingsDialog";
 import { useWireframeNavigation } from "./WireframeAppHeader";
 import { api } from "../../api";
-import { ensureTableCSVImportOption } from "../../table-kit/TableCSVImportWorkflow";
 import { useUploadImageMutation } from "../../data/workflowQueries";
 import { useArchiveRecordMutation, useTrashEntriesQuery } from "../../data/trashQueries";
 import {
@@ -82,6 +81,7 @@ export type WireframeCollectionConfig<T extends WireframeRecord> = {
   tableName?: string;
   title: string;
   description: string;
+  headerBanner?: ReactNode;
   activeCollection: string;
   records: readonly T[];
   properties?: readonly RecordPropertyDefinition<T>[];
@@ -623,6 +623,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
         <WireframeLeftPane
           recordCount={activeRecords.length}
           activeCollection={config.activeCollection}
+          activeCollectionTitle={tableTitle}
           activeCollectionIcon={<TableIcon size={16} aria-hidden="true" />}
           collapsed={mobileNavigationOpen ? false : navigationCollapsed}
           onToggleCollapsed={() => setNavigationCollapsed((collapsed) => !collapsed)}
@@ -675,6 +676,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
         <WireframePageView
           title={tableTitle}
           description={tableDescription}
+          banner={config.headerBanner}
           recordCount={sortedRecords.length}
           tableIcon={<TableIcon size={20} aria-hidden="true" />}
           onTitleChange={workspaceReady ? setTableTitle : undefined}
@@ -830,7 +832,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
                   config.newRecordUtility
                     ? {
                         ...config.newRecordUtility,
-                        options: ensureTableCSVImportOption(config.newRecordUtility.options),
+                        options: config.newRecordUtility.options,
                       }
                     : config.newRecordUtility
                 }

@@ -3,6 +3,7 @@ import {
   useSchemaGuidanceQuery,
   usePreviewTableMutation,
   useCreateTableMutation,
+  useCreateSchemaPageMutation,
   usePreviewCSVMutation,
   useImportCSVMutation,
 } from "../data/workflowQueries";
@@ -29,7 +30,7 @@ interface State {
 }
 export const initialBuilderState: State = {
   tableName: "HomeInventoryDraft",
-  columns: [newColumn()],
+  columns: [],
   preview: null,
   csv: "",
   csvPreview: null,
@@ -84,12 +85,12 @@ export function useSchemaBuilder({ onError, onSuccess }: Options) {
   const guidanceQuery = useSchemaGuidanceQuery();
   const tablePreview = usePreviewTableMutation();
   const tableCreation = useCreateTableMutation();
+  const schemaPageCreation = useCreateSchemaPageMutation();
   const csvPreviewMutation = usePreviewCSVMutation();
   const csvImport = useImportCSVMutation();
   const definition: TableBuilderRequest = { tableName: state.tableName, columns: state.columns };
   const tableNameIsValid = /^[A-Z][A-Za-z0-9]*$/.test(state.tableName.trim());
-  const columnsAreValid =
-    state.columns.length >= 1 && state.columns.every((column) => column.name.trim() && column.dataType);
+  const columnsAreValid = state.columns.every((column) => column.name.trim() && column.dataType);
   const setTableName = (value: string) => dispatch({ type: "tableName", value });
   const setCsv = (value: string) => {
     csvRead.current++;
@@ -102,7 +103,7 @@ export function useSchemaBuilder({ onError, onSuccess }: Options) {
       value: state.columns.map((column, i) => (i === index ? { ...column, ...patch } : column)),
     });
   const removeColumn = (index: number) => {
-    if (state.columns.length > 1) dispatch({ type: "columns", value: state.columns.filter((_, i) => i !== index) });
+    dispatch({ type: "columns", value: state.columns.filter((_, i) => i !== index) });
   };
 
   async function run(operation: () => Promise<void>, creation = false) {
@@ -133,7 +134,17 @@ export function useSchemaBuilder({ onError, onSuccess }: Options) {
       if (!state.preview) return;
       const result = await tableCreation.mutateAsync(state.preview.confirmationToken);
       dispatch({ type: "created" });
-      onSuccess(`${result.table} created and verified.`);
+      try {
+        await schemaPageCreation.mutateAsync(result.table);
+        onSuccess(`${result.table} created, verified, and added to navigation.`);
+      } catch (error) {
+        onError(
+          new Error(
+            `${result.table} was created, but its page could not be registered. Open Live Schema to retry page creation.`,
+            { cause: error },
+          ),
+        );
+      }
     }, true);
   const previewImport = () =>
     run(async () => {

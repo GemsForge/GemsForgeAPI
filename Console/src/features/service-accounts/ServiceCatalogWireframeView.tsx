@@ -1,7 +1,4 @@
-import { useEffect, useState } from "react";
 import type { ServiceAccount } from "../../types";
-import { api } from "../../api";
-import { useServiceLogosQuery } from "../../data/lifeQueries";
 import type { RecordPropertyDefinition } from "../../table-kit";
 import { useServiceAccountPatchMutation } from "../../data/recordQueries";
 import { createServiceAccountTableAdapter } from "../database/recordTableAdapters";
@@ -9,43 +6,19 @@ import { WireframeCollectionView } from "../workspace/WireframeCollectionView";
 import { WireframeSchemaInspector } from "../workspace/WireframeSchemaInspector";
 import { WireframeImagePreview } from "../workspace/WireframeImagePreview";
 import { useServiceAccountRecordActions } from "./useServiceAccountRecordActions";
+import { useServiceAccountLogoURLs } from "./useServiceAccountLogoURLs";
 
 export function ServiceCatalogWireframeView({ records }: { records: readonly ServiceAccount[] }) {
   const recordActions = useServiceAccountRecordActions({ onCreated: () => undefined });
   const patch = useServiceAccountPatchMutation();
-  const logos = useServiceLogosQuery(true);
-  const [logoURLs, setLogoURLs] = useState<Record<number, string>>({});
-  useEffect(() => {
-    const controller = new AbortController();
-    const objectURLs: string[] = [];
-    void Promise.all(
-      (logos.data ?? []).map(async (logo) => {
-        try {
-          const blob = await api.getServiceLogoImage(logo.id, controller.signal);
-          const url = URL.createObjectURL(blob);
-          objectURLs.push(url);
-          return [logo.id, url] as const;
-        } catch {
-          return null;
-        }
-      }),
-    ).then((entries) =>
-      setLogoURLs(Object.fromEntries(entries.filter((entry): entry is readonly [number, string] => entry !== null))),
-    );
-    return () => {
-      controller.abort();
-      objectURLs.forEach((url) => URL.revokeObjectURL(url));
-    };
-  }, [logos.data]);
+  const logoURLs = useServiceAccountLogoURLs(records);
   const adapter = createServiceAccountTableAdapter(
     (record) => {
-      const logo = logos.data?.find((item) => item.logoKey === record.logoKey);
-      const src = logo ? logoURLs[logo.id] : undefined;
+      const src = logoURLs[record.id];
       return src ? <WireframeImagePreview src={src} alt={`${record.service} logo`} /> : "No image";
     },
     (record) => {
-      const logo = logos.data?.find((item) => item.logoKey === record.logoKey);
-      const src = logo ? logoURLs[logo.id] : undefined;
+      const src = logoURLs[record.id];
       return src ? { src, alt: `${record.service} logo`, fit: "contain" } : undefined;
     },
   );
@@ -81,8 +54,7 @@ export function ServiceCatalogWireframeView({ records }: { records: readonly Ser
         cardMeta: (record) =>
           record.monthlyAmount == null ? "No monthly amount" : `$${record.monthlyAmount.toFixed(2)} / month`,
         cardImage: (record) => {
-          const logo = logos.data?.find((item) => item.logoKey === record.logoKey);
-          const src = logo ? logoURLs[logo.id] : undefined;
+          const src = logoURLs[Number(record.id)];
           return src ? { src, alt: `${record.service} logo` } : undefined;
         },
         inspector: (record, schemaProperties) => (

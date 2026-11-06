@@ -100,19 +100,25 @@ export function SchemaBuilderView({ onError, onSuccess, showHeader = true }: Sch
             {tableName && !tableNameIsValid ? (
               <small className="field-hint error-text">Use UpperCamelCase, such as NewTable.</small>
             ) : (
-              <small className="field-hint">The API supplies the ID column automatically.</small>
+              <small className="field-hint">
+                The API supplies ID, HubID, and a required Title automatically. HubID scopes records to your signed-in
+                Hub.
+              </small>
             )}
           </label>
           <div className="builder-columns">
             <div className="builder-column-heading">
               <div>
                 <strong>Column properties</strong>
-                <small className="field-hint">Add at least one property, then use + for more.</small>
+                <small className="field-hint">Title is the required item name. Add optional properties with +.</small>
               </div>
               <button className="secondary-button" onClick={addColumn}>
                 ＋ Add property
               </button>
             </div>
+            {columns.length === 0 ? (
+              <p className="field-hint">No additional properties. Every table includes Title.</p>
+            ) : null}
             {columns.map((column, index) => (
               <div className="builder-column" key={index}>
                 <div>
@@ -153,13 +159,9 @@ export function SchemaBuilderView({ onError, onSuccess, showHeader = true }: Sch
                   />
                   <small className="field-hint">Use a number, quoted text, NULL, or a CURRENT_* value.</small>
                 </div>
-                {columns.length > 1 ? (
-                  <button className="icon-button" aria-label="Remove property" onClick={() => removeColumn(index)}>
-                    ×
-                  </button>
-                ) : (
-                  <span className="field-hint">Required property</span>
-                )}
+                <button className="icon-button" aria-label="Remove property" onClick={() => removeColumn(index)}>
+                  ×
+                </button>
               </div>
             ))}
           </div>
@@ -253,7 +255,7 @@ export function SchemaBuilderView({ onError, onSuccess, showHeader = true }: Sch
           ) : null}
         </section>
       </div>
-      <LiveSchemaView onError={onError} />
+      <LiveSchemaView onError={onError} onSuccess={onSuccess} />
     </>
   );
 }

@@ -88,6 +88,7 @@ describe("Gem Life navigation", () => {
   });
   it("renders wireframe routes on their dedicated canvas", async () => {
     vi.spyOn(api, "listEducation").mockResolvedValue([]);
+    vi.spyOn(api, "getSchemaPageTables").mockResolvedValue({ tables: [], availableTables: [] });
     setup("/education-wireframe");
     expect(await screen.findByRole("heading", { name: "Education" })).toBeInTheDocument();
     expect(screen.getByRole("main", { name: "Wireframe screen" })).toHaveClass("wireframe-canvas-content");
@@ -98,6 +99,63 @@ describe("Gem Life navigation", () => {
     // The inspector is record-scoped and stays closed when the collection is empty.
     expect(screen.queryByRole("complementary", { name: "Record inspector" })).not.toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Gem Life Console" })).not.toBeInTheDocument();
+  });
+  it("lists live schema pages in the wireframe navigation and opens them on the wireframe canvas", async () => {
+    vi.spyOn(api, "listEducation").mockResolvedValue([]);
+    const columns = [
+      { name: "CategoryID", dataType: "INTEGER", nullable: false, primaryKey: true, defaultValue: null },
+      { name: "HubID", dataType: "TEXT", nullable: true, primaryKey: false, defaultValue: null },
+      { name: "Category", dataType: "TEXT", nullable: false, primaryKey: false, defaultValue: null },
+    ];
+    vi.spyOn(api, "getSchemaPageTables").mockResolvedValue({
+      tables: [
+        { name: "BudgetCategories", columns },
+        { name: "Education", columns },
+        { name: "Transactions", columns },
+        { name: "Services", columns },
+      ],
+      availableTables: [],
+    });
+    vi.spyOn(api, "getSchemaPageRecords").mockResolvedValue({
+      table: { name: "BudgetCategories", columns },
+      rows: [{ CategoryID: "12", HubID: "workspace-a", Category: "Housing" }],
+      totalCount: 1,
+      limit: 100,
+      offset: 0,
+    });
+    vi.spyOn(api, "getImportableSQLTables").mockResolvedValue({
+      tables: [{ name: "BudgetCategories", columns }],
+    });
+    vi.spyOn(api, "getTableView").mockImplementation(async (_table, viewType) => ({
+      view: {
+        viewID: viewType,
+        tableName: "BudgetCategories",
+        name: viewType,
+        viewType,
+        workspaceState: JSON.stringify({ tableIcon: "Folder" }),
+        updatedAt: "2026-11-05T10:00:00Z",
+      },
+      columns: [],
+      queries: [],
+    }));
+    setup("/education-wireframe");
+
+    await screen.findByRole("navigation", { name: "Collections" });
+    const budgetCategoriesLink = await screen.findByRole("link", { name: "BudgetCategories" });
+    expect(budgetCategoriesLink).toHaveAttribute("href", "/schema-wireframe/BudgetCategories");
+    expect(screen.getAllByRole("link", { name: "Education" })).toHaveLength(1);
+    expect(screen.queryByRole("link", { name: "Transactions" })).not.toBeInTheDocument();
+    expect(screen.getAllByRole("link", { name: "Expense Tracker" })).toHaveLength(1);
+    expect(screen.getAllByRole("link", { name: "Services" })).toHaveLength(1);
+
+    fireEvent.click(budgetCategoriesLink);
+    expect(await screen.findByRole("heading", { name: "BudgetCategories" })).toBeInTheDocument();
+    expect(screen.getByRole("main", { name: "Wireframe screen" })).toBeInTheDocument();
+    expect(screen.getAllByText("Housing").length).toBeGreaterThan(0);
+    fireEvent.click(screen.getByRole("button", { name: "New record" }));
+    expect(await screen.findByRole("dialog", { name: "New record" })).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Category" })).toBeRequired();
+    expect(screen.getByRole("button", { name: "Create record" })).toBeInTheDocument();
   });
   it("renders the wireframe home from live collection counts", async () => {
     vi.spyOn(api, "listRootPages").mockResolvedValue([]);
@@ -329,8 +387,7 @@ describe("Gem Life navigation", () => {
     setup("/education");
     expect(screen.getByText("Loading records…")).toBeInTheDocument();
     await act(async () => reject(new Error("API unavailable")));
-    const alert = await screen.findByRole("alert");
-    expect(alert.textContent).toMatch(/something went wrong|api unavailable/i);
+    expect(await screen.findByText(/something went wrong|api unavailable/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Try again" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Try again" }));
     await screen.findByRole("heading", { name: "No education records" });

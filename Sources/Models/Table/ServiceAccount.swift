@@ -19,9 +19,6 @@ final class ServiceAccount: Model, Content, @unchecked Sendable {
     @Field(key: "Service")
     var service: String
 
-    @OptionalField(key: "LogoKey")
-    var logoKey: String?
-
     @OptionalField(key: "Type")
     var type: String?
 
@@ -87,7 +84,6 @@ final class ServiceAccount: Model, Content, @unchecked Sendable {
     init(
         id: Int? = nil,
         service: String,
-        logoKey: String? = nil,
         type: String? = nil,
         expenseGroup: String? = nil,
         monthlyAmount: Double? = nil,
@@ -109,7 +105,6 @@ final class ServiceAccount: Model, Content, @unchecked Sendable {
     ) {
         self.id = id
         self.service = service
-        self.logoKey = logoKey
         self.type = type
         self.expenseGroup = expenseGroup
         self.monthlyAmount = monthlyAmount

@@ -1,6 +1,7 @@
 import { NavLink } from "react-router-dom";
 import { useState } from "react";
 import type { Domain } from "../../types";
+import { useSchemaPageTablesQuery } from "../../data/workflowQueries";
 
 const resources = [
   ["/", "Home", "Gem Life", "⌂"],
@@ -21,6 +22,7 @@ const resources = [
 
 export function DomainSidebar({ domains, onRefresh }: { domains: Domain[]; onRefresh: () => void }) {
   const [expanded, setExpanded] = useState(false);
+  const schemaPages = useSchemaPageTablesQuery();
   const linkClass = ({ isActive }: { isActive: boolean }) => `resource-button ${isActive ? "selected" : ""}`;
   return (
     <aside className="sidebar">
@@ -52,6 +54,34 @@ export function DomainSidebar({ domains, onRefresh }: { domains: Domain[]; onRef
             </NavLink>
           ))}
         </nav>
+        <div className="section-heading">
+          <span>Your schema pages</span>
+        </div>
+        {schemaPages.isPending ? <small role="status">Loading schema pages…</small> : null}
+        {schemaPages.isError ? <small role="alert">Schema pages could not be loaded.</small> : null}
+        {schemaPages.isSuccess && schemaPages.data.tables.length === 0 ? (
+          <small>No schema pages yet.</small>
+        ) : null}
+        {schemaPages.data?.tables.length ? (
+          <nav className="domain-list" aria-label="Schema page navigation">
+            {schemaPages.data.tables.map((table) => (
+              <NavLink
+                className={({ isActive }) => `domain-button ${isActive ? "selected" : ""}`}
+                to={`/schema/${encodeURIComponent(table.name)}`}
+                key={table.name}
+                aria-label={table.name}
+              >
+                <span className="domain-mark" aria-hidden="true">
+                  ▦
+                </span>
+                <span>
+                  <strong>{table.name}</strong>
+                  <small>{table.columns.length} properties</small>
+                </span>
+              </NavLink>
+            ))}
+          </nav>
+        ) : null}
         <div className="section-heading">
           <span>Domains</span>
           <button className="icon-button" aria-label="Refresh domains" onClick={onRefresh}>

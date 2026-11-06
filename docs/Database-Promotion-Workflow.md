@@ -3,6 +3,25 @@
 This procedure moves a schema or migration change from DEV through FIT to
 PROD without treating a database copy as a substitute for verification.
 
+## Deployment and migration trigger
+
+This repository currently has no deployment workflow that deploys the API to
+FIT or runs migrations when code is merged. The GitHub Actions workflow named
+**Database validation** runs tests against temporary CI databases; it does not
+connect to the local FIT database or apply migrations to it.
+
+Merging migration code makes the migration available to the server, but does
+not execute it. To apply it to FIT, start the API with the FIT environment and
+FIT database and backup paths, then use the Console's **Repository migrations**
+preview and explicit **Confirm backup and migrate** action. The server backs up
+the database it is connected to before applying pending repository migrations.
+Selecting FIT in Server Configs only changes the selected configuration; it
+does not itself run a migration.
+
+If deployments are automated later, the deployment workflow must explicitly
+select FIT, verify the target database and backup configuration, and invoke the
+migration step. Until then, use the operator-reviewed flow below.
+
 ## Environments
 
 | Environment | Purpose | Writes allowed |

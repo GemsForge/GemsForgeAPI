@@ -220,7 +220,6 @@ export interface ExpenseSubcategory {
 export interface ServiceAccount {
   id: number;
   service: string;
-  logoKey: string | null;
   type: string | null;
   expenseGroup: string | null;
   monthlyAmount: number | null;
@@ -241,16 +240,6 @@ export interface ServiceAccount {
   logoFileMetadataID: string | null;
   updatedAt?: string | null;
 }
-export interface ServiceLogo {
-  id: number;
-  logoKey: string | null;
-  mimeType: string;
-  fileName: string | null;
-  fileSizeBytes: number | null;
-  fileMetadataID: string | null;
-  imagePath: string;
-}
-
 export interface FileMetadata {
   id: string;
   relativePath: string;
@@ -341,6 +330,28 @@ export interface LiveSchema {
   databaseName: string;
   tableCount: number;
   tables: LiveSchemaTable[];
+}
+
+export interface SchemaPageTable {
+  name: string;
+  columns: LiveSchemaColumn[];
+}
+
+export interface SchemaPageTables {
+  tables: SchemaPageTable[];
+  availableTables: SchemaPageTable[];
+}
+
+export interface SchemaPageRecords {
+  table: SchemaPageTable;
+  rows: Record<string, string | null>[];
+  totalCount: number;
+  limit: number;
+  offset: number;
+}
+export interface SchemaPageRecordCreation {
+  table: string;
+  recordID: string;
 }
 
 export type ImportableSQLColumn = LiveSchemaColumn;

@@ -39,6 +39,7 @@ export function WireframeSystemPage({
   count,
   countLabel,
   showCount,
+  activeCollection = "",
 }: {
   children: ReactNode;
   title: string;
@@ -46,6 +47,7 @@ export function WireframeSystemPage({
   count: number;
   countLabel?: { singular: string; plural: string };
   showCount?: boolean;
+  activeCollection?: string;
 }) {
   const [collapsed, setCollapsed] = useState(false);
   const navigation = useWireframeNavigation();
@@ -64,7 +66,7 @@ export function WireframeSystemPage({
         ) : null}
         <WireframeLeftPane
           recordCount={0}
-          activeCollection=""
+          activeCollection={activeCollection}
           collapsed={mobileOpen ? false : collapsed}
           onToggleCollapsed={() => setCollapsed((value) => !value)}
           onCloseNavigation={navigation ? navigation.close : undefined}

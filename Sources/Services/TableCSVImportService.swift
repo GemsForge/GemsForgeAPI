@@ -104,7 +104,7 @@ actor TableCSVImportApprovals {
     func listTables(database: Database) async throws -> ImportableSQLTablesResponse {
         let schema = try await LiveSchemaService(database: database).inspect()
         let tables = schema.tables.compactMap { table -> ImportableSQLTable? in
-            guard Self.isImportableHubOwnedTable(table) else { return nil }
+            guard HubOwnedCustomTablePolicy.isEligible(table) else { return nil }
             return ImportableSQLTable(name: table.name, columns: Self.importColumns(table.columns))
         }
         return ImportableSQLTablesResponse(tables: tables)
@@ -151,9 +151,12 @@ actor TableCSVImportApprovals {
         guard Set(targets).count == targets.count else {
             throw TableCSVImportError.invalidMapping("Each table property can be mapped only once.")
         }
+        let primaryKeyCount = table.columns.filter(\.primaryKey).count
         guard !targets.isEmpty,
             targets.allSatisfy({ target in
-                table.columns.contains(where: { $0.name == target && $0.name != "HubID" })
+                table.columns.contains(where: {
+                    $0.name == target && !Self.isServerManaged($0, primaryKeyCount: primaryKeyCount)
+                })
             })
         else {
             throw TableCSVImportError.invalidMapping(
@@ -162,10 +165,8 @@ actor TableCSVImportApprovals {
 
         let insertColumns = targets + ["HubID"]
         let requiredColumns = table.columns.filter { column in
-            let generatedIntegerKey =
-                column.primaryKey && column.dataType.uppercased().contains("INT")
             return (column.primaryKey || !column.nullable) && column.defaultValue == nil
-                && !generatedIntegerKey && column.name != "HubID"
+                && !Self.isServerManaged(column, primaryKeyCount: primaryKeyCount)
         }
         let missing = requiredColumns.filter { !insertColumns.contains($0.name) }
         var previews: [TableCSVImportPreviewRow] = []
@@ -240,15 +241,20 @@ actor TableCSVImportApprovals {
                     throw TableCSVImportError.unavailableDatabase
                 }
                 for row in approval.rows {
+                    var values = row
+                    let generatedTextPrimaryKey = Self.serverGeneratedPrimaryKey(in: current.table.columns)
+                        .flatMap { $0.dataType.uppercased().trimmingCharacters(in: .whitespacesAndNewlines) == "INTEGER" ? nil : $0.name }
+                    if let generatedTextPrimaryKey { values[generatedTextPrimaryKey] = UUID().uuidString }
+                    let columns = approval.columns + (generatedTextPrimaryKey.map { [$0] } ?? [])
                     var query = SQLQueryString("INSERT INTO \(ident: approval.table) (")
-                    for (index, column) in approval.columns.enumerated() {
+                    for (index, column) in columns.enumerated() {
                         if index > 0 { query.appendInterpolation(unsafeRaw: ", ") }
                         query.appendInterpolation(ident: column)
                     }
                     query.appendInterpolation(unsafeRaw: ", \"HubID\") VALUES (")
-                    for (index, column) in approval.columns.enumerated() {
+                    for (index, column) in columns.enumerated() {
                         if index > 0 { query.appendInterpolation(unsafeRaw: ", ") }
-                        query.appendInterpolation(bind: row[column] ?? "")
+                        query.appendInterpolation(bind: values[column] ?? "")
                     }
                     query.appendInterpolation(unsafeRaw: ", ")
                     query.appendInterpolation(bind: hubID)
@@ -270,7 +276,7 @@ actor TableCSVImportApprovals {
         guard
             let table = try await LiveSchemaService(database: database).inspect().tables.first(
                 where: { $0.name == name }),
-            Self.isImportableHubOwnedTable(table)
+            HubOwnedCustomTablePolicy.isEligible(table)
         else { return nil }
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys]
@@ -291,27 +297,19 @@ actor TableCSVImportApprovals {
         }
     }
 
-    private static func isImportableHubOwnedTable(_ table: LiveSchemaTableResponse) -> Bool {
-        guard !protectedTables.contains(table.name),
-            let hubColumn = table.columns.first(where: { $0.name == "HubID" }),
-            !hubColumn.nullable,
-            !hubColumn.primaryKey
-        else { return false }
-        let type = hubColumn.dataType.uppercased()
-        return type.contains("TEXT") || type.contains("CHAR") || type.contains("CLOB")
+    private static func isServerManaged(_ column: ImportableSQLColumn, primaryKeyCount: Int) -> Bool {
+        column.name == "HubID" || (primaryKeyCount == 1 && column.primaryKey)
     }
 
-    private static let protectedTables: Set<String> = [
-        "Hubs", "Accounts", "AccountIdentities", "AuthenticationSessions", "AppleAccounts",
-        "AppleAuthChallenges",
-        "TableViews", "ViewColumnConfigurations", "ViewQueryConfigurations", "RecordPresentations",
-        "FileMetadata",
-        "SchemaMigrationAudits", "Domains", "ForgeKeeper", "Addresses", "Education", "Employment",
-        "Transactions",
-        "BudgetCategories", "BudgetSubcategories", "Merchants", "EmojiLabelDefinitions", "GemHues",
-        "GemHueImages",
-        "HomeInventory", "Services", "ServiceLogoAssets",
-    ]
+    private static func serverGeneratedPrimaryKey(in columns: [ImportableSQLColumn]) -> ImportableSQLColumn? {
+        let primaryKeys = columns.filter(\.primaryKey)
+        guard primaryKeys.count == 1, let primaryKey = primaryKeys.first else { return nil }
+        let type = primaryKey.dataType.uppercased().trimmingCharacters(in: .whitespacesAndNewlines)
+        if type == "INTEGER" || type.contains("TEXT") || type.contains("CHAR") || type.contains("CLOB") {
+            return primaryKey
+        }
+        return nil
+    }
 
     private static func matchesSQLType(_ value: String, type: String) -> Bool {
         let type = type.uppercased()

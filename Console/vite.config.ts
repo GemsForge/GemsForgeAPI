@@ -61,7 +61,6 @@ export default defineConfig(({ mode }) => {
           "/expense-subcategories",
           "/merchants",
           "/service-accounts",
-          "/service-logos",
           "/file-metadata",
           "/file-uploads",
           "/record-presentations",

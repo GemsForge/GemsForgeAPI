@@ -27,6 +27,7 @@ const WireframeNavigation = styled(YStack, {
 type WireframeLeftPaneProps = {
   recordCount: number;
   activeCollection?: string;
+  activeCollectionTitle?: string;
   collapsed?: boolean;
   onToggleCollapsed?: () => void;
   onCloseNavigation?: () => void;
@@ -37,6 +38,7 @@ type WireframeLeftPaneProps = {
 export function WireframeLeftPane({
   recordCount,
   activeCollection = "Education",
+  activeCollectionTitle,
   collapsed = false,
   onToggleCollapsed,
   onCloseNavigation,
@@ -80,6 +82,7 @@ export function WireframeLeftPane({
         </Text>
         <WireframeCollectionLinks
           activeCollection={activeCollection}
+          activeCollectionTitle={activeCollectionTitle}
           recordCount={recordCount}
           counts={counts}
           activeCollectionIcon={activeCollectionIcon}

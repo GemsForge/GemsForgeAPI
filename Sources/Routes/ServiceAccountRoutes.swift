@@ -4,7 +4,6 @@ import Vapor
 struct ServiceAccountRequest: Content {
     let id: Int?
     let service: String
-    let logoKey: String?
     let type: String?
     let expenseGroup: String?
     let monthlyAmount: Double?
@@ -33,7 +32,7 @@ struct ServiceAccountCreateRequest: Content {
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: DynamicCodingKey.self)
         let allowed = Set([
-            "id", "service", "logoKey", "type", "expenseGroup", "monthlyAmount",
+            "id", "service", "type", "expenseGroup", "monthlyAmount",
             "interestRate", "apr", "due", "occurrence", "status", "since",
             "website", "notes", "notionPage", "paymentMethod", "accountNumber",
             "emailUpdated", "associatedAddress", "serviceKey", "logoFileMetadataID"
@@ -76,7 +75,6 @@ private func makeServiceAccount(from input: ServiceAccountRequest, id: Int?) -> 
     ServiceAccount(
         id: id,
         service: input.service,
-        logoKey: input.logoKey,
         type: input.type,
         expenseGroup: input.expenseGroup,
         monthlyAmount: input.monthlyAmount,
@@ -194,7 +192,6 @@ func registerServiceAccountRoutes(_ app: Application) {
         let replacement = makeServiceAccount(from: input, id: id)
         try await AttachmentReferenceService(database: request.db, hubID: request.authenticatedHubID).replace(oldMetadataID: account.logoFileMetadataID, newMetadataID: replacement.logoFileMetadataID, ownerType: "ServiceAccount", ownerID: String(id))
         account.service = replacement.service
-        account.logoKey = replacement.logoKey
         account.type = replacement.type
         account.expenseGroup = replacement.expenseGroup
         account.monthlyAmount = replacement.monthlyAmount

@@ -88,6 +88,91 @@ describe("feature workflow transitions", () => {
     expect(table).not.toHaveBeenCalled();
     expect(csv).not.toHaveBeenCalled();
   });
+  it("registers a newly created table as a schema page", async () => {
+    const definition = {
+      tableName: "HomeInventoryDraft",
+      columns: [
+        {
+          name: "Property",
+          dataType: "TEXT" as const,
+          nullable: true,
+          defaultValue: null,
+          primaryKey: false,
+          unique: false,
+        },
+      ],
+    };
+    vi.spyOn(api, "getSchemaBuilderGuidance").mockResolvedValue(
+      {} as Awaited<ReturnType<typeof api.getSchemaBuilderGuidance>>,
+    );
+    vi.spyOn(api, "previewUserTable").mockResolvedValue({
+      definition,
+      warnings: [],
+      confirmationToken: "approved-token",
+      expiresAt: "2026-11-04T18:00:00Z",
+      status: "ready",
+    });
+    const createTable = vi.spyOn(api, "createUserTable").mockResolvedValue({
+      table: definition.tableName,
+      backupFileName: "isolated-backup.sqlite",
+      backupSizeBytes: 1,
+      status: "created",
+    });
+    const createPage = vi.spyOn(api, "createSchemaPage").mockResolvedValue({ name: definition.tableName, columns: [] });
+    const onSuccess = vi.fn();
+    const hook = renderHook(() => useSchemaBuilder({ onError: vi.fn(), onSuccess }), { wrapper });
+
+    await act(async () => hook.result.current.previewTable());
+    await act(async () => hook.result.current.createTable());
+
+    expect(createTable.mock.calls[0]?.[0]).toBe("approved-token");
+    expect(createPage.mock.calls[0]?.[0]).toBe(definition.tableName);
+    expect(onSuccess).toHaveBeenCalledWith(`${definition.tableName} created, verified, and added to navigation.`);
+  });
+  it("reports page registration failure after table creation", async () => {
+    const definition = {
+      tableName: "HomeInventoryDraft",
+      columns: [
+        {
+          name: "Property",
+          dataType: "TEXT" as const,
+          nullable: true,
+          defaultValue: null,
+          primaryKey: false,
+          unique: false,
+        },
+      ],
+    };
+    vi.spyOn(api, "getSchemaBuilderGuidance").mockResolvedValue(
+      {} as Awaited<ReturnType<typeof api.getSchemaBuilderGuidance>>,
+    );
+    vi.spyOn(api, "previewUserTable").mockResolvedValue({
+      definition,
+      warnings: [],
+      confirmationToken: "approved-token",
+      expiresAt: "2026-11-04T18:00:00Z",
+      status: "ready",
+    });
+    vi.spyOn(api, "createUserTable").mockResolvedValue({
+      table: definition.tableName,
+      backupFileName: "isolated-backup.sqlite",
+      backupSizeBytes: 1,
+      status: "created",
+    });
+    vi.spyOn(api, "createSchemaPage").mockRejectedValue(new Error("Registration failed"));
+    const onError = vi.fn();
+    const hook = renderHook(() => useSchemaBuilder({ onError, onSuccess: vi.fn() }), { wrapper });
+
+    await act(async () => hook.result.current.previewTable());
+    await act(async () => hook.result.current.createTable());
+
+    expect(onError).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: `${definition.tableName} was created, but its page could not be registered. Open Live Schema to retry page creation.`,
+      }),
+    );
+    expect(hook.result.current.creationError).toBeNull();
+  });
   it("treats picker cancellation as a no-op and rejects non-images", async () => {
     const upload = vi.spyOn(api, "uploadImage");
     const onAttach = vi.fn();

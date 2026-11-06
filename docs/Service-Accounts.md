@@ -12,7 +12,7 @@ renaming or recreating it:
 ```text
 ServiceID          stable integer identifier
 Service            display name
-LogoKey            existing logo reference key
+LogoFileMetadataID  current service logo attachment reference
 Type               service classification
 ExpenseGroup       recurring-expense grouping
 MonthlyAmount      recurring amount when applicable
@@ -55,9 +55,11 @@ recurring service or obligation behind those purchases. This issue does not
 add a foreign key to `Transactions`; that relationship must be designed after
 the existing schema and transaction identity rules are reviewed.
 
-The current implementation preserves `LogoKey` and `AssociatedAddress` as
-existing values. File-backed logos and normalized relationships belong to the
-separate FileMetadata and Service Logos issues.
+Logo bytes are stored in FileMetadata and service records point directly to
+them through `LogoFileMetadataID`. `LogoKey` remains as a legacy database value
+for compatibility, but the Console and API no longer resolve it to an image.
+`AssociatedAddress` also remains an existing value until a validated
+normalized relationship is designed.
 
 ## Migration boundary
 

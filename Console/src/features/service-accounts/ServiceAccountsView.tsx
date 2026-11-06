@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { QueryFeedback } from "../../components/QueryFeedback";
 import { AttachmentControl } from "../../components/AttachmentControl";
 import { GemEmptyState } from "@gemsforge/ui";
@@ -7,12 +7,11 @@ import type { ServiceAccount } from "../../types";
 import { EditableRecordFields } from "../../components/EditableRecordFields";
 import { serviceAccountEditableFields } from "./serviceAccountRecordFields";
 import { RecordImport } from "../../components/RecordImport";
-import { useServiceLogosQuery } from "../../data/lifeQueries";
 import { useRecordUtilities } from "../../hooks/useRecordUtilities";
-import { api } from "../../api";
 import { DatabaseRecordCollection } from "../../components/DatabaseRecordCollection";
 import { createServiceAccountTableAdapter } from "../database/recordTableAdapters";
 import { useServiceAccountRecordActions } from "./useServiceAccountRecordActions";
+import { useServiceAccountLogoURLs } from "./useServiceAccountLogoURLs";
 
 /** Render service-account records through the shared Table Kit consumer adapter. */
 export function ServiceAccountsView({ records }: { records: ServiceAccount[] }) {
@@ -37,57 +36,20 @@ export function ServiceAccountsView({ records }: { records: ServiceAccount[] }) 
   const { publish, importConfig, actions, createForm } = useServiceAccountRecordActions({
     onCreated: setSelectedID,
   });
-  const logos = useServiceLogosQuery(true);
-  const [logoImageURLs, setLogoImageURLs] = useState<Record<number, string>>({});
-  useEffect(() => {
-    let active = true;
-    const controller = new AbortController();
-    const objectURLs: string[] = [];
-    void Promise.all(
-      (logos.data ?? []).map(async (logo) => {
-        try {
-          const blob = await api.getServiceLogoImage(logo.id, controller.signal);
-          const url = URL.createObjectURL(blob);
-          objectURLs.push(url);
-          return [logo.id, url] as const;
-        } catch {
-          return null;
-        }
-      }),
-    ).then((entries) => {
-      if (!active) {
-        objectURLs.forEach((url) => URL.revokeObjectURL(url));
-        return;
-      }
-      setLogoImageURLs(
-        Object.fromEntries(entries.filter((entry): entry is readonly [number, string] => entry !== null)),
-      );
-    });
-    return () => {
-      active = false;
-      controller.abort();
-      objectURLs.forEach((url) => URL.revokeObjectURL(url));
-    };
-  }, [logos.data]);
+  const logoImageURLs = useServiceAccountLogoURLs(records);
   const tableAdapter = useMemo(
     () =>
       createServiceAccountTableAdapter(
         (record) => {
-          const logo = logos.data?.find((item) => item.logoKey === record.logoKey);
-          return logo && logoImageURLs[logo.id] ? (
-            <img className="service-account-card-logo" src={logoImageURLs[logo.id]} alt={`${record.service} logo`} />
-          ) : (
-            "—"
-          );
+          const src = logoImageURLs[record.id];
+          return src ? <img className="service-account-card-logo" src={src} alt={`${record.service} logo`} /> : "—";
         },
         (record) => {
-          const logo = logos.data?.find((item) => item.logoKey === record.logoKey);
-          return logo
-            ? { src: logoImageURLs[logo.id] ?? "", alt: `${record.service} logo`, fit: "contain" }
-            : undefined;
+          const src = logoImageURLs[record.id];
+          return src ? { src, alt: `${record.service} logo`, fit: "contain" } : undefined;
         },
       ),
-    [logoImageURLs, logos.data],
+    [logoImageURLs],
   );
   return (
     <>
@@ -183,13 +145,11 @@ function ServiceAccountDetail({
   onAttachment: (metadata: import("../../types").FileMetadata | null) => Promise<void>;
   onPatch: (values: Partial<ServiceAccount>) => Promise<void>;
 }) {
-  const logos = useServiceLogosQuery(true);
-  const legacyLogo = logos.data?.find((logo) => logo.logoKey === record.logoKey);
   return (
     <article className="address-detail">
       <EditableRecordFields className="address-fields" fields={serviceAccountEditableFields(record, onPatch)} />
       <AttachmentControl
-        fileMetadataID={record.logoFileMetadataID ?? legacyLogo?.fileMetadataID}
+        fileMetadataID={record.logoFileMetadataID}
         ownerType="ServiceAccount"
         ownerID={String(record.id)}
         label="Service logo"

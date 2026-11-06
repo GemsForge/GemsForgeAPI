@@ -11,7 +11,6 @@ const mocks = vi.hoisted(() => ({
   account: {
     id: 7,
     service: "Internet",
-    logoKey: null,
     type: "Utility",
     expenseGroup: "Home",
     monthlyAmount: 80,
@@ -103,16 +102,13 @@ describe("ServiceAccountsView", () => {
     mocks.account.emailUpdated = null;
   });
 
-  it("explains why legacy logo and address relationship values stay read-only", async () => {
+  it("explains why the address relationship stays read-only", async () => {
     renderView();
     await openDetails();
     expect(
-      await screen.findByText("Legacy logo lookup relationship; no validated selector is available."),
-    ).toBeInTheDocument();
-    expect(
       screen.getByText("Legacy address value; no normalized, validated address selector is available."),
     ).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Edit logo key" })).not.toBeInTheDocument();
+    expect(screen.queryByText(/logo lookup relationship/i)).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Edit associated address" })).not.toBeInTheDocument();
   });
 });
