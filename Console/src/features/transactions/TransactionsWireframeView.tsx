@@ -4,7 +4,6 @@ import { useExpenseCategoriesQuery, useExpenseSubcategoriesQuery, useMerchantsQu
 import { createTransactionTableAdapter } from "../database/recordTableAdapters";
 import { WireframeCollectionView } from "../workspace/WireframeCollectionView";
 import { TransactionsInspector } from "./TransactionsInspector";
-import { TransactionRelationSettings } from "./TransactionRelationSettings";
 import { useTablePropertyDefinitionsQuery } from "../../data/workflowQueries";
 import { useTransactionRecordActions } from "./useTransactionRecordActions";
 import type { RecordPropertyDefinition } from "../../table-kit";
@@ -64,8 +63,6 @@ export function TransactionsWireframeView({ records }: { records: readonly Expen
         activeCollection: "Expense Tracker",
         records,
         properties,
-        propertySettingsExtension: (property) =>
-          property.id === "category" || property.id === "subcategory" ? <TransactionRelationSettings /> : null,
         newRecordUtility: recordActions.actions.newRecordUtility,
         searchValues: (record) => [
           record.item,

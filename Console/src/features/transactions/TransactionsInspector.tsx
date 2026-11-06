@@ -9,6 +9,7 @@ import {
 } from "../../data/workflowQueries";
 import { useTransactionPatchMutation } from "../../data/recordQueries";
 import type { RecordPropertyDefinition } from "../../table-kit";
+import { TransactionRelationSettings } from "./TransactionRelationSettings";
 import { WireframeSchemaInspector } from "../workspace/WireframeSchemaInspector";
 
 function RelationPicker({
@@ -178,18 +179,29 @@ export function TransactionsInspector({
       } satisfies RecordPropertyDefinition<ExpenseTransaction>;
     });
 
+  const settings = (
+    <details className="transaction-relations-disclosure">
+      <summary>Relations and lookups</summary>
+      <TransactionRelationSettings />
+    </details>
+  );
+
   if (definitions.isError || values.isError) {
     return (
       <>
+        {settings}
         <p role="status">Related properties could not be loaded.</p>
         <WireframeSchemaInspector record={record} properties={properties} />
       </>
     );
   }
   return (
-    <WireframeSchemaInspector
-      record={record}
-      properties={[...enriched, ...lookupProperties, ...(schemaProperties ?? [])]}
-    />
+    <>
+      {settings}
+      <WireframeSchemaInspector
+        record={record}
+        properties={[...enriched, ...lookupProperties, ...(schemaProperties ?? [])]}
+      />
+    </>
   );
 }

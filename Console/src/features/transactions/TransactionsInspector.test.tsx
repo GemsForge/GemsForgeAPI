@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { TamaguiProvider } from "tamagui";
 import { MemoryRouter, useLocation } from "react-router-dom";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { tamaguiConfig } from "@gemsforge/ui";
 import { api } from "../../api";
 import type { ExpenseTransaction, TablePropertyDefinition } from "../../types";
@@ -114,9 +114,69 @@ function LocationProbe() {
   return <output data-testid="location">{location.pathname}</output>;
 }
 
+beforeEach(() => {
+  vi.spyOn(api, "getSchemaPageTables").mockResolvedValue({
+    tables: [
+      {
+        name: "BudgetCategories",
+        columns: [
+          { name: "CategoryID", dataType: "INTEGER", nullable: false, primaryKey: true, defaultValue: null },
+          { name: "HubID", dataType: "TEXT", nullable: false, primaryKey: false, defaultValue: null },
+          { name: "Category", dataType: "TEXT", nullable: false, primaryKey: false, defaultValue: null },
+          { name: "CategoryType", dataType: "TEXT", nullable: true, primaryKey: false, defaultValue: null },
+        ],
+      },
+      {
+        name: "BudgetSubcategories",
+        columns: [
+          { name: "SubcategoryID", dataType: "INTEGER", nullable: false, primaryKey: true, defaultValue: null },
+          { name: "HubID", dataType: "TEXT", nullable: false, primaryKey: false, defaultValue: null },
+          { name: "CategoryID", dataType: "INTEGER", nullable: false, primaryKey: false, defaultValue: null },
+          { name: "Subcategory", dataType: "TEXT", nullable: false, primaryKey: false, defaultValue: null },
+        ],
+      },
+    ],
+    availableTables: [],
+  });
+});
+
 afterEach(() => vi.restoreAllMocks());
 
 describe("TransactionsInspector relations and lookups", () => {
+  it("exposes relation configuration from the custom Transactions inspector", async () => {
+    vi.spyOn(api, "getTablePropertyDefinitions").mockResolvedValue([]);
+    vi.spyOn(api, "getTablePropertyValues").mockResolvedValue([]);
+    vi.spyOn(api, "getRelatedRecordOptions").mockResolvedValue([{ id: "1", name: "Food" }]);
+    const saveSpy = vi.spyOn(api, "saveTablePropertyDefinitions").mockResolvedValue(definitions.slice(0, 2));
+
+    setup();
+    fireEvent.click(screen.getByText("Relations and lookups"));
+
+    expect(await screen.findByText("Related table: BudgetCategories")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Save relations and lookups" }));
+
+    await waitFor(() => expect(saveSpy).toHaveBeenCalledOnce());
+    expect(saveSpy).toHaveBeenCalledWith(
+      "Transactions",
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "transaction-category",
+          sourceColumnName: "CategoryID",
+          targetTableName: "BudgetCategories",
+        }),
+        expect.objectContaining({
+          id: "transaction-subcategory",
+          sourceColumnName: "SubcategoryID",
+          targetTableName: "BudgetSubcategories",
+        }),
+      ]),
+    );
+    const categorySearch = await screen.findByRole("button", { name: "Search related Category" });
+    fireEvent.click(categorySearch);
+    expect(await screen.findByRole("searchbox", { name: "Search Category records" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Search related Subcategory" })).toBeInTheDocument();
+  });
+
   it("links related records, shows computed lookups, and searches options before saving their IDs", async () => {
     vi.spyOn(api, "getTablePropertyDefinitions").mockResolvedValue(definitions);
     vi.spyOn(api, "getTablePropertyValues").mockResolvedValue([

@@ -2950,6 +2950,18 @@ dialog::backdrop {
   gap: 0.55rem;
   min-width: 0;
 }
+.transaction-relations-disclosure {
+  display: grid;
+  gap: 0.55rem;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid var(--line);
+}
+.transaction-relations-disclosure > summary {
+  color: var(--ink);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
 .transaction-relation-settings h3 {
   margin: 0.25rem 0 0;
   color: var(--ink);
