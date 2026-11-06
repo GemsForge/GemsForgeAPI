@@ -190,6 +190,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
   const pendingSelectedID = useRef<string | null>(null);
   const skipWorkspaceSaveOnce = useRef(false);
   const lastSavedWorkspaceState = useRef("");
+  const workspaceSaveTimer = useRef<number | null>(null);
   useEffect(() => {
     if (!savedViewsQuery.isSuccess || workspaceHydrated.current) return;
     workspaceHydrated.current = true;
@@ -304,45 +305,51 @@ export function WireframeCollectionView<T extends WireframeRecord>({
     setSelectedID(null);
     setWorkspaceSelectionRevision((revision) => revision + 1);
   }, [activeRecords, savedViewsQuery.isSuccess]);
+  const workspaceStateSnapshot: WireframeWorkspaceState = {
+    title: tableTitle,
+    description: tableDescription,
+    activeViewId: view,
+    selectedRecordId: workspaceSelectedID,
+    galleryCardSize,
+    galleryFillMedia,
+    galleryImageSelection,
+    query,
+    sort,
+    direction,
+    filter,
+    groupBy,
+    pageIndex,
+    pageSize,
+    tableIcon,
+    propertyIcons,
+    propertyTypes,
+    propertySelectOptions,
+    dateConfigurations,
+    propertyConfigurations,
+    ...(inspectorPropertyOrder ? { inspectorPropertyOrder } : {}),
+  };
   useEffect(() => {
     if (!workspaceHydrated.current || pendingSelectedID.current) return;
     if (skipWorkspaceSaveOnce.current) {
       skipWorkspaceSaveOnce.current = false;
       return;
     }
-    const state: WireframeWorkspaceState = {
-      title: tableTitle,
-      description: tableDescription,
-      activeViewId: view,
-      selectedRecordId: workspaceSelectedID,
-      galleryCardSize,
-      galleryFillMedia,
-      galleryImageSelection,
-      query,
-      sort,
-      direction,
-      filter,
-      groupBy,
-      pageIndex,
-      pageSize,
-      tableIcon,
-      propertyIcons,
-      propertyTypes,
-      propertySelectOptions,
-      dateConfigurations,
-      propertyConfigurations,
-      ...(inspectorPropertyOrder ? { inspectorPropertyOrder } : {}),
-    };
-    const serialized = JSON.stringify(state);
+    const serialized = JSON.stringify(workspaceStateSnapshot);
     if (serialized === lastSavedWorkspaceState.current) return;
+    if (workspaceSaveTimer.current !== null) window.clearTimeout(workspaceSaveTimer.current);
     const timer = window.setTimeout(() => {
+      workspaceSaveTimer.current = null;
       lastSavedWorkspaceState.current = serialized;
       const viewType = view === "gallery" ? "Gallery" : view === "table" ? "Table" : "List";
       void saveWorkspaceStateAsync({ viewType, workspaceState: serialized }).catch(() => {
         lastSavedWorkspaceState.current = "";
       });
     }, 250);
-    return () => window.clearTimeout(timer);
+    workspaceSaveTimer.current = timer;
+    return () => {
+      window.clearTimeout(timer);
+      if (workspaceSaveTimer.current === timer) workspaceSaveTimer.current = null;
+    };
   }, [
     tableTitle,
     tableDescription,
@@ -608,7 +615,20 @@ export function WireframeCollectionView<T extends WireframeRecord>({
   };
   const saveDateConfiguration = (propertyID: string, configuration: WireframeDateConfiguration) => {
     skipWorkspaceSaveOnce.current = false;
-    setDateConfigurations((current) => ({ ...current, [propertyID]: configuration }));
+    const nextDateConfigurations = { ...dateConfigurations, [propertyID]: configuration };
+    setDateConfigurations(nextDateConfigurations);
+    if (!workspaceHydrated.current) return;
+
+    if (workspaceSaveTimer.current !== null) {
+      window.clearTimeout(workspaceSaveTimer.current);
+      workspaceSaveTimer.current = null;
+    }
+    const serialized = JSON.stringify({ ...workspaceStateSnapshot, dateConfigurations: nextDateConfigurations });
+    lastSavedWorkspaceState.current = serialized;
+    const viewType = view === "gallery" ? "Gallery" : view === "table" ? "Table" : "List";
+    void saveWorkspaceStateAsync({ viewType, workspaceState: serialized }).catch(() => {
+      lastSavedWorkspaceState.current = "";
+    });
   };
   const reorderInspectorProperties = (order: string[], announcement: string) => {
     skipWorkspaceSaveOnce.current = false;
