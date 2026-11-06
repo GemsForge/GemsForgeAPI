@@ -9,7 +9,7 @@ describe("GStructuralField", () => {
     const onSearchChange = vi.fn();
     const onSelect = vi.fn();
     render(
-      <TamaguiProvider config={tamaguiConfig} defaultTheme="light">
+      <TamaguiProvider config={tamaguiConfig} defaultTheme="dark">
         <GStructuralField
           kind={kind}
           label="Category"
@@ -24,6 +24,7 @@ describe("GStructuralField", () => {
     const search = screen.getByRole("searchbox", {
       name: kind === "relation" ? "Search Category records" : "Search records for Category",
     });
+    expect(screen.getByRole("option", { name: "Food" })).toBeVisible();
     fireEvent.change(search, { target: { value: "foo" } });
     expect(onSearchChange).toHaveBeenCalledWith("foo");
     fireEvent.click(screen.getByRole("option", { name: "Food" }));

@@ -1,4 +1,4 @@
-import { SizableText, YStack } from "tamagui";
+import { SizableText, Theme, YStack } from "tamagui";
 import { GemButton } from "./GemButton";
 import { GSearchField } from "./GSearchField";
 
@@ -42,36 +42,43 @@ export function GStructuralField({
   const searchLabel = kind === "relation" ? `Search ${label} records` : `Search records for ${label}`;
 
   return (
-    <YStack className="g-structural-field" gap="$1" aria-label={`${kind} ${label}`}>
-      <GSearchField
-        label={searchLabel}
-        value={search}
-        onChange={onSearchChange}
-        loading={loading}
-        placeholder={`Search ${label.toLowerCase()}…`}
-      />
-      {error ? <SizableText role="alert">{error}</SizableText> : null}
-      <div className="g-structural-field-options" role="listbox" aria-label={`${label} results`}>
-        {options.map((option) => (
-          <GemButton
-            key={option.value}
-            type="button"
-            variant={option.value === selectedValue ? "outlined" : "quiet"}
-            tone="secondary"
-            role="option"
-            aria-selected={option.value === selectedValue}
-            onPress={() => onSelect(option)}
-          >
-            {option.label}
+    <Theme name="light">
+      <YStack className="g-structural-field" gap="$1" aria-label={`${kind} ${label}`}>
+        <GSearchField
+          label={searchLabel}
+          value={search}
+          onChange={onSearchChange}
+          loading={loading}
+          placeholder={`Search ${label.toLowerCase()}…`}
+        />
+        {error ? <SizableText role="alert">{error}</SizableText> : null}
+        <div className="g-structural-field-options" role="listbox" aria-label={`${label} results`}>
+          {options.map((option) => (
+            <GemButton
+              key={option.value}
+              type="button"
+              variant={option.value === selectedValue ? "outlined" : "quiet"}
+              tone="secondary"
+              role="option"
+              aria-selected={option.value === selectedValue}
+              minHeight="$3"
+              width="100%"
+              justifyContent="flex-start"
+              onPress={() => onSelect(option)}
+            >
+              <SizableText color="$wireframeInk" fontSize="$2" width="100%" textAlign="left">
+                {option.label}
+              </SizableText>
+            </GemButton>
+          ))}
+          {!loading && !error && options.length === 0 ? <SizableText>{emptyMessage}</SizableText> : null}
+        </div>
+        {kind === "relation" && nullable && onClear ? (
+          <GemButton type="button" variant="quiet" tone="secondary" onPress={onClear}>
+            Clear relation
           </GemButton>
-        ))}
-        {!loading && !error && options.length === 0 ? <SizableText>{emptyMessage}</SizableText> : null}
-      </div>
-      {kind === "relation" && nullable && onClear ? (
-        <GemButton type="button" variant="quiet" tone="secondary" onPress={onClear}>
-          Clear relation
-        </GemButton>
-      ) : null}
-    </YStack>
+        ) : null}
+      </YStack>
+    </Theme>
   );
 }
