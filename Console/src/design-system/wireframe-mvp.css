@@ -569,7 +569,7 @@
 }
 
 .wireframe-page-banner {
-  max-width: 58rem;
+  max-width: 36rem;
   margin-top: 0.6rem;
   padding: 0.55rem 0.75rem;
   border: 1px solid var(--gem-wireframe-border, #d9dfdc);
