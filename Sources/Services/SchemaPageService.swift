@@ -20,6 +20,11 @@ struct SchemaPageRecordsResponse: Content, Sendable {
     let offset: Int
 }
 
+struct SchemaPageRecordResponse: Content, Sendable {
+    let table: SchemaPageTableResponse
+    let row: [String: String?]
+}
+
 struct SchemaPageRecordCreationResponse: Content, Sendable {
     let table: String
     let recordID: String
@@ -150,6 +155,49 @@ struct SchemaPageService: Sendable {
             limit: limit,
             offset: offset
         )
+    }
+
+    /// Reads one exact Hub-owned record by its table primary key.
+    func record(tableName: String, recordID: String) async throws -> SchemaPageRecordResponse {
+        guard let sql = database as? SQLDatabase else { throw SchemaPageError.unavailableDatabase }
+        let schema = try await LiveSchemaService(database: database).inspect()
+        guard let table = schema.tables.first(where: { $0.name == tableName }),
+              Self.isSchemaPageTable(table),
+              let primaryKey = table.columns.first(where: \.primaryKey)
+        else { throw SchemaPageError.tableUnavailable }
+
+        var query = SQLQueryString("SELECT ")
+        for (index, column) in table.columns.enumerated() {
+            if index > 0 { query.appendInterpolation(unsafeRaw: ", ") }
+            query.appendInterpolation(unsafeRaw: "CASE WHEN ")
+            query.appendInterpolation(ident: column.name)
+            query.appendInterpolation(unsafeRaw: " IS NULL THEN NULL WHEN typeof(")
+            query.appendInterpolation(ident: column.name)
+            query.appendInterpolation(unsafeRaw: ") = 'blob' THEN '[Binary data]' ELSE CAST(")
+            query.appendInterpolation(ident: column.name)
+            query.appendInterpolation(unsafeRaw: " AS TEXT) END AS ")
+            query.appendInterpolation(ident: column.name)
+        }
+        query.appendInterpolation(unsafeRaw: " FROM ")
+        query.appendInterpolation(ident: tableName)
+        query.appendInterpolation(unsafeRaw: " WHERE ")
+        query.appendInterpolation(ident: primaryKey.name)
+        query.appendInterpolation(unsafeRaw: " = ")
+        if primaryKey.dataType.uppercased().contains("INT"), let integerID = Int64(recordID) {
+            query.appendInterpolation(bind: integerID)
+        } else if primaryKey.dataType.uppercased().contains("INT") {
+            throw SchemaPageError.invalidRecord("Record ID must be a valid integer.")
+        } else {
+            query.appendInterpolation(bind: recordID)
+        }
+        query.appendInterpolation(unsafeRaw: " AND ")
+        query.appendInterpolation(ident: "HubID")
+        query.appendInterpolation(unsafeRaw: " = ")
+        query.appendInterpolation(bind: hubID)
+        guard let row = try await sql.raw(query).first() else { throw SchemaPageError.invalidRecord("The record is unavailable to this Hub.") }
+        var values: [String: String?] = [:]
+        for column in table.columns { values[column.name] = try row.decode(column: column.name, as: String?.self) }
+        return SchemaPageRecordResponse(table: SchemaPageTableResponse(name: table.name, columns: table.columns), row: values)
     }
 
     /// Creates one row using the inspected table contract and assigns its Hub ownership on the server.

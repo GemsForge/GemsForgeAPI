@@ -144,7 +144,7 @@ final class SchemaPageServiceTests: XCTestCase {
             let tokenA = try await self.seedSession(on: app.db, accountID: "account-a", hubID: "hub-a")
             guard let sql = app.db as? SQLDatabase else { return XCTFail("Expected SQLite SQL database.") }
             try await sql.raw("INSERT INTO SchemaPageFixture (ID, HubID, Name, Quantity) VALUES ('fixture-a', 'hub-a', 'Saved goal', 1), ('fixture-b', 'hub-b', 'Other Hub goal', 2)").run()
-            try await sql.raw("INSERT INTO IntegerSchemaPageFixture (ID, HubID, Name) VALUES (12, 'hub-a', 'Integer keyed record')").run()
+            try await sql.raw("INSERT INTO IntegerSchemaPageFixture (ID, HubID, Name) VALUES (12, 'hub-a', 'Integer keyed record'), (13, 'hub-b', 'Other Hub record')").run()
 
             try await app.test(.POST, "schema-builder/tables/SchemaPageFixture/page", beforeRequest: {
                 $0.headers.bearerAuthorization = .init(token: tokenA)
@@ -158,6 +158,18 @@ final class SchemaPageServiceTests: XCTestCase {
                 let pages = try response.content.decode(SchemaPageTablesResponse.self)
                 XCTAssertEqual(pages.tables.map(\.name), ["Education", "SchemaPageFixture"])
                 XCTAssertEqual(pages.availableTables.map(\.name), ["IntegerSchemaPageFixture"])
+            }
+            try await app.test(.GET, "schema-builder/tables/IntegerSchemaPageFixture/records/12", beforeRequest: {
+                $0.headers.bearerAuthorization = .init(token: tokenA)
+            }) { response async throws in
+                XCTAssertEqual(response.status, .ok)
+                let result = try response.content.decode(SchemaPageRecordResponse.self)
+                XCTAssertEqual(result.row["Name"]!, "Integer keyed record")
+            }
+            try await app.test(.GET, "schema-builder/tables/IntegerSchemaPageFixture/records/13", beforeRequest: {
+                $0.headers.bearerAuthorization = .init(token: tokenA)
+            }) { response in
+                XCTAssertEqual(response.status, .notFound)
             }
             let workspaceState = #"{"activeViewId":"gallery","selectedRecordId":"fixture-a","search":"goal"}"#
             try await app.test(.PUT, "table-views/SchemaPageFixture/Gallery/workspace-state", beforeRequest: { request in
