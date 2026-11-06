@@ -1,8 +1,8 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { TamaguiProvider } from "tamagui";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { tamaguiConfig } from "@gemsforge/ui";
-import { WireframePropertyEditor } from "./WireframePropertyEditor";
+import { WireframePropertyEditor, WireframePropertyIconProvider } from "./WireframePropertyEditor";
 
 describe("WireframePropertyEditor metadata", () => {
   it("opens with the inferred currency type and dollar icon selected", () => {
@@ -46,5 +46,25 @@ describe("WireframePropertyEditor metadata", () => {
 
     expect(screen.queryByRole("dialog", { name: "Edit property" })).not.toBeInTheDocument();
     expect(trigger).toHaveFocus();
+  });
+
+  it("offers Relation and Lookup types and saves the chosen type with its icon", () => {
+    const onSave = vi.fn();
+    render(
+      <TamaguiProvider config={tamaguiConfig} defaultTheme="light">
+        <WireframePropertyIconProvider onSave={onSave} propertyTypes={{}}>
+          <WireframePropertyEditor label="Category" value="Food" propertyID="category" />
+        </WireframePropertyIconProvider>
+      </TamaguiProvider>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Edit Category property" }));
+    fireEvent.click(screen.getByRole("combobox", { name: "Primitive type" }));
+    expect(screen.getByRole("option", { name: "Relation" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Lookup" })).toBeInTheDocument();
+    fireEvent.keyDown(screen.getByRole("option", { name: "Relation" }), { key: "Enter" });
+    fireEvent.click(screen.getByRole("button", { name: "Save property settings" }));
+
+    expect(onSave).toHaveBeenCalledWith("category", expect.any(String), "Relation");
   });
 });

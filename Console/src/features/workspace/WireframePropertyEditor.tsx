@@ -16,7 +16,10 @@ import { GemButton, GemCaption } from "@gemsforge/ui";
 import { GemTextField } from "@gemsforge/ui";
 import { GSelectField } from "@gemsforge/ui";
 
-export const WireframePropertyIconContext = createContext<((propertyID: string, icon: string) => void) | null>(null);
+export const WireframePropertyIconContext = createContext<
+  ((propertyID: string, icon: string, type: string) => void) | null
+>(null);
+export const WireframePropertyTypeContext = createContext<Readonly<Record<string, string>>>({});
 
 export function keepDialogTabFocus(event: ReactKeyboardEvent<HTMLElement>, dialog: HTMLElement) {
   if (event.key !== "Tab") return;
@@ -44,11 +47,17 @@ export function keepDialogTabFocus(event: ReactKeyboardEvent<HTMLElement>, dialo
 export function WireframePropertyIconProvider({
   children,
   onSave,
+  propertyTypes,
 }: {
   children: ReactNode;
-  onSave: (propertyID: string, icon: string) => void;
+  onSave: (propertyID: string, icon: string, type: string) => void;
+  propertyTypes: Readonly<Record<string, string>>;
 }) {
-  return <WireframePropertyIconContext.Provider value={onSave}>{children}</WireframePropertyIconContext.Provider>;
+  return (
+    <WireframePropertyIconContext.Provider value={onSave}>
+      <WireframePropertyTypeContext.Provider value={propertyTypes}>{children}</WireframePropertyTypeContext.Provider>
+    </WireframePropertyIconContext.Provider>
+  );
 }
 
 export function WireframePropertyEditor({
@@ -188,7 +197,7 @@ export function WireframePropertyEditor({
                       variant="outlined"
                       aria-label="Save property settings"
                       onClick={() => {
-                        if (propertyID) savePropertyIcon?.(propertyID, icon);
+                        if (propertyID) savePropertyIcon?.(propertyID, icon, type);
                         setOpen(false);
                       }}
                     >

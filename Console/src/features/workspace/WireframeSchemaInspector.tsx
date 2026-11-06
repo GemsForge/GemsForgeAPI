@@ -1,6 +1,8 @@
 import { formatRecordNumber, inferRecordNumberFormat, type RecordPropertyDefinition } from "../../table-kit";
 import { WireframeRecordInspector, type WireframeInspectorField } from "./WireframeRecordInspector";
 import { inferWireframePropertyMetadata } from "./propertyMetadata";
+import { useContext } from "react";
+import { WireframePropertyTypeContext } from "./WireframePropertyEditor";
 
 function editorKind(
   kind: RecordPropertyDefinition<unknown>["kind"],
@@ -25,6 +27,7 @@ export function WireframeSchemaInspector<Record extends object>({
   record: Record;
   properties: readonly RecordPropertyDefinition<Record>[];
 }) {
+  const propertyTypes = useContext(WireframePropertyTypeContext);
   const seen = new Set<string>();
   const seenSourceFields = new Set<string>();
   const fields = properties
@@ -54,11 +57,26 @@ export function WireframeSchemaInspector<Record extends object>({
         label: property.label,
         kind: metadataKind,
         numberFormat: property.numberFormat,
-        propertyType: property.propertyType,
+        propertyType: propertyTypes[property.id] ?? property.propertyType,
         iconName: property.iconName,
       });
-      const resolvedKind: WireframeInspectorField["kind"] =
-        metadata.type === "URL" ? "url" : metadata.type === "Email" ? "email" : kind;
+      const typeKind: Partial<{ [typeName: string]: WireframeInspectorField["kind"] }> = {
+        Text: "text",
+        Name: "text",
+        Notes: "textarea",
+        Select: "select",
+        "Multi-select": "select",
+        Tags: "select",
+        Status: "status",
+        Number: "number",
+        Currency: "number",
+        Percent: "number",
+        Date: "date",
+        URL: "url",
+        Relation: property.kind === "relation" ? "relation" : undefined,
+        Lookup: property.kind === "lookup" ? "lookup" : undefined,
+      };
+      const resolvedKind: WireframeInspectorField["kind"] = typeKind[metadata.type] ?? kind;
       const displayValue = property.getValue(record).display;
       const propertyValue = property.getValue(record);
       const linkedDisplayValue =
@@ -102,9 +120,9 @@ export function WireframeSchemaInspector<Record extends object>({
         propertyType: metadata.type,
         iconName: metadata.iconName,
         numberFormat: property.numberFormat,
-        nullable: edit?.nullable,
-        options: edit?.options?.map((option) => ({ value: option.value, label: option.label })),
         onCommit: edit ? async (next: string) => edit.onSave(record, next) : undefined,
+        options: edit?.options?.map((option) => ({ value: option.value, label: option.label })),
+        nullable: edit?.nullable,
         renderEditor: edit?.renderEditor,
       } satisfies WireframeInspectorField;
     });

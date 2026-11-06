@@ -74,6 +74,7 @@ type WireframeWorkspaceState = {
   pageSize?: number;
   tableIcon?: string;
   propertyIcons?: Record<string, string>;
+  propertyTypes?: Record<string, string>;
   propertyConfigurations?: Record<string, TablePropertyConfiguration>;
   inspectorPropertyOrder?: string[];
 };
@@ -124,6 +125,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
   });
   const tableIconDirty = useRef(false);
   const [propertyIcons, setPropertyIcons] = useState<Record<string, string>>({});
+  const [propertyTypes, setPropertyTypes] = useState<Record<string, string>>({});
   const [propertyConfigurations, setPropertyConfigurations] = useState<Record<string, TablePropertyConfiguration>>({});
   const [inspectorPropertyOrder, setInspectorPropertyOrder] = useState<string[]>();
   const [inspectorSortAnnouncement, setInspectorSortAnnouncement] = useState("");
@@ -242,6 +244,15 @@ export function WireframeCollectionView<T extends WireframeRecord>({
         ),
       );
     }
+    if (state.propertyTypes && typeof state.propertyTypes === "object") {
+      setPropertyTypes(
+        Object.fromEntries(
+          Object.entries(state.propertyTypes).filter(
+            (entry): entry is [string, string] => typeof entry[1] === "string",
+          ),
+        ),
+      );
+    }
     if (state.propertyConfigurations && typeof state.propertyConfigurations === "object") {
       setPropertyConfigurations(state.propertyConfigurations);
     }
@@ -289,6 +300,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
       pageSize,
       tableIcon,
       propertyIcons,
+      propertyTypes,
       propertyConfigurations,
       ...(inspectorPropertyOrder ? { inspectorPropertyOrder } : {}),
     };
@@ -319,6 +331,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
     pageSize,
     tableIcon,
     propertyIcons,
+    propertyTypes,
     propertyConfigurations,
     inspectorPropertyOrder,
     workspaceSelectionRevision,
@@ -527,12 +540,12 @@ export function WireframeCollectionView<T extends WireframeRecord>({
     propertyDetailsTriggerRef.current = trigger;
     const metadata = inferWireframePropertyMetadata({
       label: details.label,
-      propertyType: details.type,
+      propertyType: propertyTypes[details.id] ?? details.type,
       iconName: details.icon,
     });
     setPropertyDetails({
       ...details,
-      type: metadata.type,
+      type: propertyTypes[details.id] ?? metadata.type,
       icon: propertyIcons[details.id] ?? metadata.iconName,
       statusText: details.value,
       colorToken: "mint",
@@ -554,9 +567,10 @@ export function WireframeCollectionView<T extends WireframeRecord>({
       if (propertyDetailsTriggerRef.current?.isConnected) propertyDetailsTriggerRef.current.focus();
     };
   }, [propertyDetailsOpen]);
-  const savePropertyIcon = (propertyID: string, icon: string) => {
+  const savePropertyIcon = (propertyID: string, icon: string, type: string) => {
     skipWorkspaceSaveOnce.current = false;
     setPropertyIcons((current) => ({ ...current, [propertyID]: icon }));
+    setPropertyTypes((current) => ({ ...current, [propertyID]: type }));
   };
   const reorderInspectorProperties = (order: string[], announcement: string) => {
     skipWorkspaceSaveOnce.current = false;
@@ -669,7 +683,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
               }
             }}
           />
-          <WireframePropertyIconProvider onSave={savePropertyIcon}>
+          <WireframePropertyIconProvider onSave={savePropertyIcon} propertyTypes={propertyTypes}>
             <WireframeInspector node={config.inspector(selected, schemaProperties)} options={inspectorRenderOptions} />
           </WireframePropertyIconProvider>
         </WireframeRecordPageView>
@@ -1118,7 +1132,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
           onChange={setPropertyDetails}
           onClose={() => setPropertyDetails(null)}
           onSave={() => {
-            savePropertyIcon(propertyDetails.id, propertyDetails.icon);
+            savePropertyIcon(propertyDetails.id, propertyDetails.icon, propertyDetails.type);
             setPropertyDetails(null);
           }}
         >

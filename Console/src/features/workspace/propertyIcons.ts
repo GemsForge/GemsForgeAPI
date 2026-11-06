@@ -130,6 +130,8 @@ export function inferWireframePropertyType(
   if (kind === "url") return "URL";
   if (kind === "image") return "Image";
   if (kind === "media") return "Media";
+  if (kind === "relation") return "Relation";
+  if (kind === "lookup") return "Lookup";
 
   if (numberFormat === "currency") return "Currency";
   if (numberFormat === "percent") return "Percent";

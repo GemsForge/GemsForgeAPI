@@ -30,6 +30,8 @@ export const WIREFRAME_PROPERTY_TYPES = [
   "Notes",
   "Image",
   "Media",
+  "Relation",
+  "Lookup",
 ] as const;
 
 /** Resolve inspector type and icon once for every schema-driven wireframe. */
