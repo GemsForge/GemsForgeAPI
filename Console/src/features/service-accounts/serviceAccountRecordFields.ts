@@ -47,11 +47,6 @@ export function serviceAccountEditableFields(
   return [
     ...fields,
     {
-      label: "Legacy logo lookup relationship",
-      value: record.logoKey,
-      readOnlyReason: "Legacy logo lookup relationship; no validated selector is available.",
-    },
-    {
       label: "Email updated",
       value: record.emailUpdated,
       inputType: "boolean",

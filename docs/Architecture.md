@@ -117,7 +117,6 @@ GemsForgeAPI/
 │   │   ├── EmojiLabelDefinitionRoutes.swift
 │   │   ├── FileMetadataRoutes.swift
 │   │   ├── ServiceAccountRoutes.swift
-│   │   ├── ServiceLogoRoutes.swift
 │   │   ├── ForgeKeeperRoutes.swift
 │   │   └── GemHueRoutes.swift
 │   └── Services/
@@ -131,7 +130,6 @@ GemsForgeAPI/
 │       ├── EmojiLabelDefinitionService.swift
 │       ├── FileMetadataService.swift
 │       ├── ServiceAccountService.swift
-│       ├── ServiceLogoService.swift
 │       ├── ForgeKeeperService.swift
 │       └── GemHueService.swift
 ├── Tests/
@@ -145,7 +143,7 @@ GemsForgeAPI/
 │       ├── EmojiLabelDefinitionRouteTests.swift
 │       ├── FileMetadataRouteTests.swift
 │       ├── ServiceAccountRouteTests.swift
-│       └── ServiceLogoRouteTests.swift
+│       └── BackfillServiceAccountLogoFileMetadataTests.swift
 └── docs/
     ├── Architecture.md
     ├── Database-Migrations.md
@@ -352,24 +350,11 @@ or alter the real `Services` table at startup. See
 [`Service-Accounts.md`](Service-Accounts.md) for the field map and relationship
 boundary.
 
-Service Logos map the existing `ServiceLogoAssets` table. The current table
-contains legacy image BLOBs, so the API returns metadata for list/detail
-responses and serves bytes only through an explicit image route. The model is
-not `Content`, preventing accidental BLOB embedding. A future schema change
-can connect the asset to FileMetadata without altering this compatibility
-boundary.
-
-Service Logo feature files are organized with the other table-backed features:
-
-- `Sources/Models/Table/ServiceLogoAsset.swift` maps the existing logo table.
-- `Sources/Services/ServiceLogoService.swift` owns read persistence.
-- `Sources/Routes/ServiceLogoRoutes.swift` exposes metadata and image routes.
-- `Sources/Migrations/CreateServiceLogoAssets.swift` supports isolated tests.
-- `Tests/GemsForgeAPITests/ServiceLogoRouteTests.swift` verifies the response
-  and missing-asset behavior.
-
-See [`Service-Logos.md`](Service-Logos.md) for the field map and migration
-boundary.
+Service logos are FileMetadata attachments referenced directly by
+`Services.LogoFileMetadataID`. A data migration copies existing associations
+from the legacy `ServiceLogoAssets` catalog. The legacy table remains available
+to the migration/bootstrap path; see
+[`Service-Logos.md`](Service-Logos.md) for its retirement boundary.
 
 Gem Hues are Foundation reference data rather than a domain child. Their table
 and image model, service, and routes live alongside the other table-backed

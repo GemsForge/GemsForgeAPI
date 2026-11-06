@@ -1,5 +1,4 @@
 import type { ServiceAccount } from "../../types";
-import { useServiceLogosQuery } from "../../data/lifeQueries";
 import type { RecordPropertyDefinition } from "../../table-kit";
 import { useServiceAccountPatchMutation } from "../../data/recordQueries";
 import { createServiceAccountTableAdapter } from "../database/recordTableAdapters";
@@ -12,8 +11,7 @@ import { useServiceAccountLogoURLs } from "./useServiceAccountLogoURLs";
 export function ServiceCatalogWireframeView({ records }: { records: readonly ServiceAccount[] }) {
   const recordActions = useServiceAccountRecordActions({ onCreated: () => undefined });
   const patch = useServiceAccountPatchMutation();
-  const logos = useServiceLogosQuery(true);
-  const logoURLs = useServiceAccountLogoURLs(records, logos.data);
+  const logoURLs = useServiceAccountLogoURLs(records);
   const adapter = createServiceAccountTableAdapter(
     (record) => {
       const src = logoURLs[record.id];

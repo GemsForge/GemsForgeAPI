@@ -7,7 +7,6 @@ import type { ServiceAccount } from "../../types";
 import { EditableRecordFields } from "../../components/EditableRecordFields";
 import { serviceAccountEditableFields } from "./serviceAccountRecordFields";
 import { RecordImport } from "../../components/RecordImport";
-import { useServiceLogosQuery } from "../../data/lifeQueries";
 import { useRecordUtilities } from "../../hooks/useRecordUtilities";
 import { DatabaseRecordCollection } from "../../components/DatabaseRecordCollection";
 import { createServiceAccountTableAdapter } from "../database/recordTableAdapters";
@@ -37,8 +36,7 @@ export function ServiceAccountsView({ records }: { records: ServiceAccount[] }) 
   const { publish, importConfig, actions, createForm } = useServiceAccountRecordActions({
     onCreated: setSelectedID,
   });
-  const logos = useServiceLogosQuery(true);
-  const logoImageURLs = useServiceAccountLogoURLs(records, logos.data);
+  const logoImageURLs = useServiceAccountLogoURLs(records);
   const tableAdapter = useMemo(
     () =>
       createServiceAccountTableAdapter(
@@ -147,13 +145,11 @@ function ServiceAccountDetail({
   onAttachment: (metadata: import("../../types").FileMetadata | null) => Promise<void>;
   onPatch: (values: Partial<ServiceAccount>) => Promise<void>;
 }) {
-  const logos = useServiceLogosQuery(true);
-  const legacyLogo = logos.data?.find((logo) => logo.logoKey === record.logoKey);
   return (
     <article className="address-detail">
       <EditableRecordFields className="address-fields" fields={serviceAccountEditableFields(record, onPatch)} />
       <AttachmentControl
-        fileMetadataID={record.logoFileMetadataID ?? legacyLogo?.fileMetadataID}
+        fileMetadataID={record.logoFileMetadataID}
         ownerType="ServiceAccount"
         ownerID={String(record.id)}
         label="Service logo"

@@ -77,6 +77,9 @@ struct HubOwnershipMigrationService: Sendable {
                     "UPDATE \(ident: table) SET \"HubID\" = \(bind: hubID) WHERE \"HubID\" IS NULL"
                 ).run()
             }
+            if self.tables.contains(ServiceAccount.schema), self.tables.contains(ServiceLogoAsset.schema) {
+                try await ServiceAccountLogoFileMetadataBackfill().run(on: transaction)
+            }
             return currentCounts
         }
 

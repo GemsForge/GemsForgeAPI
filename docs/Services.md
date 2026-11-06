@@ -259,18 +259,7 @@ than inferred from display names or duplicated into transaction rows.
 See [`Service-Accounts.md`](Service-Accounts.md) for the field map, endpoint
 contract, and migration boundary.
 
-## ServiceLogoService
-
-`ServiceLogoService` reads logo assets from the existing `ServiceLogoAssets`
-table. It returns the legacy image record to the route layer, where collection
-and detail responses are converted to metadata summaries and the binary is
-served only through the explicit image endpoint.
-
-The service provides:
-
-- `list()` for all logo assets ordered by `LogoKey`.
-- `find(id:)` for one logo asset by `LogoAssetID`.
-
-It does not alter the personal database or assume the future FileMetadata
-relationship. See [`Service-Logos.md`](Service-Logos.md) for the compatibility
-boundary and image response contract.
+Service logos are read from each `ServiceAccount.logoFileMetadataID` through
+the existing FileMetadata API. The old `ServiceLogoAssets` catalog is used only
+by the one-time reference backfill and legacy BLOB migration; it has no runtime
+read service or routes. See [`Service-Logos.md`](Service-Logos.md).

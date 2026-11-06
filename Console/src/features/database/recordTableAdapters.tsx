@@ -439,7 +439,7 @@ export function createTransactionTableAdapter(
 /** Default adapter retained for MVP consumers that do not provide lookups. */
 export const transactionTableAdapter = createTransactionTableAdapter();
 
-/** Create the service adapter while retaining the existing logo lookup and preview behavior. */
+/** Create the service adapter with logos supplied by each record's FileMetadata reference. */
 export function createServiceAccountTableAdapter(
   renderLogo: (record: ServiceAccount) => ReactNode,
   getLogoImage?: (record: ServiceAccount) => RecordImage | undefined,
@@ -468,7 +468,6 @@ export function createServiceAccountTableAdapter(
           sourceField: "expenseGroup",
           getValue: (record) => display(record.expenseGroup),
         },
-        { id: "logoKey", label: "Logo key", kind: "text", getValue: (record) => display(record.logoKey) },
         {
           id: "monthlyAmount",
           label: "Monthly amount",

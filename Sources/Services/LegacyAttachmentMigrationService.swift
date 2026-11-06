@@ -24,6 +24,7 @@ struct LegacyAttachmentMigrationService: Sendable {
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         let gemHueCount = try await migrateGemHueImages()
         let logoCount = try await migrateServiceLogos()
+        try await ServiceAccountLogoFileMetadataBackfill().run(on: database)
         return LegacyAttachmentMigrationResult(
             gemHueImagesMigrated: gemHueCount.migrated,
             serviceLogosMigrated: logoCount.migrated,

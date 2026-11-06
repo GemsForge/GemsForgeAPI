@@ -48,7 +48,7 @@ core migrations are registered in this order:
 Fluent runs `revert` in the opposite order so child tables are removed before
 their parent tables.
 
-The full local development profile currently applies these migrations in order:
+The local development profile includes the following table-creation migrations:
 
 ```text
 CreateAddresses
@@ -66,6 +66,11 @@ CreateForgeKeeper
 CreateGemHues
 CreateGemHueImages
 ```
+
+It also applies `BackfillServiceAccountLogoFileMetadata` after Hub ownership
+columns are present. The backfill copies existing logo file references onto
+their matching Service rows, scoped to the same Hub. The profile's full ordered
+migration list is maintained in `LocalDatabaseService.swift`.
 
 This profile is a test/development schema assembled from the repository's
 isolated migrations. It is intentionally different from connecting to the

@@ -16,7 +16,6 @@ final class ServiceAccountRouteTests: XCTestCase {
             let payload = ServiceAccountRequest(
                 id: nil,
                 service: "Example Streaming",
-                logoKey: "example-streaming",
                 type: "Subscription",
                 expenseGroup: "Fixed Bills (Obligations)",
                 monthlyAmount: 15.99,
@@ -55,7 +54,6 @@ final class ServiceAccountRouteTests: XCTestCase {
             let duplicateServiceKey = ServiceAccountRequest(
                 id: nil,
                 service: "Example Streaming Plus",
-                logoKey: nil,
                 type: nil,
                 expenseGroup: nil,
                 monthlyAmount: nil,
@@ -97,7 +95,6 @@ final class ServiceAccountRouteTests: XCTestCase {
             let updatedPayload = ServiceAccountRequest(
                 id: 1,
                 service: "Example Streaming",
-                logoKey: "example-streaming",
                 type: "Subscription",
                 expenseGroup: "Fixed Bills (Obligations)",
                 monthlyAmount: 17.99,
@@ -177,10 +174,16 @@ final class ServiceAccountRouteTests: XCTestCase {
                 XCTAssertEqual(response.status, .badRequest)
             }
 
+            try await app.test(.POST, "service-accounts", beforeRequest: { request in
+                request.headers.contentType = .json
+                request.body = ByteBuffer(string: #"{"service":"Example","logoKey":"legacy-logo"}"#)
+            }) { response in
+                XCTAssertEqual(response.status, .badRequest)
+            }
+
             let invalidPayload = ServiceAccountRequest(
                 id: nil,
                 service: " ",
-                logoKey: nil,
                 type: nil,
                 expenseGroup: nil,
                 monthlyAmount: -1,
@@ -223,7 +226,6 @@ final class ServiceAccountRouteTests: XCTestCase {
             let missingLogo = ServiceAccountRequest(
                 id: nil,
                 service: "Should Roll Back",
-                logoKey: nil,
                 type: nil,
                 expenseGroup: nil,
                 monthlyAmount: nil,
