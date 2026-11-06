@@ -2,7 +2,7 @@ import { Text } from "tamagui";
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { GemButton } from "@gemsforge/ui";
-import { useTableIconPreferences } from "../../data/presentationQueries";
+import { useTableNavigationPreferences } from "../../data/presentationQueries";
 import { useSchemaPageTablesQuery } from "../../data/workflowQueries";
 import { getPropertyIconByName } from "./propertyIcons";
 
@@ -17,6 +17,7 @@ const collections = [
 
 type WireframeCollectionLinksProps = {
   activeCollection: string;
+  activeCollectionTitle?: string;
   recordCount: number;
   counts: Record<string, number | undefined>;
   search: string;
@@ -26,6 +27,7 @@ type WireframeCollectionLinksProps = {
 
 export function WireframeCollectionLinks({
   activeCollection,
+  activeCollectionTitle,
   recordCount,
   counts,
   search,
@@ -46,11 +48,22 @@ export function WireframeCollectionLinks({
     }));
   const visibleItems = [...collections, ...schemaCollections];
   const normalizedSearch = search.trim().toLowerCase();
-  const iconPreferences = useTableIconPreferences(visibleItems.map((item) => item.tableName));
+  const navigationPreferences = useTableNavigationPreferences(visibleItems.map((item) => item.tableName));
   const searchTerms = normalizedSearch.split(/\s+/).filter(Boolean);
   const matchesSearch = (item: (typeof visibleItems)[number]) => {
     if (searchTerms.length === 0) return true;
-    if (searchTerms.every((term) => item.label.toLowerCase().includes(term))) return true;
+    const savedTitle = navigationPreferences[item.tableName]?.title;
+    const navigationLabel =
+      item.label === activeCollection && activeCollectionTitle?.trim()
+        ? activeCollectionTitle.trim()
+        : typeof savedTitle === "string" && savedTitle.trim()
+          ? savedTitle.trim()
+          : item.label;
+    if (
+      searchTerms.every((term) => navigationLabel.toLowerCase().includes(term)) ||
+      searchTerms.every((term) => item.label.toLowerCase().includes(term))
+    )
+      return true;
     return (
       recordsByCollection[item.label]?.some((record) => {
         let searchable = "";
@@ -84,9 +97,16 @@ export function WireframeCollectionLinks({
           </Link>
         </GemButton>
         {visibleCollections.map((item) => {
+          const savedTitle = navigationPreferences[item.tableName]?.title;
+          const displayLabel =
+            item.label === activeCollection && activeCollectionTitle?.trim()
+              ? activeCollectionTitle.trim()
+              : typeof savedTitle === "string" && savedTitle.trim()
+                ? savedTitle.trim()
+                : item.label;
           const saved =
-            typeof iconPreferences[item.tableName] === "string"
-              ? (iconPreferences[item.tableName] as string)
+            typeof navigationPreferences[item.tableName]?.icon === "string"
+              ? (navigationPreferences[item.tableName]?.icon as string)
               : typeof window !== "undefined"
                 ? window.localStorage.getItem(`gemsforge:table-icon:${item.tableName}`)
                 : null;
@@ -101,8 +121,8 @@ export function WireframeCollectionLinks({
             >
               <Link
                 to={item.to}
-                title={item.label}
-                aria-label={item.label}
+                title={displayLabel}
+                aria-label={displayLabel}
                 aria-current={item.label === activeCollection ? "page" : undefined}
               >
                 <span className="wireframe-collection-link-name">
@@ -113,7 +133,7 @@ export function WireframeCollectionLinks({
                       <Icon size={16} />
                     )}
                   </span>
-                  <span className="wireframe-navigation-label">{item.label}</span>
+                  <span className="wireframe-navigation-label">{displayLabel}</span>
                 </span>
                 <Text asChild>
                   <small>{item.label === activeCollection ? recordCount : (counts[item.label] ?? "—")}</small>

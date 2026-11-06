@@ -4,7 +4,7 @@ import { APIError, api } from "../api";
 export const presentationQueryKeys = {
   recordPresentations: (tableName: string) => ["record-presentations", tableName] as const,
   tableViews: (tableName: string) => ["table-views", tableName] as const,
-  tableViewIconPreference: (tableName: string) => ["table-view-icon-preference", tableName] as const,
+  tableViewNavigationPreference: (tableName: string) => ["table-view-navigation-preference", tableName] as const,
 };
 
 export function useRecordPresentationsQuery(tableName: string) {
@@ -78,11 +78,11 @@ export function useTableViewsQuery(tableName: string) {
   });
 }
 
-/** Load table icons for navigation without requiring each table page to be mounted. */
-export function useTableIconPreferences(tableNames: readonly string[]) {
+/** Load saved page titles and icons for navigation without mounting every table page. */
+export function useTableNavigationPreferences(tableNames: readonly string[]) {
   const results = useQueries({
     queries: tableNames.map((tableName) => ({
-      queryKey: presentationQueryKeys.tableViewIconPreference(tableName),
+      queryKey: presentationQueryKeys.tableViewNavigationPreference(tableName),
       queryFn: async ({ signal }: { signal: AbortSignal }) => {
         const views = await Promise.all(
           (["List", "Gallery", "Table"] as const).map(async (viewType) => {
@@ -98,23 +98,24 @@ export function useTableIconPreferences(tableNames: readonly string[]) {
           .filter((view): view is NonNullable<typeof view> => view !== null && Boolean(view.view.workspaceState))
           .map((view) => {
             try {
+              const state = JSON.parse(view.view.workspaceState!) as { tableIcon?: unknown; title?: unknown };
               return {
                 updatedAt: Date.parse(view.view.updatedAt ?? ""),
-                icon: (JSON.parse(view.view.workspaceState!) as { tableIcon?: unknown }).tableIcon,
+                icon: state.tableIcon,
+                title: state.title,
               };
             } catch {
               return null;
             }
           })
-          .filter((value): value is { updatedAt: number; icon: unknown } => value !== null)
-          .sort((left, right) => right.updatedAt - left.updatedAt)[0]?.icon;
+          .filter((value): value is { updatedAt: number; icon: unknown; title: unknown } => value !== null)
+          .sort((left, right) => right.updatedAt - left.updatedAt)[0];
       },
     })),
   });
-  return Object.fromEntries(tableNames.map((tableName, index) => [tableName, results[index].data])) as Record<
-    string,
-    unknown
-  >;
+  return Object.fromEntries(
+    tableNames.map((tableName, index) => [tableName, results[index].data]),
+  ) as Record<string, { icon?: unknown; title?: unknown } | undefined>;
 }
 
 export function useSaveTableViewWorkspaceStateMutation(tableName: string) {
@@ -122,7 +123,11 @@ export function useSaveTableViewWorkspaceStateMutation(tableName: string) {
   return useMutation({
     mutationFn: ({ viewType, workspaceState }: { viewType: "List" | "Gallery" | "Table"; workspaceState: string }) =>
       api.saveTableViewWorkspaceState(tableName, viewType, workspaceState),
-    onSettled: () => client.invalidateQueries({ queryKey: presentationQueryKeys.tableViews(tableName) }),
+    onSettled: () =>
+      Promise.all([
+        client.invalidateQueries({ queryKey: presentationQueryKeys.tableViews(tableName) }),
+        client.invalidateQueries({ queryKey: presentationQueryKeys.tableViewNavigationPreference(tableName) }),
+      ]),
   });
 }
 

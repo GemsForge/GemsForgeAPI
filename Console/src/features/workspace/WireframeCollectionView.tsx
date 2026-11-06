@@ -623,6 +623,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
         <WireframeLeftPane
           recordCount={activeRecords.length}
           activeCollection={config.activeCollection}
+          activeCollectionTitle={tableTitle}
           activeCollectionIcon={<TableIcon size={16} aria-hidden="true" />}
           collapsed={mobileNavigationOpen ? false : navigationCollapsed}
           onToggleCollapsed={() => setNavigationCollapsed((collapsed) => !collapsed)}

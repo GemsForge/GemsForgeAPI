@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 import { tamaguiConfig } from "@gemsforge/ui";
 import { WireframeCollectionLinks } from "./WireframeCollectionLinks";
 
-vi.mock("../../data/presentationQueries", () => ({ useTableIconPreferences: () => ({}) }));
+vi.mock("../../data/presentationQueries", () => ({ useTableNavigationPreferences: () => ({}) }));
 vi.mock("../../data/workflowQueries", () => ({ useSchemaPageTablesQuery: () => ({ data: { tables: [] } }) }));
 
 describe("Wireframe collection navigation", () => {
