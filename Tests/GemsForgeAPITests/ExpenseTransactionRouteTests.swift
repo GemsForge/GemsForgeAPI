@@ -131,8 +131,19 @@ final class ExpenseTransactionRouteTests: XCTestCase {
                 XCTAssertEqual(record.item, "Patched Item")
                 XCTAssertEqual(record.regularPrice, 9.5)
                 XCTAssertTrue(record.firstReceiptItem)
+                XCTAssertEqual(record.subcategoryID, 4, "Omitting subcategoryID should preserve its current value.")
                 XCTAssertNil(record.notes)
                 XCTAssertNotNil(record.updatedAt)
+            }
+
+            try await app.test(.PATCH, "transactions/TRX-0001", beforeRequest: { request in
+                request.headers.contentType = .json
+                request.body = ByteBuffer(string: #"{"categoryID":11,"subcategoryID":null}"#)
+            }) { response async throws in
+                XCTAssertEqual(response.status, .ok)
+                let record = try response.content.decode(ExpenseTransaction.self)
+                XCTAssertEqual(record.categoryID, 11)
+                XCTAssertNil(record.subcategoryID, "Explicit null should clear the previous subcategory.")
             }
 
             try await app.test(.PATCH, "transactions/TRX-0001", beforeRequest: { request in
