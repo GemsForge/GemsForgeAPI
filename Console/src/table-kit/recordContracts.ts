@@ -20,6 +20,7 @@ export type RecordPropertyKind =
   | "image"
   | "media"
   | "relation"
+  | "lookup"
   | "formula";
 
 /** Database storage categories remain separate from the UI editing primitive. */

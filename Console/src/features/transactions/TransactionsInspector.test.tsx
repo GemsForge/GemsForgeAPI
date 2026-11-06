@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { TamaguiProvider } from "tamagui";
+import { MemoryRouter, useLocation } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { tamaguiConfig } from "@gemsforge/ui";
 import { api } from "../../api";
@@ -99,10 +100,18 @@ function setup() {
   return render(
     <TamaguiProvider config={tamaguiConfig} defaultTheme="light">
       <QueryClientProvider client={queryClient}>
-        <TransactionsInspector record={record} properties={properties} />
+        <MemoryRouter>
+          <TransactionsInspector record={record} properties={properties} />
+          <LocationProbe />
+        </MemoryRouter>
       </QueryClientProvider>
     </TamaguiProvider>,
   );
+}
+
+function LocationProbe() {
+  const location = useLocation();
+  return <output data-testid="location">{location.pathname}</output>;
 }
 
 afterEach(() => vi.restoreAllMocks());
@@ -122,12 +131,16 @@ describe("TransactionsInspector relations and lookups", () => {
 
     setup();
 
-    const categoryLink = await screen.findByRole("link", { name: "Food" });
-    expect(categoryLink).toHaveAttribute("href", "/schema-wireframe/BudgetCategories/record/1");
+    const categoryValue = await screen.findByRole("button", { name: "Search related Category" });
+    expect(categoryValue).toHaveTextContent("Food");
+    expect(screen.getByRole("link", { name: "Open related Category record" })).toHaveAttribute(
+      "href",
+      "/schema-wireframe/BudgetCategories/record/1",
+    );
     expect(await screen.findByText("Variable")).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "Edit Category" }));
-    expect(await screen.findByLabelText("Search Category")).toBeInTheDocument();
+    fireEvent.click(categoryValue);
+    expect(await screen.findByRole("searchbox", { name: "Search Category records" })).toBeInTheDocument();
     await screen.findByRole("option", { name: "Travel" });
     expect(optionSpy).toHaveBeenCalledWith("Transactions", "transaction-category", "", "TRX-1", expect.anything());
     fireEvent.click(screen.getByRole("option", { name: "Travel" }));
@@ -136,14 +149,34 @@ describe("TransactionsInspector relations and lookups", () => {
       expect(patchSpy).toHaveBeenCalledWith("TRX-1", { categoryID: 3, subcategoryID: null });
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "Edit Subcategory" }));
+    fireEvent.click(screen.getByRole("button", { name: "Search related Subcategory" }));
     await screen.findByRole("option", { name: "Travel" });
     expect(optionSpy).toHaveBeenCalledWith("Transactions", "transaction-subcategory", "", "TRX-1", expect.anything());
 
     patchSpy.mockRejectedValueOnce(new Error("Transaction save failed"));
-    fireEvent.click(screen.getByRole("button", { name: "Edit Category" }));
+    fireEvent.click(screen.getByRole("button", { name: "Search related Category" }));
     fireEvent.click(await screen.findAllByRole("option", { name: "Travel" }).then((options) => options[0]));
     expect(await screen.findByRole("alert")).toHaveTextContent("Transaction save failed");
-    expect(screen.getByLabelText("Search Category")).toBeInTheDocument();
+    expect(screen.getByRole("searchbox", { name: "Search Category records" })).toBeInTheDocument();
+  });
+
+  it("opens lookup source search and navigates to the chosen related record without patching the lookup", async () => {
+    vi.spyOn(api, "getTablePropertyDefinitions").mockResolvedValue(definitions);
+    vi.spyOn(api, "getTablePropertyValues").mockResolvedValue([
+      { definitionID: "transaction-lookup-category-type", recordID: "1", displayValue: "Variable", value: "Variable" },
+    ]);
+    const optionSpy = vi.spyOn(api, "getRelatedRecordOptions").mockResolvedValue([{ id: "3", name: "Travel" }]);
+    const patchSpy = vi.spyOn(api, "patchTransaction");
+
+    setup();
+    fireEvent.click(await screen.findByRole("button", { name: "Search lookup source for Category type" }));
+    expect(await screen.findByRole("searchbox", { name: "Search records for Category" })).toBeInTheDocument();
+    fireEvent.click(await screen.findByRole("option", { name: "Travel" }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("location")).toHaveTextContent("/schema-wireframe/BudgetCategories/record/3");
+    });
+    expect(optionSpy).toHaveBeenCalledWith("Transactions", "transaction-category", "", "TRX-1", expect.anything());
+    expect(patchSpy).not.toHaveBeenCalled();
   });
 });

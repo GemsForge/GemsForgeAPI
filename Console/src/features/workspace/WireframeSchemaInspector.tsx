@@ -9,6 +9,7 @@ function editorKind(
   if (inputType === "longText") return "textarea";
   if (kind === "select" || kind === "status") return kind;
   if (kind === "relation") return "relation";
+  if (kind === "lookup") return "lookup";
   if (kind === "date" || inputType === "date") return "date";
   if (kind === "number" || inputType === "number") return "number";
   if (kind === "url") return "url";
@@ -82,18 +83,20 @@ export function WireframeSchemaInspector<Record extends object>({
             ? String(value.raw)
             : "",
         displayValue:
-          property.kind === "number" && typeof value.raw === "number"
-            ? formatRecordNumber(
-                value.raw,
-                property.numberFormat ?? inferRecordNumberFormat(property.id, property.label),
-              )
-            : (property.kind === "url" || property.kind === "email" || property.kind === "relation") &&
-                propertyValue.href
-              ? typeof displayValue === "string"
-                ? linkedDisplayValue
-                : propertyValue.href
-              : value.display,
+          property.kind === "relation"
+            ? value.display
+            : property.kind === "number" && typeof value.raw === "number"
+              ? formatRecordNumber(
+                  value.raw,
+                  property.numberFormat ?? inferRecordNumberFormat(property.id, property.label),
+                )
+              : (property.kind === "url" || property.kind === "email") && propertyValue.href
+                ? typeof displayValue === "string"
+                  ? linkedDisplayValue
+                  : propertyValue.href
+                : value.display,
         display: linkedDisplayValue,
+        relatedHref: property.kind === "relation" ? propertyValue.href : undefined,
         kind: resolvedKind,
         propertyKind: property.kind,
         propertyType: metadata.type,

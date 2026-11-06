@@ -6,10 +6,11 @@ import { GemCaption, GemStatusPill } from "@gemsforge/ui";
 type EditableValueProps = {
   value: string;
   label?: string;
-  kind?: "text" | "select" | "status" | "number" | "date" | "url" | "email" | "relation" | "textarea";
+  kind?: "text" | "select" | "status" | "number" | "date" | "url" | "email" | "relation" | "lookup" | "textarea";
   options?: readonly (string | { value: string; label: string })[];
   nullable?: boolean;
   displayValue?: ReactNode;
+  relatedHref?: string;
   renderEditor?: (props: {
     value: string;
     onChange: (value: string) => void;
@@ -26,6 +27,7 @@ export function WireframeEditableValue({
   nullable = false,
   onCommit,
   displayValue,
+  relatedHref,
   renderEditor,
 }: EditableValueProps) {
   const fieldRef = useRef<HTMLDivElement>(null);
@@ -118,22 +120,29 @@ export function WireframeEditableValue({
             <Pencil size={14} aria-hidden="true" />
           </button>
         </span>
-      ) : !editing && kind === "relation" ? (
+      ) : !editing && (kind === "relation" || kind === "lookup") ? (
         <span className="wireframe-action-value">
-          {displayValue ?? <GemCaption>—</GemCaption>}
           <button
             type="button"
-            className="wireframe-value-edit-trigger"
-            aria-label={`Edit ${label}`}
-            title={`Edit ${label}`}
+            className="wireframe-structural-value-trigger"
+            aria-label={`${kind === "relation" ? "Search related" : "Search lookup source for"} ${label}`}
             onClick={(event) => {
               event.stopPropagation();
               setSaveError(undefined);
               setEditing(true);
             }}
           >
-            <Pencil size={14} aria-hidden="true" />
+            {displayValue ?? <GemCaption>—</GemCaption>}
           </button>
+          {relatedHref ? (
+            <a
+              className="wireframe-structural-value-link"
+              href={relatedHref}
+              aria-label={`Open related ${label} record`}
+            >
+              Open
+            </a>
+          ) : null}
         </span>
       ) : (
         <GemPrimitiveField

@@ -19,6 +19,8 @@ export type {
 } from "./primitiveFieldContracts";
 export { GSwitch } from "./GSwitch";
 export { GSearchField } from "./GSearchField";
+export { GStructuralField } from "./GStructuralField";
+export type { GStructuralFieldKind, GStructuralFieldProps, GStructuralOption } from "./GStructuralField";
 export { GemEmptyState } from "./GemEmptyState";
 export { GemLoadingState } from "./GemLoadingState";
 export { GemSectionHeader } from "./GemSectionHeader";

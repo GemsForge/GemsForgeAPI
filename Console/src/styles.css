@@ -2941,8 +2941,7 @@ dialog::backdrop {
 }
 .transaction-relation-settings,
 .transaction-relation-settings-row,
-.transaction-lookup-create,
-.transaction-relation-picker {
+.transaction-lookup-create {
   display: grid;
   gap: 0.55rem;
   min-width: 0;
@@ -2953,18 +2952,42 @@ dialog::backdrop {
   font-size: 0.9rem;
 }
 .transaction-relation-settings-row,
-.transaction-lookup-row,
-.transaction-relation-picker {
+.transaction-lookup-row {
   padding: 0.65rem;
   border: 1px solid var(--line);
   border-radius: 0.5rem;
   background: var(--panel-light);
 }
-.transaction-relation-options {
+.g-structural-field-options {
   display: grid;
-  max-height: 10rem;
+  max-height: 12rem;
   gap: 0.25rem;
   overflow-y: auto;
+}
+.wireframe-structural-value-trigger {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.wireframe-structural-value-trigger:hover {
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+.wireframe-structural-value-trigger:focus-visible,
+.wireframe-structural-value-link:focus-visible {
+  border-radius: 0.2rem;
+  outline: 2px solid var(--gem-focus);
+  outline-offset: 2px;
+}
+.wireframe-structural-value-link {
+  margin-left: 0.4rem;
+  color: var(--gem-wireframe-action);
+  font-size: 0.75rem;
 }
 .wireframe-value-save-error {
   margin: 0.25rem 0 0;

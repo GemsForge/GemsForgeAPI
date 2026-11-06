@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { GemButton, GSearchField } from "@gemsforge/ui";
-import type { ExpenseTransaction, RelatedRecordOption, TablePropertyDefinition } from "../../types";
+import { useNavigate } from "react-router-dom";
+import { GStructuralField } from "@gemsforge/ui";
+import type { ExpenseTransaction, TablePropertyDefinition } from "../../types";
 import {
   useRelatedRecordOptionsQuery,
   useTablePropertyDefinitionsQuery,
@@ -27,41 +28,49 @@ function RelationPicker({
 }) {
   const [search, setSearch] = useState("");
   const options = useRelatedRecordOptionsQuery("Transactions", definition.id, search, record.id);
-  const choose = async (option: RelatedRecordOption) => {
-    onChange(option.id);
-    await onCommit(option.id);
-  };
   return (
-    <div className="transaction-relation-picker" aria-label={`Choose ${definition.name}`}>
-      <GSearchField
-        label={`Search ${definition.name}`}
-        value={search}
-        onChange={setSearch}
-        loading={options.isFetching}
-      />
-      {options.isError ? <p role="alert">Could not load related records.</p> : null}
-      <div className="transaction-relation-options" role="listbox" aria-label={`${definition.name} results`}>
-        {(options.data ?? []).map((option) => (
-          <GemButton
-            key={option.id}
-            type="button"
-            variant={option.id === value ? "outlined" : "quiet"}
-            tone="secondary"
-            role="option"
-            aria-selected={option.id === value}
-            onClick={() => void choose(option)}
-          >
-            {option.name}
-          </GemButton>
-        ))}
-        {options.isSuccess && options.data?.length === 0 ? <p>No matching records.</p> : null}
-      </div>
-      {nullable ? (
-        <GemButton type="button" variant="quiet" tone="secondary" onClick={() => void onCommit("")}>
-          Clear relation
-        </GemButton>
-      ) : null}
-    </div>
+    <GStructuralField
+      kind="relation"
+      label={definition.name}
+      search={search}
+      onSearchChange={setSearch}
+      options={(options.data ?? []).map((option) => ({ value: option.id, label: option.name }))}
+      selectedValue={value}
+      loading={options.isFetching}
+      error={options.isError ? "Could not load related records." : undefined}
+      nullable={nullable}
+      onSelect={(option) => {
+        onChange(option.value);
+        void onCommit(option.value);
+      }}
+      onClear={() => void onCommit("")}
+    />
+  );
+}
+
+function LookupSourceSearch({
+  definition,
+  record,
+  onSelect,
+}: {
+  definition: TablePropertyDefinition;
+  record: ExpenseTransaction;
+  onSelect: (recordID: string) => void;
+}) {
+  const [search, setSearch] = useState("");
+  const options = useRelatedRecordOptionsQuery("Transactions", definition.id, search, record.id);
+  return (
+    <GStructuralField
+      kind="lookup"
+      label={definition.name}
+      search={search}
+      onSearchChange={setSearch}
+      options={(options.data ?? []).map((option) => ({ value: option.id, label: option.name }))}
+      loading={options.isFetching}
+      error={options.isError ? "Could not load lookup source records." : undefined}
+      emptyMessage="No related records match this search."
+      onSelect={(option) => onSelect(option.value)}
+    />
   );
 }
 
@@ -74,6 +83,7 @@ export function TransactionsInspector({
   properties: readonly RecordPropertyDefinition<ExpenseTransaction>[];
   schemaProperties?: readonly RecordPropertyDefinition<ExpenseTransaction>[];
 }) {
+  const navigate = useNavigate();
   const definitions = useTablePropertyDefinitionsQuery("Transactions");
   const values = useTablePropertyValuesQuery("Transactions", record.id);
   const patch = useTransactionPatchMutation();
@@ -90,7 +100,7 @@ export function TransactionsInspector({
         ? `/schema-wireframe/${encodeURIComponent(definition.targetTableName)}/record/${encodeURIComponent(resolved.recordID)}`
         : undefined;
     const display = values.isSuccess
-      ? resolved?.displayValue ?? (relationValue ? "Unavailable related record" : "—")
+      ? (resolved?.displayValue ?? (relationValue ? "Unavailable related record" : "—"))
       : property.getValue(record).display;
     return {
       ...property,
@@ -134,11 +144,37 @@ export function TransactionsInspector({
     .filter((definition) => definition.kind === "Lookup")
     .map((definition) => {
       const value = values.data?.find((item) => item.definitionID === definition.id);
+      const relation = configuredRelations.find((item) => item.id === definition.relationDefinitionID);
       return {
         id: definition.id,
         label: definition.name,
         kind: "text" as const,
         getValue: () => ({ raw: value?.value, display: value?.displayValue ?? "—" }),
+        ...(relation
+          ? {
+              kind: "lookup" as const,
+              edit: {
+                inputType: "text" as const,
+                onSave: async (_item: unknown, relatedRecordID: string | number | null) => {
+                  if (relatedRecordID === null || relatedRecordID === "" || !relation.targetTableName) return;
+                  navigate(
+                    `/schema-wireframe/${encodeURIComponent(relation.targetTableName)}/record/${encodeURIComponent(String(relatedRecordID))}`,
+                  );
+                },
+                renderEditor: (editor: {
+                  value: string;
+                  onChange: (value: string) => void;
+                  onCommit: (value: string) => Promise<void>;
+                }) => (
+                  <LookupSourceSearch
+                    definition={relation}
+                    record={record}
+                    onSelect={(recordID) => void editor.onCommit(recordID)}
+                  />
+                ),
+              },
+            }
+          : {}),
       } satisfies RecordPropertyDefinition<ExpenseTransaction>;
     });
 
