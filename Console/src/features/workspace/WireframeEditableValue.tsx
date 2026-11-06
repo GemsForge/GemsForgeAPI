@@ -3,6 +3,7 @@ import { Pencil } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { GMultiSelectField, GemPrimitiveField } from "@gemsforge/ui";
 import { GemCaption, GemStatusPill } from "@gemsforge/ui";
+import type { GemDateFormat } from "@gemsforge/ui";
 
 type EditableValueProps = {
   value: string;
@@ -22,6 +23,9 @@ type EditableValueProps = {
     | "textarea";
   options?: readonly (string | { value: string; label: string })[];
   nullable?: boolean;
+  dateFormat?: GemDateFormat;
+  includeTime?: boolean;
+  onDateConfigChange?: (config: { displayFormat: GemDateFormat; includeTime: boolean }) => void;
   displayValue?: ReactNode;
   relatedHref?: string;
   renderEditor?: (props: {
@@ -38,6 +42,9 @@ export function WireframeEditableValue({
   kind = "text",
   options = [],
   nullable = false,
+  dateFormat = "iso",
+  includeTime = false,
+  onDateConfigChange,
   onCommit,
   displayValue,
   relatedHref,
@@ -303,7 +310,9 @@ export function WireframeEditableValue({
           value={currentValue}
           editing={editing}
           displayValue={
-            kind === "status" ? (
+            kind === "date" ? (
+              displayValue
+            ) : kind === "status" ? (
               <GemStatusPill tone="success" wireframe>
                 {displayValue ?? (currentValue || "—")}
               </GemStatusPill>
@@ -313,6 +322,9 @@ export function WireframeEditableValue({
           }
           valueTextRole="caption"
           density="compact"
+          dateFormat={dateFormat}
+          includeTime={includeTime}
+          onDateConfigChange={onDateConfigChange}
           onDisplayClick={() => {
             setSaveError(undefined);
             setEditing(true);

@@ -42,7 +42,7 @@ import { inferRecordPropertyKind, normalizeStorageType } from "../../table-kit/s
 import { formatAddress } from "../addresses/formatAddress";
 import { inferWireframePropertyMetadata } from "./propertyMetadata";
 import { WireframeCover, WireframeCoverCardImage, type WireframeCover as WireframeCoverValue } from "./WireframeCover";
-import { WireframePropertyIconProvider } from "./WireframePropertyEditor";
+import { WireframePropertyIconProvider, type WireframeDateConfiguration } from "./WireframePropertyEditor";
 import { WireframePropertySettingsDialog, type WireframePropertyDetails } from "./WireframePropertySettingsDialog";
 import { useWireframeNavigation } from "./WireframeAppHeader";
 import { api } from "../../api";
@@ -76,6 +76,7 @@ type WireframeWorkspaceState = {
   propertyIcons?: Record<string, string>;
   propertyTypes?: Record<string, string>;
   propertySelectOptions?: Record<string, string[]>;
+  dateConfigurations?: Record<string, WireframeDateConfiguration>;
   propertyConfigurations?: Record<string, TablePropertyConfiguration>;
   inspectorPropertyOrder?: string[];
 };
@@ -128,6 +129,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
   const [propertyIcons, setPropertyIcons] = useState<Record<string, string>>({});
   const [propertyTypes, setPropertyTypes] = useState<Record<string, string>>({});
   const [propertySelectOptions, setPropertySelectOptions] = useState<Record<string, string[]>>({});
+  const [dateConfigurations, setDateConfigurations] = useState<Record<string, WireframeDateConfiguration>>({});
   const [propertyConfigurations, setPropertyConfigurations] = useState<Record<string, TablePropertyConfiguration>>({});
   const [inspectorPropertyOrder, setInspectorPropertyOrder] = useState<string[]>();
   const [inspectorSortAnnouncement, setInspectorSortAnnouncement] = useState("");
@@ -265,6 +267,19 @@ export function WireframeCollectionView<T extends WireframeRecord>({
         ),
       );
     }
+    if (state.dateConfigurations && typeof state.dateConfigurations === "object") {
+      setDateConfigurations(
+        Object.fromEntries(
+          Object.entries(state.dateConfigurations).filter(
+            (entry): entry is [string, WireframeDateConfiguration] =>
+              typeof entry[1] === "object" &&
+              entry[1] !== null &&
+              ["iso", "local", "relative"].includes(entry[1].displayFormat) &&
+              typeof entry[1].includeTime === "boolean",
+          ),
+        ),
+      );
+    }
     if (state.propertyConfigurations && typeof state.propertyConfigurations === "object") {
       setPropertyConfigurations(state.propertyConfigurations);
     }
@@ -314,6 +329,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
       propertyIcons,
       propertyTypes,
       propertySelectOptions,
+      dateConfigurations,
       propertyConfigurations,
       ...(inspectorPropertyOrder ? { inspectorPropertyOrder } : {}),
     };
@@ -346,6 +362,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
     propertyIcons,
     propertyTypes,
     propertySelectOptions,
+    dateConfigurations,
     propertyConfigurations,
     inspectorPropertyOrder,
     workspaceSelectionRevision,
@@ -589,6 +606,10 @@ export function WireframeCollectionView<T extends WireframeRecord>({
     setPropertyTypes((current) => ({ ...current, [propertyID]: type }));
     setPropertySelectOptions((current) => ({ ...current, [propertyID]: selectOptions }));
   };
+  const saveDateConfiguration = (propertyID: string, configuration: WireframeDateConfiguration) => {
+    skipWorkspaceSaveOnce.current = false;
+    setDateConfigurations((current) => ({ ...current, [propertyID]: configuration }));
+  };
   const reorderInspectorProperties = (order: string[], announcement: string) => {
     skipWorkspaceSaveOnce.current = false;
     setInspectorPropertyOrder(order);
@@ -704,6 +725,8 @@ export function WireframeCollectionView<T extends WireframeRecord>({
             onSave={savePropertyIcon}
             propertyTypes={propertyTypes}
             propertySelectOptions={propertySelectOptions}
+            dateConfigurations={dateConfigurations}
+            onDateConfigurationChange={saveDateConfiguration}
           >
             <WireframeInspector node={config.inspector(selected, schemaProperties)} options={inspectorRenderOptions} />
           </WireframePropertyIconProvider>

@@ -1,12 +1,18 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { TamaguiProvider } from "tamagui";
 import { describe, expect, it, vi } from "vitest";
+import { useState } from "react";
 import { MemoryRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { tamaguiConfig } from "@gemsforge/ui";
 import type { RecordPropertyDefinition } from "../../table-kit";
 import { WireframeSchemaInspector } from "./WireframeSchemaInspector";
-import { WireframePropertySelectOptionsContext, WireframePropertyTypeContext } from "./WireframePropertyEditor";
+import {
+  WireframeDateConfigurationContext,
+  WireframePropertySelectOptionsContext,
+  WireframePropertyTypeContext,
+  type WireframeDateConfiguration,
+} from "./WireframePropertyEditor";
 
 type Record = { id: string; monthlyAmount: number };
 
@@ -91,6 +97,54 @@ describe("WireframeSchemaInspector property metadata", () => {
     fireEvent.click(screen.getByRole("button", { name: "No" }));
     fireEvent.click(screen.getByRole("checkbox"));
     await waitFor(() => expect(onSave).toHaveBeenCalledWith(record, "true"));
+  });
+
+  it("shows the selected date format in readonly mode and keeps it after editing", async () => {
+    const record = { id: "REC-1", startDate: "2026-01-15" };
+    const onSave = vi.fn(async () => undefined);
+    const properties: RecordPropertyDefinition<typeof record>[] = [
+      {
+        id: "startDate",
+        label: "Start date",
+        kind: "date",
+        getValue: (item) => ({ raw: item.startDate, display: item.startDate }),
+        edit: { inputType: "date", onSave },
+      },
+    ];
+    function DateInspectorHarness() {
+      const [dateConfiguration, setDateConfiguration] = useState<WireframeDateConfiguration>({
+        displayFormat: "local",
+        includeTime: false,
+      });
+      return (
+        <WireframeDateConfigurationContext.Provider
+          value={{
+            configurations: { startDate: dateConfiguration },
+            onChange: (_propertyID, next) => setDateConfiguration(next),
+          }}
+        >
+          <WireframeSchemaInspector record={record} properties={properties} />
+        </WireframeDateConfigurationContext.Provider>
+      );
+    }
+
+    render(
+      <TamaguiProvider config={tamaguiConfig} defaultTheme="light">
+        <MemoryRouter>
+          <DateInspectorHarness />
+        </MemoryRouter>
+      </TamaguiProvider>,
+    );
+
+    expect(screen.getByText("Jan 15, 2026")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Jan 15, 2026/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Start date" }));
+    fireEvent.click(screen.getByRole("button", { name: /Full date/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Year\/Month\/Day/ }));
+    fireEvent.click(document.body);
+
+    await waitFor(() => expect(screen.getByText("2026-01-15")).toBeInTheDocument());
+    expect(onSave).not.toHaveBeenCalled();
   });
 
   it("uses a saved Select type to render a select editor for an existing number property", () => {

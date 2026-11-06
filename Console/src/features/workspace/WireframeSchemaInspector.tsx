@@ -2,7 +2,11 @@ import { formatRecordNumber, inferRecordNumberFormat, type RecordPropertyDefinit
 import { WireframeRecordInspector, type WireframeInspectorField } from "./WireframeRecordInspector";
 import { inferWireframePropertyMetadata } from "./propertyMetadata";
 import { useContext } from "react";
-import { WireframePropertySelectOptionsContext, WireframePropertyTypeContext } from "./WireframePropertyEditor";
+import {
+  WireframeDateConfigurationContext,
+  WireframePropertySelectOptionsContext,
+  WireframePropertyTypeContext,
+} from "./WireframePropertyEditor";
 import { decodeMultiSelectValue } from "@gemsforge/ui";
 import { AttachmentControl } from "../../components/AttachmentControl";
 import { FilePresentation } from "../../components/FilePresentation";
@@ -37,6 +41,7 @@ export function WireframeSchemaInspector<Record extends object>({
 }) {
   const propertyTypes = useContext(WireframePropertyTypeContext);
   const propertySelectOptions = useContext(WireframePropertySelectOptionsContext);
+  const dateConfigurationContext = useContext(WireframeDateConfigurationContext);
   const seen = new Set<string>();
   const seenSourceFields = new Set<string>();
   const fields = properties
@@ -101,6 +106,7 @@ export function WireframeSchemaInspector<Record extends object>({
         [];
       const displayValue = property.getValue(record).display;
       const propertyValue = property.getValue(record);
+      const dateConfiguration = dateConfigurationContext.configurations[property.id];
       const multiSelectDisplay =
         resolvedKind === "multiselect"
           ? decodeMultiSelectValue(String(value.raw ?? ""))
@@ -135,20 +141,21 @@ export function WireframeSchemaInspector<Record extends object>({
             ? String(value.raw)
             : "",
         displayValue:
-          isImage && typeof value.raw === "string" && value.raw
-            ? <FilePresentation fileMetadataID={value.raw} label={property.label} />
-            : property.kind === "relation"
-            ? value.display
-            : property.kind === "number" && typeof value.raw === "number"
-              ? formatRecordNumber(
-                  value.raw,
-                  property.numberFormat ?? inferRecordNumberFormat(property.id, property.label),
-                )
-              : (property.kind === "url" || property.kind === "email") && propertyValue.href
-                ? typeof displayValue === "string"
-                  ? linkedDisplayValue
-                  : propertyValue.href
-                : (multiSelectDisplay ?? checkboxDisplay ?? value.display),
+          resolvedKind === "date" ? undefined : isImage && typeof value.raw === "string" && value.raw ? (
+            <FilePresentation fileMetadataID={value.raw} label={property.label} />
+          ) : property.kind === "relation" ? (
+            value.display
+          ) : property.kind === "number" && typeof value.raw === "number" ? (
+            formatRecordNumber(value.raw, property.numberFormat ?? inferRecordNumberFormat(property.id, property.label))
+          ) : (property.kind === "url" || property.kind === "email") && propertyValue.href ? (
+            typeof displayValue === "string" ? (
+              linkedDisplayValue
+            ) : (
+              propertyValue.href
+            )
+          ) : (
+            (multiSelectDisplay ?? checkboxDisplay ?? value.display)
+          ),
         display: linkedDisplayValue,
         relatedHref: property.kind === "relation" ? propertyValue.href : undefined,
         kind: resolvedKind,
@@ -156,21 +163,24 @@ export function WireframeSchemaInspector<Record extends object>({
         propertyType: metadata.type,
         iconName: metadata.iconName,
         numberFormat: property.numberFormat,
-        onCommit: edit && !isNonTextMedia
-          ? async (next: string) => {
-              if (isImage && onAttachmentChange) {
-                await onAttachmentChange(record, property.id, next || null);
-                return;
+        dateFormat: dateConfiguration?.displayFormat ?? property.dateFormat ?? "iso",
+        includeTime: dateConfiguration?.includeTime ?? false,
+        onDateConfigChange:
+          resolvedKind === "date" && dateConfigurationContext.onChange
+            ? (configuration) => dateConfigurationContext.onChange?.(property.id, configuration)
+            : undefined,
+        onCommit:
+          edit && !isNonTextMedia
+            ? async (next: string) => {
+                if (isImage && onAttachmentChange) {
+                  await onAttachmentChange(record, property.id, next || null);
+                  return;
+                }
+                const savedValue =
+                  next === "" && edit.nullable ? null : resolvedKind === "number" && next !== "" ? Number(next) : next;
+                await edit.onSave(record, savedValue);
               }
-              const savedValue =
-                next === "" && edit.nullable
-                  ? null
-                  : resolvedKind === "number" && next !== ""
-                    ? Number(next)
-                    : next;
-              await edit.onSave(record, savedValue);
-            }
-          : undefined,
+            : undefined,
         options,
         nullable: edit?.nullable,
         renderEditor:

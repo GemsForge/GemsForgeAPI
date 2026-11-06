@@ -19,12 +19,18 @@ import { PropertyIconPicker } from "./PropertyIconPicker";
 import { GemButton, GemCaption } from "@gemsforge/ui";
 import { GemTextField } from "@gemsforge/ui";
 import { GSelectField } from "@gemsforge/ui";
+import type { GemDateFormat } from "@gemsforge/ui";
 
 export const WireframePropertyIconContext = createContext<
   ((propertyID: string, icon: string, type: string, selectOptions: string[]) => void) | null
 >(null);
 export const WireframePropertyTypeContext = createContext<Readonly<Record<string, string>>>({});
 export const WireframePropertySelectOptionsContext = createContext<Readonly<Record<string, string[]>>>({});
+export type WireframeDateConfiguration = { displayFormat: GemDateFormat; includeTime: boolean };
+export const WireframeDateConfigurationContext = createContext<{
+  configurations: Readonly<Record<string, WireframeDateConfiguration>>;
+  onChange?: (propertyID: string, configuration: WireframeDateConfiguration) => void;
+}>({ configurations: {} });
 
 export function keepDialogTabFocus(event: ReactKeyboardEvent<HTMLElement>, dialog: HTMLElement) {
   if (event.key !== "Tab") return;
@@ -54,17 +60,25 @@ export function WireframePropertyIconProvider({
   onSave,
   propertyTypes,
   propertySelectOptions,
+  dateConfigurations = {},
+  onDateConfigurationChange,
 }: {
   children: ReactNode;
   onSave: (propertyID: string, icon: string, type: string, selectOptions: string[]) => void;
   propertyTypes: Readonly<Record<string, string>>;
   propertySelectOptions: Readonly<Record<string, string[]>>;
+  dateConfigurations?: Readonly<Record<string, WireframeDateConfiguration>>;
+  onDateConfigurationChange?: (propertyID: string, configuration: WireframeDateConfiguration) => void;
 }) {
   return (
     <WireframePropertyIconContext.Provider value={onSave}>
       <WireframePropertyTypeContext.Provider value={propertyTypes}>
         <WireframePropertySelectOptionsContext.Provider value={propertySelectOptions}>
-          {children}
+          <WireframeDateConfigurationContext.Provider
+            value={{ configurations: dateConfigurations, onChange: onDateConfigurationChange }}
+          >
+            {children}
+          </WireframeDateConfigurationContext.Provider>
         </WireframePropertySelectOptionsContext.Provider>
       </WireframePropertyTypeContext.Provider>
     </WireframePropertyIconContext.Provider>
