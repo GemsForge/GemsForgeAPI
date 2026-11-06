@@ -9,7 +9,18 @@ export type WireframeInspectorField = {
   id: string;
   label: string;
   value: string;
-  kind?: "text" | "select" | "status" | "number" | "date" | "url" | "email" | "relation" | "lookup" | "textarea";
+  kind?:
+    | "text"
+    | "select"
+    | "status"
+    | "number"
+    | "date"
+    | "url"
+    | "email"
+    | "relation"
+    | "lookup"
+    | "multiselect"
+    | "textarea";
   propertyKind?: RecordPropertyKind;
   propertyType?: string;
   iconName?: string;

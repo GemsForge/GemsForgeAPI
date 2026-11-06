@@ -8,6 +8,9 @@ export { GemTextField } from "./GemTextField";
 export { GDate, GDateField } from "./GDateField";
 export type { GDateFieldProps } from "./GDateField";
 export { GSelectField } from "./GSelectField";
+export { GMultiSelectField } from "./GMultiSelectField";
+export { decodeMultiSelectValue, encodeMultiSelectValue } from "./GMultiSelectField";
+export type { GMultiSelectFieldProps, GMultiSelectOption } from "./GMultiSelectField";
 export { GCheckboxField } from "./GCheckboxField";
 export type {
   GemDatePrimitiveContract,

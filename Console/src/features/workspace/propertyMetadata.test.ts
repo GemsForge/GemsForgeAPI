@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DollarSign, Link, ListFilter, Percent } from "lucide-react";
+import { ArrowUpRight, DollarSign, Link, ListFilter, Percent, Search } from "lucide-react";
 import { inferWireframePropertyMetadata } from "./propertyMetadata";
 import { inferWireframePropertyType, PROPERTY_ICON_LIBRARY } from "./propertyIcons";
 
@@ -18,6 +18,8 @@ describe("wireframe property metadata", () => {
     ["Quantity", "number", "Number"],
     ["Notes", "text", "Notes"],
     ["Tags", "text", "Multi-select"],
+    ["Category", "relation", "Relation"],
+    ["Category name", "lookup", "Lookup"],
   ])("infers %s as %s", (label, kind, expected) => {
     expect(inferWireframePropertyType(label, kind)).toBe(expected);
   });
@@ -32,7 +34,7 @@ describe("wireframe property metadata", () => {
       }),
     ).toEqual({ type: "Text", iconName: "Lock" });
     expect(inferWireframePropertyType("Monthly amount", "number", "decimal")).toBe("Number");
-    expect(inferWireframePropertyMetadata({ label: "Address", kind: "relation" }).iconName).toBe("Address");
+    expect(inferWireframePropertyMetadata({ label: "Address", kind: "relation" }).iconName).toBe("Relation");
     expect(inferWireframePropertyType("Logo", "image")).toBe("Image");
   });
 
@@ -54,5 +56,7 @@ describe("wireframe property metadata", () => {
     expect(PROPERTY_ICON_LIBRARY.find((icon) => icon.name === "Percent")?.icon).toBe(Percent);
     expect(PROPERTY_ICON_LIBRARY.find((icon) => icon.name === "URL")?.icon).toBe(Link);
     expect(PROPERTY_ICON_LIBRARY.find((icon) => icon.name === "Select")?.icon).toBe(ListFilter);
+    expect(PROPERTY_ICON_LIBRARY.find((icon) => icon.name === "Relation")?.icon).toBe(ArrowUpRight);
+    expect(PROPERTY_ICON_LIBRARY.find((icon) => icon.name === "Lookup")?.icon).toBe(Search);
   });
 });

@@ -1,11 +1,11 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { TamaguiProvider } from "tamagui";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import { tamaguiConfig } from "@gemsforge/ui";
 import type { RecordPropertyDefinition } from "../../table-kit";
 import { WireframeSchemaInspector } from "./WireframeSchemaInspector";
-import { WireframePropertyTypeContext } from "./WireframePropertyEditor";
+import { WireframePropertySelectOptionsContext, WireframePropertyTypeContext } from "./WireframePropertyEditor";
 
 type Record = { id: string; monthlyAmount: number };
 
@@ -43,10 +43,6 @@ describe("WireframeSchemaInspector property metadata", () => {
         getValue: (item) => ({ raw: item.monthlyAmount, display: "$125.00" }),
         edit: {
           inputType: "number",
-          options: [
-            { value: "125", label: "$125.00" },
-            { value: "250", label: "$250.00" },
-          ],
           onSave: async () => undefined,
         },
       },
@@ -56,13 +52,51 @@ describe("WireframeSchemaInspector property metadata", () => {
       <TamaguiProvider config={tamaguiConfig} defaultTheme="light">
         <MemoryRouter>
           <WireframePropertyTypeContext.Provider value={{ monthlyAmount: "Select" }}>
-            <WireframeSchemaInspector record={record} properties={properties} />
+            <WireframePropertySelectOptionsContext.Provider value={{ monthlyAmount: ["125", "250"] }}>
+              <WireframeSchemaInspector record={record} properties={properties} />
+            </WireframePropertySelectOptionsContext.Provider>
           </WireframePropertyTypeContext.Provider>
         </MemoryRouter>
       </TamaguiProvider>,
     );
 
     fireEvent.click(screen.getByRole("button", { name: "$125.00" }));
-    expect(screen.getByRole("combobox", { name: "Monthly amount" })).toBeInTheDocument();
+    const select = screen.getByRole("combobox", { name: "Monthly amount" });
+    expect(select).toBeInTheDocument();
+    fireEvent.click(select);
+    expect(screen.getByRole("option", { name: "250" })).toBeInTheDocument();
+  });
+
+  it("edits Multi-select values and persists them as semicolon-delimited SQLite text", async () => {
+    const record = { id: "REC-1", tags: "low;high" };
+    const onSave = vi.fn(async (_value: string) => undefined);
+    const properties: RecordPropertyDefinition<typeof record>[] = [
+      {
+        id: "tags",
+        label: "Tags",
+        kind: "text",
+        getValue: (item) => ({ raw: item.tags, display: item.tags }),
+        edit: { inputType: "text", onSave: (_item, value) => onSave(String(value)) },
+      },
+    ];
+
+    render(
+      <TamaguiProvider config={tamaguiConfig} defaultTheme="light">
+        <MemoryRouter>
+          <WireframePropertyTypeContext.Provider value={{ tags: "Multi-select" }}>
+            <WireframePropertySelectOptionsContext.Provider value={{ tags: ["low", "medium", "high"] }}>
+              <WireframeSchemaInspector record={record} properties={properties} />
+            </WireframePropertySelectOptionsContext.Provider>
+          </WireframePropertyTypeContext.Provider>
+        </MemoryRouter>
+      </TamaguiProvider>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "low, high" }));
+    expect(screen.getByRole("checkbox", { name: "low" })).toBeChecked();
+    fireEvent.click(screen.getByRole("checkbox", { name: "medium" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    await waitFor(() => expect(onSave).toHaveBeenCalledWith("low;high;medium"));
   });
 });

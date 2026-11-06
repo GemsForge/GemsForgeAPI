@@ -75,6 +75,7 @@ type WireframeWorkspaceState = {
   tableIcon?: string;
   propertyIcons?: Record<string, string>;
   propertyTypes?: Record<string, string>;
+  propertySelectOptions?: Record<string, string[]>;
   propertyConfigurations?: Record<string, TablePropertyConfiguration>;
   inspectorPropertyOrder?: string[];
 };
@@ -126,6 +127,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
   const tableIconDirty = useRef(false);
   const [propertyIcons, setPropertyIcons] = useState<Record<string, string>>({});
   const [propertyTypes, setPropertyTypes] = useState<Record<string, string>>({});
+  const [propertySelectOptions, setPropertySelectOptions] = useState<Record<string, string[]>>({});
   const [propertyConfigurations, setPropertyConfigurations] = useState<Record<string, TablePropertyConfiguration>>({});
   const [inspectorPropertyOrder, setInspectorPropertyOrder] = useState<string[]>();
   const [inspectorSortAnnouncement, setInspectorSortAnnouncement] = useState("");
@@ -253,6 +255,16 @@ export function WireframeCollectionView<T extends WireframeRecord>({
         ),
       );
     }
+    if (state.propertySelectOptions && typeof state.propertySelectOptions === "object") {
+      setPropertySelectOptions(
+        Object.fromEntries(
+          Object.entries(state.propertySelectOptions).filter(
+            (entry): entry is [string, string[]] =>
+              Array.isArray(entry[1]) && entry[1].every((option) => typeof option === "string"),
+          ),
+        ),
+      );
+    }
     if (state.propertyConfigurations && typeof state.propertyConfigurations === "object") {
       setPropertyConfigurations(state.propertyConfigurations);
     }
@@ -301,6 +313,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
       tableIcon,
       propertyIcons,
       propertyTypes,
+      propertySelectOptions,
       propertyConfigurations,
       ...(inspectorPropertyOrder ? { inspectorPropertyOrder } : {}),
     };
@@ -332,6 +345,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
     tableIcon,
     propertyIcons,
     propertyTypes,
+    propertySelectOptions,
     propertyConfigurations,
     inspectorPropertyOrder,
     workspaceSelectionRevision,
@@ -534,7 +548,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
       navigate(`${location.pathname.replace(/\/record\/[^/]+$/, "")}/record/${encodeURIComponent(selected.id)}`);
   };
   const openPropertyDetails = (
-    details: { id: string; label: string; value: string; type?: string; icon?: string },
+    details: { id: string; label: string; value: string; type?: string; icon?: string; kind?: string },
     trigger: HTMLButtonElement,
   ) => {
     propertyDetailsTriggerRef.current = trigger;
@@ -547,6 +561,8 @@ export function WireframeCollectionView<T extends WireframeRecord>({
       ...details,
       type: propertyTypes[details.id] ?? metadata.type,
       icon: propertyIcons[details.id] ?? metadata.iconName,
+      kind: details.kind,
+      selectOptions: propertySelectOptions[details.id] ?? [],
       statusText: details.value,
       colorToken: "mint",
     });
@@ -567,10 +583,11 @@ export function WireframeCollectionView<T extends WireframeRecord>({
       if (propertyDetailsTriggerRef.current?.isConnected) propertyDetailsTriggerRef.current.focus();
     };
   }, [propertyDetailsOpen]);
-  const savePropertyIcon = (propertyID: string, icon: string, type: string) => {
+  const savePropertyIcon = (propertyID: string, icon: string, type: string, selectOptions: string[]) => {
     skipWorkspaceSaveOnce.current = false;
     setPropertyIcons((current) => ({ ...current, [propertyID]: icon }));
     setPropertyTypes((current) => ({ ...current, [propertyID]: type }));
+    setPropertySelectOptions((current) => ({ ...current, [propertyID]: selectOptions }));
   };
   const reorderInspectorProperties = (order: string[], announcement: string) => {
     skipWorkspaceSaveOnce.current = false;
@@ -683,7 +700,11 @@ export function WireframeCollectionView<T extends WireframeRecord>({
               }
             }}
           />
-          <WireframePropertyIconProvider onSave={savePropertyIcon} propertyTypes={propertyTypes}>
+          <WireframePropertyIconProvider
+            onSave={savePropertyIcon}
+            propertyTypes={propertyTypes}
+            propertySelectOptions={propertySelectOptions}
+          >
             <WireframeInspector node={config.inspector(selected, schemaProperties)} options={inspectorRenderOptions} />
           </WireframePropertyIconProvider>
         </WireframeRecordPageView>
@@ -1132,7 +1153,12 @@ export function WireframeCollectionView<T extends WireframeRecord>({
           onChange={setPropertyDetails}
           onClose={() => setPropertyDetails(null)}
           onSave={() => {
-            savePropertyIcon(propertyDetails.id, propertyDetails.icon, propertyDetails.type);
+            savePropertyIcon(
+              propertyDetails.id,
+              propertyDetails.icon,
+              propertyDetails.type,
+              propertyDetails.selectOptions ?? [],
+            );
             setPropertyDetails(null);
           }}
         >
@@ -1472,7 +1498,7 @@ function formatWireframeTableValue(field: string, value: unknown): string {
 }
 type InspectorRenderOptions = {
   onDetails: (
-    details: { id: string; label: string; value: string; type?: string; icon?: string },
+    details: { id: string; label: string; value: string; type?: string; icon?: string; kind?: string },
     trigger: HTMLButtonElement,
   ) => void;
   propertyDetailsID: string | null;
@@ -1491,12 +1517,28 @@ function WireframeInspector({ node, options }: { node: ReactNode; options: Inspe
   if (!isValidElement(node) || node.type !== "dl") return node;
   const rows = React.Children.toArray((node.props as { children?: ReactNode }).children).map((row, originalIndex) => {
     if (!isValidElement(row))
-      return { row, originalIndex, propertyID: null, labelText: "", valueText: "", metadata: null };
+      return {
+        row,
+        originalIndex,
+        propertyID: null,
+        propertyKind: undefined,
+        labelText: "",
+        valueText: "",
+        metadata: null,
+      };
     const children = React.Children.toArray((row.props as { children?: ReactNode }).children);
     const label = children.find((child) => isValidElement(child) && child.type === "dt");
     const value = children.find((child) => isValidElement(child) && child.type === "dd");
     if (!isValidElement(label) || !isValidElement(value))
-      return { row, originalIndex, propertyID: null, labelText: "", valueText: "", metadata: null };
+      return {
+        row,
+        originalIndex,
+        propertyID: null,
+        propertyKind: undefined,
+        labelText: "",
+        valueText: "",
+        metadata: null,
+      };
     const labelText = String((label.props as { children?: ReactNode }).children ?? "");
     const propertyID = String((label.props as { "data-property-id"?: string })["data-property-id"] ?? labelText);
     const propertyKind = (label.props as { "data-property-kind"?: string })["data-property-kind"];
@@ -1516,6 +1558,7 @@ function WireframeInspector({ node, options }: { node: ReactNode; options: Inspe
       row,
       originalIndex,
       propertyID,
+      propertyKind,
       labelText,
       valueText: String((value.props as { children?: ReactNode }).children ?? ""),
       metadata,
@@ -1543,7 +1586,7 @@ function WireframeInspector({ node, options }: { node: ReactNode; options: Inspe
       {cloneElement(
         node as React.ReactElement<{ children?: ReactNode }>,
         {},
-        rows.map(({ row, propertyID, labelText, valueText, metadata }) => {
+        rows.map(({ row, propertyID, propertyKind, labelText, valueText, metadata }) => {
           if (!propertyID || !metadata || !isValidElement(row)) return row;
           const children = React.Children.toArray((row.props as { children?: ReactNode }).children);
           const value = children.find((child) => isValidElement(child) && child.type === "dd");
@@ -1634,6 +1677,7 @@ function WireframeInspector({ node, options }: { node: ReactNode; options: Inspe
                         type: metadata.type,
                         id: propertyID,
                         icon: metadata.iconName,
+                        kind: propertyKind,
                       },
                       event.currentTarget,
                     )

@@ -1,16 +1,18 @@
 import type { ReactNode, Ref } from "react";
 import { createPortal } from "react-dom";
-import { GSelectField, GemButton, GemTextField } from "@gemsforge/ui";
+import { GSelectField, GemButton, GemCaption, GemTextField } from "@gemsforge/ui";
 import { SizableText, Theme } from "tamagui";
 import { PropertyIcon, PropertyIconPicker } from "./PropertyIconPicker";
-import { keepDialogTabFocus } from "./WireframePropertyEditor";
-import { WIREFRAME_PROPERTY_TYPES } from "./propertyMetadata";
+import { canSavePropertyType, isSelectType, keepDialogTabFocus, parseSelectOptions } from "./WireframePropertyEditor";
+import { isWireframePropertyTypeAvailable, WIREFRAME_PROPERTY_TYPES } from "./propertyMetadata";
 
 export type WireframePropertyDetails = {
   id: string;
   label: string;
   value: string;
   type: string;
+  kind?: string;
+  selectOptions?: string[];
   icon: string;
   statusText: string;
   colorToken: string;
@@ -91,13 +93,33 @@ export function WireframePropertySettingsDialog({
             id="wireframe-property-type"
             label="Primitive type"
             value={property.type}
-            options={[...new Set([...WIREFRAME_PROPERTY_TYPES, property.type])].map((type) => ({
-              value: type,
-              label: type,
-            }))}
+            options={[
+              ...new Set([
+                ...WIREFRAME_PROPERTY_TYPES.filter((type) =>
+                  isWireframePropertyTypeAvailable(type, property.kind, property.type),
+                ),
+                property.type,
+              ]),
+            ].map((type) => ({ value: type, label: type }))}
             onChange={(type) => onChange({ ...property, type })}
             wireframe
           />
+          {isSelectType(property.type) ? (
+            <>
+              <GemTextField
+                label="Select options (comma-separated; semicolons are reserved)"
+                value={(property.selectOptions ?? []).join(", ")}
+                onChange={(event) =>
+                  onChange({ ...property, selectOptions: parseSelectOptions(event.currentTarget.value) })
+                }
+              />
+              {!property.selectOptions?.length ? (
+                <GemCaption>Add at least one option before saving this type.</GemCaption>
+              ) : property.type === "Select" && property.kind === "number" ? (
+                <GemCaption>Because this column stores numbers, each option must be numeric.</GemCaption>
+              ) : null}
+            </>
+          ) : null}
           <fieldset className="wireframe-property-icon-fieldset">
             <legend>Icon</legend>
             <PropertyIconPicker value={property.icon} onChange={(icon) => onChange({ ...property, icon })} />
@@ -122,8 +144,8 @@ export function WireframePropertySettingsDialog({
           {children}
           {children ? (
             <p className="wireframe-property-details-save-note">
-              Save relation and lookup changes with the button in that section. This button saves the property icon
-              only.
+              Save relation and lookup definitions with the button in that section. This button saves the display type,
+              options, and icon.
             </p>
           ) : null}
           <div className="wireframe-property-details-actions">
@@ -132,10 +154,11 @@ export function WireframePropertySettingsDialog({
             </GemButton>
             <GemButton
               type="button"
-              aria-label={children ? "Save property icon" : "Save property settings"}
+              aria-label="Save property settings"
+              disabled={!canSavePropertyType(property.type, property.kind, (property.selectOptions ?? []).join(","))}
               onClick={onSave}
             >
-              {children ? "Save icon" : "Save"}
+              Save
             </GemButton>
           </div>
         </section>

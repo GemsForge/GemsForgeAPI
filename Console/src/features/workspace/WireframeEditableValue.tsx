@@ -1,13 +1,24 @@
 import { useEffect, useRef, useState, type MouseEvent, type ReactNode } from "react";
 import { Pencil } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { GemPrimitiveField } from "@gemsforge/ui";
+import { GMultiSelectField, GemPrimitiveField } from "@gemsforge/ui";
 import { GemCaption, GemStatusPill } from "@gemsforge/ui";
 
 type EditableValueProps = {
   value: string;
   label?: string;
-  kind?: "text" | "select" | "status" | "number" | "date" | "url" | "email" | "relation" | "lookup" | "textarea";
+  kind?:
+    | "text"
+    | "select"
+    | "status"
+    | "number"
+    | "date"
+    | "url"
+    | "email"
+    | "relation"
+    | "lookup"
+    | "multiselect"
+    | "textarea";
   options?: readonly (string | { value: string; label: string })[];
   nullable?: boolean;
   displayValue?: ReactNode;
@@ -149,7 +160,18 @@ export function WireframeEditableValue({
         startEditing();
       }}
     >
-      {editing && renderEditor ? (
+      {editing && kind === "multiselect" ? (
+        <GMultiSelectField
+          label={label}
+          value={currentValue}
+          options={options.map((option) => (typeof option === "string" ? { value: option, label: option } : option))}
+          error={saveError}
+          onSave={async (next) => {
+            if (await commit(next)) setEditing(false);
+          }}
+          onCancel={() => setEditing(false)}
+        />
+      ) : editing && renderEditor ? (
         <>
           {renderEditor({
             value: currentValue,
@@ -195,7 +217,6 @@ export function WireframeEditableValue({
             <a
               className="wireframe-related-record-link"
               href={relatedHref}
-              aria-description="Double-click or press F2 to edit."
               title="Double-click or press F2 to edit"
               onPointerDown={handleRelationPointerDown}
               onClick={handleRelationClick}

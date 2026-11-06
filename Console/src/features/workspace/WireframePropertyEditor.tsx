@@ -10,16 +10,21 @@ import {
 import { createPortal } from "react-dom";
 import { SizableText, Theme, type TamaguiElement } from "tamagui";
 import { getPropertyIconByName } from "./propertyIcons";
-import { inferWireframePropertyMetadata, WIREFRAME_PROPERTY_TYPES } from "./propertyMetadata";
+import {
+  inferWireframePropertyMetadata,
+  isWireframePropertyTypeAvailable,
+  WIREFRAME_PROPERTY_TYPES,
+} from "./propertyMetadata";
 import { PropertyIconPicker } from "./PropertyIconPicker";
 import { GemButton, GemCaption } from "@gemsforge/ui";
 import { GemTextField } from "@gemsforge/ui";
 import { GSelectField } from "@gemsforge/ui";
 
 export const WireframePropertyIconContext = createContext<
-  ((propertyID: string, icon: string, type: string) => void) | null
+  ((propertyID: string, icon: string, type: string, selectOptions: string[]) => void) | null
 >(null);
 export const WireframePropertyTypeContext = createContext<Readonly<Record<string, string>>>({});
+export const WireframePropertySelectOptionsContext = createContext<Readonly<Record<string, string[]>>>({});
 
 export function keepDialogTabFocus(event: ReactKeyboardEvent<HTMLElement>, dialog: HTMLElement) {
   if (event.key !== "Tab") return;
@@ -48,14 +53,20 @@ export function WireframePropertyIconProvider({
   children,
   onSave,
   propertyTypes,
+  propertySelectOptions,
 }: {
   children: ReactNode;
-  onSave: (propertyID: string, icon: string, type: string) => void;
+  onSave: (propertyID: string, icon: string, type: string, selectOptions: string[]) => void;
   propertyTypes: Readonly<Record<string, string>>;
+  propertySelectOptions: Readonly<Record<string, string[]>>;
 }) {
   return (
     <WireframePropertyIconContext.Provider value={onSave}>
-      <WireframePropertyTypeContext.Provider value={propertyTypes}>{children}</WireframePropertyTypeContext.Provider>
+      <WireframePropertyTypeContext.Provider value={propertyTypes}>
+        <WireframePropertySelectOptionsContext.Provider value={propertySelectOptions}>
+          {children}
+        </WireframePropertySelectOptionsContext.Provider>
+      </WireframePropertyTypeContext.Provider>
     </WireframePropertyIconContext.Provider>
   );
 }
@@ -82,6 +93,8 @@ export function WireframePropertyEditor({
   const metadata = inferWireframePropertyMetadata({ label, kind, numberFormat, propertyType, iconName });
   const [type, setType] = useState(metadata.type);
   const [icon, setIcon] = useState(metadata.iconName);
+  const savedSelectOptions = useContext(WireframePropertySelectOptionsContext);
+  const [optionText, setOptionText] = useState("");
   const savePropertyIcon = useContext(WireframePropertyIconContext);
   const triggerRef = useRef<TamaguiElement>(null);
   const dialogRef = useRef<HTMLElement>(null);
@@ -90,7 +103,8 @@ export function WireframePropertyEditor({
     setName(label);
     setType(metadata.type);
     setIcon(metadata.iconName);
-  }, [label, metadata.type, metadata.iconName]);
+    setOptionText((propertyID ? savedSelectOptions[propertyID] : undefined)?.join(", ") ?? "");
+  }, [label, metadata.type, metadata.iconName, propertyID, savedSelectOptions]);
 
   useEffect(() => {
     if (!open) return;
@@ -180,13 +194,34 @@ export function WireframePropertyEditor({
                   <GSelectField
                     label="Primitive type"
                     value={type}
-                    options={[...new Set([...WIREFRAME_PROPERTY_TYPES, type])].map((item) => ({
+                    options={[
+                      ...new Set([
+                        ...WIREFRAME_PROPERTY_TYPES.filter((item) =>
+                          isWireframePropertyTypeAvailable(item, kind, type),
+                        ),
+                        type,
+                      ]),
+                    ].map((item) => ({
                       value: item,
                       label: item,
                     }))}
                     onChange={setType}
                     wireframe
                   />
+                  {isSelectType(type) ? (
+                    <>
+                      <GemTextField
+                        label="Select options (comma-separated; semicolons are reserved)"
+                        value={optionText}
+                        onChange={(event) => setOptionText(event.currentTarget.value)}
+                      />
+                      {!parseSelectOptions(optionText).length ? (
+                        <GemCaption>Add at least one option before saving this type.</GemCaption>
+                      ) : type === "Select" && kind === "number" ? (
+                        <GemCaption>Because this column stores numbers, each option must be numeric.</GemCaption>
+                      ) : null}
+                    </>
+                  ) : null}
                   <fieldset className="wireframe-property-icon-fieldset">
                     <legend>Icon</legend>
                     <PropertyIconPicker value={icon} onChange={setIcon} />
@@ -196,8 +231,9 @@ export function WireframePropertyEditor({
                       type="button"
                       variant="outlined"
                       aria-label="Save property settings"
+                      disabled={!canSavePropertyType(type, kind, optionText)}
                       onClick={() => {
-                        if (propertyID) savePropertyIcon?.(propertyID, icon, type);
+                        if (propertyID) savePropertyIcon?.(propertyID, icon, type, parseSelectOptions(optionText));
                         setOpen(false);
                       }}
                     >
@@ -212,4 +248,26 @@ export function WireframePropertyEditor({
         : null}
     </>
   );
+}
+
+export function isSelectType(type: string): boolean {
+  return ["Select", "Status", "Multi-select", "Tags"].includes(type);
+}
+
+export function parseSelectOptions(value: string): string[] {
+  return [
+    ...new Set(
+      value
+        .split(",")
+        .map((option) => option.trim())
+        .filter((option) => option && !option.includes(";")),
+    ),
+  ];
+}
+
+export function canSavePropertyType(type: string, kind: string | undefined, optionText: string): boolean {
+  if (!isSelectType(type)) return true;
+  const options = parseSelectOptions(optionText);
+  if (options.length === 0) return false;
+  return type !== "Select" || kind !== "number" || options.every((option) => Number.isFinite(Number(option)));
 }

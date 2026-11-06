@@ -2,7 +2,8 @@ import { formatRecordNumber, inferRecordNumberFormat, type RecordPropertyDefinit
 import { WireframeRecordInspector, type WireframeInspectorField } from "./WireframeRecordInspector";
 import { inferWireframePropertyMetadata } from "./propertyMetadata";
 import { useContext } from "react";
-import { WireframePropertyTypeContext } from "./WireframePropertyEditor";
+import { WireframePropertySelectOptionsContext, WireframePropertyTypeContext } from "./WireframePropertyEditor";
+import { decodeMultiSelectValue } from "@gemsforge/ui";
 
 function editorKind(
   kind: RecordPropertyDefinition<unknown>["kind"],
@@ -28,6 +29,7 @@ export function WireframeSchemaInspector<Record extends object>({
   properties: readonly RecordPropertyDefinition<Record>[];
 }) {
   const propertyTypes = useContext(WireframePropertyTypeContext);
+  const propertySelectOptions = useContext(WireframePropertySelectOptionsContext);
   const seen = new Set<string>();
   const seenSourceFields = new Set<string>();
   const fields = properties
@@ -53,11 +55,17 @@ export function WireframeSchemaInspector<Record extends object>({
               : edit?.inputType === "number"
                 ? "number"
                 : (property.kind ?? kind);
+      const savedPropertyType = propertyTypes[property.id] ?? property.propertyType;
+      const propertyType =
+        (savedPropertyType === "Relation" || savedPropertyType === "Lookup") &&
+        property.kind !== savedPropertyType.toLowerCase()
+          ? undefined
+          : savedPropertyType;
       const metadata = inferWireframePropertyMetadata({
         label: property.label,
         kind: metadataKind,
         numberFormat: property.numberFormat,
-        propertyType: propertyTypes[property.id] ?? property.propertyType,
+        propertyType,
         iconName: property.iconName,
       });
       const typeKind: Partial<{ [typeName: string]: WireframeInspectorField["kind"] }> = {
@@ -65,8 +73,8 @@ export function WireframeSchemaInspector<Record extends object>({
         Name: "text",
         Notes: "textarea",
         Select: "select",
-        "Multi-select": "select",
-        Tags: "select",
+        "Multi-select": "multiselect",
+        Tags: "multiselect",
         Status: "status",
         Number: "number",
         Currency: "number",
@@ -77,8 +85,18 @@ export function WireframeSchemaInspector<Record extends object>({
         Lookup: property.kind === "lookup" ? "lookup" : undefined,
       };
       const resolvedKind: WireframeInspectorField["kind"] = typeKind[metadata.type] ?? kind;
+      const options =
+        propertySelectOptions[property.id]?.map((option) => ({ value: option, label: option })) ??
+        edit?.options?.map((option) => ({ value: option.value, label: option.label })) ??
+        [];
       const displayValue = property.getValue(record).display;
       const propertyValue = property.getValue(record);
+      const multiSelectDisplay =
+        resolvedKind === "multiselect"
+          ? decodeMultiSelectValue(String(value.raw ?? ""))
+              .map((selected) => options.find((option) => option.value === selected)?.label ?? selected)
+              .join(", ")
+          : undefined;
       const linkedDisplayValue =
         (property.kind === "url" || property.kind === "email" || property.kind === "relation") && propertyValue.href ? (
           <a
@@ -112,7 +130,7 @@ export function WireframeSchemaInspector<Record extends object>({
                 ? typeof displayValue === "string"
                   ? linkedDisplayValue
                   : propertyValue.href
-                : value.display,
+                : (multiSelectDisplay ?? value.display),
         display: linkedDisplayValue,
         relatedHref: property.kind === "relation" ? propertyValue.href : undefined,
         kind: resolvedKind,
@@ -121,7 +139,7 @@ export function WireframeSchemaInspector<Record extends object>({
         iconName: metadata.iconName,
         numberFormat: property.numberFormat,
         onCommit: edit ? async (next: string) => edit.onSave(record, next) : undefined,
-        options: edit?.options?.map((option) => ({ value: option.value, label: option.label })),
+        options,
         nullable: edit?.nullable,
         renderEditor: edit?.renderEditor,
       } satisfies WireframeInspectorField;
