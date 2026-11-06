@@ -569,7 +569,9 @@
 }
 
 .wireframe-page-banner {
+  width: 100%;
   max-width: 58rem;
+  box-sizing: border-box;
   margin-top: 0.6rem;
   padding: 0.55rem 0.75rem;
   border: 1px solid var(--gem-wireframe-border, #d9dfdc);
@@ -582,7 +584,9 @@
 }
 
 .wireframe-demo.wireframe-standalone .wireframe-page-copy {
-  width: 100%;
+  width: auto;
+  min-width: 0;
+  flex: 1 1 0;
   gap: 0;
 }
 
