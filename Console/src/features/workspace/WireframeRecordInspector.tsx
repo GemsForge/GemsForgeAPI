@@ -17,6 +17,7 @@ export type WireframeInspectorField = {
     | "date"
     | "url"
     | "email"
+    | "checkbox"
     | "relation"
     | "lookup"
     | "multiselect"

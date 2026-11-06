@@ -33,12 +33,14 @@ struct SchemaPageRecordCreationResponse: Content, Sendable {
 enum SchemaPageError: Error, CustomStringConvertible, Equatable {
     case unavailableDatabase
     case tableUnavailable
+    case recordUnavailable
     case invalidRecord(String)
 
     var description: String {
         switch self {
         case .unavailableDatabase: return "Schema pages require the configured SQLite database."
         case .tableUnavailable: return "This table is not available as a Hub-owned schema page."
+        case .recordUnavailable: return "The record is unavailable to this Hub."
         case .invalidRecord(let message): return message
         }
     }
@@ -287,6 +289,65 @@ struct SchemaPageService: Sendable {
         return SchemaPageRecordCreationResponse(table: table.name, recordID: recordID)
     }
 
+    /// Updates one or more non-key properties on an existing record owned by this Hub.
+    func updateRecord(tableName: String, recordID: String, values: [String: PatchJSONValue]) async throws {
+        guard database is SQLDatabase else { throw SchemaPageError.unavailableDatabase }
+        let schema = try await LiveSchemaService(database: database).inspect()
+        guard let table = schema.tables.first(where: { $0.name == tableName }),
+              Self.isSchemaPageTable(table),
+              let primaryKey = table.columns.first(where: \.primaryKey)
+        else { throw SchemaPageError.tableUnavailable }
+
+        guard !values.isEmpty else { throw SchemaPageError.invalidRecord("At least one property is required.") }
+        let protectedColumns = Set(["HubID", primaryKey.name])
+        let columnsByName = Dictionary(uniqueKeysWithValues: table.columns.map { ($0.name, $0) })
+        let unknown = Set(values.keys).subtracting(columnsByName.keys)
+        guard unknown.isEmpty else {
+            throw SchemaPageError.invalidRecord("Unknown properties: \(unknown.sorted().joined(separator: ", ")).")
+        }
+        if let protected = Set(values.keys).intersection(protectedColumns).sorted().first {
+            throw SchemaPageError.invalidRecord("\(protected) cannot be changed.")
+        }
+
+        for (name, value) in values {
+            guard let column = columnsByName[name] else { continue }
+            try Self.validate(value, for: column)
+        }
+
+        let updateValue = try await database.transaction { transaction in
+            guard let transactionSQL = transaction as? SQLDatabase else {
+                throw SchemaPageError.unavailableDatabase
+            }
+            var query = SQLQueryString("UPDATE \(ident: table.name) SET ")
+            for (index, name) in values.keys.sorted().enumerated() {
+                if index > 0 { query.appendInterpolation(unsafeRaw: ", ") }
+                query.appendInterpolation(ident: name)
+                query.appendInterpolation(unsafeRaw: " = ")
+                let column = columnsByName[name]!
+                try Self.bind(Self.databaseValue(values[name]!, for: column), to: &query)
+            }
+            query.appendInterpolation(unsafeRaw: " WHERE ")
+            query.appendInterpolation(ident: primaryKey.name)
+            query.appendInterpolation(unsafeRaw: " = ")
+            if primaryKey.dataType.uppercased().contains("INT") {
+                guard let integerID = Int64(recordID) else {
+                    throw SchemaPageError.invalidRecord("Record ID must be a valid integer.")
+                }
+                query.appendInterpolation(bind: integerID)
+            } else {
+                query.appendInterpolation(bind: recordID)
+            }
+            query.appendInterpolation(unsafeRaw: " AND ")
+            query.appendInterpolation(ident: "HubID")
+            query.appendInterpolation(unsafeRaw: " = ")
+            query.appendInterpolation(bind: hubID)
+            query.appendInterpolation(unsafeRaw: " RETURNING ")
+            query.appendInterpolation(ident: primaryKey.name)
+            return try await transactionSQL.raw(query).first()
+        }
+        guard updateValue != nil else { throw SchemaPageError.recordUnavailable }
+    }
+
     /// Confirms a record identifier belongs to this Hub before it is persisted as workspace selection.
     func containsRecord(_ recordID: String, in tableName: String) async throws -> Bool {
         guard let sql = database as? SQLDatabase else { throw SchemaPageError.unavailableDatabase }
@@ -356,6 +417,16 @@ struct SchemaPageService: Sendable {
             if let integer = Int64(exactly: number) { return String(integer) }
             return String(number)
         case .bool(let bool): return bool ? "1" : "0"
+        }
+    }
+
+    private static func databaseValue(_ value: PatchJSONValue, for column: LiveSchemaColumnResponse) -> PatchJSONValue {
+        guard column.dataType.uppercased().contains("BOOL") else { return value }
+        switch value {
+        case .null: return .null
+        case .bool: return value
+        case .number(let number): return .bool(number != 0)
+        case .string(let text): return .bool(["1", "true"].contains(text.lowercased()))
         }
     }
 

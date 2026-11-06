@@ -11,6 +11,7 @@ function editorKind(
 ): WireframeInspectorField["kind"] {
   if (inputType === "longText") return "textarea";
   if (kind === "select" || kind === "status") return kind;
+  if (kind === "checkbox") return "checkbox";
   if (kind === "relation") return "relation";
   if (kind === "lookup") return "lookup";
   if (kind === "date" || inputType === "date") return "date";
@@ -76,6 +77,7 @@ export function WireframeSchemaInspector<Record extends object>({
         "Multi-select": "multiselect",
         Tags: "multiselect",
         Status: "status",
+        Checkbox: "checkbox",
         Number: "number",
         Currency: "number",
         Percent: "number",
@@ -96,6 +98,12 @@ export function WireframeSchemaInspector<Record extends object>({
           ? decodeMultiSelectValue(String(value.raw ?? ""))
               .map((selected) => options.find((option) => option.value === selected)?.label ?? selected)
               .join(", ")
+          : undefined;
+      const checkboxDisplay =
+        property.kind === "checkbox"
+          ? ["1", "true"].includes(String(value.raw ?? "").toLowerCase())
+            ? "Yes"
+            : "No"
           : undefined;
       const linkedDisplayValue =
         (property.kind === "url" || property.kind === "email" || property.kind === "relation") && propertyValue.href ? (
@@ -130,7 +138,7 @@ export function WireframeSchemaInspector<Record extends object>({
                 ? typeof displayValue === "string"
                   ? linkedDisplayValue
                   : propertyValue.href
-                : (multiSelectDisplay ?? value.display),
+                : (multiSelectDisplay ?? checkboxDisplay ?? value.display),
         display: linkedDisplayValue,
         relatedHref: property.kind === "relation" ? propertyValue.href : undefined,
         kind: resolvedKind,
@@ -138,7 +146,17 @@ export function WireframeSchemaInspector<Record extends object>({
         propertyType: metadata.type,
         iconName: metadata.iconName,
         numberFormat: property.numberFormat,
-        onCommit: edit ? async (next: string) => edit.onSave(record, next) : undefined,
+        onCommit: edit
+          ? async (next: string) => {
+              const savedValue =
+                next === "" && edit.nullable
+                  ? null
+                  : resolvedKind === "number" && next !== ""
+                    ? Number(next)
+                    : next;
+              await edit.onSave(record, savedValue);
+            }
+          : undefined,
         options,
         nullable: edit?.nullable,
         renderEditor: edit?.renderEditor,

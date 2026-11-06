@@ -15,6 +15,7 @@ type EditableValueProps = {
     | "date"
     | "url"
     | "email"
+    | "checkbox"
     | "relation"
     | "lookup"
     | "multiselect"
@@ -50,7 +51,13 @@ export function WireframeEditableValue({
   const [editing, setEditing] = useState(false);
   const [saveError, setSaveError] = useState<string>();
   const primitive =
-    kind === "select" || kind === "status" || kind === "number" || kind === "date" || kind === "url" || kind === "email"
+    kind === "select" ||
+    kind === "status" ||
+    kind === "number" ||
+    kind === "date" ||
+    kind === "url" ||
+    kind === "email" ||
+    kind === "checkbox"
       ? kind
       : "text";
   const commit = async (nextValue: string | number | boolean | null) => {
@@ -62,6 +69,7 @@ export function WireframeEditableValue({
         await onCommit(next);
         return true;
       } catch (error) {
+        setCurrentValue(value);
         setSaveError(error instanceof Error ? error.message : "Could not save this property.");
         return false;
       }
@@ -160,7 +168,36 @@ export function WireframeEditableValue({
         startEditing();
       }}
     >
-      {editing && kind === "multiselect" ? (
+      {!editing && kind === "checkbox" ? (
+        <GemPrimitiveField
+          label={label}
+          showLabel={false}
+          primitive="text"
+          value={currentValue}
+          editing={false}
+          displayValue={displayValue ?? (currentValue === "1" || currentValue.toLowerCase() === "true" ? "Yes" : "No")}
+          valueTextRole="caption"
+          density="compact"
+          onDisplayClick={startEditing}
+          wireframe
+        />
+      ) : editing && kind === "checkbox" ? (
+        <GemPrimitiveField
+          label={label}
+          showLabel={false}
+          primitive="checkbox"
+          value={currentValue === "1" || currentValue.toLowerCase() === "true"}
+          editing
+          onChange={(next) => {
+            if (typeof next === "boolean") setCurrentValue(next ? "1" : "0");
+          }}
+          onSave={async (next) => {
+            if (await commit(next)) setEditing(false);
+          }}
+          error={saveError}
+          wireframe
+        />
+      ) : editing && kind === "multiselect" ? (
         <GMultiSelectField
           label={label}
           value={currentValue}

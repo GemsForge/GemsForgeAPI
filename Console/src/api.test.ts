@@ -117,6 +117,15 @@ describe("resource create contracts", () => {
     expect(fetch.mock.calls[0]?.[1]?.body).toBe(JSON.stringify({ Title: "Vacation", Count: 2 }));
   });
 
+  it("patches schema-backed records through their Hub-scoped encoded route", async () => {
+    const fetch = vi.fn().mockResolvedValue(new Response(null, { status: 204 }));
+    vi.stubGlobal("fetch", fetch);
+    await expect(api.patchSchemaPageRecord("Family Goals", "goal/1", { Quantity: 9 })).resolves.toBeNull();
+    expect(fetch.mock.calls[0]?.[0]).toBe("/schema-builder/tables/Family%20Goals/records/goal%2F1");
+    expect(fetch.mock.calls[0]?.[1]?.method).toBe("PATCH");
+    expect(fetch.mock.calls[0]?.[1]?.body).toBe(JSON.stringify({ Quantity: 9 }));
+  });
+
   it("loads exact related records, saves relation definitions, and requests searchable relation values", async () => {
     const relation = {
       id: "transaction-category",

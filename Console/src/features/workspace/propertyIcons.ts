@@ -130,6 +130,7 @@ export function inferWireframePropertyType(
   const normalized = label.trim().toLowerCase();
   if (kind === "select") return "Select";
   if (kind === "status") return "Status";
+  if (kind === "checkbox") return "Checkbox";
   if (kind === "date") return "Date";
   if (kind === "url") return "URL";
   if (kind === "image") return "Image";

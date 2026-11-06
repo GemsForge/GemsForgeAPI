@@ -122,6 +122,9 @@ final class SchemaPageServiceTests: XCTestCase {
             try await app.test(.POST, "schema-builder/tables/SchemaPageFixture/records") { response in
                 XCTAssertEqual(response.status, .unauthorized)
             }
+            try await app.test(.PATCH, "schema-builder/tables/SchemaPageFixture/records/a1") { response in
+                XCTAssertEqual(response.status, .unauthorized)
+            }
         }
     }
 
@@ -212,6 +215,40 @@ final class SchemaPageServiceTests: XCTestCase {
                 .containsRecord(createdID, in: "SchemaPageFixture")
             XCTAssertTrue(visibleToCreator)
             XCTAssertFalse(visibleToOtherHub)
+
+            try await app.test(.PATCH, "schema-builder/tables/SchemaPageFixture/records/\(createdID)", beforeRequest: { request in
+                request.headers.bearerAuthorization = .init(token: tokenA)
+                request.headers.contentType = .json
+                request.body = ByteBuffer(string: #"{"Name":"Updated goal","Quantity":9}"#)
+            }) { response in
+                XCTAssertEqual(response.status, .noContent)
+            }
+            let updatedRecord = try await SchemaPageService(database: app.db, hubID: "hub-a")
+                .record(tableName: "SchemaPageFixture", recordID: createdID)
+            XCTAssertEqual(updatedRecord.row["Name"]!, "Updated goal")
+            XCTAssertEqual(updatedRecord.row["Quantity"]!, "9")
+
+            try await app.test(.PATCH, "schema-builder/tables/SchemaPageFixture/records/fixture-b", beforeRequest: { request in
+                request.headers.bearerAuthorization = .init(token: tokenA)
+                request.headers.contentType = .json
+                request.body = ByteBuffer(string: #"{"Name":"Cross-Hub edit"}"#)
+            }) { response in
+                XCTAssertEqual(response.status, .notFound)
+            }
+            try await app.test(.PATCH, "schema-builder/tables/SchemaPageFixture/records/\(createdID)", beforeRequest: { request in
+                request.headers.bearerAuthorization = .init(token: tokenA)
+                request.headers.contentType = .json
+                request.body = ByteBuffer(string: #"{"HubID":"hub-b"}"#)
+            }) { response in
+                XCTAssertEqual(response.status, .unprocessableEntity)
+            }
+            try await app.test(.PATCH, "schema-builder/tables/SchemaPageFixture/records/\(createdID)", beforeRequest: { request in
+                request.headers.bearerAuthorization = .init(token: tokenA)
+                request.headers.contentType = .json
+                request.body = ByteBuffer(string: #"{"Unknown":"value"}"#)
+            }) { response in
+                XCTAssertEqual(response.status, .unprocessableEntity)
+            }
 
             var generatedEducationID = ""
             try await app.test(.POST, "schema-builder/tables/Education/records", beforeRequest: { request in

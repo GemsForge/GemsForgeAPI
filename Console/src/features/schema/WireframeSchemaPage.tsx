@@ -4,6 +4,7 @@ import {
   useSchemaPageRecordQuery,
   useSchemaPageRecordsQuery,
   useSchemaPageTablesQuery,
+  usePatchSchemaPageRecordMutation,
 } from "../../data/workflowQueries";
 import { createLiveSchemaProperties, type RecordPropertyDefinition } from "../../table-kit";
 import type { SchemaPageRecords } from "../../types";
@@ -33,6 +34,8 @@ export function WireframeSchemaPage() {
   const pages = useSchemaPageTablesQuery();
   const result = useSchemaPageRecordsQuery(tableName);
   const selectedRecord = useSchemaPageRecordQuery(tableName, recordID ? decodeURIComponent(recordID) : null);
+  const patchRecord = usePatchSchemaPageRecordMutation(tableName);
+  const patchSchemaRecord = patchRecord.mutateAsync;
   const table = result.data?.table ?? pages.data?.tables.find((candidate) => candidate.name === tableName);
   const records = useMemo(() => {
     const loaded = schemaRecords(result.data);
@@ -43,8 +46,16 @@ export function WireframeSchemaPage() {
     return [...loaded.filter((record) => record.id !== id), { ...row, id }];
   }, [result.data, selectedRecord.data]);
   const properties = useMemo<readonly RecordPropertyDefinition<SchemaRecord>[]>(
-    () => (table ? createLiveSchemaProperties<SchemaRecord>(table).filter((property) => property.id !== "HubID") : []),
-    [table],
+    () =>
+      table
+        ? createLiveSchemaProperties<SchemaRecord>(table, async (record, propertyID, value) => {
+            await patchSchemaRecord({
+              recordID: record.id,
+              values: { [propertyID]: value },
+            });
+          }).filter((property) => property.id !== "HubID")
+        : [],
+    [patchSchemaRecord, table],
   );
 
   if (result.isPending || pages.isPending || (recordID && selectedRecord.isPending))

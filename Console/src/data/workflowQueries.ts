@@ -127,6 +127,24 @@ export function useCreateSchemaPageRecordMutation(tableName: string) {
     onSuccess: () => client.invalidateQueries({ queryKey: workflowQueryKeys.schemaPageRecords(tableName) }),
   });
 }
+export function usePatchSchemaPageRecordMutation(tableName: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      recordID,
+      values,
+    }: {
+      recordID: string;
+      values: Record<string, string | number | boolean | null>;
+    }) => api.patchSchemaPageRecord(tableName, recordID, values),
+    onSuccess: async (_result, { recordID }) => {
+      await Promise.all([
+        client.invalidateQueries({ queryKey: workflowQueryKeys.schemaPageRecords(tableName) }),
+        client.invalidateQueries({ queryKey: workflowQueryKeys.schemaPageRecord(tableName, recordID) }),
+      ]);
+    },
+  });
+}
 export function useImportableSQLTablesQuery() {
   return useQuery({
     queryKey: workflowQueryKeys.importableTables,

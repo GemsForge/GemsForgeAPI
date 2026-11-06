@@ -17,6 +17,7 @@ func registerSchemaPageRoutes(_ app: Application) {
             switch error {
             case .tableUnavailable: throw Abort(.unprocessableEntity, reason: error.description)
             case .unavailableDatabase: throw Abort(.serviceUnavailable, reason: error.description)
+            case .recordUnavailable: throw Abort(.notFound, reason: error.description)
             case .invalidRecord: throw Abort(.unprocessableEntity, reason: error.description)
             }
         }
@@ -34,6 +35,7 @@ func registerSchemaPageRoutes(_ app: Application) {
             switch error {
             case .tableUnavailable: throw Abort(.notFound, reason: error.description)
             case .unavailableDatabase: throw Abort(.serviceUnavailable, reason: error.description)
+            case .recordUnavailable: throw Abort(.notFound, reason: error.description)
             case .invalidRecord: throw Abort(.unprocessableEntity, reason: error.description)
             }
         }
@@ -50,7 +52,29 @@ func registerSchemaPageRoutes(_ app: Application) {
             switch error {
             case .tableUnavailable: throw Abort(.notFound, reason: error.description)
             case .unavailableDatabase: throw Abort(.serviceUnavailable, reason: error.description)
+            case .recordUnavailable: throw Abort(.notFound, reason: error.description)
             case .invalidRecord: throw Abort(.notFound, reason: error.description)
+            }
+        }
+    }
+
+    pages.patch(":tableName", "records", ":recordID") { request async throws -> HTTPStatus in
+        let hubID = try request.requireAuthenticatedHubID()
+        guard let tableName = request.parameters.get("tableName"),
+              let recordID = request.parameters.get("recordID") else { throw Abort(.badRequest) }
+        let values = try request.content.decode([String: PatchJSONValue].self)
+        do {
+            try await SchemaPageService(database: request.db, hubID: hubID)
+                .updateRecord(tableName: tableName, recordID: recordID, values: values)
+            return .noContent
+        } catch let error as SchemaPageError {
+            switch error {
+            case .tableUnavailable, .recordUnavailable:
+                throw Abort(.notFound, reason: error.description)
+            case .unavailableDatabase:
+                throw Abort(.serviceUnavailable, reason: error.description)
+            case .invalidRecord:
+                throw Abort(.unprocessableEntity, reason: error.description)
             }
         }
     }
@@ -66,6 +90,7 @@ func registerSchemaPageRoutes(_ app: Application) {
             switch error {
             case .tableUnavailable: throw Abort(.notFound, reason: error.description)
             case .unavailableDatabase: throw Abort(.serviceUnavailable, reason: error.description)
+            case .recordUnavailable: throw Abort(.notFound, reason: error.description)
             case .invalidRecord: throw Abort(.unprocessableEntity, reason: error.description)
             }
         }

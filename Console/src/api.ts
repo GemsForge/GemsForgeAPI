@@ -384,6 +384,15 @@ export const api = {
       method: "POST",
       body: JSON.stringify(values),
     }),
+  patchSchemaPageRecord: (
+    tableName: string,
+    recordID: string,
+    values: Record<string, string | number | boolean | null>,
+  ) =>
+    request<void>(`/schema-builder/tables/${encodeURIComponent(tableName)}/records/${encodeURIComponent(recordID)}`, {
+      method: "PATCH",
+      body: JSON.stringify(values),
+    }),
   previewUserTable: (definition: TableBuilderRequest) =>
     request<UserTablePreview>("/live-database/tables/preview", { method: "POST", body: JSON.stringify(definition) }),
   createUserTable: (confirmationToken: string) =>

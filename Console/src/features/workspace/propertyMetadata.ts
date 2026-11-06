@@ -22,6 +22,7 @@ export const WIREFRAME_PROPERTY_TYPES = [
   "Multi-select",
   "Tags",
   "Status",
+  "Checkbox",
   "Number",
   "Currency",
   "Percent",
