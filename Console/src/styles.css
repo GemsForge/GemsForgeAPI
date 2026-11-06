@@ -245,6 +245,35 @@ select {
 .gem-date-popover [class*="font_body"] {
   font-size: 0.84rem;
 }
+.gem-date-popover .gem-date-settings {
+  color: var(--ink);
+}
+.gem-date-popover .gem-date-text-input {
+  min-height: 2.5rem;
+  color: var(--ink) !important;
+  background: var(--panel-light) !important;
+  border-color: var(--border) !important;
+}
+.gem-date-popover .gem-date-text-input::placeholder {
+  color: var(--muted) !important;
+  opacity: 1;
+}
+.gem-date-popover .gem-date-format-hint {
+  color: var(--ink);
+  font-weight: 500;
+}
+.gem-date-popover[data-wireframe-date="true"] .gem-date-settings,
+.gem-date-popover[data-wireframe-date="true"] .gem-date-format-hint {
+  color: var(--gem-wireframe-text);
+}
+.gem-date-popover .gem-date-text-input[data-wireframe-date="true"] {
+  color: var(--gem-wireframe-text) !important;
+  background: var(--gem-wireframe-surface-raised) !important;
+  border-color: var(--gem-wireframe-border-strong) !important;
+}
+.gem-date-popover .gem-date-text-input[data-wireframe-date="true"]::placeholder {
+  color: var(--gem-wireframe-text-muted) !important;
+}
 .gem-date-popover .gem-calendar-day:hover,
 .gem-date-popover .gem-calendar-day:focus-visible {
   background: var(--mint-dark);
