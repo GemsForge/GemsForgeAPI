@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { GStructuralField } from "@gemsforge/ui";
-import type { ExpenseTransaction, TablePropertyDefinition } from "../../types";
+import type { ExpenseSubcategory, ExpenseTransaction, TablePropertyDefinition } from "../../types";
 import {
   useRelatedRecordOptionsQuery,
   useTablePropertyDefinitionsQuery,
@@ -79,10 +79,12 @@ export function TransactionsInspector({
   record,
   properties,
   schemaProperties,
+  subcategories = [],
 }: {
   record: ExpenseTransaction;
   properties: readonly RecordPropertyDefinition<ExpenseTransaction>[];
   schemaProperties?: readonly RecordPropertyDefinition<ExpenseTransaction>[];
+  subcategories?: readonly ExpenseSubcategory[];
 }) {
   const navigate = useNavigate();
   const definitions = useTablePropertyDefinitionsQuery("Transactions");
@@ -116,11 +118,15 @@ export function TransactionsInspector({
         nullable: property.id === "subcategory",
         onSave: async (_item: unknown, next: string | number | null) => {
           const numeric = next === "" || next === null ? null : Number(next);
+          const selectedSubcategory = subcategories.find((subcategory) => subcategory.id === record.subcategoryID);
           await patch.mutateAsync({
             id: record.id,
             patch:
               property.id === "category"
-                ? { categoryID: numeric as number, subcategoryID: null }
+                ? {
+                    categoryID: numeric as number,
+                    subcategoryID: selectedSubcategory?.categoryID === numeric ? selectedSubcategory.id : null,
+                  }
                 : { subcategoryID: numeric },
           });
         },

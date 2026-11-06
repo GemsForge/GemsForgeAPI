@@ -60,6 +60,13 @@ export function TransactionsWireframeView({ records }: { records: readonly Expen
         tableName: "ExpenseTransaction",
         title: "Expense Tracker",
         description: "Purchases, receipts, categories, and spending history.",
+        headerBanner: (
+          <>
+            <strong>Category and Subcategory are linked.</strong> Subcategories belong to one category. The inspector
+            filters subcategory choices, and the API validates the pair. Changing Category keeps a compatible
+            Subcategory or clears one that no longer belongs. This notice does not change the database.
+          </>
+        ),
         activeCollection: "Expense Tracker",
         records,
         properties,
@@ -76,6 +83,7 @@ export function TransactionsWireframeView({ records }: { records: readonly Expen
         inspector: (record, schemaProperties) => (
           <TransactionsInspector
             record={record}
+            subcategories={subcategories.data ?? []}
             properties={properties.map((property): RecordPropertyDefinition<ExpenseTransaction> => {
               const field = fieldByProperty[property.id];
               const numeric = ["quantity", "regularPrice", "paidPrice", "total", "discount"].includes(property.id);
@@ -114,7 +122,14 @@ export function TransactionsWireframeView({ records }: { records: readonly Expen
                         const next = value === "" || value === null ? null : Number(value);
                         const values =
                           property.id === "category"
-                            ? { categoryID: next, subcategoryID: null }
+                            ? {
+                                categoryID: next,
+                                subcategoryID:
+                                  subcategories.data?.find((subcategory) => subcategory.id === record.subcategoryID)
+                                    ?.categoryID === next
+                                    ? record.subcategoryID
+                                    : null,
+                              }
                             : property.id === "subcategory"
                               ? { subcategoryID: next }
                               : property.id === "merchantCode"
