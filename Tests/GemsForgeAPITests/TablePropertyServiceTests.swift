@@ -18,6 +18,7 @@ struct CreateTablePropertyFixtures: AsyncMigration {
             .field("HubID", .string, .required)
             .field("CategoryID", .int, .required)
             .field("Subcategory", .string, .required)
+            .foreignKey(["CategoryID"], references: "BudgetCategories", ["CategoryID"])
             .create()
         try await database.schema("Transactions")
             .field("TransactionID", .string, .identifier(auto: false))
@@ -141,6 +142,7 @@ final class TablePropertyServiceTests: XCTestCase {
             try await sql.raw("INSERT INTO Hubs (HubID, AccountID, Name) VALUES ('hub-a', 'account-a', 'A')").run()
             try await TableView(hubID: "hub-a", tableName: "Transactions", name: "Transactions", viewType: .table, isDefault: true).save(on: app.db)
             try await TableView(hubID: "hub-a", tableName: "BudgetCategories", name: "Budget Categories", viewType: .table, isDefault: true).save(on: app.db)
+            try await TableView(hubID: "hub-a", tableName: "BudgetSubcategories", name: "Budget Subcategories", viewType: .table, isDefault: true).save(on: app.db)
         }) { app in
             let service = TablePropertyService(database: app.db, hubID: "hub-a")
             let valid = TablePropertyDefinitionRequest(id: "category", name: "Category", kind: .relation,
@@ -162,6 +164,23 @@ final class TablePropertyServiceTests: XCTestCase {
             }
             let preserved = try await service.definitions(tableName: "Transactions")
             XCTAssertEqual(preserved.map(\.id), ["category"])
+
+            let unrelatedFilterRelation = TablePropertyDefinitionRequest(id: "unrelated", name: "Unrelated", kind: .relation,
+                sourceColumnName: "CategoryID", targetTableName: "BudgetSubcategories",
+                targetKeyColumnName: "SubcategoryID", targetDisplayColumnName: "Subcategory",
+                relationDefinitionID: nil, targetColumnName: nil, filterByDefinitionID: nil,
+                targetFilterColumnName: nil)
+            let incorrectlyFiltered = TablePropertyDefinitionRequest(id: "filtered", name: "Filtered", kind: .relation,
+                sourceColumnName: "SubcategoryID", targetTableName: "BudgetSubcategories",
+                targetKeyColumnName: "SubcategoryID", targetDisplayColumnName: "Subcategory",
+                relationDefinitionID: nil, targetColumnName: nil, filterByDefinitionID: "unrelated",
+                targetFilterColumnName: "CategoryID")
+            do {
+                _ = try await service.replace(tableName: "Transactions", definitions: [unrelatedFilterRelation, incorrectlyFiltered])
+                XCTFail("A filter column must reference the selected relation's target key.")
+            } catch let error as TablePropertyServiceError {
+                guard case .invalidDefinition = error else { return XCTFail("Unexpected error: \(error)") }
+            }
         }
     }
 }
