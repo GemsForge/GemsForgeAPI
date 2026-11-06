@@ -393,6 +393,11 @@ export const api = {
       method: "PATCH",
       body: JSON.stringify(values),
     }),
+  patchSchemaPageAttachment: (tableName: string, recordID: string, columnName: string, fileMetadataID: string | null) =>
+    request<void>(
+      `/schema-builder/tables/${encodeURIComponent(tableName)}/records/${encodeURIComponent(recordID)}/attachments/${encodeURIComponent(columnName)}`,
+      { method: "PATCH", body: JSON.stringify({ fileMetadataID }) },
+    ),
   previewUserTable: (definition: TableBuilderRequest) =>
     request<UserTablePreview>("/live-database/tables/preview", { method: "POST", body: JSON.stringify(definition) }),
   createUserTable: (confirmationToken: string) =>

@@ -28,10 +28,12 @@ export function WireframeSchemaInspector<Record extends object>({
   record,
   properties,
   attachmentOwnerType,
+  onAttachmentChange,
 }: {
   record: Record;
   properties: readonly RecordPropertyDefinition<Record>[];
   attachmentOwnerType?: string;
+  onAttachmentChange?: (record: Record, propertyID: string, fileMetadataID: string | null) => Promise<void>;
 }) {
   const propertyTypes = useContext(WireframePropertyTypeContext);
   const propertySelectOptions = useContext(WireframePropertySelectOptionsContext);
@@ -92,7 +94,7 @@ export function WireframeSchemaInspector<Record extends object>({
       };
       const resolvedKind: WireframeInspectorField["kind"] = typeKind[metadata.type] ?? kind;
       const isImage = metadata.type === "Image";
-      const isNonTextMedia = metadata.type === "Media" || (isImage && !attachmentOwnerType);
+      const isNonTextMedia = metadata.type === "Media" || (isImage && (!attachmentOwnerType || !onAttachmentChange));
       const options =
         propertySelectOptions[property.id]?.map((option) => ({ value: option, label: option })) ??
         edit?.options?.map((option) => ({ value: option.value, label: option.label })) ??
@@ -156,6 +158,10 @@ export function WireframeSchemaInspector<Record extends object>({
         numberFormat: property.numberFormat,
         onCommit: edit && !isNonTextMedia
           ? async (next: string) => {
+              if (isImage && onAttachmentChange) {
+                await onAttachmentChange(record, property.id, next || null);
+                return;
+              }
               const savedValue =
                 next === "" && edit.nullable
                   ? null
@@ -168,7 +174,7 @@ export function WireframeSchemaInspector<Record extends object>({
         options,
         nullable: edit?.nullable,
         renderEditor:
-          isImage && edit && attachmentOwnerType && "id" in record
+          isImage && edit && attachmentOwnerType && onAttachmentChange && "id" in record
             ? ({ value: currentValue, onCommit }) => (
                 <AttachmentControl
                   fileMetadataID={currentValue || null}

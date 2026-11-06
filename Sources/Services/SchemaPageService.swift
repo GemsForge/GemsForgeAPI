@@ -351,6 +351,57 @@ struct SchemaPageService: Sendable {
         guard updateValue != nil else { throw SchemaPageError.recordUnavailable }
     }
 
+    /// Replaces an image FileMetadata reference and its ownership in one transaction.
+    func updateImageReference(tableName: String, recordID: String, columnName: String, fileMetadataID: String?) async throws {
+        guard database is SQLDatabase else { throw SchemaPageError.unavailableDatabase }
+        let schema = try await LiveSchemaService(database: database).inspect()
+        guard let table = schema.tables.first(where: { $0.name == tableName }),
+              Self.isSchemaPageTable(table),
+              let primaryKey = table.columns.first(where: \.primaryKey),
+              let column = table.columns.first(where: { $0.name == columnName }),
+              columnName != "HubID", !column.primaryKey, !column.dataType.uppercased().contains("BLOB")
+        else { throw SchemaPageError.tableUnavailable }
+
+        let trimmedID = fileMetadataID?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let normalizedID = trimmedID?.isEmpty == false ? trimmedID : nil
+        if normalizedID == nil && !column.nullable {
+            throw SchemaPageError.invalidRecord("\(columnName) cannot be empty.")
+        }
+
+        try await database.transaction { transaction in
+            guard let sql = transaction as? SQLDatabase else { throw SchemaPageError.unavailableDatabase }
+            var read = SQLQueryString("SELECT \(ident: columnName) AS \(ident: "currentValue") FROM \(ident: tableName) WHERE \(ident: primaryKey.name) = ")
+            try Self.appendRecordID(recordID, column: primaryKey, to: &read)
+            read.appendInterpolation(unsafeRaw: " AND \"HubID\" = ")
+            read.appendInterpolation(bind: hubID)
+            guard let row = try await sql.raw(read).first() else { throw SchemaPageError.recordUnavailable }
+            let oldMetadataID = try row.decode(column: "currentValue", as: String?.self)
+
+            if let normalizedID {
+                guard let metadata = try await FileMetadataService(database: transaction, hubID: hubID).find(id: normalizedID),
+                      metadata.mimeType.lowercased().hasPrefix("image/")
+                else { throw SchemaPageError.invalidRecord("The referenced file must be an image in this Hub.") }
+            }
+            try await AttachmentReferenceService(database: transaction, hubID: hubID).replace(
+                oldMetadataID: oldMetadataID,
+                newMetadataID: normalizedID,
+                ownerType: tableName,
+                ownerID: recordID
+            )
+
+            var update = SQLQueryString("UPDATE \(ident: tableName) SET \(ident: columnName) = ")
+            if let normalizedID { update.appendInterpolation(bind: normalizedID) }
+            else { update.appendInterpolation(unsafeRaw: "NULL") }
+            update.appendInterpolation(unsafeRaw: " WHERE ")
+            update.appendInterpolation(ident: primaryKey.name)
+            update.appendInterpolation(unsafeRaw: " = ")
+            try Self.appendRecordID(recordID, column: primaryKey, to: &update)
+            update.appendInterpolation(unsafeRaw: " AND \"HubID\" = ")
+            update.appendInterpolation(bind: hubID)
+            try await sql.raw(update).run()
+        }
+    }
+
     /// Confirms a record identifier belongs to this Hub before it is persisted as workspace selection.
     func containsRecord(_ recordID: String, in tableName: String) async throws -> Bool {
         guard let sql = database as? SQLDatabase else { throw SchemaPageError.unavailableDatabase }
@@ -439,6 +490,17 @@ struct SchemaPageService: Sendable {
         case .string(let text): query.appendInterpolation(bind: text)
         case .number(let number): query.appendInterpolation(bind: number)
         case .bool(let bool): query.appendInterpolation(bind: bool ? 1 : 0)
+        }
+    }
+
+    private static func appendRecordID(_ recordID: String, column: LiveSchemaColumnResponse, to query: inout SQLQueryString) throws {
+        if column.dataType.uppercased().contains("INT") {
+            guard let integerID = Int64(recordID) else {
+                throw SchemaPageError.invalidRecord("Record ID must be a valid integer.")
+            }
+            query.appendInterpolation(bind: integerID)
+        } else {
+            query.appendInterpolation(bind: recordID)
         }
     }
 }

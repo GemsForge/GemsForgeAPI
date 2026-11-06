@@ -15,6 +15,7 @@ struct CreateSchemaPageFixtures: AsyncMigration {
             .field("Name", .string, .required)
             .field("Quantity", .int, .required)
             .field("CategoryID", .int)
+            .field("Photo", .string)
             .create()
         try await database.schema("UnscopedFixture")
             .field("ID", .string, .identifier(auto: false))
@@ -140,6 +141,7 @@ final class SchemaPageServiceTests: XCTestCase {
             app.migrations.add(CreateViewQueryConfigurations())
             app.migrations.add(AddTableViewWorkspaceState())
             app.migrations.add(CreateTablePropertyDefinitions())
+            app.migrations.add(CreateFileMetadata())
             app.migrations.add(CreateSchemaPageFixtures())
             try await app.autoMigrate()
             app.middleware.use(SessionAuthenticationMiddleware(operatorAccountID: "account-a"))
@@ -148,6 +150,15 @@ final class SchemaPageServiceTests: XCTestCase {
         }) { app in
             let tokenA = try await self.seedSession(on: app.db, accountID: "account-a", hubID: "hub-a")
             guard let sql = app.db as? SQLDatabase else { return XCTFail("Expected SQLite SQL database.") }
+            let firstPhoto = FileMetadata(id: "PHOTO-A", relativePath: "uploads/a.png", fileName: "a.png", fileKind: "image", mimeType: "image/png")
+            firstPhoto.hubID = "hub-a"
+            try await firstPhoto.create(on: app.db)
+            let secondPhoto = FileMetadata(id: "PHOTO-B", relativePath: "uploads/b.png", fileName: "b.png", fileKind: "image", mimeType: "image/jpeg")
+            secondPhoto.hubID = "hub-a"
+            try await secondPhoto.create(on: app.db)
+            let otherHubPhoto = FileMetadata(id: "PHOTO-OTHER", relativePath: "uploads/other.png", fileName: "other.png", fileKind: "image", mimeType: "image/png")
+            otherHubPhoto.hubID = "hub-b"
+            try await otherHubPhoto.create(on: app.db)
             try await sql.raw("INSERT INTO SchemaPageFixture (ID, HubID, Name, Quantity) VALUES ('fixture-a', 'hub-a', 'Saved goal', 1), ('fixture-b', 'hub-b', 'Other Hub goal', 2)").run()
             try await sql.raw("INSERT INTO IntegerSchemaPageFixture (ID, HubID, Name) VALUES (12, 'hub-a', 'Integer keyed record'), (13, 'hub-b', 'Other Hub record')").run()
             try await sql.raw("CREATE TABLE NonRowidIntegerFixture (ID INT NOT NULL PRIMARY KEY, HubID TEXT NOT NULL, Name TEXT NOT NULL)").run()
@@ -263,6 +274,41 @@ final class SchemaPageServiceTests: XCTestCase {
                     XCTAssertEqual(response.status, .unprocessableEntity)
                 }
             }
+
+            for fileMetadataID in ["PHOTO-A", "PHOTO-B"] {
+                try await app.test(.PATCH, "schema-builder/tables/SchemaPageFixture/records/\(createdID)/attachments/Photo", beforeRequest: { request in
+                    request.headers.bearerAuthorization = .init(token: tokenA)
+                    try request.content.encode(AttachmentReferenceRequest(fileMetadataID: fileMetadataID))
+                }) { response in
+                    XCTAssertEqual(response.status, .noContent)
+                }
+                let attached = try await FileMetadata.find(fileMetadataID, on: app.db)
+                XCTAssertEqual(attached?.ownerType, "SchemaPageFixture")
+                XCTAssertEqual(attached?.ownerID, createdID)
+                if fileMetadataID == "PHOTO-B" {
+                    let replacedPhotoOwner = try await FileMetadata.find("PHOTO-A", on: app.db)?.ownerID
+                    XCTAssertNil(replacedPhotoOwner)
+                }
+            }
+            try await app.test(.PATCH, "schema-builder/tables/SchemaPageFixture/records/\(createdID)/attachments/Photo", beforeRequest: { request in
+                request.headers.bearerAuthorization = .init(token: tokenA)
+                try request.content.encode(AttachmentReferenceRequest(fileMetadataID: "PHOTO-OTHER"))
+            }) { response in
+                XCTAssertEqual(response.status, .unprocessableEntity)
+            }
+            try await app.test(.PATCH, "schema-builder/tables/SchemaPageFixture/records/\(createdID)/attachments/Photo", beforeRequest: { request in
+                request.headers.bearerAuthorization = .init(token: tokenA)
+                try request.content.encode(AttachmentReferenceRequest(fileMetadataID: nil))
+            }) { response in
+                XCTAssertEqual(response.status, .noContent)
+            }
+            let firstPhotoOwner = try await FileMetadata.find("PHOTO-A", on: app.db)?.ownerID
+            let secondPhotoOwner = try await FileMetadata.find("PHOTO-B", on: app.db)?.ownerID
+            let clearedPhoto = try await SchemaPageService(database: app.db, hubID: "hub-a")
+                .record(tableName: "SchemaPageFixture", recordID: createdID).row["Photo"]!
+            XCTAssertNil(firstPhotoOwner)
+            XCTAssertNil(secondPhotoOwner)
+            XCTAssertNil(clearedPhoto)
 
             try await app.test(.PATCH, "schema-builder/tables/SchemaPageFixture/records/fixture-b", beforeRequest: { request in
                 request.headers.bearerAuthorization = .init(token: tokenA)

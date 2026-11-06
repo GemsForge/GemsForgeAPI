@@ -5,6 +5,7 @@ import {
   useSchemaPageRecordsQuery,
   useSchemaPageTablesQuery,
   usePatchSchemaPageRecordMutation,
+  usePatchSchemaPageAttachmentMutation,
 } from "../../data/workflowQueries";
 import { createLiveSchemaProperties, type RecordPropertyDefinition } from "../../table-kit";
 import type { SchemaPageRecords } from "../../types";
@@ -35,6 +36,7 @@ export function WireframeSchemaPage() {
   const result = useSchemaPageRecordsQuery(tableName);
   const selectedRecord = useSchemaPageRecordQuery(tableName, recordID ? decodeURIComponent(recordID) : null);
   const patchRecord = usePatchSchemaPageRecordMutation(tableName);
+  const patchAttachment = usePatchSchemaPageAttachmentMutation(tableName);
   const patchSchemaRecord = patchRecord.mutateAsync;
   const table = result.data?.table ?? pages.data?.tables.find((candidate) => candidate.name === tableName);
   const records = useMemo(() => {
@@ -106,6 +108,9 @@ export function WireframeSchemaPage() {
             record={record}
             properties={schemaProperties ?? properties}
             attachmentOwnerType={tableName}
+            onAttachmentChange={(record, columnName, fileMetadataID) =>
+              patchAttachment.mutateAsync({ recordID: record.id, columnName, fileMetadataID })
+            }
           />
         ),
       }}

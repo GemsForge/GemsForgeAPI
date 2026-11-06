@@ -145,6 +145,26 @@ export function usePatchSchemaPageRecordMutation(tableName: string) {
     },
   });
 }
+export function usePatchSchemaPageAttachmentMutation(tableName: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      recordID,
+      columnName,
+      fileMetadataID,
+    }: {
+      recordID: string;
+      columnName: string;
+      fileMetadataID: string | null;
+    }) => api.patchSchemaPageAttachment(tableName, recordID, columnName, fileMetadataID),
+    onSuccess: async (_result, { recordID }) => {
+      await Promise.all([
+        client.invalidateQueries({ queryKey: workflowQueryKeys.schemaPageRecords(tableName) }),
+        client.invalidateQueries({ queryKey: workflowQueryKeys.schemaPageRecord(tableName, recordID) }),
+      ]);
+    },
+  });
+}
 export function useImportableSQLTablesQuery() {
   return useQuery({
     queryKey: workflowQueryKeys.importableTables,

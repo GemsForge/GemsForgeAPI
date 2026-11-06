@@ -177,7 +177,12 @@ describe("WireframeSchemaInspector property metadata", () => {
         <QueryClientProvider client={new QueryClient()}>
           <MemoryRouter>
             <WireframePropertyTypeContext.Provider value={{ photo: "Image" }}>
-              <WireframeSchemaInspector record={record} properties={properties} attachmentOwnerType="Goals" />
+              <WireframeSchemaInspector
+                record={record}
+                properties={properties}
+                attachmentOwnerType="Goals"
+                onAttachmentChange={async () => undefined}
+              />
             </WireframePropertyTypeContext.Provider>
           </MemoryRouter>
         </QueryClientProvider>
