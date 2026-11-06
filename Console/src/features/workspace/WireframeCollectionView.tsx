@@ -81,6 +81,7 @@ export type WireframeCollectionConfig<T extends WireframeRecord> = {
   tableName?: string;
   title: string;
   description: string;
+  headerBanner?: ReactNode;
   activeCollection: string;
   records: readonly T[];
   properties?: readonly RecordPropertyDefinition<T>[];
@@ -674,6 +675,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
         <WireframePageView
           title={tableTitle}
           description={tableDescription}
+          banner={config.headerBanner}
           recordCount={sortedRecords.length}
           tableIcon={<TableIcon size={20} aria-hidden="true" />}
           onTitleChange={workspaceReady ? setTableTitle : undefined}

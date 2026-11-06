@@ -17,6 +17,7 @@ type WireframePageViewProps = {
   recordCount: number;
   countLabel?: { singular: string; plural: string };
   showCount?: boolean;
+  banner?: ReactNode;
   children: ReactNode;
   tableIcon?: ReactNode;
   onTitleChange?: (value: string) => void;
@@ -29,6 +30,7 @@ export function WireframePageView({
   recordCount,
   countLabel = { singular: "record", plural: "records" },
   showCount = true,
+  banner,
   tableIcon,
   onTitleChange,
   onDescriptionChange,
@@ -153,6 +155,7 @@ export function WireframePageView({
                 ) : (
                   <WireframeDescription className="wireframe-page-description">{description}</WireframeDescription>
                 )}
+                {banner ? <div className="wireframe-page-banner" role="note">{banner}</div> : null}
               </YStack>
             </WireframeTitleGroup>
             {showCount ? (
