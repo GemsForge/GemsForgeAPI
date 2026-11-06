@@ -102,7 +102,11 @@ export function WireframeSchemaPage() {
         cardStatus: (record) => recordText(record, statusProperty?.id),
         cardMeta: (record) => recordText(record, dateProperty?.id) || record.id,
         inspector: (record, schemaProperties) => (
-          <WireframeSchemaInspector record={record} properties={schemaProperties ?? properties} />
+          <WireframeSchemaInspector
+            record={record}
+            properties={schemaProperties ?? properties}
+            attachmentOwnerType={tableName}
+          />
         ),
       }}
     />

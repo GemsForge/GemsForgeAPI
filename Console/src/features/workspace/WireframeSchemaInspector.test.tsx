@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { TamaguiProvider } from "tamagui";
 import { describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { tamaguiConfig } from "@gemsforge/ui";
 import type { RecordPropertyDefinition } from "../../table-kit";
 import { WireframeSchemaInspector } from "./WireframeSchemaInspector";
@@ -157,5 +158,60 @@ describe("WireframeSchemaInspector property metadata", () => {
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
 
     await waitFor(() => expect(onSave).toHaveBeenCalledWith("low;high;medium"));
+  });
+
+  it("uses the shared image attachment control for Image properties", () => {
+    const record = { id: "GOAL-1", photo: "" };
+    const properties: RecordPropertyDefinition<typeof record>[] = [
+      {
+        id: "photo",
+        label: "Photo",
+        kind: "text",
+        getValue: (item) => ({ raw: item.photo, display: item.photo || "—" }),
+        edit: { inputType: "text", onSave: async () => undefined },
+      },
+    ];
+
+    render(
+      <TamaguiProvider config={tamaguiConfig} defaultTheme="light">
+        <QueryClientProvider client={new QueryClient()}>
+          <MemoryRouter>
+            <WireframePropertyTypeContext.Provider value={{ photo: "Image" }}>
+              <WireframeSchemaInspector record={record} properties={properties} attachmentOwnerType="Goals" />
+            </WireframePropertyTypeContext.Provider>
+          </MemoryRouter>
+        </QueryClientProvider>
+      </TamaguiProvider>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "—" }));
+    expect(screen.getByRole("button", { name: "Choose image" })).toBeInTheDocument();
+  });
+
+  it("keeps Media properties out of the generic text editor", () => {
+    const record = { id: "GOAL-1", media: "media-reference" };
+    const properties: RecordPropertyDefinition<typeof record>[] = [
+      {
+        id: "media",
+        label: "Media",
+        kind: "text",
+        getValue: (item) => ({ raw: item.media, display: item.media }),
+        edit: { inputType: "text", onSave: async () => undefined },
+      },
+    ];
+
+    render(
+      <TamaguiProvider config={tamaguiConfig} defaultTheme="light">
+        <MemoryRouter>
+          <WireframePropertyTypeContext.Provider value={{ media: "Media" }}>
+            <WireframeSchemaInspector record={record} properties={properties} />
+          </WireframePropertyTypeContext.Provider>
+        </MemoryRouter>
+      </TamaguiProvider>,
+    );
+
+    fireEvent.doubleClick(screen.getByText("media-reference"));
+    expect(screen.queryByRole("textbox", { name: "Media" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Choose image" })).not.toBeInTheDocument();
   });
 });

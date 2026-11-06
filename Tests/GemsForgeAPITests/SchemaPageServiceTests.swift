@@ -14,6 +14,7 @@ struct CreateSchemaPageFixtures: AsyncMigration {
             .field("HubID", .string, .required)
             .field("Name", .string, .required)
             .field("Quantity", .int, .required)
+            .field("CategoryID", .int)
             .create()
         try await database.schema("UnscopedFixture")
             .field("ID", .string, .identifier(auto: false))
@@ -138,6 +139,7 @@ final class SchemaPageServiceTests: XCTestCase {
             app.migrations.add(CreateViewColumnConfigurations())
             app.migrations.add(CreateViewQueryConfigurations())
             app.migrations.add(AddTableViewWorkspaceState())
+            app.migrations.add(CreateTablePropertyDefinitions())
             app.migrations.add(CreateSchemaPageFixtures())
             try await app.autoMigrate()
             app.middleware.use(SessionAuthenticationMiddleware(operatorAccountID: "account-a"))
@@ -199,6 +201,23 @@ final class SchemaPageServiceTests: XCTestCase {
                 XCTAssertEqual(saved.view.workspaceState, workspaceState)
             }
 
+            try await sql.raw("CREATE TABLE BudgetCategories (ID INTEGER PRIMARY KEY, HubID TEXT NOT NULL, Category TEXT NOT NULL)").run()
+            try await sql.raw("INSERT INTO BudgetCategories (ID, HubID, Category) VALUES (5, 'hub-a', 'Food'), (6, 'hub-b', 'Private')").run()
+            try await TableView(hubID: "hub-a", tableName: "BudgetCategories", name: "Budget Categories", viewType: .table).save(on: app.db)
+            try await TablePropertyDefinition(
+                hubID: "hub-a",
+                tableName: "SchemaPageFixture",
+                definition: TablePropertyDefinitionRequest(
+                    id: "category-relation", name: "Category", kind: .relation,
+                    sourceColumnName: "CategoryID", targetTableName: "BudgetCategories",
+                    targetKeyColumnName: "ID", targetDisplayColumnName: "Category",
+                    relationDefinitionID: nil, targetColumnName: nil,
+                    filterByDefinitionID: nil, targetFilterColumnName: nil
+                ),
+                id: "category-relation",
+                sortOrder: 0
+            ).save(on: app.db)
+
             var createdID = ""
             try await app.test(.POST, "schema-builder/tables/SchemaPageFixture/records", beforeRequest: { request in
                 request.headers.bearerAuthorization = .init(token: tokenA)
@@ -227,6 +246,23 @@ final class SchemaPageServiceTests: XCTestCase {
                 .record(tableName: "SchemaPageFixture", recordID: createdID)
             XCTAssertEqual(updatedRecord.row["Name"]!, "Updated goal")
             XCTAssertEqual(updatedRecord.row["Quantity"]!, "9")
+
+            try await app.test(.PATCH, "schema-builder/tables/SchemaPageFixture/records/\(createdID)", beforeRequest: { request in
+                request.headers.bearerAuthorization = .init(token: tokenA)
+                request.headers.contentType = .json
+                request.body = ByteBuffer(string: #"{"CategoryID":5}"#)
+            }) { response in
+                XCTAssertEqual(response.status, .noContent)
+            }
+            for invalidCategoryID in [6, 999] {
+                try await app.test(.PATCH, "schema-builder/tables/SchemaPageFixture/records/\(createdID)", beforeRequest: { request in
+                    request.headers.bearerAuthorization = .init(token: tokenA)
+                    request.headers.contentType = .json
+                    request.body = ByteBuffer(string: #"{"CategoryID":\#(invalidCategoryID)}"#)
+                }) { response in
+                    XCTAssertEqual(response.status, .unprocessableEntity)
+                }
+            }
 
             try await app.test(.PATCH, "schema-builder/tables/SchemaPageFixture/records/fixture-b", beforeRequest: { request in
                 request.headers.bearerAuthorization = .init(token: tokenA)

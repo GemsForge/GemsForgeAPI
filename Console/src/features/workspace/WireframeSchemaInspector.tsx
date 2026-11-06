@@ -4,6 +4,8 @@ import { inferWireframePropertyMetadata } from "./propertyMetadata";
 import { useContext } from "react";
 import { WireframePropertySelectOptionsContext, WireframePropertyTypeContext } from "./WireframePropertyEditor";
 import { decodeMultiSelectValue } from "@gemsforge/ui";
+import { AttachmentControl } from "../../components/AttachmentControl";
+import { FilePresentation } from "../../components/FilePresentation";
 
 function editorKind(
   kind: RecordPropertyDefinition<unknown>["kind"],
@@ -25,9 +27,11 @@ function editorKind(
 export function WireframeSchemaInspector<Record extends object>({
   record,
   properties,
+  attachmentOwnerType,
 }: {
   record: Record;
   properties: readonly RecordPropertyDefinition<Record>[];
+  attachmentOwnerType?: string;
 }) {
   const propertyTypes = useContext(WireframePropertyTypeContext);
   const propertySelectOptions = useContext(WireframePropertySelectOptionsContext);
@@ -87,6 +91,8 @@ export function WireframeSchemaInspector<Record extends object>({
         Lookup: property.kind === "lookup" ? "lookup" : undefined,
       };
       const resolvedKind: WireframeInspectorField["kind"] = typeKind[metadata.type] ?? kind;
+      const isImage = metadata.type === "Image";
+      const isNonTextMedia = metadata.type === "Media" || (isImage && !attachmentOwnerType);
       const options =
         propertySelectOptions[property.id]?.map((option) => ({ value: option, label: option })) ??
         edit?.options?.map((option) => ({ value: option.value, label: option.label })) ??
@@ -127,7 +133,9 @@ export function WireframeSchemaInspector<Record extends object>({
             ? String(value.raw)
             : "",
         displayValue:
-          property.kind === "relation"
+          isImage && typeof value.raw === "string" && value.raw
+            ? <FilePresentation fileMetadataID={value.raw} label={property.label} />
+            : property.kind === "relation"
             ? value.display
             : property.kind === "number" && typeof value.raw === "number"
               ? formatRecordNumber(
@@ -146,7 +154,7 @@ export function WireframeSchemaInspector<Record extends object>({
         propertyType: metadata.type,
         iconName: metadata.iconName,
         numberFormat: property.numberFormat,
-        onCommit: edit
+        onCommit: edit && !isNonTextMedia
           ? async (next: string) => {
               const savedValue =
                 next === "" && edit.nullable
@@ -159,7 +167,20 @@ export function WireframeSchemaInspector<Record extends object>({
           : undefined,
         options,
         nullable: edit?.nullable,
-        renderEditor: edit?.renderEditor,
+        renderEditor:
+          isImage && edit && attachmentOwnerType && "id" in record
+            ? ({ value: currentValue, onCommit }) => (
+                <AttachmentControl
+                  fileMetadataID={currentValue || null}
+                  ownerType={attachmentOwnerType}
+                  ownerID={String((record as { id: unknown }).id)}
+                  label={property.label}
+                  onAttach={async (metadata) => onCommit(metadata?.id ?? "")}
+                />
+              )
+            : isNonTextMedia
+              ? undefined
+              : edit?.renderEditor,
       } satisfies WireframeInspectorField;
     });
 

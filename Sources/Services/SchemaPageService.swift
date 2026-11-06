@@ -314,6 +314,9 @@ struct SchemaPageService: Sendable {
             try Self.validate(value, for: column)
         }
 
+        try await TablePropertyService(database: database, hubID: hubID)
+            .validateRelationUpdates(tableName: tableName, recordID: recordID, values: values)
+
         let updateValue = try await database.transaction { transaction in
             guard let transactionSQL = transaction as? SQLDatabase else {
                 throw SchemaPageError.unavailableDatabase
