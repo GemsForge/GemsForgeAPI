@@ -153,8 +153,6 @@ describe("TransactionsInspector relations and lookups", () => {
     fireEvent.click(screen.getByText("Relations and lookups"));
 
     expect(await screen.findByText("Related table: BudgetCategories")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Save relations and lookups" }));
-
     await waitFor(() => expect(saveSpy).toHaveBeenCalledOnce());
     expect(saveSpy).toHaveBeenCalledWith(
       "Transactions",

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { GemButton, GemTextField, GSelectField } from "@gemsforge/ui";
 import type { TablePropertyDefinition, TablePropertyDefinitionInput } from "../../types";
 import {
@@ -44,6 +44,7 @@ export function TransactionRelationSettings() {
   const [lookupRelationID, setLookupRelationID] = useState<string>(RELATIONS[0].id);
   const [lookupColumn, setLookupColumn] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const defaultSetupStarted = useRef(false);
 
   useEffect(() => setDraft(definitions.data ?? []), [definitions.data]);
 
@@ -72,15 +73,72 @@ export function TransactionRelationSettings() {
   const activeLookupRelation = relationDrafts.find((relation) => relation.id === lookupRelationID) ?? relationDrafts[0];
   const lookupColumns = targetFields(activeLookupRelation?.targetTableName ?? "", tables.data);
 
-  const persist = async (next: TablePropertyDefinitionInput[]) => {
-    setError(null);
-    try {
-      const saved = await save.mutateAsync(next);
-      setDraft(saved);
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Could not save relation settings.");
+  const persist = useCallback(
+    async (next: TablePropertyDefinitionInput[]) => {
+      setError(null);
+      try {
+        const saved = await save.mutateAsync(next);
+        setDraft(saved);
+      } catch (cause) {
+        setError(cause instanceof Error ? cause.message : "Could not save relation settings.");
+      }
+    },
+    [save.mutateAsync],
+  );
+
+  useEffect(() => {
+    if (
+      definitions.isPending ||
+      tables.isPending ||
+      definitions.isError ||
+      tables.isError ||
+      definitions.data === undefined ||
+      tables.data === undefined ||
+      defaultSetupStarted.current
+    ) {
+      return;
     }
-  };
+
+    const defaults = RELATIONS.flatMap((relation) => {
+      const columns = columnsFor(relation.suggestedTable, tables.data);
+      const key = columns.find((column) => column.primaryKey)?.name;
+      const display = columns.find((column) => column.name === relation.display)?.name;
+      if (!key || !display) return [];
+      return [
+        {
+          id: relation.id,
+          name: relation.name,
+          kind: "Relation" as const,
+          sourceColumnName: relation.sourceColumnName,
+          targetTableName: relation.suggestedTable,
+          targetKeyColumnName: key,
+          targetDisplayColumnName: display,
+          relationDefinitionID: null,
+          targetColumnName: null,
+          filterByDefinitionID: relation.id === "transaction-subcategory" ? "transaction-category" : null,
+          targetFilterColumnName: relation.id === "transaction-subcategory" ? "CategoryID" : null,
+        },
+      ];
+    });
+    const existingIDs = new Set(definitions.data.filter((item) => item.kind === "Relation").map((item) => item.id));
+    const missingDefaults = defaults.filter((item) => !existingIDs.has(item.id));
+    if (missingDefaults.length === 0) return;
+
+    defaultSetupStarted.current = true;
+    const preservedDefinitions = definitions.data.filter(
+      (item) => !RELATIONS.some((relation) => relation.id === item.id),
+    );
+    const existingDefaults = definitions.data.filter((item) => RELATIONS.some((relation) => relation.id === item.id));
+    void persist([...preservedDefinitions, ...existingDefaults, ...missingDefaults]);
+  }, [
+    definitions.data,
+    definitions.isError,
+    definitions.isPending,
+    persist,
+    tables.data,
+    tables.isError,
+    tables.isPending,
+  ]);
 
   const saveRelations = () => {
     const relations: TablePropertyDefinitionInput[] = relationDrafts.map((relation) => {

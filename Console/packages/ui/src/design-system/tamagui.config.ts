@@ -56,6 +56,15 @@ export const gemElevation = {
   floating: "0 12px 32px rgba(0, 0, 0, 0.18)",
 } as const;
 
+export const gemZIndex = {
+  content: 0,
+  sticky: 10,
+  floating: 100,
+  dialog: 200,
+  popover: 250,
+  notification: 300,
+} as const;
+
 export const gemFontFamily =
   '"Avenir Next", Avenir, Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif';
 
@@ -119,11 +128,12 @@ export const tamaguiConfig = createTamagui({
     },
     zIndex: {
       ...defaultConfig.tokens.zIndex,
-      gemContent: 0,
-      gemSticky: 10,
-      gemFloating: 100,
-      gemDialog: 200,
-      gemNotification: 300,
+      gemContent: gemZIndex.content,
+      gemSticky: gemZIndex.sticky,
+      gemFloating: gemZIndex.floating,
+      gemDialog: gemZIndex.dialog,
+      gemPopover: gemZIndex.popover,
+      gemNotification: gemZIndex.notification,
     },
   },
   themes: {

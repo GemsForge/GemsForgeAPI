@@ -19,6 +19,10 @@ describe("WireframePropertyEditor metadata", () => {
     expect(screen.getByRole("combobox", { name: "Primitive type" })).toHaveTextContent("Currency");
     expect(screen.getByRole("radio", { name: "Currency" })).toHaveAttribute("aria-checked", "true");
 
+    fireEvent.click(screen.getByRole("combobox", { name: "Primitive type" }));
+    fireEvent.keyDown(screen.getByRole("option", { name: "Text" }), { key: "Enter" });
+    expect(screen.getByRole("combobox", { name: "Primitive type" })).toHaveTextContent("Text");
+
     const closeButton = screen.getByRole("button", { name: "Close property editor" });
     closeButton.focus();
     fireEvent.keyDown(closeButton, { key: "Tab", shiftKey: true });

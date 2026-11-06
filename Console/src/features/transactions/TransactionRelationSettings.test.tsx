@@ -12,6 +12,69 @@ beforeEach(() => {
 });
 
 describe("TransactionRelationSettings", () => {
+  it("initializes the fixed Category and Subcategory relations when none are saved", async () => {
+    vi.spyOn(api, "getSchemaPageTables").mockResolvedValue({
+      tables: [
+        {
+          name: "BudgetCategories",
+          columns: [
+            { name: "CategoryID", dataType: "INTEGER", nullable: false, primaryKey: true, defaultValue: null },
+            { name: "HubID", dataType: "TEXT", nullable: false, primaryKey: false, defaultValue: null },
+            { name: "Category", dataType: "TEXT", nullable: false, primaryKey: false, defaultValue: null },
+          ],
+        },
+        {
+          name: "BudgetSubcategories",
+          columns: [
+            { name: "SubcategoryID", dataType: "INTEGER", nullable: false, primaryKey: true, defaultValue: null },
+            { name: "HubID", dataType: "TEXT", nullable: false, primaryKey: false, defaultValue: null },
+            { name: "CategoryID", dataType: "INTEGER", nullable: false, primaryKey: false, defaultValue: null },
+            { name: "Subcategory", dataType: "TEXT", nullable: false, primaryKey: false, defaultValue: null },
+          ],
+        },
+      ],
+      availableTables: [],
+    });
+    vi.spyOn(api, "getTablePropertyDefinitions").mockResolvedValue([]);
+    const save = vi.spyOn(api, "saveTablePropertyDefinitions").mockImplementation(async (_tableName, input) =>
+      input.map((item, sortOrder) => ({
+        ...item,
+        id: item.id ?? `generated-${sortOrder}`,
+        tableName: "Transactions",
+        sortOrder,
+      })),
+    );
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
+
+    render(
+      <TamaguiProvider config={tamaguiConfig} defaultTheme="light">
+        <QueryClientProvider client={client}>
+          <TransactionRelationSettings />
+        </QueryClientProvider>
+      </TamaguiProvider>,
+    );
+
+    await vi.waitFor(() => expect(save).toHaveBeenCalledOnce());
+    expect(save.mock.calls[0][1]).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "transaction-category",
+          sourceColumnName: "CategoryID",
+          targetTableName: "BudgetCategories",
+          targetKeyColumnName: "CategoryID",
+          targetDisplayColumnName: "Category",
+        }),
+        expect.objectContaining({
+          id: "transaction-subcategory",
+          sourceColumnName: "SubcategoryID",
+          targetTableName: "BudgetSubcategories",
+          filterByDefinitionID: "transaction-category",
+          targetFilterColumnName: "CategoryID",
+        }),
+      ]),
+    );
+  });
+
   it("saves the fixed category relations and a selected computed lookup", async () => {
     vi.spyOn(api, "getSchemaPageTables").mockResolvedValue({
       tables: [
@@ -55,6 +118,8 @@ describe("TransactionRelationSettings", () => {
       </TamaguiProvider>,
     );
 
+    await vi.waitFor(() => expect(save).toHaveBeenCalledOnce());
+    save.mockClear();
     expect(await screen.findByText("Related table: BudgetCategories")).toBeInTheDocument();
     expect(screen.getByText("Related table: BudgetSubcategories")).toBeInTheDocument();
     fireEvent.change(screen.getByRole("textbox", { name: "Lookup property name" }), {
