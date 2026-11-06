@@ -169,10 +169,6 @@ describe("TransactionsInspector relations and lookups", () => {
         }),
       ]),
     );
-    const categoryEdit = await screen.findByRole("button", { name: "Edit Category" });
-    fireEvent.click(categoryEdit);
-    expect(await screen.findByRole("searchbox", { name: "Search Category records" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Edit Subcategory" })).toBeInTheDocument();
   });
 
   it("links related records, shows computed lookups, and searches options before saving their IDs", async () => {
@@ -191,9 +187,18 @@ describe("TransactionsInspector relations and lookups", () => {
 
     const categoryLink = await screen.findByRole("link", { name: "Food" });
     expect(categoryLink).toHaveAttribute("href", "/schema-wireframe/BudgetCategories/record/1");
+    expect(screen.queryByRole("link", { name: "—" })).not.toBeInTheDocument();
     expect(await screen.findByText("Variable")).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "Edit Category" }));
+    fireEvent.pointerDown(screen.getByRole("link", { name: "Food" }), { pointerType: "touch" });
+    fireEvent.pointerDown(screen.getByRole("link", { name: "Food" }), { pointerType: "touch" });
+    expect(await screen.findByRole("searchbox", { name: "Search Category records" })).toBeInTheDocument();
+    fireEvent.pointerDown(document.body);
+    await waitFor(() => {
+      expect(screen.queryByRole("searchbox", { name: "Search Category records" })).not.toBeInTheDocument();
+    });
+    fireEvent.pointerDown(screen.getByRole("link", { name: "Food" }), { pointerType: "touch" });
+    fireEvent.pointerDown(screen.getByRole("link", { name: "Food" }), { pointerType: "touch" });
     expect(await screen.findByRole("searchbox", { name: "Search Category records" })).toBeInTheDocument();
     await screen.findByRole("option", { name: "Travel" });
     expect(optionSpy).toHaveBeenCalledWith("Transactions", "transaction-category", "", "TRX-1", expect.anything());
@@ -203,12 +208,20 @@ describe("TransactionsInspector relations and lookups", () => {
       expect(patchSpy).toHaveBeenCalledWith("TRX-1", { categoryID: 3, subcategoryID: null });
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "Edit Subcategory" }));
+    const subcategoryLink = screen
+      .getAllByRole("link")
+      .find((link) => link.getAttribute("href")?.includes("/BudgetSubcategories/"));
+    expect(subcategoryLink).toBeDefined();
+    fireEvent.doubleClick(subcategoryLink!);
     await screen.findByRole("option", { name: "Travel" });
     expect(optionSpy).toHaveBeenCalledWith("Transactions", "transaction-subcategory", "", "TRX-1", expect.anything());
 
     patchSpy.mockRejectedValueOnce(new Error("Transaction save failed"));
-    fireEvent.click(screen.getByRole("button", { name: "Edit Category" }));
+    const categoryValueLink = screen
+      .getAllByRole("link")
+      .find((link) => link.getAttribute("href")?.includes("/BudgetCategories/"));
+    expect(categoryValueLink).toBeDefined();
+    fireEvent.doubleClick(categoryValueLink!);
     fireEvent.click(await screen.findAllByRole("option", { name: "Travel" }).then((options) => options[0]));
     expect(await screen.findByRole("alert")).toHaveTextContent("Transaction save failed");
     expect(screen.getByRole("searchbox", { name: "Search Category records" })).toBeInTheDocument();

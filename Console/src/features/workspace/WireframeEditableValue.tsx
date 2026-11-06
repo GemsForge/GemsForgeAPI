@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type MouseEvent, type ReactNode } from "react";
 import { Pencil } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { GemPrimitiveField } from "@gemsforge/ui";
 import { GemCaption, GemStatusPill } from "@gemsforge/ui";
 
@@ -31,6 +32,9 @@ export function WireframeEditableValue({
   renderEditor,
 }: EditableValueProps) {
   const fieldRef = useRef<HTMLDivElement>(null);
+  const navigationTimer = useRef<number | undefined>(undefined);
+  const lastTouchTap = useRef(0);
+  const navigate = useNavigate();
   const [currentValue, setCurrentValue] = useState(value);
   const [editing, setEditing] = useState(false);
   const [saveError, setSaveError] = useState<string>();
@@ -60,6 +64,25 @@ export function WireframeEditableValue({
   }, [editing]);
 
   useEffect(() => {
+    if (!editing) return;
+    const closeOnOutsidePointer = (event: PointerEvent) => {
+      const target = event.target;
+      if (!(target instanceof Node) || fieldRef.current?.contains(target)) return;
+      if (target instanceof Element && target.closest(".gem-select-content, .gem-date-popover")) return;
+      setEditing(false);
+    };
+    document.addEventListener("pointerdown", closeOnOutsidePointer, true);
+    return () => document.removeEventListener("pointerdown", closeOnOutsidePointer, true);
+  }, [editing]);
+
+  useEffect(
+    () => () => {
+      if (navigationTimer.current !== undefined) window.clearTimeout(navigationTimer.current);
+    },
+    [],
+  );
+
+  useEffect(() => {
     setCurrentValue(value);
     setEditing(false);
     setSaveError(undefined);
@@ -78,8 +101,54 @@ export function WireframeEditableValue({
     }, 0);
   };
 
+  const startEditing = () => {
+    if (navigationTimer.current !== undefined) window.clearTimeout(navigationTimer.current);
+    setSaveError(undefined);
+    setEditing(true);
+  };
+
+  const handleRelationClick = (event: MouseEvent<HTMLAnchorElement>) => {
+    event.stopPropagation();
+    if (event.detail === 0) {
+      if (!relatedHref) event.preventDefault();
+      return;
+    }
+    event.preventDefault();
+    if (navigationTimer.current !== undefined) window.clearTimeout(navigationTimer.current);
+    if (event.detail > 1) {
+      startEditing();
+      return;
+    }
+    if (relatedHref) {
+      navigationTimer.current = window.setTimeout(() => navigate(relatedHref), 350);
+    }
+  };
+
+  const handleRelationPointerDown = (event: React.PointerEvent<HTMLElement>) => {
+    if (event.pointerType !== "touch") return;
+    const now = Date.now();
+    if (now - lastTouchTap.current <= 350) {
+      lastTouchTap.current = 0;
+      event.preventDefault();
+      startEditing();
+      return;
+    }
+    lastTouchTap.current = now;
+  };
+
   return (
-    <div ref={fieldRef} className="wireframe-editable-value">
+    <div
+      ref={fieldRef}
+      className="wireframe-editable-value"
+      onBlurCapture={(event) => {
+        if (editing && !event.currentTarget.contains(event.relatedTarget as Node | null)) returnToReadOnlyOnBlur();
+      }}
+      onKeyDown={(event) => {
+        if (editing || kind !== "relation" || event.key !== "F2") return;
+        event.preventDefault();
+        startEditing();
+      }}
+    >
       {editing && renderEditor ? (
         <>
           {renderEditor({
@@ -123,38 +192,36 @@ export function WireframeEditableValue({
       ) : !editing && kind === "relation" ? (
         <span className="wireframe-action-value">
           {relatedHref ? (
-            <a className="primitive-value-link" href={relatedHref} onClick={(event) => event.stopPropagation()}>
-              {displayValue ?? (currentValue || <GemCaption>—</GemCaption>)}
+            <a
+              className="wireframe-related-record-link"
+              href={relatedHref}
+              aria-description="Double-click or press F2 to edit."
+              title="Double-click or press F2 to edit"
+              onPointerDown={handleRelationPointerDown}
+              onClick={handleRelationClick}
+              onDoubleClick={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                startEditing();
+              }}
+            >
+              {displayValue ?? currentValue}
             </a>
           ) : (
-            <button
-              type="button"
-              className="wireframe-structural-value-trigger"
-              aria-label={`Search related ${label}`}
-              onClick={(event) => {
+            <span
+              className="wireframe-related-record-link"
+              role="group"
+              tabIndex={0}
+              aria-label={`${label}: no related record; double-click or double-tap, or press F2 to edit`}
+              onPointerDown={handleRelationPointerDown}
+              onDoubleClick={(event) => {
                 event.stopPropagation();
-                setSaveError(undefined);
-                setEditing(true);
+                startEditing();
               }}
             >
-              {displayValue ?? (currentValue || <GemCaption>—</GemCaption>)}
-            </button>
+              {displayValue ?? <GemCaption>—</GemCaption>}
+            </span>
           )}
-          {currentValue ? (
-            <button
-              type="button"
-              className="wireframe-value-edit-trigger"
-              aria-label={`Edit ${label}`}
-              title={`Edit ${label}`}
-              onClick={(event) => {
-                event.stopPropagation();
-                setSaveError(undefined);
-                setEditing(true);
-              }}
-            >
-              <Pencil size={14} aria-hidden="true" />
-            </button>
-          ) : null}
         </span>
       ) : !editing && kind === "lookup" ? (
         <span className="wireframe-action-value">
@@ -164,8 +231,7 @@ export function WireframeEditableValue({
             aria-label={`Search lookup source for ${label}`}
             onClick={(event) => {
               event.stopPropagation();
-              setSaveError(undefined);
-              setEditing(true);
+              startEditing();
             }}
           >
             {displayValue ?? <GemCaption>—</GemCaption>}
