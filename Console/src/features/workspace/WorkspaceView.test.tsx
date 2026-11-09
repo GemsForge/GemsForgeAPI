@@ -55,8 +55,24 @@ describe("connected knowledge workspace", () => {
     expect(within(map).getByRole("button", { name: "Open Database handbook" })).toBeInTheDocument();
 
     fireEvent.click(within(map).getByRole("button", { name: "Open Chromalock" }));
-    await waitFor(() => expect(screen.getByLabelText("Page title")).toHaveValue("Chromalock"));
+    expect(await screen.findByRole("heading", { name: "Chromalock" })).toBeInTheDocument();
     expect(await screen.findByRole("navigation", { name: "Pages connected to Chromalock" })).toBeInTheDocument();
+  });
+
+  it("persists edited page title and description through the existing mutation", async () => {
+    workflow.mutateAsync.mockResolvedValue(undefined);
+    renderWorkspace();
+    fireEvent.click(await screen.findByRole("button", { name: "Edit page details" }));
+    fireEvent.change(screen.getByLabelText("Page title"), { target: { value: "Field journal" } });
+    fireEvent.change(screen.getByLabelText("Page description"), { target: { value: "A revised description." } });
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+
+    await waitFor(() =>
+      expect(workflow.mutateAsync).toHaveBeenCalledWith({
+        id: pages[0].id,
+        patch: { title: "Field journal", description: "A revised description." },
+      }),
+    );
   });
 
   it("updates the preview map when a local related-page selection changes", async () => {
@@ -77,7 +93,7 @@ describe("connected knowledge workspace", () => {
     renderWorkspace();
 
     expect(await screen.findByText(/No linked pages yet/)).toBeInTheDocument();
-    expect(screen.getByText("Sample content · not saved")).toBeInTheDocument();
+    expect(screen.getByText("Local sample · Markdown")).toBeInTheDocument();
     expect(screen.getByText("Sample table · local demo")).toBeInTheDocument();
   });
 

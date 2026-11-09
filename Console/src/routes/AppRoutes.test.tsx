@@ -18,8 +18,8 @@ function HistoryControls() {
   const navigate = useNavigate();
   return (
     <>
-      <button onClick={() => navigate(-1)}>Go back</button>
-      <button onClick={() => navigate(1)}>Go forward</button>
+      <button onClick={() => navigate(-1)}>Test Go back</button>
+      <button onClick={() => navigate(1)}>Test Go forward</button>
     </>
   );
 }
@@ -84,7 +84,7 @@ describe("Gem Life navigation", () => {
       </QueryClientProvider>,
     );
     expect(await screen.findByRole("heading", { name: "Education" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Gem Life" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Gem Life home" })).toBeInTheDocument();
     expect(screen.getByRole("banner")).toHaveClass("topbar");
     expect(screen.getByRole("complementary")).toHaveClass("sidebar");
     expect(screen.getByRole("link", { name: "Home" })).toHaveAttribute("href", "/app");
@@ -346,8 +346,11 @@ describe("Gem Life navigation", () => {
   });
   it("renders home without requesting feature data", async () => {
     const education = vi.spyOn(api, "listEducation");
+    vi.spyOn(api, "listRootPages").mockResolvedValue([
+      { id: 1, parentID: null, domainID: "Life", title: "Field notes", description: "Observations and ideas." },
+    ]);
     setup();
-    expect(await screen.findByRole("heading", { name: "A home for ideas in motion" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Field notes" })).toBeInTheDocument();
     expect(education).not.toHaveBeenCalled();
     expect(screen.getByRole("link", { name: "Home" })).toHaveAttribute("aria-current", "page");
   });
@@ -365,9 +368,9 @@ describe("Gem Life navigation", () => {
     fireEvent.click(screen.getByRole("link", { name: "Employment" }));
     await screen.findByRole("heading", { name: "Employment" });
     expect(screen.getByRole("region", { name: "Current screen" })).toHaveFocus();
-    fireEvent.click(screen.getByRole("button", { name: "Go back" }));
+    fireEvent.click(screen.getByRole("button", { name: "Test Go back" }));
     await screen.findByRole("heading", { name: "Education" });
-    fireEvent.click(screen.getByRole("button", { name: "Go forward" }));
+    fireEvent.click(screen.getByRole("button", { name: "Test Go forward" }));
     await screen.findByRole("heading", { name: "Employment" });
   });
   it.each(["/education-typo", "/addresses/unknown", "/domains/missing", "/forgekeeper/not-a-number/children"])(

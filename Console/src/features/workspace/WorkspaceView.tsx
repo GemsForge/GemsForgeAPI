@@ -1,65 +1,82 @@
 import { useEffect, useMemo, useState } from "react";
 import { Dialog, Form, SizableText, Theme } from "tamagui";
+import { useSearchParams } from "react-router-dom";
 import { QueryFeedback } from "../../components/QueryFeedback";
-import { GemButton, GemCard, GemSectionHeader, GemStatusPill, GemTextField } from "@gemsforge/ui";
+import { GemButton, GemCard, GemStatusPill, GemTextField } from "@gemsforge/ui";
 import { usePagesQuery, usePageMutation } from "../../data/workflowQueries";
 import type { ForgeKeeperPage, ForgeKeeperPatch } from "../../types";
+import { inspectionBypassEnabled } from "../../auth/session";
+import { workspacePreviewPages, workspacePreviewRows, type WorkspacePreviewRow } from "./workspacePreviewData";
 
 /** Returns a stable visual marker for a ForgeKeeper page in the workspace tree. */
 function pageIcon(page: ForgeKeeperPage): string {
   return page.parentID ? "◈" : "✦";
 }
 
-interface WorkspaceRow {
-  id: string;
-  name: string;
-  type: string;
-  status: string;
-  nextThought: string;
+function pageUpdatedLabel(updatedAt?: string | null): string {
+  if (!updatedAt) return "Created privately";
+  const updated = new Date(updatedAt);
+  if (Number.isNaN(updated.getTime())) return "Updated";
+  const now = new Date();
+  const sameDay = updated.toDateString() === now.toDateString();
+  return sameDay
+    ? "Updated today"
+    : `Updated ${new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric", year: "numeric" }).format(updated)}`;
 }
 
 type BlockEditor = { kind: "note" } | { kind: "row"; rowID: string | null };
 
 /** A connected knowledge workspace backed by ForgeKeeper root pages. */
 export function WorkspaceView({ onSuccess }: { onSuccess: (message: string) => void }) {
-  const pagesQuery = usePagesQuery({ kind: "roots" });
+  const pagesQuery = usePagesQuery({ kind: "roots" }, !inspectionBypassEnabled);
   const patchPage = usePageMutation();
-  const pages = useMemo(() => pagesQuery.data ?? [], [pagesQuery.data]);
-  const [activePageID, setActivePageID] = useState<number | null>(null);
+  const pages = useMemo(
+    () =>
+      inspectionBypassEnabled
+        ? pagesQuery.data?.length
+          ? pagesQuery.data
+          : workspacePreviewPages
+        : (pagesQuery.data ?? []),
+    [pagesQuery.data],
+  );
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [activePageID, setActivePageID] = useState<number | null>(() => {
+    const page = Number(new URLSearchParams(window.location.search).get("page"));
+    return Number.isSafeInteger(page) && page > 0 ? page : null;
+  });
   const [editing, setEditing] = useState(false);
+  const [editingMetadata, setEditingMetadata] = useState(false);
   const [draftTitle, setDraftTitle] = useState("");
   const [draftDescription, setDraftDescription] = useState("");
-  const [note, setNote] = useState("The best workspace lets structure emerge from thinking.");
-  const [rows, setRows] = useState<WorkspaceRow[]>([
-    {
-      id: "chromalock",
-      name: "Chromalock",
-      type: "Project",
-      status: "In progress",
-      nextThought: "Design the co-op map",
-    },
-    {
-      id: "handbook",
-      name: "Database handbook",
-      type: "Writing",
-      status: "Draft",
-      nextThought: "Add migration examples",
-    },
-  ]);
+  const [note, setNote] = useState(
+    "The best ideas begin as observations.\nKeep them close long enough to see what they connect to.",
+  );
+  const [rows, setRows] = useState<WorkspacePreviewRow[]>(workspacePreviewRows);
   const [blockEditor, setBlockEditor] = useState<BlockEditor | null>(null);
   const [editingLinks, setEditingLinks] = useState(false);
   const [linkedPageIDs, setLinkedPageIDs] = useState<number[]>([]);
-  const activePage = pages.find((page) => page.id === activePageID) ?? pages[0] ?? null;
+  const routePageID = Number(searchParams.get("page"));
+  const activePage =
+    pages.find((page) => page.id === routePageID) ?? pages.find((page) => page.id === activePageID) ?? pages[0] ?? null;
   const relatedPages = activePage
     ? pages.filter((page) => page.id !== activePage.id && linkedPageIDs.includes(page.id))
     : [];
 
   useEffect(() => {
+    if (Number.isSafeInteger(routePageID) && pages.some((page) => page.id === routePageID)) {
+      setActivePageID(routePageID);
+      return;
+    }
     if (activePageID === null && pages[0]) setActivePageID(pages[0].id);
     if (activePageID !== null && pages.length > 0 && !pages.some((page) => page.id === activePageID)) {
       setActivePageID(pages[0].id);
     }
-  }, [activePageID, pages]);
+  }, [activePageID, pages, routePageID]);
+
+  const selectPage = (pageID: number) => {
+    setActivePageID(pageID);
+    setSearchParams({ page: String(pageID) });
+  };
 
   useEffect(() => {
     if (activePage) {
@@ -72,111 +89,125 @@ export function WorkspaceView({ onSuccess }: { onSuccess: (message: string) => v
     setLinkedPageIDs(
       pages
         .filter((page) => page.id !== activePage?.id)
-        .slice(0, 3)
+        .filter((page) => activePage?.title !== "Field notes" || page.title !== "Personal systems")
+        .slice(0, 2)
         .map((page) => page.id),
     );
-  }, [activePage?.id, pages]);
+  }, [activePage?.id, activePage?.title, pages]);
 
   const savePage = async (patch: ForgeKeeperPatch) => {
     if (!activePage) return;
+    if (inspectionBypassEnabled) {
+      setEditing(false);
+      onSuccess("Preview mode: page changes are not saved.");
+      return;
+    }
     await patchPage.mutateAsync({ id: activePage.id, patch });
     setEditing(false);
     onSuccess("Page updated.");
   };
 
-  const saveInlineField = async (patch: ForgeKeeperPatch) => {
+  const saveMetadata = async () => {
     if (!activePage) return;
+    if (inspectionBypassEnabled) {
+      setEditingMetadata(false);
+      onSuccess("Preview mode: page changes are not saved.");
+      return;
+    }
+    const patch = { title: draftTitle.trim(), description: draftDescription.trim() };
     const changed = Object.entries(patch).some(([key, value]) => value !== activePage[key as keyof ForgeKeeperPage]);
-    if (changed) await savePage(patch);
+    if (changed) {
+      await patchPage.mutateAsync({ id: activePage.id, patch });
+      onSuccess("Page updated.");
+    }
+    setEditingMetadata(false);
   };
 
   return (
     <Theme name="knowledge">
-      <section className="hybrid-workspace" aria-labelledby="workspace-title">
-        <GemSectionHeader
-          eyebrow="Gem Life · personal knowledge workspace"
-          title="A home for ideas in motion"
-          description="Keep your notes close, let structure emerge, and follow the links between your life."
-          trailing={activePage ? <GemButton onClick={() => setEditing(true)}>Page options</GemButton> : undefined}
-        />
-        <QueryFeedback query={pagesQuery} />
+      <section className="hybrid-workspace" aria-label="Connected knowledge workspace">
+        {!inspectionBypassEnabled ? <QueryFeedback query={pagesQuery} /> : null}
         {activePage ? (
           <div className="hybrid-workspace-grid">
-            <aside className="workspace-page-tree" aria-label="Workspace pages">
-              <div className="workspace-tree-heading">
-                <SizableText fontWeight="700">Your library</SizableText>
-                <GemButton
-                  variant="quiet"
-                  aria-label="Open page manager"
-                  onClick={() => (window.location.href = "/forgekeeper")}
-                >
-                  ＋
-                </GemButton>
-              </div>
-              <nav aria-label="Root pages">
-                {pages.map((page) => (
-                  <button
-                    type="button"
-                    className={`workspace-page-link ${page.id === activePage.id ? "selected" : ""}`}
-                    key={page.id}
-                    onClick={() => setActivePageID(page.id)}
-                  >
-                    <span aria-hidden="true">{pageIcon(page)}</span>
-                    <span>{page.title}</span>
-                  </button>
-                ))}
-              </nav>
-              <div className="workspace-tree-footer">
-                <span className="eyebrow">A living archive</span>
-                <SizableText>Thoughts, projects, and the links between them.</SizableText>
-              </div>
-            </aside>
             <section className="workspace-page-canvas" aria-label={`${activePage.title} page canvas`}>
               <div className="workspace-page-heading">
-                <span className="workspace-page-icon" aria-hidden="true">
-                  {pageIcon(activePage)}
-                </span>
                 <div className="workspace-inline-fields">
-                  <SizableText className="eyebrow">
-                    {activePage.updatedAt ? "Recently updated" : "Private page"}
-                  </SizableText>
-                  <GemTextField
-                    label="Page title"
-                    value={draftTitle}
-                    onChange={(event) => setDraftTitle(event.target.value)}
-                    onBlur={() => void saveInlineField({ title: draftTitle.trim() })}
-                  />
-                  <GemTextField
-                    label="Page description"
-                    multiline
-                    rows={2}
-                    value={draftDescription}
-                    onChange={(event) => setDraftDescription(event.target.value)}
-                    onBlur={() => void saveInlineField({ description: draftDescription.trim() })}
-                  />
+                  <div className="workspace-page-meta">
+                    <span>{pageUpdatedLabel(activePage.updatedAt)}</span>
+                    <span aria-hidden="true">·</span>
+                    <span>
+                      Private page <span aria-hidden="true">♙</span>
+                    </span>
+                    {inspectionBypassEnabled ? <span className="workspace-preview-badge">Preview</span> : null}
+                  </div>
+                  {editingMetadata ? (
+                    <>
+                      <GemTextField
+                        label="Page title"
+                        showLabel={false}
+                        className="workspace-page-title-input"
+                        value={draftTitle}
+                        onChange={(event) => setDraftTitle(event.target.value)}
+                      />
+                      <GemTextField
+                        label="Page description"
+                        showLabel={false}
+                        className="workspace-page-description-input"
+                        multiline
+                        rows={2}
+                        value={draftDescription}
+                        onChange={(event) => setDraftDescription(event.target.value)}
+                      />
+                      <GemButton
+                        size="sm"
+                        disabled={!draftTitle.trim() || !draftDescription.trim() || patchPage.isPending}
+                        onClick={() => void saveMetadata()}
+                      >
+                        {inspectionBypassEnabled ? "Done" : patchPage.isPending ? "Saving…" : "Save changes"}
+                      </GemButton>
+                    </>
+                  ) : (
+                    <>
+                      <h1 className="workspace-page-title">{draftTitle || activePage.title}</h1>
+                      <p className="workspace-page-description">{draftDescription || activePage.description}</p>
+                    </>
+                  )}
+                </div>
+                <div className="workspace-page-actions">
+                  <GemButton variant="quiet" aria-label="Edit page details" onClick={() => setEditingMetadata(true)}>
+                    ✎
+                  </GemButton>
+                  <GemButton variant="quiet" aria-label="Page options" onClick={() => setEditing(true)}>
+                    ···
+                  </GemButton>
                 </div>
               </div>
               <GemCard className="workspace-note-block">
                 <div className="workspace-note-meta">
                   <SizableText className="eyebrow">A thought worth keeping</SizableText>
-                  <span className="workspace-markdown-hint" aria-label="Sample note content, not saved">
-                    Sample content · not saved
+                  <span className="workspace-markdown-hint" aria-label="Local demo note, not saved">
+                    Local sample · Markdown
                   </span>
                 </div>
-                <div className="workspace-block-heading">
+                <div className="workspace-note-layout">
                   <SizableText className="workspace-note-copy">{note}</SizableText>
                   <GemButton tone="secondary" onClick={() => setBlockEditor({ kind: "note" })}>
-                    Edit note
+                    ✎
                   </GemButton>
+                </div>
+                <div className="workspace-note-tags">
+                  <span>#note</span>
+                  <span aria-hidden="true">M↓</span>
+                  <span>Markdown</span>
                 </div>
               </GemCard>
               <GemCard className="workspace-table-block">
                 <div className="workspace-block-heading">
                   <div>
-                    <SizableText className="eyebrow">Sample table · local demo</SizableText>
                     <SizableText className="workspace-block-title" fontSize="$5" fontWeight="700">
                       Things in motion
                     </SizableText>
+                    <SizableText className="workspace-demo-caption">Sample table · local demo</SizableText>
                   </div>
                   <GemButton tone="secondary" onClick={() => setBlockEditor({ kind: "row", rowID: null })}>
                     ＋ Add row
@@ -188,7 +219,7 @@ export function WorkspaceView({ onSuccess }: { onSuccess: (message: string) => v
                     <thead>
                       <tr>
                         <th>Name</th>
-                        <th>Type</th>
+                        <th>Kind</th>
                         <th>Status</th>
                         <th>Next thought</th>
                         <th>
@@ -199,22 +230,28 @@ export function WorkspaceView({ onSuccess }: { onSuccess: (message: string) => v
                     <tbody>
                       {rows.map((row) => (
                         <tr key={row.id}>
-                          <td>{row.name}</td>
+                          <td>
+                            <span className="workspace-row-icon" aria-hidden="true">
+                              ▱
+                            </span>
+                            {row.name}
+                          </td>
                           <td>{row.type}</td>
                           <td>
-                            <GemStatusPill tone={row.status === "In progress" ? "success" : "default"}>
+                            <GemStatusPill tone={row.status === "Draft" ? "warning" : "success"}>
                               {row.status}
                             </GemStatusPill>
                           </td>
                           <td>{row.nextThought}</td>
-                          <td>
-                            <GemButton
-                              variant="quiet"
-                              size="sm"
+                          <td className="workspace-row-action-cell">
+                            <button
+                              type="button"
+                              className="workspace-row-edit"
+                              aria-label={`Edit ${row.name}`}
                               onClick={() => setBlockEditor({ kind: "row", rowID: row.id })}
                             >
-                              Edit
-                            </GemButton>
+                              ✎
+                            </button>
                           </td>
                         </tr>
                       ))}
@@ -223,11 +260,16 @@ export function WorkspaceView({ onSuccess }: { onSuccess: (message: string) => v
                 </div>
               </GemCard>
               <div className="workspace-lower-grid">
-                <GemCard className="workspace-related-block">
+                <section className="workspace-related-block" aria-labelledby="related-thoughts-title">
                   <div className="workspace-block-heading">
                     <div>
-                      <SizableText className="eyebrow">Linked from this page</SizableText>
-                      <SizableText className="workspace-block-title" fontSize="$5" fontWeight="700">
+                      <SizableText
+                        className="workspace-block-title"
+                        fontSize="$5"
+                        fontWeight="700"
+                        id="related-thoughts-title"
+                      >
+                        <span aria-hidden="true">↗</span>
                         Related thoughts
                       </SizableText>
                     </div>
@@ -264,11 +306,7 @@ export function WorkspaceView({ onSuccess }: { onSuccess: (message: string) => v
                       {relatedPages.length > 0 ? (
                         relatedPages.map((page) => (
                           <li key={page.id}>
-                            <button
-                              type="button"
-                              aria-label={`Open ${page.title}`}
-                              onClick={() => setActivePageID(page.id)}
-                            >
+                            <button type="button" aria-label={`Open ${page.title}`} onClick={() => selectPage(page.id)}>
                               <span aria-hidden="true">↗</span> {page.title}
                             </button>
                           </li>
@@ -278,14 +316,19 @@ export function WorkspaceView({ onSuccess }: { onSuccess: (message: string) => v
                       )}
                     </ul>
                   )}
-                  <SizableText className="workspace-demo-caption">
-                    Links are a local preview and are not saved.
+                  <SizableText className="workspace-demo-caption" aria-label="Sample page links, not saved">
+                    Local preview links · not saved
                   </SizableText>
-                </GemCard>
-                <GemCard className="workspace-map-block">
-                  <SizableText className="eyebrow">Knowledge map</SizableText>
-                  <SizableText className="workspace-block-title" fontSize="$5" fontWeight="700">
-                    Nearby pages
+                </section>
+                <section className="workspace-map-block" aria-labelledby="knowledge-map-title">
+                  <SizableText
+                    className="workspace-block-title"
+                    fontSize="$5"
+                    fontWeight="700"
+                    id="knowledge-map-title"
+                  >
+                    <span aria-hidden="true">♧</span>
+                    Knowledge map
                   </SizableText>
                   <nav className="workspace-map-scroll" aria-label={`Pages connected to ${activePage.title}`}>
                     <div
@@ -328,7 +371,7 @@ export function WorkspaceView({ onSuccess }: { onSuccess: (message: string) => v
                                 type="button"
                                 className="map-node"
                                 aria-label={`Open ${page.title}`}
-                                onClick={() => setActivePageID(page.id)}
+                                onClick={() => selectPage(page.id)}
                               >
                                 <span className="map-node-icon" aria-hidden="true">
                                   {pageIcon(page)}
@@ -345,10 +388,8 @@ export function WorkspaceView({ onSuccess }: { onSuccess: (message: string) => v
                       )}
                     </div>
                   </nav>
-                  <SizableText className="workspace-demo-caption">
-                    A preview of this page’s current local links.
-                  </SizableText>
-                </GemCard>
+                  <SizableText className="workspace-demo-caption">Direct links from this page</SizableText>
+                </section>
               </div>
             </section>
           </div>
@@ -406,13 +447,13 @@ function BlockEditorDialog({
 }: {
   editor: BlockEditor;
   note: string;
-  row: WorkspaceRow | null;
+  row: WorkspacePreviewRow | null;
   onCancel: () => void;
   onSaveNote: (value: string) => void;
-  onSaveRow: (row: WorkspaceRow) => void;
+  onSaveRow: (row: WorkspacePreviewRow) => void;
 }) {
   const [noteDraft, setNoteDraft] = useState(note);
-  const [rowDraft, setRowDraft] = useState<WorkspaceRow>(
+  const [rowDraft, setRowDraft] = useState<WorkspacePreviewRow>(
     row ?? { id: "", name: "", type: "", status: "Draft", nextThought: "" },
   );
   return (
