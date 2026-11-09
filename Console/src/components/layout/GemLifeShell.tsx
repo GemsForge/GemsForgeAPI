@@ -1,7 +1,7 @@
 import type { CSSProperties, KeyboardEvent as ReactKeyboardEvent, PointerEvent, ReactNode } from "react";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "../../auth/AuthProvider";
-import { useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { usePagesQuery } from "../../data/workflowQueries";
 import { inspectionBypassEnabled } from "../../auth/session";
 import { workspacePreviewPages } from "../../features/workspace/workspacePreviewData";
@@ -35,8 +35,13 @@ const MIN_CONTENT_WIDTH = gemLayout.appContentMinimum;
 export function GemLifeShell({ children, sidebar }: GemLifeShellProps) {
   const { signOut } = useAuth();
   const location = useLocation();
-  const isWorkspace = location.pathname === "/workspace";
-  const pagesQuery = usePagesQuery({ kind: "roots" }, isWorkspace && !inspectionBypassEnabled);
+  const isWorkspace = location.pathname === "/workspace" || location.pathname === "/";
+  const [searchValue, setSearchValue] = useState("");
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const pagesQuery = usePagesQuery(
+    { kind: "roots" },
+    (isWorkspace || Boolean(searchValue.trim())) && !inspectionBypassEnabled,
+  );
   const selectedPageID = Number(new URLSearchParams(location.search).get("page"));
   const pages = inspectionBypassEnabled
     ? pagesQuery.data?.length
@@ -53,7 +58,6 @@ export function GemLifeShell({ children, sidebar }: GemLifeShellProps) {
       ? COLLAPSED_SIDEBAR_WIDTH
       : EXPANDED_SIDEBAR_WIDTH,
   );
-  const [searchValue, setSearchValue] = useState("");
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
   const searchMatches = (pages ?? []).filter((page) =>
@@ -61,10 +65,24 @@ export function GemLifeShell({ children, sidebar }: GemLifeShellProps) {
   );
 
   useEffect(() => {
+    if (mobileSearchOpen) searchRef.current?.focus();
+  }, [mobileSearchOpen]);
+
+  useEffect(() => {
+    setSearchValue("");
+    setMobileSearchOpen(false);
+  }, [location.pathname, location.search]);
+
+  const toggleSearch = () => {
+    if (mobileSearchOpen) setSearchValue("");
+    setMobileSearchOpen((open) => !open);
+  };
+
+  useEffect(() => {
     const focusSearch = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
         event.preventDefault();
-        searchRef.current?.focus();
+        setMobileSearchOpen(true);
       }
     };
     window.addEventListener("keydown", focusSearch);
@@ -190,30 +208,46 @@ export function GemLifeShell({ children, sidebar }: GemLifeShellProps) {
               <span aria-hidden="true">›</span>
               <span>{activePage?.title ?? "Workspace"}</span>
             </div>
-            <label className="workspace-search">
-              <span aria-hidden="true">⌕</span>
+            <div className="workspace-search" data-mobile-open={mobileSearchOpen}>
+              <button
+                className="workspace-search-toggle"
+                type="button"
+                aria-label="Search Gem Life"
+                aria-expanded={mobileSearchOpen}
+                aria-controls="workspace-search-input"
+                onClick={toggleSearch}
+              >
+                <span aria-hidden="true">⌕</span>
+              </button>
               <input
                 ref={searchRef}
+                id="workspace-search-input"
                 aria-label="Search Gem Life"
                 placeholder="Search GEM LIFE"
                 value={searchValue}
                 onChange={(event) => setSearchValue(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Escape") {
+                    setSearchValue("");
+                    setMobileSearchOpen(false);
+                  }
+                }}
               />
               <kbd>⌘K</kbd>
               {searchValue.trim() ? (
                 <nav className="workspace-search-results" aria-label="Matching pages">
                   {searchMatches.length ? (
                     searchMatches.map((page) => (
-                      <a key={page.id} href={`/workspace?page=${page.id}`}>
+                      <Link key={page.id} to={`/workspace?page=${page.id}`}>
                         {page.title}
-                      </a>
+                      </Link>
                     ))
                   ) : (
                     <span>No matching pages</span>
                   )}
                 </nav>
               ) : null}
-            </label>
+            </div>
             {!isWorkspace ? <div className="connection-pill">Private workspace</div> : null}
             <button
               type="button"

@@ -354,6 +354,47 @@ describe("Gem Life navigation", () => {
     expect(education).not.toHaveBeenCalled();
     expect(screen.getByRole("link", { name: "Home" })).toHaveAttribute("aria-current", "page");
   });
+  it("keeps the Home alias in the connected workspace frame", async () => {
+    vi.spyOn(api, "listRootPages").mockResolvedValue([
+      { id: 1, parentID: null, domainID: "Life", title: "Field notes", description: "Observations and ideas." },
+    ]);
+    setup("/");
+
+    expect(await screen.findByRole("heading", { name: "Field notes" })).toBeInTheDocument();
+    expect(screen.getByRole("navigation", { name: "Your library" })).toBeInTheDocument();
+    expect(screen.getByRole("complementary", { name: "Gem Life sidebar" })).toBeInTheDocument();
+  });
+  it("loads root-page search results from other application routes", async () => {
+    vi.spyOn(api, "listEmployment").mockResolvedValue([]);
+    vi.spyOn(api, "listRootPages").mockResolvedValue([
+      { id: 1, parentID: null, domainID: "Life", title: "Field notes", description: "Observations and ideas." },
+    ]);
+    setup("/employment");
+    await screen.findByRole("heading", { name: "Employment" });
+
+    fireEvent.change(screen.getByRole("textbox", { name: "Search Gem Life" }), { target: { value: "Field" } });
+    fireEvent.click(await screen.findByRole("link", { name: "Field notes" }));
+
+    expect(await screen.findByRole("heading", { name: "Field notes" })).toBeInTheDocument();
+    expect(screen.getByRole("navigation", { name: "Your library" })).toBeInTheDocument();
+  });
+  it("opens and focuses search from its mobile toggle", async () => {
+    const originalWidth = window.innerWidth;
+    Object.defineProperty(window, "innerWidth", { configurable: true, value: 390 });
+    try {
+      vi.spyOn(api, "listEmployment").mockResolvedValue([]);
+      setup("/employment");
+      await screen.findByRole("heading", { name: "Employment" });
+
+      const toggle = screen.getByRole("button", { name: "Search Gem Life" });
+      fireEvent.click(toggle);
+
+      expect(toggle).toHaveAttribute("aria-expanded", "true");
+      await waitFor(() => expect(screen.getByRole("textbox", { name: "Search Gem Life" })).toHaveFocus());
+    } finally {
+      Object.defineProperty(window, "innerWidth", { configurable: true, value: originalWidth });
+    }
+  });
   it("loads a domain from a direct URL and renders its pages", async () => {
     const pages = vi.spyOn(api, "listPagesForDomain").mockResolvedValue([]);
     setup("/domains/Life");

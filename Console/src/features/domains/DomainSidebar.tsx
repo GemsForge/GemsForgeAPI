@@ -27,7 +27,7 @@ export function DomainSidebar({ domains, onRefresh }: { domains: Domain[]; onRef
   const [expanded, setExpanded] = useState(false);
   const schemaPages = useSchemaPageTablesQuery();
   const location = useLocation();
-  const isWorkspace = location.pathname === "/workspace";
+  const isWorkspace = location.pathname === "/workspace" || location.pathname === "/";
   const rootPagesQuery = usePagesQuery({ kind: "roots" }, isWorkspace && !inspectionBypassEnabled);
   const rootPages = inspectionBypassEnabled
     ? rootPagesQuery.data?.length
