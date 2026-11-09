@@ -1,7 +1,7 @@
 import type { CSSProperties, KeyboardEvent, PointerEvent, ReactNode } from "react";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "../../auth/AuthProvider";
-import { gemBreakpoints, gemLayout } from "@gemsforge/ui";
+import { GemLogo, gemBreakpoints, gemLayout } from "@gemsforge/ui";
 
 interface GemLifeShellProps {
   children: ReactNode;
@@ -102,9 +102,12 @@ export function GemLifeShell({ children, sidebar }: GemLifeShellProps) {
           Skip to content
         </a>
         <header className="topbar">
-          <div>
-            <p className="eyebrow">GemsForgeAPI · React testing console</p>
-            <h1>Gem Life Console</h1>
+          <div className="app-brand">
+            <GemLogo compact />
+            <div>
+              <p className="eyebrow">Personal knowledge and life system</p>
+              <h1>Gem Life</h1>
+            </div>
           </div>
           <div className="header-actions">
             <div className="connection-pill">Private workspace</div>

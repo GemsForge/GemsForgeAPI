@@ -84,6 +84,9 @@ describe("Gem Life navigation", () => {
       </QueryClientProvider>,
     );
     expect(await screen.findByRole("heading", { name: "Education" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Gem Life" })).toBeInTheDocument();
+    expect(screen.getByRole("banner")).toHaveClass("topbar");
+    expect(screen.getByRole("complementary")).toHaveClass("sidebar");
     expect(screen.getByRole("link", { name: "Home" })).toHaveAttribute("href", "/app");
   });
   it("renders wireframe routes on their dedicated canvas", async () => {
@@ -344,7 +347,7 @@ describe("Gem Life navigation", () => {
   it("renders home without requesting feature data", async () => {
     const education = vi.spyOn(api, "listEducation");
     setup();
-    expect(await screen.findByRole("heading", { name: "Your data, connected" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "A home for ideas in motion" })).toBeInTheDocument();
     expect(education).not.toHaveBeenCalled();
     expect(screen.getByRole("link", { name: "Home" })).toHaveAttribute("aria-current", "page");
   });
