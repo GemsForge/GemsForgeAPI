@@ -913,6 +913,7 @@ h3 {
   color: var(--gem-knowledge-ink);
 }
 .workspace-demo-table-wrap {
+  position: relative;
   overflow-x: auto;
   margin-top: 1rem;
 }
@@ -1935,6 +1936,7 @@ h3 {
 }
 .app-main-column > .workspace {
   display: block;
+  grid-column: 1 / -1;
   grid-template-columns: none;
   min-height: 0;
   overflow: auto;
