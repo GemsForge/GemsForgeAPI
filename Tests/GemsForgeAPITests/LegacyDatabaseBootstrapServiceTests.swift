@@ -71,7 +71,7 @@ final class LegacyDatabaseBootstrapServiceTests: XCTestCase {
             try await AuthenticationIdentity(
                 id: "owner-identity",
                 accountID: "owner-account",
-                issuer: "https://supabase.example.test",
+                issuer: "https://identity.example.test",
                 subject: "owner-subject"
             ).save(on: app.db)
             try await Hub(id: "owner-hub", accountID: "owner-account").save(on: app.db)

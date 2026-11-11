@@ -43,7 +43,6 @@ struct SessionAuthenticationMiddleware: AsyncMiddleware {
 
     private static let publicRoutes: Set<String> = [
         "GET /health",
-        "POST /auth/supabase",
         "POST /auth/local",
     ]
 

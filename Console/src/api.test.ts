@@ -8,7 +8,7 @@ afterEach(() => {
 });
 
 describe("API bearer authentication", () => {
-  it("exchanges a Supabase access token for an opaque API session and attaches only the API token to protected requests", async () => {
+  it("signs in locally and attaches only the API session token to protected requests", async () => {
     const fetch = vi
       .fn()
       .mockResolvedValueOnce(
@@ -22,11 +22,11 @@ describe("API bearer authentication", () => {
       .mockResolvedValueOnce(new Response("[]"));
     vi.stubGlobal("fetch", fetch);
 
-    await api.exchangeSupabaseIdentityToken("supabase-access-token");
-    expect(fetch.mock.calls[0][0]).toBe("/auth/supabase");
+    await api.localSignIn("owner", "password");
+    expect(fetch.mock.calls[0][0]).toBe("/auth/local");
     expect(fetch.mock.calls[0][1]?.method).toBe("POST");
-    expect(new Headers(fetch.mock.calls[0][1]?.headers).get("Authorization")).toBe("Bearer supabase-access-token");
-    expect(fetch.mock.calls[0][1]?.body).toBeUndefined();
+    expect(new Headers(fetch.mock.calls[0][1]?.headers).get("Authorization")).toBeNull();
+    expect(fetch.mock.calls[0][1]?.body).toBe(JSON.stringify({ username: "owner", password: "password" }));
 
     saveSession({ token: "opaque-session", expiresAt: "2099-01-01T00:00:00Z" });
     await api.listDomains();

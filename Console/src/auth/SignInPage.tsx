@@ -9,7 +9,7 @@ export function SignInPage() {
   const auth = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const destination = (location.state as { from?: { pathname?: string; search?: string; hash?: string } } | null)?.from;
 
@@ -20,7 +20,7 @@ export function SignInPage() {
   if (auth.session) return <Navigate to="/" replace />;
 
   async function signIn() {
-    if (await auth.signIn(email, password)) {
+    if (await auth.signIn(username, password)) {
       setPassword("");
       const path = destination?.pathname ?? "/";
       navigate(`${path}${destination?.search ?? ""}${destination?.hash ?? ""}`, { replace: true });
@@ -48,15 +48,15 @@ export function SignInPage() {
         )}
         <Form className="sign-in-form" onSubmit={() => void signIn()}>
           <div className="sign-in-field">
-            <label htmlFor="sign-in-email">Username</label>
+            <label htmlFor="sign-in-username">Username</label>
             <input
-              id="sign-in-email"
-              name="email"
+              id="sign-in-username"
+              name="username"
               type="text"
               autoComplete="username"
               required
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
+              value={username}
+              onChange={(event) => setUsername(event.target.value)}
               disabled={auth.busy}
             />
           </div>

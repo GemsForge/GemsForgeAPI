@@ -60,8 +60,6 @@ same target for the Console. For example:
 ```bash
 cd Console
 VITE_API_TARGET="http://127.0.0.1:8180" \
-VITE_SUPABASE_URL="https://your-project-ref.supabase.co" \
-VITE_SUPABASE_PUBLISHABLE_KEY="your-supabase-publishable-key" \
 npm run dev
 ```
 
@@ -78,9 +76,8 @@ authenticated Console at `/app/`:
 http://127.0.0.1:8180/
 ```
 
-For authentication, configure Supabase email/password and the owner-only API
-identity mapping. See
-[`Console-Authentication-299.md`](Console-Authentication-299.md) for setup,
+For authentication, configure the local username, password, and owner account
+ID. See [`Local-Authentication.md`](Local-Authentication.md) for setup, session
 storage behavior, and the deployment security gate. See
 [`Testing-Console.md`](Testing-Console.md) for the remaining UI workflows.
 
