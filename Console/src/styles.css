@@ -371,22 +371,34 @@ button {
   align-items: center;
   gap: 1rem;
 }
+/* Auth pages use the light wireframe palette, matching the signed-in canvas. */
 .sign-in-page {
+  --ink: var(--gem-wireframe-text);
+  --muted: var(--gem-knowledge-muted);
+  --line: var(--gem-wireframe-border);
+  --mint: var(--gem-wireframe-action);
+  --gold: var(--gem-wireframe-accent);
   display: grid;
   min-height: 100vh;
   place-items: center;
   padding: 1.5rem;
+  background: var(--gem-wireframe-canvas);
+  color: var(--ink);
 }
 .sign-in-card {
   width: min(100%, 34rem);
   padding: clamp(1.5rem, 5vw, 3rem);
   border: 1px solid var(--line);
   border-radius: 1.25rem;
-  background: linear-gradient(145deg, rgba(23, 49, 56, 0.96), rgba(18, 37, 43, 0.96));
-  box-shadow: 0 1.5rem 5rem rgba(0, 0, 0, 0.25);
+  background: var(--gem-wireframe-surface);
+  box-shadow: var(--gem-elevation-card);
 }
 .sign-in-card h1 {
   margin-bottom: 1rem;
+  color: var(--gem-wireframe-heading, #173d45);
+}
+.sign-in-card .eyebrow {
+  color: var(--gem-wireframe-action);
 }
 .sign-in-description,
 .sign-in-footnote,
@@ -407,8 +419,11 @@ button {
   padding: 0.65rem 0.75rem;
   border: 1px solid var(--fieldBorder, var(--gem-field-border));
   border-radius: 0.5rem;
-  background: var(--canvas);
-  color: var(--ink);
+  background: var(--fieldBackground, var(--canvas));
+  color: var(--fieldText, var(--ink));
+}
+.sign-in-form input:focus {
+  border-color: var(--fieldFocus, var(--mint));
 }
 .credential-sign-in-button {
   width: 100%;
@@ -417,7 +432,7 @@ button {
   border: 1px solid var(--mint);
   border-radius: 0.55rem;
   background: var(--mint);
-  color: var(--canvas);
+  color: var(--actionText, var(--canvas));
   font-size: 1rem;
   font-weight: 700;
 }
