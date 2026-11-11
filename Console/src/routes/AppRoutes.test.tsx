@@ -1,4 +1,4 @@
-import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter, useNavigate } from "react-router-dom";
 import { TamaguiProvider } from "tamagui";
@@ -218,7 +218,8 @@ describe("Gem Life navigation", () => {
 
     expect(await screen.findByRole("heading", { name: "ForgeKeeper" })).toBeInTheDocument();
     expect(await screen.findByRole("heading", { name: "Family plan" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Life domain" })).toHaveAttribute(
+    const page = screen.getByRole("main", { name: "ForgeKeeper" });
+    expect(within(page).getByRole("link", { name: "Life domain" })).toHaveAttribute(
       "href",
       "/forgekeeper-wireframe/domain/Life",
     );
