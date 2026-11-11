@@ -1,6 +1,7 @@
 import { lazy, Suspense, Component, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, Navigate, Outlet, Route, Routes, useLocation, useOutletContext, useParams } from "react-router-dom";
 import type { UseQueryResult } from "@tanstack/react-query";
+import { Theme } from "tamagui";
 import { useDomainsQuery } from "../data/domainQueries";
 import {
   useAddressesQuery,
@@ -176,21 +177,25 @@ function WireframeCanvas() {
     document.getElementById("main-content")?.focus();
   }, [location.pathname]);
 
+  // The signed-in canvas is a light surface; Tamagui components inside it must
+  // resolve the light theme rather than the app's dark default.
   return (
-    <div className="wireframe-canvas">
-      <WireframeNavigationProvider>
-        <WireframeAppHeader />
-        <main className="wireframe-canvas-content" id="main-content" tabIndex={-1} aria-label="Gem Life screen">
-          <WireframeAppShell>
-            <ScreenBoundary key={location.pathname}>
-              <Suspense fallback={<p role="status">Loading screen…</p>}>
-                <Outlet context={{ onError, onSuccess, notice } satisfies ShellNotifications} />
-              </Suspense>
-            </ScreenBoundary>
-          </WireframeAppShell>
-        </main>
-      </WireframeNavigationProvider>
-    </div>
+    <Theme name="light">
+      <div className="wireframe-canvas">
+        <WireframeNavigationProvider>
+          <WireframeAppHeader />
+          <main className="wireframe-canvas-content" id="main-content" tabIndex={-1} aria-label="Gem Life screen">
+            <WireframeAppShell>
+              <ScreenBoundary key={location.pathname}>
+                <Suspense fallback={<p role="status">Loading screen…</p>}>
+                  <Outlet context={{ onError, onSuccess, notice } satisfies ShellNotifications} />
+                </Suspense>
+              </ScreenBoundary>
+            </WireframeAppShell>
+          </main>
+        </WireframeNavigationProvider>
+      </div>
+    </Theme>
   );
 }
 

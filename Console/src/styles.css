@@ -8033,17 +8033,3 @@ dialog {
     overflow-wrap: anywhere;
   }
 }
-
-/* Tamagui Button text follows the app's dark default theme, not the knowledge sub-theme;
-   pin workspace actions to the knowledge palette so they meet text contrast. */
-.hybrid-workspace .workspace-knowledge-action,
-.hybrid-workspace .workspace-knowledge-action * {
-  color: var(--gem-knowledge-ink);
-}
-.hybrid-workspace .workspace-knowledge-action {
-  border-color: var(--gem-knowledge-line);
-  background: var(--gem-knowledge-panel);
-}
-.hybrid-workspace .workspace-knowledge-action:hover {
-  background: var(--gem-knowledge-panel-light);
-}
