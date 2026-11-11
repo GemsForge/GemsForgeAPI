@@ -73,6 +73,8 @@
   --wireframe-menu-border: var(--gem-wireframe-border-strong);
   --mint-dark: var(--gem-action-hover);
   --gold: var(--gem-accent);
+  /* Inside a Tamagui <Theme>, the theme's own --danger overrides this value, so app error
+     text follows the theme (e.g. the AA red on the light canvas). Keep both reds at 4.5:1. */
   --danger: var(--gem-danger);
   --gem-scrollbar-size: 6px;
   --gem-scrollbar-thumb: color-mix(in srgb, var(--muted) 42%, transparent);
@@ -7992,17 +7994,4 @@ dialog {
     text-align: left;
     overflow-wrap: anywhere;
   }
-}
-
-.hybrid-workspace .workspace-knowledge-action {
-  /* Tamagui paints Button borders from --borderColor and its state variants;
-     the knowledge line is too faint for a control (WCAG 1.4.11), so use mint. */
-  --borderColor: var(--gem-knowledge-mint);
-  --borderColorHover: var(--gem-knowledge-mint);
-  --borderColorFocus: var(--gem-knowledge-mint);
-  --borderColorPress: var(--gem-knowledge-mint);
-  background: var(--gem-knowledge-panel);
-}
-.hybrid-workspace .workspace-knowledge-action:hover {
-  background: var(--gem-knowledge-panel-light);
 }
