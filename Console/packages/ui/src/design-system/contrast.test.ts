@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { gemColors } from "./tamagui.config";
+import { gemColors, tamaguiConfig } from "./tamagui.config";
 function luminance(hex: string) {
   const channels = [1, 3, 5]
     .map((offset) => parseInt(hex.slice(offset, offset + 2), 16) / 255)
@@ -17,7 +17,27 @@ describe("text contrast expectations", () => {
     [gemColors.gemCanvas, gemColors.gemMint],
     [gemColors.gemCanvas, gemColors.gemDanger],
     [gemColors.gemInk, gemColors.gemMintDark],
+    // Field errors use the theme danger colour on light and knowledge surfaces.
+    [gemColors.gemDangerOnLight, gemColors.gemKnowledgeCanvas],
+    [gemColors.gemDangerOnLight, gemColors.gemKnowledgePanel],
+    [gemColors.gemDangerOnLight, gemColors.lightCanvas],
+    [gemColors.gemDangerOnLight, gemColors.wireframePanel],
   ])("meets 4.5:1 for %s on %s", (foreground, background) => {
     expect(contrast(foreground, background)).toBeGreaterThanOrEqual(4.5);
+  });
+});
+
+/** Theme roles, not just tokens: app CSS and Gem fields read these through Tamagui's theme variables. */
+describe("light theme roles", () => {
+  const themes = { light: tamaguiConfig.themes.light, knowledge: tamaguiConfig.themes.knowledge };
+  it.each(Object.entries(themes))("%s danger text meets 4.5:1 on its background and surface", (_, theme) => {
+    for (const surface of [theme.background.val, theme.surface.val]) {
+      expect(contrast(theme.danger.val as string, surface as string)).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+  it.each(Object.entries(themes))("%s control border meets 3:1 on its background and surface", (_, theme) => {
+    for (const surface of [theme.background.val, theme.surface.val]) {
+      expect(contrast(theme.controlBorder.val as string, surface as string)).toBeGreaterThanOrEqual(3);
+    }
   });
 });

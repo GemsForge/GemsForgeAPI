@@ -105,7 +105,7 @@ export function GSelectField({
           {label}
         </Label>
         <GemFieldDisplayValue
-          aria-describedby={`${id}-display-label`}
+          aria-describedby={error ? `${id}-display-label ${errorID}` : `${id}-display-label`}
           onClick={onDisplayClick}
           aria-invalid={Boolean(error)}
           textRole={valueTextRole}
@@ -113,7 +113,7 @@ export function GSelectField({
           {displayValue ?? options.find((option) => option.value === value)?.label ?? "—"}
         </GemFieldDisplayValue>
         {error && (
-          <SizableText role="alert" color="$gemDanger" fontSize="$1">
+          <SizableText id={errorID} role="alert" color="$danger" fontSize="$1">
             {error}
           </SizableText>
         )}
@@ -228,7 +228,7 @@ export function GSelectField({
         </Select.Content>
       </Select>
       {error && (
-        <SizableText id={errorID} role="alert" color="$gemDanger" fontSize="$1">
+        <SizableText id={errorID} role="alert" color="$danger" fontSize="$1">
           {error}
         </SizableText>
       )}

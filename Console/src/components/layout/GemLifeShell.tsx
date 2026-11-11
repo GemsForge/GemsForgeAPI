@@ -35,13 +35,9 @@ const MIN_CONTENT_WIDTH = gemLayout.appContentMinimum;
 export function GemLifeShell({ children, sidebar }: GemLifeShellProps) {
   const { signOut } = useAuth();
   const location = useLocation();
-  const isWorkspace = location.pathname === "/workspace" || location.pathname === "/";
   const [searchValue, setSearchValue] = useState("");
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
-  const pagesQuery = usePagesQuery(
-    { kind: "roots" },
-    (isWorkspace || Boolean(searchValue.trim())) && !inspectionBypassEnabled,
-  );
+  const pagesQuery = usePagesQuery({ kind: "roots" }, Boolean(searchValue.trim()) && !inspectionBypassEnabled);
   const selectedPageID = Number(new URLSearchParams(location.search).get("page"));
   const pages = inspectionBypassEnabled
     ? pagesQuery.data?.length
@@ -150,7 +146,6 @@ export function GemLifeShell({ children, sidebar }: GemLifeShellProps) {
         ref={workspaceRef}
         className="app-shell"
         data-mobile-nav-open={mobileNavOpen}
-        data-workspace-route={isWorkspace ? "true" : "false"}
         data-sidebar-collapsed={sidebarWidth < SIDEBAR_LABEL_THRESHOLD}
         style={{ "--sidebar-width": `${sidebarWidth}px` } as CSSProperties}
       >
@@ -248,7 +243,7 @@ export function GemLifeShell({ children, sidebar }: GemLifeShellProps) {
                 </nav>
               ) : null}
             </div>
-            {!isWorkspace ? <div className="connection-pill">Private workspace</div> : null}
+            <div className="connection-pill">Private workspace</div>
             <button
               type="button"
               className="secondary-button shell-sign-out"

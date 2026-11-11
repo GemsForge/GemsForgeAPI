@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ComponentProps } from "react";
 import { Dialog, Form, SizableText, Theme } from "tamagui";
 import { useSearchParams } from "react-router-dom";
 import { QueryFeedback } from "../../components/QueryFeedback";
@@ -25,6 +25,30 @@ function pageUpdatedLabel(updatedAt?: string | null): string {
 }
 
 type BlockEditor = { kind: "note" } | { kind: "row"; rowID: string | null };
+
+type CloseAutoFocus = NonNullable<ComponentProps<typeof Dialog.Content>["onCloseAutoFocus"]>;
+
+/**
+ * Returns focus to the control that opened a dialog. A modal Tamagui Dialog restores focus only to a
+ * Dialog.Trigger; these dialogs open from page buttons, so hand Dialog.Content's close path the opener.
+ */
+function useOpenerCloseAutoFocus(): CloseAutoFocus {
+  const [opener] = useState(() => (document.activeElement instanceof HTMLElement ? document.activeElement : null));
+  return (event) => {
+    if (!opener?.isConnected) return;
+    event.cancel();
+    opener.focus();
+  };
+}
+
+/** Required sample-row fields, in form order: drives labels, trimming, validation, and error focus. */
+const rowFields = [
+  { key: "name", label: "Name" },
+  { key: "type", label: "Type" },
+  { key: "status", label: "Status" },
+  { key: "nextThought", label: "Next thought" },
+] as const;
+type RowField = (typeof rowFields)[number]["key"];
 
 /** A connected knowledge workspace backed by ForgeKeeper root pages. */
 export function WorkspaceView({ onSuccess }: { onSuccess: (message: string) => void }) {
@@ -190,7 +214,9 @@ export function WorkspaceView({ onSuccess }: { onSuccess: (message: string) => v
                   </span>
                 </div>
                 <div className="workspace-note-layout">
-                  <SizableText className="workspace-note-copy">{note}</SizableText>
+                  <SizableText className="workspace-note-copy" fontWeight="400">
+                    {note}
+                  </SizableText>
                   <GemButton
                     tone="secondary"
                     className="workspace-knowledge-action"
@@ -283,7 +309,7 @@ export function WorkspaceView({ onSuccess }: { onSuccess: (message: string) => v
                       </SizableText>
                     </div>
                     <GemButton
-                      variant="quiet"
+                      tone="secondary"
                       size="sm"
                       className="workspace-knowledge-action"
                       onClick={() => setEditingLinks((value) => !value)}
@@ -466,15 +492,42 @@ function BlockEditorDialog({
   onSaveNote: (value: string) => void;
   onSaveRow: (row: WorkspacePreviewRow) => void;
 }) {
+  const returnFocus = useOpenerCloseAutoFocus();
   const [noteDraft, setNoteDraft] = useState(note);
   const [rowDraft, setRowDraft] = useState<WorkspacePreviewRow>(
     row ?? { id: "", name: "", type: "", status: "Draft", nextThought: "" },
   );
+  const [submitAttempt, setSubmitAttempt] = useState(0);
+  const noteFieldRef = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null);
+  const rowFieldRefs = useRef<Partial<Record<RowField, HTMLInputElement | HTMLTextAreaElement | null>>>({});
+  const showErrors = submitAttempt > 0;
+  const noteError = showErrors && !noteDraft.trim() ? "Enter a note." : undefined;
+  const blankRowFields = rowFields.filter(({ key }) => !rowDraft[key].trim());
+  const rowError = (field: (typeof rowFields)[number]) =>
+    showErrors && blankRowFields.includes(field) ? `Enter a ${field.label.toLowerCase()}.` : undefined;
+
+  useEffect(() => {
+    if (submitAttempt === 0) return;
+    const firstInvalid = editor.kind === "note" ? noteFieldRef.current : rowFieldRefs.current[blankRowFields[0]?.key];
+    firstInvalid?.focus();
+    // Focus only moves after a rejected submit, not on every keystroke.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [submitAttempt]);
+
+  const submit = () => {
+    if (editor.kind === "note") {
+      if (!noteDraft.trim()) return setSubmitAttempt((value) => value + 1);
+      return onSaveNote(noteDraft.trim());
+    }
+    if (blankRowFields.length > 0) return setSubmitAttempt((value) => value + 1);
+    onSaveRow({ ...rowDraft, ...Object.fromEntries(rowFields.map(({ key }) => [key, rowDraft[key].trim()])) });
+  };
+
   return (
     <Dialog open onOpenChange={(open) => !open && onCancel()} modal>
       <Dialog.Portal>
         <Dialog.Overlay className="table-kit-utility-backdrop" />
-        <Dialog.Content className="table-kit-new-record-utility workspace-editor-dialog">
+        <Dialog.Content className="table-kit-new-record-utility workspace-editor-dialog" onCloseAutoFocus={returnFocus}>
           <div className="table-kit-new-record-heading">
             <div>
               <SizableText className="eyebrow">Sample content · not saved</SizableText>
@@ -482,59 +535,43 @@ function BlockEditorDialog({
                 {editor.kind === "note" ? "Edit note" : row ? "Edit table row" : "Add table row"}
               </Dialog.Title>
             </div>
-            <Dialog.Close asChild>
-              <GemButton variant="quiet" size="sm" aria-label="Close block editor" onClick={onCancel}>
-                ×
-              </GemButton>
-            </Dialog.Close>
+            <GemButton variant="quiet" size="sm" aria-label="Close block editor" onClick={onCancel}>
+              ×
+            </GemButton>
           </div>
-          <Form
-            className="edit-form"
-            onSubmit={() => (editor.kind === "note" ? onSaveNote(noteDraft.trim()) : onSaveRow(rowDraft))}
-          >
+          <Form className="edit-form" onSubmit={submit}>
             {editor.kind === "note" ? (
               <GemTextField
+                ref={noteFieldRef}
                 label="Note"
                 multiline
                 rows={5}
                 value={noteDraft}
                 onChange={(event) => setNoteDraft(event.target.value)}
+                error={noteError}
                 required
               />
             ) : (
               <>
-                <GemTextField
-                  label="Name"
-                  value={rowDraft.name}
-                  onChange={(event) => setRowDraft({ ...rowDraft, name: event.target.value })}
-                  required
-                />
-                <GemTextField
-                  label="Type"
-                  value={rowDraft.type}
-                  onChange={(event) => setRowDraft({ ...rowDraft, type: event.target.value })}
-                  required
-                />
-                <GemTextField
-                  label="Status"
-                  value={rowDraft.status}
-                  onChange={(event) => setRowDraft({ ...rowDraft, status: event.target.value })}
-                  required
-                />
-                <GemTextField
-                  label="Next thought"
-                  value={rowDraft.nextThought}
-                  onChange={(event) => setRowDraft({ ...rowDraft, nextThought: event.target.value })}
-                  required
-                />
+                {rowFields.map((field) => (
+                  <GemTextField
+                    key={field.key}
+                    ref={(element) => {
+                      rowFieldRefs.current[field.key] = element;
+                    }}
+                    label={field.label}
+                    value={rowDraft[field.key]}
+                    onChange={(event) => setRowDraft({ ...rowDraft, [field.key]: event.target.value })}
+                    error={rowError(field)}
+                    required
+                  />
+                ))}
               </>
             )}
             <div className="dialog-actions">
-              <Dialog.Close asChild>
-                <GemButton tone="secondary" type="button" onClick={onCancel}>
-                  Cancel
-                </GemButton>
-              </Dialog.Close>
+              <GemButton tone="secondary" type="button" onClick={onCancel}>
+                Cancel
+              </GemButton>
               <GemButton type="submit">Keep in this preview</GemButton>
             </div>
           </Form>
@@ -558,13 +595,14 @@ function PageEditorDialog({
   onCancel: () => void;
   onSave: (patch: ForgeKeeperPatch) => Promise<void>;
 }) {
+  const returnFocus = useOpenerCloseAutoFocus();
   const [title, setTitle] = useState(page.title);
   const [description, setDescription] = useState(page.description);
   return (
     <Dialog open onOpenChange={(open) => !open && !saving && onCancel()} modal>
       <Dialog.Portal>
         <Dialog.Overlay className="table-kit-utility-backdrop" />
-        <Dialog.Content className="table-kit-new-record-utility workspace-editor-dialog">
+        <Dialog.Content className="table-kit-new-record-utility workspace-editor-dialog" onCloseAutoFocus={returnFocus}>
           <div className="table-kit-new-record-heading">
             <div>
               <SizableText className="eyebrow">Page editor</SizableText>
@@ -573,11 +611,9 @@ function PageEditorDialog({
                 <Dialog.Description>Changes are saved to your workspace page.</Dialog.Description>
               </div>
             </div>
-            <Dialog.Close asChild>
-              <GemButton variant="quiet" size="sm" aria-label="Close editor" disabled={saving} onClick={onCancel}>
-                ×
-              </GemButton>
-            </Dialog.Close>
+            <GemButton variant="quiet" size="sm" aria-label="Close editor" disabled={saving} onClick={onCancel}>
+              ×
+            </GemButton>
           </div>
           <Form
             className="edit-form"
@@ -602,11 +638,9 @@ function PageEditorDialog({
             />
             {error && <SizableText role="alert">{error.message}</SizableText>}
             <div className="dialog-actions">
-              <Dialog.Close asChild>
-                <GemButton tone="secondary" type="button" onClick={onCancel} disabled={saving}>
-                  Cancel
-                </GemButton>
-              </Dialog.Close>
+              <GemButton tone="secondary" type="button" onClick={onCancel} disabled={saving}>
+                Cancel
+              </GemButton>
               <GemButton type="submit" disabled={saving || !title.trim() || !description.trim()}>
                 {saving ? "Saving…" : "Save page"}
               </GemButton>

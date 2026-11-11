@@ -40,6 +40,11 @@ function renderWorkspace() {
   );
 }
 
+/** The dialog moves focus inside once the browser is idle; submit only after that, as a user would. */
+async function waitForDialogFocus(dialog: HTMLElement) {
+  await waitFor(() => expect(dialog).toContainElement(document.activeElement as HTMLElement));
+}
+
 describe("connected knowledge workspace", () => {
   beforeEach(() => {
     workflow.query = { data: pages, isLoading: false, error: null, refetch: vi.fn() };
@@ -65,6 +70,87 @@ describe("connected knowledge workspace", () => {
     // Tamagui Button text otherwise inherits the dark default theme (white on the paper canvas).
     for (const name of ["Edit note", "＋ Add row", "Edit list"]) {
       expect(await screen.findByRole("button", { name })).toHaveClass("workspace-knowledge-action");
+    }
+  });
+
+  it("rejects an empty sample row with field errors and keeps the dialog open", async () => {
+    renderWorkspace();
+    fireEvent.click(await screen.findByRole("button", { name: "＋ Add row" }));
+
+    const dialog = await screen.findByRole("dialog", { name: "Add table row", hidden: true });
+    await waitForDialogFocus(dialog);
+    expect(within(dialog).getByRole("button", { name: "Cancel", hidden: true })).toBeInTheDocument();
+    fireEvent.click(within(dialog).getByRole("button", { name: "Keep in this preview", hidden: true }));
+
+    expect(await within(dialog).findByText("Enter a name.")).toBeInTheDocument();
+    expect(within(dialog).getByLabelText(/^Name/)).toHaveAttribute("aria-invalid", "true");
+    await waitFor(() => expect(within(dialog).getByLabelText(/^Name/)).toHaveFocus());
+    expect(screen.getAllByRole("row", { hidden: true })).toHaveLength(4);
+  });
+
+  it("returns focus to the opening control when a block editor closes", async () => {
+    renderWorkspace();
+    const addRow = await screen.findByRole("button", { name: "＋ Add row" });
+    addRow.focus();
+    fireEvent.click(addRow);
+
+    const dialog = await screen.findByRole("dialog", { name: "Add table row", hidden: true });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Cancel", hidden: true }));
+
+    await waitFor(() => expect(screen.queryByRole("dialog", { hidden: true })).not.toBeInTheDocument());
+    await waitFor(() => expect(addRow).toHaveFocus());
+  });
+
+  it("rejects a whitespace-only note and keeps the existing note", async () => {
+    renderWorkspace();
+    fireEvent.click(await screen.findByRole("button", { name: "Edit note" }));
+
+    const dialog = await screen.findByRole("dialog", { name: "Edit note", hidden: true });
+    await waitForDialogFocus(dialog);
+    const field = within(dialog).getByLabelText(/^Note/);
+    fireEvent.change(field, { target: { value: "   " } });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Keep in this preview", hidden: true }));
+
+    expect(await within(dialog).findByText("Enter a note.")).toBeInTheDocument();
+    expect(field).toHaveAttribute("aria-invalid", "true");
+    await waitFor(() => expect(field).toHaveFocus());
+    expect(screen.getByText(/The best ideas begin as observations/, { ignore: "textarea" })).toBeInTheDocument();
+  });
+
+  it("returns focus to the edited row's control after saving it", async () => {
+    renderWorkspace();
+    const editRow = await screen.findByRole("button", { name: "Edit Chromalock" });
+    editRow.focus();
+    fireEvent.click(editRow);
+
+    const dialog = await screen.findByRole("dialog", { name: "Edit table row", hidden: true });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Keep in this preview", hidden: true }));
+
+    await waitFor(() => expect(screen.queryByRole("dialog", { hidden: true })).not.toBeInTheDocument());
+    await waitFor(() => expect(editRow).toHaveFocus());
+  });
+
+  it("returns focus to Page options when the page editor is cancelled", async () => {
+    renderWorkspace();
+    const options = await screen.findByRole("button", { name: "Page options" });
+    options.focus();
+    fireEvent.click(options);
+
+    const dialog = await screen.findByRole("dialog", { name: "Edit page", hidden: true });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Cancel", hidden: true }));
+
+    await waitFor(() => expect(screen.queryByRole("dialog", { hidden: true })).not.toBeInTheDocument());
+    await waitFor(() => expect(options).toHaveFocus());
+  });
+
+  it("renders as shell page content with a regular-weight note and visible sample labels", async () => {
+    const { container } = renderWorkspace();
+
+    const note = await screen.findByText(/The best ideas begin as observations/);
+    expect(getComputedStyle(note).fontWeight).toBe("400");
+    expect(container.querySelector(".app-shell, .app-navigation, .workspace-sidebar-botanical")).toBeNull();
+    for (const label of ["Local sample · Markdown", "Sample table · local demo", "Local preview links · not saved"]) {
+      expect(screen.getByText(label)).toBeVisible();
     }
   });
 

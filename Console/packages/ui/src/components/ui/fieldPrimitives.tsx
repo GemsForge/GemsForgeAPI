@@ -122,6 +122,6 @@ export const GemInput = styled(Input, fieldControlStyles);
 export const GemTextArea = styled(TextArea, fieldControlStyles);
 
 export const GemFieldError = styled(SizableText, {
-  color: "$gemDanger",
+  color: "$danger",
   fontSize: "$1",
 });
