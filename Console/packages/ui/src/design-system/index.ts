@@ -7,6 +7,7 @@ export {
   gemMotion,
   gemRadii,
   gemSpacing,
+  gemZIndex,
   tamaguiConfig,
   wireframeRadii,
   wireframeSpacing,

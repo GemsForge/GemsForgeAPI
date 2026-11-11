@@ -33,12 +33,14 @@ struct SchemaPageRecordCreationResponse: Content, Sendable {
 enum SchemaPageError: Error, CustomStringConvertible, Equatable {
     case unavailableDatabase
     case tableUnavailable
+    case recordUnavailable
     case invalidRecord(String)
 
     var description: String {
         switch self {
         case .unavailableDatabase: return "Schema pages require the configured SQLite database."
         case .tableUnavailable: return "This table is not available as a Hub-owned schema page."
+        case .recordUnavailable: return "The record is unavailable to this Hub."
         case .invalidRecord(let message): return message
         }
     }
@@ -216,7 +218,17 @@ struct SchemaPageService: Sendable {
         guard unknown.isEmpty else {
             throw SchemaPageError.invalidRecord("Unknown properties: \(unknown.sorted().joined(separator: ", ")).")
         }
-        let generatedIntegerPrimaryKey = primaryKey.dataType.uppercased().contains("INT")
+        let primaryKeyType = primaryKey.dataType.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+        let primaryKeyHasBackingIndex = table.indexes.contains {
+            $0.name.hasPrefix("sqlite_autoindex_") && $0.columns == [primaryKey.name]
+        }
+        let generatedIntegerPrimaryKey = primaryKeyType == "INTEGER" && !primaryKeyHasBackingIndex
+        let integerPrimaryKey = primaryKeyType.contains("INT")
+        if integerPrimaryKey && !generatedIntegerPrimaryKey {
+            throw SchemaPageError.invalidRecord(
+                "SQLite can generate an integer ID only for an INTEGER PRIMARY KEY column."
+            )
+        }
         if values.isEmpty && !generatedPrimaryKey && !generatedIntegerPrimaryKey {
             throw SchemaPageError.invalidRecord("At least one property is required.")
         }
@@ -247,44 +259,7 @@ struct SchemaPageService: Sendable {
             guard let transactionSQL = transaction as? SQLDatabase else {
                 throw SchemaPageError.unavailableDatabase
             }
-            var transactionValues = baseInsertValues
-
-            if generatedIntegerPrimaryKey {
-                let maximumRow = try await transactionSQL.raw(SQLQueryString(
-                    "SELECT MAX(\(ident: primaryKey.name)) AS maximumID FROM \(ident: table.name)"
-                )).first()
-                let maximumID: Int64?
-                if let maximumRow {
-                    maximumID = try maximumRow.decode(column: "maximumID", as: Int64?.self)
-                } else {
-                    maximumID = nil
-                }
-                let definitionRow = try await transactionSQL.raw(SQLQueryString(
-                    "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = \(bind: table.name)"
-                )).first()
-                let definition = try definitionRow?.decode(column: "sql", as: String?.self)?.lowercased() ?? ""
-                let lastAutoincrementID: Int64?
-                if definition.contains("autoincrement") {
-                    let sequenceRow = try await transactionSQL.raw(SQLQueryString(
-                        "SELECT seq FROM sqlite_sequence WHERE name = \(bind: table.name)"
-                    )).first()
-                    if let sequenceRow {
-                        lastAutoincrementID = try sequenceRow.decode(column: "seq", as: Int64.self)
-                    } else {
-                        lastAutoincrementID = nil
-                    }
-                } else {
-                    lastAutoincrementID = nil
-                }
-                let highestID = max(maximumID ?? 0, lastAutoincrementID ?? 0)
-                let (nextID, overflow) = highestID.addingReportingOverflow(1)
-                guard !overflow else {
-                    throw SchemaPageError.invalidRecord("A server-assigned integer ID is unavailable for this table.")
-                }
-                transactionValues[primaryKey.name] = .string(String(nextID))
-            }
-
-            let suppliedColumns = acceptedColumns.filter { transactionValues[$0.name] != nil }
+            let suppliedColumns = acceptedColumns.filter { baseInsertValues[$0.name] != nil }
             var query = SQLQueryString("INSERT INTO \(ident: table.name) (")
             for (index, column) in suppliedColumns.enumerated() {
                 if index > 0 { query.appendInterpolation(unsafeRaw: ", ") }
@@ -295,12 +270,12 @@ struct SchemaPageService: Sendable {
             query.appendInterpolation(unsafeRaw: ") VALUES (")
             for (index, column) in suppliedColumns.enumerated() {
                 if index > 0 { query.appendInterpolation(unsafeRaw: ", ") }
-                try Self.bind(transactionValues[column.name]!, to: &query)
+                try Self.bind(baseInsertValues[column.name]!, to: &query)
             }
             if !suppliedColumns.isEmpty { query.appendInterpolation(unsafeRaw: ", ") }
             query.appendInterpolation(bind: hubID)
             query.appendInterpolation(unsafeRaw: ")")
-            let generatedIDValue = transactionValues[primaryKey.name]
+            let generatedIDValue = baseInsertValues[primaryKey.name]
 
             try await transactionSQL.raw(query).run()
             if let value = generatedIDValue {
@@ -312,6 +287,119 @@ struct SchemaPageService: Sendable {
             return String(try row.decode(column: "id", as: Int64.self))
         }
         return SchemaPageRecordCreationResponse(table: table.name, recordID: recordID)
+    }
+
+    /// Updates one or more non-key properties on an existing record owned by this Hub.
+    func updateRecord(tableName: String, recordID: String, values: [String: PatchJSONValue]) async throws {
+        guard database is SQLDatabase else { throw SchemaPageError.unavailableDatabase }
+        let schema = try await LiveSchemaService(database: database).inspect()
+        guard let table = schema.tables.first(where: { $0.name == tableName }),
+              Self.isSchemaPageTable(table),
+              let primaryKey = table.columns.first(where: \.primaryKey)
+        else { throw SchemaPageError.tableUnavailable }
+
+        guard !values.isEmpty else { throw SchemaPageError.invalidRecord("At least one property is required.") }
+        let protectedColumns = Set(["HubID", primaryKey.name])
+        let columnsByName = Dictionary(uniqueKeysWithValues: table.columns.map { ($0.name, $0) })
+        let unknown = Set(values.keys).subtracting(columnsByName.keys)
+        guard unknown.isEmpty else {
+            throw SchemaPageError.invalidRecord("Unknown properties: \(unknown.sorted().joined(separator: ", ")).")
+        }
+        if let protected = Set(values.keys).intersection(protectedColumns).sorted().first {
+            throw SchemaPageError.invalidRecord("\(protected) cannot be changed.")
+        }
+
+        for (name, value) in values {
+            guard let column = columnsByName[name] else { continue }
+            try Self.validate(value, for: column)
+        }
+
+        try await TablePropertyService(database: database, hubID: hubID)
+            .validateRelationUpdates(tableName: tableName, recordID: recordID, values: values)
+
+        let updateValue = try await database.transaction { transaction in
+            guard let transactionSQL = transaction as? SQLDatabase else {
+                throw SchemaPageError.unavailableDatabase
+            }
+            var query = SQLQueryString("UPDATE \(ident: table.name) SET ")
+            for (index, name) in values.keys.sorted().enumerated() {
+                if index > 0 { query.appendInterpolation(unsafeRaw: ", ") }
+                query.appendInterpolation(ident: name)
+                query.appendInterpolation(unsafeRaw: " = ")
+                let column = columnsByName[name]!
+                try Self.bind(Self.databaseValue(values[name]!, for: column), to: &query)
+            }
+            query.appendInterpolation(unsafeRaw: " WHERE ")
+            query.appendInterpolation(ident: primaryKey.name)
+            query.appendInterpolation(unsafeRaw: " = ")
+            if primaryKey.dataType.uppercased().contains("INT") {
+                guard let integerID = Int64(recordID) else {
+                    throw SchemaPageError.invalidRecord("Record ID must be a valid integer.")
+                }
+                query.appendInterpolation(bind: integerID)
+            } else {
+                query.appendInterpolation(bind: recordID)
+            }
+            query.appendInterpolation(unsafeRaw: " AND ")
+            query.appendInterpolation(ident: "HubID")
+            query.appendInterpolation(unsafeRaw: " = ")
+            query.appendInterpolation(bind: hubID)
+            query.appendInterpolation(unsafeRaw: " RETURNING ")
+            query.appendInterpolation(ident: primaryKey.name)
+            return try await transactionSQL.raw(query).first()
+        }
+        guard updateValue != nil else { throw SchemaPageError.recordUnavailable }
+    }
+
+    /// Replaces an image FileMetadata reference and its ownership in one transaction.
+    func updateImageReference(tableName: String, recordID: String, columnName: String, fileMetadataID: String?) async throws {
+        guard database is SQLDatabase else { throw SchemaPageError.unavailableDatabase }
+        let schema = try await LiveSchemaService(database: database).inspect()
+        guard let table = schema.tables.first(where: { $0.name == tableName }),
+              Self.isSchemaPageTable(table),
+              let primaryKey = table.columns.first(where: \.primaryKey),
+              let column = table.columns.first(where: { $0.name == columnName }),
+              columnName != "HubID", !column.primaryKey, !column.dataType.uppercased().contains("BLOB")
+        else { throw SchemaPageError.tableUnavailable }
+
+        let trimmedID = fileMetadataID?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let normalizedID = trimmedID?.isEmpty == false ? trimmedID : nil
+        if normalizedID == nil && !column.nullable {
+            throw SchemaPageError.invalidRecord("\(columnName) cannot be empty.")
+        }
+
+        try await database.transaction { transaction in
+            guard let sql = transaction as? SQLDatabase else { throw SchemaPageError.unavailableDatabase }
+            var read = SQLQueryString("SELECT \(ident: columnName) AS \(ident: "currentValue") FROM \(ident: tableName) WHERE \(ident: primaryKey.name) = ")
+            try Self.appendRecordID(recordID, column: primaryKey, to: &read)
+            read.appendInterpolation(unsafeRaw: " AND \"HubID\" = ")
+            read.appendInterpolation(bind: hubID)
+            guard let row = try await sql.raw(read).first() else { throw SchemaPageError.recordUnavailable }
+            let oldMetadataID = try row.decode(column: "currentValue", as: String?.self)
+
+            if let normalizedID {
+                guard let metadata = try await FileMetadataService(database: transaction, hubID: hubID).find(id: normalizedID),
+                      metadata.mimeType.lowercased().hasPrefix("image/")
+                else { throw SchemaPageError.invalidRecord("The referenced file must be an image in this Hub.") }
+            }
+            try await AttachmentReferenceService(database: transaction, hubID: hubID).replace(
+                oldMetadataID: oldMetadataID,
+                newMetadataID: normalizedID,
+                ownerType: tableName,
+                ownerID: recordID
+            )
+
+            var update = SQLQueryString("UPDATE \(ident: tableName) SET \(ident: columnName) = ")
+            if let normalizedID { update.appendInterpolation(bind: normalizedID) }
+            else { update.appendInterpolation(unsafeRaw: "NULL") }
+            update.appendInterpolation(unsafeRaw: " WHERE ")
+            update.appendInterpolation(ident: primaryKey.name)
+            update.appendInterpolation(unsafeRaw: " = ")
+            try Self.appendRecordID(recordID, column: primaryKey, to: &update)
+            update.appendInterpolation(unsafeRaw: " AND \"HubID\" = ")
+            update.appendInterpolation(bind: hubID)
+            try await sql.raw(update).run()
+        }
     }
 
     /// Confirms a record identifier belongs to this Hub before it is persisted as workspace selection.
@@ -386,12 +474,33 @@ struct SchemaPageService: Sendable {
         }
     }
 
+    private static func databaseValue(_ value: PatchJSONValue, for column: LiveSchemaColumnResponse) -> PatchJSONValue {
+        guard column.dataType.uppercased().contains("BOOL") else { return value }
+        switch value {
+        case .null: return .null
+        case .bool: return value
+        case .number(let number): return .bool(number != 0)
+        case .string(let text): return .bool(["1", "true"].contains(text.lowercased()))
+        }
+    }
+
     private static func bind(_ value: PatchJSONValue, to query: inout SQLQueryString) throws {
         switch value {
         case .null: query.appendInterpolation(bind: Optional<String>.none)
         case .string(let text): query.appendInterpolation(bind: text)
         case .number(let number): query.appendInterpolation(bind: number)
         case .bool(let bool): query.appendInterpolation(bind: bool ? 1 : 0)
+        }
+    }
+
+    private static func appendRecordID(_ recordID: String, column: LiveSchemaColumnResponse, to query: inout SQLQueryString) throws {
+        if column.dataType.uppercased().contains("INT") {
+            guard let integerID = Int64(recordID) else {
+                throw SchemaPageError.invalidRecord("Record ID must be a valid integer.")
+            }
+            query.appendInterpolation(bind: integerID)
+        } else {
+            query.appendInterpolation(bind: recordID)
         }
     }
 }

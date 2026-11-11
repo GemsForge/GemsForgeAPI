@@ -125,15 +125,30 @@ final class ServiceAccountRouteTests: XCTestCase {
 
             try await app.test(.PATCH, "service-accounts/1", beforeRequest: { request in
                 request.headers.contentType = .json
-                request.body = ByteBuffer(string: #"{"service":"Updated Service","monthlyAmount":22.5,"notes":"Patched note"}"#)
+                request.body = ByteBuffer(string: #"{"service":"Updated Service","monthlyAmount":22.5,"interestRate":0.04,"apr":0.05,"due":"20th","occurrence":"Quarterly","since":"2025-02-01","notes":"Patched note"}"#)
             }) { response in
                 XCTAssertEqual(response.status, .ok)
                 let account = try response.content.decode(ServiceAccount.self)
                 XCTAssertEqual(account.service, "Updated Service")
                 XCTAssertEqual(account.status, "Paused")
                 XCTAssertEqual(account.monthlyAmount, 22.5)
+                XCTAssertEqual(account.interestRate, 0.04)
+                XCTAssertEqual(account.apr, 0.05)
+                XCTAssertEqual(account.due, "20th")
+                XCTAssertEqual(account.occurrence, "Quarterly")
+                XCTAssertEqual(account.since, "2025-02-01")
                 XCTAssertEqual(account.notes, "Patched note")
                 XCTAssertNotNil(account.updatedAt)
+            }
+
+            try await app.test(.PATCH, "service-accounts/1", beforeRequest: { request in
+                request.headers.contentType = .json
+                request.body = ByteBuffer(string: #"{"occurrence":null,"since":null}"#)
+            }) { response in
+                XCTAssertEqual(response.status, .ok)
+                let account = try response.content.decode(ServiceAccount.self)
+                XCTAssertNil(account.occurrence)
+                XCTAssertNil(account.since)
             }
 
             try await app.test(.PATCH, "service-accounts/1", beforeRequest: { request in

@@ -377,7 +377,7 @@ export function AppRoutes() {
           <Route path="local-databases" element={<WireframeDatabasesPage />} />
           <Route path="local-databases/new" element={<WireframeLocalDatabaseCreationPage />} />
           <Route path="schema-builder" element={<WireframeSchemaBuilderPage />} />
-          <Route path="schema/:tableName" element={<WireframeSchemaPage />} />
+          <Route path="schema/:tableName/*" element={<WireframeSchemaPage />} />
           <Route path="live-database" element={<WireframeLiveDatabasePage />} />
           <Route path="trash" element={<WireframeTrashPage />} />
           <Route path="application-settings" element={<WireframeSettingsPage />} />

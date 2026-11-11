@@ -194,6 +194,10 @@ export function useTransactionPatchMutation() {
     onSuccess: async (record) => {
       client.setQueryData(recordQueryKeys.transaction(record.id), record);
       await client.invalidateQueries({ queryKey: lifeQueryKeys.transactions, exact: true });
+      await client.invalidateQueries({ queryKey: ["table-property-values", "Transactions"] });
+      await client.invalidateQueries({
+        queryKey: ["table-property-options", "Transactions", "transaction-subcategory", record.id],
+      });
     },
   });
 }

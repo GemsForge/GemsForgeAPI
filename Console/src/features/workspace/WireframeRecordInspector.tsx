@@ -4,20 +4,42 @@ import { WireframePropertyEditor } from "./WireframePropertyEditor";
 import type { ReactNode } from "react";
 import type { RecordNumberFormat } from "../../table-kit/recordContracts";
 import type { RecordPropertyKind } from "../../table-kit/recordContracts";
+import type { GemDateFormat } from "@gemsforge/ui";
 
 export type WireframeInspectorField = {
   id: string;
   label: string;
   value: string;
-  kind?: "text" | "select" | "status" | "number" | "date" | "url" | "email" | "textarea";
+  kind?:
+    | "text"
+    | "select"
+    | "status"
+    | "number"
+    | "date"
+    | "url"
+    | "email"
+    | "checkbox"
+    | "relation"
+    | "lookup"
+    | "multiselect"
+    | "textarea";
   propertyKind?: RecordPropertyKind;
   propertyType?: string;
   iconName?: string;
   numberFormat?: RecordNumberFormat;
+  dateFormat?: GemDateFormat;
+  includeTime?: boolean;
+  onDateConfigChange?: (config: { displayFormat: GemDateFormat; includeTime: boolean }) => void;
   nullable?: boolean;
   options?: readonly (string | { value: string; label: string })[];
   display?: ReactNode;
   displayValue?: ReactNode;
+  relatedHref?: string;
+  renderEditor?: (props: {
+    value: string;
+    onChange: (value: string) => void;
+    onCommit: (value: string) => Promise<void>;
+  }) => ReactNode;
   onCommit?: (value: string) => Promise<void>;
 };
 
@@ -49,9 +71,14 @@ export function WireframeRecordInspector({ fields }: { fields: readonly Wirefram
                 label={field.label}
                 value={field.value}
                 displayValue={field.displayValue}
+                relatedHref={field.relatedHref}
                 kind={field.kind}
+                dateFormat={field.dateFormat}
+                includeTime={field.includeTime}
+                onDateConfigChange={field.onDateConfigChange}
                 options={field.options}
                 nullable={field.nullable}
+                renderEditor={field.renderEditor}
                 onCommit={field.onCommit}
               />
             ) : field.kind === "url" && field.value ? (

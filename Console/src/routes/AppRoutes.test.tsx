@@ -160,6 +160,46 @@ describe("Gem Life navigation", () => {
     expect(screen.getByRole("textbox", { name: "Category" })).toBeRequired();
     expect(screen.getByRole("button", { name: "Create record" })).toBeInTheDocument();
   });
+  it("loads a linked schema record that is outside the first collection page", async () => {
+    const columns = [
+      { name: "CategoryID", dataType: "INTEGER", nullable: false, primaryKey: true, defaultValue: null },
+      { name: "HubID", dataType: "TEXT", nullable: true, primaryKey: false, defaultValue: null },
+      { name: "Category", dataType: "TEXT", nullable: false, primaryKey: false, defaultValue: null },
+    ];
+    vi.spyOn(api, "getSchemaPageTables").mockResolvedValue({
+      tables: [{ name: "BudgetCategories", columns }],
+      availableTables: [],
+    });
+    vi.spyOn(api, "getSchemaPageRecords").mockResolvedValue({
+      table: { name: "BudgetCategories", columns },
+      rows: [{ CategoryID: "1", HubID: "workspace-a", Category: "First page record" }],
+      totalCount: 101,
+      limit: 100,
+      offset: 0,
+    });
+    const getRecord = vi.spyOn(api, "getSchemaPageRecord").mockResolvedValue({
+      table: { name: "BudgetCategories", columns },
+      row: { CategoryID: "101", HubID: "workspace-a", Category: "Linked record 101" },
+    });
+    vi.spyOn(api, "getTableView").mockImplementation(async (_table, viewType) => ({
+      view: {
+        viewID: viewType,
+        tableName: "BudgetCategories",
+        name: viewType,
+        viewType,
+        workspaceState: null,
+        updatedAt: "2026-11-11T00:00:00Z",
+      },
+      columns: [],
+      queries: [],
+    }));
+
+    setup("/schema/BudgetCategories/record/101");
+
+    expect(await screen.findByRole("heading", { name: "Linked record 101" }, lazyScreen)).toBeInTheDocument();
+    expect(getRecord).toHaveBeenCalledWith("BudgetCategories", "101", expect.any(AbortSignal));
+    expect(screen.queryByText("First page record")).not.toBeInTheDocument();
+  });
   it("renders the wireframe home from live collection counts", async () => {
     vi.spyOn(api, "listRootPages").mockResolvedValue([]);
     vi.spyOn(api, "listEducation").mockResolvedValue([]);

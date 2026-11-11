@@ -5,6 +5,7 @@ import type { GemColorToken } from "../../presentationTypes";
 import type { GemPrimitiveType } from "./primitiveFieldContracts";
 import { GemFieldDisplayValue } from "./fieldPrimitives";
 import type { GemFieldDensity, GemFieldTextRole } from "./fieldPrimitives";
+import { gemZIndex } from "../../design-system";
 
 const statusPillColors: Record<string, { backgroundColor: string; color: string }> = {
   mint: { backgroundColor: "#78d1bd", color: "#06231e" },
@@ -138,7 +139,7 @@ export function GSelectField({
           {required ? " *" : ""}
         </Label>
       ) : null}
-      <Select value={value || undefined} onValueChange={onChange} zIndex={100}>
+      <Select value={value || undefined} onValueChange={onChange} zIndex={gemZIndex.popover}>
         <Select.Trigger
           {...selectTriggerProps}
           id={id}

@@ -22,6 +22,7 @@ export const WIREFRAME_PROPERTY_TYPES = [
   "Multi-select",
   "Tags",
   "Status",
+  "Checkbox",
   "Number",
   "Currency",
   "Percent",
@@ -30,7 +31,23 @@ export const WIREFRAME_PROPERTY_TYPES = [
   "Notes",
   "Image",
   "Media",
+  "Relation",
+  "Lookup",
 ] as const;
+
+/** Relation editors require a saved relation definition; multi-select stores TEXT. */
+export function isWireframePropertyTypeAvailable(type: string, kind?: string, currentType?: string): boolean {
+  if (type === currentType) return true;
+  if (type === "Relation" || type === "Lookup") return kind === type.toLowerCase();
+  if (type === "Multi-select" || type === "Tags") {
+    return !["number", "date", "url", "email", "relation", "lookup", "checkbox", "image", "media"].includes(kind ?? "");
+  }
+  if (kind === "number") return ["Number", "Currency", "Percent", "Select"].includes(type);
+  if (["date", "url", "email", "checkbox", "image", "media", "relation", "lookup"].includes(kind ?? "")) {
+    return type === inferWireframePropertyType("", kind);
+  }
+  return true;
+}
 
 /** Resolve inspector type and icon once for every schema-driven wireframe. */
 export function inferWireframePropertyMetadata({

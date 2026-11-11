@@ -8,6 +8,7 @@ import {
   gemMotion,
   gemRadii,
   gemSpacing,
+  gemZIndex,
   tamaguiConfig,
 } from "./tamagui.config";
 
@@ -50,6 +51,10 @@ describe("Gem Life design foundation", () => {
     expect(tamaguiConfig.tokens.size.gemAppSidebarExpanded.val).toBe(gemLayout.appSidebarExpanded);
     expect(tamaguiConfig.tokens.size.gemAppContentMinimum.val).toBe(gemLayout.appContentMinimum);
     expect(tamaguiConfig.tokens.space.gemBorderHairline.val).toBe(1);
+    expect(gemZIndex.floating).toBeLessThan(gemZIndex.dialog);
+    expect(gemZIndex.dialog).toBeLessThan(gemZIndex.popover);
+    expect(gemZIndex.popover).toBeLessThan(gemZIndex.notification);
+    expect(tamaguiConfig.tokens.zIndex.gemPopover.val).toBe(gemZIndex.popover);
     expect(tamaguiConfig.tokens.zIndex.gemNotification.val).toBeGreaterThan(tamaguiConfig.tokens.zIndex.gemDialog.val);
     expect(tamaguiConfig.themes.dark.surface.val).toBe("$gemPanel");
     expect(tamaguiConfig.themes.dark.focus.val).toBe("$gemMint");

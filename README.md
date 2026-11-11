@@ -108,6 +108,8 @@ GemsForgeAPI/
 └── docs/
     ├── Architecture.md
     ├── Database-Migrations.md
+    ├── Database-Relationship-Integrity.md
+    ├── Database-Relationship-Inventory.md
     ├── ForgeKeeper.md
     ├── Education.md
     ├── Local-Development.md
@@ -143,6 +145,10 @@ current Notes-import boundary.
   entry point, dependency registry, database flow, and testing boundary.
 - [`docs/Database-Migrations.md`](docs/Database-Migrations.md) explains schema
   changes and migration ordering.
+- [`docs/Database-Relationship-Integrity.md`](docs/Database-Relationship-Integrity.md)
+  sets the rule for database-enforced relationships and documents exceptions.
+- [`docs/Database-Relationship-Inventory.md`](docs/Database-Relationship-Inventory.md)
+  records the read-only DEV relationship audit and known test-schema gaps.
 - [`docs/Local-Development.md`](docs/Local-Development.md) explains building,
   testing, running, branching, and private-hosting assumptions.
 - [`docs/Live-Schema-Management.md`](docs/Live-Schema-Management.md) explains

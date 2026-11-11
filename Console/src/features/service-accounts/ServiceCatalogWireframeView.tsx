@@ -7,6 +7,7 @@ import { WireframeSchemaInspector } from "../workspace/WireframeSchemaInspector"
 import { WireframeImagePreview } from "../workspace/WireframeImagePreview";
 import { useServiceAccountRecordActions } from "./useServiceAccountRecordActions";
 import { useServiceAccountLogoURLs } from "./useServiceAccountLogoURLs";
+import { serviceAccountFieldsWithDue } from "./serviceAccountCreateFields";
 
 export function ServiceCatalogWireframeView({ records }: { records: readonly ServiceAccount[] }) {
   const recordActions = useServiceAccountRecordActions({ onCreated: () => undefined });
@@ -22,21 +23,11 @@ export function ServiceCatalogWireframeView({ records }: { records: readonly Ser
       return src ? { src, alt: `${record.service} logo`, fit: "contain" } : undefined;
     },
   );
-  const fieldByProperty: Record<string, keyof ServiceAccount> = {
-    service: "service",
-    monthlyAmount: "monthlyAmount",
-    status: "status",
-    notes: "notes",
-    emailUpdated: "emailUpdated",
-  };
   const properties = adapter.getPropertyDefinitions();
   const wireframeRecords = records.map((record) => ({ ...record, id: String(record.id) }));
   const wireframeProperties = properties as unknown as readonly RecordPropertyDefinition<
     (typeof wireframeRecords)[number]
   >[];
-  const serviceStatusOptions = [
-    ...new Set(records.map((record) => record.status).filter((value): value is string => Boolean(value))),
-  ].map((value) => ({ value, label: value }));
   return (
     <WireframeCollectionView
       config={{
@@ -62,37 +53,56 @@ export function ServiceCatalogWireframeView({ records }: { records: readonly Ser
             record={record}
             properties={[
               ...(properties.map((property) => {
-                const field = fieldByProperty[property.id];
-                const numeric = property.id === "monthlyAmount";
-                const options =
-                  property.id === "status"
-                    ? serviceStatusOptions
-                    : property.id === "emailUpdated"
-                      ? [
-                          { value: "true", label: "Yes" },
-                          { value: "false", label: "No" },
-                        ]
-                      : undefined;
+                const fieldName = property.id === "group" ? "expenseGroup" : property.id;
+                const field = serviceAccountFieldsWithDue(record.due).find((item) => item.name === fieldName);
+                const extraField = fieldName === "emailUpdated" || fieldName === "notionPage";
+                const numeric = field?.type === "number";
+                const options = field?.options;
+                const editable = Boolean((field && field.name !== "associatedAddress") || extraField);
                 return {
                   ...property,
-                  kind: numeric ? "number" : property.kind,
-                  edit: field
+                  kind: field?.options
+                    ? "select"
+                    : field?.type === "date"
+                      ? "date"
+                      : numeric
+                        ? "number"
+                        : property.kind,
+                  edit: editable
                     ? {
-                        inputType: options ? "select" : numeric ? "number" : property.kind === "date" ? "date" : "text",
-                        options,
+                        inputType: options
+                          ? "select"
+                          : field?.multiline
+                            ? "longText"
+                            : field?.type === "date"
+                              ? "date"
+                              : numeric
+                                ? "number"
+                                : property.id === "notionPage"
+                                  ? "text"
+                                  : "select",
+                        options:
+                          property.id === "emailUpdated"
+                            ? [
+                                { value: "true", label: "Yes" },
+                                { value: "false", label: "No" },
+                              ]
+                            : options,
                         onSave: (_record: unknown, value: string | number | null) =>
                           patch
                             .mutateAsync({
                               id: Number(record.id),
                               patch: {
-                                [field]:
-                                  property.id === "emailUpdated"
+                                [fieldName]:
+                                  fieldName === "emailUpdated"
                                     ? value === "true"
                                     : numeric
                                       ? value === ""
                                         ? null
                                         : Number(value)
-                                      : value || null,
+                                      : value === ""
+                                        ? null
+                                        : value,
                               },
                             })
                             .then(() => undefined),

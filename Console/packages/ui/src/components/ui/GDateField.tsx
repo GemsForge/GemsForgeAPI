@@ -40,8 +40,14 @@ export interface GDateFieldProps extends Omit<
 
 function parseDate(value: string | undefined, format: string): Dayjs | null {
   if (!value) return null;
-  const parsed = dayjs(value, format, true);
-  return parsed.isValid() ? parsed : null;
+  const formats = [...new Set([format, "YYYY-MM-DD", "M/D/YYYY", "MM/DD/YYYY", "MMM D, YYYY", "MMMM D, YYYY"])].filter(
+    Boolean,
+  );
+  for (const candidate of formats) {
+    const parsed = dayjs(value, candidate, true);
+    if (parsed.isValid()) return parsed;
+  }
+  return null;
 }
 
 /** Render the standard GemsForge calendar picker with Day.js date formatting. */
@@ -68,6 +74,7 @@ export function GDateField({
   const selectedDate = parseDate(value, format);
   const [open, setOpen] = useState(false);
   const [formatMenuOpen, setFormatMenuOpen] = useState(false);
+  const [dateDraft, setDateDraft] = useState(value);
   const [selectedFormat, setSelectedFormat] = useState<GemDateFormat>(displayFormat);
   const [selectedIncludeTime, setSelectedIncludeTime] = useState(includeTime);
   const previousDisplayFormat = useRef(displayFormat);
@@ -83,6 +90,9 @@ export function GDateField({
   const displayDateText = selectedDate
     ? selectedDate.format(selectedFormat === "local" ? "MMM D, YYYY" : selectedFormat === "relative" ? "MMM D" : format)
     : `Select ${label.toLowerCase()}…`;
+  useEffect(() => {
+    setDateDraft(selectedDate?.format(format) ?? value);
+  }, [format, selectedDate?.valueOf(), value]);
   useEffect(() => {
     if (previousDisplayFormat.current !== displayFormat) {
       previousDisplayFormat.current = displayFormat;
@@ -139,7 +149,17 @@ export function GDateField({
           {required ? " *" : ""}
         </Label>
       ) : null}
-      <Popover open={open} onOpenChange={setOpen} placement="bottom-start">
+      <Popover
+        open={open}
+        onOpenChange={(nextOpen) => {
+          setOpen(nextOpen);
+          if (nextOpen) {
+            if (selectedDate) setVisibleMonth(selectedDate);
+            setDateDraft(selectedDate?.format(format) ?? value);
+          }
+        }}
+        placement="bottom-start"
+      >
         <Popover.Trigger asChild>
           <Button
             id={id}
@@ -184,6 +204,41 @@ export function GDateField({
                 ›
               </Button>
             </XStack>
+            <YStack gap="$1">
+              <Label htmlFor={`${id}-typed-date`} fontSize="$2" fontWeight="600">
+                Enter a date
+              </Label>
+              <Input
+                id={`${id}-typed-date`}
+                className="gem-date-text-input"
+                data-wireframe-date={wireframe ? "true" : undefined}
+                aria-label={`${label} date`}
+                placeholder="YYYY-MM-DD or M/D/YYYY"
+                value={dateDraft}
+                onChange={(event) => {
+                  const next = event.currentTarget.value;
+                  setDateDraft(next);
+                  const parsed = parseDate(next, format);
+                  if (parsed) {
+                    setVisibleMonth(parsed);
+                    onChange?.(parsed.format(format));
+                  }
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") {
+                    const parsed = parseDate(dateDraft, format);
+                    if (parsed) {
+                      onChange?.(parsed.format(format));
+                      setVisibleMonth(parsed);
+                      setOpen(false);
+                    }
+                  }
+                }}
+              />
+              <SizableText className="gem-date-format-hint" fontSize="$1">
+                Type a date to jump the calendar and save it.
+              </SizableText>
+            </YStack>
             <XStack flexWrap="wrap">
               {calendarDays.map((day) => (
                 <SizableText key={day} width="14.28%" textAlign="center" fontWeight="700">
@@ -202,7 +257,9 @@ export function GDateField({
                     opacity={date.month() === visibleMonth.month() ? 1 : 0.45}
                     aria-label={date.format("dddd, MMMM D, YYYY")}
                     onPress={() => {
-                      onChange?.(date.format(format));
+                      const next = date.format(format);
+                      setDateDraft(next);
+                      onChange?.(next);
                       setOpen(false);
                     }}
                   >
@@ -214,39 +271,40 @@ export function GDateField({
             <YStack className="gem-date-settings" gap="$1">
               <XStack justifyContent="space-between" alignItems="center">
                 <SizableText>Date format</SizableText>
-                <Popover open={formatMenuOpen} onOpenChange={setFormatMenuOpen} placement="left-start">
-                  <Popover.Trigger asChild>
-                    <Button size="sm" variant="quiet">
-                      {formatLabels[selectedFormat]} ›
-                    </Button>
-                  </Popover.Trigger>
-                  <Popover.Content
-                    className="gem-date-format-popover"
-                    data-wireframe-date={wireframe ? "true" : undefined}
-                    padding="$2"
-                    borderWidth={1}
-                  >
-                    <YStack>
-                      {(["local", "iso", "relative"] as GemDateFormat[]).map((option) => (
-                        <Button
-                          key={option}
-                          size="sm"
-                          justifyContent="space-between"
-                          backgroundColor={selectedFormat === option ? "$gemPanelLight" : "transparent"}
-                          onPress={() => {
-                            setSelectedFormat(option);
-                            onDateConfigChange?.({ displayFormat: option, includeTime: selectedIncludeTime });
-                            setFormatMenuOpen(false);
-                          }}
-                        >
-                          {formatLabels[option]}
-                          {selectedFormat === option ? " ✓" : ""}
-                        </Button>
-                      ))}
-                    </YStack>
-                  </Popover.Content>
-                </Popover>
+                <Button
+                  size="sm"
+                  variant="quiet"
+                  aria-expanded={formatMenuOpen}
+                  onPress={() => setFormatMenuOpen((isOpen) => !isOpen)}
+                >
+                  {formatLabels[selectedFormat]} {formatMenuOpen ? "⌄" : "›"}
+                </Button>
               </XStack>
+              {formatMenuOpen ? (
+                <YStack
+                  className="gem-date-format-options"
+                  data-wireframe-date={wireframe ? "true" : undefined}
+                  gap="$1"
+                >
+                  {(["local", "iso", "relative"] as GemDateFormat[]).map((option) => (
+                    <Button
+                      key={option}
+                      size="sm"
+                      justifyContent="space-between"
+                      aria-pressed={selectedFormat === option}
+                      backgroundColor={selectedFormat === option ? "$gemPanelLight" : "transparent"}
+                      onPress={() => {
+                        setSelectedFormat(option);
+                        onDateConfigChange?.({ displayFormat: option, includeTime: selectedIncludeTime });
+                        setFormatMenuOpen(false);
+                      }}
+                    >
+                      {formatLabels[option]}
+                      {selectedFormat === option ? " ✓" : ""}
+                    </Button>
+                  ))}
+                </YStack>
+              ) : null}
               <XStack justifyContent="space-between" alignItems="center">
                 <SizableText>Include time</SizableText>
                 <GSwitch

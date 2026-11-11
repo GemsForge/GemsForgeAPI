@@ -2,6 +2,7 @@ import type { LucideIcon } from "lucide-react";
 import type { RecordNumberFormat, RecordPropertyKind } from "../../table-kit/recordContracts";
 import {
   Asterisk,
+  ArrowUpRight,
   Badge,
   Bell,
   BellRing,
@@ -40,6 +41,7 @@ import {
   Percent,
   Phone,
   Settings2,
+  Search,
   ShieldCheck,
   Star,
   Tag,
@@ -108,6 +110,8 @@ export const PROPERTY_ICON_LIBRARY = [
   { name: "Favorite", icon: Star, keywords: ["favorite", "star", "important"] },
   { name: "Heart", icon: Heart, keywords: ["heart", "like"] },
   { name: "Link", icon: Link2, keywords: ["link", "relation", "reference"] },
+  { name: "Relation", icon: ArrowUpRight, keywords: ["relation", "linked record", "arrow"] },
+  { name: "Lookup", icon: Search, keywords: ["lookup", "search", "magnify", "magnifier"] },
   { name: "Upload", icon: Upload, keywords: ["upload", "import"] },
   { name: "Settings", icon: Settings2, keywords: ["settings", "configuration"] },
   { name: "Action", icon: Zap, keywords: ["action", "automation", "power"] },
@@ -126,10 +130,13 @@ export function inferWireframePropertyType(
   const normalized = label.trim().toLowerCase();
   if (kind === "select") return "Select";
   if (kind === "status") return "Status";
+  if (kind === "checkbox") return "Checkbox";
   if (kind === "date") return "Date";
   if (kind === "url") return "URL";
   if (kind === "image") return "Image";
   if (kind === "media") return "Media";
+  if (kind === "relation") return "Relation";
+  if (kind === "lookup") return "Lookup";
 
   if (numberFormat === "currency") return "Currency";
   if (numberFormat === "percent") return "Percent";

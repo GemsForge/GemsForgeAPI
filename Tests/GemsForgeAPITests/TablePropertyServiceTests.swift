@@ -138,6 +138,7 @@ final class TablePropertyServiceTests: XCTestCase {
             try await sql.raw("INSERT INTO Hubs (HubID, AccountID, Name) VALUES ('hub-a', 'account-a', 'A')").run()
             try await TableView(hubID: "hub-a", tableName: "BudgetCategories", name: "Budget Categories", viewType: .table, isDefault: true).save(on: app.db)
             try await TableView(hubID: "hub-a", tableName: "BudgetSubcategories", name: "Budget Subcategories", viewType: .table, isDefault: true).save(on: app.db)
+            try await TableView(hubID: "hub-a", tableName: "TablePropertyDefinitions", name: "Property Definitions", viewType: .table, isDefault: true).save(on: app.db)
         }) { app in
             let service = TablePropertyService(database: app.db, hubID: "hub-a")
             let valid = TablePropertyDefinitionRequest(id: "category", name: "Category", kind: .relation,
@@ -159,6 +160,39 @@ final class TablePropertyServiceTests: XCTestCase {
             }
             let preserved = try await service.definitions(tableName: "Transactions")
             XCTAssertEqual(preserved.map(\.id), ["category"])
+
+            let protectedTarget = TablePropertyDefinitionRequest(id: "protected-target", name: "Protected metadata", kind: .relation,
+                sourceColumnName: "TransactionID", targetTableName: "TablePropertyDefinitions",
+                targetKeyColumnName: "DefinitionID", targetDisplayColumnName: "Name",
+                relationDefinitionID: nil, targetColumnName: nil, filterByDefinitionID: nil,
+                targetFilterColumnName: nil)
+            do {
+                _ = try await service.replace(tableName: "Transactions", definitions: [protectedTarget])
+                XCTFail("Relations must not target protected metadata tables, even if a Hub view is registered.")
+            } catch let error as TablePropertyServiceError {
+                guard case .invalidDefinition = error else { return XCTFail("Unexpected error: \(error)") }
+            }
+            let stillPreserved = try await service.definitions(tableName: "Transactions")
+            XCTAssertEqual(stillPreserved.map(\.id), ["category"])
+
+            guard let sql = app.db as? SQLDatabase else { return XCTFail("Expected SQLite SQL database.") }
+            try await sql.raw("INSERT INTO Transactions (TransactionID, HubID, CategoryID) VALUES ('txn-protected', 'hub-a', 1)").run()
+            try await TablePropertyDefinition(
+                hubID: "hub-a", tableName: "Transactions", definition: protectedTarget,
+                id: "stored-protected-target", sortOrder: 1
+            ).save(on: app.db)
+            do {
+                _ = try await service.options(tableName: "Transactions", definitionID: "stored-protected-target", recordID: nil, search: nil, limit: 50)
+                XCTFail("Options must not query protected relation targets from a stored invalid definition.")
+            } catch let error as TablePropertyServiceError {
+                guard case .tableUnavailable = error else { return XCTFail("Unexpected error: \(error)") }
+            }
+            do {
+                _ = try await service.values(tableName: "Transactions", recordID: "txn-protected")
+                XCTFail("Lookup values must not read protected relation targets from a stored invalid definition.")
+            } catch let error as TablePropertyServiceError {
+                guard case .tableUnavailable = error else { return XCTFail("Unexpected error: \(error)") }
+            }
 
             let unrelatedFilterRelation = TablePropertyDefinitionRequest(id: "unrelated", name: "Unrelated", kind: .relation,
                 sourceColumnName: "CategoryID", targetTableName: "BudgetSubcategories",

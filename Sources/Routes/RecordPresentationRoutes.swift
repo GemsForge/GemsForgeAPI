@@ -37,7 +37,7 @@ func registerRecordPresentationRoutes(_ app: Application) {
               let presentation = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] else {
             throw Abort(.badRequest, reason: "Presentation must be a JSON object.")
         }
-        try await validateOwnedHubRecord(tableName: tableName, recordID: recordID, hubID: hubID, database: request.db)
+        try await validatePresentationRecord(tableName: tableName, recordID: recordID, hubID: hubID, database: request.db)
         try await validateCoverReference(
             presentation: presentation,
             tableName: tableName,
@@ -62,7 +62,7 @@ func registerRecordPresentationRoutes(_ app: Application) {
         guard let recordID = request.parameters.get("recordID"), !recordID.isEmpty else {
             throw Abort(.badRequest, reason: "A record ID is required.")
         }
-        try await validateOwnedHubRecord(tableName: tableName, recordID: recordID, hubID: hubID, database: request.db)
+        try await validatePresentationRecord(tableName: tableName, recordID: recordID, hubID: hubID, database: request.db)
         try await RecordPresentation.query(on: request.db)
             .filter(\.$hubID == hubID)
             .filter(\.$tableName == tableName)
@@ -129,12 +129,21 @@ func validateWorkspaceSelection(_ state: String, tableName: String, hubID: Strin
     guard let recordID = selection as? String, !recordID.isEmpty else {
         throw Abort(.badRequest, reason: "Selected record ID must be a string or null.")
     }
+    try await validatePresentationRecord(tableName: tableName, recordID: recordID, hubID: hubID, database: database)
+}
+
+/// Validates records in dedicated Hub tables and dynamically registered schema-page tables.
+func validatePresentationRecord(
+    tableName: String,
+    recordID: String,
+    hubID: String,
+    database: any Database
+) async throws {
     let physicalTableName = tableName == "ExpenseTransaction" ? "Transactions" : tableName
     if AddHubOwnershipFields.ownedTables.contains(physicalTableName) {
         try await validateOwnedHubRecord(tableName: tableName, recordID: recordID, hubID: hubID, database: database)
         return
     }
-
     let service = SchemaPageService(database: database, hubID: hubID)
     guard try await service.containsRecord(recordID, in: tableName) else {
         throw Abort(.notFound, reason: "The record is unavailable in this Hub.")

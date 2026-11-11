@@ -14,6 +14,8 @@ struct CreateSchemaPageFixtures: AsyncMigration {
             .field("HubID", .string, .required)
             .field("Name", .string, .required)
             .field("Quantity", .int, .required)
+            .field("CategoryID", .int)
+            .field("Photo", .string)
             .create()
         try await database.schema("UnscopedFixture")
             .field("ID", .string, .identifier(auto: false))
@@ -122,6 +124,9 @@ final class SchemaPageServiceTests: XCTestCase {
             try await app.test(.POST, "schema-builder/tables/SchemaPageFixture/records") { response in
                 XCTAssertEqual(response.status, .unauthorized)
             }
+            try await app.test(.PATCH, "schema-builder/tables/SchemaPageFixture/records/a1") { response in
+                XCTAssertEqual(response.status, .unauthorized)
+            }
         }
     }
 
@@ -135,6 +140,8 @@ final class SchemaPageServiceTests: XCTestCase {
             app.migrations.add(CreateViewColumnConfigurations())
             app.migrations.add(CreateViewQueryConfigurations())
             app.migrations.add(AddTableViewWorkspaceState())
+            app.migrations.add(CreateTablePropertyDefinitions())
+            app.migrations.add(CreateFileMetadata())
             app.migrations.add(CreateSchemaPageFixtures())
             try await app.autoMigrate()
             app.middleware.use(SessionAuthenticationMiddleware(operatorAccountID: "account-a"))
@@ -143,6 +150,15 @@ final class SchemaPageServiceTests: XCTestCase {
         }) { app in
             let tokenA = try await self.seedSession(on: app.db, accountID: "account-a", hubID: "hub-a")
             guard let sql = app.db as? SQLDatabase else { return XCTFail("Expected SQLite SQL database.") }
+            let firstPhoto = FileMetadata(id: "PHOTO-A", relativePath: "uploads/a.png", fileName: "a.png", fileKind: "image", mimeType: "image/png")
+            firstPhoto.hubID = "hub-a"
+            try await firstPhoto.create(on: app.db)
+            let secondPhoto = FileMetadata(id: "PHOTO-B", relativePath: "uploads/b.png", fileName: "b.png", fileKind: "image", mimeType: "image/jpeg")
+            secondPhoto.hubID = "hub-a"
+            try await secondPhoto.create(on: app.db)
+            let otherHubPhoto = FileMetadata(id: "PHOTO-OTHER", relativePath: "uploads/other.png", fileName: "other.png", fileKind: "image", mimeType: "image/png")
+            otherHubPhoto.hubID = "hub-b"
+            try await otherHubPhoto.create(on: app.db)
             try await sql.raw("INSERT INTO SchemaPageFixture (ID, HubID, Name, Quantity) VALUES ('fixture-a', 'hub-a', 'Saved goal', 1), ('fixture-b', 'hub-b', 'Other Hub goal', 2)").run()
             try await sql.raw("INSERT INTO IntegerSchemaPageFixture (ID, HubID, Name) VALUES (12, 'hub-a', 'Integer keyed record'), (13, 'hub-b', 'Other Hub record')").run()
             try await sql.raw("CREATE TABLE NonRowidIntegerFixture (ID INT NOT NULL PRIMARY KEY, HubID TEXT NOT NULL, Name TEXT NOT NULL)").run()
@@ -196,6 +212,23 @@ final class SchemaPageServiceTests: XCTestCase {
                 XCTAssertEqual(saved.view.workspaceState, workspaceState)
             }
 
+            try await sql.raw("CREATE TABLE BudgetCategories (ID INTEGER PRIMARY KEY, HubID TEXT NOT NULL, Category TEXT NOT NULL)").run()
+            try await sql.raw("INSERT INTO BudgetCategories (ID, HubID, Category) VALUES (5, 'hub-a', 'Food'), (6, 'hub-b', 'Private')").run()
+            try await TableView(hubID: "hub-a", tableName: "BudgetCategories", name: "Budget Categories", viewType: .table).save(on: app.db)
+            try await TablePropertyDefinition(
+                hubID: "hub-a",
+                tableName: "SchemaPageFixture",
+                definition: TablePropertyDefinitionRequest(
+                    id: "category-relation", name: "Category", kind: .relation,
+                    sourceColumnName: "CategoryID", targetTableName: "BudgetCategories",
+                    targetKeyColumnName: "ID", targetDisplayColumnName: "Category",
+                    relationDefinitionID: nil, targetColumnName: nil,
+                    filterByDefinitionID: nil, targetFilterColumnName: nil
+                ),
+                id: "category-relation",
+                sortOrder: 0
+            ).save(on: app.db)
+
             var createdID = ""
             try await app.test(.POST, "schema-builder/tables/SchemaPageFixture/records", beforeRequest: { request in
                 request.headers.bearerAuthorization = .init(token: tokenA)
@@ -212,6 +245,92 @@ final class SchemaPageServiceTests: XCTestCase {
                 .containsRecord(createdID, in: "SchemaPageFixture")
             XCTAssertTrue(visibleToCreator)
             XCTAssertFalse(visibleToOtherHub)
+
+            try await app.test(.PATCH, "schema-builder/tables/SchemaPageFixture/records/\(createdID)", beforeRequest: { request in
+                request.headers.bearerAuthorization = .init(token: tokenA)
+                request.headers.contentType = .json
+                request.body = ByteBuffer(string: #"{"Name":"Updated goal","Quantity":9}"#)
+            }) { response in
+                XCTAssertEqual(response.status, .noContent)
+            }
+            let updatedRecord = try await SchemaPageService(database: app.db, hubID: "hub-a")
+                .record(tableName: "SchemaPageFixture", recordID: createdID)
+            XCTAssertEqual(updatedRecord.row["Name"]!, "Updated goal")
+            XCTAssertEqual(updatedRecord.row["Quantity"]!, "9")
+
+            try await app.test(.PATCH, "schema-builder/tables/SchemaPageFixture/records/\(createdID)", beforeRequest: { request in
+                request.headers.bearerAuthorization = .init(token: tokenA)
+                request.headers.contentType = .json
+                request.body = ByteBuffer(string: #"{"CategoryID":5}"#)
+            }) { response in
+                XCTAssertEqual(response.status, .noContent)
+            }
+            for invalidCategoryID in [6, 999] {
+                try await app.test(.PATCH, "schema-builder/tables/SchemaPageFixture/records/\(createdID)", beforeRequest: { request in
+                    request.headers.bearerAuthorization = .init(token: tokenA)
+                    request.headers.contentType = .json
+                    request.body = ByteBuffer(string: #"{"CategoryID":\#(invalidCategoryID)}"#)
+                }) { response in
+                    XCTAssertEqual(response.status, .unprocessableEntity)
+                }
+            }
+
+            for fileMetadataID in ["PHOTO-A", "PHOTO-B"] {
+                try await app.test(.PATCH, "schema-builder/tables/SchemaPageFixture/records/\(createdID)/attachments/Photo", beforeRequest: { request in
+                    request.headers.bearerAuthorization = .init(token: tokenA)
+                    try request.content.encode(AttachmentReferenceRequest(fileMetadataID: fileMetadataID))
+                }) { response in
+                    XCTAssertEqual(response.status, .noContent)
+                }
+                let attached = try await FileMetadata.find(fileMetadataID, on: app.db)
+                XCTAssertEqual(attached?.ownerType, "SchemaPageFixture")
+                XCTAssertEqual(attached?.ownerID, createdID)
+                if fileMetadataID == "PHOTO-B" {
+                    let replacedPhotoOwner = try await FileMetadata.find("PHOTO-A", on: app.db)?.ownerID
+                    XCTAssertNil(replacedPhotoOwner)
+                }
+            }
+            try await app.test(.PATCH, "schema-builder/tables/SchemaPageFixture/records/\(createdID)/attachments/Photo", beforeRequest: { request in
+                request.headers.bearerAuthorization = .init(token: tokenA)
+                try request.content.encode(AttachmentReferenceRequest(fileMetadataID: "PHOTO-OTHER"))
+            }) { response in
+                XCTAssertEqual(response.status, .unprocessableEntity)
+            }
+            try await app.test(.PATCH, "schema-builder/tables/SchemaPageFixture/records/\(createdID)/attachments/Photo", beforeRequest: { request in
+                request.headers.bearerAuthorization = .init(token: tokenA)
+                try request.content.encode(AttachmentReferenceRequest(fileMetadataID: nil))
+            }) { response in
+                XCTAssertEqual(response.status, .noContent)
+            }
+            let firstPhotoOwner = try await FileMetadata.find("PHOTO-A", on: app.db)?.ownerID
+            let secondPhotoOwner = try await FileMetadata.find("PHOTO-B", on: app.db)?.ownerID
+            let clearedPhoto = try await SchemaPageService(database: app.db, hubID: "hub-a")
+                .record(tableName: "SchemaPageFixture", recordID: createdID).row["Photo"]!
+            XCTAssertNil(firstPhotoOwner)
+            XCTAssertNil(secondPhotoOwner)
+            XCTAssertNil(clearedPhoto)
+
+            try await app.test(.PATCH, "schema-builder/tables/SchemaPageFixture/records/fixture-b", beforeRequest: { request in
+                request.headers.bearerAuthorization = .init(token: tokenA)
+                request.headers.contentType = .json
+                request.body = ByteBuffer(string: #"{"Name":"Cross-Hub edit"}"#)
+            }) { response in
+                XCTAssertEqual(response.status, .notFound)
+            }
+            try await app.test(.PATCH, "schema-builder/tables/SchemaPageFixture/records/\(createdID)", beforeRequest: { request in
+                request.headers.bearerAuthorization = .init(token: tokenA)
+                request.headers.contentType = .json
+                request.body = ByteBuffer(string: #"{"HubID":"hub-b"}"#)
+            }) { response in
+                XCTAssertEqual(response.status, .unprocessableEntity)
+            }
+            try await app.test(.PATCH, "schema-builder/tables/SchemaPageFixture/records/\(createdID)", beforeRequest: { request in
+                request.headers.bearerAuthorization = .init(token: tokenA)
+                request.headers.contentType = .json
+                request.body = ByteBuffer(string: #"{"Unknown":"value"}"#)
+            }) { response in
+                XCTAssertEqual(response.status, .unprocessableEntity)
+            }
 
             var generatedEducationID = ""
             try await app.test(.POST, "schema-builder/tables/Education/records", beforeRequest: { request in
@@ -250,18 +369,31 @@ final class SchemaPageServiceTests: XCTestCase {
                 XCTAssertEqual(try row.decode(column: "Name", as: String.self), "Generated integer key")
             }
 
+            let service = SchemaPageService(database: app.db, hubID: "hub-a")
+            let concurrentIDs = try await withThrowingTaskGroup(of: String.self) { group in
+                for index in 0..<8 {
+                    group.addTask {
+                        let created = try await service.createRecord(
+                            tableName: "IntegerSchemaPageFixture",
+                            values: ["Name": .string("Concurrent record \(index)")]
+                        )
+                        return created.recordID
+                    }
+                }
+                var identifiers: [String] = []
+                for try await identifier in group { identifiers.append(identifier) }
+                return identifiers
+            }
+            XCTAssertEqual(concurrentIDs.count, 8)
+            XCTAssertEqual(Set(concurrentIDs).count, 8, "SQLite must assign distinct IDs to concurrent inserts.")
+
             try await app.test(.POST, "schema-builder/tables/NonRowidIntegerFixture/records", beforeRequest: { request in
                 request.headers.bearerAuthorization = .init(token: tokenA)
                 request.headers.contentType = .json
                 request.body = ByteBuffer(string: #"{"Name":"Generated non-rowid key"}"#)
-            }) { response async throws in
-                XCTAssertEqual(response.status, .ok)
-                let created = try response.content.decode(SchemaPageRecordCreationResponse.self)
-                XCTAssertEqual(created.recordID, "41")
-                guard let sql = app.db as? SQLDatabase,
-                      let row = try await sql.raw("SELECT Name FROM NonRowidIntegerFixture WHERE ID = 41 AND HubID = 'hub-a'").first()
-                else { return XCTFail("The server-assigned integer ID must identify the inserted row.") }
-                XCTAssertEqual(try row.decode(column: "Name", as: String.self), "Generated non-rowid key")
+            }) { response in
+                XCTAssertEqual(response.status, .unprocessableEntity)
+                XCTAssertTrue(response.body.string.contains("INTEGER PRIMARY KEY"))
             }
 
             try await app.test(.POST, "schema-builder/tables/SchemaPageFixture/records", beforeRequest: { request in

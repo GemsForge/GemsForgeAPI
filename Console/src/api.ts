@@ -28,7 +28,12 @@ import type {
   SchemaPageTables,
   SchemaPageTable,
   SchemaPageRecords,
+  SchemaPageRecord,
   SchemaPageRecordCreation,
+  TablePropertyDefinition,
+  TablePropertyDefinitionInput,
+  RelatedRecordOption,
+  TablePropertyValue,
   LocalDatabaseCapabilities,
   LocalDatabaseCreationResult,
   SchemaBuilderGuidance,
@@ -341,11 +346,58 @@ export const api = {
       `/schema-builder/tables/${encodeURIComponent(tableName)}/records?limit=100&offset=${Math.max(0, offset)}`,
       { signal },
     ),
+  getSchemaPageRecord: (tableName: string, recordID: string, signal?: AbortSignal) =>
+    request<SchemaPageRecord>(
+      `/schema-builder/tables/${encodeURIComponent(tableName)}/records/${encodeURIComponent(recordID)}`,
+      { signal },
+    ),
+  getTablePropertyDefinitions: (tableName: string, signal?: AbortSignal) =>
+    request<TablePropertyDefinition[]>(`/schema-builder/tables/${encodeURIComponent(tableName)}/properties`, {
+      signal,
+    }),
+  saveTablePropertyDefinitions: (tableName: string, definitions: TablePropertyDefinitionInput[]) =>
+    request<TablePropertyDefinition[]>(`/schema-builder/tables/${encodeURIComponent(tableName)}/properties`, {
+      method: "PUT",
+      body: JSON.stringify(definitions),
+    }),
+  getRelatedRecordOptions: (
+    tableName: string,
+    propertyID: string,
+    search: string,
+    recordID?: string,
+    signal?: AbortSignal,
+  ) => {
+    const params = new URLSearchParams({ search, limit: "50" });
+    if (recordID) params.set("recordID", recordID);
+    return request<RelatedRecordOption[]>(
+      `/schema-builder/tables/${encodeURIComponent(tableName)}/properties/${encodeURIComponent(propertyID)}/options?${params.toString()}`,
+      { signal },
+    );
+  },
+  getTablePropertyValues: (tableName: string, recordID: string, signal?: AbortSignal) =>
+    request<TablePropertyValue[]>(
+      `/schema-builder/tables/${encodeURIComponent(tableName)}/records/${encodeURIComponent(recordID)}/properties`,
+      { signal },
+    ),
   createSchemaPageRecord: (tableName: string, values: Record<string, string | number | boolean | null>) =>
     request<SchemaPageRecordCreation>(`/schema-builder/tables/${encodeURIComponent(tableName)}/records`, {
       method: "POST",
       body: JSON.stringify(values),
     }),
+  patchSchemaPageRecord: (
+    tableName: string,
+    recordID: string,
+    values: Record<string, string | number | boolean | null>,
+  ) =>
+    request<void>(`/schema-builder/tables/${encodeURIComponent(tableName)}/records/${encodeURIComponent(recordID)}`, {
+      method: "PATCH",
+      body: JSON.stringify(values),
+    }),
+  patchSchemaPageAttachment: (tableName: string, recordID: string, columnName: string, fileMetadataID: string | null) =>
+    request<void>(
+      `/schema-builder/tables/${encodeURIComponent(tableName)}/records/${encodeURIComponent(recordID)}/attachments/${encodeURIComponent(columnName)}`,
+      { method: "PATCH", body: JSON.stringify({ fileMetadataID }) },
+    ),
   previewUserTable: (definition: TableBuilderRequest) =>
     request<UserTablePreview>("/live-database/tables/preview", { method: "POST", body: JSON.stringify(definition) }),
   createUserTable: (confirmationToken: string) =>

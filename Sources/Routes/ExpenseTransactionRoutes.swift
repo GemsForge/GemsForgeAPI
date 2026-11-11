@@ -45,6 +45,37 @@ struct ExpenseTransactionPatchRequest: Content {
     let total: Double?
     let notes: String?
     let image: String?
+
+    enum CodingKeys: String, CodingKey {
+        case item
+        case firstReceiptItem
+        case categoryID
+        case subcategoryID
+        case merchantCode
+        case quantity
+        case regularPrice
+        case total
+        case notes
+        case image
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        item = try container.decodeIfPresent(String.self, forKey: .item)
+        firstReceiptItem = try container.decodeIfPresent(Bool.self, forKey: .firstReceiptItem)
+        categoryID = try container.decodeIfPresent(Int.self, forKey: .categoryID)
+        subcategoryID = container.contains(.subcategoryID)
+            ? .some(try container.decodeIfPresent(Int.self, forKey: .subcategoryID))
+            : nil
+        merchantCode = container.contains(.merchantCode)
+            ? .some(try container.decodeIfPresent(String.self, forKey: .merchantCode))
+            : nil
+        quantity = try container.decodeIfPresent(Double.self, forKey: .quantity)
+        regularPrice = try container.decodeIfPresent(Double.self, forKey: .regularPrice)
+        total = try container.decodeIfPresent(Double.self, forKey: .total)
+        notes = try container.decodeIfPresent(String.self, forKey: .notes)
+        image = try container.decodeIfPresent(String.self, forKey: .image)
+    }
 }
 
 private func validate(_ input: ExpenseTransactionRequest, requiresID: Bool = false) throws {

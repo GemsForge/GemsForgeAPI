@@ -1,4 +1,4 @@
-import type { ComponentProps } from "react";
+import { useId, type ComponentProps } from "react";
 import { Button, Input, Label, SizableText, YStack } from "tamagui";
 import type { GemTextFieldWidth } from "./GemTextField";
 
@@ -14,6 +14,8 @@ export interface GSearchSuggestion {
 /** Props for the standard GemsForge search field. */
 export interface GSearchFieldProps extends Omit<ComponentProps<typeof Input>, "value" | "defaultValue" | "onChange"> {
   label?: string;
+  /** Caller-supplied control ID; a unique ID is generated when omitted. */
+  id?: string;
   value?: string;
   variant?: GSearchFieldVariant;
   error?: string;
@@ -28,6 +30,7 @@ export interface GSearchFieldProps extends Omit<ComponentProps<typeof Input>, "v
 /** Render the standard Tamagui search field for address and regular search workflows. */
 export function GSearchField({
   label,
+  id: suppliedID,
   value = "",
   variant = "regular",
   error,
@@ -41,7 +44,8 @@ export function GSearchField({
   ...inputProps
 }: GSearchFieldProps) {
   const fieldLabel = label ?? "Search";
-  const id = `g-search-${fieldLabel.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+  const generatedID = useId();
+  const id = suppliedID ?? `g-search-${fieldLabel.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${generatedID}`;
   const errorID = `${id}-error`;
   const defaultPlaceholder = variant === "address" ? "Search for an address…" : `Search ${fieldLabel.toLowerCase()}…`;
 

@@ -8,6 +8,9 @@ export { GemTextField } from "./GemTextField";
 export { GDate, GDateField } from "./GDateField";
 export type { GDateFieldProps } from "./GDateField";
 export { GSelectField } from "./GSelectField";
+export { GMultiSelectField } from "./GMultiSelectField";
+export { decodeMultiSelectValue, encodeMultiSelectValue } from "./GMultiSelectField";
+export type { GMultiSelectFieldProps, GMultiSelectOption } from "./GMultiSelectField";
 export { GCheckboxField } from "./GCheckboxField";
 export type {
   GemDatePrimitiveContract,
@@ -19,6 +22,8 @@ export type {
 } from "./primitiveFieldContracts";
 export { GSwitch } from "./GSwitch";
 export { GSearchField } from "./GSearchField";
+export { GStructuralField } from "./GStructuralField";
+export type { GStructuralFieldKind, GStructuralFieldProps, GStructuralOption } from "./GStructuralField";
 export { GemEmptyState } from "./GemEmptyState";
 export { GemLoadingState } from "./GemLoadingState";
 export { GemSectionHeader } from "./GemSectionHeader";

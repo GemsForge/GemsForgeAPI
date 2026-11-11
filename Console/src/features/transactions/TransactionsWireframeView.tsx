@@ -3,7 +3,8 @@ import { useTransactionPatchMutation } from "../../data/recordQueries";
 import { useExpenseCategoriesQuery, useExpenseSubcategoriesQuery, useMerchantsQuery } from "../../data/lifeQueries";
 import { createTransactionTableAdapter } from "../database/recordTableAdapters";
 import { WireframeCollectionView } from "../workspace/WireframeCollectionView";
-import { WireframeSchemaInspector } from "../workspace/WireframeSchemaInspector";
+import { TransactionsInspector } from "./TransactionsInspector";
+import { useTablePropertyDefinitionsQuery } from "../../data/workflowQueries";
 import { useTransactionRecordActions } from "./useTransactionRecordActions";
 import type { RecordPropertyDefinition } from "../../table-kit";
 
@@ -13,6 +14,7 @@ export function TransactionsWireframeView({ records }: { records: readonly Expen
   const categories = useExpenseCategoriesQuery(true);
   const subcategories = useExpenseSubcategoriesQuery(null, true);
   const merchants = useMerchantsQuery(true);
+  const relationDefinitions = useTablePropertyDefinitionsQuery("Transactions");
   const transactionTableAdapter = createTransactionTableAdapter(
     categories.data ?? [],
     subcategories.data ?? [],
@@ -29,13 +31,42 @@ export function TransactionsWireframeView({ records }: { records: readonly Expen
     category: "categoryID",
     subcategory: "subcategoryID",
   };
-  const properties = transactionTableAdapter.getPropertyDefinitions();
+  const properties = transactionTableAdapter.getPropertyDefinitions().map((property) => {
+    const relation = relationDefinitions.data?.find(
+      (definition) =>
+        definition.kind === "Relation" &&
+        definition.sourceColumnName?.toLowerCase() === property.sourceField?.toLowerCase(),
+    );
+    if (!relation) return property;
+    return {
+      ...property,
+      kind: "relation" as const,
+      getValue: (record: ExpenseTransaction) => {
+        const current = property.getValue(record);
+        const id = current.raw == null ? "" : String(current.raw);
+        return {
+          ...current,
+          href:
+            id && relation.targetTableName
+              ? `/schema/${encodeURIComponent(relation.targetTableName)}/record/${encodeURIComponent(id)}`
+              : undefined,
+        };
+      },
+    };
+  });
   return (
     <WireframeCollectionView
       config={{
         tableName: "ExpenseTransaction",
         title: "Expense Tracker",
         description: "Purchases, receipts, categories, and spending history.",
+        headerBanner: (
+          <>
+            <strong>Category and Subcategory are linked.</strong> Subcategories belong to one category. The inspector
+            filters subcategory choices, and the API validates the pair. Changing Category keeps a compatible
+            Subcategory or clears one that no longer belongs. This notice does not change the database.
+          </>
+        ),
         activeCollection: "Expense Tracker",
         records,
         properties,
@@ -50,68 +81,74 @@ export function TransactionsWireframeView({ records }: { records: readonly Expen
         cardStatus: (record) => (record.total == null ? "Amount pending" : `$${record.total.toFixed(2)}`),
         cardMeta: (record) => record.transactionDate ?? "No date",
         inspector: (record, schemaProperties) => (
-          <WireframeSchemaInspector
+          <TransactionsInspector
             record={record}
-            properties={[
-              ...properties.map((property): RecordPropertyDefinition<ExpenseTransaction> => {
-                const field = fieldByProperty[property.id];
-                const numeric = ["quantity", "regularPrice", "paidPrice", "total", "discount"].includes(property.id);
-                const options =
-                  property.id === "category"
-                    ? (categories.data ?? []).map(({ id, name }) => ({ value: String(id), label: name }))
-                    : property.id === "subcategory"
-                      ? (subcategories.data ?? [])
-                          .filter((subcategory) => subcategory.categoryID === record.categoryID)
-                          .map(({ id, name }) => ({ value: String(id), label: name }))
-                      : property.id === "merchantCode"
-                        ? (merchants.data ?? []).map(({ id, name }) => ({ value: id, label: name }))
-                        : property.id === "firstReceiptItem"
-                          ? [
-                              { value: "true", label: "Yes" },
-                              { value: "false", label: "No" },
-                            ]
-                          : undefined;
-                return {
-                  ...property,
-                  kind: numeric ? "number" : property.kind,
-                  edit: field
-                    ? {
-                        inputType: options
-                          ? "select"
-                          : numeric
-                            ? "number"
-                            : property.kind === "date"
-                              ? "date"
-                              : property.id === "notes"
-                                ? "longText"
-                                : "text",
-                        nullable: property.id === "subcategory" || property.id === "merchantCode",
-                        options,
-                        onSave: (_record: unknown, value: string | number | null) => {
-                          const next = value === "" || value === null ? null : Number(value);
-                          const values =
-                            property.id === "category"
-                              ? { categoryID: next, subcategoryID: null }
-                              : property.id === "subcategory"
-                                ? { subcategoryID: next }
-                                : property.id === "merchantCode"
-                                  ? { merchantCode: value === "" ? null : String(value) }
-                                  : property.id === "firstReceiptItem"
-                                    ? { firstReceiptItem: value === "true" }
-                                    : { [field]: numeric ? (value === "" ? null : Number(value)) : value || null };
-                          return patch
-                            .mutateAsync({
-                              id: record.id,
-                              patch: values as Partial<ExpenseTransaction>,
-                            })
-                            .then(() => undefined);
-                        },
-                      }
-                    : undefined,
-                };
-              }),
-              ...(schemaProperties ?? []),
-            ]}
+            subcategories={subcategories.data ?? []}
+            properties={properties.map((property): RecordPropertyDefinition<ExpenseTransaction> => {
+              const field = fieldByProperty[property.id];
+              const numeric = ["quantity", "regularPrice", "paidPrice", "total", "discount"].includes(property.id);
+              const options =
+                property.id === "category"
+                  ? (categories.data ?? []).map(({ id, name }) => ({ value: String(id), label: name }))
+                  : property.id === "subcategory"
+                    ? (subcategories.data ?? [])
+                        .filter((subcategory) => subcategory.categoryID === record.categoryID)
+                        .map(({ id, name }) => ({ value: String(id), label: name }))
+                    : property.id === "merchantCode"
+                      ? (merchants.data ?? []).map(({ id, name }) => ({ value: id, label: name }))
+                      : property.id === "firstReceiptItem"
+                        ? [
+                            { value: "true", label: "Yes" },
+                            { value: "false", label: "No" },
+                          ]
+                        : undefined;
+              return {
+                ...property,
+                kind: numeric ? "number" : property.kind,
+                edit: field
+                  ? {
+                      inputType: options
+                        ? "select"
+                        : numeric
+                          ? "number"
+                          : property.kind === "date"
+                            ? "date"
+                            : property.id === "notes"
+                              ? "longText"
+                              : "text",
+                      nullable: property.id === "subcategory" || property.id === "merchantCode",
+                      options,
+                      onSave: (_record: unknown, value: string | number | null) => {
+                        const next = value === "" || value === null ? null : Number(value);
+                        const values =
+                          property.id === "category"
+                            ? {
+                                categoryID: next,
+                                subcategoryID:
+                                  subcategories.data?.find((subcategory) => subcategory.id === record.subcategoryID)
+                                    ?.categoryID === next
+                                    ? record.subcategoryID
+                                    : null,
+                              }
+                            : property.id === "subcategory"
+                              ? { subcategoryID: next }
+                              : property.id === "merchantCode"
+                                ? { merchantCode: value === "" ? null : String(value) }
+                                : property.id === "firstReceiptItem"
+                                  ? { firstReceiptItem: value === "true" }
+                                  : { [field]: numeric ? (value === "" ? null : Number(value)) : value || null };
+                        return patch
+                          .mutateAsync({
+                            id: record.id,
+                            patch: values as Partial<ExpenseTransaction>,
+                          })
+                          .then(() => undefined);
+                      },
+                    }
+                  : undefined,
+              };
+            })}
+            schemaProperties={schemaProperties}
           />
         ),
       }}

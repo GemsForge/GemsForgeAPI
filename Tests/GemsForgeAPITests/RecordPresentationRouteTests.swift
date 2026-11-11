@@ -1,6 +1,7 @@
 import Crypto
 import Fluent
 import FluentSQLiteDriver
+import SQLKit
 import Vapor
 import VaporTesting
 import XCTest
@@ -30,6 +31,16 @@ final class RecordPresentationRouteTests: XCTestCase {
         }) { app in
             let tokenA = try await self.seedSession(on: app.db, accountID: "account-a", hubID: "hub-a")
             let tokenB = try await self.seedSession(on: app.db, accountID: "account-b", hubID: "hub-b")
+            try await app.db.schema("CustomProjects")
+                .field("ID", .string, .identifier(auto: false))
+                .field("HubID", .string, .required)
+                .field("Title", .string, .required)
+                .create()
+            let sql = try XCTUnwrap(app.db as? SQLDatabase)
+            try await sql.raw("""
+                INSERT INTO "CustomProjects" ("ID", "HubID", "Title")
+                VALUES ('PROJECT-A', 'hub-a', 'A'), ('PROJECT-B', 'hub-b', 'B')
+                """).run()
             try await AddressService(database: app.db, hubID: "hub-a").save(
                 Address(id: "ADDR-A", city: "Owned by A", addressStatus: "Current")
             )
@@ -131,6 +142,26 @@ final class RecordPresentationRouteTests: XCTestCase {
             }
             let count = try await RecordPresentation.query(on: app.db).count()
             XCTAssertEqual(count, 0)
+
+            try await app.test(.PUT, "record-presentations/CustomProjects/PROJECT-A", beforeRequest: { request in
+                request.headers.bearerAuthorization = .init(token: tokenA)
+                try request.content.encode(RecordPresentationRequest(presentation: #"{"source":"color","color":"teal"}"#))
+            }) { response async throws in
+                XCTAssertEqual(response.status, .ok)
+            }
+            try await app.test(.PUT, "record-presentations/CustomProjects/PROJECT-B", beforeRequest: { request in
+                request.headers.bearerAuthorization = .init(token: tokenA)
+                try request.content.encode(RecordPresentationRequest(presentation: #"{"source":"color"}"#))
+            }) { response in
+                XCTAssertEqual(response.status, .notFound)
+            }
+            try await app.test(.DELETE, "record-presentations/CustomProjects/PROJECT-A", beforeRequest: {
+                $0.headers.bearerAuthorization = .init(token: tokenA)
+            }) { response in
+                XCTAssertEqual(response.status, .noContent)
+            }
+            let remainingPresentations = try await RecordPresentation.query(on: app.db).count()
+            XCTAssertEqual(remainingPresentations, 0)
 
             try await app.test(.POST, "live-database/repository-migrations/preview", beforeRequest: {
                 $0.headers.bearerAuthorization = .init(token: tokenA)

@@ -59,6 +59,7 @@ struct TablePropertyService: Sendable {
                       definition.relationDefinitionID == nil,
                       let sourceColumn = Self.columnsByName(sourceTable)[sourceColumnName],
                       let target = schema.tables.first(where: { $0.name == targetTableName }),
+                      SchemaPageService.isSchemaPageTable(target),
                       let targetKey = Self.columnsByName(target)[targetKeyColumnName], targetKey.primaryKey,
                       let targetDisplay = Self.columnsByName(target)[targetDisplayColumnName],
                       let targetHub = Self.columnsByName(target)["HubID"], !targetHub.primaryKey,
@@ -93,6 +94,7 @@ struct TablePropertyService: Sendable {
                       let relationID = definition.relationDefinitionID,
                       let relation = input.first(where: { $0.id == relationID && $0.kind == .relation }),
                       let target = schema.tables.first(where: { $0.name == relation.targetTableName }),
+                      SchemaPageService.isSchemaPageTable(target),
                       let targetColumnName = definition.targetColumnName,
                       let targetColumn = Self.columnsByName(target)[targetColumnName],
                       !targetColumn.dataType.uppercased().contains("BLOB"),
@@ -131,6 +133,7 @@ struct TablePropertyService: Sendable {
         else { throw TablePropertyServiceError.invalidDefinition("The relation property is unavailable.") }
         let schema = try await LiveSchemaService(database: database).inspect()
         guard let target = schema.tables.first(where: { $0.name == targetName }),
+              SchemaPageService.isSchemaPageTable(target),
               Self.columnsByName(target)[keyName] != nil,
               Self.columnsByName(target)[displayName] != nil,
               Self.columnsByName(target)["HubID"] != nil
@@ -217,6 +220,61 @@ struct TablePropertyService: Sendable {
         return values
     }
 
+    /// Ensures edited relation columns still point to records visible in this Hub.
+    func validateRelationUpdates(tableName: String, recordID: String, values: [String: PatchJSONValue]) async throws {
+        let definitions = try await models(tableName: tableName)
+        let relations = definitions.filter { $0.kind == TablePropertyKind.relation.rawValue }
+        let changedColumns = Set(values.keys)
+        guard relations.contains(where: { definition in
+            definition.sourceColumnName.map(changedColumns.contains) ?? false
+        }) else { return }
+
+        var source = try await sourceRow(tableName: tableName, recordID: recordID)
+        for definition in relations {
+            guard let column = definition.sourceColumnName, let value = values[column] else { continue }
+            switch value {
+            case .null:
+                source.removeValue(forKey: column)
+            case let .string(value):
+                source[column] = value
+            case let .number(value):
+                source[column] = String(value)
+            case let .bool(value):
+                source[column] = value ? "1" : "0"
+            }
+        }
+
+        let affected = relations.filter { relation in
+            guard let sourceColumn = relation.sourceColumnName else { return false }
+            if changedColumns.contains(sourceColumn) { return true }
+            guard let filterID = relation.filterByDefinitionID,
+                  let parent = relations.first(where: { $0.id == filterID }),
+                  let parentColumn = parent.sourceColumnName
+            else { return false }
+            return changedColumns.contains(parentColumn)
+        }
+        for relation in affected {
+            guard let sourceColumn = relation.sourceColumnName,
+                  let targetTable = relation.targetTableName,
+                  let targetKey = relation.targetKeyColumnName
+            else { continue }
+            guard let foreignID = source[sourceColumn], !foreignID.isEmpty else { continue }
+
+            guard let targetFilter = relationFilter(relation, definitions: definitions, source: source),
+                  try await targetValue(
+                    tableName: targetTable,
+                    keyColumn: targetKey,
+                    recordID: foreignID,
+                    valueColumn: targetKey,
+                    filterColumn: targetFilter.column,
+                    filterValue: targetFilter.value
+                  ) != nil
+            else {
+                throw SchemaPageError.invalidRecord("\(relation.name) must reference a record in this Hub and satisfy its configured relation filter.")
+            }
+        }
+    }
+
     private func models(tableName: String) async throws -> [TablePropertyDefinition] {
         try await requireRegisteredTable(tableName)
         return try await TablePropertyDefinition.query(on: database)
@@ -292,6 +350,7 @@ struct TablePropertyService: Sendable {
         guard let sql = database as? SQLDatabase else { throw TablePropertyServiceError.unavailableDatabase }
         let schema = try await LiveSchemaService(database: database).inspect()
         guard let table = schema.tables.first(where: { $0.name == tableName }),
+              SchemaPageService.isSchemaPageTable(table),
               let key = Self.columnsByName(table)[keyColumn],
               Self.columnsByName(table)[valueColumn] != nil,
               Self.columnsByName(table)["HubID"] != nil

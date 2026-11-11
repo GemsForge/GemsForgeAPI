@@ -1,6 +1,15 @@
 import { formatRecordNumber, inferRecordNumberFormat, type RecordPropertyDefinition } from "../../table-kit";
 import { WireframeRecordInspector, type WireframeInspectorField } from "./WireframeRecordInspector";
 import { inferWireframePropertyMetadata } from "./propertyMetadata";
+import { useContext } from "react";
+import {
+  WireframeDateConfigurationContext,
+  WireframePropertySelectOptionsContext,
+  WireframePropertyTypeContext,
+} from "./WireframePropertyEditor";
+import { decodeMultiSelectValue } from "@gemsforge/ui";
+import { AttachmentControl } from "../../components/AttachmentControl";
+import { FilePresentation } from "../../components/FilePresentation";
 
 function editorKind(
   kind: RecordPropertyDefinition<unknown>["kind"],
@@ -8,6 +17,9 @@ function editorKind(
 ): WireframeInspectorField["kind"] {
   if (inputType === "longText") return "textarea";
   if (kind === "select" || kind === "status") return kind;
+  if (kind === "checkbox") return "checkbox";
+  if (kind === "relation") return "relation";
+  if (kind === "lookup") return "lookup";
   if (kind === "date" || inputType === "date") return "date";
   if (kind === "number" || inputType === "number") return "number";
   if (kind === "url") return "url";
@@ -19,10 +31,17 @@ function editorKind(
 export function WireframeSchemaInspector<Record extends object>({
   record,
   properties,
+  attachmentOwnerType,
+  onAttachmentChange,
 }: {
   record: Record;
   properties: readonly RecordPropertyDefinition<Record>[];
+  attachmentOwnerType?: string;
+  onAttachmentChange?: (record: Record, propertyID: string, fileMetadataID: string | null) => Promise<void>;
 }) {
+  const propertyTypes = useContext(WireframePropertyTypeContext);
+  const propertySelectOptions = useContext(WireframePropertySelectOptionsContext);
+  const dateConfigurationContext = useContext(WireframeDateConfigurationContext);
   const seen = new Set<string>();
   const seenSourceFields = new Set<string>();
   const fields = properties
@@ -48,24 +67,65 @@ export function WireframeSchemaInspector<Record extends object>({
               : edit?.inputType === "number"
                 ? "number"
                 : (property.kind ?? kind);
+      const savedPropertyType = propertyTypes[property.id] ?? property.propertyType;
+      const propertyType =
+        (savedPropertyType === "Relation" || savedPropertyType === "Lookup") &&
+        property.kind !== savedPropertyType.toLowerCase()
+          ? undefined
+          : savedPropertyType;
       const metadata = inferWireframePropertyMetadata({
         label: property.label,
         kind: metadataKind,
         numberFormat: property.numberFormat,
-        propertyType: property.propertyType,
+        propertyType,
         iconName: property.iconName,
       });
-      const resolvedKind: WireframeInspectorField["kind"] =
-        metadata.type === "URL" ? "url" : metadata.type === "Email" ? "email" : kind;
+      const typeKind: Partial<{ [typeName: string]: WireframeInspectorField["kind"] }> = {
+        Text: "text",
+        Name: "text",
+        Notes: "textarea",
+        Select: "select",
+        "Multi-select": "multiselect",
+        Tags: "multiselect",
+        Status: "status",
+        Checkbox: "checkbox",
+        Number: "number",
+        Currency: "number",
+        Percent: "number",
+        Date: "date",
+        URL: "url",
+        Relation: property.kind === "relation" ? "relation" : undefined,
+        Lookup: property.kind === "lookup" ? "lookup" : undefined,
+      };
+      const resolvedKind: WireframeInspectorField["kind"] = typeKind[metadata.type] ?? kind;
+      const isImage = metadata.type === "Image";
+      const isNonTextMedia = metadata.type === "Media" || (isImage && (!attachmentOwnerType || !onAttachmentChange));
+      const options =
+        propertySelectOptions[property.id]?.map((option) => ({ value: option, label: option })) ??
+        edit?.options?.map((option) => ({ value: option.value, label: option.label })) ??
+        [];
       const displayValue = property.getValue(record).display;
       const propertyValue = property.getValue(record);
+      const dateConfiguration = dateConfigurationContext.configurations[property.id];
+      const multiSelectDisplay =
+        resolvedKind === "multiselect"
+          ? decodeMultiSelectValue(String(value.raw ?? ""))
+              .map((selected) => options.find((option) => option.value === selected)?.label ?? selected)
+              .join(", ")
+          : undefined;
+      const checkboxDisplay =
+        property.kind === "checkbox"
+          ? ["1", "true"].includes(String(value.raw ?? "").toLowerCase())
+            ? "Yes"
+            : "No"
+          : undefined;
       const linkedDisplayValue =
-        (property.kind === "url" || property.kind === "email") && propertyValue.href ? (
+        (property.kind === "url" || property.kind === "email" || property.kind === "relation") && propertyValue.href ? (
           <a
             className="primitive-value-link"
             href={propertyValue.href}
-            target="_blank"
-            rel="noreferrer"
+            target={property.kind === "url" ? "_blank" : undefined}
+            rel={property.kind === "url" ? "noreferrer" : undefined}
             onClick={(event) => event.stopPropagation()}
           >
             {typeof displayValue === "string" ? displayValue : propertyValue.href}
@@ -81,25 +141,62 @@ export function WireframeSchemaInspector<Record extends object>({
             ? String(value.raw)
             : "",
         displayValue:
-          property.kind === "number" && typeof value.raw === "number"
-            ? formatRecordNumber(
-                value.raw,
-                property.numberFormat ?? inferRecordNumberFormat(property.id, property.label),
-              )
-            : (property.kind === "url" || property.kind === "email") && propertyValue.href
-              ? typeof displayValue === "string"
-                ? displayValue
-                : propertyValue.href
-              : value.display,
+          resolvedKind === "date" ? undefined : isImage && typeof value.raw === "string" && value.raw ? (
+            <FilePresentation fileMetadataID={value.raw} label={property.label} />
+          ) : property.kind === "relation" ? (
+            value.display
+          ) : property.kind === "number" && typeof value.raw === "number" ? (
+            formatRecordNumber(value.raw, property.numberFormat ?? inferRecordNumberFormat(property.id, property.label))
+          ) : (property.kind === "url" || property.kind === "email") && propertyValue.href ? (
+            typeof displayValue === "string" ? (
+              linkedDisplayValue
+            ) : (
+              propertyValue.href
+            )
+          ) : (
+            (multiSelectDisplay ?? checkboxDisplay ?? value.display)
+          ),
         display: linkedDisplayValue,
+        relatedHref: property.kind === "relation" ? propertyValue.href : undefined,
         kind: resolvedKind,
         propertyKind: property.kind,
         propertyType: metadata.type,
         iconName: metadata.iconName,
         numberFormat: property.numberFormat,
+        dateFormat: dateConfiguration?.displayFormat ?? property.dateFormat ?? "iso",
+        includeTime: dateConfiguration?.includeTime ?? false,
+        onDateConfigChange:
+          resolvedKind === "date" && dateConfigurationContext.onChange
+            ? (configuration) => dateConfigurationContext.onChange?.(property.id, configuration)
+            : undefined,
+        onCommit:
+          edit && !isNonTextMedia
+            ? async (next: string) => {
+                if (isImage && onAttachmentChange) {
+                  await onAttachmentChange(record, property.id, next || null);
+                  return;
+                }
+                const savedValue =
+                  next === "" && edit.nullable ? null : resolvedKind === "number" && next !== "" ? Number(next) : next;
+                await edit.onSave(record, savedValue);
+              }
+            : undefined,
+        options,
         nullable: edit?.nullable,
-        options: edit?.options?.map((option) => ({ value: option.value, label: option.label })),
-        onCommit: edit ? async (next: string) => edit.onSave(record, next) : undefined,
+        renderEditor:
+          isImage && edit && attachmentOwnerType && onAttachmentChange && "id" in record
+            ? ({ value: currentValue, onCommit }) => (
+                <AttachmentControl
+                  fileMetadataID={currentValue || null}
+                  ownerType={attachmentOwnerType}
+                  ownerID={String((record as { id: unknown }).id)}
+                  label={property.label}
+                  onAttach={async (metadata) => onCommit(metadata?.id ?? "")}
+                />
+              )
+            : isNonTextMedia
+              ? undefined
+              : edit?.renderEditor,
       } satisfies WireframeInspectorField;
     });
 
