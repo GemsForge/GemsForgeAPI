@@ -3,7 +3,6 @@
   --gem-font-family:
     "Avenir Next", Avenir, Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display",
     sans-serif;
-  --gem-editorial-font-family: ui-serif, Georgia, "Iowan Old Style", "Palatino Linotype", serif;
   --gem-canvas: #0b171c;
   --gem-surface: #12252b;
   --gem-surface-raised: #173138;
@@ -1001,7 +1000,7 @@ h3 {
 .workspace-note-copy {
   max-width: 55rem;
   color: var(--gem-knowledge-ink);
-  font-family: var(--gem-editorial-font-family);
+  font-family: var(--gem-font-family);
   font-size: clamp(1.1rem, 1.7vw, 1.35rem);
   line-height: 1.75;
 }
@@ -1223,14 +1222,14 @@ h3 {
   padding: 0 0.75rem;
   margin-bottom: 1.15rem;
   color: var(--gem-shell-ink);
-  font-family: var(--gem-editorial-font-family);
+  font-family: var(--gem-font-family);
   font-size: 1.1rem;
   letter-spacing: 0.22em;
   text-decoration: none;
 }
 .shell-brand-mark {
   color: #e5c66a;
-  font-family: var(--gem-editorial-font-family);
+  font-family: var(--gem-font-family);
   font-size: 2.2rem;
   line-height: 1;
 }
@@ -1510,7 +1509,7 @@ h3 {
   border: 0;
   color: #262719;
   background: transparent;
-  font-family: var(--gem-editorial-font-family);
+  font-family: var(--gem-font-family);
   font-size: clamp(2.7rem, 5vw, 4rem);
   font-weight: 500;
   letter-spacing: -0.045em;
@@ -1519,7 +1518,7 @@ h3 {
 .workspace-page-title {
   margin: 0;
   color: #262719;
-  font-family: var(--gem-editorial-font-family);
+  font-family: var(--gem-font-family);
   font-size: clamp(2.7rem, 5vw, 4rem);
   font-weight: 500;
   letter-spacing: -0.045em;
@@ -1528,7 +1527,7 @@ h3 {
 .workspace-page-description {
   margin: 0;
   color: #3c3d30;
-  font-family: var(--gem-editorial-font-family);
+  font-family: var(--gem-font-family);
   font-size: 1.15rem;
   line-height: 1.4;
 }
@@ -1538,7 +1537,7 @@ h3 {
   border: 0;
   color: #3c3d30;
   background: transparent;
-  font-family: var(--gem-editorial-font-family);
+  font-family: var(--gem-font-family);
   font-size: 1.15rem;
   line-height: 1.4;
   resize: none;
@@ -1573,7 +1572,7 @@ h3 {
 .workspace-note-meta .eyebrow {
   margin: 0;
   color: #444431;
-  font-family: var(--gem-editorial-font-family);
+  font-family: var(--gem-font-family);
   font-size: 1.85rem;
   font-style: italic;
   font-weight: 500;
@@ -1593,7 +1592,7 @@ h3 {
 .workspace-note-copy {
   max-width: 58rem;
   color: #26271f;
-  font-family: var(--gem-editorial-font-family);
+  font-family: var(--gem-font-family);
   font-size: clamp(1.25rem, 1.75vw, 1.55rem);
   line-height: 1.55;
   white-space: pre-line;
@@ -1632,7 +1631,7 @@ h3 {
   gap: 0.75rem;
   margin: 0;
   color: #2c2c20;
-  font-family: var(--gem-editorial-font-family);
+  font-family: var(--gem-font-family);
   font-size: 1.85rem;
   font-weight: 500;
 }
@@ -1675,7 +1674,7 @@ h3 {
 }
 .workspace-demo-table td:nth-child(1),
 .workspace-demo-table td:nth-child(4) {
-  font-family: var(--gem-editorial-font-family);
+  font-family: var(--gem-font-family);
   font-size: 1rem;
 }
 .workspace-demo-table .status-pill {
@@ -1730,7 +1729,7 @@ h3 {
   align-items: center;
   gap: 0.65rem;
   color: #2c2c20;
-  font-family: var(--gem-editorial-font-family);
+  font-family: var(--gem-font-family);
   font-size: 1.45rem;
   font-weight: 500;
 }
