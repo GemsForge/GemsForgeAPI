@@ -140,6 +140,7 @@ final class RecordPresentationRouteTests: XCTestCase {
                 XCTAssertEqual(preview.status, "preview")
                 XCTAssertTrue(preview.migrationNames.contains("AddTableViewWorkspaceState"))
                 XCTAssertTrue(preview.migrationNames.contains("CreateRecordPresentations"))
+                XCTAssertTrue(preview.migrationNames.contains("CreateTablePropertyDefinitions"))
             }
         }
     }

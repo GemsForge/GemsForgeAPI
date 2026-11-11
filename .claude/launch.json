@@ -1,0 +1,23 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "console-pr517",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "cd /Users/gemsforge/.codex/worktrees/516-connected-knowledge-workspace/GemsForgeAPI/Console && VITE_INSPECTION_BYPASS=true npx vite --port 5179 --strictPort"
+      ],
+      "port": 5179
+    },
+    {
+      "name": "console-522",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "cd /Users/gemsforge/GemsForgeAPI/Console && VITE_INSPECTION_BYPASS=true npx vite --port 5180 --strictPort"
+      ],
+      "port": 5180
+    }
+  ]
+}

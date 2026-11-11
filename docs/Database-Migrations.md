@@ -77,6 +77,10 @@ isolated migrations. It is intentionally different from connecting to the
 existing personal database: creating a new local file may prepare tables,
 while normal API startup must preserve the existing database baseline.
 
+The `CreateTablePropertyDefinitions` migration adds Hub-scoped relation and
+lookup metadata to this profile. It does not rewrite canonical record tables
+and is not run automatically against the personal database.
+
 ## What the schema builder means
 
 The Console schema builder creates reviewed tables in the configured live

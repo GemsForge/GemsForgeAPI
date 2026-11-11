@@ -76,13 +76,13 @@ private func validate(_ input: ExpenseTransactionRequest, requiresID: Bool = fal
     }
 }
 
-private func validateCategoryReferences(_ input: ExpenseTransactionRequest, database: any Database) async throws {
-    guard try await ExpenseCategoryService(database: database).find(id: input.categoryID) != nil else {
+private func validateCategoryReferences(_ input: ExpenseTransactionRequest, database: any Database, hubID: String?) async throws {
+    guard try await ExpenseCategoryService(database: database, hubID: hubID).find(id: input.categoryID) != nil else {
         throw Abort(.unprocessableEntity, reason: "categoryID must reference an existing expense category.")
     }
 
     if let subcategoryID = input.subcategoryID {
-        guard let subcategory = try await ExpenseSubcategoryService(database: database).find(id: subcategoryID) else {
+        guard let subcategory = try await ExpenseSubcategoryService(database: database, hubID: hubID).find(id: subcategoryID) else {
             throw Abort(.unprocessableEntity, reason: "subcategoryID must reference an existing expense subcategory.")
         }
         guard subcategory.categoryID == input.categoryID else {
@@ -130,7 +130,7 @@ func registerExpenseTransactionRoutes(_ app: Application) {
             throw Abort(.conflict, reason: "A transaction with this ID already exists.")
         }
 
-        try await validateCategoryReferences(input, database: request.db)
+        try await validateCategoryReferences(input, database: request.db, hubID: request.authenticatedHubID)
 
         let transaction = makeTransaction(from: input, id: id)
         _ = try await AttachmentReferenceService(database: request.db, hubID: request.authenticatedHubID).attach(metadataID: transaction.image, ownerType: "ExpenseTransaction", ownerID: id)
@@ -163,6 +163,9 @@ func registerExpenseTransactionRoutes(_ app: Application) {
         guard !item.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { throw Abort(.unprocessableEntity, reason: "Transaction item cannot be empty.") }
         let categoryID = input.categoryID ?? transaction.categoryID
         guard categoryID > 0 else { throw Abort(.unprocessableEntity, reason: "CategoryID must be greater than zero.") }
+        guard try await ExpenseCategoryService(database: request.db, hubID: request.authenticatedHubID).find(id: categoryID) != nil else {
+            throw Abort(.unprocessableEntity, reason: "categoryID must reference an existing expense category in this Hub.")
+        }
         let subcategoryID = input.subcategoryID ?? transaction.subcategoryID
         if let subcategoryID {
             guard let subcategory = try await ExpenseSubcategoryService(database: request.db, hubID: request.authenticatedHubID).find(id: subcategoryID),
@@ -203,6 +206,7 @@ func registerExpenseTransactionRoutes(_ app: Application) {
 
         let input = try request.content.decode(ExpenseTransactionRequest.self)
         try validate(input)
+        try await validateCategoryReferences(input, database: request.db, hubID: request.authenticatedHubID)
         let replacement = makeTransaction(from: input, id: id)
         try await AttachmentReferenceService(database: request.db, hubID: request.authenticatedHubID).replace(oldMetadataID: transaction.image, newMetadataID: replacement.image, ownerType: "ExpenseTransaction", ownerID: id)
         transaction.receiptID = replacement.receiptID

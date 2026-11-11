@@ -15,6 +15,7 @@ enum HubOwnedCustomTablePolicy {
     static let protectedTables: Set<String> = [
         "Hubs", "Accounts", "AccountIdentities", "AuthenticationSessions", "AppleAccounts",
         "AppleAuthChallenges", "TableViews", "ViewColumnConfigurations", "ViewQueryConfigurations",
+        "TablePropertyDefinitions",
         "RecordPresentations", "FileMetadata", "SchemaMigrationAudits", "Domains",
         "EmojiLabelDefinitions", "TrashEntries",
     ]

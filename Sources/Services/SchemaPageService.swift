@@ -20,6 +20,11 @@ struct SchemaPageRecordsResponse: Content, Sendable {
     let offset: Int
 }
 
+struct SchemaPageRecordResponse: Content, Sendable {
+    let table: SchemaPageTableResponse
+    let row: [String: String?]
+}
+
 struct SchemaPageRecordCreationResponse: Content, Sendable {
     let table: String
     let recordID: String
@@ -152,6 +157,49 @@ struct SchemaPageService: Sendable {
         )
     }
 
+    /// Reads one exact Hub-owned record by its table primary key.
+    func record(tableName: String, recordID: String) async throws -> SchemaPageRecordResponse {
+        guard let sql = database as? SQLDatabase else { throw SchemaPageError.unavailableDatabase }
+        let schema = try await LiveSchemaService(database: database).inspect()
+        guard let table = schema.tables.first(where: { $0.name == tableName }),
+              Self.isSchemaPageTable(table),
+              let primaryKey = table.columns.first(where: \.primaryKey)
+        else { throw SchemaPageError.tableUnavailable }
+
+        var query = SQLQueryString("SELECT ")
+        for (index, column) in table.columns.enumerated() {
+            if index > 0 { query.appendInterpolation(unsafeRaw: ", ") }
+            query.appendInterpolation(unsafeRaw: "CASE WHEN ")
+            query.appendInterpolation(ident: column.name)
+            query.appendInterpolation(unsafeRaw: " IS NULL THEN NULL WHEN typeof(")
+            query.appendInterpolation(ident: column.name)
+            query.appendInterpolation(unsafeRaw: ") = 'blob' THEN '[Binary data]' ELSE CAST(")
+            query.appendInterpolation(ident: column.name)
+            query.appendInterpolation(unsafeRaw: " AS TEXT) END AS ")
+            query.appendInterpolation(ident: column.name)
+        }
+        query.appendInterpolation(unsafeRaw: " FROM ")
+        query.appendInterpolation(ident: tableName)
+        query.appendInterpolation(unsafeRaw: " WHERE ")
+        query.appendInterpolation(ident: primaryKey.name)
+        query.appendInterpolation(unsafeRaw: " = ")
+        if primaryKey.dataType.uppercased().contains("INT"), let integerID = Int64(recordID) {
+            query.appendInterpolation(bind: integerID)
+        } else if primaryKey.dataType.uppercased().contains("INT") {
+            throw SchemaPageError.invalidRecord("Record ID must be a valid integer.")
+        } else {
+            query.appendInterpolation(bind: recordID)
+        }
+        query.appendInterpolation(unsafeRaw: " AND ")
+        query.appendInterpolation(ident: "HubID")
+        query.appendInterpolation(unsafeRaw: " = ")
+        query.appendInterpolation(bind: hubID)
+        guard let row = try await sql.raw(query).first() else { throw SchemaPageError.invalidRecord("The record is unavailable to this Hub.") }
+        var values: [String: String?] = [:]
+        for column in table.columns { values[column.name] = try row.decode(column: column.name, as: String?.self) }
+        return SchemaPageRecordResponse(table: SchemaPageTableResponse(name: table.name, columns: table.columns), row: values)
+    }
+
     /// Creates one row using the inspected table contract and assigns its Hub ownership on the server.
     func createRecord(tableName: String, values: [String: PatchJSONValue]) async throws -> SchemaPageRecordCreationResponse {
         let schema = try await LiveSchemaService(database: database).inspect()
@@ -188,37 +236,73 @@ struct SchemaPageService: Sendable {
         for column in acceptedColumns {
             if let value = insertValues[column.name] {
                 try Self.validate(value, for: column)
-            } else if column.primaryKey && column.dataType.uppercased().contains("INT") {
-                continue // SQLite assigns integer primary keys.
             } else if !column.nullable && column.defaultValue == nil {
+                if column.primaryKey && generatedIntegerPrimaryKey { continue }
                 throw SchemaPageError.invalidRecord("\(column.name) is required.")
             }
         }
 
-        let suppliedColumns = acceptedColumns.filter { insertValues[$0.name] != nil }
-        var query = SQLQueryString("INSERT INTO \(ident: table.name) (")
-        for (index, column) in suppliedColumns.enumerated() {
-            if index > 0 { query.appendInterpolation(unsafeRaw: ", ") }
-            query.appendInterpolation(ident: column.name)
-        }
-        if !suppliedColumns.isEmpty { query.appendInterpolation(unsafeRaw: ", ") }
-        query.appendInterpolation(ident: "HubID")
-        query.appendInterpolation(unsafeRaw: ") VALUES (")
-        for (index, column) in suppliedColumns.enumerated() {
-            if index > 0 { query.appendInterpolation(unsafeRaw: ", ") }
-            try Self.bind(insertValues[column.name]!, to: &query)
-        }
-        if !suppliedColumns.isEmpty { query.appendInterpolation(unsafeRaw: ", ") }
-        query.appendInterpolation(bind: hubID)
-        query.appendInterpolation(unsafeRaw: ")")
-        let insertQuery = query
-        let generatedIDValue = insertValues[primaryKey.name]
-
+        let baseInsertValues = insertValues
         let recordID = try await database.transaction { transaction in
             guard let transactionSQL = transaction as? SQLDatabase else {
                 throw SchemaPageError.unavailableDatabase
             }
-            try await transactionSQL.raw(insertQuery).run()
+            var transactionValues = baseInsertValues
+
+            if generatedIntegerPrimaryKey {
+                let maximumRow = try await transactionSQL.raw(SQLQueryString(
+                    "SELECT MAX(\(ident: primaryKey.name)) AS maximumID FROM \(ident: table.name)"
+                )).first()
+                let maximumID: Int64?
+                if let maximumRow {
+                    maximumID = try maximumRow.decode(column: "maximumID", as: Int64?.self)
+                } else {
+                    maximumID = nil
+                }
+                let definitionRow = try await transactionSQL.raw(SQLQueryString(
+                    "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = \(bind: table.name)"
+                )).first()
+                let definition = try definitionRow?.decode(column: "sql", as: String?.self)?.lowercased() ?? ""
+                let lastAutoincrementID: Int64?
+                if definition.contains("autoincrement") {
+                    let sequenceRow = try await transactionSQL.raw(SQLQueryString(
+                        "SELECT seq FROM sqlite_sequence WHERE name = \(bind: table.name)"
+                    )).first()
+                    if let sequenceRow {
+                        lastAutoincrementID = try sequenceRow.decode(column: "seq", as: Int64.self)
+                    } else {
+                        lastAutoincrementID = nil
+                    }
+                } else {
+                    lastAutoincrementID = nil
+                }
+                let highestID = max(maximumID ?? 0, lastAutoincrementID ?? 0)
+                let (nextID, overflow) = highestID.addingReportingOverflow(1)
+                guard !overflow else {
+                    throw SchemaPageError.invalidRecord("A server-assigned integer ID is unavailable for this table.")
+                }
+                transactionValues[primaryKey.name] = .string(String(nextID))
+            }
+
+            let suppliedColumns = acceptedColumns.filter { transactionValues[$0.name] != nil }
+            var query = SQLQueryString("INSERT INTO \(ident: table.name) (")
+            for (index, column) in suppliedColumns.enumerated() {
+                if index > 0 { query.appendInterpolation(unsafeRaw: ", ") }
+                query.appendInterpolation(ident: column.name)
+            }
+            if !suppliedColumns.isEmpty { query.appendInterpolation(unsafeRaw: ", ") }
+            query.appendInterpolation(ident: "HubID")
+            query.appendInterpolation(unsafeRaw: ") VALUES (")
+            for (index, column) in suppliedColumns.enumerated() {
+                if index > 0 { query.appendInterpolation(unsafeRaw: ", ") }
+                try Self.bind(transactionValues[column.name]!, to: &query)
+            }
+            if !suppliedColumns.isEmpty { query.appendInterpolation(unsafeRaw: ", ") }
+            query.appendInterpolation(bind: hubID)
+            query.appendInterpolation(unsafeRaw: ")")
+            let generatedIDValue = transactionValues[primaryKey.name]
+
+            try await transactionSQL.raw(query).run()
             if let value = generatedIDValue {
                 return try Self.stringValue(value)
             }

@@ -131,14 +131,45 @@ The migrations are ordered `TableViews` -> `ViewColumnConfigurations` ->
 `ViewQueryConfigurations`. They are isolated development/FIT/test database
 migrations and are not automatic startup migrations for the personal database.
 
+## Table-level relation and lookup properties
+
+`TablePropertyDefinitions` stores Hub-owned property configuration separately
+from per-view columns and query state. Each definition names a source property
+and, for a relation, an exact target table, primary key, and display column.
+Lookup definitions point to a relation and one property on its target table;
+the API computes that value when reading a record. The value is never copied
+into the source record. Replacing definitions is atomic, and table and column
+references are checked against the live SQLite schema before saving.
+
+| Route | Behavior |
+| --- | --- |
+| `GET /schema-builder/tables/:tableName/properties` | Read this Hub's table-level relation and lookup definitions. |
+| `PUT /schema-builder/tables/:tableName/properties` | Atomically replace definitions after Hub and schema validation. |
+| `GET /schema-builder/tables/:tableName/properties/:propertyID/options` | Search relation targets; optionally pass `recordID` so dependent relations filter through another relation. |
+| `GET /schema-builder/tables/:tableName/records/:recordID/properties` | Resolve relation labels and live lookup values for one Hub-owned record. |
+
+For Transactions, relation definitions map `CategoryID` to
+`BudgetCategories.CategoryID` and `SubcategoryID` to
+`BudgetSubcategories.SubcategoryID`. The subcategory relation can filter its
+target by the category relation. Existing transaction IDs remain in their
+canonical columns. Relation values and picker options only return target rows
+whose `HubID` matches the authenticated Hub. Lookup output is read-only and is
+resolved from the related row on demand.
+
+The additive `CreateTablePropertyDefinitions` migration is included in the
+local development/test profile, but is not an automatic startup migration for
+the personal database. Live execution follows the preview and confirmation
+workflow.
+
 ## Ownership and deletion
 
 Hub-scoped ownership is an authorization boundary, not only a relationship in
 the schema. Hub deletion is an explicit authorized metadata operation and may
-remove only that Hub's Table Views and their column/query metadata. View
-deletion removes only that view's configuration rows. No operation in this
-architecture deletes or rewrites `Services`, `Transactions`, or any other
-canonical record table; no cascade crosses into another Hub.
+remove only that Hub's Table Views, their column/query metadata, and its table
+property definitions. View deletion removes only that view's configuration
+rows. No operation in this architecture deletes or rewrites `Services`,
+`Transactions`, or any other canonical record table; no cascade crosses into
+another Hub.
 
 `TableViewService` performs default changes transactionally. Creating a
 conflicting default is rejected. Promoting a view clears other defaults, and

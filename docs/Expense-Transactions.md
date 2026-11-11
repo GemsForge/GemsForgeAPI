@@ -43,8 +43,18 @@ necessary. Amounts and discounts are validated as non-negative values.
 Image metadata lookup is handled by the transaction route after the reference
 has been validated. The service never loads binary file contents.
 
-Category, subcategory, Service Account, and image-reference validation will be
-tightened as their focused issues are implemented.
+Service Account and image-reference validation are maintained by their
+respective relationship and attachment services.
+
+Category and subcategory references are Hub-validated when transactions are
+created or updated. Table-level relation metadata maps `CategoryID` to
+`BudgetCategories.CategoryID` (displaying `Category`) and `SubcategoryID` to
+`BudgetSubcategories.SubcategoryID` (displaying `Subcategory`). Subcategory
+choices can be constrained by the selected category. Lookup properties read a
+selected field from the related record at request time, so renames are
+reflected without copying values into `Transactions`. See
+[`Table-View-Metadata-Architecture.md`](Table-View-Metadata-Architecture.md)
+for the Hub-scoped API contract.
 
 ## HTTP endpoints
 
