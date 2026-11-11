@@ -1,15 +1,5 @@
 import { lazy, Suspense, Component, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import {
-  Link,
-  Navigate,
-  Outlet,
-  Route,
-  Routes,
-  useLocation,
-  useNavigate,
-  useOutletContext,
-  useParams,
-} from "react-router-dom";
+import { Link, Navigate, Outlet, Route, Routes, useLocation, useOutletContext, useParams } from "react-router-dom";
 import type { UseQueryResult } from "@tanstack/react-query";
 import { useDomainsQuery } from "../data/domainQueries";
 import {
@@ -20,28 +10,16 @@ import {
   useTransactionsQuery,
   useServiceAccountsQuery,
 } from "../data/lifeQueries";
-import { usePagesQuery, usePageMutation, type PageScope } from "../data/workflowQueries";
 import { QueryFeedback } from "../components/QueryFeedback";
 import { Notice } from "../components/Notice";
 import { GemLifeShell } from "../components/layout/GemLifeShell";
 import { DomainSidebar } from "../features/domains/DomainSidebar";
-import { useCreateDomainMutation } from "../data/domainQueries";
-import { DomainCreateForm } from "../features/create/RecordCreateForms";
 import { LocalSession } from "../components/LocalSession";
 import { RequireAuth } from "../auth/RequireAuth";
 import { SignInPage } from "../auth/SignInPage";
 import { isRecoveryLink, ResetPasswordPage } from "../auth/ResetPasswordPage";
 import { WireframeAppHeader, WireframeNavigationProvider } from "../features/workspace/WireframeAppHeader";
-import { WireframeAppShell } from "../features/workspace/WireframeAppShell";
-const ForgeKeeperView = lazy(() =>
-  import("../features/forgekeeper/ForgeKeeperView").then((module) => ({ default: module.ForgeKeeperView })),
-);
-const GemHuesView = lazy(() =>
-  import("../features/gem-hues/GemHuesView").then((module) => ({ default: module.GemHuesView })),
-);
-const EducationView = lazy(() =>
-  import("../features/education/EducationView").then((module) => ({ default: module.EducationView })),
-);
+import { WireframeAppShell, useWireframeShell } from "../features/workspace/WireframeAppShell";
 const EducationWireframeView = lazy(() =>
   import("../features/education/EducationWireframeView").then((module) => ({ default: module.EducationWireframeView })),
 );
@@ -66,36 +44,8 @@ const ServiceCatalogWireframeView = lazy(() =>
     default: module.ServiceCatalogWireframeView,
   })),
 );
-const EmploymentView = lazy(() =>
-  import("../features/employment/EmploymentView").then((module) => ({ default: module.EmploymentView })),
-);
-const AddressesView = lazy(() =>
-  import("../features/addresses/AddressesView").then((module) => ({ default: module.AddressesView })),
-);
-const TransactionsView = lazy(() =>
-  import("../features/transactions/TransactionsView").then((module) => ({ default: module.TransactionsView })),
-);
-const ServiceAccountsView = lazy(() =>
-  import("../features/service-accounts/ServiceAccountsView").then((module) => ({
-    default: module.ServiceAccountsView,
-  })),
-);
-const LocalDatabaseView = lazy(() =>
-  import("../features/databases/LocalDatabaseView").then((module) => ({ default: module.LocalDatabaseView })),
-);
-const SchemaBuilderView = lazy(() =>
-  import("../features/schema/SchemaBuilderView").then((module) => ({ default: module.SchemaBuilderView })),
-);
-const SchemaTablePage = lazy(() =>
-  import("../features/schema/SchemaTablePage").then((module) => ({ default: module.SchemaTablePage })),
-);
 const WireframeSchemaPage = lazy(() =>
   import("../features/schema/WireframeSchemaPage").then((module) => ({ default: module.WireframeSchemaPage })),
-);
-const LiveDatabaseMigrationView = lazy(() =>
-  import("../features/schema/LiveDatabaseMigrationView").then((module) => ({
-    default: module.LiveDatabaseMigrationView,
-  })),
 );
 const WorkspaceView = lazy(() =>
   import("../features/workspace/WorkspaceView").then((module) => ({ default: module.WorkspaceView })),
@@ -204,10 +154,25 @@ function Layout() {
   );
 }
 
+type ShellNotifications = Notifications & { notice: { message: string; kind: "error" | "success" } | null };
+
 function WireframeCanvas() {
   const location = useLocation();
+  const [notice, setNotice] = useState<ShellNotifications["notice"]>(null);
+  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const onError = useCallback((error: unknown) => {
+    clearTimeout(timer.current);
+    setNotice({ message: error instanceof Error ? error.message : "Request failed.", kind: "error" });
+  }, []);
+  const onSuccess = useCallback((message: string) => {
+    clearTimeout(timer.current);
+    setNotice({ message, kind: "success" });
+    timer.current = setTimeout(() => setNotice(null), 3500);
+  }, []);
+  useEffect(() => () => clearTimeout(timer.current), []);
   useEffect(() => {
-    document.title = "Gem Life · " + (location.pathname.split("/")[1] || "Wireframe");
+    setNotice(null);
+    document.title = "Gem Life · " + (location.pathname.split("/")[1] || "Home");
     document.getElementById("main-content")?.focus();
   }, [location.pathname]);
 
@@ -215,11 +180,11 @@ function WireframeCanvas() {
     <div className="wireframe-canvas">
       <WireframeNavigationProvider>
         <WireframeAppHeader />
-        <main className="wireframe-canvas-content" id="main-content" tabIndex={-1} aria-label="Wireframe screen">
+        <main className="wireframe-canvas-content" id="main-content" tabIndex={-1} aria-label="Gem Life screen">
           <WireframeAppShell>
             <ScreenBoundary key={location.pathname}>
-              <Suspense fallback={<p role="status">Loading wireframe…</p>}>
-                <Outlet />
+              <Suspense fallback={<p role="status">Loading screen…</p>}>
+                <Outlet context={{ onError, onSuccess, notice } satisfies ShellNotifications} />
               </Suspense>
             </ScreenBoundary>
           </WireframeAppShell>
@@ -227,6 +192,49 @@ function WireframeCanvas() {
       </WireframeNavigationProvider>
     </div>
   );
+}
+
+/** Content column for screens that do not render their own MVP2 page view. */
+function ShellPage({ children }: { children: ReactNode }) {
+  const { notice } = useOutletContext<ShellNotifications>();
+  useWireframeShell({ recordCount: 0 });
+  return (
+    <section className="wireframe-demo-main wireframe-shell-page">
+      <Notice message={notice?.message ?? null} kind={notice?.kind} />
+      {children}
+    </section>
+  );
+}
+
+/** Retired `*-wireframe` URLs keep working by redirecting to their canonical route. */
+const retiredWireframeRoutes = [
+  ["home-wireframe", ""],
+  ["domains-wireframe", "/domains"],
+  ["forgekeeper-wireframe", "/forgekeeper"],
+  ["education-wireframe", "/education"],
+  ["employment-wireframe", "/employment"],
+  ["addresses-wireframe", "/addresses"],
+  ["transactions-wireframe", "/transactions"],
+  ["gemhues-wireframe", "/gemhues"],
+  ["service-catalog-wireframe", "/service-accounts"],
+  ["local-databases-wireframe", "/local-databases"],
+  ["local-database-wireframe", "/local-databases/new"],
+  ["schema-builder-wireframe", "/schema-builder"],
+  ["schema-wireframe", "/schema"],
+  ["live-database-wireframe", "/live-database"],
+  ["trash-wireframe", "/trash"],
+  ["application-settings-wireframe", "/application-settings"],
+] as const;
+
+function RetiredWireframeRedirect({ from, to }: { from: string; to: string }) {
+  const location = useLocation();
+  const rest = location.pathname.slice(from.length + 1);
+  return <Navigate replace to={{ pathname: `${to}${rest}` || "/", search: location.search, hash: location.hash }} />;
+}
+
+function DomainPagesRedirect() {
+  const { domainID = "" } = useParams();
+  return <Navigate replace to={`/forgekeeper/domain/${encodeURIComponent(domainID)}`} />;
 }
 
 function QueryScreen<T>({ query, children }: { query: UseQueryResult<T, Error>; children: (data: T) => ReactNode }) {
@@ -238,85 +246,19 @@ function QueryScreen<T>({ query, children }: { query: UseQueryResult<T, Error>; 
   );
 }
 
-function Home() {
-  return <Workspace />;
+/** Collection routes accept the collection root and `record/:id`; anything else is not found. */
+function CollectionRoute({ children }: { children: ReactNode }) {
+  const { "*": rest = "" } = useParams();
+  if (rest && !/^record\/[^/]+$/.test(rest)) {
+    return (
+      <ShellPage>
+        <NotFound />
+      </ShellPage>
+    );
+  }
+  return children;
 }
-function Domains() {
-  const query = useDomainsQuery();
-  const create = useCreateDomainMutation();
-  const [creating, setCreating] = useState(false);
-  return (
-    <>
-      <div className="content-heading">
-        <h2>Domains</h2>
-        <button type="button" onClick={() => setCreating(true)}>
-          Add domain
-        </button>
-      </div>
-      {creating && (
-        <DomainCreateForm
-          onCancel={() => setCreating(false)}
-          onCreate={async (payload) => {
-            await create.mutateAsync(payload);
-            setCreating(false);
-          }}
-        />
-      )}
-      <QueryScreen query={query}>
-        {(domains) => (
-          <div className="page-list">
-            {!domains.length && <p>No domains yet.</p>}
-            {domains.map((domain) => (
-              <Link className="page-card" to={`/domains/${encodeURIComponent(domain.id)}`} key={domain.id}>
-                <h3>{domain.title}</h3>
-                <p>{domain.description}</p>
-              </Link>
-            ))}
-          </div>
-        )}
-      </QueryScreen>
-    </>
-  );
-}
-function Pages({ kind }: { kind: PageScope["kind"] }) {
-  const { domainID, pageID } = useParams();
-  const domains = useDomainsQuery();
-  const navigate = useNavigate();
-  const { onSuccess } = useOutletContext<Notifications>();
-  const validPageID =
-    pageID !== undefined && /^\d+$/.test(pageID) && Number.isSafeInteger(Number(pageID)) && Number(pageID) > 0;
-  const domain = domains.data?.find((item) => item.id === domainID) ?? null;
-  const scope: PageScope =
-    kind === "domain" ? { kind, id: domainID! } : kind === "children" ? { kind, id: Number(pageID) } : { kind };
-  const query = usePagesQuery(scope, kind === "roots" || (kind === "children" ? validPageID : domain !== null));
-  const mutation = usePageMutation();
-  if (kind === "children" && !validPageID) return <NotFound />;
-  if (kind === "domain" && !domain) return domains.data ? <NotFound /> : <QueryFeedback query={domains} />;
-  return (
-    <QueryScreen query={query}>
-      {(pages) => (
-        <ForgeKeeperView
-          domain={domain}
-          pages={pages}
-          onLoadRoots={() => navigate("/forgekeeper")}
-          onLoadChildren={(id) => navigate(`/forgekeeper/${id}/children`)}
-          onPatch={async (id, patch) => {
-            await mutation.mutateAsync({ id, patch });
-            onSuccess("Page metadata updated.");
-          }}
-        />
-      )}
-    </QueryScreen>
-  );
-}
-function Hues() {
-  const query = useGemHuesQuery(true);
-  return <QueryScreen query={query}>{(hues) => <GemHuesView hues={hues} />}</QueryScreen>;
-}
-function Education() {
-  const query = useEducationQuery(true);
-  return <QueryScreen query={query}>{(records) => <EducationView records={records} />}</QueryScreen>;
-}
+
 function EducationWireframe() {
   const query = useEducationQuery(true);
   return <QueryScreen query={query}>{(records) => <EducationWireframeView records={records} />}</QueryScreen>;
@@ -341,36 +283,15 @@ function ServiceCatalogWireframe() {
   const query = useServiceAccountsQuery(true);
   return <QueryScreen query={query}>{(records) => <ServiceCatalogWireframeView records={records} />}</QueryScreen>;
 }
-function Employment() {
-  const query = useEmploymentQuery(true);
-  return <QueryScreen query={query}>{(records) => <EmploymentView records={records} />}</QueryScreen>;
-}
-function Addresses() {
-  const query = useAddressesQuery(true);
-  return <QueryScreen query={query}>{(records) => <AddressesView records={records} />}</QueryScreen>;
-}
-function Transactions() {
-  const query = useTransactionsQuery(true);
-  return <QueryScreen query={query}>{(records) => <TransactionsView records={records} />}</QueryScreen>;
-}
-function ServiceAccounts() {
-  const query = useServiceAccountsQuery(true);
-  return <QueryScreen query={query}>{(records) => <ServiceAccountsView records={records} />}</QueryScreen>;
-}
-function Databases() {
-  return <LocalDatabaseView {...useOutletContext<Notifications>()} />;
-}
 function Workspace() {
-  return <WorkspaceView onSuccess={useOutletContext<Notifications>().onSuccess} />;
+  return (
+    <ShellPage>
+      <WorkspaceView onSuccess={useOutletContext<ShellNotifications>().onSuccess} />
+    </ShellPage>
+  );
 }
 function WireframeDemo() {
   return <WireframeDemoView />;
-}
-function Schema() {
-  return <SchemaBuilderView {...useOutletContext<Notifications>()} />;
-}
-function LiveDatabase() {
-  return <LiveDatabaseMigrationView {...useOutletContext<Notifications>()} />;
 }
 function NotFound() {
   return (
@@ -397,24 +318,80 @@ export function AppRoutes() {
             </LocalSession>
           }
         >
-          <Route path="home-wireframe" element={<WireframeHomePage />} />
-          <Route path="local-databases-wireframe" element={<WireframeDatabasesPage />} />
-          <Route path="application-settings-wireframe" element={<WireframeSettingsPage />} />
-          <Route path="trash-wireframe" element={<WireframeTrashPage />} />
-          <Route path="domains-wireframe" element={<WireframeDomainsPage />} />
-          <Route path="forgekeeper-wireframe" element={<WireframeForgeKeeperPage kind="roots" />} />
-          <Route path="forgekeeper-wireframe/domain/:domainID" element={<WireframeForgeKeeperPage kind="domain" />} />
-          <Route path="forgekeeper-wireframe/:pageID/children" element={<WireframeForgeKeeperPage kind="children" />} />
-          <Route path="local-database-wireframe" element={<WireframeLocalDatabaseCreationPage />} />
-          <Route path="schema-builder-wireframe" element={<WireframeSchemaBuilderPage />} />
-          <Route path="schema-wireframe/:tableName" element={<WireframeSchemaPage />} />
-          <Route path="live-database-wireframe" element={<WireframeLiveDatabasePage />} />
-          <Route path="education-wireframe/*" element={<EducationWireframe />} />
-          <Route path="employment-wireframe/*" element={<EmploymentWireframe />} />
-          <Route path="addresses-wireframe/*" element={<AddressesWireframe />} />
-          <Route path="transactions-wireframe/*" element={<TransactionsWireframe />} />
-          <Route path="gemhues-wireframe/*" element={<GemHuesWireframe />} />
-          <Route path="service-catalog-wireframe/*" element={<ServiceCatalogWireframe />} />
+          <Route index element={<WireframeHomePage />} />
+          <Route path="workspace" element={<Workspace />} />
+          <Route path="domains" element={<WireframeDomainsPage />} />
+          <Route path="domains/:domainID" element={<DomainPagesRedirect />} />
+          <Route path="forgekeeper" element={<WireframeForgeKeeperPage kind="roots" />} />
+          <Route path="forgekeeper/domain/:domainID" element={<WireframeForgeKeeperPage kind="domain" />} />
+          <Route path="forgekeeper/:pageID/children" element={<WireframeForgeKeeperPage kind="children" />} />
+          <Route
+            path="education/*"
+            element={
+              <CollectionRoute>
+                <EducationWireframe />
+              </CollectionRoute>
+            }
+          />
+          <Route
+            path="employment/*"
+            element={
+              <CollectionRoute>
+                <EmploymentWireframe />
+              </CollectionRoute>
+            }
+          />
+          <Route
+            path="addresses/*"
+            element={
+              <CollectionRoute>
+                <AddressesWireframe />
+              </CollectionRoute>
+            }
+          />
+          <Route
+            path="transactions/*"
+            element={
+              <CollectionRoute>
+                <TransactionsWireframe />
+              </CollectionRoute>
+            }
+          />
+          <Route path="expenses" element={<Navigate to="/transactions" replace />} />
+          <Route
+            path="gemhues/*"
+            element={
+              <CollectionRoute>
+                <GemHuesWireframe />
+              </CollectionRoute>
+            }
+          />
+          <Route
+            path="service-accounts/*"
+            element={
+              <CollectionRoute>
+                <ServiceCatalogWireframe />
+              </CollectionRoute>
+            }
+          />
+          <Route path="local-databases" element={<WireframeDatabasesPage />} />
+          <Route path="local-databases/new" element={<WireframeLocalDatabaseCreationPage />} />
+          <Route path="schema-builder" element={<WireframeSchemaBuilderPage />} />
+          <Route path="schema/:tableName" element={<WireframeSchemaPage />} />
+          <Route path="live-database" element={<WireframeLiveDatabasePage />} />
+          <Route path="trash" element={<WireframeTrashPage />} />
+          <Route path="application-settings" element={<WireframeSettingsPage />} />
+          {retiredWireframeRoutes.map(([from, to]) => (
+            <Route path={`${from}/*`} element={<RetiredWireframeRedirect from={from} to={to} />} key={from} />
+          ))}
+          <Route
+            path="*"
+            element={
+              <ShellPage>
+                <NotFound />
+              </ShellPage>
+            }
+          />
         </Route>
         <Route
           element={
@@ -423,25 +400,7 @@ export function AppRoutes() {
             </LocalSession>
           }
         >
-          <Route index element={<Home />} />
-          <Route path="domains" element={<Domains />} />
-          <Route path="workspace" element={<Workspace />} />
           <Route path="wireframe-demo" element={<WireframeDemo />} />
-          <Route path="domains/:domainID" element={<Pages kind="domain" />} />
-          <Route path="forgekeeper" element={<Pages kind="roots" />} />
-          <Route path="forgekeeper/:pageID/children" element={<Pages kind="children" />} />
-          <Route path="gemhues" element={<Hues />} />
-          <Route path="education" element={<Education />} />
-          <Route path="employment" element={<Employment />} />
-          <Route path="addresses" element={<Addresses />} />
-          <Route path="transactions" element={<Transactions />} />
-          <Route path="service-accounts" element={<ServiceAccounts />} />
-          <Route path="expenses" element={<Navigate to="/transactions" replace />} />
-          <Route path="local-databases" element={<Databases />} />
-          <Route path="schema-builder" element={<Schema />} />
-          <Route path="schema/:tableName" element={<SchemaTablePage />} />
-          <Route path="live-database" element={<LiveDatabase />} />
-          <Route path="*" element={<NotFound />} />
         </Route>
       </Route>
     </Routes>
