@@ -69,7 +69,7 @@ export function CreateFormFrame({
         {title}
       </SizableText>
       {error && (
-        <SizableText role="alert" color="$gemDanger">
+        <SizableText role="alert" color="$danger">
           {error}
         </SizableText>
       )}

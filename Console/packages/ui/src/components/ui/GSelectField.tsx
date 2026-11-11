@@ -113,7 +113,7 @@ export function GSelectField({
           {displayValue ?? options.find((option) => option.value === value)?.label ?? "—"}
         </GemFieldDisplayValue>
         {error && (
-          <SizableText role="alert" color="$gemDanger" fontSize="$1">
+          <SizableText role="alert" color="$danger" fontSize="$1">
             {error}
           </SizableText>
         )}
@@ -228,7 +228,7 @@ export function GSelectField({
         </Select.Content>
       </Select>
       {error && (
-        <SizableText id={errorID} role="alert" color="$gemDanger" fontSize="$1">
+        <SizableText id={errorID} role="alert" color="$danger" fontSize="$1">
           {error}
         </SizableText>
       )}

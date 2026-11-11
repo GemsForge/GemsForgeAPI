@@ -327,7 +327,7 @@ export function GDateField({
         </Popover.Content>
       </Popover>
       {error && (
-        <SizableText id={errorID} role="alert" color="$gemDanger" fontSize="$1">
+        <SizableText id={errorID} role="alert" color="$danger" fontSize="$1">
           {error}
         </SizableText>
       )}
