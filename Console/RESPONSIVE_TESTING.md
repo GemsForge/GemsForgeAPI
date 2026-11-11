@@ -1,9 +1,9 @@
 # Responsive verification
 
 Start the dev server, then open `/responsive-fixture.html`. This development-only
-entry uses the real shell, sidebar, table, file preview, page editor, and schema
-builder with synthetic data. All HTTP requests are intercepted locally; writes
-are rejected. It is not included in the production Vite build.
+entry uses `AppShell`, its navigation, a table, file preview, page editor, and
+schema builder with synthetic data. All HTTP requests are intercepted locally;
+writes are rejected. It is not included in the production Vite build.
 
 Test compact (up to 640 CSS px), tablet (up to 900), intermediate (up to 1200),
 and desktop layouts. The workspace sidebar collapses below 900; feature grids
