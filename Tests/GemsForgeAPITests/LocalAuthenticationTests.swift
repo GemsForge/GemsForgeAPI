@@ -11,11 +11,7 @@ final class LocalAuthenticationTests: XCTestCase {
             try await self.configureTestApp(app)
             registerLocalAuthenticationRoutes(
                 app,
-                configuration: LocalAuthenticationConfiguration(
-                    username: "owner",
-                    password: "secret",
-                    accountID: "account-1"
-                )
+                configuration: { Self.testConfiguration }
             )
             app.get("private") { request throws -> String in
                 try request.requireAuthenticatedAccountID()
@@ -51,11 +47,7 @@ final class LocalAuthenticationTests: XCTestCase {
             try await self.configureTestApp(app)
             registerLocalAuthenticationRoutes(
                 app,
-                configuration: LocalAuthenticationConfiguration(
-                    username: "owner",
-                    password: "secret",
-                    accountID: "account-1"
-                )
+                configuration: { Self.testConfiguration }
             )
         }) { app in
             try await app.test(.POST, "auth/local", beforeRequest: { request in
@@ -67,7 +59,7 @@ final class LocalAuthenticationTests: XCTestCase {
     func testLocalSignInFailsWhenConfigurationIsMissing() async throws {
         try await withApp(configure: { app in
             try await self.configureTestApp(app)
-            registerLocalAuthenticationRoutes(app, configuration: nil)
+            registerLocalAuthenticationRoutes(app, configuration: { nil })
         }) { app in
             try await app.test(.POST, "auth/local", beforeRequest: { request in
                 try request.content.encode(LocalLoginBody(username: "owner", password: "secret"))
@@ -83,6 +75,10 @@ final class LocalAuthenticationTests: XCTestCase {
         app.middleware.use(SessionAuthenticationMiddleware(operatorAccountID: "account-1"))
         try await app.autoMigrate()
     }
+
+    private static let testConfiguration = LocalAuthenticationConfiguration(
+        username: "owner", password: "secret", accountID: "account-1"
+    )
 }
 
 private struct LocalLoginBody: Content {

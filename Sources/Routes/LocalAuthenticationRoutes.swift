@@ -19,10 +19,10 @@ struct LocalAuthenticationConfiguration: Sendable {
 
 func registerLocalAuthenticationRoutes(
     _ app: Application,
-    configuration: LocalAuthenticationConfiguration? = .fromEnvironment()
+    configuration: @escaping @Sendable () -> LocalAuthenticationConfiguration? = LocalAuthenticationConfiguration.fromEnvironment
 ) {
     app.post("auth", "local") { request async throws -> AuthenticationSessionResponse in
-        guard let configuration else {
+        guard let configuration = configuration() else {
             throw Abort(.serviceUnavailable, reason: "Local authentication is not configured.")
         }
         let input = try request.content.decode(LocalLoginRequest.self)
