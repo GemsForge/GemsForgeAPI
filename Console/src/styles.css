@@ -7993,3 +7993,16 @@ dialog {
     overflow-wrap: anywhere;
   }
 }
+
+.hybrid-workspace .workspace-knowledge-action {
+  /* Tamagui paints Button borders from --borderColor and its state variants;
+     the knowledge line is too faint for a control (WCAG 1.4.11), so use mint. */
+  --borderColor: var(--gem-knowledge-mint);
+  --borderColorHover: var(--gem-knowledge-mint);
+  --borderColorFocus: var(--gem-knowledge-mint);
+  --borderColorPress: var(--gem-knowledge-mint);
+  background: var(--gem-knowledge-panel);
+}
+.hybrid-workspace .workspace-knowledge-action:hover {
+  background: var(--gem-knowledge-panel-light);
+}
