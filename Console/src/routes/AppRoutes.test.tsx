@@ -23,6 +23,8 @@ function HistoryControls() {
     </>
   );
 }
+// MVP2 collection screens are large lazy chunks; give slower CI runners time to load them.
+const lazyScreen = { timeout: 5000 };
 function BrokenScreen(): never {
   throw new Error("employment render failed");
 }
@@ -84,14 +86,14 @@ describe("Gem Life navigation", () => {
         </TamaguiProvider>
       </QueryClientProvider>,
     );
-    expect(await screen.findByRole("heading", { name: "Education" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Education" }, lazyScreen)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Home" })).toHaveAttribute("href", "/app");
   });
   it("renders wireframe routes on their dedicated canvas", async () => {
     vi.spyOn(api, "listEducation").mockResolvedValue([]);
     vi.spyOn(api, "getSchemaPageTables").mockResolvedValue({ tables: [], availableTables: [] });
     setup("/education");
-    expect(await screen.findByRole("heading", { name: "Education" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Education" }, lazyScreen)).toBeInTheDocument();
     expect(screen.getByRole("main", { name: "Gem Life screen" })).toHaveClass("wireframe-canvas-content");
     expect(screen.getByRole("navigation", { name: "Workspace navigation" })).toHaveClass("wireframe-demo-sidebar");
     expect(screen.getByRole("link", { name: /Gem Hues/ })).toHaveAttribute("href", "/gemhues");
@@ -195,7 +197,7 @@ describe("Gem Life navigation", () => {
     expect(educationLink).not.toBeNull();
     fireEvent.click(educationLink!);
 
-    expect(await screen.findByRole("heading", { name: "Education" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Education" }, lazyScreen)).toBeInTheDocument();
     expect(screen.getAllByRole("navigation", { name: "Workspace navigation" })).toEqual([navigation]);
     expect(navigation).toHaveClass("is-collapsed");
     expect(screen.getByRole("searchbox", { name: "Search workspace navigation" })).toHaveValue("Edu");
@@ -330,7 +332,7 @@ describe("Gem Life navigation", () => {
     vi.spyOn(api, "listEducation").mockResolvedValue([]);
     setup("/education");
 
-    await screen.findByRole("heading", { name: "Education" });
+    await screen.findByRole("heading", { name: "Education" }, lazyScreen);
     const headerToggle = await screen.findByRole("button", { name: "Open navigation" });
     fireEvent.click(headerToggle);
     expect(headerToggle).toHaveAttribute("aria-expanded", "true");
@@ -349,7 +351,7 @@ describe("Gem Life navigation", () => {
       vi.spyOn(api, "listEducation").mockResolvedValue([]);
       setup("/education");
 
-      await screen.findByRole("heading", { name: "Education" });
+      await screen.findByRole("heading", { name: "Education" }, lazyScreen);
       const headerToggle = await screen.findByRole("button", { name: "Open navigation" });
       fireEvent.click(headerToggle);
       expect(headerToggle).toHaveAttribute("aria-expanded", "true");
@@ -383,19 +385,19 @@ describe("Gem Life navigation", () => {
     vi.spyOn(api, "listEducation").mockResolvedValue([]);
     vi.spyOn(api, "getSchemaPageTables").mockResolvedValue({ tables: [], availableTables: [] });
     setup(path);
-    expect(await screen.findByRole("heading", { name: heading })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: heading }, lazyScreen)).toBeInTheDocument();
   });
   it("keeps Back and Forward synchronized with the route", async () => {
     vi.spyOn(api, "listEducation").mockResolvedValue([]);
     vi.spyOn(api, "listEmployment").mockResolvedValue([]);
     setup("/education");
-    await screen.findByRole("heading", { name: "Education" });
+    await screen.findByRole("heading", { name: "Education" }, lazyScreen);
     const navigation = screen.getByRole("navigation", { name: "Workspace navigation" });
     fireEvent.click(navigation.querySelector<HTMLAnchorElement>('a[href="/employment"]')!);
     await screen.findByRole("heading", { name: "Employment" });
     expect(screen.getByRole("main", { name: "Gem Life screen" })).toHaveFocus();
     fireEvent.click(screen.getByRole("button", { name: "Go back" }));
-    await screen.findByRole("heading", { name: "Education" });
+    await screen.findByRole("heading", { name: "Education" }, lazyScreen);
     fireEvent.click(screen.getByRole("button", { name: "Go forward" }));
     await screen.findByRole("heading", { name: "Employment" });
   });
