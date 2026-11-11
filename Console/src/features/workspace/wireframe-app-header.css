@@ -130,3 +130,30 @@
     display: none;
   }
 }
+
+.wireframe-page-links-error {
+  display: grid;
+  justify-items: start;
+  gap: 0.4rem;
+}
+
+.wireframe-page-links .wireframe-page-links-retry {
+  min-height: 32px;
+  padding: 0.25rem 0.7rem;
+  border: 1px solid var(--gem-wireframe-border-strong, #b9c9c6);
+  border-radius: 0.5rem;
+  background: var(--gem-wireframe-surface, #fff);
+  color: var(--gem-wireframe-text, #233c42);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.wireframe-page-links .wireframe-page-links-retry:focus-visible {
+  outline: 2px solid var(--gem-wireframe-action, #287ca5);
+  outline-offset: 2px;
+}
+
+.wireframe-demo-sidebar.is-collapsed .wireframe-page-links-error {
+  display: none;
+}
