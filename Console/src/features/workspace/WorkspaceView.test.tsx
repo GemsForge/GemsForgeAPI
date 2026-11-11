@@ -40,6 +40,11 @@ function renderWorkspace() {
   );
 }
 
+/** The dialog moves focus inside once the browser is idle; submit only after that, as a user would. */
+async function waitForDialogFocus(dialog: HTMLElement) {
+  await waitFor(() => expect(dialog).toContainElement(document.activeElement as HTMLElement));
+}
+
 describe("connected knowledge workspace", () => {
   beforeEach(() => {
     workflow.query = { data: pages, isLoading: false, error: null, refetch: vi.fn() };
@@ -73,6 +78,7 @@ describe("connected knowledge workspace", () => {
     fireEvent.click(await screen.findByRole("button", { name: "＋ Add row" }));
 
     const dialog = await screen.findByRole("dialog", { name: "Add table row", hidden: true });
+    await waitForDialogFocus(dialog);
     expect(within(dialog).getByRole("button", { name: "Cancel", hidden: true })).toBeInTheDocument();
     fireEvent.click(within(dialog).getByRole("button", { name: "Keep in this preview", hidden: true }));
 
@@ -100,6 +106,7 @@ describe("connected knowledge workspace", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Edit note" }));
 
     const dialog = await screen.findByRole("dialog", { name: "Edit note", hidden: true });
+    await waitForDialogFocus(dialog);
     const field = within(dialog).getByLabelText(/^Note/);
     fireEvent.change(field, { target: { value: "   " } });
     fireEvent.click(within(dialog).getByRole("button", { name: "Keep in this preview", hidden: true }));
