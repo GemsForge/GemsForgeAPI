@@ -132,21 +132,28 @@ struct TablePropertyService: Sendable {
         let schema = try await LiveSchemaService(database: database).inspect()
         guard let target = schema.tables.first(where: { $0.name == targetName }),
               Self.columnsByName(target)[keyName] != nil,
-              Self.columnsByName(target)[displayName] != nil
+              Self.columnsByName(target)[displayName] != nil,
+              Self.columnsByName(target)["HubID"] != nil
         else { throw TablePropertyServiceError.tableUnavailable }
 
         var query = SQLQueryString("SELECT CAST(\(ident: keyName) AS TEXT) AS \(ident: "recordID"), CAST(\(ident: displayName) AS TEXT) AS \(ident: "displayValue") FROM \(ident: targetName) WHERE \(ident: "HubID") = \(bind: hubID)")
-        if let filterID = definition.filterByDefinitionID,
-           let filterColumn = definition.targetFilterColumnName,
-           let filterRelation = definitions.first(where: { $0.id == filterID }),
-           let sourceColumn = filterRelation.sourceColumnName {
+        if let filterID = definition.filterByDefinitionID {
+            guard let filterColumn = definition.targetFilterColumnName,
+                  let filterRelation = definitions.first(where: { $0.id == filterID && $0.kind == TablePropertyKind.relation.rawValue }),
+                  let sourceColumn = filterRelation.sourceColumnName,
+                  let targetFilterColumn = Self.columnsByName(target)[filterColumn]
+            else {
+                throw TablePropertyServiceError.invalidDefinition("The relation filter references a missing live column or relation.")
+            }
             guard let recordID,
                   let sourceValue = try await sourceValue(table: tableName, recordID: recordID, column: sourceColumn)
             else { return [] }
             query.appendInterpolation(unsafeRaw: " AND ")
             query.appendInterpolation(ident: filterColumn)
             query.appendInterpolation(unsafeRaw: " = ")
-            Self.appendTyped(sourceValue, column: Self.columnsByName(target)[filterColumn], to: &query)
+            Self.appendTyped(sourceValue, column: targetFilterColumn, to: &query)
+        } else if definition.targetFilterColumnName != nil {
+            throw TablePropertyServiceError.invalidDefinition("A relation filter column requires filterByDefinitionID.")
         }
         if let search = search?.trimmingCharacters(in: .whitespacesAndNewlines), !search.isEmpty {
             query.appendInterpolation(unsafeRaw: " AND CAST(")

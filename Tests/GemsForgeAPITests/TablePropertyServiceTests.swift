@@ -178,4 +178,49 @@ final class TablePropertyServiceTests: XCTestCase {
             }
         }
     }
+
+    func testOptionsRejectsFilterColumnRemovedAfterDefinitionWasSaved() async throws {
+        try await withApp(configure: { app in
+            app.databases.use(.sqlite(.memory), as: .sqlite)
+            app.migrations.add(CreateAuthenticationSchema())
+            app.migrations.add(CreateHubs())
+            app.migrations.add(CreateTableViews())
+            app.migrations.add(AddTableViewWorkspaceState())
+            app.migrations.add(CreateTablePropertyDefinitions())
+            app.migrations.add(CreateTablePropertyFixtures())
+            try await app.autoMigrate()
+            guard let sql = app.db as? SQLDatabase else { return XCTFail("Expected SQLite SQL database.") }
+            try await sql.raw("INSERT INTO AppleAccounts (AccountID, AppleSubject) VALUES ('account-a', 'subject-a')").run()
+            try await sql.raw("INSERT INTO Hubs (HubID, AccountID, Name) VALUES ('hub-a', 'account-a', 'A')").run()
+            try await TableView(hubID: "hub-a", tableName: "BudgetCategories", name: "Budget Categories", viewType: .table, isDefault: true).save(on: app.db)
+            try await TableView(hubID: "hub-a", tableName: "BudgetSubcategories", name: "Budget Subcategories", viewType: .table, isDefault: true).save(on: app.db)
+            try await sql.raw("INSERT INTO BudgetCategories (CategoryID, HubID, Category) VALUES (1, 'hub-a', 'Food')").run()
+            try await sql.raw("INSERT INTO Transactions (TransactionID, HubID, CategoryID, SubcategoryID) VALUES ('txn-a', 'hub-a', 1, NULL)").run()
+        }) { app in
+            let service = TablePropertyService(database: app.db, hubID: "hub-a")
+            let definitions = [
+                TablePropertyDefinitionRequest(id: "category", name: "Category", kind: .relation,
+                    sourceColumnName: "CategoryID", targetTableName: "BudgetCategories",
+                    targetKeyColumnName: "CategoryID", targetDisplayColumnName: "Category",
+                    relationDefinitionID: nil, targetColumnName: nil, filterByDefinitionID: nil,
+                    targetFilterColumnName: nil),
+                TablePropertyDefinitionRequest(id: "subcategory", name: "Subcategory", kind: .relation,
+                    sourceColumnName: "SubcategoryID", targetTableName: "BudgetSubcategories",
+                    targetKeyColumnName: "SubcategoryID", targetDisplayColumnName: "Subcategory",
+                    relationDefinitionID: nil, targetColumnName: nil, filterByDefinitionID: "category",
+                    targetFilterColumnName: "CategoryID"),
+            ]
+            _ = try await service.replace(tableName: "Transactions", definitions: definitions)
+            guard let sql = app.db as? SQLDatabase else { return XCTFail("Expected SQLite SQL database.") }
+            try await sql.raw("ALTER TABLE BudgetSubcategories RENAME TO BudgetSubcategoriesBeforeDrift").run()
+            try await sql.raw("CREATE TABLE BudgetSubcategories (SubcategoryID INTEGER PRIMARY KEY, HubID TEXT NOT NULL, Subcategory TEXT NOT NULL)").run()
+            try await sql.raw("DROP TABLE BudgetSubcategoriesBeforeDrift").run()
+            do {
+                _ = try await service.options(tableName: "Transactions", definitionID: "subcategory", recordID: "txn-a", search: nil, limit: 50)
+                XCTFail("A removed target filter column must produce a clear validation error.")
+            } catch let error as TablePropertyServiceError {
+                guard case .invalidDefinition = error else { return XCTFail("Unexpected error: \(error)") }
+            }
+        }
+    }
 }

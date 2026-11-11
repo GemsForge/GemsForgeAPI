@@ -14,7 +14,7 @@ final class TableBuilderContractTests: XCTestCase {
         ))
 
         XCTAssertEqual(definition.tableName, "HomeInventory")
-        XCTAssertEqual(definition.columns.count, 4)
+        XCTAssertEqual(definition.columns.count, 5)
         XCTAssertEqual(definition.columns[0].name, "ID")
         XCTAssertEqual(definition.columns[0].dataType, .text)
         XCTAssertTrue(definition.columns[0].primaryKey)
@@ -22,6 +22,7 @@ final class TableBuilderContractTests: XCTestCase {
         XCTAssertEqual(definition.columns[1].name, "HubID")
         XCTAssertEqual(definition.columns[1].dataType, .text)
         XCTAssertFalse(definition.columns[1].nullable)
+        XCTAssertEqual(definition.columns[2].name, "Title")
     }
 
     func testAcceptsTheSupportedSQLiteTypesCaseInsensitively() throws {

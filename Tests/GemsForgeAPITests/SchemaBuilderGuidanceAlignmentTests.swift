@@ -20,7 +20,8 @@ final class SchemaBuilderGuidanceAlignmentTests: XCTestCase {
             XCTAssertTrue(definition.columns[0].primaryKey)
             XCTAssertEqual(definition.columns[1].name, "HubID")
             XCTAssertFalse(definition.columns[1].nullable)
-            XCTAssertEqual(definition.columns[2].dataType, type)
+            XCTAssertEqual(definition.columns[2].name, "Title")
+            XCTAssertEqual(definition.columns[3].dataType, type)
         }
     }
 
@@ -30,7 +31,6 @@ final class SchemaBuilderGuidanceAlignmentTests: XCTestCase {
             TableBuilderRequest(tableName: "Example", columns: validColumns(duplicateName: "Value")),
             TableBuilderRequest(tableName: "Example", columns: validColumns(defaultValue: "(SELECT 1)")),
             TableBuilderRequest(tableName: "Example", columns: validColumns(reservedName: "ID")),
-            TableBuilderRequest(tableName: "Example", columns: [])
         ]
 
         for request in invalidRequests {
