@@ -3,10 +3,10 @@ import { Boxes, House, Network, ShieldCheck } from "lucide-react";
 import { GemButton } from "@gemsforge/ui";
 
 const primaryNavigation = [
-  { label: "Home", icon: House, to: "/home-wireframe" },
+  { label: "Home", icon: House, to: "/" },
   { label: "Workspace", icon: Boxes, to: "/workspace" },
-  { label: "Domains", icon: Network, to: "/domains-wireframe" },
-  { label: "ForgeKeeper", icon: ShieldCheck, to: "/forgekeeper-wireframe" },
+  { label: "Domains", icon: Network, to: "/domains" },
+  { label: "ForgeKeeper", icon: ShieldCheck, to: "/forgekeeper" },
 ] as const;
 
 export function WireframePrimaryLinks({ search }: { search: string }) {

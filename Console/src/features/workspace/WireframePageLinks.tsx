@@ -17,13 +17,13 @@ export function WireframePageLinks({ search }: { search: string }) {
     ...(domains.data ?? []).map((domain) => ({
       key: `domain-${domain.id}`,
       label: domain.title || domain.id,
-      to: `/forgekeeper-wireframe/domain/${encodeURIComponent(domain.id)}`,
+      to: `/forgekeeper/domain/${encodeURIComponent(domain.id)}`,
       kind: "domain" as const,
     })),
     ...(rootPages.data ?? []).map((page) => ({
       key: `page-${page.id}`,
       label: page.title || "Untitled page",
-      to: `/forgekeeper-wireframe/${page.id}/children`,
+      to: `/forgekeeper/${page.id}/children`,
       kind: "page" as const,
     })),
   ];

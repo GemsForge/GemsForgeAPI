@@ -33,7 +33,7 @@ afterEach(() => {
   rootPages = query({ data: [] });
 });
 
-function renderLinks(path = "/home-wireframe", search = "") {
+function renderLinks(path = "/", search = "") {
   render(
     <TamaguiProvider config={tamaguiConfig} defaultTheme="light">
       <MemoryRouter initialEntries={[path]}>
@@ -50,20 +50,14 @@ describe("Wireframe page navigation", () => {
     renderLinks();
 
     const pages = screen.getByRole("navigation", { name: "Pages" });
-    expect(screen.getByRole("link", { name: "Life domain" })).toHaveAttribute(
-      "href",
-      "/forgekeeper-wireframe/domain/Life",
-    );
-    expect(screen.getByRole("link", { name: "Field notes" })).toHaveAttribute(
-      "href",
-      "/forgekeeper-wireframe/7/children",
-    );
+    expect(screen.getByRole("link", { name: "Life domain" })).toHaveAttribute("href", "/forgekeeper/domain/Life");
+    expect(screen.getByRole("link", { name: "Field notes" })).toHaveAttribute("href", "/forgekeeper/7/children");
     expect(pages).toContainElement(screen.getByRole("link", { name: "Field notes" }));
   });
 
   it("marks the page for the current route", () => {
     rootPages = query({ data: [{ id: 7, parentID: null, domainID: "Life", title: "Field notes", description: "" }] });
-    renderLinks("/forgekeeper-wireframe/7/children");
+    renderLinks("/forgekeeper/7/children");
 
     expect(screen.getByRole("link", { name: "Field notes" })).toHaveAttribute("aria-current", "page");
   });
@@ -71,7 +65,7 @@ describe("Wireframe page navigation", () => {
   it("filters pages with the navigation search", () => {
     domains = query({ data: [{ id: "Life", title: "Life domain", description: "" }] });
     rootPages = query({ data: [{ id: 7, parentID: null, domainID: "Life", title: "Field notes", description: "" }] });
-    renderLinks("/home-wireframe", "field");
+    renderLinks("/", "field");
 
     expect(screen.getByRole("link", { name: "Field notes" })).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Life domain" })).not.toBeInTheDocument();

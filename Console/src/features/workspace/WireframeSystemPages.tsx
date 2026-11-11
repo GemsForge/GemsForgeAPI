@@ -64,12 +64,12 @@ export function WireframeSystemPage({
 }
 
 const collectionCards = [
-  { label: "Education", href: "/education-wireframe", icon: GraduationCap },
-  { label: "Employment", href: "/employment-wireframe", icon: BriefcaseBusiness },
-  { label: "Addresses", href: "/addresses-wireframe", icon: MapPin },
-  { label: "Expense Tracker", href: "/transactions-wireframe", icon: ReceiptText },
-  { label: "Gem Hues", href: "/gemhues-wireframe", icon: Gem },
-  { label: "Services", href: "/service-catalog-wireframe", icon: Wrench },
+  { label: "Education", href: "/education", icon: GraduationCap },
+  { label: "Employment", href: "/employment", icon: BriefcaseBusiness },
+  { label: "Addresses", href: "/addresses", icon: MapPin },
+  { label: "Expense Tracker", href: "/transactions", icon: ReceiptText },
+  { label: "Gem Hues", href: "/gemhues", icon: Gem },
+  { label: "Services", href: "/service-accounts", icon: Wrench },
 ] as const;
 
 export function WireframeHomePage() {
@@ -111,7 +111,7 @@ export function WireframeHomePage() {
             </Link>
           );
         })}
-        <Link className="wireframe-system-card" to="/local-databases-wireframe">
+        <Link className="wireframe-system-card" to="/local-databases">
           <span className="wireframe-system-card-icon">
             <Database size={20} aria-hidden="true" />
           </span>
@@ -123,7 +123,7 @@ export function WireframeHomePage() {
             ↗
           </span>
         </Link>
-        <Link className="wireframe-system-card" to="/domains-wireframe">
+        <Link className="wireframe-system-card" to="/domains">
           <span className="wireframe-system-card-icon">
             <Settings2 size={20} aria-hidden="true" />
           </span>
@@ -135,7 +135,7 @@ export function WireframeHomePage() {
             ↗
           </span>
         </Link>
-        <Link className="wireframe-system-card" to="/forgekeeper-wireframe">
+        <Link className="wireframe-system-card" to="/forgekeeper">
           <span className="wireframe-system-card-icon">
             <BookOpenText size={20} aria-hidden="true" />
           </span>
@@ -170,7 +170,7 @@ export function WireframeDatabasesPage() {
       countLabel={{ singular: "database", plural: "databases" }}
     >
       <div className="wireframe-system-page-actions">
-        <Link className="wireframe-system-action" to="/local-database-wireframe">
+        <Link className="wireframe-system-action" to="/local-databases/new">
           Create database
         </Link>
       </div>
@@ -211,7 +211,7 @@ export function WireframeSettingsPage() {
       countLabel={{ singular: "tool", plural: "tools" }}
     >
       <section className="wireframe-system-card-grid" aria-label="Application tools">
-        <Link className="wireframe-system-card" to="/local-databases-wireframe">
+        <Link className="wireframe-system-card" to="/local-databases">
           <span className="wireframe-system-card-icon">
             <Database size={20} aria-hidden="true" />
           </span>
@@ -223,7 +223,7 @@ export function WireframeSettingsPage() {
             ↗
           </span>
         </Link>
-        <Link className="wireframe-system-card" to="/local-database-wireframe">
+        <Link className="wireframe-system-card" to="/local-databases/new">
           <span className="wireframe-system-card-icon">
             <Database size={20} aria-hidden="true" />
           </span>
@@ -235,7 +235,7 @@ export function WireframeSettingsPage() {
             ↗
           </span>
         </Link>
-        <Link className="wireframe-system-card" to="/schema-builder-wireframe">
+        <Link className="wireframe-system-card" to="/schema-builder">
           <span className="wireframe-system-card-icon">
             <Settings2 size={20} aria-hidden="true" />
           </span>
@@ -247,7 +247,7 @@ export function WireframeSettingsPage() {
             ↗
           </span>
         </Link>
-        <Link className="wireframe-system-card" to="/live-database-wireframe">
+        <Link className="wireframe-system-card" to="/live-database">
           <span className="wireframe-system-card-icon">
             <Database size={20} aria-hidden="true" />
           </span>
