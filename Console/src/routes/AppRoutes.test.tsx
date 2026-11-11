@@ -175,6 +175,32 @@ describe("Gem Life navigation", () => {
     ).toBe(true);
     expect(screen.getByRole("link", { name: /Local Databases/ })).toHaveAttribute("href", "/local-databases-wireframe");
   });
+  it("keeps one navigation pane mounted while moving between wireframe routes", async () => {
+    vi.spyOn(api, "listRootPages").mockResolvedValue([]);
+    vi.spyOn(api, "listEducation").mockResolvedValue([]);
+    vi.spyOn(api, "listEmployment").mockResolvedValue([]);
+    vi.spyOn(api, "listAddresses").mockResolvedValue([]);
+    vi.spyOn(api, "listTransactions").mockResolvedValue([]);
+    vi.spyOn(api, "listGemHues").mockResolvedValue([]);
+    vi.spyOn(api, "listServiceAccounts").mockResolvedValue([]);
+    vi.spyOn(api, "getSchemaPageTables").mockResolvedValue({ tables: [], availableTables: [] });
+    setup("/home-wireframe");
+
+    expect(await screen.findByRole("heading", { name: "Home" })).toBeInTheDocument();
+    const navigation = screen.getByRole("navigation", { name: "Workspace navigation" });
+    fireEvent.change(screen.getByRole("searchbox", { name: "Search workspace navigation" }), {
+      target: { value: "Edu" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Collapse navigation" }));
+    const educationLink = navigation.querySelector<HTMLAnchorElement>('a[href="/education-wireframe"]');
+    expect(educationLink).not.toBeNull();
+    fireEvent.click(educationLink!);
+
+    expect(await screen.findByRole("heading", { name: "Education" })).toBeInTheDocument();
+    expect(screen.getAllByRole("navigation", { name: "Workspace navigation" })).toEqual([navigation]);
+    expect(navigation).toHaveClass("is-collapsed");
+    expect(screen.getByRole("searchbox", { name: "Search workspace navigation" })).toHaveValue("Edu");
+  });
   it("renders the wireframe domain catalog with ForgeKeeper destinations", async () => {
     setup("/domains-wireframe");
 

@@ -28,9 +28,8 @@ import {
   useServiceAccountsQuery,
   useTransactionsQuery,
 } from "../../data/lifeQueries";
-import { WireframeLeftPane } from "./WireframeLeftPane";
+import { useWireframeShell } from "./WireframeAppShell";
 import { WireframePageView } from "./WireframePageView";
-import { useWireframeNavigation } from "./WireframeAppHeader";
 
 export function WireframeSystemPage({
   children,
@@ -49,40 +48,18 @@ export function WireframeSystemPage({
   showCount?: boolean;
   activeCollection?: string;
 }) {
-  const [collapsed, setCollapsed] = useState(false);
-  const navigation = useWireframeNavigation();
-  const mobileOpen = navigation?.open ?? false;
+  useWireframeShell({ recordCount: 0, activeCollection });
 
   return (
-    <section className="wireframe-demo wireframe-standalone inspector-closed">
-      <div id="wireframe-navigation" className={mobileOpen ? "wireframe-mobile-nav is-open" : "wireframe-mobile-nav"}>
-        {mobileOpen ? (
-          <button
-            type="button"
-            className="wireframe-nav-backdrop"
-            aria-label="Close navigation"
-            onClick={() => navigation?.close()}
-          />
-        ) : null}
-        <WireframeLeftPane
-          recordCount={0}
-          activeCollection={activeCollection}
-          collapsed={mobileOpen ? false : collapsed}
-          onToggleCollapsed={() => setCollapsed((value) => !value)}
-          onCloseNavigation={navigation ? navigation.close : undefined}
-          mobileDrawerOpen={mobileOpen}
-        />
-      </div>
-      <WireframePageView
-        title={title}
-        description={description}
-        recordCount={count}
-        countLabel={countLabel}
-        showCount={showCount}
-      >
-        {children}
-      </WireframePageView>
-    </section>
+    <WireframePageView
+      title={title}
+      description={description}
+      recordCount={count}
+      countLabel={countLabel}
+      showCount={showCount}
+    >
+      {children}
+    </WireframePageView>
   );
 }
 
