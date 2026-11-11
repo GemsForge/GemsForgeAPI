@@ -59,6 +59,15 @@ describe("connected knowledge workspace", () => {
     expect(await screen.findByRole("navigation", { name: "Pages connected to Chromalock" })).toBeInTheDocument();
   });
 
+  it("renders block actions with names and the knowledge palette class", async () => {
+    renderWorkspace();
+
+    // Tamagui Button text otherwise inherits the dark default theme (white on the paper canvas).
+    for (const name of ["Edit note", "＋ Add row", "Edit list"]) {
+      expect(await screen.findByRole("button", { name })).toHaveClass("workspace-knowledge-action");
+    }
+  });
+
   it("persists edited page title and description through the existing mutation", async () => {
     workflow.mutateAsync.mockResolvedValue(undefined);
     renderWorkspace();

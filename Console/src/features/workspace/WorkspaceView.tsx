@@ -191,7 +191,12 @@ export function WorkspaceView({ onSuccess }: { onSuccess: (message: string) => v
                 </div>
                 <div className="workspace-note-layout">
                   <SizableText className="workspace-note-copy">{note}</SizableText>
-                  <GemButton tone="secondary" onClick={() => setBlockEditor({ kind: "note" })}>
+                  <GemButton
+                    tone="secondary"
+                    className="workspace-knowledge-action"
+                    aria-label="Edit note"
+                    onClick={() => setBlockEditor({ kind: "note" })}
+                  >
                     ✎
                   </GemButton>
                 </div>
@@ -209,7 +214,11 @@ export function WorkspaceView({ onSuccess }: { onSuccess: (message: string) => v
                     </SizableText>
                     <SizableText className="workspace-demo-caption">Sample table · local demo</SizableText>
                   </div>
-                  <GemButton tone="secondary" onClick={() => setBlockEditor({ kind: "row", rowID: null })}>
+                  <GemButton
+                    tone="secondary"
+                    className="workspace-knowledge-action"
+                    onClick={() => setBlockEditor({ kind: "row", rowID: null })}
+                  >
                     ＋ Add row
                   </GemButton>
                 </div>
@@ -273,7 +282,12 @@ export function WorkspaceView({ onSuccess }: { onSuccess: (message: string) => v
                         Related thoughts
                       </SizableText>
                     </div>
-                    <GemButton variant="quiet" size="sm" onClick={() => setEditingLinks((value) => !value)}>
+                    <GemButton
+                      variant="quiet"
+                      size="sm"
+                      className="workspace-knowledge-action"
+                      onClick={() => setEditingLinks((value) => !value)}
+                    >
                       {editingLinks ? "Done" : "Edit list"}
                     </GemButton>
                   </div>
