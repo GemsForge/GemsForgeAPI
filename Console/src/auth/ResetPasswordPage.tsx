@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Form } from "tamagui";
+import { AuthBrand, AuthError, PasswordField } from "./AuthParts";
 import { getSupabaseSignInConfiguration, updateSupabasePassword } from "./supabaseSignIn";
 
 function recoveryToken(): string | null {
@@ -54,6 +55,7 @@ export function ResetPasswordPage() {
     return (
       <main className="sign-in-page">
         <section className="sign-in-card" aria-labelledby="password-reset-complete">
+          <AuthBrand />
           <h1 id="password-reset-complete">Password updated</h1>
           <p className="sign-in-description">Your password has been changed. You can now sign in.</p>
           <button
@@ -71,29 +73,24 @@ export function ResetPasswordPage() {
   return (
     <main className="sign-in-page">
       <section className="sign-in-card" aria-labelledby="password-reset-title">
+        <AuthBrand />
         <p className="eyebrow">Account recovery</p>
         <h1 id="password-reset-title">Set a new password</h1>
         <p className="sign-in-description">Choose a new password for your Gem Life account.</p>
-        {error && (
-          <p className="sign-in-error" role="alert">
-            {error}
-          </p>
-        )}
+        {error && <AuthError message={error} />}
         <Form className="sign-in-form" onSubmit={() => void submit()}>
-          <label htmlFor="new-password">New password</label>
-          <input
+          <PasswordField
             id="new-password"
-            type="password"
+            label="New password"
             autoComplete="new-password"
             required
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             disabled={busy}
           />
-          <label htmlFor="confirm-password">Confirm password</label>
-          <input
+          <PasswordField
             id="confirm-password"
-            type="password"
+            label="Confirm password"
             autoComplete="new-password"
             required
             value={confirmation}

@@ -389,7 +389,7 @@ button {
   width: min(100%, 34rem);
   padding: clamp(1.5rem, 5vw, 3rem);
   border: 1px solid var(--line);
-  border-radius: 1.25rem;
+  border-radius: 1rem;
   background: var(--gem-wireframe-surface);
   box-shadow: var(--gem-elevation-card);
 }
@@ -406,20 +406,61 @@ button {
   color: var(--muted);
   line-height: 1.6;
 }
+.sign-in-brand {
+  margin-bottom: 1.25rem;
+}
 .sign-in-form {
   display: grid;
-  gap: 0.65rem;
+  gap: 1rem;
   margin: 1.25rem 0;
+}
+/* Tight label-to-field spacing groups each label with its own input. */
+.sign-in-field {
+  display: grid;
+  gap: 0.35rem;
 }
 .sign-in-form label {
   font-weight: 650;
+}
+.sign-in-password {
+  position: relative;
+}
+.sign-in-password input {
+  width: 100%;
+  padding-right: 3rem;
+}
+.sign-in-password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 0.25rem;
+  display: grid;
+  width: 2.75rem;
+  height: 2.75rem;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 0.4rem;
+  background: transparent;
+  color: var(--muted);
+  transform: translateY(-50%);
+  cursor: pointer;
+}
+.sign-in-password-toggle:hover:not(:disabled),
+.sign-in-password-toggle[aria-pressed="true"] {
+  color: var(--ink);
+}
+.sign-in-help {
+  margin: -0.65rem 0 0;
+  color: var(--muted);
+  font-size: 0.875rem;
 }
 .sign-in-form input {
   min-height: 46px;
   padding: 0.65rem 0.75rem;
   border: 1px solid var(--fieldBorder, var(--gem-field-border));
   border-radius: 0.5rem;
-  background: var(--fieldBackground, var(--canvas));
+  /* Warm fill matches the auth canvas; the field border keeps 3:1 against it. */
+  background: var(--gem-wireframe-canvas, var(--fieldBackground, var(--canvas)));
   color: var(--fieldText, var(--ink));
 }
 .sign-in-form input:focus {
@@ -447,10 +488,20 @@ button {
 .sign-in-setup {
   margin: 1.25rem 0;
   padding: 1rem;
-  border: 1px solid rgba(240, 138, 131, 0.45);
+  border: 1px solid var(--danger);
   border-radius: 0.7rem;
   color: var(--danger);
   line-height: 1.5;
+}
+.sign-in-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  background: color-mix(in srgb, var(--danger) 7%, var(--gem-wireframe-surface, #fff));
+}
+.sign-in-error svg {
+  flex: none;
+  margin-top: 0.15rem;
 }
 .sign-in-setup {
   border-color: var(--line);
@@ -465,7 +516,7 @@ button {
 }
 .sign-in-footnote {
   margin: 0;
-  font-size: 0.82rem;
+  font-size: 0.875rem;
 }
 .topbar {
   display: flex;
