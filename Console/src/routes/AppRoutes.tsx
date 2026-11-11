@@ -308,13 +308,24 @@ function NotFound() {
   );
 }
 
+/** Sign-in and recovery share the signed-in canvas's light theme so auth fields and errors resolve light values. */
+function AuthLayout() {
+  return (
+    <Theme name="light">
+      <Outlet />
+    </Theme>
+  );
+}
+
 /** Explicit routes ensure direct links, Back/Forward, and unknown paths agree. */
 export function AppRoutes() {
   return (
     <Routes>
-      <Route path="login" element={isRecoveryLink() ? <ResetPasswordPage /> : <SignInPage />} />
-      <Route path="reset-password" element={<ResetPasswordPage />} />
-      <Route path="/" element={isRecoveryLink() ? <ResetPasswordPage /> : <Navigate to="/login" replace />} />
+      <Route element={<AuthLayout />}>
+        <Route path="login" element={isRecoveryLink() ? <ResetPasswordPage /> : <SignInPage />} />
+        <Route path="reset-password" element={<ResetPasswordPage />} />
+        <Route path="/" element={isRecoveryLink() ? <ResetPasswordPage /> : <Navigate to="/login" replace />} />
+      </Route>
       <Route element={<RequireAuth />}>
         <Route
           element={

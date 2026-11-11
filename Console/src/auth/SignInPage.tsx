@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { Form } from "tamagui";
 import { useAuth } from "./AuthProvider";
+import { AuthBrand, AuthError, PasswordField } from "./AuthParts";
 
 export function SignInPage() {
   const auth = useAuth();
@@ -29,16 +30,13 @@ export function SignInPage() {
   return (
     <main className="sign-in-page">
       <section className="sign-in-card" aria-labelledby="sign-in-title">
+        <AuthBrand />
         <p className="eyebrow">Private account access</p>
         <h1 id="sign-in-title">Sign in to Gem Life</h1>
         <p className="sign-in-description">
           Sign in to your private Gem Life workspace. Your records are loaded only after the API confirms your session.
         </p>
-        {auth.error && (
-          <p className="sign-in-error" role="alert">
-            {auth.error}
-          </p>
-        )}
+        {auth.error && <AuthError message={auth.error} />}
         {!auth.configurationReady && (
           <aside className="sign-in-setup" aria-label="Sign-in setup required">
             <strong>Sign-in setup required</strong>
@@ -49,35 +47,41 @@ export function SignInPage() {
           </aside>
         )}
         <Form className="sign-in-form" onSubmit={() => void signIn()}>
-          <label htmlFor="sign-in-email">Username</label>
-          <input
-            id="sign-in-email"
-            name="email"
-            type="text"
-            autoComplete="username"
-            required
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            disabled={auth.busy}
-          />
-          <label htmlFor="sign-in-password">Password</label>
-          <input
+          <div className="sign-in-field">
+            <label htmlFor="sign-in-email">Username</label>
+            <input
+              id="sign-in-email"
+              name="email"
+              type="text"
+              autoComplete="username"
+              required
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              disabled={auth.busy}
+            />
+          </div>
+          <PasswordField
             id="sign-in-password"
+            label="Password"
             name="password"
-            type="password"
             autoComplete="current-password"
             required
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             disabled={auth.busy}
+            aria-describedby="sign-in-password-help"
           />
+          <p className="sign-in-help" id="sign-in-password-help">
+            Forgot your password? Ask the Gem Life owner to reset it.
+          </p>
           <button className="credential-sign-in-button" type="submit" disabled={auth.busy || !auth.configurationReady}>
             {auth.busy ? "Signing in…" : "Sign in"}
           </button>
         </Form>
         {auth.busy && <p role="status">Verifying your account…</p>}
-        <p className="sign-in-footnote">Account creation is disabled. Ask the Gem Life owner to provision access.</p>
-        <p className="sign-in-footnote">Only an API-issued, expiring bearer session unlocks protected records.</p>
+        <p className="sign-in-footnote">
+          Account creation is disabled; the Gem Life owner provisions access. Sessions expire automatically.
+        </p>
       </section>
     </main>
   );

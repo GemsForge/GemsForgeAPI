@@ -353,7 +353,7 @@
 .wireframe-standalone .database-field textarea,
 .wireframe-standalone .builder-column input,
 .wireframe-standalone .builder-column select {
-  border-color: var(--gem-wireframe-border, #d9dfdc);
+  border-color: var(--gem-wireframe-field-border, #738187);
   background: var(--gem-wireframe-field, #fff);
   color: var(--gem-wireframe-text, #233c42);
 }

@@ -3,7 +3,6 @@
   --gem-font-family:
     "Avenir Next", Avenir, Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display",
     sans-serif;
-  --gem-editorial-font-family: ui-serif, Georgia, "Iowan Old Style", "Palatino Linotype", serif;
   --gem-canvas: #0b171c;
   --gem-surface: #12252b;
   --gem-surface-raised: #173138;
@@ -26,12 +25,15 @@
   --gem-knowledge-ink: #263d36;
   --gem-knowledge-muted: #59675e;
   --gem-knowledge-line: #d5ddd1;
+  --gem-knowledge-field-border: #77847a;
   --gem-knowledge-mint: #3f7055;
   --gem-knowledge-gold: #85602a;
   --gem-status-success: var(--gem-action);
   --gem-status-warning: var(--gem-accent);
   --gem-status-danger: var(--gem-danger);
   --gem-border: rgba(175, 214, 208, 0.14);
+  /* Field outlines reach 3:1 (WCAG 1.4.11); fallback when no Tamagui theme sets --fieldBorder. */
+  --gem-field-border: #6b8487;
   --gem-focus: var(--gem-action);
   --gem-wireframe-canvas: #f7f7f4;
   --gem-wireframe-surface: #ffffff;
@@ -43,6 +45,8 @@
   --gem-wireframe-accent: #9a6b22;
   --gem-wireframe-border: #dfe6e3;
   --gem-wireframe-border-strong: #a8d2cf;
+  /* Field outlines must reach 3:1 (WCAG 1.4.11); border-strong stays a decorative line. */
+  --gem-wireframe-field-border: #738187;
   --gem-wireframe-gold-light: #fff5e2;
   --gem-layout-app-header: 72px;
   --gem-layout-app-sidebar-expanded: 288px;
@@ -189,7 +193,7 @@ select {
   isolation: isolate;
 }
 [data-wireframe-field="true"] {
-  border-color: var(--gem-wireframe-border-strong) !important;
+  border-color: var(--gem-wireframe-field-border) !important;
   background: var(--gem-wireframe-surface) !important;
   color: var(--gem-wireframe-text) !important;
 }
@@ -270,7 +274,7 @@ select {
   min-height: 2.5rem;
   color: var(--ink) !important;
   background: var(--panel-light) !important;
-  border-color: var(--border) !important;
+  border-color: var(--fieldBorder, var(--gem-field-border)) !important;
 }
 .gem-date-popover .gem-date-text-input::placeholder {
   color: var(--muted) !important;
@@ -287,7 +291,7 @@ select {
 .gem-date-popover .gem-date-text-input[data-wireframe-date="true"] {
   color: var(--gem-wireframe-text) !important;
   background: var(--gem-wireframe-surface-raised) !important;
-  border-color: var(--gem-wireframe-border-strong) !important;
+  border-color: var(--gem-wireframe-field-border) !important;
 }
 .gem-date-popover .gem-date-text-input[data-wireframe-date="true"]::placeholder {
   color: var(--gem-wireframe-text-muted) !important;
@@ -366,22 +370,34 @@ button {
   align-items: center;
   gap: 1rem;
 }
+/* Auth pages use the light wireframe palette, matching the signed-in canvas. */
 .sign-in-page {
+  --ink: var(--gem-wireframe-text);
+  --muted: var(--gem-knowledge-muted);
+  --line: var(--gem-wireframe-border);
+  --mint: var(--gem-wireframe-action);
+  --gold: var(--gem-wireframe-accent);
   display: grid;
   min-height: 100vh;
   place-items: center;
   padding: 1.5rem;
+  background: var(--gem-wireframe-canvas);
+  color: var(--ink);
 }
 .sign-in-card {
   width: min(100%, 34rem);
   padding: clamp(1.5rem, 5vw, 3rem);
   border: 1px solid var(--line);
-  border-radius: 1.25rem;
-  background: linear-gradient(145deg, rgba(23, 49, 56, 0.96), rgba(18, 37, 43, 0.96));
-  box-shadow: 0 1.5rem 5rem rgba(0, 0, 0, 0.25);
+  border-radius: 1rem;
+  background: var(--gem-wireframe-surface);
+  box-shadow: var(--gem-elevation-card);
 }
 .sign-in-card h1 {
   margin-bottom: 1rem;
+  color: var(--gem-wireframe-heading, #173d45);
+}
+.sign-in-card .eyebrow {
+  color: var(--gem-wireframe-action);
 }
 .sign-in-description,
 .sign-in-footnote,
@@ -389,21 +405,62 @@ button {
   color: var(--muted);
   line-height: 1.6;
 }
+.sign-in-brand {
+  margin-bottom: 1.25rem;
+}
 .sign-in-form {
   display: grid;
-  gap: 0.65rem;
+  gap: 1rem;
   margin: 1.25rem 0;
+}
+/* Tight label-to-field spacing groups each label with its own input. */
+.sign-in-field {
+  display: grid;
+  gap: 0.35rem;
 }
 .sign-in-form label {
   font-weight: 650;
 }
+.sign-in-password {
+  position: relative;
+}
+.sign-in-password input {
+  width: 100%;
+  padding-right: 3rem;
+}
+.sign-in-password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 0.25rem;
+  display: grid;
+  width: 2.75rem;
+  height: 2.75rem;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 0.4rem;
+  background: transparent;
+  color: var(--muted);
+  transform: translateY(-50%);
+  cursor: pointer;
+}
+.sign-in-password-toggle:hover:not(:disabled),
+.sign-in-password-toggle[aria-pressed="true"] {
+  color: var(--ink);
+}
+.sign-in-help {
+  margin: -0.65rem 0 0;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
 .sign-in-form input {
   min-height: 46px;
   padding: 0.65rem 0.75rem;
-  border: 1px solid var(--line);
+  border: 1px solid var(--fieldBorder, var(--gem-field-border));
   border-radius: 0.5rem;
-  background: var(--canvas);
-  color: var(--ink);
+  /* Warm fill matches the auth canvas; the field border keeps 3:1 against it. */
+  background: var(--gem-wireframe-canvas, var(--fieldBackground, var(--canvas)));
+  color: var(--fieldText, var(--ink));
 }
 .credential-sign-in-button {
   width: 100%;
@@ -412,7 +469,7 @@ button {
   border: 1px solid var(--mint);
   border-radius: 0.55rem;
   background: var(--mint);
-  color: var(--canvas);
+  color: var(--actionText, var(--canvas));
   font-size: 1rem;
   font-weight: 700;
 }
@@ -427,10 +484,20 @@ button {
 .sign-in-setup {
   margin: 1.25rem 0;
   padding: 1rem;
-  border: 1px solid rgba(240, 138, 131, 0.45);
+  border: 1px solid var(--danger);
   border-radius: 0.7rem;
   color: var(--danger);
   line-height: 1.5;
+}
+.sign-in-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  background: color-mix(in srgb, var(--danger) 7%, var(--gem-wireframe-surface, #fff));
+}
+.sign-in-error svg {
+  flex: none;
+  margin-top: 0.15rem;
 }
 .sign-in-setup {
   border-color: var(--line);
@@ -445,7 +512,7 @@ button {
 }
 .sign-in-footnote {
   margin: 0;
-  font-size: 0.82rem;
+  font-size: 0.875rem;
 }
 .topbar {
   display: flex;
@@ -930,7 +997,7 @@ h3 {
 .workspace-note-copy {
   max-width: 55rem;
   color: var(--gem-knowledge-ink);
-  font-family: var(--gem-editorial-font-family);
+  font-family: var(--gem-font-family);
   font-size: clamp(1.1rem, 1.7vw, 1.35rem);
   line-height: 1.75;
 }
@@ -1152,14 +1219,14 @@ h3 {
   padding: 0 0.75rem;
   margin-bottom: 1.15rem;
   color: var(--gem-shell-ink);
-  font-family: var(--gem-editorial-font-family);
+  font-family: var(--gem-font-family);
   font-size: 1.1rem;
   letter-spacing: 0.22em;
   text-decoration: none;
 }
 .shell-brand-mark {
   color: #e5c66a;
-  font-family: var(--gem-editorial-font-family);
+  font-family: var(--gem-font-family);
   font-size: 2.2rem;
   line-height: 1;
 }
@@ -1439,7 +1506,7 @@ h3 {
   border: 0;
   color: #262719;
   background: transparent;
-  font-family: var(--gem-editorial-font-family);
+  font-family: var(--gem-font-family);
   font-size: clamp(2.7rem, 5vw, 4rem);
   font-weight: 500;
   letter-spacing: -0.045em;
@@ -1448,7 +1515,7 @@ h3 {
 .workspace-page-title {
   margin: 0;
   color: #262719;
-  font-family: var(--gem-editorial-font-family);
+  font-family: var(--gem-font-family);
   font-size: clamp(2.7rem, 5vw, 4rem);
   font-weight: 500;
   letter-spacing: -0.045em;
@@ -1457,7 +1524,7 @@ h3 {
 .workspace-page-description {
   margin: 0;
   color: #3c3d30;
-  font-family: var(--gem-editorial-font-family);
+  font-family: var(--gem-font-family);
   font-size: 1.15rem;
   line-height: 1.4;
 }
@@ -1467,7 +1534,7 @@ h3 {
   border: 0;
   color: #3c3d30;
   background: transparent;
-  font-family: var(--gem-editorial-font-family);
+  font-family: var(--gem-font-family);
   font-size: 1.15rem;
   line-height: 1.4;
   resize: none;
@@ -1502,7 +1569,7 @@ h3 {
 .workspace-note-meta .eyebrow {
   margin: 0;
   color: #444431;
-  font-family: var(--gem-editorial-font-family);
+  font-family: var(--gem-font-family);
   font-size: 1.85rem;
   font-style: italic;
   font-weight: 500;
@@ -1522,7 +1589,7 @@ h3 {
 .workspace-note-copy {
   max-width: 58rem;
   color: #26271f;
-  font-family: var(--gem-editorial-font-family);
+  font-family: var(--gem-font-family);
   font-size: clamp(1.25rem, 1.75vw, 1.55rem);
   line-height: 1.55;
   white-space: pre-line;
@@ -1561,7 +1628,7 @@ h3 {
   gap: 0.75rem;
   margin: 0;
   color: #2c2c20;
-  font-family: var(--gem-editorial-font-family);
+  font-family: var(--gem-font-family);
   font-size: 1.85rem;
   font-weight: 500;
 }
@@ -1604,7 +1671,7 @@ h3 {
 }
 .workspace-demo-table td:nth-child(1),
 .workspace-demo-table td:nth-child(4) {
-  font-family: var(--gem-editorial-font-family);
+  font-family: var(--gem-font-family);
   font-size: 1rem;
 }
 .workspace-demo-table .status-pill {
@@ -1659,7 +1726,7 @@ h3 {
   align-items: center;
   gap: 0.65rem;
   color: #2c2c20;
-  font-family: var(--gem-editorial-font-family);
+  font-family: var(--gem-font-family);
   font-size: 1.45rem;
   font-weight: 500;
 }
@@ -2065,7 +2132,7 @@ h3 {
 .workspace-editor-dialog textarea {
   width: 100%;
   padding: 0.7rem;
-  border: 1px solid var(--gem-knowledge-line);
+  border: 1px solid var(--gem-knowledge-field-border);
   border-radius: 0.5rem;
   color: var(--gem-knowledge-ink);
   background: var(--gem-knowledge-canvas);
@@ -2311,7 +2378,7 @@ dialog::backdrop {
   box-sizing: border-box;
   min-height: 2.75rem;
   padding: 0.65rem 0.75rem;
-  border: 1px solid var(--fieldBorder, var(--line));
+  border: 1px solid var(--fieldBorder, var(--gem-field-border));
   border-radius: 0.55rem;
   outline: 0;
   background: var(--fieldBackground, #0c1b20);
@@ -2342,10 +2409,6 @@ dialog::backdrop {
 }
 [data-status-select] [data-disabled] {
   opacity: 1;
-}
-.create-form-control:focus,
-.create-form-control:focus-visible {
-  border-color: var(--fieldFocus, var(--mint));
 }
 /* Map semantic field widths to compact controls without changing the shared field shell. */
 .create-form-control--short {
@@ -2405,7 +2468,7 @@ dialog::backdrop {
 .wireframe-demo {
   --field-background: var(--gem-wireframe-surface);
   --field-ink: var(--gem-wireframe-text);
-  --field-border: var(--gem-wireframe-border-strong);
+  --field-border: var(--gem-wireframe-field-border);
   --field-focus: var(--gem-wireframe-action);
   --field-label: #76571b;
   --gem-status-success: var(--gem-wireframe-action);
@@ -2725,7 +2788,7 @@ dialog::backdrop {
   box-sizing: border-box;
   width: 100%;
   padding: 0.4rem;
-  border: 1px solid #a8d2cf;
+  border: 1px solid var(--field-border);
   border-radius: 0.55rem;
   background: #fff;
   color: #233c42 !important;
@@ -3309,7 +3372,7 @@ dialog::backdrop {
   min-width: 10rem;
   width: min(18rem, 42vw);
   padding: 0.55rem 0.65rem;
-  border: 1px solid #dfe6e3;
+  border: 1px solid var(--gem-wireframe-field-border);
   border-radius: 0.55rem;
   background: #fff;
   color: #233c42;
@@ -3334,7 +3397,7 @@ dialog::backdrop {
 }
 .wireframe-standalone .table-kit-property-dialog .create-form-control {
   background: #fff !important;
-  border-color: #dfe6e3 !important;
+  border-color: var(--gem-wireframe-field-border) !important;
   color: #233c42 !important;
 }
 .wireframe-standalone .table-kit-property-dialog .create-form-control:focus-visible {
@@ -4094,7 +4157,7 @@ dialog::backdrop {
   overflow-y: auto;
   overscroll-behavior: contain;
   padding: 0.85rem;
-  border: 1px solid var(--field-border);
+  border: 1px solid var(--gem-wireframe-border-strong);
   border-radius: 0.75rem;
   background: var(--panel);
   color: var(--ink);
@@ -4704,16 +4767,11 @@ dialog::backdrop {
 .edit-form select {
   width: 100%;
   padding: 0.75rem;
-  border: 1px solid var(--fieldBorder, var(--line));
+  border: 1px solid var(--fieldBorder, var(--gem-field-border));
   border-radius: 0.55rem;
   outline: 0;
   background: var(--fieldBackground, #0c1b20);
   color: var(--fieldText, var(--ink));
-}
-.edit-form input:focus,
-.edit-form textarea:focus,
-.edit-form select:focus {
-  border-color: var(--fieldFocus, var(--mint));
 }
 .dialog-actions {
   display: flex;
@@ -5416,7 +5474,7 @@ dialog::backdrop {
   width: 100%;
   min-height: 2.4rem;
   padding: 0.45rem 0.6rem;
-  border: 1px solid var(--line);
+  border: 1px solid var(--fieldBorder, var(--gem-field-border));
   border-radius: 0.45rem;
   background: var(--canvas);
   color: var(--ink);
@@ -6040,7 +6098,7 @@ dialog::backdrop {
 .table-kit-settings-field select {
   min-height: 2.35rem;
   padding: 0.35rem 0.5rem;
-  border: 1px solid var(--line);
+  border: 1px solid var(--fieldBorder, var(--gem-field-border));
   border-radius: 0.4rem;
   background: var(--panel);
   color: var(--ink);
@@ -6898,15 +6956,11 @@ dialog::backdrop {
 .database-field select {
   width: 100%;
   padding: 0.75rem;
-  border: 1px solid var(--fieldBorder, var(--line));
+  border: 1px solid var(--fieldBorder, var(--gem-field-border));
   border-radius: 0.55rem;
   outline: 0;
   background: var(--fieldBackground, #0c1b20);
   color: var(--fieldText, var(--ink));
-}
-.database-field input:focus,
-.database-field select:focus {
-  border-color: var(--fieldFocus, var(--mint));
 }
 .database-confirm {
   display: flex;
@@ -7436,7 +7490,7 @@ dialog {
 .record-utilities input,
 .record-utilities select {
   min-height: 2.25rem;
-  border: 1px solid var(--line);
+  border: 1px solid var(--fieldBorder, var(--gem-field-border));
   border-radius: 0.35rem;
   background: var(--canvas);
   color: var(--ink);
@@ -7994,4 +8048,25 @@ dialog {
     text-align: left;
     overflow-wrap: anywhere;
   }
+}
+
+/* Field focus: !important beats Tamagui's atomic border-color class, and the ring uses the
+   theme's field focus colour so it stays at 3:1 on light dialogs (the global ring is dark-shell mint). */
+:is(
+  .create-form-control,
+  .edit-form :is(input, textarea, select),
+  .database-field :is(input, select, textarea),
+  .workspace-editor-dialog :is(input, textarea),
+  .sign-in-form input
+):focus {
+  border-color: var(--fieldFocus, var(--mint)) !important;
+}
+:is(
+  .create-form-control,
+  .edit-form :is(input, textarea, select),
+  .database-field :is(input, select, textarea),
+  .workspace-editor-dialog :is(input, textarea),
+  .sign-in-form input
+):focus-visible {
+  outline-color: var(--fieldFocus, var(--mint)) !important;
 }

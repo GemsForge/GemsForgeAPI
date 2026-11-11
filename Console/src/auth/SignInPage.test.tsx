@@ -80,4 +80,22 @@ describe("local sign-in page", () => {
     fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
     expect(await screen.findByRole("alert")).toHaveTextContent("Username or password is incorrect.");
   });
+
+  it("toggles password visibility without renaming the field", () => {
+    renderSignIn();
+    const password = screen.getByLabelText("Password");
+    const toggle = screen.getByRole("button", { name: "Show password" });
+    expect(password).toHaveAttribute("type", "password");
+    expect(toggle).toHaveAttribute("aria-pressed", "false");
+    fireEvent.click(toggle);
+    expect(screen.getByLabelText("Password")).toHaveAttribute("type", "text");
+    expect(toggle).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it("tells locked-out people how to recover access", () => {
+    renderSignIn();
+    expect(screen.getByLabelText("Password")).toHaveAccessibleDescription(
+      "Forgot your password? Ask the Gem Life owner to reset it.",
+    );
+  });
 });

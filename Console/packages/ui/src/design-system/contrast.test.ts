@@ -41,3 +41,26 @@ describe("light theme roles", () => {
     }
   });
 });
+
+/** Field boundaries identify controls, so they need 3:1 (WCAG 1.4.11) in every theme. */
+describe("field border roles", () => {
+  const themes = {
+    dark: tamaguiConfig.themes.dark,
+    light: tamaguiConfig.themes.light,
+    knowledge: tamaguiConfig.themes.knowledge,
+  };
+  const surfacesOf = (theme: (typeof themes)["light"]) =>
+    [theme.fieldBackground, theme.background, theme.surface, theme.surfaceRaised].map((role) => role.val as string);
+  it.each(Object.entries(themes))("%s field border meets 3:1 on the field and its surroundings", (_, theme) => {
+    for (const surface of surfacesOf(theme)) {
+      expect(contrast(theme.fieldBorder.val as string, surface)).toBeGreaterThanOrEqual(3);
+    }
+  });
+  it.each(Object.entries(themes))("%s field focus is stronger than the resting border", (_, theme) => {
+    for (const surface of surfacesOf(theme)) {
+      expect(contrast(theme.fieldFocus.val as string, surface)).toBeGreaterThan(
+        contrast(theme.fieldBorder.val as string, surface),
+      );
+    }
+  });
+});

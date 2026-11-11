@@ -66,10 +66,12 @@ contracts are documented in [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md).
 | gemDanger                | Error emphasis; use readable contrasting text |
 
 Semantic spacing is gemCompact 8, gemControl 12, gemSection 24, gemPage 32;
-radii are gemControl 8 and gemCard 16. Typography uses the system-font stack
-with 12/13/14/16/22/30px sizes and matching line heights; body text defaults
-to 14px. Inter is a preferred
-local font, not a required remote download. Do not add one-off tokens without
+radii are gemControl 8 and gemCard 16. Typography uses Avenir Next
+(`gemFontFamily` / `--gem-font-family`, falling back to Avenir, Inter, and the
+system sans stack) for every surface: page titles, dialogs, system screens such
+as sign-in, and body text. Do not introduce a serif or editorial face. Sizes
+are 12/13/14/16/22/30px with matching line heights; body text defaults to
+14px. Inter is a preferred local fallback, not a required remote download. Do not add one-off tokens without
 checking whether an existing role fits.
 
 Dark is the persistent Console shell. The table workspace intentionally uses
