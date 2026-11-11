@@ -26,12 +26,15 @@
   --gem-knowledge-ink: #263d36;
   --gem-knowledge-muted: #59675e;
   --gem-knowledge-line: #d5ddd1;
+  --gem-knowledge-field-border: #77847a;
   --gem-knowledge-mint: #3f7055;
   --gem-knowledge-gold: #85602a;
   --gem-status-success: var(--gem-action);
   --gem-status-warning: var(--gem-accent);
   --gem-status-danger: var(--gem-danger);
   --gem-border: rgba(175, 214, 208, 0.14);
+  /* Field outlines reach 3:1 (WCAG 1.4.11); fallback when no Tamagui theme sets --fieldBorder. */
+  --gem-field-border: #6b8487;
   --gem-focus: var(--gem-action);
   --gem-wireframe-canvas: #f7f7f4;
   --gem-wireframe-surface: #ffffff;
@@ -43,6 +46,8 @@
   --gem-wireframe-accent: #9a6b22;
   --gem-wireframe-border: #dfe6e3;
   --gem-wireframe-border-strong: #a8d2cf;
+  /* Field outlines must reach 3:1 (WCAG 1.4.11); border-strong stays a decorative line. */
+  --gem-wireframe-field-border: #738187;
   --gem-wireframe-gold-light: #fff5e2;
   --gem-layout-app-header: 72px;
   --gem-layout-app-sidebar-expanded: 288px;
@@ -189,7 +194,7 @@ select {
   isolation: isolate;
 }
 [data-wireframe-field="true"] {
-  border-color: var(--gem-wireframe-border-strong) !important;
+  border-color: var(--gem-wireframe-field-border) !important;
   background: var(--gem-wireframe-surface) !important;
   color: var(--gem-wireframe-text) !important;
 }
@@ -270,7 +275,7 @@ select {
   min-height: 2.5rem;
   color: var(--ink) !important;
   background: var(--panel-light) !important;
-  border-color: var(--border) !important;
+  border-color: var(--fieldBorder, var(--gem-field-border)) !important;
 }
 .gem-date-popover .gem-date-text-input::placeholder {
   color: var(--muted) !important;
@@ -287,7 +292,7 @@ select {
 .gem-date-popover .gem-date-text-input[data-wireframe-date="true"] {
   color: var(--gem-wireframe-text) !important;
   background: var(--gem-wireframe-surface-raised) !important;
-  border-color: var(--gem-wireframe-border-strong) !important;
+  border-color: var(--gem-wireframe-field-border) !important;
 }
 .gem-date-popover .gem-date-text-input[data-wireframe-date="true"]::placeholder {
   color: var(--gem-wireframe-text-muted) !important;
@@ -400,7 +405,7 @@ button {
 .sign-in-form input {
   min-height: 46px;
   padding: 0.65rem 0.75rem;
-  border: 1px solid var(--line);
+  border: 1px solid var(--fieldBorder, var(--gem-field-border));
   border-radius: 0.5rem;
   background: var(--canvas);
   color: var(--ink);
@@ -2065,7 +2070,7 @@ h3 {
 .workspace-editor-dialog textarea {
   width: 100%;
   padding: 0.7rem;
-  border: 1px solid var(--gem-knowledge-line);
+  border: 1px solid var(--gem-knowledge-field-border);
   border-radius: 0.5rem;
   color: var(--gem-knowledge-ink);
   background: var(--gem-knowledge-canvas);
@@ -2311,7 +2316,7 @@ dialog::backdrop {
   box-sizing: border-box;
   min-height: 2.75rem;
   padding: 0.65rem 0.75rem;
-  border: 1px solid var(--fieldBorder, var(--line));
+  border: 1px solid var(--fieldBorder, var(--gem-field-border));
   border-radius: 0.55rem;
   outline: 0;
   background: var(--fieldBackground, #0c1b20);
@@ -2405,7 +2410,7 @@ dialog::backdrop {
 .wireframe-demo {
   --field-background: var(--gem-wireframe-surface);
   --field-ink: var(--gem-wireframe-text);
-  --field-border: var(--gem-wireframe-border-strong);
+  --field-border: var(--gem-wireframe-field-border);
   --field-focus: var(--gem-wireframe-action);
   --field-label: #76571b;
   --gem-status-success: var(--gem-wireframe-action);
@@ -2725,7 +2730,7 @@ dialog::backdrop {
   box-sizing: border-box;
   width: 100%;
   padding: 0.4rem;
-  border: 1px solid #a8d2cf;
+  border: 1px solid var(--field-border);
   border-radius: 0.55rem;
   background: #fff;
   color: #233c42 !important;
@@ -3309,7 +3314,7 @@ dialog::backdrop {
   min-width: 10rem;
   width: min(18rem, 42vw);
   padding: 0.55rem 0.65rem;
-  border: 1px solid #dfe6e3;
+  border: 1px solid var(--gem-wireframe-field-border);
   border-radius: 0.55rem;
   background: #fff;
   color: #233c42;
@@ -3334,7 +3339,7 @@ dialog::backdrop {
 }
 .wireframe-standalone .table-kit-property-dialog .create-form-control {
   background: #fff !important;
-  border-color: #dfe6e3 !important;
+  border-color: var(--gem-wireframe-field-border) !important;
   color: #233c42 !important;
 }
 .wireframe-standalone .table-kit-property-dialog .create-form-control:focus-visible {
@@ -4094,7 +4099,7 @@ dialog::backdrop {
   overflow-y: auto;
   overscroll-behavior: contain;
   padding: 0.85rem;
-  border: 1px solid var(--field-border);
+  border: 1px solid var(--gem-wireframe-border-strong);
   border-radius: 0.75rem;
   background: var(--panel);
   color: var(--ink);
@@ -4704,7 +4709,7 @@ dialog::backdrop {
 .edit-form select {
   width: 100%;
   padding: 0.75rem;
-  border: 1px solid var(--fieldBorder, var(--line));
+  border: 1px solid var(--fieldBorder, var(--gem-field-border));
   border-radius: 0.55rem;
   outline: 0;
   background: var(--fieldBackground, #0c1b20);
@@ -5416,7 +5421,7 @@ dialog::backdrop {
   width: 100%;
   min-height: 2.4rem;
   padding: 0.45rem 0.6rem;
-  border: 1px solid var(--line);
+  border: 1px solid var(--fieldBorder, var(--gem-field-border));
   border-radius: 0.45rem;
   background: var(--canvas);
   color: var(--ink);
@@ -6040,7 +6045,7 @@ dialog::backdrop {
 .table-kit-settings-field select {
   min-height: 2.35rem;
   padding: 0.35rem 0.5rem;
-  border: 1px solid var(--line);
+  border: 1px solid var(--fieldBorder, var(--gem-field-border));
   border-radius: 0.4rem;
   background: var(--panel);
   color: var(--ink);
@@ -6898,7 +6903,7 @@ dialog::backdrop {
 .database-field select {
   width: 100%;
   padding: 0.75rem;
-  border: 1px solid var(--fieldBorder, var(--line));
+  border: 1px solid var(--fieldBorder, var(--gem-field-border));
   border-radius: 0.55rem;
   outline: 0;
   background: var(--fieldBackground, #0c1b20);
@@ -7436,7 +7441,7 @@ dialog {
 .record-utilities input,
 .record-utilities select {
   min-height: 2.25rem;
-  border: 1px solid var(--line);
+  border: 1px solid var(--fieldBorder, var(--gem-field-border));
   border-radius: 0.35rem;
   background: var(--canvas);
   color: var(--ink);
