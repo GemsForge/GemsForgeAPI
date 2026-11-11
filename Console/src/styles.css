@@ -8065,3 +8065,24 @@ dialog {
     overflow-wrap: anywhere;
   }
 }
+
+/* Field focus: !important beats Tamagui's atomic border-color class, and the ring uses the
+   theme's field focus colour so it stays at 3:1 on light dialogs (the global ring is dark-shell mint). */
+:is(
+  .create-form-control,
+  .edit-form :is(input, textarea, select),
+  .database-field :is(input, select, textarea),
+  .workspace-editor-dialog :is(input, textarea),
+  .sign-in-form input
+):focus {
+  border-color: var(--fieldFocus, var(--mint)) !important;
+}
+:is(
+  .create-form-control,
+  .edit-form :is(input, textarea, select),
+  .database-field :is(input, select, textarea),
+  .workspace-editor-dialog :is(input, textarea),
+  .sign-in-form input
+):focus-visible {
+  outline-color: var(--fieldFocus, var(--mint)) !important;
+}
