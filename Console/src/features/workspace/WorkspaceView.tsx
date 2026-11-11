@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Dialog, Form, SizableText, Theme } from "tamagui";
 import { useSearchParams } from "react-router-dom";
 import { QueryFeedback } from "../../components/QueryFeedback";
@@ -25,6 +25,28 @@ function pageUpdatedLabel(updatedAt?: string | null): string {
 }
 
 type BlockEditor = { kind: "note" } | { kind: "row"; rowID: string | null };
+
+/** Returns keyboard focus to the control that opened a dialog once the dialog unmounts. */
+function useReturnFocusOnClose() {
+  const opener = useRef(document.activeElement instanceof HTMLElement ? document.activeElement : null);
+  useEffect(() => {
+    const element = opener.current;
+    return () => {
+      // Runs after the dialog's own focus scope releases, so the opener keeps focus.
+      setTimeout(() => {
+        if (element?.isConnected) element.focus();
+      }, 0);
+    };
+  }, []);
+}
+
+type RowField = "name" | "type" | "status" | "nextThought";
+const rowFieldLabels: Record<RowField, string> = {
+  name: "Name",
+  type: "Type",
+  status: "Status",
+  nextThought: "Next thought",
+};
 
 /** A connected knowledge workspace backed by ForgeKeeper root pages. */
 export function WorkspaceView({ onSuccess }: { onSuccess: (message: string) => void }) {
@@ -468,10 +490,50 @@ function BlockEditorDialog({
   onSaveNote: (value: string) => void;
   onSaveRow: (row: WorkspacePreviewRow) => void;
 }) {
+  useReturnFocusOnClose();
   const [noteDraft, setNoteDraft] = useState(note);
   const [rowDraft, setRowDraft] = useState<WorkspacePreviewRow>(
     row ?? { id: "", name: "", type: "", status: "Draft", nextThought: "" },
   );
+  const [submitAttempt, setSubmitAttempt] = useState(0);
+  const noteFieldRef = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null);
+  const rowFieldRefs = useRef<Partial<Record<RowField, HTMLInputElement | HTMLTextAreaElement | null>>>({});
+  const showErrors = submitAttempt > 0;
+  const noteError = showErrors && !noteDraft.trim() ? "Enter a note." : undefined;
+  const rowError = (field: RowField) =>
+    showErrors && !rowDraft[field].trim() ? `Enter a ${rowFieldLabels[field].toLowerCase()}.` : undefined;
+
+  useEffect(() => {
+    if (submitAttempt === 0) return;
+    const firstInvalid =
+      editor.kind === "note"
+        ? noteFieldRef.current
+        : (["name", "type", "status", "nextThought"] as const)
+            .filter((field) => !rowDraft[field].trim())
+            .map((field) => rowFieldRefs.current[field])[0];
+    firstInvalid?.focus();
+    // Focus only moves after a rejected submit, not on every keystroke.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [submitAttempt]);
+
+  const submit = () => {
+    if (editor.kind === "note") {
+      if (!noteDraft.trim()) return setSubmitAttempt((value) => value + 1);
+      return onSaveNote(noteDraft.trim());
+    }
+    const trimmed = {
+      ...rowDraft,
+      name: rowDraft.name.trim(),
+      type: rowDraft.type.trim(),
+      status: rowDraft.status.trim(),
+      nextThought: rowDraft.nextThought.trim(),
+    };
+    if (!trimmed.name || !trimmed.type || !trimmed.status || !trimmed.nextThought) {
+      return setSubmitAttempt((value) => value + 1);
+    }
+    onSaveRow(trimmed);
+  };
+
   return (
     <Dialog open onOpenChange={(open) => !open && onCancel()} modal>
       <Dialog.Portal>
@@ -490,53 +552,66 @@ function BlockEditorDialog({
               </GemButton>
             </Dialog.Close>
           </div>
-          <Form
-            className="edit-form"
-            onSubmit={() => (editor.kind === "note" ? onSaveNote(noteDraft.trim()) : onSaveRow(rowDraft))}
-          >
+          <Form className="edit-form" onSubmit={submit}>
             {editor.kind === "note" ? (
               <GemTextField
+                ref={noteFieldRef}
                 label="Note"
                 multiline
                 rows={5}
                 value={noteDraft}
                 onChange={(event) => setNoteDraft(event.target.value)}
+                error={noteError}
                 required
               />
             ) : (
               <>
                 <GemTextField
+                  ref={(element) => {
+                    rowFieldRefs.current.name = element;
+                  }}
                   label="Name"
                   value={rowDraft.name}
                   onChange={(event) => setRowDraft({ ...rowDraft, name: event.target.value })}
+                  error={rowError("name")}
                   required
                 />
                 <GemTextField
+                  ref={(element) => {
+                    rowFieldRefs.current.type = element;
+                  }}
                   label="Type"
                   value={rowDraft.type}
                   onChange={(event) => setRowDraft({ ...rowDraft, type: event.target.value })}
+                  error={rowError("type")}
                   required
                 />
                 <GemTextField
+                  ref={(element) => {
+                    rowFieldRefs.current.status = element;
+                  }}
                   label="Status"
                   value={rowDraft.status}
                   onChange={(event) => setRowDraft({ ...rowDraft, status: event.target.value })}
+                  error={rowError("status")}
                   required
                 />
                 <GemTextField
+                  ref={(element) => {
+                    rowFieldRefs.current.nextThought = element;
+                  }}
                   label="Next thought"
                   value={rowDraft.nextThought}
                   onChange={(event) => setRowDraft({ ...rowDraft, nextThought: event.target.value })}
+                  error={rowError("nextThought")}
                   required
                 />
               </>
             )}
             <div className="dialog-actions">
-              <Dialog.Close asChild>
-                <GemButton tone="secondary" type="button" onClick={onCancel}>
-                  Cancel
-                </GemButton>
-              </Dialog.Close>
+              <GemButton tone="secondary" type="button" onClick={onCancel}>
+                Cancel
+              </GemButton>
               <GemButton type="submit">Keep in this preview</GemButton>
             </div>
           </Form>
@@ -560,6 +635,7 @@ function PageEditorDialog({
   onCancel: () => void;
   onSave: (patch: ForgeKeeperPatch) => Promise<void>;
 }) {
+  useReturnFocusOnClose();
   const [title, setTitle] = useState(page.title);
   const [description, setDescription] = useState(page.description);
   return (
@@ -604,11 +680,9 @@ function PageEditorDialog({
             />
             {error && <SizableText role="alert">{error.message}</SizableText>}
             <div className="dialog-actions">
-              <Dialog.Close asChild>
-                <GemButton tone="secondary" type="button" onClick={onCancel} disabled={saving}>
-                  Cancel
-                </GemButton>
-              </Dialog.Close>
+              <GemButton tone="secondary" type="button" onClick={onCancel} disabled={saving}>
+                Cancel
+              </GemButton>
               <GemButton type="submit" disabled={saving || !title.trim() || !description.trim()}>
                 {saving ? "Saving…" : "Save page"}
               </GemButton>

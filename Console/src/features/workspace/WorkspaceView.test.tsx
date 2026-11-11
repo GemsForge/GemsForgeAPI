@@ -68,6 +68,33 @@ describe("connected knowledge workspace", () => {
     }
   });
 
+  it("rejects an empty sample row with field errors and keeps the dialog open", async () => {
+    renderWorkspace();
+    fireEvent.click(await screen.findByRole("button", { name: "＋ Add row" }));
+
+    const dialog = await screen.findByRole("dialog", { name: "Add table row", hidden: true });
+    expect(within(dialog).getByRole("button", { name: "Cancel", hidden: true })).toBeInTheDocument();
+    fireEvent.click(within(dialog).getByRole("button", { name: "Keep in this preview", hidden: true }));
+
+    expect(await within(dialog).findByText("Enter a name.")).toBeInTheDocument();
+    expect(within(dialog).getByLabelText(/^Name/)).toHaveAttribute("aria-invalid", "true");
+    await waitFor(() => expect(within(dialog).getByLabelText(/^Name/)).toHaveFocus());
+    expect(screen.getAllByRole("row", { hidden: true })).toHaveLength(4);
+  });
+
+  it("returns focus to the opening control when a block editor closes", async () => {
+    renderWorkspace();
+    const addRow = await screen.findByRole("button", { name: "＋ Add row" });
+    addRow.focus();
+    fireEvent.click(addRow);
+
+    const dialog = await screen.findByRole("dialog", { name: "Add table row", hidden: true });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Cancel", hidden: true }));
+
+    await waitFor(() => expect(screen.queryByRole("dialog", { hidden: true })).not.toBeInTheDocument());
+    await waitFor(() => expect(addRow).toHaveFocus());
+  });
+
   it("renders as shell page content with a regular-weight note and visible sample labels", async () => {
     const { container } = renderWorkspace();
 
