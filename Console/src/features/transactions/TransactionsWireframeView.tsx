@@ -48,7 +48,7 @@ export function TransactionsWireframeView({ records }: { records: readonly Expen
           ...current,
           href:
             id && relation.targetTableName
-              ? `/schema-wireframe/${encodeURIComponent(relation.targetTableName)}/record/${encodeURIComponent(id)}`
+              ? `/schema/${encodeURIComponent(relation.targetTableName)}/record/${encodeURIComponent(id)}`
               : undefined,
         };
       },

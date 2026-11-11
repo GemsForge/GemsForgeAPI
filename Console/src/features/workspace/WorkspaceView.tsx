@@ -1,62 +1,82 @@
 import { useEffect, useMemo, useState } from "react";
-import { Dialog, Form, SizableText } from "tamagui";
+import { Dialog, Form, SizableText, Theme } from "tamagui";
+import { useSearchParams } from "react-router-dom";
 import { QueryFeedback } from "../../components/QueryFeedback";
-import { GemButton, GemCard, GemSectionHeader, GemStatusPill, GemTextField } from "@gemsforge/ui";
+import { GemButton, GemCard, GemStatusPill, GemTextField } from "@gemsforge/ui";
 import { usePagesQuery, usePageMutation } from "../../data/workflowQueries";
 import type { ForgeKeeperPage, ForgeKeeperPatch } from "../../types";
+import { inspectionBypassEnabled } from "../../auth/session";
+import { workspacePreviewPages, workspacePreviewRows, type WorkspacePreviewRow } from "./workspacePreviewData";
 
 /** Returns a stable visual marker for a ForgeKeeper page in the workspace tree. */
 function pageIcon(page: ForgeKeeperPage): string {
   return page.parentID ? "◈" : "✦";
 }
 
-interface WorkspaceRow {
-  id: string;
-  name: string;
-  type: string;
-  status: string;
-  nextThought: string;
+function pageUpdatedLabel(updatedAt?: string | null): string {
+  if (!updatedAt) return "Created privately";
+  const updated = new Date(updatedAt);
+  if (Number.isNaN(updated.getTime())) return "Updated";
+  const now = new Date();
+  const sameDay = updated.toDateString() === now.toDateString();
+  return sameDay
+    ? "Updated today"
+    : `Updated ${new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric", year: "numeric" }).format(updated)}`;
 }
 
 type BlockEditor = { kind: "note" } | { kind: "row"; rowID: string | null };
 
-/** The Notion/Obsidian-inspired workspace surface backed by ForgeKeeper pages. */
+/** A connected knowledge workspace backed by ForgeKeeper root pages. */
 export function WorkspaceView({ onSuccess }: { onSuccess: (message: string) => void }) {
-  const pagesQuery = usePagesQuery({ kind: "roots" });
+  const pagesQuery = usePagesQuery({ kind: "roots" }, !inspectionBypassEnabled);
   const patchPage = usePageMutation();
-  const pages = useMemo(() => pagesQuery.data ?? [], [pagesQuery.data]);
-  const [activePageID, setActivePageID] = useState<number | null>(null);
+  const pages = useMemo(
+    () =>
+      inspectionBypassEnabled
+        ? pagesQuery.data?.length
+          ? pagesQuery.data
+          : workspacePreviewPages
+        : (pagesQuery.data ?? []),
+    [pagesQuery.data],
+  );
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [activePageID, setActivePageID] = useState<number | null>(() => {
+    const page = Number(new URLSearchParams(window.location.search).get("page"));
+    return Number.isSafeInteger(page) && page > 0 ? page : null;
+  });
   const [editing, setEditing] = useState(false);
+  const [editingMetadata, setEditingMetadata] = useState(false);
   const [draftTitle, setDraftTitle] = useState("");
   const [draftDescription, setDraftDescription] = useState("");
-  const [note, setNote] = useState("The best workspace lets structure emerge from thinking.");
-  const [rows, setRows] = useState<WorkspaceRow[]>([
-    {
-      id: "chromalock",
-      name: "Chromalock",
-      type: "Project",
-      status: "In progress",
-      nextThought: "Design the co-op map",
-    },
-    {
-      id: "handbook",
-      name: "Database handbook",
-      type: "Writing",
-      status: "Draft",
-      nextThought: "Add migration examples",
-    },
-  ]);
+  const [note, setNote] = useState(
+    "The best ideas begin as observations.\nKeep them close long enough to see what they connect to.",
+  );
+  const [rows, setRows] = useState<WorkspacePreviewRow[]>(workspacePreviewRows);
   const [blockEditor, setBlockEditor] = useState<BlockEditor | null>(null);
   const [editingLinks, setEditingLinks] = useState(false);
   const [linkedPageIDs, setLinkedPageIDs] = useState<number[]>([]);
-  const activePage = pages.find((page) => page.id === activePageID) ?? pages[0] ?? null;
+  const routePageID = Number(searchParams.get("page"));
+  const activePage =
+    pages.find((page) => page.id === routePageID) ?? pages.find((page) => page.id === activePageID) ?? pages[0] ?? null;
+  const relatedPages = activePage
+    ? pages.filter((page) => page.id !== activePage.id && linkedPageIDs.includes(page.id))
+    : [];
 
   useEffect(() => {
+    if (Number.isSafeInteger(routePageID) && pages.some((page) => page.id === routePageID)) {
+      setActivePageID(routePageID);
+      return;
+    }
     if (activePageID === null && pages[0]) setActivePageID(pages[0].id);
     if (activePageID !== null && pages.length > 0 && !pages.some((page) => page.id === activePageID)) {
       setActivePageID(pages[0].id);
     }
-  }, [activePageID, pages]);
+  }, [activePageID, pages, routePageID]);
+
+  const selectPage = (pageID: number) => {
+    setActivePageID(pageID);
+    setSearchParams({ page: String(pageID) });
+  };
 
   useEffect(() => {
     if (activePage) {
@@ -69,256 +89,364 @@ export function WorkspaceView({ onSuccess }: { onSuccess: (message: string) => v
     setLinkedPageIDs(
       pages
         .filter((page) => page.id !== activePage?.id)
-        .slice(0, 3)
+        .filter((page) => activePage?.title !== "Field notes" || page.title !== "Personal systems")
+        .slice(0, 2)
         .map((page) => page.id),
     );
-  }, [activePage?.id, pages]);
+  }, [activePage?.id, activePage?.title, pages]);
 
   const savePage = async (patch: ForgeKeeperPatch) => {
     if (!activePage) return;
+    if (inspectionBypassEnabled) {
+      setEditing(false);
+      onSuccess("Preview mode: page changes are not saved.");
+      return;
+    }
     await patchPage.mutateAsync({ id: activePage.id, patch });
     setEditing(false);
     onSuccess("Page updated.");
   };
 
-  const saveInlineField = async (patch: ForgeKeeperPatch) => {
+  const saveMetadata = async () => {
     if (!activePage) return;
+    if (inspectionBypassEnabled) {
+      setEditingMetadata(false);
+      onSuccess("Preview mode: page changes are not saved.");
+      return;
+    }
+    const patch = { title: draftTitle.trim(), description: draftDescription.trim() };
     const changed = Object.entries(patch).some(([key, value]) => value !== activePage[key as keyof ForgeKeeperPage]);
-    if (changed) await savePage(patch);
+    if (changed) {
+      await patchPage.mutateAsync({ id: activePage.id, patch });
+      onSuccess("Page updated.");
+    }
+    setEditingMetadata(false);
   };
 
   return (
-    <section className="hybrid-workspace" aria-labelledby="workspace-title">
-      <GemSectionHeader
-        eyebrow="Gem Life · private knowledge workspace"
-        title="Your data, connected"
-        description="Write freely, structure what matters, and follow the links between your life."
-        trailing={activePage ? <GemButton onClick={() => setEditing(true)}>Page options</GemButton> : undefined}
-      />
-      <QueryFeedback query={pagesQuery} />
-      {activePage ? (
-        <div className="hybrid-workspace-grid">
-          <aside className="workspace-page-tree" aria-label="Workspace pages">
-            <div className="workspace-tree-heading">
-              <SizableText fontWeight="700">Pages</SizableText>
-              <GemButton
-                variant="quiet"
-                aria-label="Open page manager"
-                onClick={() => (window.location.href = "/forgekeeper")}
-              >
-                ＋
-              </GemButton>
-            </div>
-            <nav aria-label="Root pages">
-              {pages.map((page) => (
-                <button
-                  type="button"
-                  className={`workspace-page-link ${page.id === activePage.id ? "selected" : ""}`}
-                  key={page.id}
-                  onClick={() => setActivePageID(page.id)}
-                >
-                  <span aria-hidden="true">{pageIcon(page)}</span>
-                  <span>{page.title}</span>
-                </button>
-              ))}
-            </nav>
-            <div className="workspace-tree-footer">
-              <span className="eyebrow">Workspace</span>
-              <SizableText>Everything is a page, a block, or a link.</SizableText>
-            </div>
-          </aside>
-          <main className="workspace-page-canvas">
-            <div className="workspace-page-heading">
-              <span className="workspace-page-icon" aria-hidden="true">
-                {pageIcon(activePage)}
-              </span>
-              <div className="workspace-inline-fields">
-                <SizableText className="eyebrow">
-                  {activePage.updatedAt ? "Recently updated" : "Private page"}
-                </SizableText>
-                <GemTextField
-                  label="Page title"
-                  value={draftTitle}
-                  onChange={(event) => setDraftTitle(event.target.value)}
-                  onBlur={() => void saveInlineField({ title: draftTitle.trim() })}
-                />
-                <GemTextField
-                  label="Page description"
-                  multiline
-                  rows={2}
-                  value={draftDescription}
-                  onChange={(event) => setDraftDescription(event.target.value)}
-                  onBlur={() => void saveInlineField({ description: draftDescription.trim() })}
-                />
-              </div>
-            </div>
-            <GemCard className="workspace-note-block">
-              <SizableText className="eyebrow">A note to self</SizableText>
-              <div className="workspace-block-heading">
-                <SizableText className="workspace-note-copy">{note}</SizableText>
-                <GemButton tone="secondary" onClick={() => setBlockEditor({ kind: "note" })}>
-                  Edit note
-                </GemButton>
-              </div>
-            </GemCard>
-            <GemCard className="workspace-table-block">
-              <div className="workspace-block-heading">
-                <div>
-                  <SizableText className="eyebrow">Embedded table · editable block</SizableText>
-                  <SizableText className="workspace-block-title" fontSize="$5" fontWeight="700">
-                    Things in motion
-                  </SizableText>
-                </div>
-                <GemButton tone="secondary" onClick={() => setBlockEditor({ kind: "row", rowID: null })}>
-                  ＋ Add row
-                </GemButton>
-              </div>
-              <div className="workspace-demo-table-wrap">
-                <table className="workspace-demo-table">
-                  <caption className="sr-only">Things in motion</caption>
-                  <thead>
-                    <tr>
-                      <th>Name</th>
-                      <th>Type</th>
-                      <th>Status</th>
-                      <th>Next thought</th>
-                      <th>
-                        <span className="sr-only">Actions</span>
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {rows.map((row) => (
-                      <tr key={row.id}>
-                        <td>{row.name}</td>
-                        <td>{row.type}</td>
-                        <td>
-                          <GemStatusPill tone={row.status === "In progress" ? "success" : "default"}>
-                            {row.status}
-                          </GemStatusPill>
-                        </td>
-                        <td>{row.nextThought}</td>
-                        <td>
-                          <GemButton
-                            variant="quiet"
-                            size="sm"
-                            onClick={() => setBlockEditor({ kind: "row", rowID: row.id })}
-                          >
-                            Edit
-                          </GemButton>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </GemCard>
-            <div className="workspace-lower-grid">
-              <GemCard>
-                <div className="workspace-block-heading">
-                  <div>
-                    <SizableText className="eyebrow">Linked from this page</SizableText>
-                    <SizableText className="workspace-block-title" fontSize="$5" fontWeight="700">
-                      Related thoughts
-                    </SizableText>
+    <Theme name="knowledge">
+      <section className="hybrid-workspace" aria-label="Connected knowledge workspace">
+        {!inspectionBypassEnabled ? <QueryFeedback query={pagesQuery} /> : null}
+        {activePage ? (
+          <div className="hybrid-workspace-grid">
+            <section className="workspace-page-canvas" aria-label={`${activePage.title} page canvas`}>
+              <div className="workspace-page-heading">
+                <div className="workspace-inline-fields">
+                  <div className="workspace-page-meta">
+                    <span>{pageUpdatedLabel(activePage.updatedAt)}</span>
+                    <span aria-hidden="true">·</span>
+                    <span>
+                      Private page <span aria-hidden="true">♙</span>
+                    </span>
+                    {inspectionBypassEnabled ? <span className="workspace-preview-badge">Preview</span> : null}
                   </div>
-                  <GemButton variant="quiet" size="sm" onClick={() => setEditingLinks((value) => !value)}>
-                    {editingLinks ? "Done" : "Edit list"}
+                  {editingMetadata ? (
+                    <>
+                      <GemTextField
+                        label="Page title"
+                        showLabel={false}
+                        className="workspace-page-title-input"
+                        value={draftTitle}
+                        onChange={(event) => setDraftTitle(event.target.value)}
+                      />
+                      <GemTextField
+                        label="Page description"
+                        showLabel={false}
+                        className="workspace-page-description-input"
+                        multiline
+                        rows={2}
+                        value={draftDescription}
+                        onChange={(event) => setDraftDescription(event.target.value)}
+                      />
+                      <GemButton
+                        size="sm"
+                        disabled={!draftTitle.trim() || !draftDescription.trim() || patchPage.isPending}
+                        onClick={() => void saveMetadata()}
+                      >
+                        {inspectionBypassEnabled ? "Done" : patchPage.isPending ? "Saving…" : "Save changes"}
+                      </GemButton>
+                    </>
+                  ) : (
+                    <>
+                      <h1 className="workspace-page-title">{draftTitle || activePage.title}</h1>
+                      <p className="workspace-page-description">{draftDescription || activePage.description}</p>
+                    </>
+                  )}
+                </div>
+                <div className="workspace-page-actions">
+                  <GemButton variant="quiet" aria-label="Edit page details" onClick={() => setEditingMetadata(true)}>
+                    ✎
+                  </GemButton>
+                  <GemButton variant="quiet" aria-label="Page options" onClick={() => setEditing(true)}>
+                    ···
                   </GemButton>
                 </div>
-                {editingLinks ? (
-                  <ul className="workspace-link-list workspace-link-list-editing">
-                    {pages
-                      .filter((page) => page.id !== activePage.id)
-                      .map((page) => (
-                        <li key={page.id}>
-                          <label>
-                            <input
-                              type="checkbox"
-                              checked={linkedPageIDs.includes(page.id)}
-                              onChange={() =>
-                                setLinkedPageIDs((current) =>
-                                  current.includes(page.id)
-                                    ? current.filter((id) => id !== page.id)
-                                    : [...current, page.id],
-                                )
-                              }
-                            />
-                            {page.title}
-                          </label>
-                        </li>
-                      ))}
-                  </ul>
-                ) : (
-                  <ul className="workspace-link-list">
-                    {pages
-                      .filter((page) => linkedPageIDs.includes(page.id))
-                      .map((page) => (
-                        <li key={page.id}>
-                          <button type="button" onClick={() => setActivePageID(page.id)}>
-                            ↗ {page.title}
-                          </button>
-                        </li>
-                      ))}
-                  </ul>
-                )}
-              </GemCard>
-              <GemCard>
-                <SizableText className="eyebrow">Knowledge map</SizableText>
-                <SizableText className="workspace-block-title" fontSize="$5" fontWeight="700">
-                  Nearby pages
-                </SizableText>
-                <div className="workspace-map" aria-label="Connected root pages">
-                  <span className="map-node map-node-main">{pageIcon(activePage)}</span>
-                  <span className="map-line map-line-a" />
-                  <span className="map-line map-line-b" />
-                  <span className="map-node map-node-a">◈</span>
-                  <span className="map-node map-node-b">✎</span>
+              </div>
+              <GemCard className="workspace-note-block">
+                <div className="workspace-note-meta">
+                  <SizableText className="eyebrow">A thought worth keeping</SizableText>
+                  <span className="workspace-markdown-hint" aria-label="Local demo note, not saved">
+                    Local sample · Markdown
+                  </span>
                 </div>
-                <SizableText className="muted">{pages.length} root pages in this workspace</SizableText>
+                <div className="workspace-note-layout">
+                  <SizableText className="workspace-note-copy">{note}</SizableText>
+                  <GemButton
+                    tone="secondary"
+                    className="workspace-knowledge-action"
+                    aria-label="Edit note"
+                    onClick={() => setBlockEditor({ kind: "note" })}
+                  >
+                    ✎
+                  </GemButton>
+                </div>
+                <div className="workspace-note-tags">
+                  <span>#note</span>
+                  <span aria-hidden="true">M↓</span>
+                  <span>Markdown</span>
+                </div>
               </GemCard>
-            </div>
-          </main>
-        </div>
-      ) : !pagesQuery.isLoading && !pagesQuery.error ? (
-        <div className="empty-state">
-          <SizableText className="workspace-block-title" fontSize="$6" fontWeight="700">
-            No workspace pages yet
-          </SizableText>
-          <SizableText>Create a ForgeKeeper page to start your knowledge hub.</SizableText>
-          <GemButton onClick={() => (window.location.href = "/forgekeeper")}>Open page manager</GemButton>
-        </div>
-      ) : null}
-      {activePage && editing ? (
-        <PageEditorDialog
-          page={activePage}
-          saving={patchPage.isPending}
-          error={patchPage.error}
-          onCancel={() => setEditing(false)}
-          onSave={savePage}
-        />
-      ) : null}
-      {blockEditor ? (
-        <BlockEditorDialog
-          editor={blockEditor}
-          note={note}
-          row={blockEditor.kind === "row" ? (rows.find((item) => item.id === blockEditor.rowID) ?? null) : null}
-          onCancel={() => setBlockEditor(null)}
-          onSaveNote={(value) => {
-            setNote(value);
-            setBlockEditor(null);
-          }}
-          onSaveRow={(row) => {
-            setRows((current) =>
-              row.id
-                ? current.map((item) => (item.id === row.id ? row : item))
-                : [...current, { ...row, id: crypto.randomUUID() }],
-            );
-            setBlockEditor(null);
-          }}
-        />
-      ) : null}
-    </section>
+              <GemCard className="workspace-table-block">
+                <div className="workspace-block-heading">
+                  <div>
+                    <SizableText className="workspace-block-title" fontSize="$5" fontWeight="700">
+                      Things in motion
+                    </SizableText>
+                    <SizableText className="workspace-demo-caption">Sample table · local demo</SizableText>
+                  </div>
+                  <GemButton
+                    tone="secondary"
+                    className="workspace-knowledge-action"
+                    onClick={() => setBlockEditor({ kind: "row", rowID: null })}
+                  >
+                    ＋ Add row
+                  </GemButton>
+                </div>
+                <div className="workspace-demo-table-wrap">
+                  <table className="workspace-demo-table">
+                    <caption className="sr-only">Things in motion</caption>
+                    <thead>
+                      <tr>
+                        <th>Name</th>
+                        <th>Kind</th>
+                        <th>Status</th>
+                        <th>Next thought</th>
+                        <th>
+                          <span className="sr-only">Actions</span>
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rows.map((row) => (
+                        <tr key={row.id}>
+                          <td>
+                            <span className="workspace-row-icon" aria-hidden="true">
+                              ▱
+                            </span>
+                            {row.name}
+                          </td>
+                          <td>{row.type}</td>
+                          <td>
+                            <GemStatusPill tone={row.status === "Draft" ? "warning" : "success"}>
+                              {row.status}
+                            </GemStatusPill>
+                          </td>
+                          <td>{row.nextThought}</td>
+                          <td className="workspace-row-action-cell">
+                            <button
+                              type="button"
+                              className="workspace-row-edit"
+                              aria-label={`Edit ${row.name}`}
+                              onClick={() => setBlockEditor({ kind: "row", rowID: row.id })}
+                            >
+                              ✎
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </GemCard>
+              <div className="workspace-lower-grid">
+                <section className="workspace-related-block" aria-labelledby="related-thoughts-title">
+                  <div className="workspace-block-heading">
+                    <div>
+                      <SizableText
+                        className="workspace-block-title"
+                        fontSize="$5"
+                        fontWeight="700"
+                        id="related-thoughts-title"
+                      >
+                        <span aria-hidden="true">↗</span>
+                        Related thoughts
+                      </SizableText>
+                    </div>
+                    <GemButton
+                      variant="quiet"
+                      size="sm"
+                      className="workspace-knowledge-action"
+                      onClick={() => setEditingLinks((value) => !value)}
+                    >
+                      {editingLinks ? "Done" : "Edit list"}
+                    </GemButton>
+                  </div>
+                  {editingLinks ? (
+                    <ul className="workspace-link-list workspace-link-list-editing">
+                      {pages
+                        .filter((page) => page.id !== activePage.id)
+                        .map((page) => (
+                          <li key={page.id}>
+                            <label>
+                              <input
+                                type="checkbox"
+                                checked={linkedPageIDs.includes(page.id)}
+                                aria-label={`Link ${page.title} from ${activePage.title}`}
+                                onChange={() =>
+                                  setLinkedPageIDs((current) =>
+                                    current.includes(page.id)
+                                      ? current.filter((id) => id !== page.id)
+                                      : [...current, page.id],
+                                  )
+                                }
+                              />
+                              {page.title}
+                            </label>
+                          </li>
+                        ))}
+                    </ul>
+                  ) : (
+                    <ul className="workspace-link-list">
+                      {relatedPages.length > 0 ? (
+                        relatedPages.map((page) => (
+                          <li key={page.id}>
+                            <button type="button" aria-label={`Open ${page.title}`} onClick={() => selectPage(page.id)}>
+                              <span aria-hidden="true">↗</span> {page.title}
+                            </button>
+                          </li>
+                        ))
+                      ) : (
+                        <li className="workspace-no-links">No related pages selected yet.</li>
+                      )}
+                    </ul>
+                  )}
+                  <SizableText className="workspace-demo-caption" aria-label="Sample page links, not saved">
+                    Local preview links · not saved
+                  </SizableText>
+                </section>
+                <section className="workspace-map-block" aria-labelledby="knowledge-map-title">
+                  <SizableText
+                    className="workspace-block-title"
+                    fontSize="$5"
+                    fontWeight="700"
+                    id="knowledge-map-title"
+                  >
+                    <span aria-hidden="true">♧</span>
+                    Knowledge map
+                  </SizableText>
+                  <nav className="workspace-map-scroll" aria-label={`Pages connected to ${activePage.title}`}>
+                    <div
+                      className={`workspace-map ${relatedPages.length === 0 ? "workspace-map-empty" : ""}`}
+                      style={{ minWidth: `${Math.max(320, relatedPages.length * 152)}px` }}
+                    >
+                      {relatedPages.length > 0 ? (
+                        <svg
+                          className="workspace-map-lines"
+                          viewBox="0 0 100 100"
+                          preserveAspectRatio="none"
+                          aria-hidden="true"
+                        >
+                          {relatedPages.map((page, index) => (
+                            <line
+                              key={page.id}
+                              x1="50"
+                              y1="32"
+                              x2={((index + 0.5) / relatedPages.length) * 100}
+                              y2="78"
+                            />
+                          ))}
+                        </svg>
+                      ) : null}
+                      <span className="map-node map-node-main" aria-current="page">
+                        <span className="map-node-icon" aria-hidden="true">
+                          {pageIcon(activePage)}
+                        </span>
+                        <span>{activePage.title}</span>
+                      </span>
+                      {relatedPages.length > 0 ? (
+                        <ul
+                          className="workspace-map-nodes"
+                          aria-label="Directly linked pages"
+                          style={{ gridTemplateColumns: `repeat(${relatedPages.length}, minmax(0, 1fr))` }}
+                        >
+                          {relatedPages.map((page) => (
+                            <li key={page.id}>
+                              <button
+                                type="button"
+                                className="map-node"
+                                aria-label={`Open ${page.title}`}
+                                onClick={() => selectPage(page.id)}
+                              >
+                                <span className="map-node-icon" aria-hidden="true">
+                                  {pageIcon(page)}
+                                </span>
+                                <span>{page.title}</span>
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="workspace-map-empty-copy">
+                          No linked pages yet. Use Edit list to connect a thought.
+                        </p>
+                      )}
+                    </div>
+                  </nav>
+                  <SizableText className="workspace-demo-caption">Direct links from this page</SizableText>
+                </section>
+              </div>
+            </section>
+          </div>
+        ) : !pagesQuery.isLoading && !pagesQuery.error ? (
+          <div className="workspace-empty-state">
+            <SizableText className="workspace-block-title" fontSize="$6" fontWeight="700">
+              Your library is ready for its first page
+            </SizableText>
+            <SizableText>Create a ForgeKeeper page to begin collecting ideas and connections.</SizableText>
+            <GemButton onClick={() => (window.location.href = "/forgekeeper")}>Open page manager</GemButton>
+          </div>
+        ) : null}
+        {activePage && editing ? (
+          <PageEditorDialog
+            page={activePage}
+            saving={patchPage.isPending}
+            error={patchPage.error}
+            onCancel={() => setEditing(false)}
+            onSave={savePage}
+          />
+        ) : null}
+        {blockEditor ? (
+          <BlockEditorDialog
+            editor={blockEditor}
+            note={note}
+            row={blockEditor.kind === "row" ? (rows.find((item) => item.id === blockEditor.rowID) ?? null) : null}
+            onCancel={() => setBlockEditor(null)}
+            onSaveNote={(value) => {
+              setNote(value);
+              setBlockEditor(null);
+            }}
+            onSaveRow={(row) => {
+              setRows((current) =>
+                row.id
+                  ? current.map((item) => (item.id === row.id ? row : item))
+                  : [...current, { ...row, id: crypto.randomUUID() }],
+              );
+              setBlockEditor(null);
+            }}
+          />
+        ) : null}
+      </section>
+    </Theme>
   );
 }
 
@@ -333,13 +461,13 @@ function BlockEditorDialog({
 }: {
   editor: BlockEditor;
   note: string;
-  row: WorkspaceRow | null;
+  row: WorkspacePreviewRow | null;
   onCancel: () => void;
   onSaveNote: (value: string) => void;
-  onSaveRow: (row: WorkspaceRow) => void;
+  onSaveRow: (row: WorkspacePreviewRow) => void;
 }) {
   const [noteDraft, setNoteDraft] = useState(note);
-  const [rowDraft, setRowDraft] = useState<WorkspaceRow>(
+  const [rowDraft, setRowDraft] = useState<WorkspacePreviewRow>(
     row ?? { id: "", name: "", type: "", status: "Draft", nextThought: "" },
   );
   return (
@@ -349,7 +477,7 @@ function BlockEditorDialog({
         <Dialog.Content className="table-kit-new-record-utility workspace-editor-dialog">
           <div className="table-kit-new-record-heading">
             <div>
-              <SizableText className="eyebrow">Canvas block</SizableText>
+              <SizableText className="eyebrow">Sample content · not saved</SizableText>
               <Dialog.Title>
                 {editor.kind === "note" ? "Edit note" : row ? "Edit table row" : "Add table row"}
               </Dialog.Title>
@@ -407,7 +535,7 @@ function BlockEditorDialog({
                   Cancel
                 </GemButton>
               </Dialog.Close>
-              <GemButton type="submit">Save block</GemButton>
+              <GemButton type="submit">Keep in this preview</GemButton>
             </div>
           </Form>
         </Dialog.Content>

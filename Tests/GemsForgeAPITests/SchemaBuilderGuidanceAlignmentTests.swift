@@ -20,7 +20,10 @@ final class SchemaBuilderGuidanceAlignmentTests: XCTestCase {
             XCTAssertTrue(definition.columns[0].primaryKey)
             XCTAssertEqual(definition.columns[1].name, "HubID")
             XCTAssertFalse(definition.columns[1].nullable)
-            XCTAssertEqual(definition.columns[2].dataType, type)
+            XCTAssertEqual(definition.columns[2].name, "Title")
+            XCTAssertFalse(definition.columns[2].nullable)
+            XCTAssertEqual(definition.columns[3].name, "Value")
+            XCTAssertEqual(definition.columns[3].dataType, type)
         }
     }
 
@@ -30,11 +33,12 @@ final class SchemaBuilderGuidanceAlignmentTests: XCTestCase {
             TableBuilderRequest(tableName: "Example", columns: validColumns(duplicateName: "Value")),
             TableBuilderRequest(tableName: "Example", columns: validColumns(defaultValue: "(SELECT 1)")),
             TableBuilderRequest(tableName: "Example", columns: validColumns(reservedName: "ID")),
-            TableBuilderRequest(tableName: "Example", columns: [])
+            TableBuilderRequest(tableName: "Example", columns: validColumns(reservedName: "HubID")),
+            TableBuilderRequest(tableName: "Example", columns: validColumns(reservedName: "title"))
         ]
 
-        for request in invalidRequests {
-            XCTAssertThrowsError(try validator.validate(request))
+        for (index, request) in invalidRequests.enumerated() {
+            XCTAssertThrowsError(try validator.validate(request), "invalid request \(index) was accepted")
         }
     }
 

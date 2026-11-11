@@ -41,6 +41,7 @@ jobs:
       - name: Prepare isolated database paths
         run: mkdir -p "$LIVE_DATABASE_BACKUP_DIRECTORY"
       - name: Report selected environment
-        run: echo "Validating Gem Life environment: $GEMLIFE_ENVIRONMENT"
+        run: |
+          echo "Validating Gem Life environment: $GEMLIFE_ENVIRONMENT"
       - name: Run API and migration tests
         run: swift test --parallel

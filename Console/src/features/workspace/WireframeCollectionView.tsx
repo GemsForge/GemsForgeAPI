@@ -1,20 +1,9 @@
 import React, { cloneElement, isValidElement, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import {
-  ChevronDown,
-  ChevronLeft,
-  Archive,
-  Expand,
-  GalleryHorizontal,
-  GripVertical,
-  List,
-  Menu as MenuIcon,
-  Table2,
-  X,
-} from "lucide-react";
+import { ChevronDown, ChevronLeft, Archive, Expand, GalleryHorizontal, GripVertical, List, Table2 } from "lucide-react";
 import { AgGridReact } from "ag-grid-react";
 import { themeQuartz, type ColDef, type ColDefField, type ICellRendererParams } from "ag-grid-community";
 import { useLiveSchemaQuery } from "../../data/workflowQueries";
-import { WireframeLeftPane } from "./WireframeLeftPane";
+import { useWireframeShell } from "./WireframeAppShell";
 import { WireframePageView } from "./WireframePageView";
 import { WireframeRecordPageView } from "./WireframeRecordPageView";
 import { PropertyIcon } from "./PropertyIconPicker";
@@ -44,7 +33,6 @@ import { inferWireframePropertyMetadata } from "./propertyMetadata";
 import { WireframeCover, WireframeCoverCardImage, type WireframeCover as WireframeCoverValue } from "./WireframeCover";
 import { WireframePropertyIconProvider, type WireframeDateConfiguration } from "./WireframePropertyEditor";
 import { WireframePropertySettingsDialog, type WireframePropertyDetails } from "./WireframePropertySettingsDialog";
-import { useWireframeNavigation } from "./WireframeAppHeader";
 import { api } from "../../api";
 import { useUploadImageMutation } from "../../data/workflowQueries";
 import { useArchiveRecordMutation, useTrashEntriesQuery } from "../../data/trashQueries";
@@ -146,20 +134,6 @@ export function WireframeCollectionView<T extends WireframeRecord>({
   const [groupBy, setGroupBy] = useState("");
   const [pageIndex, setPageIndex] = useState(0);
   const [pageSize, setPageSize] = useState(9);
-  const wireframeNavigation = useWireframeNavigation();
-  const [fallbackMobileNavigationOpen, setFallbackMobileNavigationOpen] = useState(false);
-  const mobileNavigationOpen = wireframeNavigation?.open ?? fallbackMobileNavigationOpen;
-  const setMobileNavigationOpen = wireframeNavigation?.setOpen ?? setFallbackMobileNavigationOpen;
-  const fallbackMobileNavigationToggleRef = useRef<HTMLButtonElement>(null);
-  const closeMobileNavigation = () => {
-    if (wireframeNavigation) {
-      wireframeNavigation.close();
-      return;
-    }
-    setFallbackMobileNavigationOpen(false);
-    requestAnimationFrame(() => fallbackMobileNavigationToggleRef.current?.focus());
-  };
-  const [navigationCollapsed, setNavigationCollapsed] = useState(false);
   const [inspectorWidth, setInspectorWidth] = useState(384);
   const inspectorResizeRef = useRef<{ startX: number; startWidth: number } | null>(null);
   const [propertyDetails, setPropertyDetails] = useState<WireframePropertyDetails | null>(null);
@@ -648,62 +622,21 @@ export function WireframeCollectionView<T extends WireframeRecord>({
     setDropTargetID: setInspectorDropTargetID,
     announcement: inspectorSortAnnouncement,
   };
+  useWireframeShell(
+    {
+      recordCount: activeRecords.length,
+      activeCollection: config.activeCollection,
+      activeCollectionTitle: tableTitle,
+      activeCollectionIcon: TableIcon,
+    },
+    {
+      inspector: selected ? (inspectorExpanded ? "expanded" : "open") : "closed",
+      inspectorWidth,
+      schemaTable: schema?.name ?? config.tableName ?? config.title,
+    },
+  );
   return (
-    <section
-      className={`wireframe-demo wireframe-standalone ${inspectorExpanded ? "is-expanded" : ""} ${selected ? "has-inspector" : "inspector-closed"}`}
-      style={{ "--inspector-width": `${inspectorWidth}px` } as React.CSSProperties}
-      data-schema-table={schema?.name ?? config.tableName ?? config.title}
-      aria-labelledby="wireframe-page-title"
-    >
-      {wireframeNavigation === null ? (
-        <button
-          type="button"
-          ref={fallbackMobileNavigationToggleRef}
-          className="wireframe-mobile-nav-toggle"
-          aria-label={mobileNavigationOpen ? "Close navigation" : "Open navigation"}
-          aria-expanded={mobileNavigationOpen}
-          aria-controls="wireframe-navigation"
-          onClick={() => setMobileNavigationOpen(!mobileNavigationOpen)}
-        >
-          {mobileNavigationOpen ? <X size={17} aria-hidden="true" /> : <MenuIcon size={17} aria-hidden="true" />}
-          <span>{mobileNavigationOpen ? "Close" : "Navigation"}</span>
-        </button>
-      ) : null}
-      <div
-        id="wireframe-navigation"
-        className={mobileNavigationOpen ? "wireframe-mobile-nav is-open" : "wireframe-mobile-nav"}
-      >
-        {mobileNavigationOpen ? (
-          <>
-            <button
-              type="button"
-              className="wireframe-nav-backdrop"
-              aria-label="Close navigation"
-              onClick={closeMobileNavigation}
-            />
-            {wireframeNavigation === null ? (
-              <button
-                type="button"
-                className="wireframe-nav-close"
-                aria-label="Close navigation"
-                onClick={closeMobileNavigation}
-              >
-                <X size={17} aria-hidden="true" />
-              </button>
-            ) : null}
-          </>
-        ) : null}
-        <WireframeLeftPane
-          recordCount={activeRecords.length}
-          activeCollection={config.activeCollection}
-          activeCollectionTitle={tableTitle}
-          activeCollectionIcon={<TableIcon size={16} aria-hidden="true" />}
-          collapsed={mobileNavigationOpen ? false : navigationCollapsed}
-          onToggleCollapsed={() => setNavigationCollapsed((collapsed) => !collapsed)}
-          onCloseNavigation={wireframeNavigation ? closeMobileNavigation : undefined}
-          mobileDrawerOpen={mobileNavigationOpen}
-        />
-      </div>
+    <>
       {inspectorExpanded && selected ? (
         <WireframeRecordPageView
           collectionTitle={tableTitle}
@@ -1208,7 +1141,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
           {config.propertySettingsExtension?.(propertyDetails)}
         </WireframePropertySettingsDialog>
       ) : null}
-    </section>
+    </>
   );
 }
 

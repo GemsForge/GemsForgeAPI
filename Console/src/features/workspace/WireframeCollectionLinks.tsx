@@ -7,12 +7,12 @@ import { useSchemaPageTablesQuery } from "../../data/workflowQueries";
 import { getPropertyIconByName } from "./propertyIcons";
 
 const collections = [
-  { label: "Gem Hues", tableName: "GemHues", to: "/gemhues-wireframe" },
-  { label: "Education", tableName: "Education", to: "/education-wireframe" },
-  { label: "Employment", tableName: "Employment", to: "/employment-wireframe" },
-  { label: "Addresses", tableName: "Addresses", to: "/addresses-wireframe" },
-  { label: "Expense Tracker", tableName: "ExpenseTransaction", to: "/transactions-wireframe" },
-  { label: "Services", tableName: "Services", to: "/service-catalog-wireframe" },
+  { label: "Gem Hues", tableName: "GemHues", to: "/gemhues" },
+  { label: "Education", tableName: "Education", to: "/education" },
+  { label: "Employment", tableName: "Employment", to: "/employment" },
+  { label: "Addresses", tableName: "Addresses", to: "/addresses" },
+  { label: "Expense Tracker", tableName: "ExpenseTransaction", to: "/transactions" },
+  { label: "Services", tableName: "Services", to: "/service-accounts" },
 ] as const;
 
 type WireframeCollectionLinksProps = {
@@ -44,7 +44,7 @@ export function WireframeCollectionLinks({
     .map((table) => ({
       label: table.name,
       tableName: table.name,
-      to: `/schema-wireframe/${encodeURIComponent(table.name)}`,
+      to: `/schema/${encodeURIComponent(table.name)}`,
     }));
   const visibleItems = [...collections, ...schemaCollections];
   const normalizedSearch = search.trim().toLowerCase();
@@ -87,7 +87,7 @@ export function WireframeCollectionLinks({
           tone="secondary"
           className="wireframe-collection-link wireframe-collection-create-table"
         >
-          <Link to="/schema-builder-wireframe" aria-label="Create a new table">
+          <Link to="/schema-builder" aria-label="Create a new table">
             <span className="wireframe-collection-link-name">
               <span className="wireframe-collection-link-icon" aria-hidden="true">
                 ＋

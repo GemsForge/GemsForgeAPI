@@ -100,7 +100,7 @@ export function TransactionsInspector({
     const relationValue = resolved?.recordID ?? String(property.getValue(record).raw ?? "");
     const href =
       resolved?.recordID && definition.targetTableName
-        ? `/schema-wireframe/${encodeURIComponent(definition.targetTableName)}/record/${encodeURIComponent(resolved.recordID)}`
+        ? `/schema/${encodeURIComponent(definition.targetTableName)}/record/${encodeURIComponent(resolved.recordID)}`
         : undefined;
     const display = values.isSuccess
       ? (resolved?.displayValue ?? (relationValue ? "Unavailable related record" : "—"))
@@ -165,7 +165,7 @@ export function TransactionsInspector({
                 onSave: async (_item: unknown, relatedRecordID: string | number | null) => {
                   if (relatedRecordID === null || relatedRecordID === "" || !relation.targetTableName) return;
                   navigate(
-                    `/schema-wireframe/${encodeURIComponent(relation.targetTableName)}/record/${encodeURIComponent(String(relatedRecordID))}`,
+                    `/schema/${encodeURIComponent(relation.targetTableName)}/record/${encodeURIComponent(String(relatedRecordID))}`,
                   );
                 },
                 renderEditor: (editor: {

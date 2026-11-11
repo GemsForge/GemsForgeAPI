@@ -38,7 +38,7 @@ function targetFields(tableName: string, tables: ReturnType<typeof useSchemaPage
 export function TransactionRelationSettings() {
   const tables = useSchemaPageTablesQuery();
   const definitions = useTablePropertyDefinitionsQuery(TABLE_NAME);
-  const { mutateAsync: saveDefinitions } = useSaveTablePropertyDefinitionsMutation(TABLE_NAME);
+  const { mutateAsync: saveDefinitions, isPending: savePending } = useSaveTablePropertyDefinitionsMutation(TABLE_NAME);
   const [draft, setDraft] = useState<TablePropertyDefinition[]>([]);
   const [lookupName, setLookupName] = useState("");
   const [lookupRelationID, setLookupRelationID] = useState<string>(RELATIONS[0].id);
@@ -293,8 +293,8 @@ export function TransactionRelationSettings() {
           </div>
         ))}
       {error ? <p role="alert">{error}</p> : null}
-      <GemButton type="button" onClick={saveRelations} disabled={save.isPending}>
-        {save.isPending ? "Saving relations…" : "Save relations and lookups"}
+      <GemButton type="button" onClick={saveRelations} disabled={savePending}>
+        {savePending ? "Saving relations…" : "Save relations and lookups"}
       </GemButton>
     </section>
   );

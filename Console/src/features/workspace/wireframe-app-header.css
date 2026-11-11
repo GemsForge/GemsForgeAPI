@@ -49,6 +49,15 @@
   display: none;
 }
 
+/* Route loading and error fallbacks occupy the content column of the shell grid. */
+.wireframe-app-shell > [role="status"],
+.wireframe-app-shell > [role="alert"] {
+  grid-column: 2 / -1;
+  grid-row: 2;
+  margin: 0;
+  padding: 2.2rem 1.8rem;
+}
+
 @media (max-width: 1100px) {
   .wireframe-app-header {
     position: sticky;
@@ -69,7 +78,9 @@
   }
 
   .wireframe-canvas .wireframe-demo.wireframe-standalone .wireframe-demo-main,
-  .wireframe-canvas .wireframe-demo.wireframe-standalone.is-expanded .wireframe-record-page {
+  .wireframe-canvas .wireframe-demo.wireframe-standalone.is-expanded .wireframe-record-page,
+  .wireframe-app-shell > [role="status"],
+  .wireframe-app-shell > [role="alert"] {
     grid-row: 1;
   }
 
@@ -118,4 +129,31 @@
   .wireframe-app-header {
     display: none;
   }
+}
+
+.wireframe-page-links-error {
+  display: grid;
+  justify-items: start;
+  gap: 0.4rem;
+}
+
+.wireframe-page-links .wireframe-page-links-retry {
+  min-height: 32px;
+  padding: 0.25rem 0.7rem;
+  border: 1px solid var(--gem-wireframe-border-strong, #b9c9c6);
+  border-radius: 0.5rem;
+  background: var(--gem-wireframe-surface, #fff);
+  color: var(--gem-wireframe-text, #233c42);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.wireframe-page-links .wireframe-page-links-retry:focus-visible {
+  outline: 2px solid var(--gem-wireframe-action, #287ca5);
+  outline-offset: 2px;
+}
+
+.wireframe-demo-sidebar.is-collapsed .wireframe-page-links-error {
+  display: none;
 }

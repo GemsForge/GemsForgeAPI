@@ -205,8 +205,11 @@ fields, relationship updates, and field-level errors.
 ## Story creation
 
 Use Scripts/create-github-story.mjs as the repository story-creation entry
-point. The helper infers the type and scope labels from the required
-`type(scope): short imperative description` title, preserves any explicit
+point. Pass the title without a story number,
+`type(scope): short imperative description`; GitHub assigns the number on
+creation and the helper renames the issue to `type(scope): #number description`,
+which pull request titles must then match exactly. The helper infers the type
+and scope labels from the title, preserves any explicit
 additional labels, and rejects unknown mappings. Use existing labels only and
 provide relationship inputs explicitly. A story should receive its standard
 assignee, milestone, project membership, and initial Backlog status unless a

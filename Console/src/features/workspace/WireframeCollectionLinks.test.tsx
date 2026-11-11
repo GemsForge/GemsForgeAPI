@@ -23,9 +23,6 @@ describe("Wireframe collection navigation", () => {
         </MemoryRouter>
       </TamaguiProvider>,
     );
-    expect(screen.getByRole("link", { name: "Create a new table" })).toHaveAttribute(
-      "href",
-      "/schema-builder-wireframe",
-    );
+    expect(screen.getByRole("link", { name: "Create a new table" })).toHaveAttribute("href", "/schema-builder");
   });
 });

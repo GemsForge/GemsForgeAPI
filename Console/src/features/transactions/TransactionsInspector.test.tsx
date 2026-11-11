@@ -186,7 +186,7 @@ describe("TransactionsInspector relations and lookups", () => {
     setup();
 
     const categoryLink = await screen.findByRole("link", { name: "Food" });
-    expect(categoryLink).toHaveAttribute("href", "/schema-wireframe/BudgetCategories/record/1");
+    expect(categoryLink).toHaveAttribute("href", "/schema/BudgetCategories/record/1");
     expect(screen.queryByRole("link", { name: "—" })).not.toBeInTheDocument();
     expect(await screen.findByText("Variable")).toBeInTheDocument();
 
@@ -241,7 +241,7 @@ describe("TransactionsInspector relations and lookups", () => {
     fireEvent.click(await screen.findByRole("option", { name: "Travel" }));
 
     await waitFor(() => {
-      expect(screen.getByTestId("location")).toHaveTextContent("/schema-wireframe/BudgetCategories/record/3");
+      expect(screen.getByTestId("location")).toHaveTextContent("/schema/BudgetCategories/record/3");
     });
     expect(optionSpy).toHaveBeenCalledWith("Transactions", "transaction-category", "", "TRX-1", expect.anything());
     expect(patchSpy).not.toHaveBeenCalled();
