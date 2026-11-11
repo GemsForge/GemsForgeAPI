@@ -220,7 +220,7 @@ The database path is supplied through the required `DATABASE_PATH` environment
 variable. The real local value is kept in Xcode's Scheme settings rather than
 in source code.
 
-The API remains private and owner-only. Supabase session authentication protects
+The API remains private and owner-only. Local session authentication protects
 Console routes, while the Vapor service maps the authenticated owner to the
 configured Gem Life account. Authentication does not make public hosting safe:
 deployment security, network privacy, and the reviewed ownership migration must

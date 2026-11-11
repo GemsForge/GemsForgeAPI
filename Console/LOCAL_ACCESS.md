@@ -2,13 +2,13 @@
 
 The Console has two separate concerns: the native device-local workspace and
 the API account session. The native workspace remains device-local, while the
-Console's Supabase sign-in UI uses the API session contract. Do not treat one as
+Console's local sign-in uses the API session contract. Do not treat one as
 proof of the other.
 
 The UI must not collect passwords itself, invent credentials, or persist
 session or personal query data in browser storage. Account identity,
 authorization, token handling, and expiration are server/session concerns; see
-`Console-Authentication-299.md` for that contract.
+`Local-Authentication.md` for that contract.
 
 A workspace opens locally when the app loads. Its banner checks `/health` and
 distinguishes checking, available, and unavailable API state, with a retry.

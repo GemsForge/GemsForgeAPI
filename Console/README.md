@@ -8,8 +8,8 @@ production asset packaging, accessibility and responsive/performance checks.
 
 Start with [UI standards](UI_STANDARDS.md) for implementation conventions and
 [the design system](DESIGN_SYSTEM.md) for canvas, tokens, layout, and component
-roles. Protected Console routes require the Supabase Auth
-session described in [Console authentication](../docs/Console-Authentication-299.md).
+roles. Protected Console routes require the local API session described in
+[Local authentication](../docs/Local-Authentication.md).
 This does not make the API public; see the deployment security gate before
 changing its private deployment posture. Live database attachment-column
 mismatches are tracked separately in [#178](https://github.com/GemsForge/GemsForgeAPI/issues/178).
@@ -30,14 +30,11 @@ In a second terminal:
 ```bash
 cd Console
 VITE_API_TARGET="http://127.0.0.1:8081" \
-VITE_SUPABASE_URL="https://your-project-ref.supabase.co" \
-VITE_SUPABASE_PUBLISHABLE_KEY="your-supabase-publishable-key" \
 npm run dev
 ```
 
-Configure the API's `SUPABASE_URL`, `SUPABASE_OWNER_SUBJECT`, and
-`GEM_LIFE_OPERATOR_ACCOUNT_ID` as described in the authentication guide. Keep
-public Supabase signups disabled; this Console is owner-only.
+Configure the API's `LOCAL_AUTH_USERNAME`, `LOCAL_AUTH_PASSWORD`, and
+`GEM_LIFE_OPERATOR_ACCOUNT_ID` as described in the authentication guide.
 
 Open `http://127.0.0.1:4173/`.
 

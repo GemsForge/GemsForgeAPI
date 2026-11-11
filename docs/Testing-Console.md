@@ -32,10 +32,9 @@ swift run GemsForgeAPI serve --hostname 127.0.0.1 --port 8082
 Then open `http://127.0.0.1:8082/` for the guidance page and set
 `VITE_API_TARGET=http://127.0.0.1:8082` for the Console.
 
-Sign-in requires Supabase `VITE_SUPABASE_URL` and
-`VITE_SUPABASE_PUBLISHABLE_KEY`, plus API `SUPABASE_URL`,
-`SUPABASE_OWNER_SUBJECT`, and `GEM_LIFE_OPERATOR_ACCOUNT_ID`. Keep public
-signups disabled. See [`Console-Authentication-299.md`](Console-Authentication-299.md).
+Sign-in requires API `LOCAL_AUTH_USERNAME`, `LOCAL_AUTH_PASSWORD`, and
+`GEM_LIFE_OPERATOR_ACCOUNT_ID`. See
+[`Local-Authentication.md`](Local-Authentication.md).
 
 ## Table Kit development
 

@@ -9,7 +9,7 @@ The project is designed to run locally on a Mac and remain private behind a secu
 The M3 Gem Life UI foundations are documented in
 [UI standards](Console/UI_STANDARDS.md), including local session scope,
 accessibility, responsive verification, performance and release packaging.
-The API includes owner-only Supabase Auth session authentication, with route
+The API includes owner-only local session authentication, with route
 authorization and per-account hub isolation in progress. Keep it private until
 that work and an operator-reviewed ownership migration are complete; see
 [Deployment-Security.md](docs/Deployment-Security.md). Live database
@@ -68,7 +68,7 @@ The project currently includes:
   in-memory databases.
 
 Production hosting and remote private-network access remain planned work.
-Authentication is owner-only through the Supabase session contract; keep the
+Authentication is owner-only through the local session contract; keep the
 API private until deployment security and ownership migration are complete.
 
 ## Requirements
@@ -151,6 +151,8 @@ current Notes-import boundary.
   records the read-only DEV relationship audit and known test-schema gaps.
 - [`docs/Local-Development.md`](docs/Local-Development.md) explains building,
   testing, running, branching, and private-hosting assumptions.
+- [`docs/Local-Authentication.md`](docs/Local-Authentication.md) documents
+  local sign-in configuration, session storage, and logout behavior.
 - [`docs/Live-Schema-Management.md`](docs/Live-Schema-Management.md) explains
   the reviewed live-schema workflow, audit history, and recovery procedure.
 - [`docs/Services.md`](docs/Services.md) explains the database service layer.
@@ -199,7 +201,7 @@ It covers local configuration, live migrations, attachment relationships,
 GitHub Actions, commit policy, story creation, and verification commands.
 
 For the active Console-specific workflow, see [`Console/README.md`](Console/README.md).
-It documents the React/Vite development server, Supabase owner-session
+It documents the React/Vite development server, local owner-session
 configuration, API proxy paths, persistent Table Kit workspace and inspector,
 shared form and attachment conventions, and the local schema-builder boundary.
 See [`Console/COMPONENT_API.md`](Console/COMPONENT_API.md) for shared workspace
