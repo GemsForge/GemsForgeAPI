@@ -14,6 +14,8 @@ import { GemRecordList } from "../components/ui/GemRecordList--LEGACY";
 import { GemRecordCard } from "../components/ui/GemRecordCard--LEGACY";
 import { FilePresentation } from "../components/FilePresentation";
 import { AuthProvider } from "../auth/AuthProvider";
+import "../design-system/global-density.css";
+import "../design-system/wireframe-mvp.css";
 import "../styles.css";
 
 window.fetch = async (input, init) => {
@@ -36,18 +38,7 @@ window.fetch = async (input, init) => {
       }
     : url.includes("schema-builder")
       ? { version: 1, supportedTypes: [{ value: "TEXT", label: "Text", description: "Text values" }], rules: [] }
-      : {
-          databaseName: "Fixture.sqlite",
-          tableCount: 1,
-          tables: [
-            {
-              name: "LongExampleTableNameForNarrowScreens",
-              columns: [{ name: "ExampleProperty", dataType: "TEXT", primaryKey: false, nullable: true }],
-              foreignKeys: [],
-              indexes: [],
-            },
-          ],
-        };
+      : [];
   return new Response(JSON.stringify(data), { headers: { "Content-Type": "application/json" } });
 };
 const domains = [{ id: "TEST", title: "Long example domain title", description: "Synthetic records only" }];
