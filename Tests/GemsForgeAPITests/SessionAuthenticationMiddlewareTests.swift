@@ -132,15 +132,15 @@ final class SessionAuthenticationMiddlewareTests: XCTestCase {
         }
     }
 
-    func testOnlyHealthAndSupabaseSignInArePublic() async throws {
+    func testOnlyHealthAndLocalSignInArePublic() async throws {
         try await withApp(configure: { app in
             try await self.configureTestApp(app)
             app.get("health") { _ async in "ok" }
-            app.post("auth", "supabase") { _ async in "signin" }
+            app.post("auth", "local") { _ async in "signin" }
             app.get("protected") { _ async in "private" }
         }) { app in
             try await app.test(.GET, "health") { XCTAssertEqual($0.status, .ok) }
-            try await app.test(.POST, "auth/supabase") { XCTAssertEqual($0.status, .ok) }
+            try await app.test(.POST, "auth/local") { XCTAssertEqual($0.status, .ok) }
             try await app.test(.GET, "protected") {
                 XCTAssertEqual($0.status, .unauthorized)
             }

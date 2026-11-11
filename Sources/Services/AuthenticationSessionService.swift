@@ -1,6 +1,12 @@
 import Crypto
 import Fluent
 import Foundation
+import Vapor
+
+struct AuthenticationSessionResponse: Content, Sendable {
+    let sessionToken: String
+    let expiresAt: Date
+}
 
 /// Issues and validates opaque API sessions independently of the sign-in provider.
 struct AuthenticationSessionService: Sendable {

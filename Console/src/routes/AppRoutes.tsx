@@ -18,7 +18,6 @@ import { DomainSidebar } from "../features/domains/DomainSidebar";
 import { LocalSession } from "../components/LocalSession";
 import { RequireAuth } from "../auth/RequireAuth";
 import { SignInPage } from "../auth/SignInPage";
-import { isRecoveryLink, ResetPasswordPage } from "../auth/ResetPasswordPage";
 import { WireframeAppHeader, WireframeNavigationProvider } from "../features/workspace/WireframeAppHeader";
 import { WireframeAppShell, useWireframeShell } from "../features/workspace/WireframeAppShell";
 const EducationWireframeView = lazy(() =>
@@ -322,9 +321,8 @@ export function AppRoutes() {
   return (
     <Routes>
       <Route element={<AuthLayout />}>
-        <Route path="login" element={isRecoveryLink() ? <ResetPasswordPage /> : <SignInPage />} />
-        <Route path="reset-password" element={<ResetPasswordPage />} />
-        <Route path="/" element={isRecoveryLink() ? <ResetPasswordPage /> : <Navigate to="/login" replace />} />
+        <Route path="login" element={<SignInPage />} />
+        <Route path="/" element={<Navigate to="/login" replace />} />
       </Route>
       <Route element={<RequireAuth />}>
         <Route
