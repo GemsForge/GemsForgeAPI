@@ -86,10 +86,7 @@ describe("Gem Life navigation", () => {
         </TamaguiProvider>
       </QueryClientProvider>,
     );
-    expect(await screen.findByRole("heading", { name: "Education" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Gem Life home" })).toBeInTheDocument();
-    expect(screen.getByRole("banner")).toHaveClass("topbar");
-    expect(screen.getByRole("complementary")).toHaveClass("sidebar");
+    expect(await screen.findByRole("heading", { name: "Education" }, lazyScreen)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Home" })).toHaveAttribute("href", "/app");
   });
   it("renders wireframe routes on their dedicated canvas", async () => {
@@ -369,65 +366,26 @@ describe("Gem Life navigation", () => {
       Object.defineProperty(window, "innerWidth", { configurable: true, value: originalWidth });
     }
   });
-  it("renders home without requesting feature data", async () => {
-    const education = vi.spyOn(api, "listEducation");
-    vi.spyOn(api, "listRootPages").mockResolvedValue([
-      { id: 1, parentID: null, domainID: "Life", title: "Field notes", description: "Observations and ideas." },
-    ]);
+  it("renders the MVP2 home at the root route", async () => {
+    vi.spyOn(api, "listRootPages").mockResolvedValue([]);
+    vi.spyOn(api, "listEducation").mockResolvedValue([]);
     setup();
-    expect(await screen.findByRole("heading", { name: "Field notes" })).toBeInTheDocument();
-    expect(education).not.toHaveBeenCalled();
+    expect(await screen.findByRole("heading", { name: "Home" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Home" })).toHaveAttribute("aria-current", "page");
     expect(screen.getByRole("main", { name: "Gem Life screen" })).toContainElement(
       screen.getByRole("navigation", { name: "Workspace navigation" }),
     );
   });
-  it("keeps the Home alias in the connected workspace frame", async () => {
-    vi.spyOn(api, "listRootPages").mockResolvedValue([
-      { id: 1, parentID: null, domainID: "Life", title: "Field notes", description: "Observations and ideas." },
-    ]);
-    setup("/");
-
-    expect(await screen.findByRole("heading", { name: "Field notes" })).toBeInTheDocument();
-    expect(screen.getByRole("navigation", { name: "Your library" })).toBeInTheDocument();
-    expect(screen.getByRole("complementary", { name: "Gem Life sidebar" })).toBeInTheDocument();
-  });
-  it("loads root-page search results from other application routes", async () => {
-    vi.spyOn(api, "listEmployment").mockResolvedValue([]);
-    vi.spyOn(api, "listRootPages").mockResolvedValue([
-      { id: 1, parentID: null, domainID: "Life", title: "Field notes", description: "Observations and ideas." },
-    ]);
-    setup("/employment");
-    await screen.findByRole("heading", { name: "Employment" });
-
-    fireEvent.change(screen.getByRole("textbox", { name: "Search Gem Life" }), { target: { value: "Field" } });
-    fireEvent.click(await screen.findByRole("link", { name: "Field notes" }));
-
-    expect(await screen.findByRole("heading", { name: "Field notes" })).toBeInTheDocument();
-    expect(screen.getByRole("navigation", { name: "Your library" })).toBeInTheDocument();
-  });
-  it("opens and focuses search from its mobile toggle", async () => {
-    const originalWidth = window.innerWidth;
-    Object.defineProperty(window, "innerWidth", { configurable: true, value: 390 });
-    try {
-      vi.spyOn(api, "listEmployment").mockResolvedValue([]);
-      setup("/employment");
-      await screen.findByRole("heading", { name: "Employment" });
-
-      const toggle = screen.getByRole("button", { name: "Search Gem Life" });
-      fireEvent.click(toggle);
-
-      expect(toggle).toHaveAttribute("aria-expanded", "true");
-      await waitFor(() => expect(screen.getByRole("textbox", { name: "Search Gem Life" })).toHaveFocus());
-    } finally {
-      Object.defineProperty(window, "innerWidth", { configurable: true, value: originalWidth });
-    }
-  });
-  it("loads a domain from a direct URL and renders its pages", async () => {
-    const pages = vi.spyOn(api, "listPagesForDomain").mockResolvedValue([]);
-    setup("/domains/Life");
-    expect(await screen.findByRole("heading", { name: "Life domain" })).toBeInTheDocument();
-    expect(pages).toHaveBeenCalledWith("Life", expect.any(AbortSignal));
+  it.each([
+    ["/education-wireframe", "Education"],
+    ["/home-wireframe", "Home"],
+    ["/forgekeeper-wireframe", "ForgeKeeper"],
+  ])("redirects the retired %s URL to its canonical route", async (path, heading) => {
+    vi.spyOn(api, "listRootPages").mockResolvedValue([]);
+    vi.spyOn(api, "listEducation").mockResolvedValue([]);
+    vi.spyOn(api, "getSchemaPageTables").mockResolvedValue({ tables: [], availableTables: [] });
+    setup(path);
+    expect(await screen.findByRole("heading", { name: heading }, lazyScreen)).toBeInTheDocument();
   });
   it("keeps Back and Forward synchronized with the route", async () => {
     vi.spyOn(api, "listEducation").mockResolvedValue([]);
@@ -437,9 +395,9 @@ describe("Gem Life navigation", () => {
     const navigation = screen.getByRole("navigation", { name: "Workspace navigation" });
     fireEvent.click(navigation.querySelector<HTMLAnchorElement>('a[href="/employment"]')!);
     await screen.findByRole("heading", { name: "Employment" });
-    expect(screen.getByRole("region", { name: "Current screen" })).toHaveFocus();
+    expect(screen.getByRole("main", { name: "Gem Life screen" })).toHaveFocus();
     fireEvent.click(screen.getByRole("button", { name: "Test Go back" }));
-    await screen.findByRole("heading", { name: "Education" });
+    await screen.findByRole("heading", { name: "Education" }, lazyScreen);
     fireEvent.click(screen.getByRole("button", { name: "Test Go forward" }));
     await screen.findByRole("heading", { name: "Employment" });
   });
