@@ -38,7 +38,7 @@ function targetFields(tableName: string, tables: ReturnType<typeof useSchemaPage
 export function TransactionRelationSettings() {
   const tables = useSchemaPageTablesQuery();
   const definitions = useTablePropertyDefinitionsQuery(TABLE_NAME);
-  const save = useSaveTablePropertyDefinitionsMutation(TABLE_NAME);
+  const { mutateAsync: saveDefinitions } = useSaveTablePropertyDefinitionsMutation(TABLE_NAME);
   const [draft, setDraft] = useState<TablePropertyDefinition[]>([]);
   const [lookupName, setLookupName] = useState("");
   const [lookupRelationID, setLookupRelationID] = useState<string>(RELATIONS[0].id);
@@ -77,13 +77,13 @@ export function TransactionRelationSettings() {
     async (next: TablePropertyDefinitionInput[]) => {
       setError(null);
       try {
-        const saved = await save.mutateAsync(next);
+        const saved = await saveDefinitions(next);
         setDraft(saved);
       } catch (cause) {
         setError(cause instanceof Error ? cause.message : "Could not save relation settings.");
       }
     },
-    [save.mutateAsync],
+    [saveDefinitions],
   );
 
   useEffect(() => {

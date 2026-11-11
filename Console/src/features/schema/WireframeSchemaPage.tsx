@@ -103,7 +103,7 @@ export function WireframeSchemaPage() {
         cardSubtitle: (record) => recordText(record, subtitleProperty?.id) || tableName,
         cardStatus: (record) => recordText(record, statusProperty?.id),
         cardMeta: (record) => recordText(record, dateProperty?.id) || record.id,
-        inspector: (record, schemaProperties) => (
+        inspector: (record, _schemaProperties) => (
           <WireframeSchemaInspector
             record={record}
             // `properties` carries the schema-aware PATCH handlers. The generated
