@@ -462,9 +462,6 @@ button {
   background: var(--gem-wireframe-canvas, var(--fieldBackground, var(--canvas)));
   color: var(--fieldText, var(--ink));
 }
-.sign-in-form input:focus {
-  border-color: var(--fieldFocus, var(--mint));
-}
 .credential-sign-in-button {
   width: 100%;
   margin-top: 0.6rem;
@@ -2412,10 +2409,6 @@ dialog::backdrop {
 }
 [data-status-select] [data-disabled] {
   opacity: 1;
-}
-.create-form-control:focus,
-.create-form-control:focus-visible {
-  border-color: var(--fieldFocus, var(--mint));
 }
 /* Map semantic field widths to compact controls without changing the shared field shell. */
 .create-form-control--short {
@@ -4780,11 +4773,6 @@ dialog::backdrop {
   background: var(--fieldBackground, #0c1b20);
   color: var(--fieldText, var(--ink));
 }
-.edit-form input:focus,
-.edit-form textarea:focus,
-.edit-form select:focus {
-  border-color: var(--fieldFocus, var(--mint));
-}
 .dialog-actions {
   display: flex;
   justify-content: end;
@@ -6973,10 +6961,6 @@ dialog::backdrop {
   outline: 0;
   background: var(--fieldBackground, #0c1b20);
   color: var(--fieldText, var(--ink));
-}
-.database-field input:focus,
-.database-field select:focus {
-  border-color: var(--fieldFocus, var(--mint));
 }
 .database-confirm {
   display: flex;
