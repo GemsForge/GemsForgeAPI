@@ -84,9 +84,12 @@ node Scripts/create-github-story.mjs \
   --blocked-by 200
 ```
 
-The helper does not infer relationships from prose. It passes only the
-explicit structured relationship inputs to the workflow. Its success output
-means the issue was created and the workflow was dispatched; inspect the
+Omit the story number from `--title`; the helper adds the number GitHub
+assigns. The helper does not infer relationships from prose. It passes only the
+explicit structured relationship inputs to the workflow. Its JSON output
+reports the issue URL, numbered title, and `workflowDispatch`. If dispatch
+fails, the issue still exists and the command exits non-zero; dispatch the
+workflow for that issue rather than creating the story again. After success, inspect the
 workflow run notices before treating the story as fully configured.
 
 ## Credentials and local configuration

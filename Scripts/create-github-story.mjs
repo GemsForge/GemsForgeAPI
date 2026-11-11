@@ -1,6 +1,9 @@
 import { execFileSync } from "node:child_process";
 
-const usage = `Usage: node Scripts/create-github-story.mjs --title "..." [options]
+const usage = `Usage: node Scripts/create-github-story.mjs --title "type(scope): description" [options]
+
+The title omits the story number: GitHub assigns it on creation, and the helper
+then renames the issue to "type(scope): #number description".
 
 Options:
   --body TEXT              Markdown issue body
@@ -89,37 +92,56 @@ const parseArgs = (args) => {
   return options;
 };
 
-const runGh = (args) => JSON.parse(execFileSync("gh", args, { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }));
+const runGh = (args, { json = true } = {}) => {
+  const output = execFileSync("gh", args, { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+  return json ? JSON.parse(output) : output.trim();
+};
+
+const storyNumberPrefix = /^([^:]+):\s+(?:#[1-9]\d*\s+)?/;
+
+// The issue number does not exist until GitHub creates the issue, so titles
+// are written without it. Any number supplied anyway is replaced with the real one.
+export function numberedStoryTitle(title, issueNumber) {
+  return title.replace(storyNumberPrefix, `$1: #${issueNumber} `);
+}
 
 export function createStory(options, run = runGh) {
   const labels = inferLabels(options.title, options.labels);
-  const issueArgs = ["api", `repos/${options.repo}/issues`, "--method", "POST", "-f", `title=${options.title}`];
+  const draftTitle = options.title.replace(storyNumberPrefix, "$1: ");
+  const issueArgs = ["api", `repos/${options.repo}/issues`, "--method", "POST", "-f", `title=${draftTitle}`];
   if (options.body) issueArgs.push("-f", `body=${options.body}`);
   for (const label of labels) issueArgs.push("-f", `labels[]=${label}`);
   for (const assignee of options.assignees) issueArgs.push("-f", `assignees[]=${assignee}`);
   if (options.milestone) issueArgs.push("-f", `milestone=${options.milestone}`);
   const issue = run(issueArgs);
-  const numberedTitle = /^([^:]+):\s+#([1-9]\d*)\s+/.test(options.title)
-    ? options.title
-    : options.title.replace(/^([^:]+):\s+/, `$1: #${issue.number} `);
-  if (numberedTitle !== options.title) {
-    run(["api", `repos/${options.repo}/issues/${issue.number}`, "--method", "PATCH", "-f", `title=${numberedTitle}`]);
-  }
+  const numberedTitle = numberedStoryTitle(draftTitle, issue.number);
+  run(["api", `repos/${options.repo}/issues/${issue.number}`, "--method", "PATCH", "-f", `title=${numberedTitle}`]);
   const metadataWorkflow = options.metadataWorkflow || process.env.GITHUB_METADATA_WORKFLOW || "sync-issue-metadata.yml";
   const workflowArgs = ["workflow", "run", metadataWorkflow, "--repo", options.repo, "--ref", "master",
     "-f", `issue_number=${issue.number}`];
   if (options.parentIssue) workflowArgs.push("-f", `parent_issue=${options.parentIssue}`);
   if (options.blockedBy.length) workflowArgs.push("-f", `blocked_by=${options.blockedBy.join(",")}`);
   if (options.blocking.length) workflowArgs.push("-f", `blocking=${options.blocking.join(",")}`);
-  run(workflowArgs);
-  return { issueNumber: issue.number, issueURL: issue.html_url, workflow: metadataWorkflow };
+  // `gh workflow run` prints text, not JSON. The issue already exists here, so
+  // a dispatch failure is reported alongside the issue instead of discarding it.
+  let workflowDispatch = "dispatched";
+  try {
+    run(workflowArgs, { json: false });
+  } catch (error) {
+    workflowDispatch = `failed: ${error.message}`;
+  }
+  return { issueNumber: issue.number, issueURL: issue.html_url, title: numberedTitle, workflow: metadataWorkflow, workflowDispatch };
 }
 
 if (process.argv[1]?.endsWith("create-github-story.mjs")) {
   try {
     const options = parseArgs(process.argv.slice(2));
     if (options.help) console.log(usage);
-    else console.log(JSON.stringify(createStory(options), null, 2));
+    else {
+      const result = createStory(options);
+      console.log(JSON.stringify(result, null, 2));
+      if (result.workflowDispatch !== "dispatched") process.exitCode = 1;
+    }
   } catch (error) {
     console.error(`${error.message}\n\n${usage}`);
     process.exitCode = 1;
