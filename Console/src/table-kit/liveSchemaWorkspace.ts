@@ -26,8 +26,7 @@ export function createLiveSchemaProperties<Row extends globalThis.Record<string,
                 ? ("date" as const)
                 : ("text" as const),
             nullable: column.nullable,
-            onSave: (record: unknown, value: string | number | null) =>
-              onSave(record as Row, column.name, value),
+            onSave: (record: unknown, value: string | number | null) => onSave(record as Row, column.name, value),
           },
         }
       : {}),
