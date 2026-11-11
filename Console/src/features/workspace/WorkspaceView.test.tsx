@@ -95,6 +95,47 @@ describe("connected knowledge workspace", () => {
     await waitFor(() => expect(addRow).toHaveFocus());
   });
 
+  it("rejects a whitespace-only note and keeps the existing note", async () => {
+    renderWorkspace();
+    fireEvent.click(await screen.findByRole("button", { name: "Edit note" }));
+
+    const dialog = await screen.findByRole("dialog", { name: "Edit note", hidden: true });
+    const field = within(dialog).getByLabelText(/^Note/);
+    fireEvent.change(field, { target: { value: "   " } });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Keep in this preview", hidden: true }));
+
+    expect(await within(dialog).findByText("Enter a note.")).toBeInTheDocument();
+    expect(field).toHaveAttribute("aria-invalid", "true");
+    await waitFor(() => expect(field).toHaveFocus());
+    expect(screen.getByText(/The best ideas begin as observations/, { ignore: "textarea" })).toBeInTheDocument();
+  });
+
+  it("returns focus to the edited row's control after saving it", async () => {
+    renderWorkspace();
+    const editRow = await screen.findByRole("button", { name: "Edit Chromalock" });
+    editRow.focus();
+    fireEvent.click(editRow);
+
+    const dialog = await screen.findByRole("dialog", { name: "Edit table row", hidden: true });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Keep in this preview", hidden: true }));
+
+    await waitFor(() => expect(screen.queryByRole("dialog", { hidden: true })).not.toBeInTheDocument());
+    await waitFor(() => expect(editRow).toHaveFocus());
+  });
+
+  it("returns focus to Page options when the page editor is cancelled", async () => {
+    renderWorkspace();
+    const options = await screen.findByRole("button", { name: "Page options" });
+    options.focus();
+    fireEvent.click(options);
+
+    const dialog = await screen.findByRole("dialog", { name: "Edit page", hidden: true });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Cancel", hidden: true }));
+
+    await waitFor(() => expect(screen.queryByRole("dialog", { hidden: true })).not.toBeInTheDocument());
+    await waitFor(() => expect(options).toHaveFocus());
+  });
+
   it("renders as shell page content with a regular-weight note and visible sample labels", async () => {
     const { container } = renderWorkspace();
 

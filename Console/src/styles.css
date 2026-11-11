@@ -932,15 +932,6 @@ h3 {
   font-size: clamp(1.1rem, 1.7vw, 1.35rem);
   line-height: 1.75;
 }
-.workspace-note-block,
-.workspace-table-block,
-.workspace-related-block,
-.workspace-map-block {
-  min-width: 0;
-  border-color: var(--gem-knowledge-line);
-  background: var(--gem-knowledge-panel);
-  box-shadow: none;
-}
 .workspace-note-meta {
   display: flex;
   flex-wrap: wrap;
@@ -1495,11 +1486,9 @@ h3 {
   --borderColor: var(--gem-knowledge-line);
   min-width: 0;
   padding: 1.25rem 1.65rem;
-  border: 1px solid var(--gem-knowledge-line);
   border-radius: 0.8rem;
   background: var(--gem-knowledge-panel);
   box-shadow: 0 1px 3px rgba(38, 61, 54, 0.06);
-  outline: 0;
 }
 .hybrid-workspace .workspace-note-block {
   padding: 1.6rem 2rem 1.25rem;
@@ -1533,7 +1522,6 @@ h3 {
   color: #26271f;
   font-family: var(--gem-editorial-font-family);
   font-size: clamp(1.25rem, 1.75vw, 1.55rem);
-  font-weight: 400;
   line-height: 1.55;
   white-space: pre-line;
 }
@@ -8011,14 +7999,12 @@ dialog {
   color: var(--gem-knowledge-ink);
 }
 .hybrid-workspace .workspace-knowledge-action {
-  /* Tamagui paints Button borders from --borderColor; quiet buttons also need an explicit width. */
+  /* Tamagui paints Button borders from --borderColor and its state variants. */
   --borderColor: var(--gem-knowledge-mint);
   --borderColorHover: var(--gem-knowledge-mint);
   --borderColorFocus: var(--gem-knowledge-mint);
   --borderColorPress: var(--gem-knowledge-mint);
-  border: 1px solid var(--gem-knowledge-mint);
   background: var(--gem-knowledge-panel);
-  opacity: 1;
 }
 .hybrid-workspace .workspace-knowledge-action:hover {
   background: var(--gem-knowledge-panel-light);

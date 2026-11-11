@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ComponentProps } from "react";
 import { Dialog, Form, SizableText, Theme } from "tamagui";
 import { useSearchParams } from "react-router-dom";
 import { QueryFeedback } from "../../components/QueryFeedback";
@@ -26,29 +26,29 @@ function pageUpdatedLabel(updatedAt?: string | null): string {
 
 type BlockEditor = { kind: "note" } | { kind: "row"; rowID: string | null };
 
-/** Returns keyboard focus to the control that opened a dialog once the dialog unmounts. */
-function useReturnFocusOnClose() {
+type CloseAutoFocus = NonNullable<ComponentProps<typeof Dialog.Content>["onCloseAutoFocus"]>;
+
+/**
+ * Returns focus to the control that opened a dialog. A modal Tamagui Dialog restores focus only to a
+ * Dialog.Trigger; these dialogs open from page buttons, so hand Dialog.Content's close path the opener.
+ */
+function useOpenerCloseAutoFocus(): CloseAutoFocus {
   const [opener] = useState(() => (document.activeElement instanceof HTMLElement ? document.activeElement : null));
-  const pendingFocus = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  useEffect(() => {
-    // StrictMode replays cleanup then setup on mount; cancel that replay's focus so the open dialog keeps focus.
-    clearTimeout(pendingFocus.current);
-    return () => {
-      // Runs after the dialog's own focus scope releases, so the opener keeps focus.
-      pendingFocus.current = setTimeout(() => {
-        if (opener?.isConnected) opener.focus();
-      }, 0);
-    };
-  }, [opener]);
+  return (event) => {
+    if (!opener?.isConnected) return;
+    event.cancel();
+    opener.focus();
+  };
 }
 
-type RowField = "name" | "type" | "status" | "nextThought";
-const rowFieldLabels: Record<RowField, string> = {
-  name: "Name",
-  type: "Type",
-  status: "Status",
-  nextThought: "Next thought",
-};
+/** Required sample-row fields, in form order: drives labels, trimming, validation, and error focus. */
+const rowFields = [
+  { key: "name", label: "Name" },
+  { key: "type", label: "Type" },
+  { key: "status", label: "Status" },
+  { key: "nextThought", label: "Next thought" },
+] as const;
+type RowField = (typeof rowFields)[number]["key"];
 
 /** A connected knowledge workspace backed by ForgeKeeper root pages. */
 export function WorkspaceView({ onSuccess }: { onSuccess: (message: string) => void }) {
@@ -492,7 +492,7 @@ function BlockEditorDialog({
   onSaveNote: (value: string) => void;
   onSaveRow: (row: WorkspacePreviewRow) => void;
 }) {
-  useReturnFocusOnClose();
+  const returnFocus = useOpenerCloseAutoFocus();
   const [noteDraft, setNoteDraft] = useState(note);
   const [rowDraft, setRowDraft] = useState<WorkspacePreviewRow>(
     row ?? { id: "", name: "", type: "", status: "Draft", nextThought: "" },
@@ -502,17 +502,13 @@ function BlockEditorDialog({
   const rowFieldRefs = useRef<Partial<Record<RowField, HTMLInputElement | HTMLTextAreaElement | null>>>({});
   const showErrors = submitAttempt > 0;
   const noteError = showErrors && !noteDraft.trim() ? "Enter a note." : undefined;
-  const rowError = (field: RowField) =>
-    showErrors && !rowDraft[field].trim() ? `Enter a ${rowFieldLabels[field].toLowerCase()}.` : undefined;
+  const blankRowFields = rowFields.filter(({ key }) => !rowDraft[key].trim());
+  const rowError = (field: (typeof rowFields)[number]) =>
+    showErrors && blankRowFields.includes(field) ? `Enter a ${field.label.toLowerCase()}.` : undefined;
 
   useEffect(() => {
     if (submitAttempt === 0) return;
-    const firstInvalid =
-      editor.kind === "note"
-        ? noteFieldRef.current
-        : (["name", "type", "status", "nextThought"] as const)
-            .filter((field) => !rowDraft[field].trim())
-            .map((field) => rowFieldRefs.current[field])[0];
+    const firstInvalid = editor.kind === "note" ? noteFieldRef.current : rowFieldRefs.current[blankRowFields[0]?.key];
     firstInvalid?.focus();
     // Focus only moves after a rejected submit, not on every keystroke.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -523,24 +519,15 @@ function BlockEditorDialog({
       if (!noteDraft.trim()) return setSubmitAttempt((value) => value + 1);
       return onSaveNote(noteDraft.trim());
     }
-    const trimmed = {
-      ...rowDraft,
-      name: rowDraft.name.trim(),
-      type: rowDraft.type.trim(),
-      status: rowDraft.status.trim(),
-      nextThought: rowDraft.nextThought.trim(),
-    };
-    if (!trimmed.name || !trimmed.type || !trimmed.status || !trimmed.nextThought) {
-      return setSubmitAttempt((value) => value + 1);
-    }
-    onSaveRow(trimmed);
+    if (blankRowFields.length > 0) return setSubmitAttempt((value) => value + 1);
+    onSaveRow({ ...rowDraft, ...Object.fromEntries(rowFields.map(({ key }) => [key, rowDraft[key].trim()])) });
   };
 
   return (
     <Dialog open onOpenChange={(open) => !open && onCancel()} modal>
       <Dialog.Portal>
         <Dialog.Overlay className="table-kit-utility-backdrop" />
-        <Dialog.Content className="table-kit-new-record-utility workspace-editor-dialog">
+        <Dialog.Content className="table-kit-new-record-utility workspace-editor-dialog" onCloseAutoFocus={returnFocus}>
           <div className="table-kit-new-record-heading">
             <div>
               <SizableText className="eyebrow">Sample content · not saved</SizableText>
@@ -566,46 +553,19 @@ function BlockEditorDialog({
               />
             ) : (
               <>
-                <GemTextField
-                  ref={(element) => {
-                    rowFieldRefs.current.name = element;
-                  }}
-                  label="Name"
-                  value={rowDraft.name}
-                  onChange={(event) => setRowDraft({ ...rowDraft, name: event.target.value })}
-                  error={rowError("name")}
-                  required
-                />
-                <GemTextField
-                  ref={(element) => {
-                    rowFieldRefs.current.type = element;
-                  }}
-                  label="Type"
-                  value={rowDraft.type}
-                  onChange={(event) => setRowDraft({ ...rowDraft, type: event.target.value })}
-                  error={rowError("type")}
-                  required
-                />
-                <GemTextField
-                  ref={(element) => {
-                    rowFieldRefs.current.status = element;
-                  }}
-                  label="Status"
-                  value={rowDraft.status}
-                  onChange={(event) => setRowDraft({ ...rowDraft, status: event.target.value })}
-                  error={rowError("status")}
-                  required
-                />
-                <GemTextField
-                  ref={(element) => {
-                    rowFieldRefs.current.nextThought = element;
-                  }}
-                  label="Next thought"
-                  value={rowDraft.nextThought}
-                  onChange={(event) => setRowDraft({ ...rowDraft, nextThought: event.target.value })}
-                  error={rowError("nextThought")}
-                  required
-                />
+                {rowFields.map((field) => (
+                  <GemTextField
+                    key={field.key}
+                    ref={(element) => {
+                      rowFieldRefs.current[field.key] = element;
+                    }}
+                    label={field.label}
+                    value={rowDraft[field.key]}
+                    onChange={(event) => setRowDraft({ ...rowDraft, [field.key]: event.target.value })}
+                    error={rowError(field)}
+                    required
+                  />
+                ))}
               </>
             )}
             <div className="dialog-actions">
@@ -635,14 +595,14 @@ function PageEditorDialog({
   onCancel: () => void;
   onSave: (patch: ForgeKeeperPatch) => Promise<void>;
 }) {
-  useReturnFocusOnClose();
+  const returnFocus = useOpenerCloseAutoFocus();
   const [title, setTitle] = useState(page.title);
   const [description, setDescription] = useState(page.description);
   return (
     <Dialog open onOpenChange={(open) => !open && !saving && onCancel()} modal>
       <Dialog.Portal>
         <Dialog.Overlay className="table-kit-utility-backdrop" />
-        <Dialog.Content className="table-kit-new-record-utility workspace-editor-dialog">
+        <Dialog.Content className="table-kit-new-record-utility workspace-editor-dialog" onCloseAutoFocus={returnFocus}>
           <div className="table-kit-new-record-heading">
             <div>
               <SizableText className="eyebrow">Page editor</SizableText>
