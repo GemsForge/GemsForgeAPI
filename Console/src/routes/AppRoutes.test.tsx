@@ -18,8 +18,8 @@ function HistoryControls() {
   const navigate = useNavigate();
   return (
     <>
-      <button onClick={() => navigate(-1)}>Go back</button>
-      <button onClick={() => navigate(1)}>Go forward</button>
+      <button onClick={() => navigate(-1)}>Test Go back</button>
+      <button onClick={() => navigate(1)}>Test Go forward</button>
     </>
   );
 }
@@ -396,9 +396,9 @@ describe("Gem Life navigation", () => {
     fireEvent.click(navigation.querySelector<HTMLAnchorElement>('a[href="/employment"]')!);
     await screen.findByRole("heading", { name: "Employment" });
     expect(screen.getByRole("main", { name: "Gem Life screen" })).toHaveFocus();
-    fireEvent.click(screen.getByRole("button", { name: "Go back" }));
+    fireEvent.click(screen.getByRole("button", { name: "Test Go back" }));
     await screen.findByRole("heading", { name: "Education" }, lazyScreen);
-    fireEvent.click(screen.getByRole("button", { name: "Go forward" }));
+    fireEvent.click(screen.getByRole("button", { name: "Test Go forward" }));
     await screen.findByRole("heading", { name: "Employment" });
   });
   it.each([

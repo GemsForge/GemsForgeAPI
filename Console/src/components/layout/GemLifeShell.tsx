@@ -1,6 +1,10 @@
-import type { CSSProperties, KeyboardEvent, PointerEvent, ReactNode } from "react";
+import type { CSSProperties, KeyboardEvent as ReactKeyboardEvent, PointerEvent, ReactNode } from "react";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "../../auth/AuthProvider";
+import { Link, useLocation } from "react-router-dom";
+import { usePagesQuery } from "../../data/workflowQueries";
+import { inspectionBypassEnabled } from "../../auth/session";
+import { workspacePreviewPages } from "../../features/workspace/workspacePreviewData";
 import { gemBreakpoints, gemLayout } from "@gemsforge/ui";
 
 interface GemLifeShellProps {
@@ -30,7 +34,22 @@ const MIN_CONTENT_WIDTH = gemLayout.appContentMinimum;
 /** Shared application frame for the Gem Life interface. */
 export function GemLifeShell({ children, sidebar }: GemLifeShellProps) {
   const { signOut } = useAuth();
-  const workspaceRef = useRef<HTMLElement>(null);
+  const location = useLocation();
+  const isWorkspace = location.pathname === "/workspace" || location.pathname === "/";
+  const [searchValue, setSearchValue] = useState("");
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const pagesQuery = usePagesQuery(
+    { kind: "roots" },
+    (isWorkspace || Boolean(searchValue.trim())) && !inspectionBypassEnabled,
+  );
+  const selectedPageID = Number(new URLSearchParams(location.search).get("page"));
+  const pages = inspectionBypassEnabled
+    ? pagesQuery.data?.length
+      ? pagesQuery.data
+      : workspacePreviewPages
+    : pagesQuery.data;
+  const activePage = pages?.find((page) => page.id === selectedPageID) ?? pages?.[0];
+  const workspaceRef = useRef<HTMLDivElement>(null);
   const resizingRef = useRef(false);
   const manuallyResizedRef = useRef(false);
   const utilityPreviousWidthRef = useRef<number | null>(null);
@@ -39,6 +58,36 @@ export function GemLifeShell({ children, sidebar }: GemLifeShellProps) {
       ? COLLAPSED_SIDEBAR_WIDTH
       : EXPANDED_SIDEBAR_WIDTH,
   );
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const searchRef = useRef<HTMLInputElement>(null);
+  const searchMatches = (pages ?? []).filter((page) =>
+    page.title.toLocaleLowerCase().includes(searchValue.trim().toLocaleLowerCase()),
+  );
+
+  useEffect(() => {
+    if (mobileSearchOpen) searchRef.current?.focus();
+  }, [mobileSearchOpen]);
+
+  useEffect(() => {
+    setSearchValue("");
+    setMobileSearchOpen(false);
+  }, [location.pathname, location.search]);
+
+  const toggleSearch = () => {
+    if (mobileSearchOpen) setSearchValue("");
+    setMobileSearchOpen((open) => !open);
+  };
+
+  useEffect(() => {
+    const focusSearch = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        setMobileSearchOpen(true);
+      }
+    };
+    window.addEventListener("keydown", focusSearch);
+    return () => window.removeEventListener("keydown", focusSearch);
+  }, []);
 
   const resizeSidebar = (width: number) => {
     const availableWidth = workspaceRef.current?.clientWidth ?? MAX_SIDEBAR_WIDTH + MIN_CONTENT_WIDTH;
@@ -68,7 +117,7 @@ export function GemLifeShell({ children, sidebar }: GemLifeShellProps) {
     resizeSidebar(event.clientX - workspaceLeft);
   };
 
-  const handleResizeKey = (event: KeyboardEvent<HTMLDivElement>) => {
+  const handleResizeKey = (event: ReactKeyboardEvent<HTMLDivElement>) => {
     if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
     event.preventDefault();
     manuallyResizedRef.current = true;
@@ -97,61 +146,128 @@ export function GemLifeShell({ children, sidebar }: GemLifeShellProps) {
 
   return (
     <GemLifeShellContext.Provider value={shellContext}>
-      <div className="app-shell">
+      <div
+        ref={workspaceRef}
+        className="app-shell"
+        data-mobile-nav-open={mobileNavOpen}
+        data-workspace-route={isWorkspace ? "true" : "false"}
+        data-sidebar-collapsed={sidebarWidth < SIDEBAR_LABEL_THRESHOLD}
+        style={{ "--sidebar-width": `${sidebarWidth}px` } as CSSProperties}
+      >
         <a className="skip-link" href="#main-content">
           Skip to content
         </a>
-        <header className="topbar">
-          <div>
-            <p className="eyebrow">GemsForgeAPI · React testing console</p>
-            <h1>Gem Life Console</h1>
-          </div>
-          <div className="header-actions">
-            <div className="connection-pill">Private workspace</div>
-            <button type="button" className="secondary-button" onClick={() => void signOut()}>
-              Sign out
+        {sidebar}
+        <div
+          className="sidebar-resizer"
+          role="separator"
+          aria-label="Resize navigation pane"
+          aria-orientation="vertical"
+          aria-valuemin={COLLAPSED_SIDEBAR_WIDTH}
+          aria-valuemax={MAX_SIDEBAR_WIDTH}
+          aria-valuenow={sidebarWidth}
+          tabIndex={0}
+          onKeyDown={handleResizeKey}
+          onDoubleClick={() => {
+            manuallyResizedRef.current = true;
+            resizeSidebar(sidebarWidth < SIDEBAR_LABEL_THRESHOLD ? EXPANDED_SIDEBAR_WIDTH : COLLAPSED_SIDEBAR_WIDTH);
+          }}
+          onPointerDown={(event) => {
+            manuallyResizedRef.current = true;
+            resizingRef.current = true;
+            event.currentTarget.setPointerCapture(event.pointerId);
+          }}
+          onPointerMove={handlePointerMove}
+          onPointerUp={(event) => {
+            resizingRef.current = false;
+            event.currentTarget.releasePointerCapture(event.pointerId);
+          }}
+          onPointerCancel={() => {
+            resizingRef.current = false;
+          }}
+        />
+        <div className="app-main-column">
+          <header className="topbar">
+            <div className="workspace-breadcrumbs">
+              <button
+                className="workspace-mobile-menu"
+                type="button"
+                aria-label="Toggle navigation"
+                aria-expanded={mobileNavOpen}
+                onClick={() => setMobileNavOpen((open) => !open)}
+              >
+                ☰
+              </button>
+              <button type="button" aria-label="Previous page" onClick={() => window.history.back()}>
+                ←
+              </button>
+              <button type="button" aria-label="Next page" onClick={() => window.history.forward()}>
+                →
+              </button>
+              <span className="breadcrumb-library">♧&nbsp; Library</span>
+              <span aria-hidden="true">›</span>
+              <span>{activePage?.title ?? "Workspace"}</span>
+            </div>
+            <div className="workspace-search" data-mobile-open={mobileSearchOpen}>
+              <button
+                className="workspace-search-toggle"
+                type="button"
+                aria-label="Search Gem Life"
+                aria-expanded={mobileSearchOpen}
+                aria-controls="workspace-search-input"
+                onClick={toggleSearch}
+              >
+                <span aria-hidden="true">⌕</span>
+              </button>
+              <input
+                ref={searchRef}
+                id="workspace-search-input"
+                aria-label="Search Gem Life"
+                placeholder="Search GEM LIFE"
+                value={searchValue}
+                onChange={(event) => setSearchValue(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Escape") {
+                    setSearchValue("");
+                    setMobileSearchOpen(false);
+                  }
+                }}
+              />
+              <kbd>⌘K</kbd>
+              {searchValue.trim() ? (
+                <nav className="workspace-search-results" aria-label="Matching pages">
+                  {searchMatches.length ? (
+                    searchMatches.map((page) => (
+                      <Link key={page.id} to={`/workspace?page=${page.id}`}>
+                        {page.title}
+                      </Link>
+                    ))
+                  ) : (
+                    <span>No matching pages</span>
+                  )}
+                </nav>
+              ) : null}
+            </div>
+            {!isWorkspace ? <div className="connection-pill">Private workspace</div> : null}
+            <button
+              type="button"
+              className="secondary-button shell-sign-out"
+              aria-label="Sign out"
+              onClick={() => void signOut()}
+            >
+              ⇥
             </button>
-          </div>
-        </header>
-        <main
-          ref={workspaceRef}
-          className="workspace"
-          data-sidebar-collapsed={sidebarWidth < SIDEBAR_LABEL_THRESHOLD}
-          style={{ "--sidebar-width": `${sidebarWidth}px` } as CSSProperties}
-        >
-          {sidebar}
-          <div
-            className="sidebar-resizer"
-            role="separator"
-            aria-label="Resize navigation pane"
-            aria-orientation="vertical"
-            aria-valuemin={COLLAPSED_SIDEBAR_WIDTH}
-            aria-valuemax={MAX_SIDEBAR_WIDTH}
-            aria-valuenow={sidebarWidth}
-            tabIndex={0}
-            onKeyDown={handleResizeKey}
-            onDoubleClick={() => {
-              manuallyResizedRef.current = true;
-              resizeSidebar(sidebarWidth < SIDEBAR_LABEL_THRESHOLD ? EXPANDED_SIDEBAR_WIDTH : COLLAPSED_SIDEBAR_WIDTH);
-            }}
-            onPointerDown={(event) => {
-              manuallyResizedRef.current = true;
-              resizingRef.current = true;
-              event.currentTarget.setPointerCapture(event.pointerId);
-            }}
-            onPointerMove={handlePointerMove}
-            onPointerUp={(event) => {
-              resizingRef.current = false;
-              event.currentTarget.releasePointerCapture(event.pointerId);
-            }}
-            onPointerCancel={() => {
-              resizingRef.current = false;
-            }}
-          />
-          <section className="content" id="main-content" tabIndex={-1} aria-label="Current screen">
-            {children}
-          </section>
-        </main>
+          </header>
+          <main
+            className="workspace"
+            data-sidebar-collapsed={sidebarWidth < SIDEBAR_LABEL_THRESHOLD}
+            style={{ "--sidebar-width": `${sidebarWidth}px` } as CSSProperties}
+          >
+            <section className="content" id="main-content" tabIndex={-1} aria-label="Current screen">
+              {children}
+            </section>
+          </main>
+        </div>
       </div>
     </GemLifeShellContext.Provider>
   );
