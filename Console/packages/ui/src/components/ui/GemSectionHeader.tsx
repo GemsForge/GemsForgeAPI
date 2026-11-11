@@ -13,7 +13,7 @@ export interface GemSectionHeaderProps {
 export function GemSectionHeader({ eyebrow, title, description, trailing }: GemSectionHeaderProps) {
   return (
     <XStack className="content-heading" justifyContent="space-between" alignItems="flex-end" gap="$4">
-      <YStack>
+      <YStack flexShrink={1} minWidth={0}>
         {eyebrow ? <p className="eyebrow">{eyebrow}</p> : null}
         <GemSectionHeading marginBottom="$1">{title}</GemSectionHeading>
         {description ? <GemBody className="muted">{description}</GemBody> : null}

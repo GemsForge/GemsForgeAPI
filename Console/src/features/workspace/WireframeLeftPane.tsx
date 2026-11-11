@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { ReactNode } from "react";
 import { GSearchField } from "@gemsforge/ui";
 import { WireframeCollectionLinks } from "./WireframeCollectionLinks";
+import { WireframePageLinks } from "./WireframePageLinks";
 import { WireframePrimaryLinks } from "./WireframePrimaryLinks";
 import { WireframeUtilityLinks } from "./WireframeUtilityLinks";
 import { WireframeWorkspaceHeader } from "./WireframeWorkspaceHeader";
@@ -77,6 +78,7 @@ export function WireframeLeftPane({
           <kbd>⌘ K</kbd>
         </div>
         <WireframePrimaryLinks search={search} />
+        <WireframePageLinks search={search} />
         <Text asChild>
           <p className="demo-sidebar-label">Collections</p>
         </Text>

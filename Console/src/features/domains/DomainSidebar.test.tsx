@@ -10,7 +10,7 @@ function renderSidebar() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={client}>
-      <MemoryRouter>
+      <MemoryRouter initialEntries={["/employment"]}>
         <DomainSidebar domains={[]} onRefresh={vi.fn()} />
       </MemoryRouter>
     </QueryClientProvider>,

@@ -155,7 +155,11 @@ export function WireframePageView({
                 ) : (
                   <WireframeDescription className="wireframe-page-description">{description}</WireframeDescription>
                 )}
-                {banner ? <div className="wireframe-page-banner" role="note">{banner}</div> : null}
+                {banner ? (
+                  <div className="wireframe-page-banner" role="note">
+                    {banner}
+                  </div>
+                ) : null}
               </YStack>
             </WireframeTitleGroup>
             {showCount ? (

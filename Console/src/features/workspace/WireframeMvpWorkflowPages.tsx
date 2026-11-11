@@ -50,7 +50,7 @@ export function WireframeDomainsPage() {
             {records.map((domain) => (
               <Link
                 className="wireframe-system-card wireframe-system-domain-card"
-                to={`/forgekeeper-wireframe/domain/${encodeURIComponent(domain.id)}`}
+                to={`/forgekeeper/domain/${encodeURIComponent(domain.id)}`}
                 key={domain.id}
                 aria-label={`Open ForgeKeeper pages in ${domain.title}`}
               >
@@ -109,7 +109,7 @@ export function WireframeForgeKeeperPage({ kind }: { kind: ForgeKeeperScope }) {
       <section className="wireframe-system-domain-picker" aria-label="ForgeKeeper scope">
         <Link
           className={`wireframe-system-scope-link${kind === "roots" ? " is-active" : ""}`}
-          to="/forgekeeper-wireframe"
+          to="/forgekeeper"
           aria-current={kind === "roots" ? "page" : undefined}
         >
           All root pages
@@ -117,7 +117,7 @@ export function WireframeForgeKeeperPage({ kind }: { kind: ForgeKeeperScope }) {
         {domains.data?.map((item) => (
           <Link
             className={`wireframe-system-scope-link${item.id === domainID ? " is-active" : ""}`}
-            to={`/forgekeeper-wireframe/domain/${encodeURIComponent(item.id)}`}
+            to={`/forgekeeper/domain/${encodeURIComponent(item.id)}`}
             key={item.id}
             aria-current={item.id === domainID ? "page" : undefined}
           >
@@ -153,8 +153,8 @@ export function WireframeForgeKeeperPage({ kind }: { kind: ForgeKeeperScope }) {
         <ForgeKeeperView
           domain={domain}
           pages={pages.data}
-          onLoadRoots={() => navigate("/forgekeeper-wireframe")}
-          onLoadChildren={(id) => navigate(`/forgekeeper-wireframe/${id}/children`)}
+          onLoadRoots={() => navigate("/forgekeeper")}
+          onLoadChildren={(id) => navigate(`/forgekeeper/${id}/children`)}
           onPatch={async (id, patch) => {
             setError(null);
             setNotice(null);

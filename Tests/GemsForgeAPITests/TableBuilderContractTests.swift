@@ -23,6 +23,16 @@ final class TableBuilderContractTests: XCTestCase {
         XCTAssertEqual(definition.columns[1].dataType, .text)
         XCTAssertFalse(definition.columns[1].nullable)
         XCTAssertEqual(definition.columns[2].name, "Title")
+        XCTAssertEqual(definition.columns[2].dataType, .text)
+        XCTAssertFalse(definition.columns[2].nullable)
+        XCTAssertFalse(definition.columns[2].primaryKey)
+        XCTAssertEqual(definition.columns.dropFirst(3).map(\.name), ["Name", "PurchasePrice"])
+    }
+
+    func testAcceptsATitleOnlyTableWithServerManagedColumns() throws {
+        let definition = try service.validate(TableBuilderRequest(tableName: "Reading", columns: []))
+
+        XCTAssertEqual(definition.columns.map(\.name), ["ID", "HubID", "Title"])
     }
 
     func testAcceptsTheSupportedSQLiteTypesCaseInsensitively() throws {
@@ -38,6 +48,7 @@ final class TableBuilderContractTests: XCTestCase {
             TableBuilderRequest(tableName: "Example", columns: [column("Name", .text), column("name", .text)]),
             TableBuilderRequest(tableName: "Example", columns: [column("ID", .text)]),
             TableBuilderRequest(tableName: "Example", columns: [column("HubID", .text)]),
+            TableBuilderRequest(tableName: "Example", columns: [column("Title", .text)]),
             TableBuilderRequest(tableName: "Example", columns: [column("Name", .text, primaryKey: true)])
         ]
 

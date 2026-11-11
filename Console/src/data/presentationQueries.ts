@@ -113,9 +113,10 @@ export function useTableNavigationPreferences(tableNames: readonly string[]) {
       },
     })),
   });
-  return Object.fromEntries(
-    tableNames.map((tableName, index) => [tableName, results[index].data]),
-  ) as Record<string, { icon?: unknown; title?: unknown } | undefined>;
+  return Object.fromEntries(tableNames.map((tableName, index) => [tableName, results[index].data])) as Record<
+    string,
+    { icon?: unknown; title?: unknown } | undefined
+  >;
 }
 
 export function useSaveTableViewWorkspaceStateMutation(tableName: string) {

@@ -52,9 +52,9 @@ export function WireframeSchemaPage() {
           ? {
               headerBanner: (
                 <>
-                  <strong>Obsolete legacy table.</strong> Service logos now use <code>Services.LogoFileMetadataID</code>.
-                  This table remains only to backfill existing logo references and can be removed after verification in
-                  each database.
+                  <strong>Obsolete legacy table.</strong> Service logos now use <code>Services.LogoFileMetadataID</code>
+                  . This table remains only to backfill existing logo references and can be removed after verification
+                  in each database.
                 </>
               ),
             }
