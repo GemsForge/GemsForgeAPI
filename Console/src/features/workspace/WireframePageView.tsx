@@ -74,7 +74,7 @@ export function WireframePageView({
         <WireframeHeader asChild>
           <header className="wireframe-page-header">
             <WireframeTitleGroup className="wireframe-page-title-group">
-              <WireframeIcon>{tableIcon ?? <Text>✦</Text>}</WireframeIcon>
+              <WireframeIcon>{tableIcon ?? <span aria-hidden="true">✦</span>}</WireframeIcon>
               <YStack minWidth={0} className="wireframe-page-copy">
                 {onTitleChange ? (
                   <div
