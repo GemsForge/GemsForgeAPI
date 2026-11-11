@@ -26,7 +26,7 @@ describe("Gem Life design foundation", () => {
     expect(gemSpacing.section).toBeGreaterThan(gemSpacing.control);
     expect(gemRadii.card).toBeGreaterThan(gemRadii.control);
     expect(gemColors.lightCanvas).toBe("#f3f8f7");
-    expect(tamaguiConfig.themes.light.background.val).toBe("$lightCanvas");
+    expect(tamaguiConfig.themes.light.background.val).toBe(gemColors.lightCanvas);
     expect(tamaguiConfig.themes.dark).toBeDefined();
     expect(tamaguiConfig.themes.light).toBeDefined();
   });
@@ -56,13 +56,24 @@ describe("Gem Life design foundation", () => {
     expect(gemZIndex.popover).toBeLessThan(gemZIndex.notification);
     expect(tamaguiConfig.tokens.zIndex.gemPopover.val).toBe(gemZIndex.popover);
     expect(tamaguiConfig.tokens.zIndex.gemNotification.val).toBeGreaterThan(tamaguiConfig.tokens.zIndex.gemDialog.val);
-    expect(tamaguiConfig.themes.dark.surface.val).toBe("$gemPanel");
-    expect(tamaguiConfig.themes.dark.focus.val).toBe("$gemMint");
-    expect(tamaguiConfig.themes.dark.actionText.val).toBe("$gemCanvas");
-    expect(tamaguiConfig.themes.dark.warning.val).toBe("$gemGold");
-    expect(tamaguiConfig.themes.light.surface.val).toBe("$wireframePanel");
-    expect(tamaguiConfig.themes.light.focus.val).toBe("$wireframeMint");
-    expect(tamaguiConfig.themes.light.actionText.val).toBe("$wireframePanel");
-    expect(tamaguiConfig.themes.light.warning.val).toBe("$wireframeGold");
+    expect(tamaguiConfig.themes.dark.surface.val).toBe(gemColors.gemPanel);
+    expect(tamaguiConfig.themes.dark.focus.val).toBe(gemColors.gemMint);
+    expect(tamaguiConfig.themes.dark.actionText.val).toBe(gemColors.gemCanvas);
+    expect(tamaguiConfig.themes.dark.warning.val).toBe(gemColors.gemGold);
+    expect(tamaguiConfig.themes.light.surface.val).toBe(gemColors.wireframePanel);
+    expect(tamaguiConfig.themes.light.focus.val).toBe(gemColors.wireframeMint);
+    expect(tamaguiConfig.themes.light.actionText.val).toBe(gemColors.wireframePanel);
+    expect(tamaguiConfig.themes.light.warning.val).toBe(gemColors.wireframeGold);
+  });
+
+  it("resolves every theme value to a concrete value instead of a $token reference", () => {
+    const unresolved = Object.entries(tamaguiConfig.themes).flatMap(([themeName, theme]) =>
+      Object.entries(theme as Record<string, { val: unknown }>)
+        .filter(([, variable]) => typeof variable?.val === "string" && variable.val.startsWith("$"))
+        .map(([key, variable]) => `${themeName}.${key} = ${String(variable.val)}`),
+    );
+    expect(unresolved).toEqual([]);
+    expect(tamaguiConfig.themes.knowledge.borderColor.val).toBe(gemColors.gemKnowledgeLine);
+    expect(tamaguiConfig.themes.dark.borderColor.val).toBe(gemColors.gemPanelLight);
   });
 });
