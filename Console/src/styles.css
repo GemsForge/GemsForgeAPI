@@ -1389,6 +1389,8 @@ h3 {
 }
 .hybrid-workspace {
   min-width: 0;
+  /* Reset the legacy full-viewport min-height: the canvas sizes to its content inside the shell. */
+  min-height: 0;
   margin: 0;
   padding: 2.25rem clamp(1rem, 5vw, 4rem) 3rem;
   border: 1px solid var(--gem-knowledge-line);

@@ -28,16 +28,18 @@ type BlockEditor = { kind: "note" } | { kind: "row"; rowID: string | null };
 
 /** Returns keyboard focus to the control that opened a dialog once the dialog unmounts. */
 function useReturnFocusOnClose() {
-  const opener = useRef(document.activeElement instanceof HTMLElement ? document.activeElement : null);
+  const [opener] = useState(() => (document.activeElement instanceof HTMLElement ? document.activeElement : null));
+  const pendingFocus = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   useEffect(() => {
-    const element = opener.current;
+    // StrictMode replays cleanup then setup on mount; cancel that replay's focus so the open dialog keeps focus.
+    clearTimeout(pendingFocus.current);
     return () => {
       // Runs after the dialog's own focus scope releases, so the opener keeps focus.
-      setTimeout(() => {
-        if (element?.isConnected) element.focus();
+      pendingFocus.current = setTimeout(() => {
+        if (opener?.isConnected) opener.focus();
       }, 0);
     };
-  }, []);
+  }, [opener]);
 }
 
 type RowField = "name" | "type" | "status" | "nextThought";
@@ -546,11 +548,9 @@ function BlockEditorDialog({
                 {editor.kind === "note" ? "Edit note" : row ? "Edit table row" : "Add table row"}
               </Dialog.Title>
             </div>
-            <Dialog.Close asChild>
-              <GemButton variant="quiet" size="sm" aria-label="Close block editor" onClick={onCancel}>
-                ×
-              </GemButton>
-            </Dialog.Close>
+            <GemButton variant="quiet" size="sm" aria-label="Close block editor" onClick={onCancel}>
+              ×
+            </GemButton>
           </div>
           <Form className="edit-form" onSubmit={submit}>
             {editor.kind === "note" ? (
@@ -651,11 +651,9 @@ function PageEditorDialog({
                 <Dialog.Description>Changes are saved to your workspace page.</Dialog.Description>
               </div>
             </div>
-            <Dialog.Close asChild>
-              <GemButton variant="quiet" size="sm" aria-label="Close editor" disabled={saving} onClick={onCancel}>
-                ×
-              </GemButton>
-            </Dialog.Close>
+            <GemButton variant="quiet" size="sm" aria-label="Close editor" disabled={saving} onClick={onCancel}>
+              ×
+            </GemButton>
           </div>
           <Form
             className="edit-form"
