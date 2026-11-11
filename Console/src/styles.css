@@ -8009,6 +8009,11 @@ dialog {
   color: var(--gem-knowledge-ink);
 }
 .hybrid-workspace .workspace-knowledge-action {
+  /* Tamagui paints Button borders from --borderColor; quiet buttons also need an explicit width. */
+  --borderColor: var(--gem-knowledge-mint);
+  --borderColorHover: var(--gem-knowledge-mint);
+  --borderColorFocus: var(--gem-knowledge-mint);
+  --borderColorPress: var(--gem-knowledge-mint);
   border: 1px solid var(--gem-knowledge-mint);
   background: var(--gem-knowledge-panel);
   opacity: 1;

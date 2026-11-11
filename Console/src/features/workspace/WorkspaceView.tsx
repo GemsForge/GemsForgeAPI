@@ -285,7 +285,7 @@ export function WorkspaceView({ onSuccess }: { onSuccess: (message: string) => v
                       </SizableText>
                     </div>
                     <GemButton
-                      variant="quiet"
+                      tone="secondary"
                       size="sm"
                       className="workspace-knowledge-action"
                       onClick={() => setEditingLinks((value) => !value)}
