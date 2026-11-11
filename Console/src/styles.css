@@ -941,10 +941,6 @@ h3 {
   background: var(--gem-knowledge-panel);
   box-shadow: none;
 }
-.workspace-note-block {
-  padding: 1.15rem 1.4rem;
-  border-left: 3px solid var(--gem-knowledge-gold);
-}
 .workspace-note-meta {
   display: flex;
   flex-wrap: wrap;
@@ -1391,38 +1387,13 @@ h3 {
   padding: 0;
   overflow: visible;
 }
-.app-shell[data-workspace-route="true"] .app-main-column,
-.app-shell[data-workspace-route="true"] .workspace {
-  background: var(--gem-knowledge-canvas);
-}
-.app-shell[data-workspace-route="true"] .topbar {
-  border-bottom-color: var(--gem-knowledge-line);
-  background: var(--gem-knowledge-canvas);
-}
-.app-shell[data-workspace-route="true"] .workspace-breadcrumbs {
-  color: var(--gem-knowledge-ink);
-}
-.app-shell[data-workspace-route="true"] .workspace-breadcrumbs button,
-.app-shell[data-workspace-route="true"] .shell-sign-out {
-  color: var(--gem-knowledge-muted);
-}
-.app-shell[data-workspace-route="true"] .workspace-search {
-  border-color: #d0d0c2;
-  color: var(--gem-knowledge-muted);
-  background: rgba(250, 249, 242, 0.72);
-}
-.app-shell[data-workspace-route="true"] .workspace-search input {
-  color: var(--gem-knowledge-ink);
-}
-.app-shell[data-workspace-route="true"] .workspace-search input::placeholder {
-  color: var(--gem-knowledge-muted);
-}
 .hybrid-workspace {
-  min-height: calc(100dvh - 3.625rem);
+  min-width: 0;
   margin: 0;
-  padding: 2.25rem clamp(2rem, 6vw, 6rem) 3.5rem;
-  background:
-    radial-gradient(ellipse at 35% 10%, rgba(255, 255, 255, 0.42), transparent 52%), var(--gem-knowledge-canvas);
+  padding: 2.25rem clamp(1rem, 5vw, 4rem) 3rem;
+  border: 1px solid var(--gem-knowledge-line);
+  border-radius: 0.9rem;
+  background: var(--gem-knowledge-canvas);
 }
 .hybrid-workspace-grid {
   display: block;
@@ -1516,18 +1487,20 @@ h3 {
   color: var(--gem-knowledge-muted);
   font-size: 1.2rem;
 }
-.workspace-note-block,
-.workspace-table-block {
+/* Light editorial blocks: one hairline and a soft shadow. GemCard paints its border from --borderColor. */
+.hybrid-workspace .workspace-note-block,
+.hybrid-workspace .workspace-table-block {
+  --borderColor: var(--gem-knowledge-line);
   min-width: 0;
   padding: 1.25rem 1.65rem;
-  border: 1px solid rgba(209, 210, 193, 0.25);
+  border: 1px solid var(--gem-knowledge-line);
   border-radius: 0.8rem;
-  background: rgba(250, 249, 242, 0.78);
-  box-shadow: none;
+  background: var(--gem-knowledge-panel);
+  box-shadow: 0 1px 3px rgba(38, 61, 54, 0.06);
+  outline: 0;
 }
-.workspace-note-block {
+.hybrid-workspace .workspace-note-block {
   padding: 1.6rem 2rem 1.25rem;
-  border-left: 3px solid #d7b55c;
 }
 .workspace-note-meta {
   justify-content: space-between;
@@ -1558,6 +1531,7 @@ h3 {
   color: #26271f;
   font-family: var(--gem-editorial-font-family);
   font-size: clamp(1.25rem, 1.75vw, 1.55rem);
+  font-weight: 400;
   line-height: 1.55;
   white-space: pre-line;
 }
@@ -1583,10 +1557,8 @@ h3 {
 .workspace-block-heading {
   align-items: center;
 }
-.workspace-table-block {
-  padding: 0.65rem 0;
-  border: 0;
-  background: transparent;
+.hybrid-workspace .workspace-table-block {
+  padding: 0.9rem 0.35rem 0.5rem;
 }
 .workspace-table-block > .workspace-block-heading {
   padding: 0 0.65rem;
@@ -1614,9 +1586,6 @@ h3 {
 }
 .workspace-table-block .workspace-block-heading > button {
   min-height: 2.25rem;
-  color: var(--gem-knowledge-muted);
-  background: transparent;
-  opacity: 0.65;
 }
 .workspace-demo-table-wrap {
   overflow-x: auto;
@@ -1760,7 +1729,6 @@ h3 {
   stroke: #6d855a;
   stroke-opacity: 0.8;
 }
-.app-shell[data-workspace-route="true"] :where(a, button, input, textarea, [tabindex]):focus-visible,
 .hybrid-workspace :where(a, button, input, textarea, [tabindex]):focus-visible {
   outline-color: var(--gem-knowledge-gold) !important;
 }
@@ -8041,8 +8009,9 @@ dialog {
   color: var(--gem-knowledge-ink);
 }
 .hybrid-workspace .workspace-knowledge-action {
-  border-color: var(--gem-knowledge-line);
+  border: 1px solid var(--gem-knowledge-mint);
   background: var(--gem-knowledge-panel);
+  opacity: 1;
 }
 .hybrid-workspace .workspace-knowledge-action:hover {
   background: var(--gem-knowledge-panel-light);

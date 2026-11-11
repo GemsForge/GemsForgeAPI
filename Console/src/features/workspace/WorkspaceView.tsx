@@ -190,7 +190,9 @@ export function WorkspaceView({ onSuccess }: { onSuccess: (message: string) => v
                   </span>
                 </div>
                 <div className="workspace-note-layout">
-                  <SizableText className="workspace-note-copy">{note}</SizableText>
+                  <SizableText className="workspace-note-copy" fontWeight="400">
+                    {note}
+                  </SizableText>
                   <GemButton
                     tone="secondary"
                     className="workspace-knowledge-action"
