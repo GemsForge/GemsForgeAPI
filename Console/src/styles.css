@@ -2334,7 +2334,7 @@ dialog::backdrop {
 }
 .g-field-label {
   margin: 0 0 0.1rem !important;
-  color: var(--gold) !important;
+  color: var(--fieldLabel, var(--gold)) !important;
   font-family: inherit !important;
   font-size: 0.68rem !important;
   font-weight: 800 !important;
@@ -2342,6 +2342,8 @@ dialog::backdrop {
   line-height: 1.3 !important;
   text-transform: uppercase !important;
 }
+/* Field colours follow the nearest Tamagui theme (--field* variables), so fields in
+   portaled dialogs match their dialog instead of the dark default. */
 .create-form-control {
   width: 100%;
   max-width: 100%;
@@ -2349,11 +2351,11 @@ dialog::backdrop {
   box-sizing: border-box;
   min-height: 2.75rem;
   padding: 0.65rem 0.75rem;
-  border: 1px solid var(--line);
+  border: 1px solid var(--fieldBorder, var(--line));
   border-radius: 0.55rem;
   outline: 0;
-  background: #0c1b20;
-  color: var(--ink);
+  background: var(--fieldBackground, #0c1b20);
+  color: var(--fieldText, var(--ink));
   font-size: 0.84rem;
 }
 .create-form-control.gem-field-control--compact {
@@ -2383,7 +2385,7 @@ dialog::backdrop {
 }
 .create-form-control:focus,
 .create-form-control:focus-visible {
-  border-color: var(--mint);
+  border-color: var(--fieldFocus, var(--mint));
 }
 /* Map semantic field widths to compact controls without changing the shared field shell. */
 .create-form-control--short {
@@ -4742,16 +4744,16 @@ dialog::backdrop {
 .edit-form select {
   width: 100%;
   padding: 0.75rem;
-  border: 1px solid var(--line);
+  border: 1px solid var(--fieldBorder, var(--line));
   border-radius: 0.55rem;
   outline: 0;
-  background: #0c1b20;
-  color: var(--ink);
+  background: var(--fieldBackground, #0c1b20);
+  color: var(--fieldText, var(--ink));
 }
 .edit-form input:focus,
 .edit-form textarea:focus,
 .edit-form select:focus {
-  border-color: var(--mint);
+  border-color: var(--fieldFocus, var(--mint));
 }
 .dialog-actions {
   display: flex;
@@ -6936,15 +6938,15 @@ dialog::backdrop {
 .database-field select {
   width: 100%;
   padding: 0.75rem;
-  border: 1px solid var(--line);
+  border: 1px solid var(--fieldBorder, var(--line));
   border-radius: 0.55rem;
   outline: 0;
-  background: #0c1b20;
-  color: var(--ink);
+  background: var(--fieldBackground, #0c1b20);
+  color: var(--fieldText, var(--ink));
 }
 .database-field input:focus,
 .database-field select:focus {
-  border-color: var(--mint);
+  border-color: var(--fieldFocus, var(--mint));
 }
 .database-confirm {
   display: flex;
