@@ -41,4 +41,25 @@ describe("GSelectField", () => {
     fireEvent.click(trigger);
     expect(document.querySelector('[data-wireframe-select="true"]')).toBeInTheDocument();
   });
+
+  it("links a read-mode error to the displayed value", () => {
+    render(
+      <TamaguiProvider config={tamaguiConfig} defaultTheme="light">
+        <GSelectField
+          id="status"
+          label="Status"
+          value="Current"
+          editing={false}
+          onDisplayClick={vi.fn()}
+          error="Choose a status."
+          options={[{ label: "Current", value: "Current" }]}
+          onChange={vi.fn()}
+        />
+      </TamaguiProvider>,
+    );
+
+    const value = screen.getByRole("button", { name: "Current" });
+    expect(value).toHaveAccessibleDescription(/Choose a status\./);
+    expect(screen.getByRole("alert")).toHaveAttribute("id", "status-error");
+  });
 });
