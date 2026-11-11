@@ -55,20 +55,26 @@ describe("TransactionRelationSettings", () => {
     );
 
     await vi.waitFor(() => expect(save).toHaveBeenCalledOnce());
-    expect(save.mock.calls[0][1]).toEqual(
+    const savedDefaults = save.mock.calls[0][1];
+    const categoryID = savedDefaults.find((item) => item.sourceColumnName === "CategoryID")?.id;
+    const subcategoryID = savedDefaults.find((item) => item.sourceColumnName === "SubcategoryID")?.id;
+    expect(categoryID).toMatch(/^transaction-/);
+    expect(subcategoryID).toMatch(/^transaction-/);
+    expect(subcategoryID).not.toBe(categoryID);
+    expect(savedDefaults).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          id: "transaction-category",
+          id: categoryID,
           sourceColumnName: "CategoryID",
           targetTableName: "BudgetCategories",
           targetKeyColumnName: "CategoryID",
           targetDisplayColumnName: "Category",
         }),
         expect.objectContaining({
-          id: "transaction-subcategory",
+          id: subcategoryID,
           sourceColumnName: "SubcategoryID",
           targetTableName: "BudgetSubcategories",
-          filterByDefinitionID: "transaction-category",
+          filterByDefinitionID: categoryID,
           targetFilterColumnName: "CategoryID",
         }),
       ]),
@@ -119,9 +125,11 @@ describe("TransactionRelationSettings", () => {
     );
 
     await vi.waitFor(() => expect(save).toHaveBeenCalledOnce());
+    const initialRelations = save.mock.calls[0][1];
+    const categoryID = initialRelations.find((item) => item.sourceColumnName === "CategoryID")?.id;
+    const subcategoryID = initialRelations.find((item) => item.sourceColumnName === "SubcategoryID")?.id;
     save.mockClear();
-    expect(await screen.findByText("Related table: BudgetCategories")).toBeInTheDocument();
-    expect(screen.getByText("Related table: BudgetSubcategories")).toBeInTheDocument();
+    expect(screen.getAllByRole("combobox", { name: "Related table" })).toHaveLength(2);
     fireEvent.change(screen.getByRole("textbox", { name: "Lookup property name" }), {
       target: { value: "Category type" },
     });
@@ -135,7 +143,7 @@ describe("TransactionRelationSettings", () => {
     expect(savedDefinitions).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          id: "transaction-category",
+          id: categoryID,
           sourceColumnName: "CategoryID",
           targetTableName: "BudgetCategories",
           targetKeyColumnName: "CategoryID",
@@ -143,15 +151,15 @@ describe("TransactionRelationSettings", () => {
           kind: "Relation",
         }),
         expect.objectContaining({
-          id: "transaction-subcategory",
+          id: subcategoryID,
           sourceColumnName: "SubcategoryID",
           targetTableName: "BudgetSubcategories",
-          filterByDefinitionID: "transaction-category",
+          filterByDefinitionID: categoryID,
           targetFilterColumnName: "CategoryID",
         }),
         expect.objectContaining({
           name: "Category type",
-          relationDefinitionID: "transaction-category",
+          relationDefinitionID: categoryID,
           targetColumnName: "CategoryType",
           kind: "Lookup",
         }),

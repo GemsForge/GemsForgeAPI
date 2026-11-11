@@ -152,23 +152,16 @@ describe("TransactionsInspector relations and lookups", () => {
     setup();
     fireEvent.click(screen.getByText("Relations and lookups"));
 
-    expect(await screen.findByText("Related table: BudgetCategories")).toBeInTheDocument();
+    expect(await screen.findAllByRole("combobox", { name: "Related table" })).toHaveLength(2);
     await waitFor(() => expect(saveSpy).toHaveBeenCalledOnce());
-    expect(saveSpy).toHaveBeenCalledWith(
-      "Transactions",
-      expect.arrayContaining([
-        expect.objectContaining({
-          id: "transaction-category",
-          sourceColumnName: "CategoryID",
-          targetTableName: "BudgetCategories",
-        }),
-        expect.objectContaining({
-          id: "transaction-subcategory",
-          sourceColumnName: "SubcategoryID",
-          targetTableName: "BudgetSubcategories",
-        }),
-      ]),
-    );
+    const saved = saveSpy.mock.calls[0][1];
+    const category = saved.find((definition) => definition.sourceColumnName === "CategoryID");
+    const subcategory = saved.find((definition) => definition.sourceColumnName === "SubcategoryID");
+    expect(category?.id).toMatch(/^transaction-/);
+    expect(subcategory?.id).toMatch(/^transaction-/);
+    expect(category?.targetTableName).toBe("BudgetCategories");
+    expect(subcategory?.targetTableName).toBe("BudgetSubcategories");
+    expect(subcategory?.filterByDefinitionID).toBe(category?.id);
   });
 
   it("links related records, shows computed lookups, and searches options before saving their IDs", async () => {

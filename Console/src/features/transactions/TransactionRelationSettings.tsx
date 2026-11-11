@@ -10,14 +10,12 @@ import {
 const TABLE_NAME = "Transactions";
 const RELATIONS = [
   {
-    id: "transaction-category",
     sourceColumnName: "CategoryID",
     name: "Category",
     suggestedTable: "BudgetCategories",
     display: "Category",
   },
   {
-    id: "transaction-subcategory",
     sourceColumnName: "SubcategoryID",
     name: "Subcategory",
     suggestedTable: "BudgetSubcategories",
@@ -40,8 +38,9 @@ export function TransactionRelationSettings() {
   const definitions = useTablePropertyDefinitionsQuery(TABLE_NAME);
   const { mutateAsync: saveDefinitions, isPending: savePending } = useSaveTablePropertyDefinitionsMutation(TABLE_NAME);
   const [draft, setDraft] = useState<TablePropertyDefinition[]>([]);
+  const [defaultIDs] = useState(() => RELATIONS.map(() => `transaction-${crypto.randomUUID()}`));
   const [lookupName, setLookupName] = useState("");
-  const [lookupRelationID, setLookupRelationID] = useState<string>(RELATIONS[0].id);
+  const [lookupRelationID, setLookupRelationID] = useState<string>(defaultIDs[0]);
   const [lookupColumn, setLookupColumn] = useState("");
   const [error, setError] = useState<string | null>(null);
   const defaultSetupStarted = useRef(false);
@@ -51,8 +50,12 @@ export function TransactionRelationSettings() {
   const relationDrafts = useMemo(
     () =>
       RELATIONS.map((relation) => {
-        const saved = draft.find((item) => item.id === relation.id && item.kind === "Relation");
-        const targetTableName = relation.suggestedTable;
+        const saved = draft.find(
+          (item) => item.sourceColumnName === relation.sourceColumnName && item.kind === "Relation",
+        );
+        const relationIndex = RELATIONS.indexOf(relation);
+        const id = saved?.id ?? defaultIDs[relationIndex];
+        const targetTableName = saved?.targetTableName ?? relation.suggestedTable;
         const columns = columnsFor(targetTableName, tables.data);
         const key = columns.find((column) => column.primaryKey)?.name ?? "";
         const display =
@@ -62,13 +65,14 @@ export function TransactionRelationSettings() {
           "";
         return {
           ...relation,
+          id,
           saved,
           targetTableName,
           targetKeyColumnName: key,
           targetDisplayColumnName: display,
         };
       }),
-    [draft, tables.data],
+    [defaultIDs, draft, tables.data],
   );
   const activeLookupRelation = relationDrafts.find((relation) => relation.id === lookupRelationID) ?? relationDrafts[0];
   const lookupColumns = targetFields(activeLookupRelation?.targetTableName ?? "", tables.data);
@@ -100,13 +104,17 @@ export function TransactionRelationSettings() {
     }
 
     const defaults = RELATIONS.flatMap((relation) => {
+      const existing = definitions.data.find(
+        (item) => item.kind === "Relation" && item.sourceColumnName === relation.sourceColumnName,
+      );
+      if (existing) return [];
       const columns = columnsFor(relation.suggestedTable, tables.data);
       const key = columns.find((column) => column.primaryKey)?.name;
       const display = columns.find((column) => column.name === relation.display)?.name;
       if (!key || !display) return [];
       return [
         {
-          id: relation.id,
+          id: defaultIDs[RELATIONS.indexOf(relation)],
           name: relation.name,
           kind: "Relation" as const,
           sourceColumnName: relation.sourceColumnName,
@@ -115,26 +123,35 @@ export function TransactionRelationSettings() {
           targetDisplayColumnName: display,
           relationDefinitionID: null,
           targetColumnName: null,
-          filterByDefinitionID: relation.id === "transaction-subcategory" ? "transaction-category" : null,
-          targetFilterColumnName: relation.id === "transaction-subcategory" ? "CategoryID" : null,
+          filterByDefinitionID:
+            relation.sourceColumnName === "SubcategoryID"
+              ? (definitions.data.find((item) => item.kind === "Relation" && item.sourceColumnName === "CategoryID")
+                  ?.id ?? defaultIDs[0])
+              : null,
+          targetFilterColumnName: relation.sourceColumnName === "SubcategoryID" ? "CategoryID" : null,
         },
       ];
     });
-    const existingIDs = new Set(definitions.data.filter((item) => item.kind === "Relation").map((item) => item.id));
-    const missingDefaults = defaults.filter((item) => !existingIDs.has(item.id));
+    const existingSources = new Set(
+      definitions.data.filter((item) => item.kind === "Relation").map((item) => item.sourceColumnName),
+    );
+    const missingDefaults = defaults.filter((item) => !existingSources.has(item.sourceColumnName));
     if (missingDefaults.length === 0) return;
 
     defaultSetupStarted.current = true;
     const preservedDefinitions = definitions.data.filter(
-      (item) => !RELATIONS.some((relation) => relation.id === item.id),
+      (item) => !RELATIONS.some((relation) => relation.sourceColumnName === item.sourceColumnName),
     );
-    const existingDefaults = definitions.data.filter((item) => RELATIONS.some((relation) => relation.id === item.id));
+    const existingDefaults = definitions.data.filter((item) =>
+      RELATIONS.some((relation) => relation.sourceColumnName === item.sourceColumnName),
+    );
     void persist([...preservedDefinitions, ...existingDefaults, ...missingDefaults]);
   }, [
     definitions.data,
     definitions.isError,
     definitions.isPending,
     persist,
+    defaultIDs,
     tables.data,
     tables.isError,
     tables.isPending,
@@ -154,8 +171,11 @@ export function TransactionRelationSettings() {
         targetDisplayColumnName: relation.targetDisplayColumnName,
         relationDefinitionID: null,
         targetColumnName: null,
-        filterByDefinitionID: relation.id === "transaction-subcategory" ? "transaction-category" : null,
-        targetFilterColumnName: relation.id === "transaction-subcategory" ? "CategoryID" : null,
+        filterByDefinitionID:
+          relation.sourceColumnName === "SubcategoryID"
+            ? (relationDrafts.find((item) => item.sourceColumnName === "CategoryID")?.id ?? null)
+            : null,
+        targetFilterColumnName: relation.sourceColumnName === "SubcategoryID" ? "CategoryID" : null,
       };
     });
     const lookups = draft.filter((definition) => definition.kind === "Lookup");
@@ -176,7 +196,7 @@ export function TransactionRelationSettings() {
         targetTableName: null,
         targetKeyColumnName: null,
         targetDisplayColumnName: null,
-        relationDefinitionID: lookupRelationID,
+        relationDefinitionID: activeLookupRelation.id,
         targetColumnName: lookupColumn,
         filterByDefinitionID: null,
         targetFilterColumnName: null,
@@ -199,7 +219,43 @@ export function TransactionRelationSettings() {
           <strong>
             {relation.name} · {relation.sourceColumnName}
           </strong>
-          <p>Related table: {relation.targetTableName}</p>
+          <GSelectField
+            id={`${relation.id}-table`}
+            label="Related table"
+            value={relation.targetTableName}
+            options={(tables.data?.tables ?? [])
+              .filter((table) => table.columns.some((column) => column.primaryKey))
+              .map((table) => ({ value: table.name, label: table.name }))}
+            onChange={(targetTableName) => {
+              const targetColumns = columnsFor(targetTableName, tables.data);
+              const targetDisplayColumnName =
+                targetColumns.find((column) => column.name === relation.display)?.name ??
+                targetFields(targetTableName, tables.data).find((column) => !column.primaryKey)?.name ??
+                "";
+              setDraft((current) => {
+                const existing = current.find((item) => item.id === relation.id);
+                const next: TablePropertyDefinition = {
+                  ...(existing ?? {
+                    id: relation.id,
+                    tableName: TABLE_NAME,
+                    name: relation.name,
+                    kind: "Relation" as const,
+                    sourceColumnName: relation.sourceColumnName,
+                    relationDefinitionID: null,
+                    targetColumnName: null,
+                    filterByDefinitionID: null,
+                    targetFilterColumnName: null,
+                    sortOrder: 0,
+                  }),
+                  targetTableName,
+                  targetKeyColumnName: targetColumns.find((column) => column.primaryKey)?.name ?? "",
+                  targetDisplayColumnName,
+                };
+                return [...current.filter((item) => item.id !== relation.id), next];
+              });
+            }}
+            wireframe
+          />
           <GSelectField
             id={`${relation.id}-display`}
             label="Record name property"
@@ -222,8 +278,11 @@ export function TransactionRelationSettings() {
                     targetKeyColumnName: relation.targetKeyColumnName,
                     relationDefinitionID: null,
                     targetColumnName: null,
-                    filterByDefinitionID: relation.id === "transaction-subcategory" ? "transaction-category" : null,
-                    targetFilterColumnName: relation.id === "transaction-subcategory" ? "CategoryID" : null,
+                    filterByDefinitionID:
+                      relation.sourceColumnName === "SubcategoryID"
+                        ? (relationDrafts.find((item) => item.sourceColumnName === "CategoryID")?.id ?? null)
+                        : null,
+                    targetFilterColumnName: relation.sourceColumnName === "SubcategoryID" ? "CategoryID" : null,
                     sortOrder: 0,
                   }),
                   targetDisplayColumnName,
@@ -247,7 +306,7 @@ export function TransactionRelationSettings() {
         <GSelectField
           id="transaction-lookup-relation"
           label="Relation"
-          value={lookupRelationID}
+          value={activeLookupRelation?.id ?? lookupRelationID}
           options={relationDrafts.map((relation) => ({ value: relation.id, label: relation.name }))}
           onChange={(value) => {
             setLookupRelationID(value);
