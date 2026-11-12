@@ -3838,12 +3838,17 @@ dialog::backdrop {
   pointer-events: auto;
   transform: translateY(0);
 }
+.wireframe-cover-action,
+.wireframe-cover-action > span,
+.wireframe-cover-action > * {
+  color: #fff !important;
+  background: transparent !important;
+}
 .wireframe-cover-action {
   min-height: 1.8rem !important;
   padding: 0.25rem 0.55rem !important;
   border-color: rgba(255, 255, 255, 0.28) !important;
   border-radius: 0 !important;
-  color: #fff !important;
   font-size: 0.7rem !important;
 }
 .wireframe-cover-action:first-child {
@@ -4504,31 +4509,50 @@ dialog::backdrop {
   padding: 0 clamp(2rem, 8vw, 8rem) 3rem;
   background: #fbfbf9;
 }
-.wireframe-record-page > .wireframe-cover {
+.wireframe-record-page > .wireframe-cover,
+.wireframe-record-page-cover-wrap .wireframe-cover {
   width: calc(100% + (2 * clamp(2rem, 8vw, 8rem)));
   max-width: none;
   margin-left: calc(-1 * clamp(2rem, 8vw, 8rem));
 }
+.wireframe-record-page-cover-wrap {
+  position: relative;
+  overflow: visible;
+}
+.wireframe-record-page-emoji {
+  position: absolute;
+  bottom: -1.125rem;
+  left: clamp(2rem, 8vw, 8rem);
+  font-size: 2.5rem;
+  line-height: 1;
+  z-index: 2;
+  filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.3));
+  pointer-events: none;
+  user-select: none;
+}
 .wireframe-record-page-header {
   display: flex;
-  align-items: flex-start;
-  justify-content: flex-start;
-  gap: 0.25rem;
+  align-items: center;
+  justify-content: space-between;
   max-width: none;
   min-height: 0;
   margin-left: calc(-1 * clamp(2rem, 8vw, 8rem));
 }
-.wireframe-record-page-header .demo-inspector-actions {
-  gap: 0.15rem;
+.wireframe-record-page-action {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  min-width: 2rem;
+  min-height: 2rem;
+  padding: 0;
+  border: 1px solid var(--wireframe-border, #dfe6e3);
+  border-radius: 0.5rem;
+  background: var(--gem-wireframe-surface, #fff);
+  color: var(--gem-wireframe-ink, #233c42);
+  cursor: pointer;
 }
-.wireframe-record-page-header .demo-inspector-actions button {
-  min-width: 1.75rem;
-  min-height: 1.75rem;
-  padding: 0.2rem 0.3rem;
-  border: 1px solid #dfe6e3;
-  border-radius: 0.3rem;
-  background: #fff;
-  font-size: 0.65rem;
+.wireframe-record-page-action:hover {
+  opacity: 0.75;
 }
 .wireframe-record-page-heading {
   max-width: 52rem;

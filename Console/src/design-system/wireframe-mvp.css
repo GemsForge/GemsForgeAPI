@@ -815,6 +815,7 @@
 
 .wireframe-demo.wireframe-standalone .wireframe-demo-inspector {
   min-height: 0;
+  align-self: stretch;
   padding: 0 1rem 1.5rem;
   border-color: var(--wireframe-border);
   background: var(--gem-wireframe-inspector, var(--gem-wireframe-surface));
@@ -971,8 +972,7 @@
   padding: 0;
 }
 
-.wireframe-demo.wireframe-standalone .wireframe-value-edit-trigger,
-.wireframe-demo.wireframe-standalone .wireframe-cover-actions {
+.wireframe-demo.wireframe-standalone .wireframe-value-edit-trigger {
   opacity: 1;
   pointer-events: auto;
   transform: none;
@@ -1091,21 +1091,14 @@
     top: var(--wireframe-app-header-height, 3.5rem);
     right: 0;
     bottom: 0;
-    width: min(var(--inspector-width, 22.5rem), 46vw);
-    min-width: 19rem;
-    border-left: 1px solid var(--wireframe-border);
-    box-shadow: -1rem 0 2.5rem rgb(16 35 38 / 12%);
+    left: 0;
+    width: 100%;
+    border-left: none;
+    box-shadow: none;
   }
 
   .wireframe-demo.wireframe-standalone .wireframe-inspector-backdrop {
-    display: block;
-    position: fixed;
-    z-index: 40;
-    inset: var(--wireframe-app-header-height, 3.5rem) 0 0;
-    width: 100%;
-    min-height: 0;
-    border: 0;
-    background: rgb(16 35 38 / 12%);
+    display: none;
   }
 
   .wireframe-demo.wireframe-standalone .demo-inspector-actions button {
@@ -1324,10 +1317,18 @@
     padding: 0 1rem 2rem;
   }
 
+  .wireframe-demo.wireframe-standalone .wireframe-record-page-cover-wrap,
   .wireframe-demo.wireframe-standalone .wireframe-record-page > .wireframe-cover,
   .wireframe-demo.wireframe-standalone .wireframe-record-page-header {
     width: calc(100% + 2rem);
     margin-left: -1rem;
+  }
+  .wireframe-demo.wireframe-standalone .wireframe-record-page-cover-wrap .wireframe-cover {
+    width: 100%;
+    margin-left: 0;
+  }
+  .wireframe-demo.wireframe-standalone .wireframe-record-page-emoji {
+    left: 1rem;
   }
 }
 
@@ -1689,4 +1690,23 @@
   .wireframe-page-cover-banner-gradient {
     background: color-mix(in srgb, var(--gem-domain-hue, var(--gem-wireframe-action)) 18%, var(--gem-wireframe-surface));
   }
+}
+
+/* New table page */
+.wireframe-new-table-empty {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 2rem 0 0;
+}
+.wireframe-new-table-create {
+  align-self: flex-start;
+}
+.wireframe-new-table-hint {
+  font-size: 0.8rem;
+  color: var(--gem-wireframe-muted, #738187);
+  margin: 0;
+}
+.wireframe-new-table-hint.error {
+  color: #c0392b;
 }
