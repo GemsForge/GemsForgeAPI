@@ -1029,7 +1029,7 @@
   .wireframe-demo.wireframe-standalone .wireframe-demo-inspector {
     position: fixed;
     z-index: 41;
-    top: 3.25rem;
+    top: var(--wireframe-app-header-height, 3.5rem);
     right: 0;
     bottom: 0;
     width: min(var(--inspector-width, 22.5rem), 46vw);
@@ -1042,7 +1042,7 @@
     display: block;
     position: fixed;
     z-index: 40;
-    inset: 3.25rem 0 0;
+    inset: var(--wireframe-app-header-height, 3.5rem) 0 0;
     width: 100%;
     min-height: 0;
     border: 0;
