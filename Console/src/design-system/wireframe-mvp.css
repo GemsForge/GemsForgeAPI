@@ -854,12 +854,18 @@
 .wireframe-demo.wireframe-standalone .wireframe-inspector-cover-wrap {
   position: relative;
   margin: 0 -1rem 0;
+  overflow: visible;
 }
 
 .wireframe-demo.wireframe-standalone .wireframe-inspector-cover-wrap .wireframe-cover {
   height: 8.5rem;
   border-radius: 0;
-  overflow: visible;
+  overflow: hidden;
+}
+
+.wireframe-demo.wireframe-standalone .wireframe-inspector-cover-wrap .wireframe-cover-visual {
+  min-height: 0;
+  height: 100%;
 }
 
 .wireframe-demo.wireframe-standalone .wireframe-inspector-emoji-anchor {
