@@ -20,6 +20,8 @@ export function AddressesWireframeView({ records }: { records: readonly Address[
         tableName: "Addresses",
         title: "Addresses",
         description: "Places, locations, and address history referenced across your records.",
+        domainLabel: "Home",
+        domainHue: "#5C8A26",
         activeCollection: "Addresses",
         records,
         properties,

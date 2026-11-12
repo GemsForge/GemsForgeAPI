@@ -47,6 +47,8 @@ export function EmploymentWireframeView({ records }: { records: readonly Employm
         tableName: "Employment",
         title: "Employment",
         description: "Employers, roles, dates, and professional history.",
+        domainLabel: "Career",
+        domainHue: "#2F5FA8",
         activeCollection: "Employment",
         records,
         properties,

@@ -67,6 +67,8 @@ export function GemHuesWireframeView({ records }: { records: readonly GemHue[] }
         tableName: "GemHues",
         title: "Gem Hues",
         description: "Foundation colors, palettes, moods, and visual language for GemsForge.",
+        domainLabel: "Personal",
+        domainHue: "#A33B4A",
         activeCollection: "Gem Hues",
         records,
         properties,

@@ -67,6 +67,8 @@ export function TransactionsWireframeView({ records }: { records: readonly Expen
             Subcategory or clears one that no longer belongs. This notice does not change the database.
           </>
         ),
+        domainLabel: "Money",
+        domainHue: "#A9771C",
         activeCollection: "Expense Tracker",
         records,
         properties,

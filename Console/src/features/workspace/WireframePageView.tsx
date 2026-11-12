@@ -89,10 +89,15 @@ export function WireframePageView({
         <WireframeHeader asChild>
           <header className="wireframe-page-header">
             {domainLabel && (
-              <div className="wireframe-domain-pill" aria-label={`Domain: ${domainLabel}`}>
-                <span className="wireframe-domain-pill-dot" />
-                {domainLabel}
-              </div>
+              <nav className="wireframe-breadcrumb" aria-label="Breadcrumb">
+                <span
+                  className="wireframe-domain-pill-dot"
+                  style={domainHue ? { background: domainHue } : undefined}
+                />
+                <span>{domainLabel}</span>
+                <span aria-hidden="true">›</span>
+                <span className="wireframe-breadcrumb-current">{title}</span>
+              </nav>
             )}
             <WireframeTitleGroup className="wireframe-page-title-group">
               {!showCoverBanner && <WireframeIcon>{tableIcon ?? <span aria-hidden="true">✦</span>}</WireframeIcon>}
