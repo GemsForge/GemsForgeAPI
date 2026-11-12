@@ -69,6 +69,7 @@ export function TransactionsWireframeView({ records }: { records: readonly Expen
         ),
         domainLabel: "Money",
         domainHue: "#A9771C",
+        recordEmoji: "💳",
         activeCollection: "Expense Tracker",
         records,
         properties,

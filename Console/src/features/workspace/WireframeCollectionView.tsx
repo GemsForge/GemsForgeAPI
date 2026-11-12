@@ -75,6 +75,7 @@ export type WireframeCollectionConfig<T extends WireframeRecord> = {
   headerBanner?: ReactNode;
   domainLabel?: string;
   domainHue?: string;
+  recordEmoji?: string;
   activeCollection: string;
   records: readonly T[];
   properties?: readonly RecordPropertyDefinition<T>[];
@@ -1057,6 +1058,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
             <aside
               className={`wireframe-demo-inspector ${inspectorExpanded ? "is-expanded" : ""}`}
               aria-labelledby="wireframe-inspector-title"
+              style={config.domainHue ? ({ "--gem-domain-hue": config.domainHue } as React.CSSProperties) : undefined}
             >
               <div className="demo-inspector-heading">
                 <div aria-hidden="true" />
@@ -1102,12 +1104,19 @@ export function WireframeCollectionView<T extends WireframeRecord>({
                   {archiveError}
                 </p>
               ) : null}
-              <WireframeCover
-                recordKey={selected.id}
-                value={selectedCover}
-                onChange={(cover) => persistCover(selected, cover)}
-                onUpload={(file) => uploadCover(selected, file)}
-              />
+              <div className="wireframe-inspector-cover-wrap">
+                <WireframeCover
+                  recordKey={selected.id}
+                  value={selectedCover}
+                  onChange={(cover) => persistCover(selected, cover)}
+                  onUpload={(file) => uploadCover(selected, file)}
+                />
+                {config.recordEmoji ? (
+                  <span className="wireframe-inspector-record-emoji" aria-hidden="true">
+                    {config.recordEmoji}
+                  </span>
+                ) : null}
+              </div>
               <div className="wireframe-inspector-record-title">
                 <GemSectionHeading
                   id="wireframe-inspector-title"

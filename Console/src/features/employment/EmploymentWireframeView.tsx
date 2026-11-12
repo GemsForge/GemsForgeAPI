@@ -49,6 +49,7 @@ export function EmploymentWireframeView({ records }: { records: readonly Employm
         description: "Employers, roles, dates, and professional history.",
         domainLabel: "Career",
         domainHue: "#2F5FA8",
+        recordEmoji: "💼",
         activeCollection: "Employment",
         records,
         properties,

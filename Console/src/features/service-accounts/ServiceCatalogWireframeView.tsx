@@ -36,6 +36,7 @@ export function ServiceCatalogWireframeView({ records }: { records: readonly Ser
         description: "Recurring services, accounts, costs, and renewal details.",
         domainLabel: "Services",
         domainHue: "#237F8E",
+        recordEmoji: "☁️",
         activeCollection: "Services",
         records: wireframeRecords,
         properties: wireframeProperties,

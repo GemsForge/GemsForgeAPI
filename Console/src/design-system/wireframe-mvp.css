@@ -851,14 +851,35 @@
   background: var(--gem-wireframe-surface);
 }
 
-.wireframe-demo.wireframe-standalone .wireframe-demo-inspector > .wireframe-cover {
+.wireframe-demo.wireframe-standalone .wireframe-inspector-cover-wrap {
+  position: relative;
+  margin: 0 -1rem 0;
+}
+
+.wireframe-demo.wireframe-standalone .wireframe-inspector-cover-wrap .wireframe-cover {
   height: 8.5rem;
-  margin: 0 -1rem 1rem;
   border-radius: 0;
+  overflow: visible;
+}
+
+.wireframe-demo.wireframe-standalone .wireframe-inspector-record-emoji {
+  position: absolute;
+  bottom: -1.1rem;
+  left: 1rem;
+  font-size: 2.25rem;
+  line-height: 1;
+  z-index: 2;
+  filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.3));
+  user-select: none;
+  pointer-events: none;
 }
 
 .wireframe-demo.wireframe-standalone .wireframe-inspector-record-title {
-  margin: 0.75rem 0 1rem;
+  margin: 0 0 0.75rem;
+  padding: 2rem 0 0 calc(1rem - 3px);
+  border-left: 3px solid var(--gem-domain-hue, var(--gem-wireframe-action));
+  margin-left: -1rem;
+  padding-right: 0;
 }
 
 .wireframe-demo.wireframe-standalone .wireframe-inspector-record-title h2,
@@ -880,7 +901,6 @@
   gap: 0.65rem;
   align-items: start;
   padding: 0.65rem 0;
-  border-bottom: 1px solid var(--gem-wireframe-line);
 }
 
 .wireframe-demo.wireframe-standalone .wireframe-demo-inspector dt,
@@ -1241,7 +1261,7 @@
     inset: 0;
   }
 
-  .wireframe-demo.wireframe-standalone .wireframe-demo-inspector > .wireframe-cover {
+  .wireframe-demo.wireframe-standalone .wireframe-inspector-cover-wrap .wireframe-cover {
     height: 7rem;
   }
 
