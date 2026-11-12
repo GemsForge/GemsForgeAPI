@@ -79,9 +79,18 @@ export function WireframeLeftPane({
         </div>
         <WireframePrimaryLinks search={search} />
         <WireframePageLinks search={search} />
-        <Text asChild>
-          <p className="demo-sidebar-label">Collections</p>
-        </Text>
+        <button
+          type="button"
+          className="wireframe-section-toggle"
+          aria-expanded={true}
+          aria-controls="sidebar-collections"
+        >
+          Collections
+          <span className="wireframe-section-toggle-chevron" aria-hidden="true">
+            ▾
+          </span>
+        </button>
+        <div id="sidebar-collections">
         <WireframeCollectionLinks
           activeCollection={activeCollection}
           activeCollectionTitle={activeCollectionTitle}
@@ -91,6 +100,7 @@ export function WireframeLeftPane({
           search={search}
           recordsByCollection={recordsByCollection}
         />
+        </div>
         <div className="demo-sidebar-bottom">
           <WireframeUtilityLinks />
           {onToggleCollapsed ? (

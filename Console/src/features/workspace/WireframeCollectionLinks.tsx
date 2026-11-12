@@ -1,3 +1,4 @@
+import React from "react";
 import { Text } from "tamagui";
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
@@ -7,12 +8,12 @@ import { useSchemaPageTablesQuery } from "../../data/workflowQueries";
 import { getPropertyIconByName } from "./propertyIcons";
 
 const collections = [
-  { label: "Gem Hues", tableName: "GemHues", to: "/gemhues" },
-  { label: "Education", tableName: "Education", to: "/education" },
-  { label: "Employment", tableName: "Employment", to: "/employment" },
-  { label: "Addresses", tableName: "Addresses", to: "/addresses" },
-  { label: "Expense Tracker", tableName: "ExpenseTransaction", to: "/transactions" },
-  { label: "Services", tableName: "Services", to: "/service-accounts" },
+  { label: "Gem Hues", tableName: "GemHues", to: "/gemhues", hue: "#7650A8" },
+  { label: "Education", tableName: "Education", to: "/education", hue: "#2F5FA8" },
+  { label: "Employment", tableName: "Employment", to: "/employment", hue: "#2F5FA8" },
+  { label: "Addresses", tableName: "Addresses", to: "/addresses", hue: "#5C8A26" },
+  { label: "Expense Tracker", tableName: "ExpenseTransaction", to: "/transactions", hue: "#A9771C" },
+  { label: "Services", tableName: "Services", to: "/service-accounts", hue: "#237F8E" },
 ] as const;
 
 type WireframeCollectionLinksProps = {
@@ -111,6 +112,7 @@ export function WireframeCollectionLinks({
                 ? window.localStorage.getItem(`gemsforge:table-icon:${item.tableName}`)
                 : null;
           const Icon = getPropertyIconByName(saved || "Folder").icon;
+          const hue = "hue" in item ? item.hue : undefined;
           return (
             <GemButton
               asChild
@@ -124,10 +126,13 @@ export function WireframeCollectionLinks({
                 title={displayLabel}
                 aria-label={displayLabel}
                 aria-current={item.label === activeCollection ? "page" : undefined}
+                style={hue ? ({ "--gem-domain-hue": hue } as React.CSSProperties) : undefined}
               >
                 <span className="wireframe-collection-link-name">
                   <span className="wireframe-collection-link-icon" aria-hidden="true">
-                    {item.label === activeCollection && activeCollectionIcon ? (
+                    {hue ? (
+                      <span className="wireframe-gem-hue-dot" style={{ background: hue }} />
+                    ) : item.label === activeCollection && activeCollectionIcon ? (
                       activeCollectionIcon
                     ) : (
                       <Icon size={16} />

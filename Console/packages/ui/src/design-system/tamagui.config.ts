@@ -31,17 +31,20 @@ export const gemColors = {
   gemKnowledgeMint: "#3f7055",
   gemKnowledgeGold: "#85602a",
   gemKnowledgeActionText: "#ffffff",
-  wireframeCanvas: "#f7f7f4",
-  wireframePanel: "#ffffff",
-  wireframeSidebar: "#fbfbf9",
-  wireframePanelLight: "#e8f1ef",
-  wireframeInk: "#233c42",
-  wireframeHeading: "#173d45",
-  wireframeMuted: "#738187",
-  wireframeLine: "#dfe6e3",
-  wireframeMint: "#39736d",
+  wireframeCanvas: "#FFFFFF",
+  wireframePanel: "#FFFFFF",
+  wireframeSidebar: "#F2F3F2",
+  wireframeInspector: "#F2F3F2",
+  wireframePanelLight: "#E8EDE8",
+  wireframeInk: "#272626",
+  wireframeHeading: "#1E2823",
+  wireframeMuted: "#5A706C",
+  wireframeLine: "#E2E4E2",
+  wireframeMint: "#7DB687",
+  wireframeMintDark: "#355A3A",
   wireframeGold: "#9a6b22",
-  wireframeGoldLight: "#fff5e2",
+  wireframeGoldLight: "#EDF5EE",
+  wireframeFieldBorder: "#C8CAC8",
   lightCanvas: "#f3f8f7",
   lightInk: "#12252b",
   lightBorder: "#c2d4d1",
@@ -86,7 +89,10 @@ export const gemZIndex = {
 } as const;
 
 export const gemFontFamily =
-  '"Avenir Next", Avenir, Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif';
+  '"Avenir Next", Avenir, system-ui, -apple-system, sans-serif';
+
+export const gemFontFamilySerif =
+  "ui-serif, 'New York', 'Iowan Old Style', Georgia, serif";
 
 const bodyFont = createFont({
   family: gemFontFamily,

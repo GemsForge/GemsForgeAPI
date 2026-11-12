@@ -65,6 +65,9 @@ const WireframeSettingsPage = lazy(() =>
 const WireframeTrashPage = lazy(() =>
   import("../features/workspace/WireframeSystemPages").then((module) => ({ default: module.WireframeTrashPage })),
 );
+const WireframeImportPage = lazy(() =>
+  import("../features/workspace/WireframeSystemPages").then((module) => ({ default: module.WireframeImportPage })),
+);
 const WireframeDomainsPage = lazy(() =>
   import("../features/workspace/WireframeMvpWorkflowPages").then((module) => ({
     default: module.WireframeDomainsPage,
@@ -395,6 +398,7 @@ export function AppRoutes() {
           <Route path="live-database" element={<WireframeLiveDatabasePage />} />
           <Route path="trash" element={<WireframeTrashPage />} />
           <Route path="application-settings" element={<WireframeSettingsPage />} />
+          <Route path="import" element={<WireframeImportPage />} />
           {retiredWireframeRoutes.map(([from, to]) => (
             <Route path={`${from}/*`} element={<RetiredWireframeRedirect from={from} to={to} />} key={from} />
           ))}

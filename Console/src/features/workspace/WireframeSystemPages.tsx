@@ -11,6 +11,7 @@ import {
   BookOpenText,
   Settings2,
   Trash2,
+  FileSpreadsheet,
 } from "lucide-react";
 import { QueryFeedback } from "../../components/QueryFeedback";
 import { useLocalDatabasesQuery, usePagesQuery } from "../../data/workflowQueries";
@@ -207,7 +208,7 @@ export function WireframeSettingsPage() {
     <WireframeSystemPage
       title="Application Settings"
       description="Workspace tools and local development configuration."
-      count={4}
+      count={5}
       countLabel={{ singular: "tool", plural: "tools" }}
     >
       <section className="wireframe-system-card-grid" aria-label="Application tools">
@@ -259,7 +260,43 @@ export function WireframeSettingsPage() {
             ↗
           </span>
         </Link>
+        <Link className="wireframe-system-card" to="/import">
+          <span className="wireframe-system-card-icon">
+            <FileSpreadsheet size={20} aria-hidden="true" />
+          </span>
+          <span className="wireframe-system-card-copy">
+            <strong>Import data</strong>
+            <small>Import records from a CSV file</small>
+          </span>
+          <span className="wireframe-system-card-arrow" aria-hidden="true">
+            ↗
+          </span>
+        </Link>
       </section>
+    </WireframeSystemPage>
+  );
+}
+
+export function WireframeImportPage() {
+  return (
+    <WireframeSystemPage
+      title="Import data"
+      description="Import records from a CSV file into a collection."
+      count={0}
+      showCount={false}
+      activeCollection=""
+    >
+      <div className="import-card wireframe-system-card" style={{ flexDirection: "column", alignItems: "flex-start", gap: "0.75rem", padding: "1.5rem" }}>
+        <div className="wireframe-system-card-icon" style={{ width: "3rem", height: "3rem" }}>
+          <FileSpreadsheet size={22} aria-hidden="true" />
+        </div>
+        <div>
+          <strong style={{ display: "block", marginBottom: "0.3rem" }}>CSV import</strong>
+          <p className="upload-placeholder" style={{ margin: 0, fontSize: "0.8125rem" }}>
+            CSV import is coming soon. You'll be able to map columns to collection fields and preview records before import.
+          </p>
+        </div>
+      </div>
     </WireframeSystemPage>
   );
 }

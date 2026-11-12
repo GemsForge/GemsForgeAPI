@@ -31,11 +31,7 @@ export function SignInPage() {
     <main className="sign-in-page">
       <section className="sign-in-card" aria-labelledby="sign-in-title">
         <AuthBrand />
-        <p className="eyebrow">Private account access</p>
         <h1 id="sign-in-title">Sign in to Gem Life</h1>
-        <p className="sign-in-description">
-          Sign in to your private Gem Life workspace. Your records are loaded only after the API confirms your session.
-        </p>
         {auth.error && <AuthError message={auth.error} />}
         {!auth.configurationReady && (
           <aside className="sign-in-setup" aria-label="Sign-in setup required">
