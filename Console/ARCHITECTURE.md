@@ -13,7 +13,7 @@ The Console is the React and TypeScript client for developing and verifying the 
 ### React route ownership
 
 `src/routes/AppRoutes.tsx` declares exact routes rather than copying the current
-URL into component state. The shared shell and sidebar remain mounted; only the
+URL into component state. `AppShell` and its navigation remain mounted; only the
 active feature requests its records. Home is `/`; `/domains` lists domains and
 `/domains/:domainID` loads their pages. `/forgekeeper` shows roots, with children
 at `/forgekeeper/:pageID/children`. Life routes are `/education`, `/employment`,
@@ -30,7 +30,7 @@ sidebar.
 
 Use router links for web navigation. Direct links and history navigation use the
 same query keys. Unknown paths/IDs show not-found; pending requests and failures
-have loading/retry states. Screen render failures are caught inside the shell.
+have loading/retry states. Screen render failures are caught inside `AppShell`.
 Native navigation remains a separate bridge concern. Vite serves HTML navigation
 requests locally while proxying API fetches on the same paths. Production hosting
 must likewise serve index.html for React route requests, not API JSON.
@@ -112,7 +112,8 @@ semantic role and layout contract is documented in
 [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md). It defines the existing Gem Life palette,
 system-font typography, semantic spacing
 (`gemCompact`, `gemControl`, `gemSection`, `gemPage`), and control/card radii.
-The dark theme remains the application default; a light theme is available.
+The provider's base theme is dark; `AppShell` applies the light workspace theme
+to signed-in routes, and auth pages use the same light theme.
 Responsive thresholds are compact 640px, tablet 900px, desktop 1200px; the
 reduced-motion media key supports user motion preferences. Prefer semantic
 tokens in shared primitives instead of adding one-off visual constants.
