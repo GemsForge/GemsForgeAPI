@@ -37,6 +37,11 @@ Chromium rendered the local `responsive-fixture.html` with no page errors at all
 three checked viewport widths. The synthetic live-schema table name wrapped at
 375px, and the wide data table remained in its own scroll region.
 
+The `/workspace`, `/domains`, `/education`, `/transactions`,
+`/service-accounts`, and `/wireframe-demo` routes were also rendered with
+synthetic API responses at the same widths. None produced a page-level runtime
+error or document overflow.
+
 | Viewport width | Document width | Table region | Table content | Outcome                                   |
 | -------------- | -------------- | ------------ | ------------- | ----------------------------------------- |
 | 1440           | 1440           | 1196         | 1196          | No page overflow                          |
