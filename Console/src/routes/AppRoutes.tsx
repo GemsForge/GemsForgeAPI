@@ -88,6 +88,11 @@ const WireframeSchemaBuilderPage = lazy(() =>
     default: module.WireframeSchemaBuilderPage,
   })),
 );
+const WireframeNewTablePage = lazy(() =>
+  import("../features/schema/WireframeNewTablePage").then((module) => ({
+    default: module.WireframeNewTablePage,
+  })),
+);
 const WireframeLiveDatabasePage = lazy(() =>
   import("../features/workspace/WireframeMvpWorkflowPages").then((module) => ({
     default: module.WireframeLiveDatabasePage,
@@ -393,6 +398,7 @@ export function AppRoutes() {
           />
           <Route path="local-databases" element={<WireframeDatabasesPage />} />
           <Route path="local-databases/new" element={<WireframeLocalDatabaseCreationPage />} />
+          <Route path="new-table" element={<WireframeNewTablePage />} />
           <Route path="schema-builder" element={<WireframeSchemaBuilderPage />} />
           <Route path="schema/:tableName/*" element={<WireframeSchemaPage />} />
           <Route path="live-database" element={<WireframeLiveDatabasePage />} />

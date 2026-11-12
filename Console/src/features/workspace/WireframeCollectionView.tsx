@@ -1,5 +1,5 @@
 import React, { cloneElement, isValidElement, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { ChevronDown, ChevronLeft, Archive, Expand, GalleryHorizontal, GripVertical, List, Table2 } from "lucide-react";
+import { ChevronDown, ChevronLeft, Archive, Expand, GalleryHorizontal, GripVertical, List, Table2, X } from "lucide-react";
 import { AgGridReact } from "ag-grid-react";
 import { themeQuartz, type ColDef, type ColDefField, type ICellRendererParams } from "ag-grid-community";
 import { useLiveSchemaQuery } from "../../data/workflowQueries";
@@ -672,6 +672,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
           recordTitle={config.cardTitle(selected)}
           onBack={() => navigate(location.pathname.replace(/\/record\/[^/]+$/, ""))}
           onClose={closeInspector}
+          emoji={selectedEmoji}
           cover={
             <WireframeCover
               recordKey={selected.id}
@@ -1108,20 +1109,17 @@ export function WireframeCollectionView<T extends WireframeRecord>({
                       <Expand size={15} aria-hidden="true" />
                     </button>
                   )}
-                  <GemButton
+                  <button
                     type="button"
-                    className="wireframe-inspector-trash-button"
-                    size="xs"
-                    variant="quiet"
-                    tone="secondary"
                     aria-label="Move record to Trash"
+                    title="Move record to Trash"
                     disabled={archiveRecord.isPending}
                     onClick={() => void moveSelectedToTrash()}
                   >
                     <Archive size={15} aria-hidden="true" />
-                  </GemButton>
+                  </button>
                   <button type="button" aria-label="Close inspector" title="Close inspector" onClick={closeInspector}>
-                    ×
+                    <X size={15} aria-hidden="true" />
                   </button>
                 </div>
               </div>

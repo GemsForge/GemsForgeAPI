@@ -88,7 +88,7 @@ export function WireframeCollectionLinks({
           tone="secondary"
           className="wireframe-collection-link wireframe-collection-create-table"
         >
-          <Link to="/schema-builder" aria-label="Create a new table">
+          <Link to="/new-table" aria-label="Create a new table">
             <span className="wireframe-collection-link-name">
               <span className="wireframe-collection-link-icon" aria-hidden="true">
                 ＋
