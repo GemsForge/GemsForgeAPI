@@ -339,6 +339,14 @@
   color: var(--gem-wireframe-heading, #173d45);
 }
 
+.wireframe-standalone .schema-panel h3 {
+  overflow-wrap: anywhere;
+}
+
+.wireframe-standalone .schema-table-button strong {
+  overflow-wrap: anywhere;
+}
+
 .wireframe-standalone .database-field,
 .wireframe-standalone .database-confirm,
 .wireframe-standalone .migration-list,

@@ -36,9 +36,24 @@ window.fetch = async (input, init) => {
         byteSize: 160,
         fileKind: "image",
       }
-    : url.includes("schema-builder")
-      ? { version: 1, supportedTypes: [{ value: "TEXT", label: "Text", description: "Text values" }], rules: [] }
-      : [];
+    : url.endsWith("/live-database/schema")
+      ? {
+          databaseName: "Fixture.sqlite",
+          tableCount: 1,
+          tables: [
+            {
+              name: "LongExampleTableNameForNarrowScreens",
+              columns: [{ name: "ExampleProperty", dataType: "TEXT", primaryKey: false, nullable: true }],
+              foreignKeys: [],
+              indexes: [],
+            },
+          ],
+        }
+      : url.endsWith("/schema-builder/tables")
+        ? { tables: [], availableTables: [] }
+        : url.endsWith("/schema-builder/metadata")
+          ? { version: 1, supportedTypes: [{ value: "TEXT", label: "Text", description: "Text values" }], rules: [] }
+          : [];
   return new Response(JSON.stringify(data), { headers: { "Content-Type": "application/json" } });
 };
 const domains = [{ id: "TEST", title: "Long example domain title", description: "Synthetic records only" }];

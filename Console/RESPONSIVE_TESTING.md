@@ -31,6 +31,18 @@ image preview and long metadata filename remained contained. Restore browser
 viewport overrides after testing. These browser checks do not constitute an
 iOS-native app test or a complete VoiceOver audit.
 
+## Recorded #526 browser smoke test
+
+Chromium rendered the local `responsive-fixture.html` with no page errors at all
+three checked viewport widths. The synthetic live-schema table name wrapped at
+375px, and the wide data table remained in its own scroll region.
+
+| Viewport width | Document width | Table region | Table content | Outcome                                   |
+| -------------- | -------------- | ------------ | ------------- | ----------------------------------------- |
+| 1440           | 1440           | 1196         | 1196          | No page overflow                          |
+| 900            | 900            | 896          | 896           | No page overflow                          |
+| 375            | 375            | 373          | 576           | No page overflow; table scrolls in region |
+
 ## Recorded #458 browser smoke test
 
 The current browser reports a 0.5 device scale factor, so the viewport tool's
