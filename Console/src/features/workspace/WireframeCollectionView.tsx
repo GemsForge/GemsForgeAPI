@@ -147,6 +147,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
   const trashEntriesQuery = useTrashEntriesQuery();
   const archiveRecord = useArchiveRecordMutation();
   const [archiveError, setArchiveError] = useState<string | null>(null);
+  const [emojiEditing, setEmojiEditing] = useState(false);
   const archivedRecordIDs = useMemo(
     () =>
       new Set(
@@ -357,37 +358,62 @@ export function WireframeCollectionView<T extends WireframeRecord>({
   const savePresentation = useSaveRecordPresentationMutation(presentationTableName);
   const deletePresentation = useDeleteRecordPresentationMutation(presentationTableName);
   const { mutateAsync: uploadImageAsync } = useUploadImageMutation();
-  const storedCovers = useMemo(() => {
-    const covers: Record<string, WireframeCoverValue | null> = {};
+  type StoredPresentation = { cover: WireframeCoverValue | null; emoji: string | null };
+  const storedPresentations = useMemo(() => {
+    const result: Record<string, StoredPresentation> = {};
     for (const item of presentationsQuery.data ?? []) {
       try {
-        covers[item.recordID] = JSON.parse(item.presentation) as WireframeCoverValue | null;
+        const parsed = JSON.parse(item.presentation) as unknown;
+        if (parsed && typeof parsed === "object" && "v" in parsed && (parsed as { v: unknown }).v === 2) {
+          const p = parsed as { cover?: WireframeCoverValue | null; emoji?: string | null };
+          result[item.recordID] = { cover: p.cover ?? null, emoji: p.emoji ?? null };
+        } else {
+          result[item.recordID] = { cover: parsed as WireframeCoverValue | null, emoji: null };
+        }
       } catch {
         /* ignore malformed persisted presentation */
       }
     }
-    return covers;
+    return result;
   }, [presentationsQuery.data]);
+  const storedCovers = useMemo(
+    () => Object.fromEntries(Object.entries(storedPresentations).map(([k, v]) => [k, v.cover])),
+    [storedPresentations],
+  );
+  const storedEmojis = useMemo(
+    () => Object.fromEntries(Object.entries(storedPresentations).map(([k, v]) => [k, v.emoji])),
+    [storedPresentations],
+  );
   const selectedCardRef = useRef<HTMLButtonElement | null>(null);
   const inspectorExpanded = Boolean(recordPageID);
   const selected =
     activeRecords.find((record) => record.id === (recordPageID ? decodeURIComponent(recordPageID) : selectedID)) ??
     null;
   const selectedCover = selected ? (config.cover?.(selected) ?? storedCovers[selected.id]) : undefined;
+  const selectedEmoji = selected ? (storedEmojis[selected.id] ?? config.recordEmoji ?? null) : null;
   const TableIcon = getPropertyIconByName(tableIcon).icon;
   const updateTableIcon = (value: string) => {
     tableIconDirty.current = true;
     setTableIcon(value);
     window.localStorage.setItem(tableIconStorageKey, value);
   };
-  const persistCover = async (record: T, cover: WireframeCoverValue | null) => {
-    if (cover) {
-      await savePresentation.mutateAsync({ recordID: record.id, presentation: JSON.stringify(cover) });
-    } else {
+  const persistPresentation = async (record: T, update: Partial<StoredPresentation>) => {
+    const existing = storedPresentations[record.id] ?? { cover: null, emoji: null };
+    const next: StoredPresentation = { ...existing, ...update };
+    if (next.cover === null && next.emoji === null) {
       await deletePresentation.mutateAsync(record.id);
+    } else {
+      await savePresentation.mutateAsync({
+        recordID: record.id,
+        presentation: JSON.stringify({ v: 2, cover: next.cover, emoji: next.emoji }),
+      });
     }
+  };
+  const persistCover = async (record: T, cover: WireframeCoverValue | null) => {
+    await persistPresentation(record, { cover });
     await config.onCoverChange?.(record, cover);
   };
+  const persistEmoji = (record: T, emoji: string | null) => persistPresentation(record, { emoji });
   const uploadCover = async (record: T, file: File) => {
     const metadata = await uploadImageAsync({
       file,
@@ -1111,10 +1137,42 @@ export function WireframeCollectionView<T extends WireframeRecord>({
                   onChange={(cover) => persistCover(selected, cover)}
                   onUpload={(file) => uploadCover(selected, file)}
                 />
-                {config.recordEmoji ? (
-                  <span className="wireframe-inspector-record-emoji" aria-hidden="true">
-                    {config.recordEmoji}
-                  </span>
+                {selectedEmoji || config.recordEmoji ? (
+                  <div className="wireframe-inspector-emoji-anchor">
+                    <button
+                      className="wireframe-inspector-record-emoji"
+                      title="Change emoji"
+                      onClick={() => setEmojiEditing((v) => !v)}
+                      type="button"
+                    >
+                      {selectedEmoji ?? config.recordEmoji}
+                    </button>
+                    {emojiEditing && selected ? (
+                      <div className="wireframe-inspector-emoji-picker" role="dialog" aria-label="Set emoji">
+                        <input
+                          className="wireframe-inspector-emoji-input"
+                          type="text"
+                          defaultValue={selectedEmoji ?? config.recordEmoji ?? ""}
+                          placeholder="Paste an emoji…"
+                          autoFocus
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === "Escape") {
+                              if (e.key === "Enter") {
+                                const v = e.currentTarget.value.trim() || null;
+                                void persistEmoji(selected, v);
+                              }
+                              setEmojiEditing(false);
+                            }
+                          }}
+                          onBlur={(e) => {
+                            const v = e.currentTarget.value.trim() || null;
+                            void persistEmoji(selected, v);
+                            setEmojiEditing(false);
+                          }}
+                        />
+                      </div>
+                    ) : null}
+                  </div>
                 ) : null}
               </div>
               <div className="wireframe-inspector-record-title">

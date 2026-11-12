@@ -862,16 +862,49 @@
   overflow: visible;
 }
 
-.wireframe-demo.wireframe-standalone .wireframe-inspector-record-emoji {
+.wireframe-demo.wireframe-standalone .wireframe-inspector-emoji-anchor {
   position: absolute;
   bottom: -1.1rem;
   left: 1rem;
+  z-index: 2;
+}
+
+.wireframe-demo.wireframe-standalone .wireframe-inspector-record-emoji {
+  display: block;
   font-size: 2.25rem;
   line-height: 1;
-  z-index: 2;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
   filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.3));
-  user-select: none;
-  pointer-events: none;
+  transition: transform 0.1s ease;
+}
+
+.wireframe-demo.wireframe-standalone .wireframe-inspector-record-emoji:hover {
+  transform: scale(1.15);
+}
+
+.wireframe-demo.wireframe-standalone .wireframe-inspector-emoji-picker {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  left: 0;
+  background: var(--gem-wireframe-surface, #fff);
+  border: 1px solid var(--gem-wireframe-line, #e0e0e0);
+  border-radius: 0.5rem;
+  padding: 0.4rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  white-space: nowrap;
+}
+
+.wireframe-demo.wireframe-standalone .wireframe-inspector-emoji-input {
+  font-size: 1.5rem;
+  width: 8rem;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--gem-wireframe-text, inherit);
+  font-family: inherit;
 }
 
 .wireframe-demo.wireframe-standalone .wireframe-inspector-record-title {
