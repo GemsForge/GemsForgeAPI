@@ -121,6 +121,9 @@ final class SchemaPageServiceTests: XCTestCase {
             try await app.test(.GET, "schema-builder/tables/SchemaPageFixture/records") { response in
                 XCTAssertEqual(response.status, .unauthorized)
             }
+            try await app.test(.POST, "schema-builder/tables/SchemaPageFixture/query") { response in
+                XCTAssertEqual(response.status, .unauthorized)
+            }
             try await app.test(.POST, "schema-builder/tables/SchemaPageFixture/records") { response in
                 XCTAssertEqual(response.status, .unauthorized)
             }
