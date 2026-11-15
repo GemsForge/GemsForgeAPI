@@ -81,6 +81,19 @@ export interface SavedTableViewInput {
   workspaceState: string;
 }
 
+export interface RecordBody {
+  recordID: string;
+  markdown: string;
+  revision: number;
+  updatedAt: string | null;
+}
+
+export interface RecordBodyExcerpt {
+  recordID: string;
+  excerpt: string;
+  updatedAt: string | null;
+}
+
 export interface APIAuthenticationSession {
   sessionToken: string;
   expiresAt: string;
@@ -283,6 +296,15 @@ export const api = {
   deleteRecordPresentation: (tableName: string, recordID: string) =>
     request<void>(`/record-presentations/${encodeURIComponent(tableName)}/${encodeURIComponent(recordID)}`, {
       method: "DELETE",
+    }),
+  listRecordBodyExcerpts: (tableName: string, signal?: AbortSignal) =>
+    request<RecordBodyExcerpt[]>(`/record-bodies/${encodeURIComponent(tableName)}`, { signal }),
+  getRecordBody: (tableName: string, recordID: string, signal?: AbortSignal) =>
+    request<RecordBody>(`/record-bodies/${encodeURIComponent(tableName)}/${encodeURIComponent(recordID)}`, { signal }),
+  saveRecordBody: (tableName: string, recordID: string, markdown: string, baseRevision: number) =>
+    request<RecordBody>(`/record-bodies/${encodeURIComponent(tableName)}/${encodeURIComponent(recordID)}`, {
+      method: "PUT",
+      body: JSON.stringify({ markdown, baseRevision }),
     }),
   patchAddressAttachment: (addressID: string, fileMetadataID: string | null) =>
     request<Address>(`/addresses/${encodeURIComponent(addressID)}/attachment`, {

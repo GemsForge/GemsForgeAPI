@@ -16,6 +16,7 @@ import { useLiveSchemaQuery } from "../../data/workflowQueries";
 import { useAppShell } from "./AppShell";
 import { WireframePageView } from "./WireframePageView";
 import { WireframeRecordPageView } from "./WireframeRecordPageView";
+import { WireframeRecordBody } from "./WireframeRecordBody";
 import { PropertyIcon } from "./PropertyIconPicker";
 import { PROPERTY_ICON_LIBRARY, getPropertyIconByName } from "./propertyIcons";
 import { formatRecordNumber, inferRecordNumberFormat } from "../../table-kit";
@@ -56,6 +57,7 @@ import {
   useSaveTableViewWorkspaceStateMutation,
   useTableViewsQuery,
 } from "../../data/presentationQueries";
+import { useRecordBodyExcerptsQuery } from "../../data/recordBodyQueries";
 
 export type WireframeRecord = { id: string };
 type WireframeWorkspaceState = {
@@ -432,6 +434,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
     saveWorkspaceStateAsync,
   ]);
   const presentationsQuery = useRecordPresentationsQuery(presentationTableName);
+  const bodyExcerptsQuery = useRecordBodyExcerptsQuery(presentationTableName);
   const savePresentation = useSaveRecordPresentationMutation(presentationTableName);
   const deletePresentation = useDeleteRecordPresentationMutation(presentationTableName);
   const { mutateAsync: uploadImageAsync } = useUploadImageMutation();
@@ -834,6 +837,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
             />
           }
         >
+          <WireframeRecordBody tableName={presentationTableName} recordID={selected.id} />
           <div
             className="wireframe-inspector-resizer"
             aria-label="Resize record inspector"
@@ -1350,6 +1354,15 @@ export function WireframeCollectionView<T extends WireframeRecord>({
                 node={config.inspector(selected, schemaProperties)}
                 options={inspectorRenderOptions}
               />
+              {bodyExcerptsQuery.data?.find((item) => item.recordID === selected.id)?.excerpt ? (
+                <div className="wireframe-record-body-inspector">
+                  <p>Page</p>
+                  <p>{bodyExcerptsQuery.data.find((item) => item.recordID === selected.id)?.excerpt}</p>
+                  <button type="button" onClick={openRecordPage}>Open page</button>
+                </div>
+              ) : (
+                <button className="wireframe-record-body-open" type="button" onClick={openRecordPage}>Open page</button>
+              )}
             </aside>
           </>
         )
