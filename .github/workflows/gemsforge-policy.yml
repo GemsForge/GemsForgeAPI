@@ -1,0 +1,24 @@
+# Managed by GemsForge/.github — do not edit here. Change the shared workflows
+# instead: https://github.com/GemsForge/.github
+# Per-repository settings are repository variables:
+#   ALLOWED_BASE_BRANCHES   comma-separated PR bases (blank = default branch)
+#   REQUIRE_CLOSING_KEYWORD "true" to require "Closes #N"
+name: GemsForge policy
+
+on:
+  pull_request_target:
+    types: [opened, edited, synchronize, reopened, labeled, unlabeled]
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+
+jobs:
+  branch:
+    uses: GemsForge/.github/.github/workflows/branch-policy.yml@v1
+    with:
+      allowed-base-branches: ${{ vars.ALLOWED_BASE_BRANCHES }}
+      require-closing-keyword: ${{ vars.REQUIRE_CLOSING_KEYWORD == 'true' }}
+  labels:
+    uses: GemsForge/.github/.github/workflows/label-policy.yml@v1

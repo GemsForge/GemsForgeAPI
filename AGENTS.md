@@ -33,12 +33,11 @@ workflow work:
   for issue/story creation.
 - `Scripts/commit-policy.mjs`, `Scripts/commit-policy.json`, and their tests
   for focused commit subjects.
-- `.github/workflows/branch-policy.yml` for branch and base-branch policy.
-- `.github/workflows/commit-policy.yml` for commit and PR-title policy.
-- `.github/workflows/label-policy.yml` for required labels.
-- `.github/workflows/sync-issue-metadata.yml` for issue metadata and Project
-  synchronization.
-- `.github/workflows/sync-pr-metadata.yml` for PR metadata synchronization.
+- `.github/workflows/gemsforge-policy.yml`, `commit-policy.yml`,
+  `sync-issue-metadata.yml`, and `sync-labels.yml`: managed callers for the
+  shared workflows in [GemsForge/.github](https://github.com/GemsForge/.github)
+  (`@v1`). Change policy there, not here. Per-repository settings are the
+  `ALLOWED_BASE_BRANCHES` and `PROJECT_NUMBER` variables and `PROJECTS_TOKEN`.
 - `.github/agents/*.agent.md` for the PO, developer, Scrum Master, and QA
   operating instructions.
 - `docs/governance/gemsforge-ai-scrum-team.md`,

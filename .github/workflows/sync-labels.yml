@@ -1,0 +1,16 @@
+# Managed by GemsForge/.github — do not edit here. The label catalog is
+# labels.json in https://github.com/GemsForge/.github
+name: Sync repository labels
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 6 * * 1"
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  labels:
+    uses: GemsForge/.github/.github/workflows/sync-labels.yml@v1

@@ -1,13 +1,7 @@
+# Managed by GemsForge/.github — do not edit here. Change the shared workflows
+# instead: https://github.com/GemsForge/.github
 name: Commit policy
 
-# Policy: type(scope): #issue short imperative description.
-# The shared validator/config in Scripts is also installed by the local
-# pre-push hook. Local hooks block transfer; this Action runs AFTER a push.
-# Make the "Commit policy" job required in master protection to block merges.
-# PR titles are checked because they supply the proposed squash-merge subject.
-# Historical commits through the documented baseline are grandfathered.
-# Merge commits are exempt because their subjects describe the merge rather
-# than a single issue-scoped change; ordinary commits remain strict.
 on:
   push:
     branches: ["**"]
@@ -18,27 +12,5 @@ permissions:
   contents: read
 
 jobs:
-  commit-policy:
-    name: Commit policy
-    # A newly-created branch push does not identify a non-default PR base.
-    # Let the pull_request event validate that branch against its actual base
-    # SHA instead of falsely revalidating the base branch's grandfathered history.
-    if: ${{ github.event_name != 'push' || !github.event.created }}
-    runs-on: ubuntu-24.04
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-          persist-credentials: false
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 24
-          package-manager-cache: false
-      - name: Test validator and push blocking
-        run: node --test Scripts/commit-policy.test.mjs
-      - name: Validate commits and proposed squash subject
-        # Commit messages/titles come from Git and the event JSON, never shell
-        # interpolation. No checkout of untrusted code in a privileged event.
-        run: node Scripts/commit-policy.mjs github
+  commits:
+    uses: GemsForge/.github/.github/workflows/commit-policy.yml@v1
