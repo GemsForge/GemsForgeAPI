@@ -14,9 +14,10 @@ import { GemRecordList } from "../components/ui/GemRecordList--LEGACY";
 import { GemRecordCard } from "../components/ui/GemRecordCard--LEGACY";
 import { FilePresentation } from "../components/FilePresentation";
 import { AuthProvider } from "../auth/AuthProvider";
+// Same stylesheet order as src/main.tsx so the fixture cascades like the app.
+import "../styles.css";
 import "../design-system/global-density.css";
 import "../design-system/wireframe-mvp.css";
-import "../styles.css";
 
 window.fetch = async (input, init) => {
   const url = String(input);

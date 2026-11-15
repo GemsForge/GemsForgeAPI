@@ -62,6 +62,9 @@ const WireframeSettingsPage = lazy(() =>
 const WireframeTrashPage = lazy(() =>
   import("../features/workspace/WireframeSystemPages").then((module) => ({ default: module.WireframeTrashPage })),
 );
+const WireframeImportPage = lazy(() =>
+  import("../features/workspace/WireframeSystemPages").then((module) => ({ default: module.WireframeImportPage })),
+);
 const WireframeDomainsPage = lazy(() =>
   import("../features/workspace/WireframeMvpWorkflowPages").then((module) => ({
     default: module.WireframeDomainsPage,
@@ -80,6 +83,11 @@ const WireframeLocalDatabaseCreationPage = lazy(() =>
 const WireframeSchemaBuilderPage = lazy(() =>
   import("../features/workspace/WireframeMvpWorkflowPages").then((module) => ({
     default: module.WireframeSchemaBuilderPage,
+  })),
+);
+const WireframeNewTablePage = lazy(() =>
+  import("../features/schema/WireframeNewTablePage").then((module) => ({
+    default: module.WireframeNewTablePage,
   })),
 );
 const WireframeLiveDatabasePage = lazy(() =>
@@ -138,7 +146,11 @@ function WireframeCanvas() {
   useEffect(() => {
     setNotice(null);
     document.title = "Gem Life · " + (location.pathname.split("/")[1] || "Home");
-    document.getElementById("main-content")?.focus();
+    const main = document.getElementById("main-content");
+    // focus() alone keeps the previous route's scroll when main is partly visible,
+    // which can leave a short page scrolled out of view.
+    main?.focus({ preventScroll: true });
+    main?.scrollIntoView?.({ block: "start" });
   }, [location.pathname]);
 
   // The signed-in canvas is a light surface; Tamagui components inside it must
@@ -356,11 +368,13 @@ export function AppRoutes() {
           />
           <Route path="local-databases" element={<WireframeDatabasesPage />} />
           <Route path="local-databases/new" element={<WireframeLocalDatabaseCreationPage />} />
+          <Route path="new-table" element={<WireframeNewTablePage />} />
           <Route path="schema-builder" element={<WireframeSchemaBuilderPage />} />
           <Route path="schema/:tableName/*" element={<WireframeSchemaPage />} />
           <Route path="live-database" element={<WireframeLiveDatabasePage />} />
           <Route path="trash" element={<WireframeTrashPage />} />
           <Route path="application-settings" element={<WireframeSettingsPage />} />
+          <Route path="import" element={<WireframeImportPage />} />
           {retiredWireframeRoutes.map(([from, to]) => (
             <Route path={`${from}/*`} element={<RetiredWireframeRedirect from={from} to={to} />} key={from} />
           ))}

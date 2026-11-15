@@ -46,10 +46,9 @@
 .wireframe-demo.wireframe-standalone .demo-sidebar-label {
   margin: 1.25rem 0 0.45rem;
   color: var(--gem-wireframe-muted);
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
 }
 
 .wireframe-demo.wireframe-standalone .demo-search {
@@ -634,6 +633,11 @@
 
 .wireframe-demo.wireframe-standalone .wireframe-page-title-editor .create-form-control {
   color: var(--gem-wireframe-heading) !important;
+  font-family: var(--gem-font-family-serif) !important;
+  font-size: 2rem !important;
+  font-weight: 600 !important;
+  line-height: 1.2 !important;
+  letter-spacing: -0.02em !important;
 }
 
 .wireframe-demo.wireframe-standalone .wireframe-page-description-editor .create-form-control {
@@ -826,9 +830,10 @@
 
 .wireframe-demo.wireframe-standalone .wireframe-demo-inspector {
   min-height: 0;
+  align-self: stretch;
   padding: 0 1rem 1.5rem;
   border-color: var(--wireframe-border);
-  background: var(--gem-wireframe-surface);
+  background: var(--gem-wireframe-inspector, var(--gem-wireframe-surface));
   box-shadow: -4px 0 16px rgb(25 47 49 / 3%);
 }
 
@@ -862,14 +867,74 @@
   background: var(--gem-wireframe-surface);
 }
 
-.wireframe-demo.wireframe-standalone .wireframe-demo-inspector > .wireframe-cover {
+.wireframe-demo.wireframe-standalone .wireframe-inspector-cover-wrap {
+  position: relative;
+  margin: 0 -1rem 0;
+  overflow: visible;
+}
+
+.wireframe-demo.wireframe-standalone .wireframe-inspector-cover-wrap .wireframe-cover {
   height: 8.5rem;
-  margin: 0 -1rem 1rem;
   border-radius: 0;
+  overflow: hidden;
+}
+
+.wireframe-demo.wireframe-standalone .wireframe-inspector-cover-wrap .wireframe-cover-visual {
+  min-height: 0;
+  height: 100%;
+}
+
+.wireframe-demo.wireframe-standalone .wireframe-inspector-emoji-anchor {
+  position: absolute;
+  bottom: -1.1rem;
+  left: 1rem;
+  z-index: 2;
+}
+
+.wireframe-demo.wireframe-standalone .wireframe-inspector-record-emoji {
+  display: block;
+  font-size: 2.25rem;
+  line-height: 1;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.3));
+  transition: transform 0.1s ease;
+}
+
+.wireframe-demo.wireframe-standalone .wireframe-inspector-record-emoji:hover {
+  transform: scale(1.15);
+}
+
+.wireframe-demo.wireframe-standalone .wireframe-inspector-emoji-picker {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  left: 0;
+  background: var(--gem-wireframe-surface, #fff);
+  border: 1px solid var(--gem-wireframe-line, #e0e0e0);
+  border-radius: 0.5rem;
+  padding: 0.4rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  white-space: nowrap;
+}
+
+.wireframe-demo.wireframe-standalone .wireframe-inspector-emoji-input {
+  font-size: 1.5rem;
+  width: 8rem;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--gem-wireframe-text, inherit);
+  font-family: inherit;
 }
 
 .wireframe-demo.wireframe-standalone .wireframe-inspector-record-title {
-  margin: 0.75rem 0 1rem;
+  margin: 0 0 0.75rem;
+  padding: 2rem 0 0 calc(1rem - 3px);
+  border-left: 3px solid var(--gem-domain-hue, var(--gem-wireframe-action));
+  margin-left: -1rem;
+  padding-right: 0;
 }
 
 .wireframe-demo.wireframe-standalone .wireframe-inspector-record-title h2,
@@ -891,7 +956,6 @@
   gap: 0.65rem;
   align-items: start;
   padding: 0.65rem 0;
-  border-bottom: 1px solid var(--gem-wireframe-line);
 }
 
 .wireframe-demo.wireframe-standalone .wireframe-demo-inspector dt,
@@ -923,8 +987,7 @@
   padding: 0;
 }
 
-.wireframe-demo.wireframe-standalone .wireframe-value-edit-trigger,
-.wireframe-demo.wireframe-standalone .wireframe-cover-actions {
+.wireframe-demo.wireframe-standalone .wireframe-value-edit-trigger {
   opacity: 1;
   pointer-events: auto;
   transform: none;
@@ -1040,24 +1103,17 @@
   .wireframe-demo.wireframe-standalone .wireframe-demo-inspector {
     position: fixed;
     z-index: 41;
-    top: 3.25rem;
+    top: var(--wireframe-app-header-height, 3.5rem);
     right: 0;
     bottom: 0;
-    width: min(var(--inspector-width, 22.5rem), 46vw);
-    min-width: 19rem;
-    border-left: 1px solid var(--wireframe-border);
-    box-shadow: -1rem 0 2.5rem rgb(16 35 38 / 12%);
+    left: 0;
+    width: 100%;
+    border-left: none;
+    box-shadow: none;
   }
 
   .wireframe-demo.wireframe-standalone .wireframe-inspector-backdrop {
-    display: block;
-    position: fixed;
-    z-index: 40;
-    inset: 3.25rem 0 0;
-    width: 100%;
-    min-height: 0;
-    border: 0;
-    background: rgb(16 35 38 / 12%);
+    display: none;
   }
 
   .wireframe-demo.wireframe-standalone .demo-inspector-actions button {
@@ -1240,7 +1296,8 @@
     left: 0;
     width: 100%;
     min-width: 0;
-    max-height: min(76dvh, 44rem);
+    /* Modal on compact screens (role="dialog"): cover the collection it blocks instead of a 76dvh sheet. */
+    max-height: none;
     padding-bottom: max(1rem, env(safe-area-inset-bottom));
     border: 1px solid var(--wireframe-border);
     border-bottom: 0;
@@ -1252,7 +1309,7 @@
     inset: 0;
   }
 
-  .wireframe-demo.wireframe-standalone .wireframe-demo-inspector > .wireframe-cover {
+  .wireframe-demo.wireframe-standalone .wireframe-inspector-cover-wrap .wireframe-cover {
     height: 7rem;
   }
 
@@ -1276,10 +1333,18 @@
     padding: 0 1rem 2rem;
   }
 
+  .wireframe-demo.wireframe-standalone .wireframe-record-page-cover-wrap,
   .wireframe-demo.wireframe-standalone .wireframe-record-page > .wireframe-cover,
   .wireframe-demo.wireframe-standalone .wireframe-record-page-header {
     width: calc(100% + 2rem);
     margin-left: -1rem;
+  }
+  .wireframe-demo.wireframe-standalone .wireframe-record-page-cover-wrap .wireframe-cover {
+    width: 100%;
+    margin-left: 0;
+  }
+  .wireframe-demo.wireframe-standalone .wireframe-record-page-emoji {
+    left: 1rem;
   }
 }
 
@@ -1319,4 +1384,432 @@
     min-height: 44px;
     flex-basis: 44px;
   }
+}
+
+/* ── GemLife POS structural components ──────────────────────────────────── */
+
+/* Skip link (WCAG 2.4.1) */
+.wireframe-skip-link {
+  position: absolute;
+  left: -9999px;
+  z-index: 9999;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  border-radius: 0 0 0.5rem 0.5rem;
+  background: var(--gem-wireframe-action);
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+.wireframe-skip-link:focus {
+  left: 0;
+}
+
+/* Domain 5px color bar across the top of the content area. A top border on the page itself spans
+   its full width at every breakpoint, whatever the page padding. */
+.wireframe-demo-main.has-domain-bar {
+  border-top: 5px solid var(--gem-domain-hue, var(--gem-wireframe-action));
+}
+
+/* Collection toolbar breadcrumb */
+.wireframe-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-width: 0;
+  color: var(--gem-wireframe-muted);
+  font-size: 0.75rem;
+}
+.wireframe-breadcrumb a {
+  color: var(--gem-wireframe-muted);
+  text-decoration: none;
+}
+.wireframe-breadcrumb a:hover {
+  color: var(--gem-wireframe-heading);
+}
+.wireframe-breadcrumb-current {
+  color: var(--gem-wireframe-heading);
+  font-weight: 600;
+}
+
+/* Full-width page banner (160px) */
+.wireframe-page-cover-banner {
+  position: relative;
+  width: calc(100% + 2 * clamp(1.25rem, 2.2vw, 2rem));
+  height: 160px;
+  margin: calc(-1 * clamp(1.25rem, 2.2vw, 2rem)) calc(-1 * clamp(1.25rem, 2.2vw, 2rem)) 1.5rem;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.wireframe-page-cover-banner-gradient {
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(
+    ellipse at 60% 60%,
+    color-mix(in srgb, var(--gem-domain-hue, var(--gem-wireframe-action)) 60%, transparent) 0%,
+    color-mix(in srgb, var(--gem-domain-hue, var(--gem-wireframe-action)) 25%, var(--gem-wireframe-surface)) 60%,
+    var(--gem-wireframe-surface) 100%
+  );
+}
+
+/* Domain pill below banner */
+.wireframe-domain-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.75rem 0.3rem 0.5rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--gem-domain-hue, var(--gem-wireframe-action)) 12%, transparent);
+  color: color-mix(in srgb, var(--gem-domain-hue, var(--gem-wireframe-action)) 70%, var(--gem-wireframe-heading));
+  font-size: 0.72rem;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  margin-bottom: 0.5rem;
+}
+.wireframe-domain-pill-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--gem-domain-hue, var(--gem-wireframe-action));
+  flex: 0 0 auto;
+}
+
+/* Gem-hue dot in sidebar items */
+.wireframe-gem-hue-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+  background: var(--gem-domain-hue, var(--gem-wireframe-muted));
+}
+
+/* Page title — serif voice */
+.wireframe-page-title-serif {
+  margin: 0 0 0.35rem;
+  color: var(--gem-wireframe-heading);
+  font-family: var(--gem-font-family-serif);
+  font-size: 2.125rem;
+  font-weight: 600;
+  line-height: 1.18;
+  letter-spacing: -0.025em;
+  overflow-wrap: break-word;
+}
+
+/* Page meta row (Type / Status / Started / Last edited) */
+.wireframe-page-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+  margin: 0.6rem 0 1.25rem;
+  color: var(--gem-wireframe-muted);
+  font-size: 0.75rem;
+}
+.wireframe-page-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+.wireframe-page-meta-label {
+  font-weight: 600;
+}
+.wireframe-page-meta-value {
+  color: var(--gem-wireframe-text);
+}
+
+/* Page body — serif voice */
+.wireframe-page-body {
+  max-width: 60ch;
+  color: var(--gem-wireframe-text);
+  font-family: var(--gem-font-family-serif);
+  font-size: 1rem;
+  line-height: 1.72;
+}
+
+/* Inspector cover strip */
+.wireframe-inspector-cover-strip {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin: 0.75rem 0;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--gem-wireframe-border);
+  border-radius: 0.6rem;
+  background: var(--gem-wireframe-surface-raised);
+  text-decoration: none;
+  color: inherit;
+}
+.wireframe-inspector-cover-strip:hover {
+  border-color: var(--gem-wireframe-action);
+}
+.wireframe-inspector-cover-thumbnail {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  border-radius: 0.4rem;
+  overflow: hidden;
+  background: var(--gem-wireframe-surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gem-wireframe-muted);
+}
+.wireframe-inspector-cover-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--gem-wireframe-heading);
+  font-size: 0.8125rem;
+  font-weight: 650;
+}
+.wireframe-inspector-cover-expand {
+  flex: 0 0 auto;
+  color: var(--gem-wireframe-muted);
+}
+
+/* Show empty fields disclosure */
+.wireframe-show-empty-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0;
+  border: 0;
+  background: transparent;
+  color: var(--gem-wireframe-muted);
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  letter-spacing: 0.01em;
+}
+.wireframe-show-empty-toggle:hover {
+  color: var(--gem-wireframe-text);
+}
+.wireframe-show-empty-toggle:focus-visible {
+  outline: 2px solid var(--wireframe-accent, var(--gem-wireframe-action));
+  outline-offset: 2px;
+  border-radius: 0.3rem;
+}
+
+/* Backlinks panel */
+.wireframe-backlinks-panel {
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--gem-wireframe-border);
+}
+.wireframe-backlinks-heading {
+  margin: 0 0 0.5rem;
+  color: var(--gem-wireframe-muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+.wireframe-backlinks-list {
+  display: grid;
+  gap: 0.3rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.wireframe-backlinks-list a {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.4rem;
+  border-radius: 0.4rem;
+  color: var(--gem-wireframe-action);
+  font-size: 0.75rem;
+  text-decoration: none;
+}
+.wireframe-backlinks-list a:hover {
+  background: var(--gem-wireframe-surface-raised);
+  color: var(--gem-wireframe-heading);
+}
+.wireframe-backlinks-list a:focus-visible {
+  outline: 2px solid var(--wireframe-accent, var(--gem-wireframe-action));
+  outline-offset: 2px;
+}
+.wireframe-backlinks-empty {
+  margin: 0;
+  color: var(--gem-wireframe-muted);
+  font-size: 0.75rem;
+}
+
+/* Inspector toggle button (⌘I) */
+.wireframe-inspector-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-width: 2.25rem;
+  min-height: 2.25rem;
+  padding: 0.35rem 0.6rem;
+  border: 1px solid var(--wireframe-border);
+  border-radius: 0.5rem;
+  background: var(--gem-wireframe-surface);
+  color: var(--gem-wireframe-ink);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--gem-motion-quick, 120ms) ease;
+}
+.wireframe-inspector-toggle:hover {
+  background: var(--gem-wireframe-surface-raised);
+}
+.wireframe-inspector-toggle:focus-visible {
+  outline: 2px solid var(--wireframe-accent, var(--gem-wireframe-action));
+  outline-offset: 2px;
+}
+.wireframe-inspector-toggle[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--gem-wireframe-action) 12%, var(--gem-wireframe-surface));
+  border-color: var(--gem-wireframe-action);
+  color: var(--gem-wireframe-heading);
+}
+
+/* Domain section collapse toggle */
+.wireframe-section-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--gem-wireframe-muted);
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  text-align: left;
+  margin: 1.25rem 0 0.45rem;
+}
+.wireframe-section-toggle:focus-visible {
+  outline: 2px solid var(--wireframe-accent, var(--gem-wireframe-action));
+  outline-offset: 2px;
+  border-radius: 0.3rem;
+}
+.wireframe-section-toggle-chevron {
+  margin-left: auto;
+  transition: transform var(--gem-motion-quick, 120ms) ease;
+}
+.wireframe-section-toggle[aria-expanded="false"] .wireframe-section-toggle-chevron {
+  transform: rotate(-90deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wireframe-section-toggle-chevron,
+  .wireframe-inspector-toggle {
+    transition: none;
+  }
+  .wireframe-page-cover-banner-gradient {
+    background: color-mix(
+      in srgb,
+      var(--gem-domain-hue, var(--gem-wireframe-action)) 18%,
+      var(--gem-wireframe-surface)
+    );
+  }
+}
+
+/* New table page */
+.wireframe-new-table-empty {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 2rem 0 0;
+}
+.wireframe-new-table-create {
+  align-self: flex-start;
+}
+.wireframe-new-table-hint {
+  font-size: 0.8rem;
+  color: var(--gem-wireframe-muted, #738187);
+  margin: 0;
+}
+.wireframe-new-table-hint.error {
+  color: #c0392b;
+}
+
+/* Sidebar domain sections: gem-hue dot + sentence-case label, collapsible (state in localStorage). */
+.wireframe-domain-section + .wireframe-domain-section {
+  margin-top: 0.25rem;
+}
+.wireframe-domain-section-toggle {
+  display: flex;
+  width: 100%;
+  min-height: 32px;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.5rem;
+  border: 0;
+  border-radius: 0.45rem;
+  background: transparent;
+  color: var(--gem-wireframe-muted);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.wireframe-domain-section-toggle:hover {
+  background: var(--gem-wireframe-surface-raised);
+  color: var(--gem-wireframe-heading);
+}
+.wireframe-domain-section-toggle.contains-active {
+  color: var(--gem-wireframe-heading);
+}
+.wireframe-domain-section-dot {
+  width: 7px;
+  height: 7px;
+  flex: 0 0 7px;
+  border-radius: 50%;
+  background: var(--gem-domain-hue, var(--gem-wireframe-muted));
+}
+.wireframe-domain-section-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.wireframe-domain-section-chevron {
+  flex: 0 0 auto;
+  transition: transform var(--gem-motion-quick, 120ms) ease;
+}
+.wireframe-domain-section-toggle[aria-expanded="false"] .wireframe-domain-section-chevron {
+  transform: rotate(-90deg);
+}
+@media (prefers-reduced-motion: reduce) {
+  .wireframe-domain-section-chevron {
+    transition: none;
+  }
+}
+
+/* Serif page titles (#544): New York at 34px semibold. Tamagui sets fonts with atomic classes, so the
+   title and the editable title's inner text/input are matched explicitly. */
+.wireframe-demo .wireframe-page-title-serif,
+.wireframe-demo .wireframe-page-title-serif :where(span, input, textarea),
+.wireframe-record-page .wireframe-page-title-serif {
+  font-family: var(--gem-font-family-serif) !important;
+  font-size: clamp(1.75rem, 1.2rem + 1.6vw, 2.125rem) !important;
+  font-weight: 600 !important;
+  line-height: 1.18 !important;
+  letter-spacing: -0.02em !important;
+  text-wrap: balance;
+}
+.wireframe-record-page-breadcrumb a {
+  color: inherit;
+  text-decoration: none;
+}
+.wireframe-record-page-breadcrumb a:hover {
+  color: var(--gem-wireframe-heading);
+}
+.wireframe-record-page > .wireframe-domain-pill {
+  align-self: flex-start;
+  margin-top: 1.25rem;
 }

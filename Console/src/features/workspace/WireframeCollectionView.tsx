@@ -1,5 +1,15 @@
 import React, { cloneElement, isValidElement, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { ChevronDown, ChevronLeft, Archive, Expand, GalleryHorizontal, GripVertical, List, Table2 } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronLeft,
+  Archive,
+  Expand,
+  GalleryHorizontal,
+  GripVertical,
+  List,
+  Table2,
+  X,
+} from "lucide-react";
 import { AgGridReact } from "ag-grid-react";
 import { themeQuartz, type ColDef, type ColDefField, type ICellRendererParams } from "ag-grid-community";
 import { useLiveSchemaQuery } from "../../data/workflowQueries";
@@ -22,6 +32,7 @@ import {
 import { RecordUtilities } from "../../components/RecordUtilities";
 import { type GalleryCardSize } from "../../table-kit";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useMediaQuery } from "../../hooks/useMediaQuery";
 import { GSelectField } from "@gemsforge/ui";
 import { GemButton } from "@gemsforge/ui";
 import { GemStatusPill } from "@gemsforge/ui";
@@ -73,6 +84,9 @@ export type WireframeCollectionConfig<T extends WireframeRecord> = {
   title: string;
   description: string;
   headerBanner?: ReactNode;
+  domainLabel?: string;
+  domainHue?: string;
+  recordEmoji?: string;
   activeCollection: string;
   records: readonly T[];
   properties?: readonly RecordPropertyDefinition<T>[];
@@ -125,6 +139,9 @@ export function WireframeCollectionView<T extends WireframeRecord>({
   const [inspectorDropTargetID, setInspectorDropTargetID] = useState<string | null>(null);
   const draggedInspectorPropertyRef = useRef<string | null>(null);
   const [selectedID, setSelectedID] = useState<string | null>(null);
+  // At <=1100px the inspector covers the collection (see wireframe-mvp.css), so it behaves as a modal dialog.
+  const compactInspector = useMediaQuery("(max-width: 1100px)");
+  const inspectorRef = useRef<HTMLElement | null>(null);
   const [workspaceSelectionRevision, setWorkspaceSelectionRevision] = useState(0);
   const workspaceSelectedID = recordPageID ? decodeURIComponent(recordPageID) : selectedID;
   const [query, setQuery] = useState("");
@@ -144,6 +161,21 @@ export function WireframeCollectionView<T extends WireframeRecord>({
   const trashEntriesQuery = useTrashEntriesQuery();
   const archiveRecord = useArchiveRecordMutation();
   const [archiveError, setArchiveError] = useState<string | null>(null);
+  const [emojiEditing, setEmojiEditing] = useState(false);
+  const emojiInputRef = useRef<HTMLInputElement>(null);
+  const emojiButtonRef = useRef<HTMLButtonElement>(null);
+  // Set when Enter/Escape already decided the outcome, so the blur from moving focus doesn't save again.
+  const emojiKeyHandled = useRef(false);
+  // Move focus into the emoji dialog when it opens (replaces autoFocus for jsx-a11y).
+  useEffect(() => {
+    if (!emojiEditing) return;
+    emojiKeyHandled.current = false;
+    emojiInputRef.current?.focus();
+  }, [emojiEditing]);
+  const closeEmojiDialog = () => {
+    emojiButtonRef.current?.focus();
+    setEmojiEditing(false);
+  };
   const archivedRecordIDs = useMemo(
     () =>
       new Set(
@@ -270,6 +302,9 @@ export function WireframeCollectionView<T extends WireframeRecord>({
     if (!pendingID) return;
     pendingSelectedID.current = null;
     skipWorkspaceSaveOnce.current = true;
+    // On compact screens a restored selection would open the full-screen inspector over the list on load;
+    // the inspector opens only when the person picks a record there.
+    if (compactInspector) return;
     if (activeRecords.some((record) => record.id === pendingID)) {
       setSelectedID(pendingID);
       return;
@@ -278,7 +313,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
     // selection and trigger a follow-up save after hydration updates settle.
     setSelectedID(null);
     setWorkspaceSelectionRevision((revision) => revision + 1);
-  }, [activeRecords, savedViewsQuery.isSuccess]);
+  }, [activeRecords, savedViewsQuery.isSuccess, compactInspector]);
   const workspaceStateSnapshot: WireframeWorkspaceState = {
     title: tableTitle,
     description: tableDescription,
@@ -354,37 +389,62 @@ export function WireframeCollectionView<T extends WireframeRecord>({
   const savePresentation = useSaveRecordPresentationMutation(presentationTableName);
   const deletePresentation = useDeleteRecordPresentationMutation(presentationTableName);
   const { mutateAsync: uploadImageAsync } = useUploadImageMutation();
-  const storedCovers = useMemo(() => {
-    const covers: Record<string, WireframeCoverValue | null> = {};
+  type StoredPresentation = { cover: WireframeCoverValue | null; emoji: string | null };
+  const storedPresentations = useMemo(() => {
+    const result: Record<string, StoredPresentation> = {};
     for (const item of presentationsQuery.data ?? []) {
       try {
-        covers[item.recordID] = JSON.parse(item.presentation) as WireframeCoverValue | null;
+        const parsed = JSON.parse(item.presentation) as unknown;
+        if (parsed && typeof parsed === "object" && "v" in parsed && (parsed as { v: unknown }).v === 2) {
+          const p = parsed as { cover?: WireframeCoverValue | null; emoji?: string | null };
+          result[item.recordID] = { cover: p.cover ?? null, emoji: p.emoji ?? null };
+        } else {
+          result[item.recordID] = { cover: parsed as WireframeCoverValue | null, emoji: null };
+        }
       } catch {
         /* ignore malformed persisted presentation */
       }
     }
-    return covers;
+    return result;
   }, [presentationsQuery.data]);
+  const storedCovers = useMemo(
+    () => Object.fromEntries(Object.entries(storedPresentations).map(([k, v]) => [k, v.cover])),
+    [storedPresentations],
+  );
+  const storedEmojis = useMemo(
+    () => Object.fromEntries(Object.entries(storedPresentations).map(([k, v]) => [k, v.emoji])),
+    [storedPresentations],
+  );
   const selectedCardRef = useRef<HTMLButtonElement | null>(null);
   const inspectorExpanded = Boolean(recordPageID);
   const selected =
     activeRecords.find((record) => record.id === (recordPageID ? decodeURIComponent(recordPageID) : selectedID)) ??
     null;
   const selectedCover = selected ? (config.cover?.(selected) ?? storedCovers[selected.id]) : undefined;
+  const selectedEmoji = selected ? (storedEmojis[selected.id] ?? config.recordEmoji ?? null) : null;
   const TableIcon = getPropertyIconByName(tableIcon).icon;
   const updateTableIcon = (value: string) => {
     tableIconDirty.current = true;
     setTableIcon(value);
     window.localStorage.setItem(tableIconStorageKey, value);
   };
-  const persistCover = async (record: T, cover: WireframeCoverValue | null) => {
-    if (cover) {
-      await savePresentation.mutateAsync({ recordID: record.id, presentation: JSON.stringify(cover) });
-    } else {
+  const persistPresentation = async (record: T, update: Partial<StoredPresentation>) => {
+    const existing = storedPresentations[record.id] ?? { cover: null, emoji: null };
+    const next: StoredPresentation = { ...existing, ...update };
+    if (next.cover === null && next.emoji === null) {
       await deletePresentation.mutateAsync(record.id);
+    } else {
+      await savePresentation.mutateAsync({
+        recordID: record.id,
+        presentation: JSON.stringify({ v: 2, cover: next.cover, emoji: next.emoji }),
+      });
     }
+  };
+  const persistCover = async (record: T, cover: WireframeCoverValue | null) => {
+    await persistPresentation(record, { cover });
     await config.onCoverChange?.(record, cover);
   };
+  const persistEmoji = (record: T, emoji: string | null) => persistPresentation(record, { emoji });
   const uploadCover = async (record: T, file: File) => {
     const metadata = await uploadImageAsync({
       file,
@@ -508,6 +568,47 @@ export function WireframeCollectionView<T extends WireframeRecord>({
     setSelectedID(null);
     if (inspectorExpanded) navigate(location.pathname.replace(/\/record\/[^/]+$/, ""));
     requestAnimationFrame(() => selectedCardRef.current?.focus());
+  };
+  const selectedRecordID = selected?.id;
+  // Compact dialog: move focus in when it opens; Escape closes; Tab stays inside (closeInspector
+  // returns focus to the selected card).
+  useEffect(() => {
+    if (!compactInspector || !selectedRecordID || inspectorExpanded) return;
+    // Remember what opened the dialog (a table cell, list row, or card) so focus can go back to it.
+    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const frame = requestAnimationFrame(() =>
+      inspectorRef.current?.querySelector<HTMLElement>('button[aria-label="Close inspector"]')?.focus(),
+    );
+    return () => {
+      cancelAnimationFrame(frame);
+      requestAnimationFrame(() => {
+        const lost = !document.activeElement || document.activeElement === document.body;
+        if (lost && opener?.isConnected) opener.focus();
+      });
+    };
+  }, [compactInspector, selectedRecordID, inspectorExpanded]);
+  const handleCompactInspectorKeyDown = (event: React.KeyboardEvent<HTMLElement>) => {
+    if (event.key === "Escape" && !event.defaultPrevented) {
+      event.preventDefault();
+      closeInspector();
+      return;
+    }
+    if (event.key !== "Tab" || !inspectorRef.current) return;
+    const focusable = [
+      ...inspectorRef.current.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      ),
+    ].filter((element) => element.offsetParent !== null);
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (!first || !last) return;
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
   };
   const moveSelectedToTrash = async () => {
     if (!selected) return;
@@ -641,8 +742,11 @@ export function WireframeCollectionView<T extends WireframeRecord>({
         <WireframeRecordPageView
           collectionTitle={tableTitle}
           recordTitle={config.cardTitle(selected)}
+          domainLabel={config.domainLabel}
+          domainHue={config.domainHue}
           onBack={() => navigate(location.pathname.replace(/\/record\/[^/]+$/, ""))}
           onClose={closeInspector}
+          emoji={selectedEmoji}
           cover={
             <WireframeCover
               recordKey={selected.id}
@@ -689,6 +793,8 @@ export function WireframeCollectionView<T extends WireframeRecord>({
           title={tableTitle}
           description={tableDescription}
           banner={config.headerBanner}
+          domainLabel={config.domainLabel}
+          domainHue={config.domainHue}
           recordCount={sortedRecords.length}
           tableIcon={<TableIcon size={20} aria-hidden="true" />}
           onTitleChange={workspaceReady ? setTableTitle : undefined}
@@ -1051,8 +1157,13 @@ export function WireframeCollectionView<T extends WireframeRecord>({
               onClick={closeInspector}
             />
             <aside
+              ref={inspectorRef}
               className={`wireframe-demo-inspector ${inspectorExpanded ? "is-expanded" : ""}`}
               aria-labelledby="wireframe-inspector-title"
+              role={compactInspector ? "dialog" : undefined}
+              aria-modal={compactInspector ? true : undefined}
+              onKeyDown={compactInspector ? handleCompactInspectorKeyDown : undefined}
+              style={config.domainHue ? ({ "--gem-domain-hue": config.domainHue } as React.CSSProperties) : undefined}
             >
               <div className="demo-inspector-heading">
                 <div aria-hidden="true" />
@@ -1076,20 +1187,17 @@ export function WireframeCollectionView<T extends WireframeRecord>({
                       <Expand size={15} aria-hidden="true" />
                     </button>
                   )}
-                  <GemButton
+                  <button
                     type="button"
-                    className="wireframe-inspector-trash-button"
-                    size="xs"
-                    variant="quiet"
-                    tone="secondary"
                     aria-label="Move record to Trash"
+                    title="Move record to Trash"
                     disabled={archiveRecord.isPending}
                     onClick={() => void moveSelectedToTrash()}
                   >
                     <Archive size={15} aria-hidden="true" />
-                  </GemButton>
+                  </button>
                   <button type="button" aria-label="Close inspector" title="Close inspector" onClick={closeInspector}>
-                    ×
+                    <X size={15} aria-hidden="true" />
                   </button>
                 </div>
               </div>
@@ -1098,12 +1206,58 @@ export function WireframeCollectionView<T extends WireframeRecord>({
                   {archiveError}
                 </p>
               ) : null}
-              <WireframeCover
-                recordKey={selected.id}
-                value={selectedCover}
-                onChange={(cover) => persistCover(selected, cover)}
-                onUpload={(file) => uploadCover(selected, file)}
-              />
+              <div className="wireframe-inspector-cover-wrap">
+                <WireframeCover
+                  recordKey={selected.id}
+                  value={selectedCover}
+                  onChange={(cover) => persistCover(selected, cover)}
+                  onUpload={(file) => uploadCover(selected, file)}
+                />
+                {selectedEmoji || config.recordEmoji ? (
+                  <div className="wireframe-inspector-emoji-anchor">
+                    <button
+                      ref={emojiButtonRef}
+                      className="wireframe-inspector-record-emoji"
+                      title="Change emoji"
+                      onClick={() => setEmojiEditing((v) => !v)}
+                      type="button"
+                    >
+                      {selectedEmoji ?? config.recordEmoji}
+                    </button>
+                    {emojiEditing && selected ? (
+                      <div className="wireframe-inspector-emoji-picker" role="dialog" aria-label="Set emoji">
+                        <input
+                          className="wireframe-inspector-emoji-input"
+                          type="text"
+                          defaultValue={selectedEmoji ?? config.recordEmoji ?? ""}
+                          placeholder="Paste an emoji…"
+                          ref={emojiInputRef}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === "Escape") {
+                              e.preventDefault();
+                              if (e.key === "Enter") {
+                                const v = e.currentTarget.value.trim() || null;
+                                void persistEmoji(selected, v);
+                              }
+                              emojiKeyHandled.current = true;
+                              closeEmojiDialog();
+                            }
+                          }}
+                          onBlur={(e) => {
+                            if (emojiKeyHandled.current) {
+                              emojiKeyHandled.current = false;
+                              return;
+                            }
+                            const v = e.currentTarget.value.trim() || null;
+                            void persistEmoji(selected, v);
+                            setEmojiEditing(false);
+                          }}
+                        />
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
+              </div>
               <div className="wireframe-inspector-record-title">
                 <GemSectionHeading
                   id="wireframe-inspector-title"

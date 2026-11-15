@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import React, { useEffect, useRef, useState, type ReactNode } from "react";
 import { GemTextField } from "@gemsforge/ui";
+import { Link } from "react-router-dom";
 import { Text, XStack, YStack } from "tamagui";
 import {
   WireframeCount,
@@ -22,6 +23,10 @@ type WireframePageViewProps = {
   tableIcon?: ReactNode;
   onTitleChange?: (value: string) => void;
   onDescriptionChange?: (value: string) => void;
+  domainHue?: string;
+  domainLabel?: string;
+  metaItems?: ReadonlyArray<{ label: string; value: string }>;
+  showCoverBanner?: boolean;
 };
 
 export function WireframePageView({
@@ -34,6 +39,10 @@ export function WireframePageView({
   tableIcon,
   onTitleChange,
   onDescriptionChange,
+  domainHue,
+  domainLabel,
+  metaItems,
+  showCoverBanner = false,
   children,
 }: WireframePageViewProps) {
   const [editingTitle, setEditingTitle] = useState(false);
@@ -68,19 +77,44 @@ export function WireframePageView({
     setEditingDescription(false);
   };
 
+  const hueStyle = domainHue ? ({ "--gem-domain-hue": domainHue } as React.CSSProperties) : undefined;
+
   return (
     <WireframeMain asChild>
-      <main className="wireframe-demo-main" aria-labelledby="wireframe-page-title">
+      <main
+        className={domainHue && !showCoverBanner ? "wireframe-demo-main has-domain-bar" : "wireframe-demo-main"}
+        aria-labelledby="wireframe-page-title"
+        style={hueStyle}
+      >
+        {showCoverBanner && (
+          <div className="wireframe-page-cover-banner" aria-hidden="true">
+            <div className="wireframe-page-cover-banner-gradient" />
+          </div>
+        )}
         <WireframeHeader asChild>
           <header className="wireframe-page-header">
+            {domainLabel && (
+              <nav className="wireframe-breadcrumb" aria-label="Breadcrumb">
+                <Link to="/">Home</Link>
+                <span aria-hidden="true">›</span>
+                <span
+                  className="wireframe-domain-pill-dot"
+                  aria-hidden="true"
+                  style={domainHue ? { background: domainHue } : undefined}
+                />
+                <span>{domainLabel}</span>
+                <span aria-hidden="true">›</span>
+                <span className="wireframe-breadcrumb-current">{title}</span>
+              </nav>
+            )}
             <WireframeTitleGroup className="wireframe-page-title-group">
-              <WireframeIcon>{tableIcon ?? <span aria-hidden="true">✦</span>}</WireframeIcon>
+              {!showCoverBanner && <WireframeIcon>{tableIcon ?? <span aria-hidden="true">✦</span>}</WireframeIcon>}
               <YStack minWidth={0} className="wireframe-page-copy">
                 {onTitleChange ? (
                   <div
                     ref={titleEditorRef}
                     id="wireframe-page-title"
-                    className="wireframe-page-title-editor"
+                    className="wireframe-page-title-editor wireframe-page-title-serif"
                     role="heading"
                     aria-level={2}
                   >
@@ -123,7 +157,9 @@ export function WireframePageView({
                     />
                   </div>
                 ) : (
-                  <WireframeHeading id="wireframe-page-title">{title}</WireframeHeading>
+                  <WireframeHeading id="wireframe-page-title" className="wireframe-page-title-serif">
+                    {title}
+                  </WireframeHeading>
                 )}
                 {onDescriptionChange ? (
                   <div className="wireframe-page-description wireframe-page-description-editor">
@@ -162,6 +198,16 @@ export function WireframePageView({
                 ) : null}
               </YStack>
             </WireframeTitleGroup>
+            {metaItems && metaItems.length > 0 && (
+              <div className="wireframe-page-meta-row" role="list" aria-label="Page metadata">
+                {metaItems.map((item) => (
+                  <span key={item.label} className="wireframe-page-meta-item" role="listitem">
+                    <span className="wireframe-page-meta-label">{item.label}</span>
+                    <span className="wireframe-page-meta-value">{item.value}</span>
+                  </span>
+                ))}
+              </div>
+            )}
             {showCount ? (
               <XStack className="wireframe-page-count-group" alignItems="center" gap="$wireframeCard">
                 <WireframeCount>

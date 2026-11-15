@@ -68,7 +68,7 @@ const parseArgs = (args) => {
     const option = args[index];
     if (option === "--help") return { help: true };
     const valueOptions = new Set(["--title", "--body", "--labels", "--assignees", "--milestone",
-      "--parent-issue", "--blocked-by", "--blocking", "--repo"]);
+      "--parent-issue", "--blocked-by", "--blocking", "--repo", "--project"]);
     if (!valueOptions.has(option)) throw new Error(`Unknown option: ${option}`);
     const value = valueAfter(args, index, option);
     index += 1;

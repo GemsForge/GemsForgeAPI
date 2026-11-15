@@ -26,7 +26,7 @@ describe("Gem Life design foundation", () => {
     expect(gemSpacing.section).toBeGreaterThan(gemSpacing.control);
     expect(gemRadii.card).toBeGreaterThan(gemRadii.control);
     expect(gemColors.lightCanvas).toBe("#f3f8f7");
-    expect(tamaguiConfig.themes.light.background.val).toBe(gemColors.lightCanvas);
+    expect(tamaguiConfig.themes.light.background.val).toBe(gemColors.wireframeCanvas);
     expect(tamaguiConfig.themes.dark).toBeDefined();
     expect(tamaguiConfig.themes.light).toBeDefined();
   });
@@ -61,7 +61,7 @@ describe("Gem Life design foundation", () => {
     expect(tamaguiConfig.themes.dark.actionText.val).toBe(gemColors.gemCanvas);
     expect(tamaguiConfig.themes.dark.warning.val).toBe(gemColors.gemGold);
     expect(tamaguiConfig.themes.light.surface.val).toBe(gemColors.wireframePanel);
-    expect(tamaguiConfig.themes.light.focus.val).toBe(gemColors.wireframeMint);
+    expect(tamaguiConfig.themes.light.focus.val).toBe(gemColors.wireframeAction);
     expect(tamaguiConfig.themes.light.actionText.val).toBe(gemColors.wireframePanel);
     expect(tamaguiConfig.themes.light.warning.val).toBe(gemColors.wireframeGold);
   });

@@ -31,17 +31,25 @@ export const gemColors = {
   gemKnowledgeMint: "#3f7055",
   gemKnowledgeGold: "#85602a",
   gemKnowledgeActionText: "#ffffff",
-  wireframeCanvas: "#f7f7f4",
-  wireframePanel: "#ffffff",
-  wireframeSidebar: "#fbfbf9",
-  wireframePanelLight: "#e8f1ef",
-  wireframeInk: "#233c42",
-  wireframeHeading: "#173d45",
-  wireframeMuted: "#738187",
-  wireframeLine: "#dfe6e3",
-  wireframeMint: "#39736d",
-  wireframeGold: "#9a6b22",
-  wireframeGoldLight: "#fff5e2",
+  // Portfolio design system (professional-portfolio redesign.css): sand surfaces, forest ink, and
+  // gold reserved for active state, focus, and calls to action.
+  wireframeCanvas: "#fbfaf4",
+  wireframePanel: "#fbfaf4",
+  wireframeSidebar: "#f4f2e8",
+  wireframeInspector: "#f4f2e8",
+  wireframePanelLight: "#dfe6dc",
+  wireframeInk: "#1e2823",
+  wireframeHeading: "#1e2823",
+  wireframeMuted: "#4d5d50",
+  wireframeLine: "#d9d6c8",
+  wireframeAction: "#8a6526",
+  wireframeActionSoft: "#e3c48a",
+  wireframeMint: "#7DB687",
+  wireframeMintDark: "#355A3A",
+  wireframeGold: "#8a6526",
+  wireframeGoldLight: "#f3ead6",
+  // Field outlines reach 3:1 (WCAG 1.4.11) on every wireframe surface and stay below the focus colour.
+  wireframeFieldBorder: "#857f6b",
   lightCanvas: "#f3f8f7",
   lightInk: "#12252b",
   lightBorder: "#c2d4d1",
@@ -85,8 +93,9 @@ export const gemZIndex = {
   notification: 300,
 } as const;
 
-export const gemFontFamily =
-  '"Avenir Next", Avenir, Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif';
+export const gemFontFamily = '"Avenir Next", Avenir, system-ui, -apple-system, sans-serif';
+
+export const gemFontFamilySerif = "ui-serif, 'New York', 'Iowan Old Style', Georgia, serif";
 
 const bodyFont = createFont({
   family: gemFontFamily,
@@ -187,28 +196,28 @@ export const tamaguiConfig = createTamagui({
     },
     light: {
       ...defaultConfig.themes.light,
-      background: gemColors.lightCanvas,
-      color: gemColors.lightInk,
-      borderColor: gemColors.lightBorder,
+      background: gemColors.wireframeCanvas,
+      color: gemColors.wireframeInk,
+      borderColor: gemColors.wireframeLine,
       // Control outlines must reach 3:1 (WCAG 1.4.11); borderColor stays a decorative hairline.
-      controlBorder: gemColors.wireframeMuted,
+      controlBorder: gemColors.wireframeFieldBorder,
       fieldLabel: gemColors.gemGold,
-      fieldBackground: gemColors.lightCanvas,
-      fieldBorder: gemColors.wireframeMuted,
-      fieldText: gemColors.lightInk,
-      fieldFocus: gemColors.wireframeMint,
+      fieldBackground: gemColors.wireframePanel,
+      fieldBorder: gemColors.wireframeFieldBorder,
+      fieldText: gemColors.wireframeInk,
+      fieldFocus: gemColors.wireframeAction,
       fieldMenuBackground: gemColors.wireframePanel,
       fieldMenuHover: gemColors.wireframePanelLight,
-      fieldMenuText: gemColors.lightInk,
+      fieldMenuText: gemColors.wireframeInk,
       surface: gemColors.wireframePanel,
       surfaceRaised: gemColors.wireframePanelLight,
       textMuted: gemColors.wireframeMuted,
-      action: gemColors.wireframeMint,
+      action: gemColors.wireframeAction,
       actionHover: gemColors.wireframeHeading,
       actionText: gemColors.wireframePanel,
-      focus: gemColors.wireframeMint,
+      focus: gemColors.wireframeAction,
       danger: gemColors.gemDangerOnLight,
-      success: gemColors.wireframeMint,
+      success: gemColors.wireframeMintDark,
       warning: gemColors.wireframeGold,
     },
     knowledge: {

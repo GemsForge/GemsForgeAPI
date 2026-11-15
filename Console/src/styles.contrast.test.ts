@@ -38,8 +38,8 @@ describe("stylesheet field border fallbacks", () => {
   it.each([
     ["gem-field-border", gemColors.gemFieldLine],
     ["gem-knowledge-field-border", gemColors.gemKnowledgeFieldLine],
-    ["gem-wireframe-field-border", gemColors.wireframeMuted],
+    ["gem-wireframe-field-border", gemColors.wireframeFieldBorder],
   ])("--%s matches the theme field border %s", (name, expected) => {
-    expect(token(name).toLowerCase()).toBe(expected);
+    expect(token(name).toLowerCase()).toBe(expected.toLowerCase());
   });
 });

@@ -84,10 +84,23 @@ export function WireframeEditableValue({
     return true;
   };
 
+  const restoreFocusAfterCancel = useRef(false);
   useEffect(() => {
-    if (!editing) return;
+    if (!editing) {
+      if (!restoreFocusAfterCancel.current) return;
+      restoreFocusAfterCancel.current = false;
+      fieldRef.current?.querySelector<HTMLElement>("button, a[href], [tabindex]:not([tabindex='-1'])")?.focus();
+      return;
+    }
     fieldRef.current?.querySelector<HTMLElement>("input, textarea, button.create-form-control")?.focus();
   }, [editing]);
+
+  const cancelEditing = () => {
+    restoreFocusAfterCancel.current = true;
+    setCurrentValue(value);
+    setSaveError(undefined);
+    setEditing(false);
+  };
 
   useEffect(() => {
     if (!editing) return;
@@ -170,6 +183,13 @@ export function WireframeEditableValue({
         if (editing && !event.currentTarget.contains(event.relatedTarget as Node | null)) returnToReadOnlyOnBlur();
       }}
       onKeyDown={(event) => {
+        // Escape discards the draft; menus and popovers that handle Escape themselves mark it defaultPrevented.
+        if (editing && event.key === "Escape" && !event.defaultPrevented) {
+          event.preventDefault();
+          event.stopPropagation();
+          cancelEditing();
+          return;
+        }
         if (editing || kind !== "relation" || event.key !== "F2") return;
         event.preventDefault();
         startEditing();

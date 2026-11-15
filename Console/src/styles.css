@@ -1,8 +1,7 @@
 :root {
   color-scheme: dark;
-  --gem-font-family:
-    "Avenir Next", Avenir, Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Display",
-    sans-serif;
+  --gem-font-family: "Avenir Next", Avenir, system-ui, -apple-system, sans-serif;
+  --gem-font-family-serif: ui-serif, "New York", "Iowan Old Style", Georgia, serif;
   --gem-canvas: #0b171c;
   --gem-surface: #12252b;
   --gem-surface-raised: #173138;
@@ -28,19 +27,30 @@
   /* Field outlines reach 3:1 (WCAG 1.4.11); fallback when no Tamagui theme sets --fieldBorder. */
   --gem-field-border: #6b8487;
   --gem-focus: var(--gem-action);
-  --gem-wireframe-canvas: #f7f7f4;
-  --gem-wireframe-surface: #ffffff;
-  --gem-wireframe-surface-raised: #e8f1ef;
-  --gem-wireframe-sidebar: #fbfbf9;
-  --gem-wireframe-text: #233c42;
-  --gem-wireframe-text-muted: #738187;
-  --gem-wireframe-action: #39736d;
-  --gem-wireframe-accent: #9a6b22;
-  --gem-wireframe-border: #dfe6e3;
-  --gem-wireframe-border-strong: #a8d2cf;
+  /* Portfolio design system (professional-portfolio redesign.css): sand surfaces, forest ink,
+     and gold reserved for active state, focus, and calls to action. */
+  --gem-wireframe-canvas: #fbfaf4;
+  --gem-wireframe-surface: #fbfaf4;
+  --gem-wireframe-surface-raised: #dfe6dc;
+  --gem-wireframe-sidebar: #f4f2e8;
+  --gem-wireframe-inspector: #f4f2e8;
+  --gem-wireframe-text: #1e2823;
+  --gem-wireframe-heading: #1e2823;
+  --gem-wireframe-muted: #4d5d50;
+  --gem-wireframe-text-muted: #4d5d50;
+  --gem-wireframe-action: #8a6526;
+  --gem-wireframe-action-dark: #6e501d;
+  --gem-wireframe-action-soft: #e3c48a;
+  --gem-wireframe-accent: #8a6526;
+  --gem-wireframe-border: #d9d6c8;
+  --gem-wireframe-border-strong: #c9c4b0;
   /* Field outlines must reach 3:1 (WCAG 1.4.11); border-strong stays a decorative line. */
-  --gem-wireframe-field-border: #738187;
-  --gem-wireframe-gold-light: #fff5e2;
+  --gem-wireframe-field-border: #857f6b;
+  --gem-wireframe-gold-light: #f3ead6;
+  --wireframe-menu-background: var(--gem-wireframe-surface);
+  --wireframe-menu-text: var(--gem-wireframe-text);
+  --wireframe-menu-hover: var(--gem-wireframe-surface-raised);
+  --wireframe-menu-border: var(--gem-wireframe-border-strong);
   --gem-layout-app-header: 72px;
   --gem-layout-app-sidebar-expanded: 288px;
   --gem-layout-app-sidebar-collapsed: 68px;
@@ -114,6 +124,13 @@
 :where(a, button, input, select, textarea, [tabindex]):focus-visible {
   outline: 3px solid var(--mint) !important;
   outline-offset: 3px;
+}
+/* Light surfaces outside .wireframe-demo inherit the dark-theme --mint (#78d1bd, ~1.7:1 on
+   white); use the wireframe action so the ring meets 3:1 (WCAG 1.4.11). */
+.wireframe-canvas :where(a, button, input, select, textarea, [tabindex]):focus-visible,
+.wireframe-canvas:focus-visible,
+[data-gem-select-content][data-wireframe-select] :where([role="option"], [tabindex]):focus-visible {
+  outline-color: var(--gem-wireframe-action) !important;
 }
 button,
 .primary-button,
@@ -335,8 +352,8 @@ button {
 }
 .wireframe-canvas {
   min-height: 100vh;
-  background: #f7f7f4;
-  color: #233c42;
+  background: var(--gem-wireframe-canvas);
+  color: var(--gem-wireframe-text);
   isolation: isolate;
 }
 .wireframe-canvas:focus {
@@ -349,32 +366,38 @@ button {
 }
 /* Auth pages use the light wireframe palette, matching the signed-in canvas. */
 .sign-in-page {
-  --ink: var(--gem-wireframe-text);
-  --muted: var(--gem-knowledge-muted);
+  --ink: var(--gem-wireframe-heading);
+  --muted: var(--gem-wireframe-muted);
   --line: var(--gem-wireframe-border);
   --mint: var(--gem-wireframe-action);
   --gold: var(--gem-wireframe-accent);
+  --danger: #a33b4a;
   display: grid;
-  min-height: 100vh;
+  min-height: 100dvh;
   place-items: center;
   padding: 1.5rem;
-  background: var(--gem-wireframe-canvas);
+  background: var(--gem-wireframe-sidebar);
   color: var(--ink);
 }
 .sign-in-card {
-  width: min(100%, 34rem);
-  padding: clamp(1.5rem, 5vw, 3rem);
+  width: min(100%, 26rem);
+  padding: clamp(1.75rem, 5vw, 2.5rem);
   border: 1px solid var(--line);
-  border-radius: 1rem;
-  background: var(--gem-wireframe-surface);
-  box-shadow: var(--gem-elevation-card);
+  border-radius: 1.25rem;
+  background: #ffffff;
+  box-shadow: 0 8px 32px rgb(30 40 35 / 10%);
 }
 .sign-in-card h1 {
-  margin-bottom: 1rem;
-  color: var(--gem-wireframe-heading, #173d45);
+  margin: 0.25rem 0 0.75rem;
+  color: var(--gem-wireframe-heading);
+  font-family: var(--gem-font-family-serif);
+  font-size: 1.75rem;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
 }
 .sign-in-card .eyebrow {
-  color: var(--gem-wireframe-action);
+  display: none;
 }
 .sign-in-description,
 .sign-in-footnote,
@@ -443,15 +466,26 @@ button {
   width: 100%;
   margin-top: 0.6rem;
   padding: 0.85rem 1.25rem;
-  border: 1px solid var(--mint);
+  border: 1px solid var(--gem-wireframe-action-dark, #355a3a);
   border-radius: 0.55rem;
-  background: var(--mint);
-  color: var(--actionText, var(--canvas));
+  background: var(--gem-wireframe-action);
+  color: #fff;
   font-size: 1rem;
   font-weight: 700;
+  letter-spacing: 0.01em;
+  transition:
+    filter 120ms ease,
+    transform 60ms ease;
 }
 .credential-sign-in-button:hover:not(:disabled) {
-  filter: brightness(1.08);
+  filter: brightness(1.06);
+}
+.credential-sign-in-button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+.credential-sign-in-button:focus-visible {
+  outline: 2px solid var(--gem-wireframe-action-dark);
+  outline-offset: 2px;
 }
 .credential-sign-in-button:disabled {
   cursor: not-allowed;
@@ -2119,7 +2153,7 @@ dialog::backdrop {
   display: grid;
   place-items: center;
   min-height: 14rem;
-  color: #738187;
+  color: var(--gem-wireframe-muted);
   text-align: center;
 }
 .wireframe-demo-inspector {
@@ -2245,7 +2279,7 @@ dialog::backdrop {
 }
 .demo-search kbd {
   font-size: 0.65rem;
-  color: #849197;
+  color: var(--gem-wireframe-muted);
 }
 .demo-nav,
 .demo-collections {
@@ -2284,11 +2318,17 @@ dialog::backdrop {
 .wireframe-demo-sidebar .demo-collections .wireframe-collection-link > a:focus-visible,
 .wireframe-demo-sidebar .demo-collections .wireframe-collection-link.active > a {
   border-radius: 0.45rem;
-  background: #e5f0ed;
-  color: #173d45;
+  background: var(--gem-wireframe-surface-raised);
+  color: var(--gem-wireframe-heading);
+}
+/* Active row: portfolio nav pattern (sage fill, ink, semibold) plus a left edge in the domain hue. */
+.wireframe-demo-sidebar .demo-collections .wireframe-collection-link.active > a,
+.wireframe-demo-sidebar .demo-collections a.wireframe-collection-link[aria-current="page"] {
+  font-weight: 600;
+  box-shadow: inset 3px 0 0 var(--gem-domain-hue, var(--gem-wireframe-action));
 }
 .wireframe-demo-sidebar .demo-collections .wireframe-collection-link > a:focus-visible {
-  outline: 2px solid #39736d;
+  outline: 2px solid var(--gem-wireframe-action);
   outline-offset: 2px;
 }
 .wireframe-collection-link-name {
@@ -2306,7 +2346,7 @@ dialog::backdrop {
   display: contents;
 }
 .wireframe-collection-link-name > span {
-  color: #39736d;
+  color: inherit;
 }
 .wireframe-demo-sidebar .demo-nav .wireframe-primary-link,
 .wireframe-demo-sidebar .demo-nav .wireframe-primary-link > a {
@@ -2381,7 +2421,7 @@ dialog::backdrop {
 }
 .wireframe-utility-links small {
   margin-left: auto;
-  color: #849197;
+  color: var(--gem-wireframe-muted);
 }
 .demo-nav button:hover,
 .demo-collections button:hover,
@@ -2392,7 +2432,7 @@ dialog::backdrop {
 .demo-collections button small,
 .demo-trash small {
   margin-left: auto;
-  color: #849197;
+  color: var(--gem-wireframe-muted);
 }
 .demo-sidebar-label {
   display: flex;
@@ -2463,7 +2503,7 @@ dialog::backdrop {
 .demo-collection-title p,
 .demo-inspector-heading p {
   margin: 0.25rem 0 0;
-  color: #738187;
+  color: var(--gem-wireframe-muted);
   font-size: 0.8rem;
 }
 .demo-record-count {
@@ -2655,7 +2695,7 @@ dialog::backdrop {
   font-size: 0.8rem;
 }
 .wireframe-standalone .record-utilities-search-field input::placeholder {
-  color: #849197;
+  color: var(--gem-wireframe-muted);
 }
 .wireframe-standalone .record-utilities-search-field input:focus-visible {
   border-color: #39736d;
@@ -2700,7 +2740,7 @@ dialog::backdrop {
   justify-content: space-between;
   gap: 0.65rem;
   padding: 0.75rem 0;
-  color: #68777c;
+  color: var(--gem-wireframe-muted);
   font-family: "Avenir Next", "Avenir Next Demo", Avenir, Inter, ui-sans-serif, system-ui, sans-serif;
   font-size: 0.78rem;
 }
@@ -2780,7 +2820,7 @@ dialog::backdrop {
   font-size: 0.75rem;
 }
 .wireframe-record-group-count {
-  color: #738187;
+  color: var(--gem-wireframe-muted);
   font-size: 0.78rem;
   font-weight: 400;
 }
@@ -2913,7 +2953,7 @@ dialog::backdrop {
   font-size: inherit;
 }
 .demo-place-copy small {
-  color: #738187;
+  color: var(--gem-wireframe-muted);
   font-size: 0.78rem;
 }
 .demo-place-copy em {
@@ -3010,7 +3050,7 @@ dialog::backdrop {
 .demo-inspector-heading button {
   border: 0;
   background: transparent;
-  color: #68777c;
+  color: var(--gem-wireframe-muted);
   font-size: 1.3rem;
 }
 .demo-cover {
@@ -3090,12 +3130,17 @@ dialog::backdrop {
   pointer-events: auto;
   transform: translateY(0);
 }
+.wireframe-cover-action,
+.wireframe-cover-action > span,
+.wireframe-cover-action > * {
+  color: #fff !important;
+  background: transparent !important;
+}
 .wireframe-cover-action {
   min-height: 1.8rem !important;
   padding: 0.25rem 0.55rem !important;
   border-color: rgba(255, 255, 255, 0.28) !important;
   border-radius: 0 !important;
-  color: #fff !important;
   font-size: 0.7rem !important;
 }
 .wireframe-cover-action:first-child {
@@ -3225,7 +3270,7 @@ dialog::backdrop {
   align-items: baseline;
 }
 .wireframe-demo-inspector dt {
-  color: #68777c;
+  color: var(--gem-wireframe-muted);
 }
 .wireframe-demo-inspector dd {
   min-width: 0;
@@ -3590,7 +3635,7 @@ dialog::backdrop {
 }
 .wireframe-property-icon-fieldset legend {
   margin-bottom: 0.3rem;
-  color: #68777c;
+  color: var(--gem-wireframe-muted);
   font-size: 0.72rem;
 }
 .wireframe-property-icon-picker {
@@ -3692,7 +3737,7 @@ dialog::backdrop {
 .gem-image-field {
   display: grid;
   gap: 0.4rem;
-  color: #68777c;
+  color: var(--gem-wireframe-muted);
   font-size: 0.75rem;
 }
 .demo-place-image img {
@@ -3729,7 +3774,7 @@ dialog::backdrop {
 .demo-attachments small {
   display: block;
   margin-top: 0.2rem;
-  color: #849197;
+  color: var(--gem-wireframe-muted);
 }
 .demo-page-actions {
   display: flex;
@@ -3738,7 +3783,7 @@ dialog::backdrop {
 }
 .demo-expanded-breadcrumb {
   margin-bottom: 1rem;
-  color: #738187;
+  color: var(--gem-wireframe-muted);
   font-size: 0.75rem;
 }
 .demo-expanded-breadcrumb button {
@@ -3756,31 +3801,50 @@ dialog::backdrop {
   padding: 0 clamp(2rem, 8vw, 8rem) 3rem;
   background: #fbfbf9;
 }
-.wireframe-record-page > .wireframe-cover {
+.wireframe-record-page > .wireframe-cover,
+.wireframe-record-page-cover-wrap .wireframe-cover {
   width: calc(100% + (2 * clamp(2rem, 8vw, 8rem)));
   max-width: none;
   margin-left: calc(-1 * clamp(2rem, 8vw, 8rem));
 }
+.wireframe-record-page-cover-wrap {
+  position: relative;
+  overflow: visible;
+}
+.wireframe-record-page-emoji {
+  position: absolute;
+  bottom: -1.125rem;
+  left: clamp(2rem, 8vw, 8rem);
+  font-size: 2.5rem;
+  line-height: 1;
+  z-index: 2;
+  filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.3));
+  pointer-events: none;
+  user-select: none;
+}
 .wireframe-record-page-header {
   display: flex;
-  align-items: flex-start;
-  justify-content: flex-start;
-  gap: 0.25rem;
+  align-items: center;
+  justify-content: space-between;
   max-width: none;
   min-height: 0;
   margin-left: calc(-1 * clamp(2rem, 8vw, 8rem));
 }
-.wireframe-record-page-header .demo-inspector-actions {
-  gap: 0.15rem;
+.wireframe-record-page-action {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  min-width: 2rem;
+  min-height: 2rem;
+  padding: 0;
+  border: 1px solid var(--wireframe-border, #dfe6e3);
+  border-radius: 0.5rem;
+  background: var(--gem-wireframe-surface, #fff);
+  color: var(--gem-wireframe-ink, #233c42);
+  cursor: pointer;
 }
-.wireframe-record-page-header .demo-inspector-actions button {
-  min-width: 1.75rem;
-  min-height: 1.75rem;
-  padding: 0.2rem 0.3rem;
-  border: 1px solid #dfe6e3;
-  border-radius: 0.3rem;
-  background: #fff;
-  font-size: 0.65rem;
+.wireframe-record-page-action:hover {
+  opacity: 0.75;
 }
 .wireframe-record-page-heading {
   max-width: 52rem;
@@ -3820,7 +3884,7 @@ dialog::backdrop {
   align-items: baseline;
 }
 .wireframe-record-page-content dt {
-  color: #68777c;
+  color: var(--gem-wireframe-muted);
   font-size: 0.7rem;
   font-weight: 700;
 }
@@ -3847,7 +3911,7 @@ dialog::backdrop {
 }
 .demo-expanded-title p {
   margin: 0.35rem 0 0;
-  color: #738187;
+  color: var(--gem-wireframe-muted);
 }
 .demo-eyebrow {
   text-transform: uppercase;

@@ -3,6 +3,7 @@ import { useAddressPatchMutation, useAddressQuery } from "../../data/recordQueri
 import { QueryFeedback } from "../../components/QueryFeedback";
 import { addressTableAdapter } from "../database/recordTableAdapters";
 import { WireframeCollectionView } from "../workspace/WireframeCollectionView";
+import { domainConfigFor } from "../workspace/collectionDomains";
 import { WireframeSchemaInspector } from "../workspace/WireframeSchemaInspector";
 import { useAddressRecordActions } from "./useAddressRecordActions";
 import type { RecordPropertyDefinition, RecordSelectOption } from "../../table-kit";
@@ -20,6 +21,8 @@ export function AddressesWireframeView({ records }: { records: readonly Address[
         tableName: "Addresses",
         title: "Addresses",
         description: "Places, locations, and address history referenced across your records.",
+        ...domainConfigFor("Addresses"),
+        recordEmoji: "🏡",
         activeCollection: "Addresses",
         records,
         properties,
