@@ -91,6 +91,17 @@ final class RecordBodyRouteTests: XCTestCase {
                 XCTAssertEqual(response.status, .payloadTooLarge)
             }
 
+            let newlineHeavyBody = String(repeating: "\n", count: 600_000)
+            try await app.test(.PUT, "record-bodies/Addresses/ADDR-A", beforeRequest: { request in
+                request.headers.bearerAuthorization = .init(token: tokenA)
+                try request.content.encode(RecordBodyRequest(markdown: newlineHeavyBody, baseRevision: 1))
+            }) { response async throws in
+                XCTAssertEqual(response.status, .ok)
+                let body = try response.content.decode(RecordBodyResponse.self)
+                XCTAssertEqual(body.markdown.utf8.count, 600_000)
+                XCTAssertEqual(body.revision, 2)
+            }
+
             try await RecordBody(
                 hubID: "hub-a",
                 tableName: "Addresses",

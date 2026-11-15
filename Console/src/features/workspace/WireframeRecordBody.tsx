@@ -40,12 +40,19 @@ export function WireframeRecordBody({ tableName, recordID }: { tableName: string
     if (!dirtyRef.current || saveInFlight.current) return;
     setError(null);
     saveInFlight.current = true;
+    let saveSucceeded = false;
     try {
       const saved = await saveBody.mutateAsync({ markdown: value, baseRevision: revisionRef.current });
-      setMarkdown(saved.markdown);
+      saveSucceeded = true;
+      revisionRef.current = saved.revision;
       setRevision(saved.revision);
-      setDirty(false);
-      setSaved(true);
+      if (markdownRef.current === value) {
+        markdownRef.current = saved.markdown;
+        dirtyRef.current = false;
+        setMarkdown(saved.markdown);
+        setDirty(false);
+        setSaved(true);
+      }
     } catch (reason) {
       if (reason instanceof APIError && reason.status === 409) {
         const currentBody = await api.getRecordBody(tableName, recordID);
@@ -55,6 +62,9 @@ export function WireframeRecordBody({ tableName, recordID }: { tableName: string
       }
     } finally {
       saveInFlight.current = false;
+      if (saveSucceeded && dirtyRef.current) {
+        timer.current = window.setTimeout(() => void save(), 0);
+      }
     }
   };
 
@@ -84,6 +94,8 @@ export function WireframeRecordBody({ tableName, recordID }: { tableName: string
         rows={12}
         onChange={(event) => {
           const value = event.currentTarget.value;
+          markdownRef.current = value;
+          dirtyRef.current = true;
           setMarkdown(value);
           setDirty(true);
           setSaved(false);
@@ -110,9 +122,13 @@ export function WireframeRecordBody({ tableName, recordID }: { tableName: string
                 end: markdownRef.current.length,
               };
               const next = `${markdownRef.current.slice(0, start)}${insertion}${markdownRef.current.slice(end)}`;
+              markdownRef.current = next;
+              dirtyRef.current = true;
               setMarkdown(next);
               setDirty(true);
               pasteSelection.current = null;
+              if (timer.current !== null) window.clearTimeout(timer.current);
+              timer.current = window.setTimeout(() => void save(next), 800);
               window.requestAnimationFrame(() => {
                 editor.focus();
                 editor.setSelectionRange(start + insertion.length, start + insertion.length);

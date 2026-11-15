@@ -66,7 +66,9 @@ func registerRecordBodyRoutes(_ app: Application) {
         "record-bodies",
         ":tableName",
         ":recordID",
-        body: .collect(maxSize: ByteCount(value: 1_100_000))
+        // The decoded Markdown is limited below. Leave room for JSON escaping of
+        // control characters (for example, each newline is encoded as `\\n`).
+        body: .collect(maxSize: ByteCount(value: 6_100_000))
     ) { request async throws -> Response in
         let hubID = try requireRecordBodyHubID(request)
         let tableName = try requireRecordBodyTableName(request)
