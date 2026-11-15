@@ -159,10 +159,19 @@ export function WireframeCollectionView<T extends WireframeRecord>({
   const [archiveError, setArchiveError] = useState<string | null>(null);
   const [emojiEditing, setEmojiEditing] = useState(false);
   const emojiInputRef = useRef<HTMLInputElement>(null);
+  const emojiButtonRef = useRef<HTMLButtonElement>(null);
+  // Set when Enter/Escape already decided the outcome, so the blur from moving focus doesn't save again.
+  const emojiKeyHandled = useRef(false);
   // Move focus into the emoji dialog when it opens (replaces autoFocus for jsx-a11y).
   useEffect(() => {
-    if (emojiEditing) emojiInputRef.current?.focus();
+    if (!emojiEditing) return;
+    emojiKeyHandled.current = false;
+    emojiInputRef.current?.focus();
   }, [emojiEditing]);
+  const closeEmojiDialog = () => {
+    emojiButtonRef.current?.focus();
+    setEmojiEditing(false);
+  };
   const archivedRecordIDs = useMemo(
     () =>
       new Set(
@@ -1153,6 +1162,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
                 {selectedEmoji || config.recordEmoji ? (
                   <div className="wireframe-inspector-emoji-anchor">
                     <button
+                      ref={emojiButtonRef}
                       className="wireframe-inspector-record-emoji"
                       title="Change emoji"
                       onClick={() => setEmojiEditing((v) => !v)}
@@ -1170,14 +1180,20 @@ export function WireframeCollectionView<T extends WireframeRecord>({
                           ref={emojiInputRef}
                           onKeyDown={(e) => {
                             if (e.key === "Enter" || e.key === "Escape") {
+                              e.preventDefault();
                               if (e.key === "Enter") {
                                 const v = e.currentTarget.value.trim() || null;
                                 void persistEmoji(selected, v);
                               }
-                              setEmojiEditing(false);
+                              emojiKeyHandled.current = true;
+                              closeEmojiDialog();
                             }
                           }}
                           onBlur={(e) => {
+                            if (emojiKeyHandled.current) {
+                              emojiKeyHandled.current = false;
+                              return;
+                            }
                             const v = e.currentTarget.value.trim() || null;
                             void persistEmoji(selected, v);
                             setEmojiEditing(false);
