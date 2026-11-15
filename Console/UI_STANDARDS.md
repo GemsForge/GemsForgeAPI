@@ -74,11 +74,11 @@ are 12/13/14/16/22/30px with matching line heights; body text defaults to
 14px. Inter is a preferred local fallback, not a required remote download. Do not add one-off tokens without
 checking whether an existing role fits.
 
-Dark is the persistent Console shell. The table workspace intentionally uses
-the light canvas for its navigation, collection, and inspector surfaces; it is
-not a theme toggle. Existing CSS variables remain a compatibility layer and
-must map to the same semantic roles until each feature migrates. Do not claim
-all legacy markup is already composed of Tamagui primitives.
+`AppShell` is the persistent Console shell. Signed-in workspace routes use the
+light canvas for navigation, collection, and inspector surfaces. Existing CSS
+variables remain a compatibility layer and must map to the same semantic roles
+until each feature migrates. Do not claim all legacy markup is already composed
+of Tamagui primitives.
 
 Use GemButton, GemField, GemCard, GemSectionHeader, GemStatusPill,
 GemEmptyState, GemLoadingState, and the shared field controls for reusable
@@ -87,9 +87,10 @@ checkbox, switch, and search variants; preserve their labels, error states,
 and keyboard behavior when composing a feature.
 
 The schema-driven table workspace is the default for table-backed screens.
-`src/features/workspace/WorkspaceView.tsx` owns the shared shell: the left pane
-lists configured tables/views, the collection renders records from schema and
-data, and the inspector renders semantic field definitions. `src/table-kit`
+`src/features/workspace/AppShell.tsx` owns the shared shell. The
+`WorkspaceView.tsx` left pane lists configured tables/views, the collection
+renders records from schema and data, and the inspector renders semantic field
+definitions. `src/table-kit`
 owns table configuration, record contracts, property renderers, selection,
 imports, and query/cache adapters. Feature code supplies schema metadata,
 record mapping, query wiring, and mutation contracts; it must not duplicate the

@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { PaginationControls } from "./PaginationControls";
 import { RecordUtilities } from "./RecordUtilities";
-import { useGemLifeShell } from "./layout/GemLifeShell";
 import type { RecordSortDirection } from "../hooks/useRecordUtilities";
 import {
   RecordGallery,
@@ -379,16 +378,14 @@ function DatabaseRecordTableShell<Record>({
       },
     };
   }, [configuration, properties, viewId]);
-  const shell = useGemLifeShell();
   const utilityConfig = actions?.newRecordUtility;
   const [utilityOpen, setUtilityOpen] = useState(utilityConfig?.open ?? false);
   const handleUtilityChange = useCallback(
     (open: boolean) => {
       setUtilityOpen(open);
-      shell.setUtilityOpen(open);
       utilityConfig?.onOpenChange?.(open);
     },
-    [shell, utilityConfig],
+    [utilityConfig],
   );
   const resolvedActions = utilityConfig
     ? {

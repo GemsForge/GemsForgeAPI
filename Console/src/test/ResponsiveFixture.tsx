@@ -3,10 +3,10 @@
 import { createRoot } from "react-dom/client";
 import { MemoryRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { TamaguiProvider } from "tamagui";
+import { TamaguiProvider, Theme } from "tamagui";
 import { tamaguiConfig } from "@gemsforge/ui";
-import { GemLifeShell } from "../components/layout/GemLifeShell";
-import { DomainSidebar } from "../features/domains/DomainSidebar";
+import { AppShell } from "../features/workspace/AppShell";
+import { WireframeAppHeader, WireframeNavigationProvider } from "../features/workspace/WireframeAppHeader";
 import { SchemaBuilderView } from "../features/schema/SchemaBuilderView";
 import { ForgeKeeperView } from "../features/forgekeeper/ForgeKeeperView";
 import { GemDataTable } from "../components/ui/GemDataTable--LEGACY";
@@ -14,6 +14,7 @@ import { GemRecordList } from "../components/ui/GemRecordList--LEGACY";
 import { GemRecordCard } from "../components/ui/GemRecordCard--LEGACY";
 import { FilePresentation } from "../components/FilePresentation";
 import { AuthProvider } from "../auth/AuthProvider";
+// Same stylesheet order as src/main.tsx so the fixture cascades like the app.
 import "../styles.css";
 import "../design-system/global-density.css";
 import "../design-system/wireframe-mvp.css";
@@ -36,9 +37,24 @@ window.fetch = async (input, init) => {
         byteSize: 160,
         fileKind: "image",
       }
-    : url.includes("schema-builder")
-      ? { version: 1, supportedTypes: [{ value: "TEXT", label: "Text", description: "Text values" }], rules: [] }
-      : [];
+    : url.endsWith("/live-database/schema")
+      ? {
+          databaseName: "Fixture.sqlite",
+          tableCount: 1,
+          tables: [
+            {
+              name: "LongExampleTableNameForNarrowScreens",
+              columns: [{ name: "ExampleProperty", dataType: "TEXT", primaryKey: false, nullable: true }],
+              foreignKeys: [],
+              indexes: [],
+            },
+          ],
+        }
+      : url.endsWith("/schema-builder/tables")
+        ? { tables: [], availableTables: [] }
+        : url.endsWith("/schema-builder/metadata")
+          ? { version: 1, supportedTypes: [{ value: "TEXT", label: "Text", description: "Text values" }], rules: [] }
+          : [];
   return new Response(JSON.stringify(data), { headers: { "Content-Type": "application/json" } });
 };
 const domains = [{ id: "TEST", title: "Long example domain title", description: "Synthetic records only" }];
@@ -47,61 +63,70 @@ createRoot(document.getElementById("root")!).render(
     <QueryClientProvider client={new QueryClient()}>
       <TamaguiProvider config={tamaguiConfig} defaultTheme="dark">
         <MemoryRouter>
-          <GemLifeShell sidebar={<DomainSidebar domains={domains} onRefresh={() => {}} />}>
-            <h2>Responsive fixture</h2>
-            <p>Local synthetic content. Writes are disabled.</p>
-            <GemDataTable
-              caption="Wide table fixture"
-              columns={[{ key: "value", label: "Long property", render: (row: { id: string }) => row.id }]}
-              rows={Array.from({ length: 1000 }, (_, index) => ({
-                id: `Record ${index}: example long identifier for wrapping and horizontal table scrolling`,
-              }))}
-              rowKey={(row) => row.id}
-            />
-            <GemRecordList
-              label="Responsive gallery fixture"
-              records={Array.from({ length: 6 }, (_, index) => ({
-                id: `fixture-${index + 1}`,
-                title: `Long synthetic record title ${index + 1} for compact gallery wrapping`,
-                category: "Fixture category",
-              }))}
-              getKey={(record) => record.id}
-              renderRecord={(record) => (
-                <GemRecordCard
-                  className="fixture-card"
-                  icon="◎"
-                  title={record.title}
-                  subtitle={`${record.category} · ${record.id}`}
-                  properties={[{ label: "Category", value: record.category }]}
-                  onSelect={() => {}}
-                />
-              )}
-              tableColumns={[
-                { key: "title", label: "Entry", icon: () => "◎", render: (record) => record.title },
-                { key: "category", label: "Category", render: (record) => record.category },
-                { key: "id", label: "Item ID", render: (record) => record.id },
-              ]}
-            />
-            <FilePresentation fileMetadataID="fixture" label="Fixture image" />
-            <ForgeKeeperView
-              domain={domains[0]}
-              pages={[
-                {
-                  id: 1,
-                  domainID: "TEST",
-                  title: "Fixture page",
-                  description: "Test the dialog without saving",
-                  parentID: null,
-                },
-              ]}
-              onLoadRoots={() => {}}
-              onLoadChildren={() => {}}
-              onPatch={async () => {
-                throw new Error("Fixture writes are disabled.");
-              }}
-            />
-            <SchemaBuilderView onError={() => {}} onSuccess={() => {}} />
-          </GemLifeShell>
+          <Theme name="light">
+            <div className="wireframe-canvas">
+              <WireframeNavigationProvider>
+                <WireframeAppHeader />
+                <main className="wireframe-canvas-content" id="main-content" tabIndex={-1}>
+                  <AppShell>
+                    <h2>Responsive fixture</h2>
+                    <p>Local synthetic content. Writes are disabled.</p>
+                    <GemDataTable
+                      caption="Wide table fixture"
+                      columns={[{ key: "value", label: "Long property", render: (row: { id: string }) => row.id }]}
+                      rows={Array.from({ length: 1000 }, (_, index) => ({
+                        id: `Record ${index}: example long identifier for wrapping and horizontal table scrolling`,
+                      }))}
+                      rowKey={(row) => row.id}
+                    />
+                    <GemRecordList
+                      label="Responsive gallery fixture"
+                      records={Array.from({ length: 6 }, (_, index) => ({
+                        id: `fixture-${index + 1}`,
+                        title: `Long synthetic record title ${index + 1} for compact gallery wrapping`,
+                        category: "Fixture category",
+                      }))}
+                      getKey={(record) => record.id}
+                      renderRecord={(record) => (
+                        <GemRecordCard
+                          className="fixture-card"
+                          icon="◎"
+                          title={record.title}
+                          subtitle={`${record.category} · ${record.id}`}
+                          properties={[{ label: "Category", value: record.category }]}
+                          onSelect={() => {}}
+                        />
+                      )}
+                      tableColumns={[
+                        { key: "title", label: "Entry", icon: () => "◎", render: (record) => record.title },
+                        { key: "category", label: "Category", render: (record) => record.category },
+                        { key: "id", label: "Item ID", render: (record) => record.id },
+                      ]}
+                    />
+                    <FilePresentation fileMetadataID="fixture" label="Fixture image" />
+                    <ForgeKeeperView
+                      domain={domains[0]}
+                      pages={[
+                        {
+                          id: 1,
+                          domainID: "TEST",
+                          title: "Fixture page",
+                          description: "Test the dialog without saving",
+                          parentID: null,
+                        },
+                      ]}
+                      onLoadRoots={() => {}}
+                      onLoadChildren={() => {}}
+                      onPatch={async () => {
+                        throw new Error("Fixture writes are disabled.");
+                      }}
+                    />
+                    <SchemaBuilderView onError={() => {}} onSuccess={() => {}} />
+                  </AppShell>
+                </main>
+              </WireframeNavigationProvider>
+            </div>
+          </Theme>
         </MemoryRouter>
       </TamaguiProvider>
     </QueryClientProvider>

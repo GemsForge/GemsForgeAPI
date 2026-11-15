@@ -1,9 +1,9 @@
 # Responsive verification
 
 Start the dev server, then open `/responsive-fixture.html`. This development-only
-entry uses the real shell, sidebar, table, file preview, page editor, and schema
-builder with synthetic data. All HTTP requests are intercepted locally; writes
-are rejected. It is not included in the production Vite build.
+entry uses `AppShell`, its navigation, a table, file preview, page editor, and
+schema builder with synthetic data. All HTTP requests are intercepted locally;
+writes are rejected. It is not included in the production Vite build.
 
 Test compact (up to 640 CSS px), tablet (up to 900), intermediate (up to 1200),
 and desktop layouts. The workspace sidebar collapses below 900; feature grids
@@ -30,6 +30,23 @@ At the narrowest size, the page editor measured about 239×498px inside a
 image preview and long metadata filename remained contained. Restore browser
 viewport overrides after testing. These browser checks do not constitute an
 iOS-native app test or a complete VoiceOver audit.
+
+## Recorded #526 browser smoke test
+
+Chromium rendered the local `responsive-fixture.html` with no page errors at all
+three checked viewport widths. The synthetic live-schema table name wrapped at
+375px, and the wide data table remained in its own scroll region.
+
+The `/workspace`, `/domains`, `/education`, `/transactions`,
+`/service-accounts`, and `/wireframe-demo` routes were also rendered with
+synthetic API responses at the same widths. None produced a page-level runtime
+error or document overflow.
+
+| Viewport width | Document width | Table region | Table content | Outcome                                   |
+| -------------- | -------------- | ------------ | ------------- | ----------------------------------------- |
+| 1440           | 1440           | 1196         | 1196          | No page overflow                          |
+| 900            | 900            | 896          | 896           | No page overflow                          |
+| 375            | 375            | 373          | 576           | No page overflow; table scrolls in region |
 
 ## Recorded #458 browser smoke test
 

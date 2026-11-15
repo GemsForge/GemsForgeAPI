@@ -16,7 +16,7 @@ import { useWireframeNavigation } from "./WireframeAppHeader";
 type PaneIcon = ComponentType<{ size?: number; "aria-hidden"?: boolean | "true" | "false" }>;
 
 /** What the active page tells the persistent navigation pane about itself. */
-export interface WireframeShellPane {
+export interface AppShellPane {
   recordCount: number;
   activeCollection?: string;
   activeCollectionTitle?: string;
@@ -24,22 +24,22 @@ export interface WireframeShellPane {
 }
 
 /** Layout modifiers the active page applies to the shared frame grid. */
-export interface WireframeShellFrame {
+export interface AppShellFrame {
   inspector?: "closed" | "open" | "expanded";
   inspectorWidth?: number;
   schemaTable?: string;
 }
 
-interface WireframeShellState {
-  pane: WireframeShellPane;
-  frame: WireframeShellFrame;
+interface AppShellState {
+  pane: AppShellPane;
+  frame: AppShellFrame;
 }
 
-const defaultState: WireframeShellState = { pane: { recordCount: 0, activeCollection: "" }, frame: {} };
+const defaultState: AppShellState = { pane: { recordCount: 0, activeCollection: "" }, frame: {} };
 
-const WireframeShellContext = createContext<((state: WireframeShellState) => void) | null>(null);
+const AppShellContext = createContext<((state: AppShellState) => void) | null>(null);
 
-const sameState = (left: WireframeShellState, right: WireframeShellState) =>
+const sameState = (left: AppShellState, right: AppShellState) =>
   left.pane.recordCount === right.pane.recordCount &&
   left.pane.activeCollection === right.pane.activeCollection &&
   left.pane.activeCollectionTitle === right.pane.activeCollectionTitle &&
@@ -53,8 +53,8 @@ const sameState = (left: WireframeShellState, right: WireframeShellState) =>
  * persistent app shell. Pages render only their content; the shell owns the
  * navigation pane, its collapse state, and the compact-width drawer.
  */
-export function useWireframeShell(pane: WireframeShellPane, frame: WireframeShellFrame = {}) {
-  const publish = useContext(WireframeShellContext);
+export function useAppShell(pane: AppShellPane, frame: AppShellFrame = {}) {
+  const publish = useContext(AppShellContext);
   const { recordCount, activeCollection = "", activeCollectionTitle, activeCollectionIcon } = pane;
   const { inspector = "closed", inspectorWidth, schemaTable } = frame;
   useLayoutEffect(() => {
@@ -80,13 +80,13 @@ const inspectorClassName = {
   expanded: "has-inspector is-expanded",
 } as const;
 
-export function WireframeAppShell({ children }: { children: ReactNode }) {
+export function AppShell({ children }: { children: ReactNode }) {
   const navigation = useWireframeNavigation();
   const { pathname } = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const [state, setState] = useState(defaultState);
   const publish = useMemo(
-    () => (next: WireframeShellState) => setState((current) => (sameState(current, next) ? current : next)),
+    () => (next: AppShellState) => setState((current) => (sameState(current, next) ? current : next)),
     [],
   );
   const mobileOpen = navigation?.open ?? false;
@@ -104,7 +104,7 @@ export function WireframeAppShell({ children }: { children: ReactNode }) {
       : ({ "--inspector-width": `${frame.inspectorWidth}px` } as CSSProperties);
 
   return (
-    <WireframeShellContext.Provider value={publish}>
+    <AppShellContext.Provider value={publish}>
       <section
         className={`wireframe-demo wireframe-standalone wireframe-app-shell ${inspectorClassName[frame.inspector ?? "closed"]}`}
         style={style}
@@ -132,6 +132,6 @@ export function WireframeAppShell({ children }: { children: ReactNode }) {
         </div>
         {children}
       </section>
-    </WireframeShellContext.Provider>
+    </AppShellContext.Provider>
   );
 }

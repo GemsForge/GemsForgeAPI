@@ -13,7 +13,7 @@ import {
 import { AgGridReact } from "ag-grid-react";
 import { themeQuartz, type ColDef, type ColDefField, type ICellRendererParams } from "ag-grid-community";
 import { useLiveSchemaQuery } from "../../data/workflowQueries";
-import { useWireframeShell } from "./WireframeAppShell";
+import { useAppShell } from "./AppShell";
 import { WireframePageView } from "./WireframePageView";
 import { WireframeRecordPageView } from "./WireframeRecordPageView";
 import { PropertyIcon } from "./PropertyIconPicker";
@@ -723,7 +723,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
     setDropTargetID: setInspectorDropTargetID,
     announcement: inspectorSortAnnouncement,
   };
-  useWireframeShell(
+  useAppShell(
     {
       recordCount: activeRecords.length,
       activeCollection: config.activeCollection,

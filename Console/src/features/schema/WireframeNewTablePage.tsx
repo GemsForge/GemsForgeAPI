@@ -5,7 +5,7 @@ import {
   useCreateTableMutation,
   useCreateSchemaPageMutation,
 } from "../../data/workflowQueries";
-import { useWireframeShell } from "../workspace/WireframeAppShell";
+import { useAppShell } from "../workspace/AppShell";
 import { WireframePageView } from "../workspace/WireframePageView";
 
 const TABLE_NAME_RE = /^[A-Z][A-Za-z0-9]*$/;
@@ -13,7 +13,7 @@ const TABLE_NAME_RE = /^[A-Z][A-Za-z0-9]*$/;
 export function WireframeNewTablePage() {
   const navigate = useNavigate();
   // Clear the previous collection's sidebar highlight; the New table link marks itself current.
-  useWireframeShell({ recordCount: 0 });
+  useAppShell({ recordCount: 0 });
   const [tableName, setTableName] = useState("NewCollection");
   const [phase, setPhase] = useState<"idle" | "busy" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
