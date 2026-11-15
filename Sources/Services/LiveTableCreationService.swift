@@ -1,21 +1,33 @@
 import Fluent
 import Vapor
 
-/// The only table currently approved for live creation. Future tables must be
-/// added here with a reviewed migration rather than accepted from the browser.
+/// Only explicitly reviewed additive tables can be created through this route.
 enum ApprovedLiveTable: String, CaseIterable, Sendable {
     case fileMetadata = "file-metadata"
+    case notionImportReferences = "notion-import-references"
 
-    var tableName: String { FileMetadata.schema }
+    var tableName: String {
+        switch self {
+        case .fileMetadata: FileMetadata.schema
+        case .notionImportReferences: NotionImportReference.schema
+        }
+    }
 
     var columns: [String] {
-        ["FileMetadataID", "RelativePath", "FileName", "FileKind", "MimeType", "ByteSize", "Checksum", "OwnerType", "OwnerID"]
+        switch self {
+        case .fileMetadata:
+            ["FileMetadataID", "RelativePath", "FileName", "FileKind", "MimeType", "ByteSize", "Checksum", "OwnerType", "OwnerID"]
+        case .notionImportReferences:
+            ["NotionImportReferenceID", "HubID", "NotionPageID", "TableName", "RecordID", "CreatedAt", "UpdatedAt"]
+        }
     }
 
     func apply(on database: Database) async throws {
         switch self {
         case .fileMetadata:
             try await CreateFileMetadata().prepare(on: database)
+        case .notionImportReferences:
+            try await CreateNotionImportReferences().prepare(on: database)
         }
     }
 }
@@ -68,7 +80,9 @@ struct LiveTableCreationService: Sendable {
         guard plan.operations.count == 1,
               let operation = plan.operations.first,
               operation.operation == "create-table",
-              let approvedTable = ApprovedLiveTable(rawValue: "file-metadata"),
+              let approvedTable = ApprovedLiveTable.allCases.first(where: { candidate in
+                  candidate.tableName == operation.table && candidate.columns == operation.columns
+              }),
               operation.table == approvedTable.tableName,
               operation.columns == approvedTable.columns else {
             throw LiveTableCreationError.unsupportedTable

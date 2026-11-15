@@ -36,6 +36,17 @@ indirect enum NotionJSONValue: Codable, Sendable, Equatable {
     var arrayValue: [NotionJSONValue]? { if case .array(let value) = self { value } else { nil } }
     var stringValue: String? { if case .string(let value) = self { value } else { nil } }
     var boolValue: Bool? { if case .bool(let value) = self { value } else { nil } }
+
+    var foundationValue: Any {
+        switch self {
+        case .string(let value): value
+        case .number(let value): value
+        case .bool(let value): value
+        case .object(let value): value.mapValues(\.foundationValue)
+        case .array(let value): value.map(\.foundationValue)
+        case .null: NSNull()
+        }
+    }
 }
 
 struct NotionAPIPage: Decodable, Sendable {
@@ -54,6 +65,8 @@ enum NotionAPIError: Error, CustomStringConvertible {
     case missingToken
     case rejected(status: Int, retryAfter: String?)
     case invalidResponse
+    case invalidFileURL
+    case fileDownloadFailed
 
     var description: String {
         switch self {
@@ -64,6 +77,8 @@ enum NotionAPIError: Error, CustomStringConvertible {
             }
             return "Notion returned HTTP \(status). Check the integration access and retry."
         case .invalidResponse: return "Notion returned an unreadable response."
+        case .invalidFileURL: return "Only HTTPS Notion-hosted file URLs can be imported."
+        case .fileDownloadFailed: return "A Notion attachment could not be downloaded within the configured size limit."
         }
     }
 }
@@ -130,6 +145,50 @@ struct NotionAPIClient: Sendable {
 
     func childrenAll(of blockID: String) async throws -> [NotionJSONValue] {
         try await paginate { cursor in try await children(of: blockID, cursor: cursor) }
+    }
+
+    /// Expands every child block recursively and preserves the original block
+    /// fields. The mapper consumes the resulting nested `children` arrays.
+    func childrenRecursively(of blockID: String, maximumDepth: Int = 32) async throws -> [NotionJSONValue] {
+        try await expandedChildren(of: blockID, depth: 0, maximumDepth: maximumDepth)
+    }
+
+    /// Downloads only Notion-hosted file attachments. External links are never
+    /// fetched and the Notion bearer token is not sent to the file host.
+    func downloadHostedFile(url rawURL: String, maximumBytes: Int) async throws -> (Data, String) {
+        guard let url = URL(string: rawURL), url.scheme?.lowercased() == "https",
+              let host = url.host?.lowercased(),
+              host.hasSuffix(".amazonaws.com") || host == "amazonaws.com" || host.hasSuffix(".notion.so") else {
+            throw NotionAPIError.invalidFileURL
+        }
+        let request = ClientRequest(method: .GET, url: URI(string: rawURL))
+        let response = try await client.send(request)
+        guard response.status == .ok, let body = response.body,
+              body.readableBytes > 0, body.readableBytes <= maximumBytes,
+              let data = body.getData(at: body.readerIndex, length: body.readableBytes) else {
+            throw NotionAPIError.fileDownloadFailed
+        }
+        return (data, response.headers.first(name: "Content-Type") ?? "application/octet-stream")
+    }
+
+    private func expandedChildren(of blockID: String, depth: Int, maximumDepth: Int) async throws -> [NotionJSONValue] {
+        let blocks = try await childrenAll(of: blockID)
+        guard depth < maximumDepth else { return blocks }
+        var expanded: [NotionJSONValue] = []
+        for block in blocks {
+            guard var object = block.objectValue else { expanded.append(block); continue }
+            if object["has_children"]?.boolValue == true,
+               let id = object["id"]?.stringValue,
+               let type = object["type"]?.stringValue,
+               var payload = object[type]?.objectValue {
+                payload["children"] = .array(try await expandedChildren(
+                    of: id, depth: depth + 1, maximumDepth: maximumDepth
+                ))
+                object[type] = .object(payload)
+            }
+            expanded.append(.object(object))
+        }
+        return expanded
     }
 
     private func paginate(

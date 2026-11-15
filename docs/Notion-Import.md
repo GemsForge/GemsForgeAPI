@@ -27,16 +27,34 @@ current Markdown converter supports common headings, paragraphs, lists, quotes,
 code, dividers, checkboxes, and child-page titles; unsupported block types are
 reported rather than silently represented as imported content.
 
-## Import safety and remaining story work
+## Reviewed import
 
-`NotionImportReferences` provides a Hub-scoped unique key for the Notion page
-ID, so the importer can update or skip an existing source page instead of
-creating duplicates. Its migration is included in the isolated development
-profile and must go through the repository's reviewed live-migration and
-backup process before any live import.
+The preview returns a short-lived, single-use confirmation token bound to the
+authenticated Hub and a fingerprint of the captured Notion workspace. Review
+every target and unmapped property before submitting:
 
-The authenticated preview is the first server-side increment. The approved
-writer, complete block traversal, file copying, relationship linking, and the
-owner-reviewed live dry-run/import steps are still required before issue #545
-meets its full acceptance criteria. Do not run an import against personal data
-until the owner has reviewed the preview and approved the target mapping.
+```text
+POST /notion-import/commit
+```
+
+The JSON body must contain the `confirmationToken` from the preview,
+`confirmImport: true`, and may contain `excludedNotionIDs` for resources that
+should be skipped. The server refreshes the snapshot and rejects the request if
+the workspace changed or the token expired. Before writing, it creates and
+verifies a SQLite backup. The idempotency map is Hub-scoped and uses each
+Notion page ID to update the same GemLife record on a repeat run.
+
+`NotionImportReferences` is available through the reviewed live-migration flow
+as `notion-import-references`. Apply it with the live database migration
+preview/execute routes before importing. File copying requires
+`ASSET_DIRECTORY`; files hosted by Notion are copied into GemLife storage and
+registered in `FileMetadata`. External attachments and unsupported mappings
+are reported. Markdown block children are traversed recursively, and supported
+relations, select options, and rollups are installed as table properties where
+their targets can be resolved.
+
+The commit response lists created or updated rows, skips, failures, unmapped
+properties, and the verified backup name and size. This is a one-way import;
+the backup is the recovery point. Do not submit the commit request against
+personal data until the owner has reviewed the actual preview and approved its
+target mapping.

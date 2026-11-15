@@ -37,12 +37,15 @@ final class NotionImportValueMapperTests: XCTestCase {
     func testMarkdownRendererPreservesSupportedBlocksAndReportsUnsupportedOnes() {
         let blocks: [[String: Any]] = [
             ["type": "heading_1", "heading_1": ["rich_text": [["plain_text": "Journal"]]]],
-            ["type": "paragraph", "paragraph": ["rich_text": [["plain_text": "Entry"]]]],
+            ["type": "paragraph", "paragraph": [
+                "rich_text": [["plain_text": "Entry"]],
+                "children": [["type": "bulleted_list_item", "bulleted_list_item": ["rich_text": [["plain_text": "Nested note"]]]]],
+            ]],
             ["type": "to_do", "to_do": ["checked": true, "rich_text": [["plain_text": "Done"]]]],
             ["type": "synced_block", "synced_block": [:]],
         ]
         let result = NotionImportValueMapper.markdown(blocks: blocks)
-        XCTAssertEqual(result.markdown, "# Journal\n\nEntry\n\n- [x] Done")
+        XCTAssertEqual(result.markdown, "# Journal\n\nEntry\n\n  - Nested note\n\n- [x] Done")
         XCTAssertEqual(result.unmappedTypes, ["synced_block"])
     }
 }

@@ -1,4 +1,5 @@
 import Foundation
+import Crypto
 import Vapor
 
 struct NotionImportPreviewProperty: Content, Sendable {
@@ -20,10 +21,103 @@ struct NotionImportPreviewResource: Content, Sendable {
 
 struct NotionImportPreviewResponse: Content, Sendable {
     let readOnly: Bool
+    let confirmationToken: String
+    let expiresAt: Date
     let resources: [NotionImportPreviewResource]
     let totalRows: Int
     let unmappedProperties: [String]
     let warnings: [String]
+}
+
+struct NotionImportSnapshot: Sendable, Codable {
+    let pages: [NotionJSONValue]
+    let dataSources: [NotionJSONValue]
+    let rowsByDataSourceID: [String: [NotionJSONValue]]
+
+    var fingerprint: String {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.sortedKeys]
+        let canonical = NotionImportSnapshot(
+            pages: Self.stripTemporaryFileURLs(pages),
+            dataSources: Self.stripTemporaryFileURLs(dataSources),
+            rowsByDataSourceID: rowsByDataSourceID.mapValues(Self.stripTemporaryFileURLs)
+        )
+        let data = (try? encoder.encode(canonical)) ?? Data()
+        return SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
+    }
+
+    private static func stripTemporaryFileURLs(_ values: [NotionJSONValue]) -> [NotionJSONValue] {
+        values.map { stripTemporaryFileURLs($0, insideHostedFile: false) }
+    }
+
+    private static func stripTemporaryFileURLs(_ value: NotionJSONValue, insideHostedFile: Bool) -> NotionJSONValue {
+        switch value {
+        case .object(let object):
+            var sanitized: [String: NotionJSONValue] = [:]
+            for (key, child) in object {
+                if insideHostedFile && (key == "url" || key == "expiry_time") { continue }
+                sanitized[key] = stripTemporaryFileURLs(child, insideHostedFile: key == "file" || insideHostedFile)
+            }
+            return .object(sanitized)
+        case .array(let values):
+            return .array(values.map { stripTemporaryFileURLs($0, insideHostedFile: insideHostedFile) })
+        default: return value
+        }
+    }
+}
+
+struct NotionImportCommitRequest: Content, Sendable {
+    let confirmationToken: String
+    let confirmImport: Bool
+    var excludedNotionIDs: [String] = []
+}
+
+struct NotionImportRowResult: Content, Sendable {
+    let notionID: String
+    let title: String
+    let target: String
+    let result: String
+    let recordID: String?
+    let reason: String?
+}
+
+struct NotionImportCommitResponse: Content, Sendable {
+    let status: String
+    let backupFileName: String
+    let backupSizeBytes: Int64
+    let created: Int
+    let updated: Int
+    let skipped: Int
+    let failed: Int
+    let unmappedProperties: [String]
+    let rows: [NotionImportRowResult]
+}
+
+actor NotionImportApprovals {
+    static let shared = NotionImportApprovals()
+    static let lifetime: TimeInterval = 5 * 60
+
+    private struct Approval: Sendable {
+        let hubID: String
+        let fingerprint: String
+        let expiresAt: Date
+    }
+    private var approvals: [String: Approval] = [:]
+
+    func issue(hubID: String, fingerprint: String, now: Date = Date()) -> (token: String, expiresAt: Date) {
+        approvals = approvals.filter { $0.value.expiresAt > now }
+        let token = UUID().uuidString
+        let expiresAt = now.addingTimeInterval(Self.lifetime)
+        approvals[token] = Approval(hubID: hubID, fingerprint: fingerprint, expiresAt: expiresAt)
+        return (token, expiresAt)
+    }
+
+    func consume(token: String, hubID: String, now: Date = Date()) -> String? {
+        guard let approval = approvals[token], approval.expiresAt > now,
+              approval.hubID == hubID else { return nil }
+        approvals.removeValue(forKey: token)
+        return approval.fingerprint
+    }
 }
 
 /// Reads every page and data source visible to the configured integration and
@@ -31,16 +125,41 @@ struct NotionImportPreviewResponse: Content, Sendable {
 struct NotionImportPreviewService: Sendable {
     let api: NotionAPIClient
 
-    func preview() async throws -> NotionImportPreviewResponse {
+    func preview(hubID: String, now: Date = Date()) async throws -> NotionImportPreviewResponse {
+        let snapshot = try await loadSnapshot()
+        let approval = await NotionImportApprovals.shared.issue(hubID: hubID, fingerprint: snapshot.fingerprint, now: now)
+        return try await response(for: snapshot, confirmationToken: approval.token, expiresAt: approval.expiresAt)
+    }
+
+    func refreshedSnapshot() async throws -> NotionImportSnapshot {
+        try await loadSnapshot()
+    }
+
+    private func loadSnapshot() async throws -> NotionImportSnapshot {
         async let pageResults = api.searchAll(kind: "page")
         async let sourceResults = api.searchAll(kind: "data_source")
         let (pages, dataSources) = try await (pageResults, sourceResults)
+        var rowsByDataSourceID: [String: [NotionJSONValue]] = [:]
+        for source in dataSources {
+            guard let id = source.objectValue?["id"]?.stringValue else { continue }
+            rowsByDataSourceID[id] = try await api.queryDataSourceAll(id)
+        }
+        return NotionImportSnapshot(pages: pages, dataSources: dataSources, rowsByDataSourceID: rowsByDataSourceID)
+    }
+
+    private func response(
+        for snapshot: NotionImportSnapshot,
+        confirmationToken: String,
+        expiresAt: Date
+    ) async throws -> NotionImportPreviewResponse {
+        let pages = snapshot.pages
+        let dataSources = snapshot.dataSources
 
         var resources: [NotionImportPreviewResource] = []
         for page in pages {
             guard let object = page.objectValue else { continue }
             let title = Self.title(from: object)
-            let target = Self.target(for: title, object: "page")
+            let target = Self.target(for: title, object: "page", notionObject: object)
             resources.append(.init(
                 notionID: object["id"]?.stringValue ?? "",
                 title: title,
@@ -56,7 +175,7 @@ struct NotionImportPreviewService: Sendable {
             guard let object = source.objectValue else { continue }
             let title = Self.title(from: object)
             let properties = Self.properties(from: object["properties"])
-            let rows = try await api.queryDataSourceAll(object["id"]?.stringValue ?? "")
+            let rows = snapshot.rowsByDataSourceID[object["id"]?.stringValue ?? ""] ?? []
             let target = Self.target(for: title, object: "data_source")
             resources.append(.init(
                 notionID: object["id"]?.stringValue ?? "",
@@ -79,13 +198,15 @@ struct NotionImportPreviewService: Sendable {
         }
         return .init(
             readOnly: true,
+            confirmationToken: confirmationToken,
+            expiresAt: expiresAt,
             resources: resources,
             totalRows: resources.reduce(0) { $0 + $1.rowCount },
             unmappedProperties: unmapped,
             warnings: [
                 "This preview is read-only. It does not modify GemLife or Notion.",
-                "Pages are listed individually; child blocks, file downloads, and relation targets require review before import.",
-                "Unsupported properties and unknown targets must be resolved before an import can be approved.",
+                "Confirming this preview imports the captured pages and data-source rows into the authenticated Hub.",
+                "Rows with unknown targets or unsupported properties are reported and skipped unless the mappings are supported.",
             ]
         )
     }
@@ -127,15 +248,17 @@ struct NotionImportPreviewService: Sendable {
         }.joined()
     }
 
-    private static func target(for title: String, object: String) -> String {
+    static func target(for title: String, object: String, notionObject: [String: NotionJSONValue] = [:]) -> String {
         let key = title.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         if object == "page" {
+            let parent = notionObject["parent"]?.objectValue ?? [:]
+            let parentType = parent["type"]?.stringValue
+            if parentType == "data_source" || parentType == "database" { return "Database row" }
             switch key {
             case "gem.personal", "gem personal": return "Hub"
             case "forgekeeper", "career", "family", "interests": return "Domain"
-            case "home", "auto", "health & wellness", "beauty", "journals", "finances", "faith", "life manual":
-                return "ForgeKeeper"
-            default: return "Review required"
+            default:
+                return parent["page_id"]?.stringValue == nil ? "Review required" : "ForgeKeeper"
             }
         }
         switch key {

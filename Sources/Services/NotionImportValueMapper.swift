@@ -11,6 +11,7 @@ enum NotionImportValueMapper {
         case multiSelect = "TEXT + MultiSelect options"
         case status = "TEXT + Status options"
         case dateRange = "Start / End date columns"
+        case fileMetadata = "FileMetadata"
         case relation = "Relation property"
         case lookup = "Lookup property"
         case timestamp = "CreatedAt / UpdatedAt"
@@ -47,6 +48,7 @@ enum NotionImportValueMapper {
         case "number": return .init(storage: .number, requiresReview: false)
         case "select": return .init(storage: .select, requiresReview: false)
         case "multi_select": return .init(storage: .multiSelect, requiresReview: false)
+        case "files": return .init(storage: .fileMetadata, requiresReview: false)
         case "status": return .init(storage: .status, requiresReview: false)
         case "date": return .init(storage: .dateRange, requiresReview: false)
         case "relation": return .init(storage: .relation, requiresReview: false)
@@ -55,7 +57,7 @@ enum NotionImportValueMapper {
         case "last_edited_time": return .init(storage: .timestamp, requiresReview: false)
         case "unique_id": return .init(storage: .integer, requiresReview: false)
         case "people": return .init(storage: .dropped, requiresReview: false)
-        case "checkbox", "files", "created_by", "last_edited_by", "verification",
+        case "checkbox", "created_by", "last_edited_by", "verification",
              "button", "place", "unknown":
             return .init(storage: .unsupported, requiresReview: true)
         default:
@@ -76,28 +78,44 @@ enum NotionImportValueMapper {
                 continue
             }
             let text = richText(payload["rich_text"])
+            let value: String
             switch type {
-            case "paragraph": rendered.append(text)
-            case "heading_1": rendered.append("# \(text)")
-            case "heading_2": rendered.append("## \(text)")
-            case "heading_3": rendered.append("### \(text)")
-            case "bulleted_list_item": rendered.append("- \(text)")
-            case "numbered_list_item": rendered.append("1. \(text)")
-            case "quote": rendered.append("> \(text)")
+            case "paragraph": value = text
+            case "heading_1": value = "# \(text)"
+            case "heading_2": value = "## \(text)"
+            case "heading_3": value = "### \(text)"
+            case "bulleted_list_item": value = "- \(text)"
+            case "numbered_list_item": value = "1. \(text)"
+            case "quote": value = "> \(text)"
             case "code":
                 let language = payload["language"] as? String ?? ""
-                rendered.append("```\(language)\n\(text)\n```")
-            case "divider": rendered.append("---")
+                value = "```\(language)\n\(text)\n```"
+            case "divider": value = "---"
             case "to_do":
                 let checked = payload["checked"] as? Bool == true ? "x" : " "
-                rendered.append("- [\(checked)] \(text)")
-            case "child_page":
+                value = "- [\(checked)] \(text)"
+            case "child_page", "child_database":
                 let title = payload["title"] as? String ?? text
-                rendered.append("## \(title)")
-            default: unmapped.append(type)
+                value = "## \(title)"
+            default:
+                unmapped.append(type)
+                continue
+            }
+            rendered.append(value)
+            if let children = payload["children"] as? [[String: Any]], !children.isEmpty {
+                let nested = markdown(blocks: children)
+                unmapped.append(contentsOf: nested.unmappedTypes)
+                rendered.append(nested.markdown
+                    .split(separator: "\n", omittingEmptySubsequences: false)
+                    .map { "  \($0)" }
+                    .joined(separator: "\n"))
             }
         }
         return (rendered.joined(separator: "\n\n"), unmapped)
+    }
+
+    static func markdown(blocks: [NotionJSONValue]) -> (markdown: String, unmappedTypes: [String]) {
+        markdown(blocks: blocks.map { $0.foundationValue as? [String: Any] ?? [:] })
     }
 
     private static func richText(_ rawValue: Any?) -> String {
