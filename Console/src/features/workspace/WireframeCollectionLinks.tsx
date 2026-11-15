@@ -1,7 +1,7 @@
 import React from "react";
 import { Text } from "tamagui";
 import type { ReactNode } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { GemButton } from "@gemsforge/ui";
 import { useTableNavigationPreferences } from "../../data/presentationQueries";
 import { useSchemaPageTablesQuery } from "../../data/workflowQueries";
@@ -36,6 +36,7 @@ export function WireframeCollectionLinks({
   recordsByCollection,
 }: WireframeCollectionLinksProps) {
   const schemaPages = useSchemaPageTablesQuery();
+  const newTableActive = useLocation().pathname === "/new-table";
   const existingCollectionTables = new Set<string>([
     ...collections.flatMap((item) => [item.tableName, item.label]),
     "Transactions",
@@ -86,9 +87,9 @@ export function WireframeCollectionLinks({
           asChild
           variant="quiet"
           tone="secondary"
-          className="wireframe-collection-link wireframe-collection-create-table"
+          className={`wireframe-collection-link wireframe-collection-create-table${newTableActive ? " active" : ""}`}
         >
-          <Link to="/new-table" aria-label="Create a new table">
+          <Link to="/new-table" aria-label="Create a new table" aria-current={newTableActive ? "page" : undefined}>
             <span className="wireframe-collection-link-name">
               <span className="wireframe-collection-link-icon" aria-hidden="true">
                 ＋

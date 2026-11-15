@@ -181,7 +181,11 @@ function WireframeCanvas() {
   useEffect(() => {
     setNotice(null);
     document.title = "Gem Life · " + (location.pathname.split("/")[1] || "Home");
-    document.getElementById("main-content")?.focus();
+    const main = document.getElementById("main-content");
+    // focus() alone keeps the previous route's scroll when main is partly visible,
+    // which can leave a short page scrolled out of view.
+    main?.focus({ preventScroll: true });
+    main?.scrollIntoView?.({ block: "start" });
   }, [location.pathname]);
 
   // The signed-in canvas is a light surface; Tamagui components inside it must
