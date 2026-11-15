@@ -9,7 +9,7 @@ vi.mock("../../data/presentationQueries", () => ({ useTableNavigationPreferences
 vi.mock("../../data/workflowQueries", () => ({ useSchemaPageTablesQuery: () => ({ data: { tables: [] } }) }));
 
 describe("Wireframe collection navigation", () => {
-  it("links to the existing guided schema builder to create a table", () => {
+  it("links the sidebar New table entry to the new-table page", () => {
     render(
       <TamaguiProvider config={tamaguiConfig} defaultTheme="light">
         <MemoryRouter>
@@ -23,6 +23,6 @@ describe("Wireframe collection navigation", () => {
         </MemoryRouter>
       </TamaguiProvider>,
     );
-    expect(screen.getByRole("link", { name: "Create a new table" })).toHaveAttribute("href", "/schema-builder");
+    expect(screen.getByRole("link", { name: "Create a new table" })).toHaveAttribute("href", "/new-table");
   });
 });
