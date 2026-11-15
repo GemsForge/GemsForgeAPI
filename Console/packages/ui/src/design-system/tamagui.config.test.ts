@@ -61,7 +61,7 @@ describe("Gem Life design foundation", () => {
     expect(tamaguiConfig.themes.dark.actionText.val).toBe(gemColors.gemCanvas);
     expect(tamaguiConfig.themes.dark.warning.val).toBe(gemColors.gemGold);
     expect(tamaguiConfig.themes.light.surface.val).toBe(gemColors.wireframePanel);
-    expect(tamaguiConfig.themes.light.focus.val).toBe(gemColors.wireframeMint);
+    expect(tamaguiConfig.themes.light.focus.val).toBe(gemColors.wireframeMintDark);
     expect(tamaguiConfig.themes.light.actionText.val).toBe(gemColors.wireframePanel);
     expect(tamaguiConfig.themes.light.warning.val).toBe(gemColors.wireframeGold);
   });

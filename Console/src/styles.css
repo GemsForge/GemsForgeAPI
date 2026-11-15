@@ -44,13 +44,13 @@
   --gem-wireframe-heading: #1E2823;
   --gem-wireframe-muted: #5A706C;
   --gem-wireframe-text-muted: #5A706C;
-  --gem-wireframe-action: #7DB687;
+  --gem-wireframe-action: #355A3A;
   --gem-wireframe-action-dark: #355A3A;
   --gem-wireframe-accent: #9a6b22;
   --gem-wireframe-border: #E2E4E2;
   --gem-wireframe-border-strong: #C8CAC8;
   /* Field outlines must reach 3:1 (WCAG 1.4.11); border-strong stays a decorative line. */
-  --gem-wireframe-field-border: #C8CAC8;
+  --gem-wireframe-field-border: #5A706C;
   --gem-wireframe-gold-light: #EDF5EE;
   --wireframe-menu-background: var(--gem-wireframe-surface);
   --wireframe-menu-text: var(--gem-wireframe-text);

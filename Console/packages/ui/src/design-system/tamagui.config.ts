@@ -88,11 +88,9 @@ export const gemZIndex = {
   notification: 300,
 } as const;
 
-export const gemFontFamily =
-  '"Avenir Next", Avenir, system-ui, -apple-system, sans-serif';
+export const gemFontFamily = '"Avenir Next", Avenir, system-ui, -apple-system, sans-serif';
 
-export const gemFontFamilySerif =
-  "ui-serif, 'New York', 'Iowan Old Style', Georgia, serif";
+export const gemFontFamilySerif = "ui-serif, 'New York', 'Iowan Old Style', Georgia, serif";
 
 const bodyFont = createFont({
   family: gemFontFamily,
@@ -202,17 +200,17 @@ export const tamaguiConfig = createTamagui({
       fieldBackground: gemColors.lightCanvas,
       fieldBorder: gemColors.wireframeMuted,
       fieldText: gemColors.lightInk,
-      fieldFocus: gemColors.wireframeMint,
+      fieldFocus: gemColors.wireframeMintDark,
       fieldMenuBackground: gemColors.wireframePanel,
       fieldMenuHover: gemColors.wireframePanelLight,
       fieldMenuText: gemColors.lightInk,
       surface: gemColors.wireframePanel,
       surfaceRaised: gemColors.wireframePanelLight,
       textMuted: gemColors.wireframeMuted,
-      action: gemColors.wireframeMint,
+      action: gemColors.wireframeMintDark,
       actionHover: gemColors.wireframeHeading,
       actionText: gemColors.wireframePanel,
-      focus: gemColors.wireframeMint,
+      focus: gemColors.wireframeMintDark,
       danger: gemColors.gemDangerOnLight,
       success: gemColors.wireframeMint,
       warning: gemColors.wireframeGold,

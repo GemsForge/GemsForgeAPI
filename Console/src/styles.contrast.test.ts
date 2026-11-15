@@ -40,6 +40,6 @@ describe("stylesheet field border fallbacks", () => {
     ["gem-knowledge-field-border", gemColors.gemKnowledgeFieldLine],
     ["gem-wireframe-field-border", gemColors.wireframeMuted],
   ])("--%s matches the theme field border %s", (name, expected) => {
-    expect(token(name).toLowerCase()).toBe(expected);
+    expect(token(name).toLowerCase()).toBe(expected.toLowerCase());
   });
 });
