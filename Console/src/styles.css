@@ -1,7 +1,7 @@
 :root {
   color-scheme: dark;
   --gem-font-family: "Avenir Next", Avenir, system-ui, -apple-system, sans-serif;
-  --gem-font-family-serif: ui-serif, 'New York', 'Iowan Old Style', Georgia, serif;
+  --gem-font-family-serif: ui-serif, "New York", "Iowan Old Style", Georgia, serif;
   --gem-canvas: #0b171c;
   --gem-surface: #12252b;
   --gem-surface-raised: #173138;
@@ -384,7 +384,7 @@ button {
   padding: clamp(1.75rem, 5vw, 2.5rem);
   border: 1px solid var(--line);
   border-radius: 1.25rem;
-  background: #FFFFFF;
+  background: #ffffff;
   box-shadow: 0 8px 32px rgb(30 40 35 / 10%);
 }
 .sign-in-card h1 {
@@ -466,14 +466,16 @@ button {
   width: 100%;
   margin-top: 0.6rem;
   padding: 0.85rem 1.25rem;
-  border: 1px solid var(--gem-wireframe-action-dark, #355A3A);
+  border: 1px solid var(--gem-wireframe-action-dark, #355a3a);
   border-radius: 0.55rem;
   background: var(--gem-wireframe-action);
   color: #fff;
   font-size: 1rem;
   font-weight: 700;
   letter-spacing: 0.01em;
-  transition: filter 120ms ease, transform 60ms ease;
+  transition:
+    filter 120ms ease,
+    transform 60ms ease;
 }
 .credential-sign-in-button:hover:not(:disabled) {
   filter: brightness(1.06);

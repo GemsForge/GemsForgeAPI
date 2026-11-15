@@ -286,14 +286,18 @@ export function WireframeImportPage() {
       showCount={false}
       activeCollection=""
     >
-      <div className="import-card wireframe-system-card" style={{ flexDirection: "column", alignItems: "flex-start", gap: "0.75rem", padding: "1.5rem" }}>
+      <div
+        className="import-card wireframe-system-card"
+        style={{ flexDirection: "column", alignItems: "flex-start", gap: "0.75rem", padding: "1.5rem" }}
+      >
         <div className="wireframe-system-card-icon" style={{ width: "3rem", height: "3rem" }}>
           <FileSpreadsheet size={22} aria-hidden="true" />
         </div>
         <div>
           <strong style={{ display: "block", marginBottom: "0.3rem" }}>CSV import</strong>
           <p className="upload-placeholder" style={{ margin: 0, fontSize: "0.8125rem" }}>
-            CSV import is coming soon. You'll be able to map columns to collection fields and preview records before import.
+            CSV import is coming soon. You'll be able to map columns to collection fields and preview records before
+            import.
           </p>
         </div>
       </div>
