@@ -84,7 +84,7 @@ struct UserTableCreationService: Sendable {
             warnings: [
                 "Preview only: the live database is unchanged.",
                 "A verified SQLite backup is created immediately before execution.",
-                "The table cannot be dropped through this workflow."
+                "A reviewed deletion workflow is available for eligible user-created tables."
             ],
             confirmationToken: token,
             expiresAt: expiresAt,

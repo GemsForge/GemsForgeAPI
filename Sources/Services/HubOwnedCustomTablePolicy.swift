@@ -20,6 +20,18 @@ enum HubOwnedCustomTablePolicy {
         "EmojiLabelDefinitions", "TrashEntries",
     ]
 
+    /// Tables created by repository migrations are never user-owned tables,
+    /// even when they contain the same ID/HubID shape as a custom table.
+    static let migrationOwnedTables: Set<String> = [
+        "Accounts", "AccountIdentities", "AuthenticationSessions", "AppleAccounts", "AppleAuthChallenges",
+        "Hubs", "Addresses", "Domains", "Education", "Employment", "Transactions", "HomeInventory",
+        "BudgetCategories", "BudgetSubcategories", "EmojiLabelDefinitions", "FileMetadata",
+        "Services", "ServiceLogoAssets", "ForgeKeeper", "GemHues", "GemHueImages",
+        "TableViews", "ViewColumnConfigurations", "ViewQueryConfigurations",
+        "TablePropertyDefinitions", "TableColumnDefinitions", "RecordPresentations", "RecordBodies",
+        "TrashEntries", "SchemaMigrationAudits",
+    ]
+
     static func isEligible(_ table: LiveSchemaTableResponse) -> Bool {
         guard !protectedTables.contains(table.name),
               let hubColumn = table.columns.first(where: { $0.name == "HubID" }),
@@ -28,5 +40,14 @@ enum HubOwnedCustomTablePolicy {
         let type = hubColumn.dataType.uppercased()
         guard type.contains("TEXT") || type.contains("CHAR") || type.contains("CLOB") else { return false }
         return liveRecordTables.contains(table.name) || !hubColumn.nullable
+    }
+
+    static func isDropEligible(_ table: LiveSchemaTableResponse) -> Bool {
+        guard isEligible(table),
+              !migrationOwnedTables.contains(table.name),
+              !protectedTables.contains(table.name),
+              table.columns.filter(\.primaryKey).count == 1
+        else { return false }
+        return true
     }
 }

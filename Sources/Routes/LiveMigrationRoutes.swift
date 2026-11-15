@@ -13,6 +13,7 @@ func registerLiveMigrationRoutes(_ app: Application, backupConfiguration: LiveDa
     let userTables = UserTableCreationService(backupConfiguration: backupConfiguration)
     let repositoryMigrations = LiveRepositoryMigrationService(backupConfiguration: backupConfiguration)
     let auditDatabaseIdentity = backupConfiguration?.databaseIdentity ?? "configured Gem Life database"
+    let tableDrops = TableDropWorkflowService(backupConfiguration: backupConfiguration, auditDatabaseIdentity: auditDatabaseIdentity)
 
     app.post("live-database", "repository-migrations", "preview") { _ async throws -> LiveRepositoryMigrationPreview in
         await repositoryMigrations.preview()
@@ -91,6 +92,53 @@ func registerLiveMigrationRoutes(_ app: Application, backupConfiguration: LiveDa
                 throw Abort(.serviceUnavailable, reason: error.description)
             case .sqliteDatabaseRequired, .migrationFailed, .verificationFailed:
                 throw Abort(.unprocessableEntity, reason: error.description)
+            }
+        }
+    }
+
+    let tableDropRoutes = app.grouped("live-schema", "tables", ":tableName")
+    tableDropRoutes.post("drop-preview") { request async throws -> TableDropPreviewResponse in
+        let hubID = try request.requireAuthenticatedHubID()
+        guard let tableName = request.parameters.get("tableName") else { throw Abort(.badRequest) }
+        do {
+            return try await tableDrops.preview(tableName: tableName, hubID: hubID, using: request.db)
+        } catch let error as TableDropWorkflowError {
+            switch error {
+            case .tableUnavailable: throw Abort(.notFound, reason: error.description)
+            case .sqliteDatabaseRequired, .backupNotConfigured, .backupFailed:
+                throw Abort(.serviceUnavailable, reason: error.description)
+            case .notEligible, .blocked: throw Abort(.unprocessableEntity, reason: error.description)
+            case .expiredOrUnknownToken, .typedNameMismatch, .previewChanged, .dropFailed, .verificationFailed:
+                throw Abort(.conflict, reason: error.description)
+            }
+        }
+    }
+    tableDropRoutes.post("drop") { request async throws -> Response in
+        let hubID = try request.requireAuthenticatedHubID()
+        guard let tableName = request.parameters.get("tableName") else { throw Abort(.badRequest) }
+        let input = try request.content.decode(TableDropConfirmationRequest.self)
+        do {
+            let result = try await tableDrops.confirm(
+                tableName: tableName,
+                hubID: hubID,
+                request: input,
+                using: request.db
+            )
+            return try await result.encodeResponse(for: request)
+        } catch let error as TableDropWorkflowError {
+            if case .previewChanged(let freshPreview) = error {
+                let response = Response(status: .conflict)
+                try response.content.encode(freshPreview)
+                return response
+            }
+            switch error {
+            case .tableUnavailable: throw Abort(.notFound, reason: error.description)
+            case .sqliteDatabaseRequired, .backupNotConfigured, .backupFailed:
+                throw Abort(.serviceUnavailable, reason: error.description)
+            case .blocked, .notEligible: throw Abort(.unprocessableEntity, reason: error.description)
+            case .expiredOrUnknownToken, .typedNameMismatch: throw Abort(.conflict, reason: error.description)
+            case .dropFailed, .verificationFailed: throw Abort(.unprocessableEntity, reason: error.description)
+            case .previewChanged: throw Abort(.conflict, reason: error.description)
             }
         }
     }
