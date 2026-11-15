@@ -1,0 +1,5 @@
+[
+  { "input": "low; high;low;;", "decoded": ["low", "high"], "encoded": "low;high" },
+  { "input": "🏡 Home;💳 Credit", "decoded": ["🏡 Home", "💳 Credit"], "encoded": "🏡 Home;💳 Credit" },
+  { "input": "Café;Café", "decoded": ["Café"], "encoded": "Café" }
+]

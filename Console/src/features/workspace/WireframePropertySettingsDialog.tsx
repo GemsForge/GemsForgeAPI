@@ -115,6 +115,8 @@ export function WireframePropertySettingsDialog({
               />
               {!property.selectOptions?.length ? (
                 <GemCaption>Add at least one option before saving this type.</GemCaption>
+              ) : (property.selectOptions ?? []).some((option) => option.includes(";")) ? (
+                <GemCaption>Option names cannot contain semicolons because semicolons separate stored tags.</GemCaption>
               ) : property.type === "Select" && property.kind === "number" ? (
                 <GemCaption>Because this column stores numbers, each option must be numeric.</GemCaption>
               ) : null}

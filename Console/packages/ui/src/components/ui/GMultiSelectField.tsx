@@ -83,12 +83,12 @@ export function decodeMultiSelectValue(value: string): string[] {
     ...new Set(
       value
         .split(";")
-        .map((item) => item.trim())
+        .map((item) => item.trim().normalize("NFC"))
         .filter(Boolean),
     ),
   ];
 }
 
 export function encodeMultiSelectValue(values: readonly string[]): string {
-  return [...new Set(values.map((item) => item.trim()).filter(Boolean))].join(";");
+  return [...new Set(values.map((item) => item.trim().normalize("NFC")).filter(Boolean))].join(";");
 }

@@ -40,12 +40,14 @@ import { GemSectionHeading } from "@gemsforge/ui";
 import { Button, Menu as DropdownMenu, Theme } from "tamagui";
 import { inferRecordPropertyKind, normalizeStorageType } from "../../table-kit/storageTypes";
 import { formatAddress } from "../addresses/formatAddress";
+import { matchesMultiSelectOption } from "../../table-kit/multiSelect";
 import { inferWireframePropertyMetadata } from "./propertyMetadata";
 import { WireframeCover, WireframeCoverCardImage, type WireframeCover as WireframeCoverValue } from "./WireframeCover";
 import { WireframePropertyIconProvider, type WireframeDateConfiguration } from "./WireframePropertyEditor";
 import { WireframePropertySettingsDialog, type WireframePropertyDetails } from "./WireframePropertySettingsDialog";
 import { api } from "../../api";
 import { useUploadImageMutation } from "../../data/workflowQueries";
+import type { TableColumnDefinition } from "../../types";
 import { useArchiveRecordMutation, useTrashEntriesQuery } from "../../data/trashQueries";
 import {
   useDeleteRecordPresentationMutation,
@@ -103,6 +105,8 @@ export type WireframeCollectionConfig<T extends WireframeRecord> = {
   cover?: (record: T) => WireframeCoverValue | null | undefined;
   onCoverChange?: (record: T, cover: WireframeCoverValue | null) => Promise<void> | void;
   propertySettingsExtension?: (property: WireframePropertyDetails) => ReactNode;
+  columnDefinitions?: readonly TableColumnDefinition[];
+  onSaveColumnDefinition?: (propertyID: string, type: string, options: string[], colorToken: string) => Promise<void> | void;
 };
 const cardColors = ["#e8b17d", "#a8d2cf", "#9dc9e0", "#e8b3b7"];
 
@@ -331,8 +335,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
     pageSize,
     tableIcon,
     propertyIcons,
-    propertyTypes,
-    propertySelectOptions,
+    ...(config.onSaveColumnDefinition ? {} : { propertyTypes, propertySelectOptions }),
     dateConfigurations,
     propertyConfigurations,
     ...(inspectorPropertyOrder ? { inspectorPropertyOrder } : {}),
@@ -376,6 +379,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
     pageSize,
     tableIcon,
     propertyIcons,
+    config.onSaveColumnDefinition,
     propertyTypes,
     propertySelectOptions,
     dateConfigurations,
@@ -455,6 +459,16 @@ export function WireframeCollectionView<T extends WireframeRecord>({
     return { id: metadata.id, url: api.fileContentURL(metadata.id) };
   };
   const schema = schemaQuery.data?.tables.find((table) => table.name === (config.tableName ?? config.title));
+  const statusColumnID = (config.properties ?? []).find((property) => /status/i.test(property.id))?.sourceField ??
+    schema?.columns.find((column) => /status/i.test(column.name))?.name;
+  const statusIsMultiSelect = config.columnDefinitions?.some((definition) => definition.columnName === statusColumnID && definition.propertyType === "MultiSelect") ?? false;
+  const statusFilterOptions = useMemo(() => {
+    if (!statusIsMultiSelect || !statusColumnID) return [...new Set(activeRecords.map((record) => config.cardStatus(record)))];
+    return [...new Set(activeRecords.flatMap((record) => {
+      const raw = (record as Record<string, unknown>)[statusColumnID];
+      return typeof raw === "string" ? raw.split(";").map((part) => part.trim()).filter(Boolean) : [];
+    }))];
+  }, [activeRecords, config, statusColumnID, statusIsMultiSelect]);
   const schemaProperties = useMemo(
     () => (schema ? createWireframeSchemaProperties<T>(schema.columns, activeRecords) : []),
     [activeRecords, schema],
@@ -464,7 +478,9 @@ export function WireframeCollectionView<T extends WireframeRecord>({
       activeRecords.filter(
         (record) =>
           config.searchValues(record).some((value) => value.toLowerCase().includes(query.trim().toLowerCase())) &&
-          (!filter || config.cardStatus(record) === filter),
+          (!filter || (statusIsMultiSelect && statusColumnID
+            ? matchesMultiSelectOption(String((record as Record<string, unknown>)[statusColumnID] ?? ""), filter)
+            : config.cardStatus(record) === filter)),
       ),
     [activeRecords, config, filter, query],
   );
@@ -651,19 +667,20 @@ export function WireframeCollectionView<T extends WireframeRecord>({
     trigger: HTMLButtonElement,
   ) => {
     propertyDetailsTriggerRef.current = trigger;
+    const columnDefinition = config.columnDefinitions?.find((item) => item.columnName === details.id);
     const metadata = inferWireframePropertyMetadata({
       label: details.label,
-      propertyType: propertyTypes[details.id] ?? details.type,
+      propertyType: columnDefinition?.propertyType ?? propertyTypes[details.id] ?? details.type,
       iconName: details.icon,
     });
     setPropertyDetails({
       ...details,
-      type: propertyTypes[details.id] ?? metadata.type,
+      type: columnDefinition?.propertyType ?? propertyTypes[details.id] ?? metadata.type,
       icon: propertyIcons[details.id] ?? metadata.iconName,
       kind: details.kind,
-      selectOptions: propertySelectOptions[details.id] ?? [],
+      selectOptions: columnDefinition?.options.map((option) => option.value) ?? propertySelectOptions[details.id] ?? [],
       statusText: details.value,
-      colorToken: "mint",
+      colorToken: columnDefinition?.options.find((option) => option.color)?.color ?? "mint",
     });
   };
   useEffect(() => {
@@ -685,8 +702,10 @@ export function WireframeCollectionView<T extends WireframeRecord>({
   const savePropertyIcon = (propertyID: string, icon: string, type: string, selectOptions: string[]) => {
     skipWorkspaceSaveOnce.current = false;
     setPropertyIcons((current) => ({ ...current, [propertyID]: icon }));
-    setPropertyTypes((current) => ({ ...current, [propertyID]: type }));
-    setPropertySelectOptions((current) => ({ ...current, [propertyID]: selectOptions }));
+    if (!config.onSaveColumnDefinition) {
+      setPropertyTypes((current) => ({ ...current, [propertyID]: type }));
+      setPropertySelectOptions((current) => ({ ...current, [propertyID]: selectOptions }));
+    }
   };
   const saveDateConfiguration = (propertyID: string, configuration: WireframeDateConfiguration) => {
     skipWorkspaceSaveOnce.current = false;
@@ -896,7 +915,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
                 { value: "status", label: "Status" },
                 { value: "meta", label: "Metadata" },
               ]}
-              filterOptions={[...new Set(activeRecords.map((record) => config.cardStatus(record)))]}
+              filterOptions={statusFilterOptions}
               totalCount={activeRecords.length}
               visibleCount={matchingRecords.length}
               compact
@@ -924,7 +943,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
                 setFilter(value);
                 resetPage();
               }}
-              filterOptions={[...new Set(activeRecords.map((record) => config.cardStatus(record)))]}
+              filterOptions={statusFilterOptions}
               groupBy={groupBy}
               onGroupBy={(value) => {
                 setGroupBy(value);
@@ -1283,13 +1302,11 @@ export function WireframeCollectionView<T extends WireframeRecord>({
           onChange={setPropertyDetails}
           onClose={() => setPropertyDetails(null)}
           onSave={() => {
-            savePropertyIcon(
-              propertyDetails.id,
-              propertyDetails.icon,
-              propertyDetails.type,
-              propertyDetails.selectOptions ?? [],
-            );
-            setPropertyDetails(null);
+            void (async () => {
+              await config.onSaveColumnDefinition?.(propertyDetails.id, propertyDetails.type, propertyDetails.selectOptions ?? [], propertyDetails.colorToken);
+              savePropertyIcon(propertyDetails.id, propertyDetails.icon, propertyDetails.type, propertyDetails.selectOptions ?? []);
+              setPropertyDetails(null);
+            })();
           }}
         >
           {config.propertySettingsExtension?.(propertyDetails)}

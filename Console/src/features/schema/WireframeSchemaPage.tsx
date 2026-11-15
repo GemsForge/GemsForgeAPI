@@ -6,6 +6,8 @@ import {
   useSchemaPageTablesQuery,
   usePatchSchemaPageRecordMutation,
   usePatchSchemaPageAttachmentMutation,
+  useTableColumnDefinitionsQuery,
+  useSaveTableColumnDefinitionMutation,
 } from "../../data/workflowQueries";
 import { createLiveSchemaProperties, type RecordPropertyDefinition } from "../../table-kit";
 import type { SchemaPageRecords } from "../../types";
@@ -36,6 +38,8 @@ export function WireframeSchemaPage() {
   const result = useSchemaPageRecordsQuery(tableName);
   const selectedRecord = useSchemaPageRecordQuery(tableName, recordID ? decodeURIComponent(recordID) : null);
   const patchRecord = usePatchSchemaPageRecordMutation(tableName);
+  const definitions = useTableColumnDefinitionsQuery(tableName);
+  const saveDefinition = useSaveTableColumnDefinitionMutation(tableName);
   const patchAttachment = usePatchSchemaPageAttachmentMutation(tableName);
   const patchSchemaRecord = patchRecord.mutateAsync;
   const table = result.data?.table ?? pages.data?.tables.find((candidate) => candidate.name === tableName);
@@ -51,17 +55,31 @@ export function WireframeSchemaPage() {
     () =>
       table
         ? createLiveSchemaProperties<SchemaRecord>(table, async (record, propertyID, value) => {
+            const definition = (definitions.data ?? []).find((item) => item.columnName === propertyID);
             await patchSchemaRecord({
               recordID: record.id,
-              values: { [propertyID]: value },
+              values: { [propertyID]: definition?.propertyType === "MultiSelect" && typeof value === "string" ? value.split(";").map((tag: string) => tag.trim()).filter(Boolean) : value },
             });
-          }).filter((property) => property.id !== "HubID")
+          }).filter((property) => property.id !== "HubID").map((property) => {
+            const definition = (definitions.data ?? []).find((item) => item.columnName === property.id);
+            return definition ? {
+              ...property,
+              propertyType: definition.propertyType,
+              selectOptions: definition.options,
+              edit: property.edit ? {
+                ...property.edit,
+                options: definition.options.map((option) => ({ value: option.value, label: option.value, colorToken: option.color ?? undefined })),
+              } : undefined,
+              kind: definition.propertyType === "MultiSelect" ? "multiSelect" as const : definition.propertyType === "Status" ? "status" as const : "select" as const,
+            } : property;
+          })
         : [],
-    [patchSchemaRecord, table],
+    [definitions.data, patchSchemaRecord, table],
   );
 
-  if (result.isPending || pages.isPending || (recordID && selectedRecord.isPending))
+  if (result.isPending || pages.isPending || definitions.isPending || (recordID && selectedRecord.isPending))
     return <p role="status">Loading collection…</p>;
+  if (definitions.isError) return <p role="alert">Property definitions could not be loaded.</p>;
   if (recordID && selectedRecord.isError) return <p role="alert">This record is unavailable in this collection.</p>;
   if (result.isError) return <p role="alert">This collection could not be loaded.</p>;
   if (!table) return <p role="alert">This collection is not available in the live database.</p>;
@@ -91,6 +109,21 @@ export function WireframeSchemaPage() {
         activeCollection: tableName,
         records,
         properties,
+        columnDefinitions: definitions.data ?? [],
+        onSaveColumnDefinition: async (propertyID, type, options, colorToken) => {
+          if (!["Select", "MultiSelect", "Status"].includes(type)) {
+            const { api } = await import("../../api");
+            await api.deleteTableColumnDefinition(tableName, propertyID);
+            return;
+          }
+          await saveDefinition.mutateAsync({
+            columnName: propertyID,
+            input: {
+              propertyType: type as "Select" | "MultiSelect" | "Status",
+              options: options.map((value) => ({ value, color: colorToken as import("../../types").TableColumnColor })),
+            },
+          });
+        },
         ...(isLegacyServiceLogoAssets
           ? {}
           : {
