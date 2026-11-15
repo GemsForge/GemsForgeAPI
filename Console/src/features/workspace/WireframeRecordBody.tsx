@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { GemButton, GemField } from "@gemsforge/ui";
 import { APIError, api } from "../../api";
 import { useUploadImageMutation } from "../../data/workflowQueries";
 import { useRecordBodyQuery, useSaveRecordBodyMutation } from "../../data/recordBodyQueries";
@@ -57,21 +58,28 @@ export function WireframeRecordBody({ tableName, recordID }: { tableName: string
     }
   };
 
-  useEffect(() => () => {
-    if (dirtyRef.current) {
-      if (timer.current !== null) window.clearTimeout(timer.current);
-      if (dirtyRef.current) void saveBody.mutateAsync({ markdown: markdownRef.current, baseRevision: revisionRef.current });
-    }
-  }, []);
+  useEffect(
+    () => () => {
+      if (dirtyRef.current) {
+        if (timer.current !== null) window.clearTimeout(timer.current);
+        if (dirtyRef.current)
+          void saveBody.mutateAsync({ markdown: markdownRef.current, baseRevision: revisionRef.current });
+      }
+    },
+    [],
+  );
 
   if (bodyQuery.isLoading) return <p>Loading page…</p>;
   if (bodyQuery.isError) return <p role="alert">Page could not be loaded.</p>;
 
   return (
     <section className="wireframe-record-body" aria-label="Record page body">
-      <label htmlFor="wireframe-record-body-editor">Page content (Markdown)</label>
-      <textarea
+      <GemField
         id="wireframe-record-body-editor"
+        className="wireframe-record-body-editor"
+        label="Page content (Markdown)"
+        multiline
+        width="long"
         value={markdown}
         rows={12}
         onChange={(event) => {
@@ -89,11 +97,18 @@ export function WireframeRecordBody({ tableName, recordID }: { tableName: string
           if (!file) return;
           event.preventDefault();
           const editor = event.currentTarget;
-          pasteSelection.current = { start: editor.selectionStart, end: editor.selectionEnd };
-          void uploadImage.mutateAsync({ file, kind: "image", ownerType: `RecordBody.${tableName}`, ownerID: recordID })
+          pasteSelection.current = {
+            start: editor.selectionStart ?? markdownRef.current.length,
+            end: editor.selectionEnd ?? markdownRef.current.length,
+          };
+          void uploadImage
+            .mutateAsync({ file, kind: "image", ownerType: `RecordBody.${tableName}`, ownerID: recordID })
             .then((metadata) => {
               const insertion = `![${file.name}](${api.fileContentURL(metadata.id)})`;
-              const { start, end } = pasteSelection.current ?? { start: markdownRef.current.length, end: markdownRef.current.length };
+              const { start, end } = pasteSelection.current ?? {
+                start: markdownRef.current.length,
+                end: markdownRef.current.length,
+              };
               const next = `${markdownRef.current.slice(0, start)}${insertion}${markdownRef.current.slice(end)}`;
               setMarkdown(next);
               setDirty(true);
@@ -106,8 +121,16 @@ export function WireframeRecordBody({ tableName, recordID }: { tableName: string
             .catch((reason: unknown) => setError(reason instanceof Error ? reason.message : "Image upload failed."));
         }}
       />
-      <p className="wireframe-record-body-status" aria-live="polite">
-        {uploadImage.isPending ? "Uploading image…" : saveBody.isPending ? "Saving…" : dirty ? "Unsaved changes" : saved ? "Saved" : ""}
+      <p className="wireframe-record-body-status" role="status" aria-live="polite">
+        {uploadImage.isPending
+          ? "Uploading image…"
+          : saveBody.isPending
+            ? "Saving…"
+            : dirty
+              ? "Unsaved changes"
+              : saved
+                ? "Saved"
+                : ""}
       </p>
       {error ? <p role="alert">{error}</p> : null}
       {conflict ? (
@@ -118,21 +141,33 @@ export function WireframeRecordBody({ tableName, recordID }: { tableName: string
               {conflict.markdown}
             </ReactMarkdown>
           </div>
-          <button type="button" onClick={() => { setMarkdown(conflict.markdown); setRevision(conflict.revision); setDirty(false); setConflict(null); }}>
+          <GemButton
+            type="button"
+            tone="secondary"
+            onPress={() => {
+              setMarkdown(conflict.markdown);
+              setRevision(conflict.revision);
+              setDirty(false);
+              setConflict(null);
+            }}
+          >
             Use saved
-          </button>
-          <button type="button" onClick={() => {
-            const localMarkdown = markdownRef.current;
-            const currentRevision = conflict.revision;
-            setRevision(currentRevision);
-            revisionRef.current = currentRevision;
-            setConflict(null);
-            setDirty(true);
-            dirtyRef.current = true;
-            void save(localMarkdown);
-          }}>
+          </GemButton>
+          <GemButton
+            type="button"
+            onPress={() => {
+              const localMarkdown = markdownRef.current;
+              const currentRevision = conflict.revision;
+              setRevision(currentRevision);
+              revisionRef.current = currentRevision;
+              setConflict(null);
+              setDirty(true);
+              dirtyRef.current = true;
+              void save(localMarkdown);
+            }}
+          >
             Keep mine
-          </button>
+          </GemButton>
         </div>
       ) : null}
       <div className="wireframe-record-body-preview" aria-label="Markdown preview">
@@ -146,7 +181,8 @@ export function WireframeRecordBody({ tableName, recordID }: { tableName: string
 
 export function safeMarkdownURL(value: string): string {
   const trimmed = value.trim();
-  if (trimmed.startsWith("/file-metadata/") && /^\/file-metadata\/[A-Za-z0-9_-]+\/content$/.test(trimmed)) return trimmed;
+  if (trimmed.startsWith("/file-metadata/") && /^\/file-metadata\/[A-Za-z0-9_-]+\/content$/.test(trimmed))
+    return trimmed;
   if (trimmed.startsWith("/") || trimmed.startsWith("#") || !/^(https?:|mailto:)/i.test(trimmed)) return "";
   try {
     const protocol = new URL(trimmed, window.location.origin).protocol;
