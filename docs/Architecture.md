@@ -41,6 +41,9 @@ in `TableColumnDefinitions`. They describe existing TEXT columns without
 changing the live table schema. See [`Multi-Select-Properties.md`](Multi-Select-Properties.md)
 for storage, write validation, and query behavior.
 
+Server-side Schema Builder query validation, execution, limits, and response
+semantics are documented in [`View-Query-Execution.md`](View-Query-Execution.md).
+
 The optional `GemLifeHost` native wrapper starts the local API and serves the
 packaged Console. It communicates with the web UI through the established
 bridge; native capabilities and lifecycle remain outside React feature code.
