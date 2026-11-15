@@ -51,7 +51,6 @@ enum ViewQueryConfigurationValidationError: Error, CustomStringConvertible, Equa
     case selfParent(nodeID: String)
     case cycle([String])
     case invalidFilterRootCount(actual: Int, nodeIDs: [String])
-    case emptyGroup(nodeID: String)
     case illegalParentChild(parentID: String, parentType: ViewQueryNodeType, childID: String, childType: ViewQueryNodeType)
     case independentNodeHasParent(nodeID: String, nodeType: ViewQueryNodeType, parentID: String)
     case invalidSortOrder(nodeID: String, value: Int)
@@ -77,7 +76,6 @@ enum ViewQueryConfigurationValidationError: Error, CustomStringConvertible, Equa
         case .selfParent(let id): return "Query node \"\(id)\" cannot be its own parent."
         case .cycle(let ids): return "Query configuration contains a parent cycle: \(ids.joined(separator: " -> "))."
         case .invalidFilterRootCount(let actual, let ids): return "A View query requires exactly one filter root; found \(actual) (\(ids.isEmpty ? "none" : ids.joined(separator: ", ")))."
-        case .emptyGroup(let id): return "Filter Group \"\(id)\" must contain at least one Condition or Group."
         case .illegalParentChild(let parent, let parentType, let child, let childType): return "\(childType.rawValue) node \"\(child)\" cannot be a child of \(parentType.rawValue) node \"\(parent)\"."
         case .independentNodeHasParent(let id, let type, let parent): return "\(type.rawValue) node \"\(id)\" is independent and cannot have parent \"\(parent)\"."
         case .invalidSortOrder(let id, let value): return "Query node \"\(id)\" has invalid SortOrder \(value); SortOrder must be non-negative."
@@ -269,12 +267,6 @@ struct ViewQueryConfigurationValidator: Sendable {
         guard filterRoots.count == 1 else {
             throw ViewQueryConfigurationValidationError.invalidFilterRootCount(actual: filterRoots.count, nodeIDs: filterRoots.map(\.id))
         }
-        for node in parsed where node.nodeType == .group {
-            guard !(children[node.id] ?? []).isEmpty else {
-                throw ViewQueryConfigurationValidationError.emptyGroup(nodeID: node.id)
-            }
-        }
-
         // Serialize in deterministic pre-order: each group's children are emitted
         // by SortOrder, while independent Sort and RecordGroup nodes follow the
         // filter tree in their own persisted order.

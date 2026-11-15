@@ -5,6 +5,7 @@ import Vapor
 struct SchemaPageTableResponse: Content, Sendable {
     let name: String
     let columns: [LiveSchemaColumnResponse]
+    let supportsServerQuery: Bool
 }
 
 struct SchemaPageTablesResponse: Content, Sendable {
@@ -68,9 +69,9 @@ struct SchemaPageService: Sendable {
             .filter(\.$hubID == hubID).all().map(\.tableName))
         return SchemaPageTablesResponse(
             tables: eligibleTables.filter { registeredTables.contains($0.name) }
-                .map { SchemaPageTableResponse(name: $0.name, columns: $0.columns) },
+                .map { SchemaPageTableResponse(name: $0.name, columns: $0.columns, supportsServerQuery: !HubOwnedCustomTablePolicy.liveRecordTables.contains($0.name)) },
             availableTables: eligibleTables.filter { !registeredTables.contains($0.name) }
-                .map { SchemaPageTableResponse(name: $0.name, columns: $0.columns) }
+                .map { SchemaPageTableResponse(name: $0.name, columns: $0.columns, supportsServerQuery: !HubOwnedCustomTablePolicy.liveRecordTables.contains($0.name)) }
         )
     }
 
@@ -81,7 +82,7 @@ struct SchemaPageService: Sendable {
             throw SchemaPageError.tableUnavailable
         }
         try await registerPageIfNeeded(tableName: tableName)
-        return SchemaPageTableResponse(name: table.name, columns: table.columns)
+        return SchemaPageTableResponse(name: table.name, columns: table.columns, supportsServerQuery: !HubOwnedCustomTablePolicy.liveRecordTables.contains(table.name))
     }
 
     private func registerPageIfNeeded(tableName: String) async throws {
@@ -153,7 +154,7 @@ struct SchemaPageService: Sendable {
             return values
         }
         return SchemaPageRecordsResponse(
-            table: SchemaPageTableResponse(name: schemaTable.name, columns: schemaTable.columns),
+            table: SchemaPageTableResponse(name: schemaTable.name, columns: schemaTable.columns, supportsServerQuery: !HubOwnedCustomTablePolicy.liveRecordTables.contains(schemaTable.name)),
             rows: rows,
             totalCount: totalCount,
             limit: limit,
@@ -201,7 +202,7 @@ struct SchemaPageService: Sendable {
         guard let row = try await sql.raw(query).first() else { throw SchemaPageError.invalidRecord("The record is unavailable to this Hub.") }
         var values: [String: String?] = [:]
         for column in table.columns { values[column.name] = try row.decode(column: column.name, as: String?.self) }
-        return SchemaPageRecordResponse(table: SchemaPageTableResponse(name: table.name, columns: table.columns), row: values)
+        return SchemaPageRecordResponse(table: SchemaPageTableResponse(name: table.name, columns: table.columns, supportsServerQuery: !HubOwnedCustomTablePolicy.liveRecordTables.contains(table.name)), row: values)
     }
 
     /// Creates one row using the inspected table contract and assigns its Hub ownership on the server.
