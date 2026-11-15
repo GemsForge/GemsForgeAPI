@@ -28,6 +28,8 @@ import type {
   SchemaPageTables,
   SchemaPageTable,
   SchemaPageRecords,
+  SchemaPageQueryRequest,
+  SchemaPageQueryResult,
   SchemaPageRecord,
   SchemaPageRecordCreation,
   TablePropertyDefinition,
@@ -367,6 +369,12 @@ export const api = {
       `/schema-builder/tables/${encodeURIComponent(tableName)}/records?limit=100&offset=${Math.max(0, offset)}`,
       { signal },
     ),
+  querySchemaPageRecords: (tableName: string, payload: SchemaPageQueryRequest, signal?: AbortSignal) =>
+    request<SchemaPageQueryResult>(`/schema-builder/tables/${encodeURIComponent(tableName)}/query`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+      signal,
+    }),
   getSchemaPageRecord: (tableName: string, recordID: string, signal?: AbortSignal) =>
     request<SchemaPageRecord>(
       `/schema-builder/tables/${encodeURIComponent(tableName)}/records/${encodeURIComponent(recordID)}`,

@@ -117,6 +117,7 @@ export function WireframeSchemaPage() {
     <WireframeCollectionView
       config={{
         tableName,
+        supportsServerQuery: table.supportsServerQuery === true,
         title: tableName,
         description: "Records from this collection in your live database.",
         ...(isLegacyServiceLogoAssets

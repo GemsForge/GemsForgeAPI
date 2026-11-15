@@ -107,6 +107,17 @@ describe("resource create contracts", () => {
     expect(fetch.mock.calls[2][1]?.method).toBe("POST");
   });
 
+  it("executes a parameterized schema-page query request", async () => {
+    const response = { records: [{ row: { ID: "one" }, groupKey: null }], total: 1, limit: 9, offset: 0 };
+    const fetch = vi.fn().mockResolvedValue(new Response(JSON.stringify(response)));
+    vi.stubGlobal("fetch", fetch);
+    const payload = { nodes: [], search: "alpha", limit: 9, offset: 0 };
+    await expect(api.querySchemaPageRecords("Family Goals", payload)).resolves.toEqual(response);
+    expect(fetch.mock.calls[0]?.[0]).toBe("/schema-builder/tables/Family%20Goals/query");
+    expect(fetch.mock.calls[0]?.[1]?.method).toBe("POST");
+    expect(JSON.parse(String(fetch.mock.calls[0]?.[1]?.body))).toEqual(payload);
+  });
+
   it("creates one schema-backed record through its encoded Hub-scoped route", async () => {
     const created = { table: "Family Goals", recordID: "generated-id" };
     const fetch = vi.fn().mockResolvedValue(new Response(JSON.stringify(created)));

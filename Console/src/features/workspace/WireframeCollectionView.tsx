@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { AgGridReact } from "ag-grid-react";
 import { themeQuartz, type ColDef, type ColDefField, type ICellRendererParams } from "ag-grid-community";
-import { useLiveSchemaQuery } from "../../data/workflowQueries";
+import { useLiveSchemaQuery, useSchemaPageQuery } from "../../data/workflowQueries";
 import { useAppShell } from "./AppShell";
 import { WireframePageView } from "./WireframePageView";
 import { WireframeRecordPageView } from "./WireframeRecordPageView";
@@ -58,6 +58,7 @@ import {
   useTableViewsQuery,
 } from "../../data/presentationQueries";
 import { useRecordBodyExcerptsQuery } from "../../data/recordBodyQueries";
+import { buildSchemaPageQuery } from "../schema/serverQuery";
 
 export type WireframeRecord = { id: string };
 type WireframeWorkspaceState = {
@@ -85,6 +86,7 @@ type WireframeWorkspaceState = {
 };
 export type WireframeCollectionConfig<T extends WireframeRecord> = {
   tableName?: string;
+  supportsServerQuery?: boolean;
   title: string;
   description: string;
   headerBanner?: ReactNode;
@@ -206,6 +208,30 @@ export function WireframeCollectionView<T extends WireframeRecord>({
   const propertyDetailsDialogRef = useRef<HTMLElement | null>(null);
   const propertyDetailsTriggerRef = useRef<HTMLButtonElement | null>(null);
   const presentationTableName = config.tableName ?? config.title;
+  const serverRequest = useMemo(() => {
+    const filterColumn =
+      (config.properties ?? []).find((property) => /status/i.test(property.id))?.sourceField ??
+      config.columnDefinitions?.find((definition) => /status/i.test(definition.columnName))?.columnName;
+    const sortColumn =
+      sort === "title"
+        ? (config.properties ?? []).find((property) => !property.primary)?.sourceField
+        : sort === "status"
+          ? filterColumn
+          : sort === "meta"
+            ? (config.properties ?? []).find((property) => property.kind === "date")?.sourceField
+            : undefined;
+    return buildSchemaPageQuery({
+      search: query,
+      filter,
+      filterColumn,
+      sortColumn,
+      direction,
+      groupBy,
+      limit: pageSize,
+      offset: pageIndex * pageSize,
+    });
+  }, [config.columnDefinitions, config.properties, direction, filter, groupBy, pageIndex, pageSize, query, sort]);
+  const serverQuery = useSchemaPageQuery(presentationTableName, serverRequest, config.supportsServerQuery === true);
   const trashEntriesQuery = useTrashEntriesQuery();
   const archiveRecord = useArchiveRecordMutation();
   const [archiveError, setArchiveError] = useState<string | null>(null);
@@ -233,9 +259,17 @@ export function WireframeCollectionView<T extends WireframeRecord>({
       ),
     [presentationTableName, trashEntriesQuery.data],
   );
+  const serverRows = useMemo(() => {
+    const primaryKey = schemaQuery.data?.tables.find((table) => table.name === presentationTableName)?.columns.find((column) => column.primaryKey)?.name;
+    return serverQuery.data?.records.map((record) => ({
+      ...record.row,
+      id: String((primaryKey ? record.row[primaryKey] : undefined) ?? ""),
+    }) as T) ?? [];
+  }, [presentationTableName, schemaQuery.data, serverQuery.data]);
+  const usingServerQuery = config.supportsServerQuery === true && serverQuery.isSuccess;
   const activeRecords = useMemo(
-    () => config.records.filter((record) => !archivedRecordIDs.has(record.id)),
-    [archivedRecordIDs, config.records],
+    () => (usingServerQuery ? serverRows : config.records).filter((record) => usingServerQuery || !archivedRecordIDs.has(record.id)),
+    [archivedRecordIDs, config.records, serverRows, usingServerQuery],
   );
   const savedViewsQuery = useTableViewsQuery(presentationTableName);
   const { mutateAsync: saveWorkspaceStateAsync } = useSaveTableViewWorkspaceStateMutation(presentationTableName);
@@ -537,17 +571,19 @@ export function WireframeCollectionView<T extends WireframeRecord>({
     () => (schema ? createWireframeSchemaProperties<T>(schema.columns, activeRecords) : []),
     [activeRecords, schema],
   );
+  const clientQueryEnabled = !usingServerQuery;
   const matchingRecords = useMemo(
     () =>
       activeRecords.filter(
         (record) =>
-          config.searchValues(record).some((value) => value.toLowerCase().includes(query.trim().toLowerCase())) &&
-          matchesCollectionFilter(record, filter, filterColumnID, filterColumnIsMultiSelect, config.cardStatus),
+          (!clientQueryEnabled ||
+            (config.searchValues(record).some((value) => value.toLowerCase().includes(query.trim().toLowerCase())) &&
+              matchesCollectionFilter(record, filter, filterColumnID, filterColumnIsMultiSelect, config.cardStatus))),
       ),
-    [activeRecords, config, filter, filterColumnID, filterColumnIsMultiSelect, query],
+    [activeRecords, clientQueryEnabled, config, filter, filterColumnID, filterColumnIsMultiSelect, query],
   );
   const sortedRecords = useMemo(() => {
-    if (!sort) return matchingRecords;
+    if (!sort || usingServerQuery) return matchingRecords;
     return [...matchingRecords].sort((left, right) => {
       const leftValue =
         sort === "title" ? config.cardTitle(left) : sort === "status" ? config.cardStatus(left) : config.cardMeta(left);
@@ -560,9 +596,10 @@ export function WireframeCollectionView<T extends WireframeRecord>({
       const result = leftValue.localeCompare(rightValue, undefined, { numeric: true });
       return direction === "asc" ? result : -result;
     });
-  }, [config, direction, matchingRecords, sort]);
-  const pageCount = Math.max(1, Math.ceil(sortedRecords.length / pageSize));
-  const visibleRecords = sortedRecords.slice(pageIndex * pageSize, (pageIndex + 1) * pageSize);
+  }, [config, direction, matchingRecords, sort, usingServerQuery]);
+  const resultCount = usingServerQuery ? serverQuery.data.total : sortedRecords.length;
+  const pageCount = Math.max(1, Math.ceil(resultCount / pageSize));
+  const visibleRecords = usingServerQuery ? sortedRecords : sortedRecords.slice(pageIndex * pageSize, (pageIndex + 1) * pageSize);
   const propertyOptions = useMemo(() => {
     const first = activeRecords[0] as Record<string, unknown> | undefined;
     const ids = new Set(
@@ -979,7 +1016,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
                 { value: "meta", label: "Metadata" },
               ]}
               filterOptions={statusFilterOptions}
-              totalCount={activeRecords.length}
+              totalCount={usingServerQuery ? serverQuery.data.total : activeRecords.length}
               visibleCount={matchingRecords.length}
               compact
             />
@@ -1190,15 +1227,15 @@ export function WireframeCollectionView<T extends WireframeRecord>({
               tone="wireframe"
               size="xs"
               aria-label={`Previous page of ${tableTitle}`}
-              disabled={pageIndex === 0 || sortedRecords.length === 0}
+              disabled={pageIndex === 0 || resultCount === 0}
               onClick={() => setPageIndex((page) => Math.max(0, page - 1))}
             >
               Previous
             </GemButton>
             <span role="status">
-              {sortedRecords.length === 0
+              {resultCount === 0
                 ? "0 records"
-                : `${pageIndex * pageSize + 1}–${Math.min(sortedRecords.length, (pageIndex + 1) * pageSize)} of ${sortedRecords.length}`}
+                : `${pageIndex * pageSize + 1}–${Math.min(resultCount, (pageIndex + 1) * pageSize)} of ${resultCount}`}
             </span>
             <GSelectField
               label="Records per page"
@@ -1221,7 +1258,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
               tone="wireframe"
               size="xs"
               aria-label={`Next page of ${tableTitle}`}
-              disabled={pageIndex >= pageCount - 1 || sortedRecords.length === 0}
+              disabled={pageIndex >= pageCount - 1 || resultCount === 0}
               onClick={() => setPageIndex((page) => Math.min(pageCount - 1, page + 1))}
             >
               Next
