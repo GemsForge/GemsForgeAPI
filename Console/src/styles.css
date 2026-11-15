@@ -1564,10 +1564,20 @@ h3 {
   background: var(--panel);
 }
 .notion-import-intro h3,
-.notion-import-results h4 { margin: 0 0 0.5rem; }
-.notion-import-intro p { max-width: 45rem; margin: 0; color: var(--muted); }
-.notion-import-intro .eyebrow { margin-bottom: 0.4rem; }
-.notion-import-intro button { white-space: nowrap; }
+.notion-import-results h4 {
+  margin: 0 0 0.5rem;
+}
+.notion-import-intro p {
+  max-width: 45rem;
+  margin: 0;
+  color: var(--muted);
+}
+.notion-import-intro .eyebrow {
+  margin-bottom: 0.4rem;
+}
+.notion-import-intro button {
+  white-space: nowrap;
+}
 .notion-import-message {
   margin-top: 1rem;
   padding: 1rem;
@@ -1575,13 +1585,29 @@ h3 {
   border-radius: 0.5rem;
   background: var(--panel-light);
 }
-.notion-import-message p { margin-bottom: 0; }
-.notion-import-message ul { margin-bottom: 0; padding-left: 1.25rem; }
-.notion-import-results { margin-top: 1.5rem; }
-.notion-import-results h4 { margin-top: 1.5rem; }
-.notion-import-summary { font-weight: 700; }
-.notion-import-note { color: var(--muted); }
-.notion-import-resource-list { display: grid; gap: 0.5rem; }
+.notion-import-message p {
+  margin-bottom: 0;
+}
+.notion-import-message ul {
+  margin-bottom: 0;
+  padding-left: 1.25rem;
+}
+.notion-import-results {
+  margin-top: 1.5rem;
+}
+.notion-import-results h4 {
+  margin-top: 1.5rem;
+}
+.notion-import-summary {
+  font-weight: 700;
+}
+.notion-import-note {
+  color: var(--muted);
+}
+.notion-import-resource-list {
+  display: grid;
+  gap: 0.5rem;
+}
 .notion-import-resource,
 .notion-import-page-list li {
   border: 1px solid var(--line);
@@ -1597,15 +1623,44 @@ h3 {
   cursor: pointer;
 }
 .notion-import-resource summary span,
-.notion-import-page-list span { color: var(--muted); }
-.notion-import-resource summary em { font-style: normal; font-weight: 700; }
-.notion-import-property-scroll { overflow-x: auto; padding: 0 1rem 1rem; }
-.notion-import-property-scroll table { width: 100%; border-collapse: collapse; text-align: left; }
-.notion-import-property-scroll caption { text-align: left; padding: 0.5rem 0; color: var(--muted); }
+.notion-import-page-list span {
+  color: var(--muted);
+}
+.notion-import-resource summary em {
+  font-style: normal;
+  font-weight: 700;
+}
+.notion-import-property-scroll {
+  overflow-x: auto;
+  padding: 0 1rem 1rem;
+}
+.notion-import-property-scroll table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+.notion-import-property-scroll caption {
+  text-align: left;
+  padding: 0.5rem 0;
+  color: var(--muted);
+}
 .notion-import-property-scroll th,
-.notion-import-property-scroll td { padding: 0.5rem; border-bottom: 1px solid var(--line); }
-.notion-import-page-list { display: grid; gap: 0.5rem; padding: 0; list-style: none; }
-.notion-import-page-list li { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; padding: 0.85rem 1rem; }
+.notion-import-property-scroll td {
+  padding: 0.5rem;
+  border-bottom: 1px solid var(--line);
+}
+.notion-import-page-list {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0;
+  list-style: none;
+}
+.notion-import-page-list li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  padding: 0.85rem 1rem;
+}
 .upload-placeholder {
   display: grid;
   min-width: 12rem;

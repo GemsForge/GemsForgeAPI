@@ -17,7 +17,7 @@ enum HubOwnedCustomTablePolicy {
         "AppleAuthChallenges", "TableViews", "ViewColumnConfigurations", "ViewQueryConfigurations",
         "TablePropertyDefinitions", "TableColumnDefinitions",
         "RecordPresentations", "FileMetadata", "SchemaMigrationAudits", "Domains",
-        "EmojiLabelDefinitions", "TrashEntries",
+        "EmojiLabelDefinitions", "TrashEntries", "NotionImportReferences",
     ]
 
     /// Tables created by repository migrations are never user-owned tables,
@@ -29,7 +29,7 @@ enum HubOwnedCustomTablePolicy {
         "Services", "ServiceLogoAssets", "ForgeKeeper", "GemHues", "GemHueImages",
         "TableViews", "ViewColumnConfigurations", "ViewQueryConfigurations",
         "TablePropertyDefinitions", "TableColumnDefinitions", "RecordPresentations", "RecordBodies",
-        "TrashEntries", "SchemaMigrationAudits",
+        "TrashEntries", "SchemaMigrationAudits", "NotionImportReferences",
     ]
 
     static func isEligible(_ table: LiveSchemaTableResponse) -> Bool {

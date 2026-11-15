@@ -126,12 +126,16 @@ export function WireframeHomePage() {
           </span>
         </Link>
         <Link className="wireframe-system-card" to="/import">
-          <span className="wireframe-system-card-icon"><FileSpreadsheet size={20} aria-hidden="true" /></span>
+          <span className="wireframe-system-card-icon">
+            <FileSpreadsheet size={20} aria-hidden="true" />
+          </span>
           <span className="wireframe-system-card-copy">
             <strong>Import data</strong>
             <small>Review your Notion workspace</small>
           </span>
-          <span className="wireframe-system-card-arrow" aria-hidden="true">↗</span>
+          <span className="wireframe-system-card-arrow" aria-hidden="true">
+            ↗
+          </span>
         </Link>
         <Link className="wireframe-system-card" to="/domains">
           <span className="wireframe-system-card-icon">
