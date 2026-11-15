@@ -23,6 +23,7 @@ final class RecordPresentationRouteTests: XCTestCase {
             app.migrations.add(CreateViewQueryConfigurations())
             app.migrations.add(AddTableViewWorkspaceState())
             app.migrations.add(CreateRecordPresentations())
+            app.migrations.add(CreateRecordBodies())
             try await app.autoMigrate()
             app.middleware.use(SessionAuthenticationMiddleware(operatorAccountID: "account-a"))
             registerRecordPresentationRoutes(app)
@@ -172,6 +173,7 @@ final class RecordPresentationRouteTests: XCTestCase {
                 XCTAssertTrue(preview.migrationNames.contains("AddTableViewWorkspaceState"))
                 XCTAssertTrue(preview.migrationNames.contains("CreateRecordPresentations"))
                 XCTAssertTrue(preview.migrationNames.contains("CreateTablePropertyDefinitions"))
+                XCTAssertTrue(preview.migrationNames.contains("CreateRecordBodies"))
             }
         }
     }
