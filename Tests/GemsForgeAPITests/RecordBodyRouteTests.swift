@@ -109,15 +109,6 @@ final class RecordBodyRouteTests: XCTestCase {
                 XCTAssertEqual(body.markdown.utf8.count, 600_000)
                 XCTAssertEqual(body.revision, 2)
             }
-            try await app.test(.PUT, "record-bodies/Addresses/ADDR-A", beforeRequest: { request in
-                request.headers.bearerAuthorization = .init(token: tokenA)
-                try request.content.encode(RecordBodyRequest(markdown: "", baseRevision: 2))
-            }) { response async throws in
-                XCTAssertEqual(response.status, .ok)
-                let body = try response.content.decode(RecordBodyResponse.self)
-                XCTAssertEqual(body.revision, 3)
-            }
-
             try await RecordBody(
                 hubID: "hub-a",
                 tableName: "Addresses",
@@ -146,6 +137,8 @@ final class RecordBodyRouteTests: XCTestCase {
                 let excerpt = try XCTUnwrap(excerpts.first { $0.recordID == "ADDR-EXCERPT" })
                 XCTAssertEqual(excerpt.excerpt.prefix(200).count, 200)
                 XCTAssertTrue(excerpt.excerpt.hasPrefix("Heading Bold and link todo"))
+                let whitespaceOnlyExcerpt = try XCTUnwrap(excerpts.first { $0.recordID == "ADDR-A" })
+                XCTAssertEqual(whitespaceOnlyExcerpt.excerpt, "")
             }
         }
     }

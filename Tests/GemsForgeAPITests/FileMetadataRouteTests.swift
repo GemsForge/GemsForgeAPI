@@ -154,6 +154,17 @@ final class FileMetadataRouteTests: XCTestCase {
 
             try await RecordBody.query(on: app.db).filter(\.$hubID == "hub-a").delete()
 
+            try await RecordBody(
+                hubID: "hub-a",
+                tableName: "Addresses",
+                recordID: "ADDR-REFERENCE",
+                markdown: "![receipt][scan]\n\n[scan]: /file-metadata/FILE-0001/content"
+            ).save(on: app.db)
+            try await app.test(.DELETE, "file-metadata/FILE-0001") { response in
+                XCTAssertEqual(response.status, .conflict)
+            }
+            try await RecordBody.query(on: app.db).filter(\.$hubID == "hub-a").delete()
+
             try await app.test(.DELETE, "file-metadata/FILE-0001") { response in
                 XCTAssertEqual(response.status, .noContent)
             }
