@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from "react";
 import { decodeMultiSelectValue, GemButton } from "@gemsforge/ui";
+import type { TamaguiElement } from "tamagui";
 import { useLocation, useOutletContext, useParams } from "react-router-dom";
 import {
   useSchemaPageRecordQuery,
@@ -35,7 +36,7 @@ export function WireframeSchemaPage() {
   const { onSuccess } = useOutletContext<{ onSuccess: (message: string) => void }>();
   const { tableName = "" } = useParams();
   const [deletePreviewOpen, setDeletePreviewOpen] = useState(false);
-  const deleteTableButtonRef = useRef<HTMLButtonElement>(null);
+  const deleteTableButtonRef = useRef<TamaguiElement>(null);
   const location = useLocation();
   const recordID = location.pathname.match(/\/record\/([^/]+)$/)?.[1];
   const isLegacyServiceLogoAssets = tableName === "ServiceLogoAssets";
