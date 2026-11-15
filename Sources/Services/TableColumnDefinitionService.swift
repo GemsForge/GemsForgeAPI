@@ -14,7 +14,7 @@ struct TableColumnDefinitionService: Sendable {
         return try rows.map(TableColumnDefinitionResponse.init(model:))
     }
 
-    func definition(tableName: String, columnName: String, on database: any Database? = nil) async throws -> TableColumnDefinition? {
+    func definition(tableName: String, columnName: String, on database: (any Database)? = nil) async throws -> TableColumnDefinition? {
         try await TableColumnDefinition.query(on: database ?? self.database)
             .filter(\.$hubID == hubID)
             .filter(\.$tableName == tableName)
