@@ -31,6 +31,7 @@ struct TableColumnDefinitionBackfillService: Sendable {
         var types: [String: TableColumnPropertyType] = [:]
         var options: [String: [TableColumnOption]] = [:]
         var conflicts: [String] = []
+        var conflictingColumns = Set<String>()
         for view in views {
             guard let workspaceState = view.workspaceState,
                   let data = workspaceState.data(using: .utf8),
@@ -38,9 +39,17 @@ struct TableColumnDefinitionBackfillService: Sendable {
             let rawTypes = state["propertyTypes"] as? [String: String] ?? [:]
             let rawOptions = state["propertySelectOptions"] as? [String: [String]] ?? [:]
             for (column, rawType) in rawTypes {
-                guard let type = TableColumnPropertyType(rawValue: rawType) else { continue }
+                let type: TableColumnPropertyType?
+                switch rawType {
+                case "MultiSelect", "Multi-select", "Tags": type = .multiSelect
+                case "Select": type = .select
+                case "Status": type = .status
+                default: type = nil
+                }
+                guard let type else { continue }
                 if let prior = types[column], prior != type {
                     conflicts.append("\(column) has conflicting legacy types \(prior.rawValue) and \(type.rawValue).")
+                    conflictingColumns.insert(column)
                     continue
                 }
                 types[column] = type
@@ -53,7 +62,7 @@ struct TableColumnDefinitionBackfillService: Sendable {
 
         var items: [TableColumnDefinitionBackfillItem] = []
         for column in types.keys.sorted() {
-            guard let type = types[column] else { continue }
+            guard !conflictingColumns.contains(column), let type = types[column] else { continue }
             guard let liveColumn = table.columns.first(where: { $0.name == column }), liveColumn.hasTextAffinity,
                   table.columns.contains(where: { $0.name == "HubID" }) else {
                 conflicts.append("\(column) is missing or does not have TEXT affinity; its legacy definition was skipped.")

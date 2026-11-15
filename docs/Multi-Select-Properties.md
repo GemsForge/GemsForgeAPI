@@ -29,6 +29,10 @@ Equals, NotEquals, Contains, In, IsNull, and IsNotNull, with operands that name
 configured options exactly. Other operators and unknown option values fail
 validation. Server-side SQL execution is not part of this contract yet; any
 future executor must use bound parameters and the same whole-tag semantics.
+For SQLite, the token match pattern is
+`(';' || "Column" || ';') LIKE '%;' || ? || ';%'`, with the option supplied
+as a bound value. Escape LIKE metacharacters (`%`, `_`, and `\\`) in the bound
+option so the match remains literal.
 
 ## Legacy workspace settings
 

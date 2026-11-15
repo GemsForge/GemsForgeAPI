@@ -135,6 +135,20 @@ export function WireframeCollectionView<T extends WireframeRecord>({
   const [propertyIcons, setPropertyIcons] = useState<Record<string, string>>({});
   const [propertyTypes, setPropertyTypes] = useState<Record<string, string>>({});
   const [propertySelectOptions, setPropertySelectOptions] = useState<Record<string, string[]>>({});
+  const resolvedPropertyTypes = useMemo(
+    () => ({
+      ...propertyTypes,
+      ...Object.fromEntries((config.columnDefinitions ?? []).map((definition) => [definition.columnName, definition.propertyType])),
+    }),
+    [config.columnDefinitions, propertyTypes],
+  );
+  const resolvedPropertySelectOptions = useMemo(
+    () => ({
+      ...propertySelectOptions,
+      ...Object.fromEntries((config.columnDefinitions ?? []).map((definition) => [definition.columnName, definition.options.map((option) => option.value)])),
+    }),
+    [config.columnDefinitions, propertySelectOptions],
+  );
   const [dateConfigurations, setDateConfigurations] = useState<Record<string, WireframeDateConfiguration>>({});
   const [propertyConfigurations, setPropertyConfigurations] = useState<Record<string, TablePropertyConfiguration>>({});
   const [inspectorPropertyOrder, setInspectorPropertyOrder] = useState<string[]>();
@@ -464,6 +478,8 @@ export function WireframeCollectionView<T extends WireframeRecord>({
   const statusIsMultiSelect = config.columnDefinitions?.some((definition) => definition.columnName === statusColumnID && definition.propertyType === "MultiSelect") ?? false;
   const statusFilterOptions = useMemo(() => {
     if (!statusIsMultiSelect || !statusColumnID) return [...new Set(activeRecords.map((record) => config.cardStatus(record)))];
+    const definitionOptions = config.columnDefinitions?.find((definition) => definition.columnName === statusColumnID)?.options.map((option) => option.value);
+    if (definitionOptions) return definitionOptions;
     return [...new Set(activeRecords.flatMap((record) => {
       const raw = (record as Record<string, unknown>)[statusColumnID];
       return typeof raw === "string" ? raw.split(";").map((part) => part.trim()).filter(Boolean) : [];
@@ -799,8 +815,8 @@ export function WireframeCollectionView<T extends WireframeRecord>({
           />
           <WireframePropertyIconProvider
             onSave={savePropertyIcon}
-            propertyTypes={propertyTypes}
-            propertySelectOptions={propertySelectOptions}
+            propertyTypes={resolvedPropertyTypes}
+            propertySelectOptions={resolvedPropertySelectOptions}
             dateConfigurations={dateConfigurations}
             onDateConfigurationChange={saveDateConfiguration}
           >

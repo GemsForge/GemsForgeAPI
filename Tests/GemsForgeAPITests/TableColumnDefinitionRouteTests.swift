@@ -25,6 +25,7 @@ final class TableColumnDefinitionRouteTests: XCTestCase {
                 .field("HubID", .string, .required)
                 .field("Tags", .string)
                 .field("Choice", .string)
+                .field("LegacyTags", .string)
                 .field("Number", .int)
                 .create()
             app.middleware.use(SessionAuthenticationMiddleware(operatorAccountID: "account-a"))
@@ -35,10 +36,14 @@ final class TableColumnDefinitionRouteTests: XCTestCase {
             let tokenB = try await self.seedSession(on: app.db, accountID: "account-b", hubID: "hub-b")
             try await TableView(
                 hubID: "hub-a", tableName: "TagRecords", name: "Legacy", viewType: .table,
-                workspaceState: #"{"propertyTypes":{"Choice":"Select"},"propertySelectOptions":{"Choice":["One","Two"]}}"#
+                workspaceState: #"{"propertyTypes":{"Choice":"Select","LegacyTags":"Multi-select","Conflict":"Select"},"propertySelectOptions":{"Choice":["One","Two"],"LegacyTags":["Rare" ]}}"#
+            ).save(on: app.db)
+            try await TableView(
+                hubID: "hub-a", tableName: "TagRecords", name: "Legacy conflict", viewType: .gallery,
+                workspaceState: #"{"propertyTypes":{"Conflict":"Status"},"propertySelectOptions":{}}"#
             ).save(on: app.db)
             let sql = try XCTUnwrap(app.db as? SQLDatabase)
-            try await sql.raw("INSERT INTO TagRecords (ID, HubID, Tags, Choice, Number) VALUES ('r1', 'hub-a', 'Home;Homework', NULL, 1)").run()
+            try await sql.raw("INSERT INTO TagRecords (ID, HubID, Tags, Choice, LegacyTags, Number) VALUES ('r1', 'hub-a', 'Home;Homework', NULL, 'Rare;StoredTag', 1)").run()
 
             try await app.test(.GET, "table-column-definitions/TagRecords") { response in
                 XCTAssertEqual(response.status, .unauthorized)
@@ -97,6 +102,9 @@ final class TableColumnDefinitionRouteTests: XCTestCase {
             }) { response async throws in
                 let result = try response.content.decode(TableColumnDefinitionBackfillResponse.self)
                 XCTAssertEqual(result.items.first(where: { $0.columnName == "Choice" })?.status, "pending")
+                XCTAssertEqual(result.items.first(where: { $0.columnName == "LegacyTags" })?.options.map(\.value), ["Rare", "StoredTag"])
+                XCTAssertTrue(result.conflicts.contains(where: { $0.contains("Conflict") }))
+                XCTAssertFalse(result.items.contains(where: { $0.columnName == "Conflict" }))
             }
             for _ in 0..<2 {
                 try await app.test(.POST, "table-column-definitions/TagRecords/backfill/apply", beforeRequest: {

@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { decodeMultiSelectValue } from "@gemsforge/ui";
 import { useLocation, useParams } from "react-router-dom";
 import {
   useSchemaPageRecordQuery,
@@ -131,7 +132,12 @@ export function WireframeSchemaPage() {
                 options: createSchemaRecordOptions(table),
               },
             }),
-        searchValues: (record) => Object.values(record).filter((value): value is string => typeof value === "string"),
+        searchValues: (record) => Object.entries(record).flatMap(([columnName, value]) => {
+          if (typeof value !== "string") return [];
+          return definitions.data?.find((definition) => definition.columnName === columnName)?.propertyType === "MultiSelect"
+            ? decodeMultiSelectValue(value)
+            : [value];
+        }),
         cardTitle: (record) => recordText(record, titleProperty?.id) || record.id,
         cardSubtitle: (record) => recordText(record, subtitleProperty?.id) || tableName,
         cardStatus: (record) => recordText(record, statusProperty?.id),
