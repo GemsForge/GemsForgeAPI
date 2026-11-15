@@ -4,7 +4,7 @@ import { TamaguiProvider } from "tamagui";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import { tamaguiConfig } from "@gemsforge/ui";
-import { resolveColumnPropertyMetadata, WireframeCollectionView, type WireframeCollectionConfig } from "./WireframeCollectionView";
+import { matchesCollectionFilter, resolveColumnPropertyMetadata, WireframeCollectionView, type WireframeCollectionConfig } from "./WireframeCollectionView";
 
 vi.mock("../../data/workflowQueries", () => ({
   useLiveSchemaQuery: () => ({ data: { tables: [] } }),
@@ -34,14 +34,18 @@ describe("WireframeCollectionView multi-select filters", () => {
   });
 
   it("uses definition options and matches whole tags in a status filter", async () => {
+    const firstRecord = { id: "r1", status: "🏡 Home;💳 Credit" };
+    const secondRecord = { id: "r2", status: "🏡 Homework" };
+    expect(matchesCollectionFilter(firstRecord, "🏡 Home", "status", true, (record) => record.status)).toBe(true);
+    expect(matchesCollectionFilter(secondRecord, "🏡 Home", "status", true, (record) => record.status)).toBe(false);
     const config: WireframeCollectionConfig<{ id: string; status: string }> = {
       tableName: "Things",
       title: "Things",
       description: "Test records",
       activeCollection: "Things",
       records: [
-        { id: "r1", status: "🏡 Home;💳 Credit" },
-        { id: "r2", status: "🏡 Homework" },
+        firstRecord,
+        secondRecord,
       ],
       properties: [{ id: "status", sourceField: "Status", label: "Status", getValue: (record) => ({ raw: record.status, display: record.status }) }],
       searchValues: (record) => [record.status],
@@ -72,6 +76,6 @@ describe("WireframeCollectionView multi-select filters", () => {
     const filterButton = screen.getByRole("button", { name: "Filter records" });
     expect(filterButton).toBeInTheDocument();
     expect(config.columnDefinitions?.[0].options.map((option) => option.value)).toEqual(["🏡 Home", "💳 Credit"]);
-    expect(config.records.filter((record) => record.status.split(";").includes("🏡 Home")).map((record) => record.id)).toEqual(["r1"]);
+    expect(config.records.filter((record) => matchesCollectionFilter(record, "🏡 Home", "status", true, config.cardStatus)).map((record) => record.id)).toEqual(["r1"]);
   });
 });

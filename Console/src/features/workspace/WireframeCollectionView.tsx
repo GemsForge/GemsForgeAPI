@@ -127,6 +127,20 @@ export function resolveColumnPropertyMetadata(
   };
 }
 
+export function matchesCollectionFilter<T extends WireframeRecord>(
+  record: T,
+  filter: string,
+  columnID: string | undefined,
+  isMultiSelect: boolean,
+  cardStatus: (record: T) => string,
+) {
+  if (!filter) return true;
+  if (isMultiSelect && columnID) {
+    return matchesMultiSelectOption(String((record as Record<string, unknown>)[columnID] ?? ""), filter);
+  }
+  return cardStatus(record) === filter;
+}
+
 export function WireframeCollectionView<T extends WireframeRecord>({
   config,
 }: {
@@ -502,9 +516,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
       activeRecords.filter(
         (record) =>
           config.searchValues(record).some((value) => value.toLowerCase().includes(query.trim().toLowerCase())) &&
-          (!filter || (filterColumnIsMultiSelect && filterColumnID
-            ? matchesMultiSelectOption(String((record as Record<string, unknown>)[filterColumnID] ?? ""), filter)
-            : config.cardStatus(record) === filter)),
+          matchesCollectionFilter(record, filter, filterColumnID, filterColumnIsMultiSelect, config.cardStatus),
       ),
     [activeRecords, config, filter, filterColumnID, filterColumnIsMultiSelect, query],
   );
