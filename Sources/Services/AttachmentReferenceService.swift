@@ -1,4 +1,6 @@
+import Foundation
 import Fluent
+import SQLKit
 import Vapor
 
 /// Validates and assigns FileMetadata references without exposing filesystem paths.
@@ -60,9 +62,58 @@ struct AttachmentReferenceService: Sendable {
         }
     }
 
+    /// Counts Markdown image links that still reference the file-content route.
+    func bodyReferenceCount(metadataID: String) async throws -> Int {
+        guard let sql = database as? SQLDatabase else { return 0 }
+        let bodyTable = try await sql.raw(SQLQueryString(stringLiteral: """
+            SELECT 1 AS present FROM sqlite_master
+            WHERE type = 'table' AND name = 'RecordBodies'
+            LIMIT 1
+            """)).first()
+        guard bodyTable != nil else { return 0 }
+
+        var query = SQLQueryString("SELECT \(ident: "HubID"), \(ident: "Markdown") FROM \(ident: RecordBody.schema) WHERE ")
+        if let hubID {
+            query.appendInterpolation(ident: "HubID")
+            query.appendInterpolation(unsafeRaw: " = ")
+            query.appendInterpolation(bind: hubID)
+        } else {
+            query.appendInterpolation(unsafeRaw: "1 = 1")
+        }
+        let rows = try await sql.raw(query).all()
+        let metadataHubID = try await find(id: metadataID)?.hubID
+        return try rows.reduce(into: 0) { count, row in
+            if let metadataHubID,
+               try row.decode(column: "HubID", as: String.self) != metadataHubID { return }
+            let markdown = try row.decode(column: "Markdown", as: String.self)
+            count += recordBodyImageReferenceCount(in: markdown, metadataID: metadataID)
+        }
+    }
+
     private func find(id: String) async throws -> FileMetadata? {
         var query = FileMetadata.query(on: database).filter(\.$id == id)
         if let hubID { query = query.filter(\.$hubID == hubID) }
         return try await query.first()
+    }
+}
+
+private func recordBodyImageReferenceCount(in markdown: String, metadataID: String) -> Int {
+    guard let expression = try? NSRegularExpression(
+        pattern: #"!\[[^\]]*\]\(\s*(?:<([^>]+)>|([^\s)]+))(?:\s+[^)]*)?\s*\)"#
+    ) else { return 0 }
+
+    let source = markdown as NSString
+    return expression.matches(in: markdown, range: NSRange(location: 0, length: source.length)).reduce(into: 0) { count, match in
+        let range = match.range(at: 1).location == NSNotFound ? match.range(at: 2) : match.range(at: 1)
+        guard range.location != NSNotFound,
+              let components = URLComponents(string: source.substring(with: range)),
+              components.scheme == nil,
+              components.host == nil else { return }
+        let segments = components.percentEncodedPath.split(separator: "/")
+        guard segments.count == 3,
+              segments[0] == "file-metadata",
+              segments[2] == "content",
+              String(segments[1]).removingPercentEncoding == metadataID else { return }
+        count += 1
     }
 }

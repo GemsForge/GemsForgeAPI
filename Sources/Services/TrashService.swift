@@ -80,23 +80,74 @@ struct TrashService: Sendable {
             throw TrashServiceError.alreadyArchived
         }
 
-        let entry = TrashEntry(
-            hubID: hubID,
-            tableName: input.tableName,
-            recordID: input.recordID,
-            title: title,
-            snapshot: input.snapshot
-        )
-        try await entry.save(on: database)
-        return try TrashEntryResponse(entry)
+        let snapshotData = try JSONSerialization.data(withJSONObject: snapshot, options: [.sortedKeys])
+        guard let baseSnapshot = String(data: snapshotData, encoding: .utf8) else {
+            throw TrashServiceError.invalidRequest
+        }
+        return try await database.transaction { transaction in
+            let body = try await RecordBody.query(on: transaction)
+                .filter(\.$hubID == hubID)
+                .filter(\.$tableName == input.tableName)
+                .filter(\.$recordID == input.recordID)
+                .first()
+            var archivedSnapshot = (try JSONSerialization.jsonObject(with: Data(baseSnapshot.utf8))) as? [String: Any]
+            archivedSnapshot?["body"] = [
+                "markdown": body?.markdown ?? "",
+                "revision": body?.revision ?? 0,
+            ]
+            guard let archivedSnapshot,
+                  let storedSnapshotData = try? JSONSerialization.data(withJSONObject: archivedSnapshot, options: [.sortedKeys]),
+                  let storedSnapshot = String(data: storedSnapshotData, encoding: .utf8) else {
+                throw TrashServiceError.invalidRequest
+            }
+            let entry = TrashEntry(
+                hubID: hubID,
+                tableName: input.tableName,
+                recordID: input.recordID,
+                title: title,
+                snapshot: storedSnapshot
+            )
+            try await entry.save(on: transaction)
+            return try TrashEntryResponse(entry)
+        }
     }
 
     func restore(entryID: String) async throws {
-        guard let entry = try await TrashEntry.query(on: database)
-            .filter(\.$hubID == hubID)
-            .filter(\.$id == entryID)
-            .first() else { throw TrashServiceError.entryNotFound }
-        try await entry.delete(on: database)
+        try await database.transaction { transaction in
+            guard let entry = try await TrashEntry.query(on: transaction)
+                .filter(\.$hubID == hubID)
+                .filter(\.$id == entryID)
+                .first() else { throw TrashServiceError.entryNotFound }
+
+            guard let data = entry.snapshot.data(using: .utf8),
+                  let snapshot = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+                throw TrashServiceError.invalidStoredEntry
+            }
+            if let archivedBody = snapshot["body"] {
+                guard let values = archivedBody as? [String: Any],
+                      let markdown = values["markdown"] as? String,
+                      let revision = values["revision"] as? Int,
+                      revision >= 0 else {
+                    throw TrashServiceError.invalidStoredEntry
+                }
+
+                let current = try await RecordBody.query(on: transaction)
+                    .filter(\.$hubID == hubID)
+                    .filter(\.$tableName == entry.tableName)
+                    .filter(\.$recordID == entry.recordID)
+                    .first()
+                let body = current ?? RecordBody(
+                    hubID: hubID,
+                    tableName: entry.tableName,
+                    recordID: entry.recordID
+                )
+                body.markdown = markdown
+                body.revision = max(current?.revision ?? 0, revision) + 1
+                body.updatedAt = Date()
+                try await body.save(on: transaction)
+            }
+            try await entry.delete(on: transaction)
+        }
     }
 
     func permanentlyDelete(entryID: String) async throws {
@@ -128,6 +179,11 @@ struct TrashService: Sendable {
                 "DELETE FROM \(ident: table.physicalName) WHERE CAST(\(ident: primaryKey) AS TEXT) = \(bind: entry.recordID) AND \(ident: "HubID") = \(bind: hubID)"
             ).run()
             try await RecordPresentation.query(on: transaction)
+                .filter(\.$hubID == hubID)
+                .filter(\.$tableName == entry.tableName)
+                .filter(\.$recordID == entry.recordID)
+                .delete()
+            try await RecordBody.query(on: transaction)
                 .filter(\.$hubID == hubID)
                 .filter(\.$tableName == entry.tableName)
                 .filter(\.$recordID == entry.recordID)

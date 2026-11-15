@@ -18,6 +18,7 @@ final class TrashRouteTests: XCTestCase {
             app.migrations.add(AddAddressUpdatedAt())
             app.migrations.add(AddAddressAttachmentReference())
             app.migrations.add(CreateRecordPresentations())
+            app.migrations.add(CreateRecordBodies())
             app.migrations.add(CreateTrashEntries())
             try await app.autoMigrate()
             app.middleware.use(SessionAuthenticationMiddleware(operatorAccountID: "account-a"))
@@ -31,6 +32,13 @@ final class TrashRouteTests: XCTestCase {
             try await AddressService(database: app.db, hubID: "hub-b").save(
                 Address(id: "ADDR-B", city: "Salem", addressStatus: "Current")
             )
+            try await RecordBody(
+                hubID: "hub-a",
+                tableName: "Addresses",
+                recordID: "ADDR-A",
+                markdown: "Original body",
+                revision: 4
+            ).save(on: app.db)
 
             let entry = TrashEntryRequest(
                 tableName: "Addresses",
@@ -57,6 +65,11 @@ final class TrashRouteTests: XCTestCase {
                 let saved = try response.content.decode(TrashEntryResponse.self)
                 XCTAssertEqual(saved.tableName, "Addresses")
                 XCTAssertEqual(saved.recordID, "ADDR-A")
+                let savedSnapshot = try XCTUnwrap(saved.snapshot.data(using: .utf8))
+                let snapshot = try XCTUnwrap(JSONSerialization.jsonObject(with: savedSnapshot) as? [String: Any])
+                let body = try XCTUnwrap(snapshot["body"] as? [String: Any])
+                XCTAssertEqual(body["markdown"] as? String, "Original body")
+                XCTAssertEqual(body["revision"] as? Int, 4)
             }
 
             try await app.test(.GET, "trash", beforeRequest: { $0.headers.bearerAuthorization = .init(token: tokenB) }) { response async throws in
@@ -79,6 +92,15 @@ final class TrashRouteTests: XCTestCase {
             let savedEntryResult = try await TrashEntry.query(on: app.db).filter(\.$hubID == "hub-a").first()
             let savedEntry = try XCTUnwrap(savedEntryResult)
             let savedID = try XCTUnwrap(savedEntry.id)
+            let archivedBodyResult = try await RecordBody.query(on: app.db)
+                .filter(\.$hubID == "hub-a")
+                .filter(\.$tableName == "Addresses")
+                .filter(\.$recordID == "ADDR-A")
+                .first()
+            let archivedBody = try XCTUnwrap(archivedBodyResult)
+            archivedBody.markdown = "Edited while archived"
+            archivedBody.revision = 5
+            try await archivedBody.save(on: app.db)
             try await app.test(.POST, "trash/\(savedID)/restore", beforeRequest: {
                 $0.headers.bearerAuthorization = .init(token: tokenA)
             }) { response in
@@ -86,6 +108,14 @@ final class TrashRouteTests: XCTestCase {
             }
             let restoredAddress = try await AddressService(database: app.db, hubID: "hub-a").find(id: "ADDR-A")
             XCTAssertNotNil(restoredAddress)
+            let restoredBodyResult = try await RecordBody.query(on: app.db)
+                .filter(\.$hubID == "hub-a")
+                .filter(\.$tableName == "Addresses")
+                .filter(\.$recordID == "ADDR-A")
+                .first()
+            let restoredBody = try XCTUnwrap(restoredBodyResult)
+            XCTAssertEqual(restoredBody.markdown, "Original body")
+            XCTAssertEqual(restoredBody.revision, 6)
 
             let secondEntry = TrashEntryRequest(
                 tableName: "Addresses",
@@ -108,6 +138,12 @@ final class TrashRouteTests: XCTestCase {
             }
             let deletedAddress = try await AddressService(database: app.db, hubID: "hub-a").find(id: "ADDR-A")
             XCTAssertNil(deletedAddress)
+            let deletedBody = try await RecordBody.query(on: app.db)
+                .filter(\.$hubID == "hub-a")
+                .filter(\.$tableName == "Addresses")
+                .filter(\.$recordID == "ADDR-A")
+                .first()
+            XCTAssertNil(deletedBody)
         }
     }
 

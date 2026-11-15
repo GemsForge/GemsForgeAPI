@@ -2,6 +2,7 @@ import FluentSQLiteDriver
 import NIOCore
 import XCTest
 import VaporTesting
+import Fluent
 @testable import GemsForgeAPI
 
 final class FileMetadataRouteTests: XCTestCase {
@@ -53,10 +54,18 @@ final class FileMetadataRouteTests: XCTestCase {
     func testFileMetadataCRUDDoesNotTouchFiles() async throws {
         try await withApp(configure: { app in
             app.databases.use(.sqlite(.memory), as: .sqlite)
+            app.migrations.add(CreateAuthenticationSchema())
+            app.migrations.add(CreateHubs())
             app.migrations.add(CreateFileMetadata())
+            app.migrations.add(CreateRecordBodies())
+            app.migrations.add(CreateAddresses())
             try await app.autoMigrate()
             registerFileMetadataRoutes(app)
         }) { app in
+            try await AuthenticationAccount(id: "account-a").save(on: app.db)
+            try await Hub(id: "hub-a", accountID: "account-a").save(on: app.db)
+            try await AuthenticationAccount(id: "account-b").save(on: app.db)
+            try await Hub(id: "hub-b", accountID: "account-b").save(on: app.db)
             let payload = FileMetadataRequest(
                 id: "FILE-0001",
                 relativePath: "images/receipts/receipt-0001.jpg",
@@ -119,6 +128,26 @@ final class FileMetadataRouteTests: XCTestCase {
                 XCTAssertEqual(metadata.relativePath, "images/receipts/receipt-0001-updated.jpg")
                 XCTAssertEqual(metadata.byteSize, 4096)
             }
+
+            try await RecordBody(
+                hubID: "hub-a",
+                tableName: "Addresses",
+                recordID: "ADDR-A",
+                markdown: "![receipt](/file-metadata/FILE-0001/content)"
+            ).save(on: app.db)
+            try await RecordBody(
+                hubID: "hub-b",
+                tableName: "Addresses",
+                recordID: "ADDR-B",
+                markdown: "![other hub](/file-metadata/FILE-0001/content)"
+            ).save(on: app.db)
+            try await app.test(.DELETE, "file-metadata/FILE-0001") { response async throws in
+                XCTAssertEqual(response.status, .conflict)
+            }
+            let retainedFile = try await FileMetadataService(database: app.db).find(id: "FILE-0001")
+            XCTAssertNotNil(retainedFile)
+
+            try await RecordBody.query(on: app.db).filter(\.$hubID == "hub-a").delete()
 
             try await app.test(.DELETE, "file-metadata/FILE-0001") { response in
                 XCTAssertEqual(response.status, .noContent)

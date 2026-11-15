@@ -125,6 +125,14 @@ func registerFileMetadataRoutes(_ app: Application) {
             throw Abort(.notFound)
         }
 
+        let bodyReferences = try await AttachmentReferenceService(
+            database: request.db,
+            hubID: request.authenticatedHubID
+        ).bodyReferenceCount(metadataID: id)
+        guard bodyReferences == 0 else {
+            throw Abort(.conflict, reason: "The file is referenced by a record body and cannot be removed.")
+        }
+
         // Deleting metadata deliberately does not delete the referenced file.
         try await FileMetadataService(database: request.db, hubID: request.authenticatedHubID).delete(id: id)
         return .noContent
