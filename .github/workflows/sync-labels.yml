@@ -2,8 +2,12 @@
 # labels.json in https://github.com/GemsForge/.github
 name: Sync repository labels
 
+# Runs on every default-branch push as well as weekly: GitHub disables
+# schedules after 60 days without repository activity.
 on:
   workflow_dispatch:
+  push:
+    branches: [main, master]
   schedule:
     - cron: "17 6 * * 1"
 
