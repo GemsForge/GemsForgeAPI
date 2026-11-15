@@ -36,6 +36,11 @@ query keys, caching, and invalidation. Feature views compose local form and
 workflow state from shared UI primitives. The Console does not bypass the API
 to access SQLite, local files, or credentials.
 
+Schema Builder semantic column types and option lists are Hub-scoped metadata
+in `TableColumnDefinitions`. They describe existing TEXT columns without
+changing the live table schema. See [`Multi-Select-Properties.md`](Multi-Select-Properties.md)
+for storage, write validation, and query behavior.
+
 The optional `GemLifeHost` native wrapper starts the local API and serves the
 packaged Console. It communicates with the web UI through the established
 bridge; native capabilities and lifecycle remain outside React feature code.
