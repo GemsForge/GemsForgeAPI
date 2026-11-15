@@ -283,9 +283,10 @@ struct NotionImportPreviewService: Sendable {
         switch key {
         case "service expense tracker": return "Services"
         case "budget (archive)", "budget": return "Transactions / Categories"
-        case "employment": return "Employment"
-        case "education": return "Education"
-        case "affiliations", "vehicles", "projects", "proverbs planner", "life themes",
+        case "employment", "employment database": return "Employment"
+        case "education", "education db": return "Education"
+        case "affiliations", "affiliation database", "vehicles", "vehicle database", "projects",
+             "proverbs planner", "proverbs planner 2026", "planner in proverb", "life themes",
              "professional milestones", "think pieces":
             return "Custom table: \(title)"
         default: return "Review required"

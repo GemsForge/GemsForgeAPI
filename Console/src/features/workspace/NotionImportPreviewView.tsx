@@ -1,4 +1,55 @@
+import type { NotionImportPreview } from "../../api";
 import { useNotionImportPreviewQuery } from "../../data/notionImportQueries";
+
+function downloadReviewReport(preview: NotionImportPreview) {
+  const cells = (values: Array<string | number>) =>
+    values
+      .map((value) => {
+        const text = String(value);
+        const safe = /^[\s]*[=+\-@]/.test(text) ? `'${text}` : text;
+        return `"${safe.replaceAll('"', '""')}"`;
+      })
+      .join(",");
+  const rows = [
+    cells(["Notion ID", "Resource", "Kind", "GemLife target", "Rows", "Property", "Notion type", "Proposed storage"]),
+  ];
+  for (const resource of preview.resources) {
+    if (resource.target === "Review required") {
+      rows.push(
+        cells([
+          resource.notionID,
+          resource.title,
+          resource.notionObject,
+          resource.target,
+          resource.rowCount,
+          "Target",
+          "",
+          "Choose a GemLife destination",
+        ]),
+      );
+    }
+    for (const property of resource.properties.filter((item) => item.requiresReview)) {
+      rows.push(
+        cells([
+          resource.notionID,
+          resource.title,
+          resource.notionObject,
+          resource.target,
+          resource.rowCount,
+          property.name,
+          property.notionType,
+          property.proposedStorage,
+        ]),
+      );
+    }
+  }
+  const url = URL.createObjectURL(new Blob([`\uFEFF${rows.join("\r\n")}\r\n`], { type: "text/csv;charset=utf-8" }));
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "notion-import-review.csv";
+  link.click();
+  window.setTimeout(() => URL.revokeObjectURL(url), 0);
+}
 
 export function NotionImportPreviewView() {
   const preview = useNotionImportPreviewQuery();
@@ -45,6 +96,9 @@ export function NotionImportPreviewView() {
             This is a read-only mapping preview. No GemLife records have been created from it. Relations can link one
             mapped record per row; Notion rollup calculations need separate review.
           </p>
+          <button type="button" className="wireframe-system-action" onClick={() => downloadReviewReport(preview.data)}>
+            Download review report (CSV)
+          </button>
           {preview.data.unmappedProperties.length > 0 ? (
             <div className="notion-import-message" role="status">
               <strong>{preview.data.unmappedProperties.length} mapping items need review</strong>

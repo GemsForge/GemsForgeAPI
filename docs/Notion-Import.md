@@ -19,6 +19,11 @@ In the Console, open **Home → Import data** and select **Load Notion preview**
 The page displays database and page names, proposed GemLife targets, row counts,
 property mappings, and items requiring review. Opening the page does not start
 an import. The API token remains in the server environment.
+Use **Download review report (CSV)** to inspect every flagged database target
+and property without scrolling through the preview. The report contains resource
+names, IDs, row counts, proposed targets, and property mappings, but no row
+values. It is created in the browser from the current preview and is not
+uploaded elsewhere.
 
 The route uses the authenticated session and requires the configured operator
 account. It searches both pages and data sources, follows Notion pagination,

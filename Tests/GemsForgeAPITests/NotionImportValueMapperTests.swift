@@ -54,6 +54,23 @@ final class NotionImportValueMapperTests: XCTestCase {
         XCTAssertTrue(properties.first { $0.name == "Total" }?.proposedStorage.contains("rollup calculation") == true)
     }
 
+    func testPreviewRecognizesWorkspaceDataSourceNames() {
+        XCTAssertEqual(NotionImportPreviewService.target(for: "Employment Database", object: "data_source"), "Employment")
+        XCTAssertEqual(NotionImportPreviewService.target(for: "Education DB", object: "data_source"), "Education")
+        XCTAssertEqual(
+            NotionImportPreviewService.target(for: "Affiliation Database", object: "data_source"),
+            "Custom table: Affiliation Database"
+        )
+        XCTAssertEqual(
+            NotionImportPreviewService.target(for: "Vehicle Database", object: "data_source"),
+            "Custom table: Vehicle Database"
+        )
+        XCTAssertEqual(
+            NotionImportPreviewService.target(for: "Planner in Proverb", object: "data_source"),
+            "Custom table: Planner in Proverb"
+        )
+    }
+
     func testMarkdownRendererPreservesSupportedBlocksAndReportsUnsupportedOnes() {
         let blocks: [[String: Any]] = [
             ["type": "heading_1", "heading_1": ["rich_text": [["plain_text": "Journal"]]]],
