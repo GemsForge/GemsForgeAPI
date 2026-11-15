@@ -34,24 +34,26 @@
   /* Field outlines reach 3:1 (WCAG 1.4.11); fallback when no Tamagui theme sets --fieldBorder. */
   --gem-field-border: #6b8487;
   --gem-focus: var(--gem-action);
-  /* GemsForge brand palette — Emerald Spark action, Obsidian Shade headings, Frosted Quartz surfaces */
-  --gem-wireframe-canvas: #FFFFFF;
-  --gem-wireframe-surface: #FFFFFF;
-  --gem-wireframe-surface-raised: #E8EDE8;
-  --gem-wireframe-sidebar: #F2F3F2;
-  --gem-wireframe-inspector: #F2F3F2;
-  --gem-wireframe-text: #272626;
-  --gem-wireframe-heading: #1E2823;
-  --gem-wireframe-muted: #5A706C;
-  --gem-wireframe-text-muted: #5A706C;
-  --gem-wireframe-action: #355A3A;
-  --gem-wireframe-action-dark: #355A3A;
-  --gem-wireframe-accent: #9a6b22;
-  --gem-wireframe-border: #E2E4E2;
-  --gem-wireframe-border-strong: #C8CAC8;
+  /* Portfolio design system (professional-portfolio redesign.css): sand surfaces, forest ink,
+     and gold reserved for active state, focus, and calls to action. */
+  --gem-wireframe-canvas: #fbfaf4;
+  --gem-wireframe-surface: #fbfaf4;
+  --gem-wireframe-surface-raised: #dfe6dc;
+  --gem-wireframe-sidebar: #f4f2e8;
+  --gem-wireframe-inspector: #f4f2e8;
+  --gem-wireframe-text: #1e2823;
+  --gem-wireframe-heading: #1e2823;
+  --gem-wireframe-muted: #4d5d50;
+  --gem-wireframe-text-muted: #4d5d50;
+  --gem-wireframe-action: #8a6526;
+  --gem-wireframe-action-dark: #6e501d;
+  --gem-wireframe-action-soft: #e3c48a;
+  --gem-wireframe-accent: #8a6526;
+  --gem-wireframe-border: #d9d6c8;
+  --gem-wireframe-border-strong: #c9c4b0;
   /* Field outlines must reach 3:1 (WCAG 1.4.11); border-strong stays a decorative line. */
-  --gem-wireframe-field-border: #5A706C;
-  --gem-wireframe-gold-light: #EDF5EE;
+  --gem-wireframe-field-border: #857f6b;
+  --gem-wireframe-gold-light: #f3ead6;
   --wireframe-menu-background: var(--gem-wireframe-surface);
   --wireframe-menu-text: var(--gem-wireframe-text);
   --wireframe-menu-hover: var(--gem-wireframe-surface-raised);
@@ -373,8 +375,8 @@ button {
 }
 .wireframe-canvas {
   min-height: 100vh;
-  background: #f7f7f4;
-  color: #233c42;
+  background: var(--gem-wireframe-canvas);
+  color: var(--gem-wireframe-text);
   isolation: isolate;
 }
 .wireframe-canvas:focus {
@@ -3039,11 +3041,17 @@ dialog::backdrop {
 .wireframe-demo-sidebar .demo-collections .wireframe-collection-link > a:focus-visible,
 .wireframe-demo-sidebar .demo-collections .wireframe-collection-link.active > a {
   border-radius: 0.45rem;
-  background: #e5f0ed;
-  color: #173d45;
+  background: var(--gem-wireframe-surface-raised);
+  color: var(--gem-wireframe-heading);
+}
+/* Active row: portfolio nav pattern (sage fill, ink, semibold) plus a left edge in the domain hue. */
+.wireframe-demo-sidebar .demo-collections .wireframe-collection-link.active > a,
+.wireframe-demo-sidebar .demo-collections a.wireframe-collection-link[aria-current="page"] {
+  font-weight: 600;
+  box-shadow: inset 3px 0 0 var(--gem-domain-hue, var(--gem-wireframe-action));
 }
 .wireframe-demo-sidebar .demo-collections .wireframe-collection-link > a:focus-visible {
-  outline: 2px solid #39736d;
+  outline: 2px solid var(--gem-wireframe-action);
   outline-offset: 2px;
 }
 .wireframe-collection-link-name {
