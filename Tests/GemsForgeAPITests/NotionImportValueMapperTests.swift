@@ -29,9 +29,29 @@ final class NotionImportValueMapperTests: XCTestCase {
     func testPropertyTypesIdentifyStorageAndReviewRequirements() {
         XCTAssertEqual(NotionImportValueMapper.propertyType("multi_select"), .init(storage: .multiSelect, requiresReview: false))
         XCTAssertEqual(NotionImportValueMapper.propertyType("relation"), .init(storage: .relation, requiresReview: false))
+        XCTAssertEqual(NotionImportValueMapper.propertyType("rollup"), .init(storage: .lookup, requiresReview: true))
         XCTAssertEqual(NotionImportValueMapper.propertyType("formula"), .init(storage: .text, requiresReview: true))
         XCTAssertEqual(NotionImportValueMapper.propertyType("people"), .init(storage: .dropped, requiresReview: false))
         XCTAssertEqual(NotionImportValueMapper.propertyType("file"), .init(storage: .unsupported, requiresReview: true))
+    }
+
+    func testPreviewFlagsMultipleRelationsAndRollupCalculations() {
+        let definitions: NotionJSONValue = .object([
+            "Project": .object(["type": .string("relation"), "relation": .object(["data_source_id": .string("projects")])]),
+            "Total": .object(["type": .string("rollup"), "rollup": .object(["function": .string("sum")])]),
+        ])
+        let row: NotionJSONValue = .object(["properties": .object([
+            "Project": .object(["relation": .array([
+                .object(["id": .string("a")]), .object(["id": .string("b")]),
+            ])]),
+        ])])
+        let properties = NotionImportPreviewService.properties(
+            from: definitions, rows: [row], targetSourceIDs: ["projects"]
+        )
+
+        XCTAssertTrue(properties.first { $0.name == "Project" }?.requiresReview == true)
+        XCTAssertTrue(properties.first { $0.name == "Total" }?.requiresReview == true)
+        XCTAssertTrue(properties.first { $0.name == "Total" }?.proposedStorage.contains("rollup calculation") == true)
     }
 
     func testMarkdownRendererPreservesSupportedBlocksAndReportsUnsupportedOnes() {

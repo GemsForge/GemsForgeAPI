@@ -13,7 +13,7 @@ enum NotionImportValueMapper {
         case dateRange = "Start / End date columns"
         case fileMetadata = "FileMetadata"
         case relation = "Relation property"
-        case lookup = "Lookup property"
+        case lookup = "Lookup value only; rollup calculation needs review"
         case timestamp = "CreatedAt / UpdatedAt"
         case integer = "INTEGER"
         case dropped = "Dropped (single-user workspace)"
@@ -52,7 +52,7 @@ enum NotionImportValueMapper {
         case "status": return .init(storage: .status, requiresReview: false)
         case "date": return .init(storage: .dateRange, requiresReview: false)
         case "relation": return .init(storage: .relation, requiresReview: false)
-        case "rollup": return .init(storage: .lookup, requiresReview: false)
+        case "rollup": return .init(storage: .lookup, requiresReview: true)
         case "created_time": return .init(storage: .timestamp, requiresReview: false)
         case "last_edited_time": return .init(storage: .timestamp, requiresReview: false)
         case "unique_id": return .init(storage: .integer, requiresReview: false)

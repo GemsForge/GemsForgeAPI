@@ -54,9 +54,11 @@ as `notion-import-references`. Apply it with the live database migration
 preview/execute routes before importing. File copying requires
 `ASSET_DIRECTORY`; files hosted by Notion are copied into GemLife storage and
 registered in `FileMetadata`. External attachments and unsupported mappings
-are reported. Markdown block children are traversed recursively, and supported
-relations, select options, and rollups are installed as table properties where
-their targets can be resolved.
+are reported. Markdown block children are traversed recursively. Single-target
+relations and select options are installed where their targets resolve. A
+`show_original` Notion rollup can become a GemLife lookup; aggregate rollup
+functions and relations with multiple linked records need separate review and
+are not equivalent to GemLife's single-record lookups.
 
 The commit response lists created or updated rows, skips, failures, unmapped
 properties, and the verified backup name and size. This is a one-way import;

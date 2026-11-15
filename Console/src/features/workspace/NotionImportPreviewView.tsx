@@ -42,7 +42,8 @@ export function NotionImportPreviewView() {
             {pages.length === 1 ? "page" : "pages"}, and {preview.data.totalRows} proposed items found.
           </p>
           <p className="notion-import-note">
-            This is a read-only mapping preview. No GemLife records have been created from it.
+            This is a read-only mapping preview. No GemLife records have been created from it. Relations can link one
+            mapped record per row; Notion rollup calculations need separate review.
           </p>
           {preview.data.unmappedProperties.length > 0 ? (
             <div className="notion-import-message" role="status">

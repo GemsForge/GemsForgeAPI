@@ -174,8 +174,15 @@ struct NotionImportPreviewService: Sendable {
         for source in dataSources {
             guard let object = source.objectValue else { continue }
             let title = Self.title(from: object)
-            let properties = Self.properties(from: object["properties"])
             let rows = snapshot.rowsByDataSourceID[object["id"]?.stringValue ?? ""] ?? []
+            let targetSourceIDs = Set(dataSources.compactMap { value -> String? in
+                guard let candidate = value.objectValue,
+                      let id = candidate["id"]?.stringValue,
+                      Self.target(for: Self.title(from: candidate), object: "data_source") != "Review required"
+                else { return nil }
+                return id
+            })
+            let properties = Self.properties(from: object["properties"], rows: rows, targetSourceIDs: targetSourceIDs)
             let target = Self.target(for: title, object: "data_source")
             resources.append(.init(
                 notionID: object["id"]?.stringValue ?? "",
@@ -207,6 +214,7 @@ struct NotionImportPreviewService: Sendable {
                 "This preview is read-only. It does not modify GemLife or Notion.",
                 "Confirming this preview imports the captured pages and data-source rows into the authenticated Hub.",
                 "Rows with unknown targets or unsupported properties are reported and skipped unless the mappings are supported.",
+                "Relations support one mapped target per row. Notion rollup calculations are not reproduced by GemLife lookups.",
             ]
         )
     }
@@ -224,17 +232,28 @@ struct NotionImportPreviewService: Sendable {
         return "Untitled"
     }
 
-    private static func properties(from value: NotionJSONValue?) -> [NotionImportPreviewProperty] {
+    static func properties(
+        from value: NotionJSONValue?, rows: [NotionJSONValue], targetSourceIDs: Set<String>
+    ) -> [NotionImportPreviewProperty] {
         guard let values = value?.objectValue else { return [] }
         return values.keys.sorted().map { name in
             let property = values[name]?.objectValue ?? [:]
             let type = property["type"]?.stringValue ?? "unknown"
             let mapped = NotionImportValueMapper.propertyType(type)
+            let targetID = property["relation"]?.objectValue?["data_source_id"]?.stringValue
+                ?? property["relation"]?.objectValue?["database_id"]?.stringValue
+            let hasMultipleLinks = rows.contains { row in
+                (row.objectValue?["properties"]?.objectValue?[name]?.objectValue?["relation"]?.arrayValue?.count ?? 0) > 1
+            }
+            let relationNeedsReview = type == "relation" &&
+                (targetID.map { !targetSourceIDs.contains($0) } ?? true || hasMultipleLinks)
             return .init(
                 name: name,
                 notionType: type,
-                proposedStorage: mapped.storage.rawValue,
-                requiresReview: mapped.requiresReview
+                proposedStorage: relationNeedsReview
+                    ? "Single linked record only; target or multiple links need review"
+                    : mapped.storage.rawValue,
+                requiresReview: mapped.requiresReview || relationNeedsReview
             )
         }
     }

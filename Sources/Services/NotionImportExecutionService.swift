@@ -341,6 +341,7 @@ private struct NotionImportWriter: Sendable {
         let properties = object["properties"]?.objectValue ?? [:]
         for (name, property) in properties {
             let rawType = property.objectValue?["type"]?.stringValue ?? "unknown"
+            if rawType == "relation" || rawType == "rollup" { continue }
             let key = Self.normalized(name)
             let scalar = Self.scalar(property, type: rawType)
             guard let scalar else { continue }
@@ -660,6 +661,10 @@ private struct NotionImportWriter: Sendable {
                 }
                 for (name, property) in rawProperties where property.objectValue?["type"]?.stringValue == "rollup" {
                     let rollup = property.objectValue?["rollup"]?.objectValue ?? [:]
+                    guard rollup["function"]?.stringValue == "show_original" else {
+                        unmapped.append("\(sourceTitle): \(name) rollup aggregation is not supported by GemLife lookups")
+                        continue
+                    }
                     let relationName = rollup["relation_property_name"]?.stringValue
                     let targetColumn = rollup["rollup_property_name"]?.stringValue
                     guard let relationName, let relationID = relationIDs[relationName],
@@ -833,9 +838,10 @@ private struct NotionImportWriter: Sendable {
             let title = Self.title(object)
             return (object["properties"]?.objectValue ?? [:]).compactMap { name, property in
                 let type = property.objectValue?["type"]?.stringValue ?? "unknown"
-                return NotionImportValueMapper.propertyType(type).requiresReview
-                    ? "\(title): \(name) (\(type)) requires review and was not imported"
-                    : nil
+                guard NotionImportValueMapper.propertyType(type).requiresReview else { return nil }
+                return type == "rollup"
+                    ? "\(title): \(name) rollup requires review; only direct lookup values can be recreated"
+                    : "\(title): \(name) (\(type)) requires review and was not imported"
             }
         }
     }
