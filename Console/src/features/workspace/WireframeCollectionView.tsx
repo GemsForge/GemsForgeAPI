@@ -1,5 +1,15 @@
 import React, { cloneElement, isValidElement, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { ChevronDown, ChevronLeft, Archive, Expand, GalleryHorizontal, GripVertical, List, Table2, X } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronLeft,
+  Archive,
+  Expand,
+  GalleryHorizontal,
+  GripVertical,
+  List,
+  Table2,
+  X,
+} from "lucide-react";
 import { AgGridReact } from "ag-grid-react";
 import { themeQuartz, type ColDef, type ColDefField, type ICellRendererParams } from "ag-grid-community";
 import { useLiveSchemaQuery } from "../../data/workflowQueries";
@@ -148,6 +158,11 @@ export function WireframeCollectionView<T extends WireframeRecord>({
   const archiveRecord = useArchiveRecordMutation();
   const [archiveError, setArchiveError] = useState<string | null>(null);
   const [emojiEditing, setEmojiEditing] = useState(false);
+  const emojiInputRef = useRef<HTMLInputElement>(null);
+  // Move focus into the emoji dialog when it opens (replaces autoFocus for jsx-a11y).
+  useEffect(() => {
+    if (emojiEditing) emojiInputRef.current?.focus();
+  }, [emojiEditing]);
   const archivedRecordIDs = useMemo(
     () =>
       new Set(
@@ -1152,7 +1167,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
                           type="text"
                           defaultValue={selectedEmoji ?? config.recordEmoji ?? ""}
                           placeholder="Paste an emoji…"
-                          autoFocus
+                          ref={emojiInputRef}
                           onKeyDown={(e) => {
                             if (e.key === "Enter" || e.key === "Escape") {
                               if (e.key === "Enter") {

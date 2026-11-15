@@ -148,8 +148,9 @@ export function WireframeSchemaInspector<Record extends object>({
           ) : property.kind === "number" && typeof value.raw === "number" ? (
             formatRecordNumber(value.raw, property.numberFormat ?? inferRecordNumberFormat(property.id, property.label))
           ) : (property.kind === "url" || property.kind === "email") && propertyValue.href ? (
+            // Plain text: WireframeEditableValue renders the link, so an anchor here would nest <a> in <a>.
             typeof displayValue === "string" ? (
-              linkedDisplayValue
+              displayValue
             ) : (
               propertyValue.href
             )
