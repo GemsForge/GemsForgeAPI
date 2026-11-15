@@ -781,7 +781,8 @@ private struct NotionImportWriter: Sendable {
             let column = normalizedColumn(name)
             guard !["ID", "HubID", "Title"].contains(column), names.insert(column.lowercased()).inserted else { return nil }
             let storage = NotionImportValueMapper.propertyType(type).storage
-            let dataType: SQLiteColumnType = storage == .number ? .real : (type == "unique_id" ? .integer : .text)
+            let dataType: SQLiteColumnType = storage == .number ? .real
+                : (storage == .checkbox || type == "unique_id" ? .integer : .text)
             return TableBuilderColumnRequest(name: column, dataType: dataType, nullable: true, defaultValue: nil, primaryKey: false, unique: false)
         }.sorted { $0.name < $1.name }
     }
@@ -839,9 +840,12 @@ private struct NotionImportWriter: Sendable {
             return (object["properties"]?.objectValue ?? [:]).compactMap { name, property in
                 let type = property.objectValue?["type"]?.stringValue ?? "unknown"
                 guard NotionImportValueMapper.propertyType(type).requiresReview else { return nil }
-                return type == "rollup"
-                    ? "\(title): \(name) rollup requires review; only direct lookup values can be recreated"
-                    : "\(title): \(name) (\(type)) requires review and was not imported"
+                switch type {
+                case "rollup": return "\(title): \(name) rollup requires review; only direct lookup values can be recreated"
+                case "formula": return "\(title): \(name) formula result can be copied as text; its calculation needs review"
+                case "checkbox": return "\(title): \(name) checkbox value can be stored as 0/1; presentation needs review"
+                default: return "\(title): \(name) (\(type)) requires review and was not imported"
+                }
             }
         }
     }

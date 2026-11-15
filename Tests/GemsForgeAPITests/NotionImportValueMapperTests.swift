@@ -30,7 +30,8 @@ final class NotionImportValueMapperTests: XCTestCase {
         XCTAssertEqual(NotionImportValueMapper.propertyType("multi_select"), .init(storage: .multiSelect, requiresReview: false))
         XCTAssertEqual(NotionImportValueMapper.propertyType("relation"), .init(storage: .relation, requiresReview: false))
         XCTAssertEqual(NotionImportValueMapper.propertyType("rollup"), .init(storage: .lookup, requiresReview: true))
-        XCTAssertEqual(NotionImportValueMapper.propertyType("formula"), .init(storage: .text, requiresReview: true))
+        XCTAssertEqual(NotionImportValueMapper.propertyType("formula"), .init(storage: .formulaText, requiresReview: true))
+        XCTAssertEqual(NotionImportValueMapper.propertyType("checkbox"), .init(storage: .checkbox, requiresReview: true))
         XCTAssertEqual(NotionImportValueMapper.propertyType("people"), .init(storage: .dropped, requiresReview: false))
         XCTAssertEqual(NotionImportValueMapper.propertyType("file"), .init(storage: .unsupported, requiresReview: true))
     }

@@ -6,7 +6,9 @@ import Foundation
 enum NotionImportValueMapper {
     enum StorageKind: String, Sendable, Equatable {
         case text = "TEXT"
+        case formulaText = "TEXT value only; formula calculation needs review"
         case number = "REAL"
+        case checkbox = "INTEGER (0/1); checkbox presentation needs review"
         case select = "TEXT + Select options"
         case multiSelect = "TEXT + MultiSelect options"
         case status = "TEXT + Status options"
@@ -43,8 +45,10 @@ enum NotionImportValueMapper {
     /// and marked for review because formula semantics are not imported.
     static func propertyType(_ notionType: String) -> PropertyMapping {
         switch notionType {
-        case "title", "rich_text", "url", "email", "phone_number", "formula":
-            return .init(storage: .text, requiresReview: notionType == "formula")
+        case "title", "rich_text", "url", "email", "phone_number":
+            return .init(storage: .text, requiresReview: false)
+        case "formula": return .init(storage: .formulaText, requiresReview: true)
+        case "checkbox": return .init(storage: .checkbox, requiresReview: true)
         case "number": return .init(storage: .number, requiresReview: false)
         case "select": return .init(storage: .select, requiresReview: false)
         case "multi_select": return .init(storage: .multiSelect, requiresReview: false)
@@ -57,7 +61,7 @@ enum NotionImportValueMapper {
         case "last_edited_time": return .init(storage: .timestamp, requiresReview: false)
         case "unique_id": return .init(storage: .integer, requiresReview: false)
         case "people": return .init(storage: .dropped, requiresReview: false)
-        case "checkbox", "created_by", "last_edited_by", "verification",
+        case "created_by", "last_edited_by", "verification",
              "button", "place", "unknown":
             return .init(storage: .unsupported, requiresReview: true)
         default:
