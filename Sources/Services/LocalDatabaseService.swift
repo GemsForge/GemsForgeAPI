@@ -52,7 +52,8 @@ enum LocalDatabaseProfile: String, Codable, CaseIterable, Sendable {
             "CreateRecordPresentations",
             "CreateTrashEntries",
             "CreateTablePropertyDefinitions",
-            "CreateTableColumnDefinitions"
+            "CreateTableColumnDefinitions",
+            "CreateRecordBodies"
         ]
     }
 
@@ -104,6 +105,7 @@ enum LocalDatabaseProfile: String, Codable, CaseIterable, Sendable {
             app.migrations.add(CreateTrashEntries())
             app.migrations.add(CreateTablePropertyDefinitions())
             app.migrations.add(CreateTableColumnDefinitions())
+            app.migrations.add(CreateRecordBodies())
         }
     }
 }
