@@ -1,5 +1,19 @@
 name: Database validation
 
+# Two kinds of check:
+# 1. "API and migration tests" runs the test suite once. The tests use in-memory
+#    SQLite and pass configuration values in directly, so environment settings
+#    do not affect them and running them per environment would only repeat them.
+# 2. "<env> database configuration" runs Scripts/validate-database-environment.sh,
+#    which starts GemsForgeAPI the way that Gem Life environment starts it, using
+#    that environment's own keys (dev: DATABASE_PATH, fit: DATABASE_PATH_FIT,
+#    prod: DATABASE_PATH_PROD, plus the matching LIVE_DATABASE_BACKUP_DIRECTORY*),
+#    against a brand-new SQLite file:
+#      dev/fit  bootstrap backs up, applies every migration, verifies the schema,
+#               and a second bootstrap is a safe no-op
+#      prod     the offline bootstrap is refused
+#      all      the server starts and answers /health; unsafe settings are refused
+# No job connects to a real database or uses real secrets.
 on:
   pull_request:
     paths:
@@ -7,6 +21,7 @@ on:
       - 'Tests/**'
       - 'Package.swift'
       - 'Package.resolved'
+      - 'Scripts/validate-database-environment.sh'
       - '.github/workflows/database-validation.yml'
   push:
     branches: [master]
@@ -15,33 +30,37 @@ on:
       - 'Tests/**'
       - 'Package.swift'
       - 'Package.resolved'
+      - 'Scripts/validate-database-environment.sh'
       - '.github/workflows/database-validation.yml'
 
 permissions:
   contents: read
 
 jobs:
-  database-validation:
-    name: ${{ matrix.environment }} database validation
+  tests:
+    name: API and migration tests
     runs-on: macos-15
-    environment: ${{ matrix.environment }}
-    strategy:
-      fail-fast: false
-      matrix:
-        environment: [dev, fit, prod]
     timeout-minutes: 30
-    env:
-      GEMLIFE_ENVIRONMENT: ${{ matrix.environment }}
-      DATABASE_PATH: ${{ github.workspace }}/.ci/GemLife_DB_${{ matrix.environment }}.sqlite
-      LIVE_DATABASE_BACKUP_DIRECTORY: ${{ github.workspace }}/.ci/database-backups/${{ matrix.environment }}
     steps:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - name: Prepare isolated database paths
-        run: mkdir -p "$LIVE_DATABASE_BACKUP_DIRECTORY"
-      - name: Report selected environment
-        run: |
-          echo "Validating Gem Life environment: $GEMLIFE_ENVIRONMENT"
       - name: Run API and migration tests
         run: swift test --parallel
+
+  environment:
+    name: ${{ matrix.environment }} database configuration
+    runs-on: macos-15
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        environment: [dev, fit, prod]
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Build API
+        run: swift build --product GemsForgeAPI
+      - name: Start ${{ matrix.environment }} against a fresh database
+        run: Scripts/validate-database-environment.sh ${{ matrix.environment }}

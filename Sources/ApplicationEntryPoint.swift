@@ -20,7 +20,15 @@ enum EntryPoint {
             )
         )
 
-        try app.configureDatabase()
+        do {
+            try app.configureDatabase()
+        } catch {
+            // Report the configuration problem before stopping; otherwise Vapor's
+            // shutdown assertion is the only output and the reason is lost.
+            app.logger.critical("Database configuration error: \(error)")
+            try? await app.asyncShutdown()
+            throw error
+        }
         app.asyncCommands.use(BootstrapLegacyDatabaseCommand(), as: "bootstrap-legacy-database")
         app.middleware.use(SessionAuthenticationMiddleware())
         registerLocalAuthenticationRoutes(app)
