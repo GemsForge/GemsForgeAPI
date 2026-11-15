@@ -29,7 +29,9 @@ The route uses the authenticated session and requires the configured operator
 account. It searches both pages and data sources, follows Notion pagination,
 queries data-source rows, and returns each visible resource, its proposed
 GemLife target, property storage types, row count, and properties that need
-review. This is read-only: it does not write to Notion or GemLife.
+review. Pages whose parent is a Notion data source are counted in that data
+source's rows, not again as standalone pages. This is read-only: it does not
+write to Notion or GemLife.
 
 The preview marks unknown page/database targets and unsupported property types
 for review. Formula values are represented as plain text and flagged. The

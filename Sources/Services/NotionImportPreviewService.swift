@@ -157,7 +157,7 @@ struct NotionImportPreviewService: Sendable {
 
         var resources: [NotionImportPreviewResource] = []
         for page in pages {
-            guard let object = page.objectValue else { continue }
+            guard let object = page.objectValue, !Self.isDatabaseRow(object) else { continue }
             let title = Self.title(from: object)
             let target = Self.target(for: title, object: "page", notionObject: object)
             resources.append(.init(
@@ -267,12 +267,16 @@ struct NotionImportPreviewService: Sendable {
         }.joined()
     }
 
+    static func isDatabaseRow(_ object: [String: NotionJSONValue]) -> Bool {
+        guard let parentType = object["parent"]?.objectValue?["type"]?.stringValue else { return false }
+        return ["data_source_id", "database_id", "data_source", "database"].contains(parentType)
+    }
+
     static func target(for title: String, object: String, notionObject: [String: NotionJSONValue] = [:]) -> String {
         let key = title.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         if object == "page" {
             let parent = notionObject["parent"]?.objectValue ?? [:]
-            let parentType = parent["type"]?.stringValue
-            if parentType == "data_source" || parentType == "database" { return "Database row" }
+            if isDatabaseRow(notionObject) { return "Database row" }
             switch key {
             case "gem.personal", "gem personal": return "Hub"
             case "forgekeeper", "career", "family", "interests": return "Domain"

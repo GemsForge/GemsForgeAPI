@@ -71,7 +71,7 @@ private struct NotionImportWriter: Sendable {
         let tableMap = try await prepareCustomTables(snapshot.dataSources, excluding: excluded)
 
         let pageObjects = snapshot.pages.compactMap(\.objectValue)
-            .filter { ($0["parent"]?.objectValue?["type"]?.stringValue ?? "") != "data_source" }
+            .filter { !NotionImportPreviewService.isDatabaseRow($0) }
         let domains = pageObjects.filter { object in
             NotionImportPreviewService.target(
                 for: Self.title(object), object: "page", notionObject: object
@@ -745,13 +745,13 @@ private struct NotionImportWriter: Sendable {
     }
 
     private static func targetTable(for title: String) -> String? {
-        switch title.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() {
-        case "service expense tracker": return ServiceAccount.schema
-        case "budget", "budget (archive)": return ExpenseTransaction.schema
-        case "employment": return Employment.schema
-        case "education": return Education.schema
+        let target = NotionImportPreviewService.target(for: title, object: "data_source")
+        switch target {
+        case "Services": return ServiceAccount.schema
+        case "Transactions / Categories": return ExpenseTransaction.schema
+        case "Employment": return Employment.schema
+        case "Education": return Education.schema
         default:
-            let target = NotionImportPreviewService.target(for: title, object: "data_source")
             guard target.hasPrefix("Custom table: ") else { return nil }
             return customTableName(String(target.dropFirst("Custom table: ".count)))
         }

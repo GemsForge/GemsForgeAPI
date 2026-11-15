@@ -71,6 +71,19 @@ final class NotionImportValueMapperTests: XCTestCase {
         )
     }
 
+    func testPreviewClassifiesDataSourcePagesAsRows() {
+        for parentType in ["data_source_id", "database_id", "data_source", "database"] {
+            let page: [String: NotionJSONValue] = ["parent": .object(["type": .string(parentType)])]
+            XCTAssertTrue(NotionImportPreviewService.isDatabaseRow(page))
+            XCTAssertEqual(NotionImportPreviewService.target(for: "Recipe", object: "page", notionObject: page), "Database row")
+        }
+        let nestedPage: [String: NotionJSONValue] = ["parent": .object([
+            "type": .string("page_id"), "page_id": .string("parent-page"),
+        ])]
+        XCTAssertFalse(NotionImportPreviewService.isDatabaseRow(nestedPage))
+        XCTAssertEqual(NotionImportPreviewService.target(for: "Recipe", object: "page", notionObject: nestedPage), "ForgeKeeper")
+    }
+
     func testMarkdownRendererPreservesSupportedBlocksAndReportsUnsupportedOnes() {
         let blocks: [[String: Any]] = [
             ["type": "heading_1", "heading_1": ["rich_text": [["plain_text": "Journal"]]]],
