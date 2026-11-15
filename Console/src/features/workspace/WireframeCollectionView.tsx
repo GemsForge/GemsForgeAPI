@@ -1358,10 +1358,14 @@ export function WireframeCollectionView<T extends WireframeRecord>({
                 <div className="wireframe-record-body-inspector">
                   <p>Page</p>
                   <p>{bodyExcerptsQuery.data.find((item) => item.recordID === selected.id)?.excerpt}</p>
-                  <button type="button" onClick={openRecordPage}>Open page</button>
+                  <button type="button" onClick={openRecordPage}>
+                    Open page
+                  </button>
                 </div>
               ) : (
-                <button className="wireframe-record-body-open" type="button" onClick={openRecordPage}>Open page</button>
+                <button className="wireframe-record-body-open" type="button" onClick={openRecordPage}>
+                  Open page
+                </button>
               )}
             </aside>
           </>
