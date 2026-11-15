@@ -7,6 +7,8 @@ import type {
   TableColumnDefinitionInput,
 } from "../types";
 import { fileQueryKeys } from "./fileQueries";
+import { presentationQueryKeys } from "./presentationQueries";
+import { trashQueryKeys } from "./trashQueries";
 
 export type PageScope = { kind: "domain"; id: string } | { kind: "children"; id: number } | { kind: "roots" };
 export const workflowQueryKeys = {
@@ -62,6 +64,33 @@ export function useSchemaPageTablesQuery() {
     queryFn: ({ signal }) => api.getSchemaPageTables(signal),
   });
 }
+
+export function useDropTableMutation(tableName: string) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ confirmationToken, typedTableName }: { confirmationToken: string; typedTableName: string }) =>
+      api.dropTable(tableName, confirmationToken, typedTableName),
+    onSuccess: async () => {
+      await Promise.all([
+        client.invalidateQueries({ queryKey: workflowQueryKeys.schema }),
+        client.invalidateQueries({ queryKey: workflowQueryKeys.schemaPageTables }),
+        client.invalidateQueries({ queryKey: workflowQueryKeys.schemaPageRecords(tableName) }),
+        client.invalidateQueries({ queryKey: workflowQueryKeys.tableRecords(tableName) }),
+        client.invalidateQueries({ queryKey: workflowQueryKeys.tableColumnDefinitions(tableName) }),
+        client.invalidateQueries({ queryKey: workflowQueryKeys.tablePropertyDefinitions(tableName) }),
+        client.invalidateQueries({ queryKey: workflowQueryKeys.tablePropertyValuesForTable(tableName) }),
+        client.invalidateQueries({ queryKey: presentationQueryKeys.tableViews(tableName) }),
+        client.invalidateQueries({ queryKey: presentationQueryKeys.recordPresentations(tableName) }),
+        client.invalidateQueries({ queryKey: trashQueryKeys.entries }),
+      ]);
+    },
+  });
+}
+
+export function usePreviewTableDropMutation() {
+  return useMutation({ mutationFn: api.previewTableDrop });
+}
+
 export function useCreateSchemaPageMutation() {
   const client = useQueryClient();
   return useMutation({

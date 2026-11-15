@@ -522,6 +522,41 @@
   font-size: 0.8rem;
 }
 
+.table-drop-dialog {
+  width: min(42rem, calc(100vw - 2rem));
+  max-height: min(88vh, 52rem);
+  overflow: auto;
+}
+
+.table-drop-preview {
+  display: grid;
+  gap: 0.75rem;
+  margin: 1rem 0;
+  font-size: 0.85rem;
+}
+
+.table-drop-preview ul {
+  margin: 0.35rem 0;
+  padding-left: 1.25rem;
+}
+
+.table-drop-confirm-label {
+  display: grid;
+  gap: 0.4rem;
+  margin: 1rem 0;
+  font-size: 0.85rem;
+}
+
+.table-drop-confirm-label input {
+  min-height: 2.5rem;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--gem-wireframe-border, #d9dfdc);
+  border-radius: 0.45rem;
+  background: var(--gem-wireframe-surface, #fff);
+  color: var(--gem-wireframe-text, #233c42);
+  font: inherit;
+}
+
 .wireframe-inspector-trash-button {
   min-width: 2.25rem !important;
   min-height: 2.25rem !important;

@@ -88,6 +88,7 @@ export type WireframeCollectionConfig<T extends WireframeRecord> = {
   title: string;
   description: string;
   headerBanner?: ReactNode;
+  tableActions?: ReactNode;
   domainLabel?: string;
   domainHue?: string;
   recordEmoji?: string;
@@ -1024,6 +1025,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
               tableIconOptions={PROPERTY_ICON_LIBRARY}
               onTableIconChange={updateTableIcon}
             />
+            {config.tableActions}
             <Theme name="light">
               <Table.Actions
                 onNew={config.onCreateRecord}

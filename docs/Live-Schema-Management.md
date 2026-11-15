@@ -81,9 +81,11 @@ file-metadata-create
 ```
 
 Approved live changes are additive only unless a separate design review
-explicitly expands the safety boundary. Arbitrary SQL, table drops, column
-drops, silent rewrites, and the isolated development migration profile are not
-permitted in this workflow.
+explicitly expands the safety boundary. Arbitrary SQL, column drops, silent
+rewrites, and the isolated development migration profile are not permitted in
+this workflow. User-created table deletion uses the separate reviewed workflow
+described in [`Table-Drop-Workflow.md`](Table-Drop-Workflow.md); it does not
+expose a generic destructive migration operation.
 
 ## Recovery procedure
 
