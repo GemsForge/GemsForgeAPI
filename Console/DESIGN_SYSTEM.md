@@ -7,10 +7,11 @@ table renderers while those surfaces migrate.
 
 ## Design principles
 
-- **One system, two canvas roles.** The persistent Console shell uses the dark
-  application palette. The schema-driven workspace uses a light reading canvas
-  for its collection, navigation pane, and inspector. This is intentional, not
-  a user-selectable theme mode.
+- **One application shell, scoped canvas roles.** `AppShell` owns the signed-in
+  Console navigation and route frame. Its workspace pages use the light
+  wireframe palette; the knowledge workspace keeps its own semantic surface
+  roles within that same frame. These are page surfaces, not separate shells
+  or user-selectable theme modes.
 - **Preserve the current composition.** The design system standardizes values,
   layout contracts, and component behavior; it does not redesign existing page
   hierarchies.
@@ -23,18 +24,22 @@ table renderers while those surfaces migrate.
 
 ## Canvas and semantic color roles
 
-| Role                   | Dark Console     | Light workspace        |
-| ---------------------- | ---------------- | ---------------------- |
-| Canvas                 | `$gemCanvas`     | `$wireframeCanvas`     |
-| Surface                | `$gemPanel`      | `$wireframePanel`      |
-| Raised surface / hover | `$gemPanelLight` | `$wireframePanelLight` |
-| Primary text           | `$gemInk`        | `$wireframeInk`        |
-| Headings               | `$gemInk`        | `$wireframeHeading`    |
-| Supporting text        | `$gemMuted`      | `$wireframeMuted`      |
-| Action / focus         | `$gemMint`       | `$wireframeMint`       |
-| Reference accent       | `$gemGold`       | `$wireframeGold`       |
-| Error                  | `$gemDanger`     | `$gemDanger`           |
-| Border                 | `$gemPanelLight` | `$wireframeLine`       |
+| Role                   | Shared Console palette | Workspace palette      |
+| ---------------------- | ---------------------- | ---------------------- |
+| Canvas                 | `$gemCanvas`           | `$wireframeCanvas`     |
+| Surface                | `$gemPanel`            | `$wireframePanel`      |
+| Raised surface / hover | `$gemPanelLight`       | `$wireframePanelLight` |
+| Primary text           | `$gemInk`              | `$wireframeInk`        |
+| Headings               | `$gemInk`              | `$wireframeHeading`    |
+| Supporting text        | `$gemMuted`            | `$wireframeMuted`      |
+| Action / focus         | `$gemMint`             | `$wireframeMint`       |
+| Reference accent       | `$gemGold`             | `$wireframeGold`       |
+| Error                  | `$gemDanger`           | `$gemDanger`           |
+| Border                 | `$gemPanelLight`       | `$wireframeLine`       |
+
+The CSS custom-property families that remain are the shared `--gem-*` semantic
+palette, `--gem-wireframe-*` workspace palette, and `--gem-knowledge-*` page
+surface palette. `AppShell` uses the shared workspace palette.
 
 Use a semantic role rather than selecting a palette color by appearance. Status
 colors must retain their text/icon cue; color alone does not communicate state.
@@ -113,21 +118,20 @@ unless that value defines a reusable layout or component contract.
 
 ## Layout recipes
 
-### Application shell
+### AppShell
 
-- Persistent navigation and route content stay in the shared shell.
-- At desktop widths, the navigation pane starts at 18rem, can resize up to
-  22.5rem, and leaves at least 26.25rem for route content. The compact rail is
-  4.25rem wide; the label threshold is a shared layout value.
-- At 900px and below, navigation collapses to the compact icon rail; content
-  remains the primary scroll region.
-- At 640px and below, multi-column form and feature grids become one column.
+- `AppShell` is the only signed-in application shell. It owns the persistent
+  navigation, collection pane, and optional record inspector layout.
+- The shell and workspace canvas use the shared light wireframe palette. Page
+  surface roles such as the knowledge palette remain scoped to their page.
+- At tablet widths, navigation uses the compact rail or drawer; at 640px and
+  below, multi-column form and feature grids become one column.
 
 ### Table workspace
 
 ```mermaid
 flowchart LR
-  Shell[Dark Console shell] --> Workspace[Light workspace canvas]
+  Shell[AppShell] --> Workspace[Workspace canvas]
   Workspace --> Nav[Navigation pane]
   Workspace --> Collection[Collection and toolbar]
   Workspace --> Inspector[Selected record inspector]
@@ -244,8 +248,8 @@ table region rather than widening the page.
 ## CSS compatibility boundary
 
 The root custom properties in `src/styles.css` mirror the Tamagui palette and
-shared elevation roles for legacy CSS consumers. The `.wireframe-demo` and `.wireframe-collection-page`
-scopes intentionally remap those aliases to the light workspace palette. Other
+shared elevation roles for CSS consumers. The `.wireframe-demo` and `.wireframe-collection-page`
+scopes intentionally map workspace aliases to the light workspace palette. Other
 feature rules remain CSS-owned until their feature migration; table-library
 variables and geometry rules also stay in CSS because the grid and virtualized
 renderers consume CSS custom properties directly. The wireframe MVP's shared
@@ -263,4 +267,4 @@ When migrating a surface:
 
 The current source/consumer relationship is tracked in
 [#505](https://github.com/GemsForge/GemsForgeAPI/issues/505). Feature-specific
-pages migrate incrementally after the shared shell and workspace foundation.
+pages migrate incrementally within `AppShell` and the shared workspace foundation.

@@ -15,6 +15,13 @@
   box-shadow: 0 8px 28px rgb(25 47 49 / 7%);
 }
 
+.wireframe-app-shell > .wireframe-demo {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+}
+
 .wireframe-demo.wireframe-standalone.inspector-closed {
   grid-template-columns: var(--wireframe-nav-width) minmax(0, 1fr);
 }
@@ -337,6 +344,14 @@
 .wireframe-standalone .database-panel-heading h3,
 .wireframe-standalone .builder-preview h4 {
   color: var(--gem-wireframe-heading, #173d45);
+}
+
+.wireframe-standalone .schema-panel h3 {
+  overflow-wrap: anywhere;
+}
+
+.wireframe-standalone .schema-table-button strong {
+  overflow-wrap: anywhere;
 }
 
 .wireframe-standalone .database-field,

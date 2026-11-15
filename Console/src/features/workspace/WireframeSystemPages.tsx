@@ -28,7 +28,7 @@ import {
   useServiceAccountsQuery,
   useTransactionsQuery,
 } from "../../data/lifeQueries";
-import { useWireframeShell } from "./WireframeAppShell";
+import { useAppShell } from "./AppShell";
 import { WireframePageView } from "./WireframePageView";
 
 export function WireframeSystemPage({
@@ -48,7 +48,7 @@ export function WireframeSystemPage({
   showCount?: boolean;
   activeCollection?: string;
 }) {
-  useWireframeShell({ recordCount: 0, activeCollection });
+  useAppShell({ recordCount: 0, activeCollection });
 
   return (
     <WireframePageView

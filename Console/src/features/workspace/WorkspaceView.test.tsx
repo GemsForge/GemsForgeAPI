@@ -144,11 +144,10 @@ describe("connected knowledge workspace", () => {
   });
 
   it("renders as shell page content with a regular-weight note and visible sample labels", async () => {
-    const { container } = renderWorkspace();
+    renderWorkspace();
 
     const note = await screen.findByText(/The best ideas begin as observations/);
     expect(getComputedStyle(note).fontWeight).toBe("400");
-    expect(container.querySelector(".app-shell, .app-navigation, .workspace-sidebar-botanical")).toBeNull();
     for (const label of ["Local sample · Markdown", "Sample table · local demo", "Local preview links · not saved"]) {
       expect(screen.getByText(label)).toBeVisible();
     }

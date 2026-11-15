@@ -2,7 +2,6 @@ import { lazy, Suspense, Component, useCallback, useEffect, useRef, useState, ty
 import { Link, Navigate, Outlet, Route, Routes, useLocation, useOutletContext, useParams } from "react-router-dom";
 import type { UseQueryResult } from "@tanstack/react-query";
 import { Theme } from "tamagui";
-import { useDomainsQuery } from "../data/domainQueries";
 import {
   useAddressesQuery,
   useEducationQuery,
@@ -13,13 +12,11 @@ import {
 } from "../data/lifeQueries";
 import { QueryFeedback } from "../components/QueryFeedback";
 import { Notice } from "../components/Notice";
-import { GemLifeShell } from "../components/layout/GemLifeShell";
-import { DomainSidebar } from "../features/domains/DomainSidebar";
 import { LocalSession } from "../components/LocalSession";
 import { RequireAuth } from "../auth/RequireAuth";
 import { SignInPage } from "../auth/SignInPage";
 import { WireframeAppHeader, WireframeNavigationProvider } from "../features/workspace/WireframeAppHeader";
-import { WireframeAppShell, useWireframeShell } from "../features/workspace/WireframeAppShell";
+import { AppShell, useAppShell } from "../features/workspace/AppShell";
 const EducationWireframeView = lazy(() =>
   import("../features/education/EducationWireframeView").then((module) => ({ default: module.EducationWireframeView })),
 );
@@ -122,38 +119,6 @@ export class ScreenBoundary extends Component<
   }
 }
 
-function Layout() {
-  const domains = useDomainsQuery();
-  const location = useLocation();
-  const [notice, setNotice] = useState<{ message: string; kind: "error" | "success" } | null>(null);
-  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  const onError = useCallback((error: unknown) => {
-    clearTimeout(timer.current);
-    setNotice({ message: error instanceof Error ? error.message : "Request failed.", kind: "error" });
-  }, []);
-  const onSuccess = useCallback((message: string) => {
-    clearTimeout(timer.current);
-    setNotice({ message, kind: "success" });
-    timer.current = setTimeout(() => setNotice(null), 3500);
-  }, []);
-  useEffect(() => () => clearTimeout(timer.current), []);
-  useEffect(() => {
-    setNotice(null);
-    document.title = "Gem Life · " + (location.pathname === "/" ? "Home" : location.pathname.split("/")[1]);
-    document.getElementById("main-content")?.focus();
-  }, [location.pathname]);
-  return (
-    <GemLifeShell sidebar={<DomainSidebar domains={domains.data ?? []} onRefresh={() => void domains.refetch()} />}>
-      <Notice message={notice?.message ?? null} kind={notice?.kind} />
-      <ScreenBoundary key={location.pathname}>
-        <Suspense fallback={<p role="status">Loading screen…</p>}>
-          <Outlet context={{ onError, onSuccess } satisfies Notifications} />
-        </Suspense>
-      </ScreenBoundary>
-    </GemLifeShell>
-  );
-}
-
 type ShellNotifications = Notifications & { notice: { message: string; kind: "error" | "success" } | null };
 
 function WireframeCanvas() {
@@ -184,13 +149,13 @@ function WireframeCanvas() {
         <WireframeNavigationProvider>
           <WireframeAppHeader />
           <main className="wireframe-canvas-content" id="main-content" tabIndex={-1} aria-label="Gem Life screen">
-            <WireframeAppShell>
+            <AppShell>
               <ScreenBoundary key={location.pathname}>
                 <Suspense fallback={<p role="status">Loading screen…</p>}>
                   <Outlet context={{ onError, onSuccess, notice } satisfies ShellNotifications} />
                 </Suspense>
               </ScreenBoundary>
-            </WireframeAppShell>
+            </AppShell>
           </main>
         </WireframeNavigationProvider>
       </div>
@@ -201,7 +166,7 @@ function WireframeCanvas() {
 /** Content column for screens that do not render their own MVP2 page view. */
 function ShellPage({ children }: { children: ReactNode }) {
   const { notice } = useOutletContext<ShellNotifications>();
-  useWireframeShell({ recordCount: 0 });
+  useAppShell({ recordCount: 0 });
   return (
     <section className="wireframe-demo-main wireframe-shell-page">
       <Notice message={notice?.message ?? null} kind={notice?.kind} />
@@ -333,6 +298,7 @@ export function AppRoutes() {
           }
         >
           <Route index element={<WireframeHomePage />} />
+          <Route path="wireframe-demo" element={<WireframeDemo />} />
           <Route path="workspace" element={<Workspace />} />
           <Route path="domains" element={<WireframeDomainsPage />} />
           <Route path="domains/:domainID" element={<DomainPagesRedirect />} />
@@ -406,15 +372,6 @@ export function AppRoutes() {
               </ShellPage>
             }
           />
-        </Route>
-        <Route
-          element={
-            <LocalSession>
-              <Layout />
-            </LocalSession>
-          }
-        >
-          <Route path="wireframe-demo" element={<WireframeDemo />} />
         </Route>
       </Route>
     </Routes>

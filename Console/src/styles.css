@@ -12,13 +12,6 @@
   --gem-action-hover: #1d574f;
   --gem-accent: #f0bd73;
   --gem-danger: #f08a83;
-  --gem-shell-canvas: #203b33;
-  --gem-shell-surface: #2a483c;
-  --gem-shell-line: #4c6658;
-  --gem-shell-ink: #f1f1e6;
-  --gem-shell-muted: #c0cabe;
-  --gem-shell-mint: #a9d4bc;
-  --gem-shell-active: #3b5949;
   --gem-knowledge-canvas: #f2f3e7;
   --gem-knowledge-panel: #faf9f2;
   --gem-knowledge-panel-light: #e7ebdc;
@@ -118,12 +111,6 @@
 .table-kit-pagination * {
   font-family: var(--gem-font-family) !important;
 }
-.sidebar a,
-a.page-card,
-a.primary-button,
-a.secondary-button {
-  text-decoration: none;
-}
 :where(a, button, input, select, textarea, [tabindex]):focus-visible {
   outline: 3px solid var(--mint) !important;
   outline-offset: 3px;
@@ -167,18 +154,13 @@ a {
     transition: none !important;
   }
 }
-.sidebar nav[aria-label="Gem Life navigation"] {
-  display: grid;
-  gap: 0.35rem;
-  margin-bottom: 2rem;
-}
 * {
   box-sizing: border-box;
 }
 body {
   margin: 0;
   min-width: 320px;
-  background: var(--gem-shell-canvas);
+  background: var(--gem-canvas);
   color: var(--ink);
 }
 button,
@@ -351,11 +333,6 @@ select {
 button {
   cursor: pointer;
 }
-.app-shell {
-  min-height: 100vh;
-  background: var(--gem-shell-canvas);
-  color: var(--gem-shell-ink);
-}
 .wireframe-canvas {
   min-height: 100vh;
   background: #f7f7f4;
@@ -514,39 +491,6 @@ button {
   margin: 0;
   font-size: 0.875rem;
 }
-.topbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  min-height: 5.5rem;
-  padding: 0.8rem clamp(1.25rem, 5vw, 5rem);
-  border-bottom: 1px solid var(--gem-shell-line);
-  background: var(--gem-shell-surface);
-}
-.app-brand {
-  display: flex;
-  min-width: 0;
-  align-items: center;
-  gap: 0.75rem;
-}
-.app-brand h1 {
-  color: var(--gem-shell-ink);
-  font-size: 1.35rem;
-  letter-spacing: -0.025em;
-}
-.app-brand .eyebrow {
-  margin-bottom: 0.2rem;
-  color: var(--gem-shell-muted);
-  letter-spacing: 0.08em;
-}
-.topbar .secondary-button {
-  border-color: var(--gem-shell-line);
-  color: var(--gem-shell-ink);
-}
-.topbar .secondary-button:hover {
-  border-color: var(--gem-shell-mint);
-  background: var(--gem-shell-active);
-}
 h1,
 h2,
 h3,
@@ -568,117 +512,10 @@ h3 {
 }
 .eyebrow {
   margin: 0 0 0.5rem;
-  color: var(--gem-shell-mint);
+  color: var(--gem-action);
   font-size: 0.7rem;
   font-weight: 800;
   letter-spacing: 0.16em;
-  text-transform: uppercase;
-}
-.connection-pill {
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  color: var(--gem-shell-muted);
-  font-size: 0.82rem;
-}
-.connection-pill span {
-  width: 0.55rem;
-  height: 0.55rem;
-  border-radius: 50%;
-  background: var(--gem-shell-mint);
-  box-shadow: 0 0 0 0.25rem rgba(120, 209, 189, 0.12);
-}
-.workspace {
-  display: grid;
-  grid-template-columns:
-    var(--sidebar-width, minmax(var(--gem-layout-app-sidebar-collapsed), var(--gem-layout-app-sidebar-expanded)))
-    0.5rem minmax(0, 1fr);
-  max-width: 1440px;
-  margin: 0 auto;
-}
-.sidebar-resizer {
-  position: relative;
-  z-index: 2;
-  width: 0.5rem;
-  min-width: 0.5rem;
-  cursor: col-resize;
-  touch-action: none;
-}
-.sidebar-resizer::after {
-  position: absolute;
-  inset: 0 0.2rem;
-  content: "";
-  background: transparent;
-  transition: background var(--gem-motion-quick) ease;
-}
-.sidebar-resizer:hover::after,
-.sidebar-resizer:focus-visible::after {
-  background: var(--mint);
-}
-.workspace[data-sidebar-collapsed="true"] .sidebar {
-  padding-inline: 0.5rem;
-}
-.workspace[data-sidebar-collapsed="false"] .sidebar {
-  padding-inline: clamp(0.75rem, 1.5vw, 1.25rem);
-}
-.workspace[data-sidebar-collapsed="true"] .navigation-links nav[aria-label="Gem Life navigation"] .resource-button {
-  grid-template-columns: 1fr;
-  width: 3.25rem;
-  min-width: 3.25rem;
-  padding: 0.55rem;
-  place-items: center;
-}
-.workspace[data-sidebar-collapsed="true"]
-  .navigation-links
-  nav[aria-label="Gem Life navigation"]
-  .resource-button
-  > span:last-child {
-  display: none;
-}
-.workspace[data-sidebar-collapsed="true"] .navigation-links nav[aria-label="Gem Life navigation"] .resource-mark {
-  margin: 0;
-}
-.workspace[data-sidebar-collapsed="true"] .navigation-links .section-heading,
-.workspace[data-sidebar-collapsed="true"] .navigation-links .domain-list,
-.workspace[data-sidebar-collapsed="true"] .navigation-links .sidebar-note {
-  display: none;
-}
-.sidebar {
-  min-height: calc(100vh - 124px);
-  padding: 2rem clamp(1.25rem, 4vw, 3rem);
-  border-right: 1px solid var(--gem-shell-line);
-  background: var(--gem-shell-surface);
-  color: var(--gem-shell-ink);
-}
-.sidebar .section-heading,
-.sidebar .sidebar-note,
-.sidebar .arrow {
-  color: var(--gem-shell-muted);
-}
-.sidebar small,
-.sidebar .icon-button {
-  color: var(--gem-shell-muted);
-}
-.sidebar .resource-button,
-.sidebar .domain-button {
-  color: var(--gem-shell-ink);
-}
-.sidebar .resource-button:hover,
-.sidebar .resource-button.selected,
-.sidebar .domain-button:hover,
-.sidebar .domain-button.selected {
-  border-color: transparent;
-  background: var(--gem-shell-active);
-}
-.section-heading {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.2rem;
-  color: var(--muted);
-  font-size: 0.8rem;
-  font-weight: 800;
-  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 .icon-button {
@@ -697,87 +534,6 @@ h3 {
 }
 .icon-button:hover {
   color: var(--ink);
-}
-.domain-list {
-  display: grid;
-  gap: 0.55rem;
-}
-.domain-button,
-.resource-button {
-  display: grid;
-  grid-template-columns: 2rem 1fr auto;
-  align-items: center;
-  gap: 0.75rem;
-  width: 100%;
-  padding: 0.7rem;
-  border: 1px solid transparent;
-  border-radius: 0.75rem;
-  color: var(--ink);
-  text-align: left;
-  background: transparent;
-}
-.domain-button:hover,
-.domain-button.selected {
-  border-color: rgba(120, 209, 189, 0.28);
-  background: var(--panel-light);
-}
-.domain-mark,
-.resource-mark {
-  display: grid;
-  place-items: center;
-  width: 2rem;
-  height: 2rem;
-  border-radius: 0.6rem;
-  background: var(--mint-dark);
-  color: var(--mint);
-  font-weight: 800;
-}
-.domain-button strong,
-.domain-button small,
-.resource-button strong,
-.resource-button small {
-  display: block;
-}
-.domain-button strong,
-.resource-button strong {
-  font-size: 0.9rem;
-}
-.domain-button small,
-.resource-button small {
-  margin-top: 0.2rem;
-  color: var(--muted);
-  font-size: 0.7rem;
-}
-.resource-button:hover,
-.resource-button.selected {
-  border-color: rgba(240, 189, 115, 0.35);
-  background: rgba(93, 65, 36, 0.18);
-}
-.resource-mark {
-  background: rgba(240, 189, 115, 0.18);
-  color: var(--gold);
-  font-size: 1.2rem;
-}
-.arrow {
-  color: var(--muted);
-  font-size: 1.2rem;
-}
-.sidebar-note {
-  margin-top: 3rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--line);
-  color: var(--muted);
-  font-size: 0.78rem;
-  line-height: 1.55;
-}
-.sidebar-note strong {
-  color: var(--gold);
-}
-.sidebar-section {
-  margin-top: 2.5rem;
-}
-.content {
-  padding: 2.4rem clamp(1.25rem, 5vw, 5rem);
 }
 .content-heading,
 .hue-heading {
@@ -1182,271 +938,6 @@ h3 {
 }
 
 /* Connected knowledge workspace composition, aligned to its editorial reference. */
-.app-shell {
-  display: grid;
-  min-height: 100vh;
-  grid-template-columns: var(--sidebar-width, 18rem) 0.5rem minmax(0, 1fr);
-  grid-template-rows: 3.625rem minmax(0, 1fr);
-  max-width: none;
-  margin: 0;
-  overflow: clip;
-  background: var(--gem-shell-canvas);
-}
-.app-navigation {
-  position: sticky;
-  top: 0;
-  z-index: 5;
-  grid-column: 1;
-  grid-row: 1 / -1;
-  display: flex;
-  width: var(--sidebar-width, 18rem);
-  height: 100dvh;
-  min-height: 0;
-  flex-direction: column;
-  overflow: hidden auto;
-  padding: 1.1rem 1rem;
-  border: 0;
-  border-right: 1px solid var(--gem-shell-line);
-  border-radius: 0;
-  background: linear-gradient(160deg, #253d32 0%, #263e33 45%, #2d4939 100%);
-  color: var(--gem-shell-ink);
-}
-.shell-brand {
-  display: flex;
-  min-height: 3rem;
-  align-items: center;
-  gap: 1rem;
-  padding: 0 0.75rem;
-  margin-bottom: 1.15rem;
-  color: var(--gem-shell-ink);
-  font-family: var(--gem-font-family);
-  font-size: 1.1rem;
-  letter-spacing: 0.22em;
-  text-decoration: none;
-}
-.shell-brand-mark {
-  color: #e5c66a;
-  font-family: var(--gem-font-family);
-  font-size: 2.2rem;
-  line-height: 1;
-}
-.app-navigation .navigation-links {
-  min-height: 0;
-  overflow-y: auto;
-}
-.workspace-primary-navigation,
-.workspace-root-navigation {
-  display: grid;
-  gap: 0.2rem;
-}
-.workspace-primary-navigation {
-  padding-bottom: 1.15rem;
-  border-bottom: 1px solid color-mix(in srgb, var(--gem-shell-muted) 30%, transparent);
-}
-.workspace-primary-navigation .resource-button,
-.workspace-root-link {
-  display: flex;
-  min-height: 2.8rem;
-  align-items: center;
-  gap: 0.85rem;
-  padding: 0.55rem 0.75rem;
-  border: 0;
-  border-radius: 0.55rem;
-  color: var(--gem-shell-ink);
-  background: transparent;
-  font-size: 0.93rem;
-  font-weight: 450;
-  text-decoration: none;
-}
-.workspace-primary-navigation .resource-button > span:first-child,
-.workspace-root-link > span:first-child {
-  display: grid;
-  width: 1.5rem;
-  place-items: center;
-  color: #e4e7cd;
-  font-size: 1.2rem;
-}
-.workspace-primary-navigation .resource-button strong,
-.workspace-primary-navigation .resource-button small {
-  display: inline;
-  margin: 0;
-  font-size: inherit;
-  font-weight: inherit;
-}
-.workspace-primary-navigation .resource-button small {
-  display: none;
-}
-.workspace-primary-navigation .resource-button.selected,
-.workspace-primary-navigation .resource-button:hover,
-.workspace-root-link.selected,
-.workspace-root-link:hover {
-  color: #fffef2;
-  background: rgba(216, 222, 188, 0.2);
-}
-.workspace-library-heading {
-  padding: 1.35rem 0.75rem 0.55rem;
-  color: #e8e9d8;
-  font-size: 0.88rem;
-}
-.workspace-root-link {
-  min-height: 2.45rem;
-  font-size: 0.88rem;
-}
-.workspace-sidebar-botanical {
-  min-height: 10rem;
-  flex: 1 0 10rem;
-  margin: auto -1rem -1.1rem;
-  background: url("/botanical-sprig.svg") left bottom / auto 15rem no-repeat;
-  opacity: 0.56;
-  pointer-events: none;
-}
-.sidebar-resizer {
-  position: sticky;
-  z-index: 6;
-  top: 0;
-  grid-column: 2;
-  grid-row: 1 / -1;
-  width: 0.5rem;
-  height: 100dvh;
-  min-width: 0.5rem;
-  cursor: col-resize;
-  touch-action: none;
-}
-.sidebar-resizer::after {
-  inset: 0 0.2rem;
-}
-.sidebar-resizer:hover::after,
-.sidebar-resizer:focus-visible::after {
-  background: var(--gem-shell-mint);
-}
-.app-main-column {
-  display: grid;
-  min-width: 0;
-  min-height: 100vh;
-  grid-column: 3;
-  grid-row: 1 / -1;
-  grid-template-rows: 3.625rem minmax(0, 1fr);
-  background: var(--gem-shell-canvas);
-}
-.topbar {
-  position: sticky;
-  top: 0;
-  z-index: 4;
-  display: flex;
-  min-width: 0;
-  min-height: 3.625rem;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 0 1.25rem 0 1.5rem;
-  border: 0;
-  border-bottom: 1px solid var(--gem-shell-line);
-  background: var(--gem-shell-surface);
-}
-.workspace-breadcrumbs {
-  display: flex;
-  min-width: 0;
-  align-items: center;
-  gap: 0.75rem;
-  color: var(--gem-shell-ink);
-  white-space: nowrap;
-}
-.workspace-breadcrumbs button {
-  min-width: 2rem;
-  min-height: 2rem;
-  padding: 0;
-  border: 0;
-  color: var(--gem-shell-muted);
-  background: transparent;
-  font-size: 1.2rem;
-}
-.breadcrumb-library {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-}
-.workspace-search {
-  position: relative;
-  display: flex;
-  width: min(25rem, 36vw);
-  min-width: 13rem;
-  min-height: 2.5rem;
-  align-items: center;
-  gap: 0.65rem;
-  padding: 0 0.7rem;
-  border: 1px solid var(--gem-shell-line);
-  border-radius: 0.6rem;
-  color: var(--gem-shell-muted);
-  background: color-mix(in srgb, var(--gem-shell-surface) 86%, #eee9d8);
-}
-.workspace-search-results {
-  position: absolute;
-  z-index: 20;
-  top: calc(100% + 0.35rem);
-  right: 0;
-  display: grid;
-  width: min(22rem, calc(100vw - 2rem));
-  padding: 0.35rem;
-  border: 1px solid var(--gem-knowledge-line);
-  border-radius: 0.65rem;
-  background: var(--gem-knowledge-panel);
-  box-shadow: 0 0.65rem 1.8rem rgba(25, 35, 27, 0.16);
-}
-.workspace-search-results a,
-.workspace-search-results > span {
-  padding: 0.65rem 0.75rem;
-  border-radius: 0.4rem;
-  color: var(--gem-knowledge-ink);
-  text-decoration: none;
-}
-.workspace-search-results a:hover,
-.workspace-search-results a:focus-visible {
-  background: var(--gem-knowledge-panel-light);
-}
-.workspace-mobile-menu {
-  display: none;
-}
-.workspace-search-toggle {
-  display: none;
-}
-.workspace-search input {
-  width: 100%;
-  min-width: 0;
-  padding: 0;
-  border: 0;
-  outline: none;
-  color: var(--gem-shell-ink);
-  background: transparent;
-}
-.workspace-search input::placeholder {
-  color: var(--gem-shell-muted);
-}
-.workspace-search kbd {
-  flex: 0 0 auto;
-  font-size: 0.75rem;
-}
-.shell-sign-out {
-  min-width: 2.5rem;
-  min-height: 2.5rem;
-  padding: 0;
-  border-color: transparent;
-  color: var(--gem-shell-muted);
-  font-size: 1.35rem;
-}
-.workspace {
-  display: block;
-  min-width: 0;
-  min-height: 0;
-  grid-column: 3;
-  grid-row: 2;
-  overflow: auto;
-  background: var(--gem-shell-canvas);
-}
-.content {
-  min-height: 100%;
-  padding: 0;
-  overflow: visible;
-}
 .hybrid-workspace {
   min-width: 0;
   /* Reset the legacy full-viewport min-height: the canvas sizes to its content inside the shell. */
@@ -1792,31 +1283,6 @@ h3 {
   outline-color: var(--gem-knowledge-gold) !important;
 }
 @media (max-width: 900px) {
-  .app-shell {
-    grid-template-columns: 13rem 0.5rem minmax(0, 1fr);
-  }
-  .app-shell[data-sidebar-collapsed="true"] {
-    grid-template-columns: 4.25rem 0.5rem minmax(0, 1fr);
-  }
-  .app-shell[data-sidebar-collapsed="true"] .app-navigation {
-    width: 4.25rem;
-    padding-inline: 0.45rem;
-  }
-  .app-shell[data-sidebar-collapsed="true"] .shell-brand > span:last-child,
-  .app-shell[data-sidebar-collapsed="true"] .workspace-primary-navigation .resource-button:not(.selected),
-  .app-shell[data-sidebar-collapsed="true"] .workspace-primary-navigation .resource-button,
-  .app-shell[data-sidebar-collapsed="true"] .workspace-library-heading,
-  .app-shell[data-sidebar-collapsed="true"] .workspace-root-navigation,
-  .app-shell[data-sidebar-collapsed="true"] .workspace-sidebar-botanical {
-    display: none;
-  }
-  .app-shell[data-sidebar-collapsed="true"] .shell-brand {
-    justify-content: center;
-    padding: 0;
-  }
-  .workspace-primary-navigation .resource-button {
-    justify-content: flex-start;
-  }
   .hybrid-workspace {
     padding-inline: 1.5rem;
   }
@@ -1832,135 +1298,6 @@ h3 {
   }
 }
 @media (max-width: 640px) {
-  .app-shell {
-    grid-template-columns: 3.5rem 0.35rem minmax(0, 1fr);
-    grid-template-rows: 3.4rem minmax(0, 1fr);
-  }
-  .app-navigation {
-    width: 3.5rem;
-    padding: 0.6rem 0.25rem;
-  }
-  .shell-brand {
-    justify-content: center;
-    padding: 0;
-    margin-bottom: 0.5rem;
-  }
-  .shell-brand > span:last-child,
-  .app-navigation .navigation-links,
-  .workspace-library-heading,
-  .workspace-root-navigation,
-  .workspace-sidebar-botanical,
-  .workspace-primary-navigation .resource-button:not(.selected) {
-    display: none;
-  }
-  .workspace-mobile-menu {
-    display: inline-grid;
-    width: 2rem;
-    height: 2rem;
-    place-items: center;
-    border: 0;
-    background: transparent;
-    color: var(--gem-knowledge-ink);
-    font-size: 1.1rem;
-  }
-  .app-shell[data-mobile-nav-open="true"] .app-navigation {
-    position: fixed;
-    z-index: 30;
-    inset: 0 auto 0 0;
-    width: min(18rem, calc(100vw - 3.5rem));
-    padding: 0.8rem;
-    box-shadow: 0 0 0 100vw rgba(15, 24, 18, 0.42);
-  }
-  .app-shell[data-mobile-nav-open="true"] .shell-brand > span:last-child,
-  .app-shell[data-mobile-nav-open="true"] .workspace-library-heading,
-  .app-shell[data-mobile-nav-open="true"] .workspace-root-navigation,
-  .app-shell[data-mobile-nav-open="true"] .workspace-primary-navigation .resource-button:not(.selected) {
-    display: flex;
-  }
-  .app-shell[data-mobile-nav-open="true"] .workspace-library-heading {
-    display: block;
-  }
-  .app-shell[data-mobile-nav-open="true"] .workspace-primary-navigation {
-    border-bottom: 1px solid color-mix(in srgb, var(--gem-shell-muted) 30%, transparent);
-  }
-  .app-shell[data-mobile-nav-open="true"] .workspace-primary-navigation .resource-button {
-    justify-content: flex-start;
-    font-size: 0.9rem;
-  }
-  .app-shell[data-mobile-nav-open="true"] .workspace-root-navigation {
-    display: grid;
-  }
-  .app-shell[data-mobile-nav-open="true"] .sidebar-resizer {
-    display: none;
-  }
-  .workspace-primary-navigation {
-    border: 0;
-  }
-  .workspace-primary-navigation .resource-button {
-    justify-content: center;
-    padding: 0.35rem;
-    font-size: 0;
-  }
-  .workspace-primary-navigation .resource-button > span:first-child {
-    font-size: 1.15rem;
-  }
-  .sidebar-resizer {
-    width: 0.35rem;
-    min-width: 0.35rem;
-  }
-  .app-main-column {
-    grid-template-rows: 3.4rem minmax(0, 1fr);
-  }
-  .topbar {
-    gap: 0.45rem;
-    padding-inline: 0.5rem;
-  }
-  .workspace-breadcrumbs {
-    gap: 0.2rem;
-    font-size: 0.74rem;
-  }
-  .workspace-breadcrumbs button {
-    min-width: 1.6rem;
-    font-size: 1rem;
-  }
-  .breadcrumb-library {
-    font-size: 0;
-  }
-  .breadcrumb-library::first-letter {
-    font-size: 1rem;
-  }
-  .workspace-search {
-    width: 2.4rem;
-    min-width: 2.4rem;
-    min-height: 2.25rem;
-    justify-content: center;
-    padding: 0 0.4rem;
-  }
-  .workspace-search-toggle {
-    display: inline-grid;
-    width: 2rem;
-    height: 2rem;
-    flex: 0 0 auto;
-    place-items: center;
-    padding: 0;
-    border: 0;
-    color: var(--gem-knowledge-muted);
-    background: transparent;
-    font-size: 1.25rem;
-  }
-  .workspace-search:not([data-mobile-open="true"]) input,
-  .workspace-search kbd,
-  .connection-pill {
-    display: none;
-  }
-  .workspace-search[data-mobile-open="true"] {
-    width: min(17rem, calc(100vw - 5rem));
-    min-width: 0;
-    justify-content: flex-start;
-  }
-  .workspace-search[data-mobile-open="true"] input {
-    display: block;
-  }
   .hybrid-workspace {
     padding: 1.1rem 0.85rem 1.5rem;
   }
@@ -2011,26 +1348,6 @@ h3 {
   }
 }
 
-/* Final shell overrides keep the app frame stable across legacy responsive rules. */
-.app-shell > .app-navigation {
-  width: var(--sidebar-width, 18rem);
-  min-height: 0;
-  max-height: 100dvh;
-  padding: 1.1rem 1rem;
-  border-right: 1px solid var(--gem-shell-line);
-  border-bottom: 0;
-}
-.app-main-column > .workspace {
-  display: block;
-  grid-column: 1 / -1;
-  grid-template-columns: none;
-  min-height: 0;
-  overflow: auto;
-}
-.app-main-column > .workspace > .content {
-  min-height: 100%;
-  padding: 0;
-}
 .workspace-inline-fields .workspace-page-title-input {
   width: min(100%, 60rem);
   max-width: 100%;
@@ -2046,51 +1363,9 @@ h3 {
   color: #56634b;
   font-family: var(--gem-font-family);
 }
-.app-shell[data-sidebar-collapsed="true"]
-  .app-navigation
-  .navigation-links
-  nav[aria-label="Gem Life navigation"]
-  .resource-button {
-  grid-template-columns: 1fr;
-  width: 3.25rem;
-  min-width: 3.25rem;
-  padding: 0.55rem;
-  place-items: center;
-}
-.app-shell[data-sidebar-collapsed="true"]
-  .app-navigation
-  .navigation-links
-  nav[aria-label="Gem Life navigation"]
-  .resource-button
-  > span:last-child,
-.app-shell[data-sidebar-collapsed="true"] .app-navigation .navigation-links .section-heading,
-.app-shell[data-sidebar-collapsed="true"] .app-navigation .navigation-links .domain-list,
-.app-shell[data-sidebar-collapsed="true"] .app-navigation .navigation-links .sidebar-note {
-  display: none;
-}
-.app-shell[data-sidebar-collapsed="true"]
-  .app-navigation
-  .navigation-links
-  nav[aria-label="Gem Life navigation"]
-  .resource-mark {
-  margin: 0;
-}
 @media (max-width: 900px) {
-  .app-shell > .app-navigation {
-    width: var(--sidebar-width, 4.25rem);
-  }
-  .app-main-column > .workspace {
-    display: block;
-  }
 }
 @media (max-width: 640px) {
-  .app-shell > .app-navigation {
-    width: 3.5rem;
-    padding: 0.6rem 0.25rem;
-  }
-  .app-main-column > .workspace {
-    display: block;
-  }
 }
 .workspace-empty-state {
   display: grid;
@@ -6681,24 +5956,6 @@ dialog::backdrop {
   font-size: 0.72rem;
 }
 @media (max-width: 760px) {
-  .topbar {
-    align-items: start;
-    gap: 1rem;
-  }
-  .workspace {
-    display: block;
-  }
-  .sidebar {
-    min-height: auto;
-    border-right: 0;
-    border-bottom: 1px solid var(--line);
-  }
-  .domain-list {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .sidebar-note {
-    display: none;
-  }
   .content-heading,
   .import-card,
   .page-card,
@@ -7274,22 +6531,6 @@ dialog::backdrop {
 body {
   min-width: 0;
 }
-.workspace {
-  grid-template-columns: var(--sidebar-width, minmax(15rem, 20rem)) 0.5rem minmax(0, 1fr);
-}
-.workspace > *,
-.content > *,
-.database-layout > *,
-.schema-layout > *,
-.builder-column > *,
-.navigation-links,
-.resource-button > *,
-.domain-button > * {
-  min-width: 0;
-}
-.content {
-  overflow-wrap: anywhere;
-}
 input,
 select,
 textarea {
@@ -7306,9 +6547,6 @@ img {
 dialog {
   max-height: calc(100dvh - 2rem);
   overflow: auto;
-}
-.sidebar-toggle {
-  display: none;
 }
 .local-session-bar {
   display: flex;
@@ -7356,67 +6594,6 @@ dialog {
   }
 }
 @media (max-width: 900px) {
-  .workspace {
-    display: grid;
-    grid-template-columns: var(--sidebar-width, 4.25rem) 0.5rem minmax(0, 1fr);
-  }
-  .sidebar {
-    position: sticky;
-    top: 0;
-    align-self: start;
-    min-height: 100dvh;
-    max-height: 100dvh;
-    overflow-y: auto;
-    padding: 0.75rem 0.5rem;
-    border-right: 1px solid var(--line);
-    border-bottom: 0;
-  }
-  .sidebar-toggle {
-    display: none;
-  }
-  .navigation-links,
-  .navigation-links:not(.is-open),
-  .navigation-links.is-open {
-    display: block;
-    padding-top: 0;
-  }
-  .navigation-links nav[aria-label="Gem Life navigation"] {
-    display: grid;
-    gap: 0.4rem;
-    margin: 0;
-  }
-  .workspace[data-sidebar-collapsed="true"] .navigation-links nav[aria-label="Gem Life navigation"] .resource-button {
-    grid-template-columns: 1fr;
-    width: 3.25rem;
-    min-width: 3.25rem;
-    padding: 0.55rem;
-    place-items: center;
-  }
-  .workspace[data-sidebar-collapsed="true"]
-    .navigation-links
-    nav[aria-label="Gem Life navigation"]
-    .resource-button
-    > span:last-child {
-    display: none;
-  }
-  .workspace[data-sidebar-collapsed="true"] .navigation-links nav[aria-label="Gem Life navigation"] .resource-mark {
-    margin: 0;
-  }
-  .workspace[data-sidebar-collapsed="true"] .navigation-links .section-heading,
-  .workspace[data-sidebar-collapsed="true"] .navigation-links .domain-list,
-  .workspace[data-sidebar-collapsed="true"] .navigation-links .sidebar-note {
-    display: none;
-  }
-  .sidebar-note {
-    display: none;
-  }
-  .topbar {
-    flex-wrap: wrap;
-    gap: 1rem;
-  }
-  .content {
-    padding: 1.5rem 1rem;
-  }
   .wireframe-collection-page {
     margin-inline: -1rem;
   }
@@ -7425,11 +6602,6 @@ dialog {
   }
 }
 @media (max-width: 640px) {
-  .domain-list,
-  .schema-guidance-grid,
-  .builder-column {
-    grid-template-columns: minmax(0, 1fr);
-  }
   .education-card,
   .employment-card,
   .address-card,
