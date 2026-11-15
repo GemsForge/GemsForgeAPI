@@ -2876,7 +2876,7 @@ dialog::backdrop {
   display: grid;
   place-items: center;
   min-height: 14rem;
-  color: #738187;
+  color: var(--gem-wireframe-muted);
   text-align: center;
 }
 .wireframe-demo-inspector {
@@ -3002,7 +3002,7 @@ dialog::backdrop {
 }
 .demo-search kbd {
   font-size: 0.65rem;
-  color: #849197;
+  color: var(--gem-wireframe-muted);
 }
 .demo-nav,
 .demo-collections {
@@ -3069,7 +3069,7 @@ dialog::backdrop {
   display: contents;
 }
 .wireframe-collection-link-name > span {
-  color: #39736d;
+  color: inherit;
 }
 .wireframe-demo-sidebar .demo-nav .wireframe-primary-link,
 .wireframe-demo-sidebar .demo-nav .wireframe-primary-link > a {
@@ -3144,7 +3144,7 @@ dialog::backdrop {
 }
 .wireframe-utility-links small {
   margin-left: auto;
-  color: #849197;
+  color: var(--gem-wireframe-muted);
 }
 .demo-nav button:hover,
 .demo-collections button:hover,
@@ -3155,7 +3155,7 @@ dialog::backdrop {
 .demo-collections button small,
 .demo-trash small {
   margin-left: auto;
-  color: #849197;
+  color: var(--gem-wireframe-muted);
 }
 .demo-sidebar-label {
   display: flex;
@@ -3226,7 +3226,7 @@ dialog::backdrop {
 .demo-collection-title p,
 .demo-inspector-heading p {
   margin: 0.25rem 0 0;
-  color: #738187;
+  color: var(--gem-wireframe-muted);
   font-size: 0.8rem;
 }
 .demo-record-count {
@@ -3418,7 +3418,7 @@ dialog::backdrop {
   font-size: 0.8rem;
 }
 .wireframe-standalone .record-utilities-search-field input::placeholder {
-  color: #849197;
+  color: var(--gem-wireframe-muted);
 }
 .wireframe-standalone .record-utilities-search-field input:focus-visible {
   border-color: #39736d;
@@ -3463,7 +3463,7 @@ dialog::backdrop {
   justify-content: space-between;
   gap: 0.65rem;
   padding: 0.75rem 0;
-  color: #68777c;
+  color: var(--gem-wireframe-muted);
   font-family: "Avenir Next", "Avenir Next Demo", Avenir, Inter, ui-sans-serif, system-ui, sans-serif;
   font-size: 0.78rem;
 }
@@ -3543,7 +3543,7 @@ dialog::backdrop {
   font-size: 0.75rem;
 }
 .wireframe-record-group-count {
-  color: #738187;
+  color: var(--gem-wireframe-muted);
   font-size: 0.78rem;
   font-weight: 400;
 }
@@ -3676,7 +3676,7 @@ dialog::backdrop {
   font-size: inherit;
 }
 .demo-place-copy small {
-  color: #738187;
+  color: var(--gem-wireframe-muted);
   font-size: 0.78rem;
 }
 .demo-place-copy em {
@@ -3773,7 +3773,7 @@ dialog::backdrop {
 .demo-inspector-heading button {
   border: 0;
   background: transparent;
-  color: #68777c;
+  color: var(--gem-wireframe-muted);
   font-size: 1.3rem;
 }
 .demo-cover {
@@ -3993,7 +3993,7 @@ dialog::backdrop {
   align-items: baseline;
 }
 .wireframe-demo-inspector dt {
-  color: #68777c;
+  color: var(--gem-wireframe-muted);
 }
 .wireframe-demo-inspector dd {
   min-width: 0;
@@ -4358,7 +4358,7 @@ dialog::backdrop {
 }
 .wireframe-property-icon-fieldset legend {
   margin-bottom: 0.3rem;
-  color: #68777c;
+  color: var(--gem-wireframe-muted);
   font-size: 0.72rem;
 }
 .wireframe-property-icon-picker {
@@ -4460,7 +4460,7 @@ dialog::backdrop {
 .gem-image-field {
   display: grid;
   gap: 0.4rem;
-  color: #68777c;
+  color: var(--gem-wireframe-muted);
   font-size: 0.75rem;
 }
 .demo-place-image img {
@@ -4497,7 +4497,7 @@ dialog::backdrop {
 .demo-attachments small {
   display: block;
   margin-top: 0.2rem;
-  color: #849197;
+  color: var(--gem-wireframe-muted);
 }
 .demo-page-actions {
   display: flex;
@@ -4506,7 +4506,7 @@ dialog::backdrop {
 }
 .demo-expanded-breadcrumb {
   margin-bottom: 1rem;
-  color: #738187;
+  color: var(--gem-wireframe-muted);
   font-size: 0.75rem;
 }
 .demo-expanded-breadcrumb button {
@@ -4607,7 +4607,7 @@ dialog::backdrop {
   align-items: baseline;
 }
 .wireframe-record-page-content dt {
-  color: #68777c;
+  color: var(--gem-wireframe-muted);
   font-size: 0.7rem;
   font-weight: 700;
 }
@@ -4634,7 +4634,7 @@ dialog::backdrop {
 }
 .demo-expanded-title p {
   margin: 0.35rem 0 0;
-  color: #738187;
+  color: var(--gem-wireframe-muted);
 }
 .demo-eyebrow {
   text-transform: uppercase;
