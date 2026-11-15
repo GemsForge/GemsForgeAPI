@@ -228,7 +228,11 @@ export function WireframePropertyEditor({
                         label="Select options (comma-separated; semicolons are reserved)"
                         value={optionText}
                         onChange={(event) => setOptionText(event.currentTarget.value)}
-                        error={optionText.includes(";") ? "Option names cannot contain semicolons because semicolons separate stored tags." : undefined}
+                        error={
+                          optionText.includes(";")
+                            ? "Option names cannot contain semicolons because semicolons separate stored tags."
+                            : undefined
+                        }
                       />
                       {!optionText.includes(";") && !parseSelectOptions(optionText).length ? (
                         <GemCaption>Add at least one option before saving this type.</GemCaption>

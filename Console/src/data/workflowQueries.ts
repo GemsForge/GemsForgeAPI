@@ -1,6 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../api";
-import type { ForgeKeeperPatch, TableBuilderRequest, TablePropertyDefinitionInput, TableColumnDefinitionInput } from "../types";
+import type {
+  ForgeKeeperPatch,
+  TableBuilderRequest,
+  TablePropertyDefinitionInput,
+  TableColumnDefinitionInput,
+} from "../types";
 import { fileQueryKeys } from "./fileQueries";
 
 export type PageScope = { kind: "domain"; id: string } | { kind: "children"; id: number } | { kind: "roots" };

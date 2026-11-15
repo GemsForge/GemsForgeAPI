@@ -106,7 +106,12 @@ export type WireframeCollectionConfig<T extends WireframeRecord> = {
   onCoverChange?: (record: T, cover: WireframeCoverValue | null) => Promise<void> | void;
   propertySettingsExtension?: (property: WireframePropertyDetails) => ReactNode;
   columnDefinitions?: readonly TableColumnDefinition[];
-  onSaveColumnDefinition?: (propertyID: string, type: string, options: string[], colorToken: string) => Promise<void> | void;
+  onSaveColumnDefinition?: (
+    propertyID: string,
+    type: string,
+    options: string[],
+    colorToken: string,
+  ) => Promise<void> | void;
 };
 const cardColors = ["#e8b17d", "#a8d2cf", "#9dc9e0", "#e8b3b7"];
 
@@ -122,7 +127,9 @@ export function resolveColumnPropertyMetadata(
     },
     propertySelectOptions: {
       ...workspaceOptions,
-      ...Object.fromEntries(definitions.map((definition) => [definition.columnName, definition.options.map((option) => option.value)])),
+      ...Object.fromEntries(
+        definitions.map((definition) => [definition.columnName, definition.options.map((option) => option.value)]),
+      ),
     },
   };
 }
@@ -494,18 +501,34 @@ export function WireframeCollectionView<T extends WireframeRecord>({
     return { id: metadata.id, url: api.fileContentURL(metadata.id) };
   };
   const schema = schemaQuery.data?.tables.find((table) => table.name === (config.tableName ?? config.title));
-  const statusColumnID = (config.properties ?? []).find((property) => /status/i.test(property.id))?.sourceField ??
+  const statusColumnID =
+    (config.properties ?? []).find((property) => /status/i.test(property.id))?.sourceField ??
     schema?.columns.find((column) => /status/i.test(column.name))?.name;
   const filterColumnID = statusColumnID;
-  const filterColumnIsMultiSelect = config.columnDefinitions?.some((definition) => definition.columnName === filterColumnID && definition.propertyType === "MultiSelect") ?? false;
+  const filterColumnIsMultiSelect =
+    config.columnDefinitions?.some(
+      (definition) => definition.columnName === filterColumnID && definition.propertyType === "MultiSelect",
+    ) ?? false;
   const statusFilterOptions = useMemo(() => {
-    if (!filterColumnIsMultiSelect || !filterColumnID) return [...new Set(activeRecords.map((record) => config.cardStatus(record)))];
-    const definitionOptions = config.columnDefinitions?.find((definition) => definition.columnName === filterColumnID)?.options.map((option) => option.value);
+    if (!filterColumnIsMultiSelect || !filterColumnID)
+      return [...new Set(activeRecords.map((record) => config.cardStatus(record)))];
+    const definitionOptions = config.columnDefinitions
+      ?.find((definition) => definition.columnName === filterColumnID)
+      ?.options.map((option) => option.value);
     if (definitionOptions) return definitionOptions;
-    return [...new Set(activeRecords.flatMap((record) => {
-      const raw = (record as Record<string, unknown>)[filterColumnID];
-      return typeof raw === "string" ? raw.split(";").map((part) => part.trim()).filter(Boolean) : [];
-    }))];
+    return [
+      ...new Set(
+        activeRecords.flatMap((record) => {
+          const raw = (record as Record<string, unknown>)[filterColumnID];
+          return typeof raw === "string"
+            ? raw
+                .split(";")
+                .map((part) => part.trim())
+                .filter(Boolean)
+            : [];
+        }),
+      ),
+    ];
   }, [activeRecords, config, filterColumnID, filterColumnIsMultiSelect]);
   const schemaProperties = useMemo(
     () => (schema ? createWireframeSchemaProperties<T>(schema.columns, activeRecords) : []),
@@ -1339,8 +1362,18 @@ export function WireframeCollectionView<T extends WireframeRecord>({
           onClose={() => setPropertyDetails(null)}
           onSave={() => {
             void (async () => {
-              await config.onSaveColumnDefinition?.(propertyDetails.id, propertyDetails.type, propertyDetails.selectOptions ?? [], propertyDetails.colorToken);
-              savePropertyIcon(propertyDetails.id, propertyDetails.icon, propertyDetails.type, propertyDetails.selectOptions ?? []);
+              await config.onSaveColumnDefinition?.(
+                propertyDetails.id,
+                propertyDetails.type,
+                propertyDetails.selectOptions ?? [],
+                propertyDetails.colorToken,
+              );
+              savePropertyIcon(
+                propertyDetails.id,
+                propertyDetails.icon,
+                propertyDetails.type,
+                propertyDetails.selectOptions ?? [],
+              );
               setPropertyDetails(null);
             })();
           }}

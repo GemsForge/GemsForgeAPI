@@ -232,13 +232,30 @@ function PropertyValue({
 }) {
   const text = displayValue(value, property);
   if (property.kind === "multiSelect") {
-    const values = typeof value.raw === "string" ? value.raw.split(";").map((item) => item.trim()).filter(Boolean) : [];
+    const values =
+      typeof value.raw === "string"
+        ? value.raw
+            .split(";")
+            .map((item) => item.trim())
+            .filter(Boolean)
+        : [];
     return (
       <span className="multi-select-pills" aria-label={`${property.label}: ${values.join(", ") || "none"}`}>
-        {values.length ? values.map((item) => {
-          const option = property.selectOptions?.find((candidate) => candidate.value === item);
-          return <span key={item} className={`multi-select-pill${option?.color ? ` multi-select-pill--${option.color}` : ""}`}>{item}</span>;
-        }) : <GemCaption color="$gemMuted">—</GemCaption>}
+        {values.length ? (
+          values.map((item) => {
+            const option = property.selectOptions?.find((candidate) => candidate.value === item);
+            return (
+              <span
+                key={item}
+                className={`multi-select-pill${option?.color ? ` multi-select-pill--${option.color}` : ""}`}
+              >
+                {item}
+              </span>
+            );
+          })
+        ) : (
+          <GemCaption color="$gemMuted">—</GemCaption>
+        )}
       </span>
     );
   }
@@ -285,18 +302,35 @@ function PropertyValue({
 /** Render a property value through AG Grid without changing the record contract. */
 function GridPropertyCell({ value, colDef }: ICellRendererParams<TableRecord<unknown>>) {
   const property = colDef?.context as RecordPropertyDefinition<unknown> | undefined;
-  if (property?.kind === "multiSelect" && typeof value === "string") return <MultiSelectPills property={property} value={value} />;
+  if (property?.kind === "multiSelect" && typeof value === "string")
+    return <MultiSelectPills property={property} value={value} />;
   return <span>{value ?? "unconfigured"}</span>;
 }
 
 function MultiSelectPills({ property, value }: { property: RecordPropertyDefinition<unknown>; value: string }) {
-  const values = value.split(";").map((item) => item.trim()).filter(Boolean);
-  return <span className="multi-select-pills" aria-label={`${property.label}: ${values.join(", ") || "none"}`}>
-    {values.length ? values.map((item) => {
-      const option = property.selectOptions?.find((candidate) => candidate.value === item);
-      return <span key={item} className={`multi-select-pill${option?.color ? ` multi-select-pill--${option.color}` : ""}`}>{item}</span>;
-    }) : <GemCaption color="$gemMuted">—</GemCaption>}
-  </span>;
+  const values = value
+    .split(";")
+    .map((item) => item.trim())
+    .filter(Boolean);
+  return (
+    <span className="multi-select-pills" aria-label={`${property.label}: ${values.join(", ") || "none"}`}>
+      {values.length ? (
+        values.map((item) => {
+          const option = property.selectOptions?.find((candidate) => candidate.value === item);
+          return (
+            <span
+              key={item}
+              className={`multi-select-pill${option?.color ? ` multi-select-pill--${option.color}` : ""}`}
+            >
+              {item}
+            </span>
+          );
+        })
+      ) : (
+        <GemCaption color="$gemMuted">—</GemCaption>
+      )}
+    </span>
+  );
 }
 
 /** Render Tamagui list items with distinct open and multi-select gestures. */
@@ -698,7 +732,14 @@ export function RecordGallery<Record>({
                         className="table-kit-gallery-property"
                         aria-label={`${property.label}: ${text}`}
                       >
-                        {property.kind === "multiSelect" ? <MultiSelectPills property={property as RecordPropertyDefinition<unknown>} value={String(propertyValue(property, record).raw ?? "")} /> : text}
+                        {property.kind === "multiSelect" ? (
+                          <MultiSelectPills
+                            property={property as RecordPropertyDefinition<unknown>}
+                            value={String(propertyValue(property, record).raw ?? "")}
+                          />
+                        ) : (
+                          text
+                        )}
                       </Text>
                     ))}
                   </YStack>

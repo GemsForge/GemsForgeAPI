@@ -59,21 +59,44 @@ export function WireframeSchemaPage() {
             const definition = (definitions.data ?? []).find((item) => item.columnName === propertyID);
             await patchSchemaRecord({
               recordID: record.id,
-              values: { [propertyID]: definition?.propertyType === "MultiSelect" && typeof value === "string" ? value.split(";").map((tag: string) => tag.trim()).filter(Boolean) : value },
+              values: {
+                [propertyID]:
+                  definition?.propertyType === "MultiSelect" && typeof value === "string"
+                    ? value
+                        .split(";")
+                        .map((tag: string) => tag.trim())
+                        .filter(Boolean)
+                    : value,
+              },
             });
-          }).filter((property) => property.id !== "HubID").map((property) => {
-            const definition = (definitions.data ?? []).find((item) => item.columnName === property.id);
-            return definition ? {
-              ...property,
-              propertyType: definition.propertyType,
-              selectOptions: definition.options,
-              edit: property.edit ? {
-                ...property.edit,
-                options: definition.options.map((option) => ({ value: option.value, label: option.value, colorToken: option.color ?? undefined })),
-              } : undefined,
-              kind: definition.propertyType === "MultiSelect" ? "multiSelect" as const : definition.propertyType === "Status" ? "status" as const : "select" as const,
-            } : property;
           })
+            .filter((property) => property.id !== "HubID")
+            .map((property) => {
+              const definition = (definitions.data ?? []).find((item) => item.columnName === property.id);
+              return definition
+                ? {
+                    ...property,
+                    propertyType: definition.propertyType,
+                    selectOptions: definition.options,
+                    edit: property.edit
+                      ? {
+                          ...property.edit,
+                          options: definition.options.map((option) => ({
+                            value: option.value,
+                            label: option.value,
+                            colorToken: option.color ?? undefined,
+                          })),
+                        }
+                      : undefined,
+                    kind:
+                      definition.propertyType === "MultiSelect"
+                        ? ("multiSelect" as const)
+                        : definition.propertyType === "Status"
+                          ? ("status" as const)
+                          : ("select" as const),
+                  }
+                : property;
+            })
         : [],
     [definitions.data, patchSchemaRecord, table],
   );
@@ -132,12 +155,14 @@ export function WireframeSchemaPage() {
                 options: createSchemaRecordOptions(table),
               },
             }),
-        searchValues: (record) => Object.entries(record).flatMap(([columnName, value]) => {
-          if (typeof value !== "string") return [];
-          return definitions.data?.find((definition) => definition.columnName === columnName)?.propertyType === "MultiSelect"
-            ? decodeMultiSelectValue(value)
-            : [value];
-        }),
+        searchValues: (record) =>
+          Object.entries(record).flatMap(([columnName, value]) => {
+            if (typeof value !== "string") return [];
+            return definitions.data?.find((definition) => definition.columnName === columnName)?.propertyType ===
+              "MultiSelect"
+              ? decodeMultiSelectValue(value)
+              : [value];
+          }),
         cardTitle: (record) => recordText(record, titleProperty?.id) || record.id,
         cardSubtitle: (record) => recordText(record, subtitleProperty?.id) || tableName,
         cardStatus: (record) => recordText(record, statusProperty?.id),

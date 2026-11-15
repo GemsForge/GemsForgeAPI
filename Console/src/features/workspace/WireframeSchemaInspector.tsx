@@ -108,15 +108,19 @@ export function WireframeSchemaInspector<Record extends object>({
       const propertyValue = property.getValue(record);
       const dateConfiguration = dateConfigurationContext.configurations[property.id];
       const multiSelectDisplay =
-        resolvedKind === "multiselect"
-          ? <span className="multi-select-pills" aria-label={`${property.label}: ${String(value.raw ?? "")}`}>
-              {decodeMultiSelectValue(String(value.raw ?? "")).map((selected) => {
-                const option = options.find((candidate) => candidate.value === selected);
-                const token = property.selectOptions?.find((candidate) => candidate.value === selected)?.color;
-                return <span key={selected} className={`multi-select-pill${token ? ` multi-select-pill--${token}` : ""}`}>{option?.label ?? selected}</span>;
-              })}
-            </span>
-          : undefined;
+        resolvedKind === "multiselect" ? (
+          <span className="multi-select-pills" aria-label={`${property.label}: ${String(value.raw ?? "")}`}>
+            {decodeMultiSelectValue(String(value.raw ?? "")).map((selected) => {
+              const option = options.find((candidate) => candidate.value === selected);
+              const token = property.selectOptions?.find((candidate) => candidate.value === selected)?.color;
+              return (
+                <span key={selected} className={`multi-select-pill${token ? ` multi-select-pill--${token}` : ""}`}>
+                  {option?.label ?? selected}
+                </span>
+              );
+            })}
+          </span>
+        ) : undefined;
       const checkboxDisplay =
         property.kind === "checkbox"
           ? ["1", "true"].includes(String(value.raw ?? "").toLowerCase())

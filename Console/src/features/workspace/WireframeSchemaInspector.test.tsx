@@ -233,7 +233,9 @@ describe("WireframeSchemaInspector property metadata", () => {
 
     expect(options).toHaveAttribute("aria-invalid", "true");
     expect(options).toHaveAttribute("aria-describedby");
-    expect(document.getElementById(options.getAttribute("aria-describedby")!)).toHaveTextContent("Option names cannot contain semicolons");
+    expect(document.getElementById(options.getAttribute("aria-describedby")!)).toHaveTextContent(
+      "Option names cannot contain semicolons",
+    );
     expect(screen.getByRole("button", { name: "Save property settings" })).toBeDisabled();
   });
 

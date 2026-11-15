@@ -366,9 +366,15 @@ export const api = {
       method: "DELETE",
     }),
   previewTableColumnDefinitionBackfill: (tableName: string, signal?: AbortSignal) =>
-    request<TableColumnDefinitionBackfill>(`/table-column-definitions/${encodeURIComponent(tableName)}/backfill/preview`, { signal }),
+    request<TableColumnDefinitionBackfill>(
+      `/table-column-definitions/${encodeURIComponent(tableName)}/backfill/preview`,
+      { signal },
+    ),
   applyTableColumnDefinitionBackfill: (tableName: string) =>
-    request<TableColumnDefinitionBackfill>(`/table-column-definitions/${encodeURIComponent(tableName)}/backfill/apply`, { method: "POST" }),
+    request<TableColumnDefinitionBackfill>(
+      `/table-column-definitions/${encodeURIComponent(tableName)}/backfill/apply`,
+      { method: "POST" },
+    ),
   saveTablePropertyDefinitions: (tableName: string, definitions: TablePropertyDefinitionInput[]) =>
     request<TablePropertyDefinition[]>(`/schema-builder/tables/${encodeURIComponent(tableName)}/properties`, {
       method: "PUT",
