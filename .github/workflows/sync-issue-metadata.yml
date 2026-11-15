@@ -50,4 +50,6 @@ jobs:
       blocked_by: ${{ inputs.blocked_by || '' }}
       blocking: ${{ inputs.blocking || '' }}
       project-number: ${{ vars.PROJECT_NUMBER || '' }}
-    secrets: inherit
+    # Pass only the Project token; inherit would hand every secret to the shared code.
+    secrets:
+      PROJECTS_TOKEN: ${{ secrets.PROJECTS_TOKEN }}
