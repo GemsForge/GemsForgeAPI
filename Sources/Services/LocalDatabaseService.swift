@@ -53,7 +53,8 @@ enum LocalDatabaseProfile: String, Codable, CaseIterable, Sendable {
             "CreateTrashEntries",
             "CreateTablePropertyDefinitions",
             "CreateTableColumnDefinitions",
-            "CreateRecordBodies"
+            "CreateRecordBodies",
+            "CreateNotionImportReferences"
         ]
     }
 
@@ -106,6 +107,7 @@ enum LocalDatabaseProfile: String, Codable, CaseIterable, Sendable {
             app.migrations.add(CreateTablePropertyDefinitions())
             app.migrations.add(CreateTableColumnDefinitions())
             app.migrations.add(CreateRecordBodies())
+            app.migrations.add(CreateNotionImportReferences())
         }
     }
 }

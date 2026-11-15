@@ -4,6 +4,26 @@ import Foundation
 /// This mapper is pure so dry-run previews can report transformations without
 /// requiring a database connection or exposing imported values in logs.
 enum NotionImportValueMapper {
+    enum StorageKind: String, Sendable, Equatable {
+        case text = "TEXT"
+        case number = "REAL"
+        case select = "TEXT + Select options"
+        case multiSelect = "TEXT + MultiSelect options"
+        case status = "TEXT + Status options"
+        case dateRange = "Start / End date columns"
+        case relation = "Relation property"
+        case lookup = "Lookup property"
+        case timestamp = "CreatedAt / UpdatedAt"
+        case integer = "INTEGER"
+        case dropped = "Dropped (single-user workspace)"
+        case unsupported = "Unmapped"
+    }
+
+    struct PropertyMapping: Sendable, Equatable {
+        let storage: StorageKind
+        let requiresReview: Bool
+    }
+
     struct DueDate: Equatable, Sendable {
         let day: Int
         let occurrence: String
@@ -15,6 +35,77 @@ enum NotionImportValueMapper {
         let digits = value.filter(\.isNumber)
         guard !digits.isEmpty else { return nil }
         return String(digits.suffix(4))
+    }
+
+    /// Maps Notion property types to the existing GemLife column and metadata
+    /// contracts. Formula values are intentionally preserved as text fallback
+    /// and marked for review because formula semantics are not imported.
+    static func propertyType(_ notionType: String) -> PropertyMapping {
+        switch notionType {
+        case "title", "rich_text", "url", "email", "phone_number", "formula":
+            return .init(storage: .text, requiresReview: notionType == "formula")
+        case "number": return .init(storage: .number, requiresReview: false)
+        case "select": return .init(storage: .select, requiresReview: false)
+        case "multi_select": return .init(storage: .multiSelect, requiresReview: false)
+        case "status": return .init(storage: .status, requiresReview: false)
+        case "date": return .init(storage: .dateRange, requiresReview: false)
+        case "relation": return .init(storage: .relation, requiresReview: false)
+        case "rollup": return .init(storage: .lookup, requiresReview: false)
+        case "created_time": return .init(storage: .timestamp, requiresReview: false)
+        case "last_edited_time": return .init(storage: .timestamp, requiresReview: false)
+        case "unique_id": return .init(storage: .integer, requiresReview: false)
+        case "people": return .init(storage: .dropped, requiresReview: false)
+        case "checkbox", "files", "created_by", "last_edited_by", "verification",
+             "button", "place", "unknown":
+            return .init(storage: .unsupported, requiresReview: true)
+        default:
+            return .init(storage: .unsupported, requiresReview: true)
+        }
+    }
+
+    /// Renders the supported Notion block subset into Markdown. Unsupported
+    /// blocks are omitted and reported by their type so a preview can surface
+    /// losses before an import is approved.
+    static func markdown(blocks: [[String: Any]]) -> (markdown: String, unmappedTypes: [String]) {
+        var rendered: [String] = []
+        var unmapped: [String] = []
+        for block in blocks {
+            guard let type = block["type"] as? String,
+                  let payload = block[type] as? [String: Any] else {
+                unmapped.append("unknown")
+                continue
+            }
+            let text = richText(payload["rich_text"])
+            switch type {
+            case "paragraph": rendered.append(text)
+            case "heading_1": rendered.append("# \(text)")
+            case "heading_2": rendered.append("## \(text)")
+            case "heading_3": rendered.append("### \(text)")
+            case "bulleted_list_item": rendered.append("- \(text)")
+            case "numbered_list_item": rendered.append("1. \(text)")
+            case "quote": rendered.append("> \(text)")
+            case "code":
+                let language = payload["language"] as? String ?? ""
+                rendered.append("```\(language)\n\(text)\n```")
+            case "divider": rendered.append("---")
+            case "to_do":
+                let checked = payload["checked"] as? Bool == true ? "x" : " "
+                rendered.append("- [\(checked)] \(text)")
+            case "child_page":
+                let title = payload["title"] as? String ?? text
+                rendered.append("## \(title)")
+            default: unmapped.append(type)
+            }
+        }
+        return (rendered.joined(separator: "\n\n"), unmapped)
+    }
+
+    private static func richText(_ rawValue: Any?) -> String {
+        guard let items = rawValue as? [[String: Any]] else { return "" }
+        return items.compactMap { item in
+            (item["plain_text"] as? String)
+                ?? ((item["text"] as? [String: Any])?["content"] as? String)
+        }.joined()
     }
 
     /// Maps common human-readable Notion due-date labels to a day of month and
