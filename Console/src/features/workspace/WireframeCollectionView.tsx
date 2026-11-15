@@ -110,6 +110,23 @@ export type WireframeCollectionConfig<T extends WireframeRecord> = {
 };
 const cardColors = ["#e8b17d", "#a8d2cf", "#9dc9e0", "#e8b3b7"];
 
+export function resolveColumnPropertyMetadata(
+  workspaceTypes: Readonly<Record<string, string>>,
+  workspaceOptions: Readonly<Record<string, string[]>>,
+  definitions: readonly TableColumnDefinition[],
+) {
+  return {
+    propertyTypes: {
+      ...workspaceTypes,
+      ...Object.fromEntries(definitions.map((definition) => [definition.columnName, definition.propertyType])),
+    },
+    propertySelectOptions: {
+      ...workspaceOptions,
+      ...Object.fromEntries(definitions.map((definition) => [definition.columnName, definition.options.map((option) => option.value)])),
+    },
+  };
+}
+
 export function WireframeCollectionView<T extends WireframeRecord>({
   config,
 }: {
@@ -135,19 +152,9 @@ export function WireframeCollectionView<T extends WireframeRecord>({
   const [propertyIcons, setPropertyIcons] = useState<Record<string, string>>({});
   const [propertyTypes, setPropertyTypes] = useState<Record<string, string>>({});
   const [propertySelectOptions, setPropertySelectOptions] = useState<Record<string, string[]>>({});
-  const resolvedPropertyTypes = useMemo(
-    () => ({
-      ...propertyTypes,
-      ...Object.fromEntries((config.columnDefinitions ?? []).map((definition) => [definition.columnName, definition.propertyType])),
-    }),
-    [config.columnDefinitions, propertyTypes],
-  );
-  const resolvedPropertySelectOptions = useMemo(
-    () => ({
-      ...propertySelectOptions,
-      ...Object.fromEntries((config.columnDefinitions ?? []).map((definition) => [definition.columnName, definition.options.map((option) => option.value)])),
-    }),
-    [config.columnDefinitions, propertySelectOptions],
+  const resolvedMetadata = useMemo(
+    () => resolveColumnPropertyMetadata(propertyTypes, propertySelectOptions, config.columnDefinitions ?? []),
+    [config.columnDefinitions, propertySelectOptions, propertyTypes],
   );
   const [dateConfigurations, setDateConfigurations] = useState<Record<string, WireframeDateConfiguration>>({});
   const [propertyConfigurations, setPropertyConfigurations] = useState<Record<string, TablePropertyConfiguration>>({});
@@ -475,16 +482,17 @@ export function WireframeCollectionView<T extends WireframeRecord>({
   const schema = schemaQuery.data?.tables.find((table) => table.name === (config.tableName ?? config.title));
   const statusColumnID = (config.properties ?? []).find((property) => /status/i.test(property.id))?.sourceField ??
     schema?.columns.find((column) => /status/i.test(column.name))?.name;
-  const statusIsMultiSelect = config.columnDefinitions?.some((definition) => definition.columnName === statusColumnID && definition.propertyType === "MultiSelect") ?? false;
+  const filterColumnID = statusColumnID;
+  const filterColumnIsMultiSelect = config.columnDefinitions?.some((definition) => definition.columnName === filterColumnID && definition.propertyType === "MultiSelect") ?? false;
   const statusFilterOptions = useMemo(() => {
-    if (!statusIsMultiSelect || !statusColumnID) return [...new Set(activeRecords.map((record) => config.cardStatus(record)))];
-    const definitionOptions = config.columnDefinitions?.find((definition) => definition.columnName === statusColumnID)?.options.map((option) => option.value);
+    if (!filterColumnIsMultiSelect || !filterColumnID) return [...new Set(activeRecords.map((record) => config.cardStatus(record)))];
+    const definitionOptions = config.columnDefinitions?.find((definition) => definition.columnName === filterColumnID)?.options.map((option) => option.value);
     if (definitionOptions) return definitionOptions;
     return [...new Set(activeRecords.flatMap((record) => {
-      const raw = (record as Record<string, unknown>)[statusColumnID];
+      const raw = (record as Record<string, unknown>)[filterColumnID];
       return typeof raw === "string" ? raw.split(";").map((part) => part.trim()).filter(Boolean) : [];
     }))];
-  }, [activeRecords, config, statusColumnID, statusIsMultiSelect]);
+  }, [activeRecords, config, filterColumnID, filterColumnIsMultiSelect]);
   const schemaProperties = useMemo(
     () => (schema ? createWireframeSchemaProperties<T>(schema.columns, activeRecords) : []),
     [activeRecords, schema],
@@ -494,11 +502,11 @@ export function WireframeCollectionView<T extends WireframeRecord>({
       activeRecords.filter(
         (record) =>
           config.searchValues(record).some((value) => value.toLowerCase().includes(query.trim().toLowerCase())) &&
-          (!filter || (statusIsMultiSelect && statusColumnID
-            ? matchesMultiSelectOption(String((record as Record<string, unknown>)[statusColumnID] ?? ""), filter)
+          (!filter || (filterColumnIsMultiSelect && filterColumnID
+            ? matchesMultiSelectOption(String((record as Record<string, unknown>)[filterColumnID] ?? ""), filter)
             : config.cardStatus(record) === filter)),
       ),
-    [activeRecords, config, filter, query],
+    [activeRecords, config, filter, filterColumnID, filterColumnIsMultiSelect, query],
   );
   const sortedRecords = useMemo(() => {
     if (!sort) return matchingRecords;
@@ -815,8 +823,8 @@ export function WireframeCollectionView<T extends WireframeRecord>({
           />
           <WireframePropertyIconProvider
             onSave={savePropertyIcon}
-            propertyTypes={resolvedPropertyTypes}
-            propertySelectOptions={resolvedPropertySelectOptions}
+            propertyTypes={resolvedMetadata.propertyTypes}
+            propertySelectOptions={resolvedMetadata.propertySelectOptions}
             dateConfigurations={dateConfigurations}
             onDateConfigurationChange={saveDateConfiguration}
           >

@@ -77,18 +77,18 @@ export function WireframeSchemaPage() {
         : [],
     [definitions.data, patchSchemaRecord, table],
   );
+  const resolvedProperties = properties.length > 0 ? properties : [];
 
-  if (result.isPending || pages.isPending || definitions.isPending || (recordID && selectedRecord.isPending))
+  if (result.isPending || pages.isPending || (recordID && selectedRecord.isPending))
     return <p role="status">Loading collection…</p>;
-  if (definitions.isError) return <p role="alert">Property definitions could not be loaded.</p>;
   if (recordID && selectedRecord.isError) return <p role="alert">This record is unavailable in this collection.</p>;
   if (result.isError) return <p role="alert">This collection could not be loaded.</p>;
   if (!table) return <p role="alert">This collection is not available in the live database.</p>;
 
-  const titleProperty = properties.find((property) => !property.primary) ?? properties[0];
-  const subtitleProperty = properties.find((property) => property !== titleProperty && !property.primary);
-  const statusProperty = properties.find((property) => /status/i.test(property.id));
-  const dateProperty = properties.find((property) => property.kind === "date");
+  const titleProperty = resolvedProperties.find((property) => !property.primary) ?? resolvedProperties[0];
+  const subtitleProperty = resolvedProperties.find((property) => property !== titleProperty && !property.primary);
+  const statusProperty = resolvedProperties.find((property) => /status/i.test(property.id));
+  const dateProperty = resolvedProperties.find((property) => property.kind === "date");
 
   return (
     <WireframeCollectionView
@@ -109,7 +109,7 @@ export function WireframeSchemaPage() {
           : {}),
         activeCollection: tableName,
         records,
-        properties,
+        properties: resolvedProperties,
         columnDefinitions: definitions.data ?? [],
         onSaveColumnDefinition: async (propertyID, type, options, colorToken) => {
           if (!["Select", "MultiSelect", "Status"].includes(type)) {

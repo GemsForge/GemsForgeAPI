@@ -206,12 +206,35 @@ describe("WireframeSchemaInspector property metadata", () => {
       </TamaguiProvider>,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "low, high" }));
+    fireEvent.click(screen.getByRole("button", { name: "Tags: low;high" }));
     expect(screen.getByRole("checkbox", { name: "low" })).toBeChecked();
     fireEvent.click(screen.getByRole("checkbox", { name: "medium" }));
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
 
     await waitFor(() => expect(onSave).toHaveBeenCalledWith("low;high;medium"));
+  });
+
+  it("shows an inline validation message and disables save when an option contains a semicolon", async () => {
+    const record = { id: "REC-2", tags: "low;high" };
+    const properties: RecordPropertyDefinition<typeof record>[] = [
+      { id: "tags", label: "Tags", kind: "text", getValue: (item) => ({ raw: item.tags, display: item.tags }) },
+    ];
+    render(
+      <TamaguiProvider config={tamaguiConfig} defaultTheme="light">
+        <MemoryRouter>
+          <WireframeSchemaInspector record={record} properties={properties} />
+        </MemoryRouter>
+      </TamaguiProvider>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Edit Tags property" }));
+    const options = screen.getByRole("textbox", { name: /Select options/ });
+    fireEvent.change(options, { target: { value: "Home;Homework" } });
+
+    expect(options).toHaveAttribute("aria-invalid", "true");
+    expect(options).toHaveAttribute("aria-describedby");
+    expect(document.getElementById(options.getAttribute("aria-describedby")!)).toHaveTextContent("Option names cannot contain semicolons");
+    expect(screen.getByRole("button", { name: "Save property settings" })).toBeDisabled();
   });
 
   it("uses the shared image attachment control for Image properties", () => {
