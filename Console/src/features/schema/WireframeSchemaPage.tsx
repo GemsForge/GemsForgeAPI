@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { decodeMultiSelectValue } from "@gemsforge/ui";
 import { useLocation, useParams } from "react-router-dom";
 import {
   useSchemaPageRecordQuery,
@@ -6,6 +7,8 @@ import {
   useSchemaPageTablesQuery,
   usePatchSchemaPageRecordMutation,
   usePatchSchemaPageAttachmentMutation,
+  useTableColumnDefinitionsQuery,
+  useSaveTableColumnDefinitionMutation,
 } from "../../data/workflowQueries";
 import { createLiveSchemaProperties, type RecordPropertyDefinition } from "../../table-kit";
 import type { SchemaPageRecords } from "../../types";
@@ -36,6 +39,8 @@ export function WireframeSchemaPage() {
   const result = useSchemaPageRecordsQuery(tableName);
   const selectedRecord = useSchemaPageRecordQuery(tableName, recordID ? decodeURIComponent(recordID) : null);
   const patchRecord = usePatchSchemaPageRecordMutation(tableName);
+  const definitions = useTableColumnDefinitionsQuery(tableName);
+  const saveDefinition = useSaveTableColumnDefinitionMutation(tableName);
   const patchAttachment = usePatchSchemaPageAttachmentMutation(tableName);
   const patchSchemaRecord = patchRecord.mutateAsync;
   const table = result.data?.table ?? pages.data?.tables.find((candidate) => candidate.name === tableName);
@@ -51,14 +56,51 @@ export function WireframeSchemaPage() {
     () =>
       table
         ? createLiveSchemaProperties<SchemaRecord>(table, async (record, propertyID, value) => {
+            const definition = (definitions.data ?? []).find((item) => item.columnName === propertyID);
             await patchSchemaRecord({
               recordID: record.id,
-              values: { [propertyID]: value },
+              values: {
+                [propertyID]:
+                  definition?.propertyType === "MultiSelect" && typeof value === "string"
+                    ? value
+                        .split(";")
+                        .map((tag: string) => tag.trim())
+                        .filter(Boolean)
+                    : value,
+              },
             });
-          }).filter((property) => property.id !== "HubID")
+          })
+            .filter((property) => property.id !== "HubID")
+            .map((property) => {
+              const definition = (definitions.data ?? []).find((item) => item.columnName === property.id);
+              return definition
+                ? {
+                    ...property,
+                    propertyType: definition.propertyType,
+                    selectOptions: definition.options,
+                    edit: property.edit
+                      ? {
+                          ...property.edit,
+                          options: definition.options.map((option) => ({
+                            value: option.value,
+                            label: option.value,
+                            colorToken: option.color ?? undefined,
+                          })),
+                        }
+                      : undefined,
+                    kind:
+                      definition.propertyType === "MultiSelect"
+                        ? ("multiSelect" as const)
+                        : definition.propertyType === "Status"
+                          ? ("status" as const)
+                          : ("select" as const),
+                  }
+                : property;
+            })
         : [],
-    [patchSchemaRecord, table],
+    [definitions.data, patchSchemaRecord, table],
   );
+  const resolvedProperties = properties.length > 0 ? properties : [];
 
   if (result.isPending || pages.isPending || (recordID && selectedRecord.isPending))
     return <p role="status">Loading collection…</p>;
@@ -66,10 +108,10 @@ export function WireframeSchemaPage() {
   if (result.isError) return <p role="alert">This collection could not be loaded.</p>;
   if (!table) return <p role="alert">This collection is not available in the live database.</p>;
 
-  const titleProperty = properties.find((property) => !property.primary) ?? properties[0];
-  const subtitleProperty = properties.find((property) => property !== titleProperty && !property.primary);
-  const statusProperty = properties.find((property) => /status/i.test(property.id));
-  const dateProperty = properties.find((property) => property.kind === "date");
+  const titleProperty = resolvedProperties.find((property) => !property.primary) ?? resolvedProperties[0];
+  const subtitleProperty = resolvedProperties.find((property) => property !== titleProperty && !property.primary);
+  const statusProperty = resolvedProperties.find((property) => /status/i.test(property.id));
+  const dateProperty = resolvedProperties.find((property) => property.kind === "date");
 
   return (
     <WireframeCollectionView
@@ -90,7 +132,22 @@ export function WireframeSchemaPage() {
           : {}),
         activeCollection: tableName,
         records,
-        properties,
+        properties: resolvedProperties,
+        columnDefinitions: definitions.data ?? [],
+        onSaveColumnDefinition: async (propertyID, type, options, colorToken) => {
+          if (!["Select", "MultiSelect", "Status"].includes(type)) {
+            const { api } = await import("../../api");
+            await api.deleteTableColumnDefinition(tableName, propertyID);
+            return;
+          }
+          await saveDefinition.mutateAsync({
+            columnName: propertyID,
+            input: {
+              propertyType: type as "Select" | "MultiSelect" | "Status",
+              options: options.map((value) => ({ value, color: colorToken as import("../../types").TableColumnColor })),
+            },
+          });
+        },
         ...(isLegacyServiceLogoAssets
           ? {}
           : {
@@ -98,7 +155,14 @@ export function WireframeSchemaPage() {
                 options: createSchemaRecordOptions(table),
               },
             }),
-        searchValues: (record) => Object.values(record).filter((value): value is string => typeof value === "string"),
+        searchValues: (record) =>
+          Object.entries(record).flatMap(([columnName, value]) => {
+            if (typeof value !== "string") return [];
+            return definitions.data?.find((definition) => definition.columnName === columnName)?.propertyType ===
+              "MultiSelect"
+              ? decodeMultiSelectValue(value)
+              : [value];
+          }),
         cardTitle: (record) => recordText(record, titleProperty?.id) || record.id,
         cardSubtitle: (record) => recordText(record, subtitleProperty?.id) || tableName,
         cardStatus: (record) => recordText(record, statusProperty?.id),

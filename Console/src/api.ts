@@ -32,6 +32,10 @@ import type {
   SchemaPageRecordCreation,
   TablePropertyDefinition,
   TablePropertyDefinitionInput,
+  TableColumnDefinition,
+  TableColumnDefinitionInput,
+  TableColumnDefinitionWrite,
+  TableColumnDefinitionBackfill,
   RelatedRecordOption,
   TablePropertyValue,
   LocalDatabaseCapabilities,
@@ -350,6 +354,27 @@ export const api = {
     request<TablePropertyDefinition[]>(`/schema-builder/tables/${encodeURIComponent(tableName)}/properties`, {
       signal,
     }),
+  getTableColumnDefinitions: (tableName: string, signal?: AbortSignal) =>
+    request<TableColumnDefinition[]>(`/table-column-definitions/${encodeURIComponent(tableName)}`, { signal }),
+  saveTableColumnDefinition: (tableName: string, columnName: string, input: TableColumnDefinitionInput) =>
+    request<TableColumnDefinitionWrite>(
+      `/table-column-definitions/${encodeURIComponent(tableName)}/${encodeURIComponent(columnName)}`,
+      { method: "PUT", body: JSON.stringify(input) },
+    ),
+  deleteTableColumnDefinition: (tableName: string, columnName: string) =>
+    request<void>(`/table-column-definitions/${encodeURIComponent(tableName)}/${encodeURIComponent(columnName)}`, {
+      method: "DELETE",
+    }),
+  previewTableColumnDefinitionBackfill: (tableName: string, signal?: AbortSignal) =>
+    request<TableColumnDefinitionBackfill>(
+      `/table-column-definitions/${encodeURIComponent(tableName)}/backfill/preview`,
+      { signal },
+    ),
+  applyTableColumnDefinitionBackfill: (tableName: string) =>
+    request<TableColumnDefinitionBackfill>(
+      `/table-column-definitions/${encodeURIComponent(tableName)}/backfill/apply`,
+      { method: "POST" },
+    ),
   saveTablePropertyDefinitions: (tableName: string, definitions: TablePropertyDefinitionInput[]) =>
     request<TablePropertyDefinition[]>(`/schema-builder/tables/${encodeURIComponent(tableName)}/properties`, {
       method: "PUT",
@@ -374,19 +399,24 @@ export const api = {
       `/schema-builder/tables/${encodeURIComponent(tableName)}/records/${encodeURIComponent(recordID)}/properties`,
       { signal },
     ),
-  createSchemaPageRecord: (tableName: string, values: Record<string, string | number | boolean | null>) =>
+  createSchemaPageRecord: (
+    tableName: string,
+    values: Record<string, string | number | boolean | string[] | null>,
+    createMissingOptions = false,
+  ) =>
     request<SchemaPageRecordCreation>(`/schema-builder/tables/${encodeURIComponent(tableName)}/records`, {
       method: "POST",
-      body: JSON.stringify(values),
+      body: JSON.stringify({ ...values, ...(createMissingOptions ? { createMissingOptions: true } : {}) }),
     }),
   patchSchemaPageRecord: (
     tableName: string,
     recordID: string,
-    values: Record<string, string | number | boolean | null>,
+    values: Record<string, string | number | boolean | string[] | null>,
+    createMissingOptions = false,
   ) =>
     request<void>(`/schema-builder/tables/${encodeURIComponent(tableName)}/records/${encodeURIComponent(recordID)}`, {
       method: "PATCH",
-      body: JSON.stringify(values),
+      body: JSON.stringify({ ...values, ...(createMissingOptions ? { createMissingOptions: true } : {}) }),
     }),
   patchSchemaPageAttachment: (tableName: string, recordID: string, columnName: string, fileMetadataID: string | null) =>
     request<void>(

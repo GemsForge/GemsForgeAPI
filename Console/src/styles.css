@@ -5842,6 +5842,57 @@ dialog::backdrop {
   color: var(--gold);
   font-size: 0.72rem;
 }
+.multi-select-pills {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  vertical-align: middle;
+}
+
+.multi-select-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.1rem 0.48rem;
+  background: #e9efec;
+  color: #253b35;
+  font-size: 0.78em;
+  line-height: 1.4;
+}
+
+.multi-select-pill--mint {
+  background: #d9f0e8;
+  color: #205747;
+}
+.multi-select-pill--gold {
+  background: #f5e8bd;
+  color: #674f11;
+}
+.multi-select-pill--blue {
+  background: #dceafa;
+  color: #254b73;
+}
+.multi-select-pill--green {
+  background: #dceddf;
+  color: #285b35;
+}
+.multi-select-pill--purple {
+  background: #eae1f6;
+  color: #523777;
+}
+.multi-select-pill--orange {
+  background: #f7e2d2;
+  color: #77431c;
+}
+.multi-select-pill--red {
+  background: #f6dddd;
+  color: #7a2e2e;
+}
+.multi-select-pill--gray {
+  background: #e7e9e9;
+  color: #444b4a;
+}
+
 .status-pill {
   display: inline-flex;
   min-height: 1.35rem;

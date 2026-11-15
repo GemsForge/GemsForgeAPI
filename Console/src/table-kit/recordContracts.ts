@@ -15,6 +15,7 @@ export type RecordPropertyKind =
   | "number"
   | "date"
   | "select"
+  | "multiSelect"
   | "status"
   | "checkbox"
   | "image"
@@ -65,6 +66,7 @@ export interface RecordPropertyDefinition<Record> {
   dateFormat?: RecordDateFormat;
   /** Explicit inspector type override when the inferred type is not suitable. */
   propertyType?: string;
+  selectOptions?: ReadonlyArray<{ value: string; color?: GemColorToken | null }>;
   /** Explicit icon catalog name for this property. */
   iconName?: string;
   colorToken?: RecordColorToken;

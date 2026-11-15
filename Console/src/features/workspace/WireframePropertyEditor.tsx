@@ -228,10 +228,15 @@ export function WireframePropertyEditor({
                         label="Select options (comma-separated; semicolons are reserved)"
                         value={optionText}
                         onChange={(event) => setOptionText(event.currentTarget.value)}
+                        error={
+                          optionText.includes(";")
+                            ? "Option names cannot contain semicolons because semicolons separate stored tags."
+                            : undefined
+                        }
                       />
-                      {!parseSelectOptions(optionText).length ? (
+                      {!optionText.includes(";") && !parseSelectOptions(optionText).length ? (
                         <GemCaption>Add at least one option before saving this type.</GemCaption>
-                      ) : type === "Select" && kind === "number" ? (
+                      ) : !optionText.includes(";") && type === "Select" && kind === "number" ? (
                         <GemCaption>Because this column stores numbers, each option must be numeric.</GemCaption>
                       ) : null}
                     </>
@@ -274,13 +279,14 @@ export function parseSelectOptions(value: string): string[] {
       value
         .split(",")
         .map((option) => option.trim())
-        .filter((option) => option && !option.includes(";")),
+        .filter(Boolean),
     ),
   ];
 }
 
 export function canSavePropertyType(type: string, kind: string | undefined, optionText: string): boolean {
   if (!isSelectType(type)) return true;
+  if (optionText.includes(";")) return false;
   const options = parseSelectOptions(optionText);
   if (options.length === 0) return false;
   return type !== "Select" || kind !== "number" || options.every((option) => Number.isFinite(Number(option)));

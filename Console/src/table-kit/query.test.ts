@@ -1,6 +1,9 @@
 import { renderHook, act } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { deriveClientQuery, normalizeTableQueryState, useTableQueryState } from "./query";
+import { matchesMultiSelectOption } from "./multiSelect";
+import vectors from "./multiSelectCodecVectors.json";
+import { decodeMultiSelectValue, encodeMultiSelectValue } from "@gemsforge/ui";
 
 interface Row {
   name: string;
@@ -43,6 +46,35 @@ describe("Table Kit query contract", () => {
 
     expect(result.total).toBe(2);
     expect(result.rows).toEqual([{ name: "Gamma", category: "A" }]);
+  });
+
+  it("keeps the shared multi-select codec vectors aligned", () => {
+    for (const vector of vectors) {
+      expect(decodeMultiSelectValue(vector.input)).toEqual(vector.decoded);
+      expect(encodeMultiSelectValue(vector.decoded)).toBe(vector.encoded);
+    }
+  });
+
+  it("filters multi-select rows by a whole NFC-normalized tag", () => {
+    const result = deriveClientQuery(
+      { search: "", filters: { tags: "🏡 Home" }, sort: [], pageIndex: 0, pageSize: 25 },
+      {
+        rows: [{ tags: "🏡 Home;💳 Credit" }, { tags: "🏡 Homework" }],
+        searchText: (row) => row.tags,
+        filterValue: (row) => row.tags,
+        filterMatch: (row, column, expected) => column !== "tags" || matchesMultiSelectOption(row.tags, expected),
+      },
+    );
+    expect(result.rows).toEqual([{ tags: "🏡 Home;💳 Credit" }]);
+    expect(matchesMultiSelectOption("Cafe\u0301", "Café")).toBe(true);
+  });
+
+  it("preserves exact-equality filter behavior when no matcher is supplied", () => {
+    const result = deriveClientQuery(
+      { search: "", filters: { category: "A" }, sort: [], pageIndex: 0, pageSize: 25 },
+      { rows, searchText: (row) => row.name, filterValue: (row) => row.category },
+    );
+    expect(result.rows).toEqual(rows.filter((row) => row.category === "A"));
   });
 
   it("restores uncontrolled query state per view and reports controlled changes", () => {

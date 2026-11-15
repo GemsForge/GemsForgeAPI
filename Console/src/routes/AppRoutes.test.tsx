@@ -51,6 +51,45 @@ function setup(path = "/", authenticated = true) {
 }
 
 describe("Gem Life navigation", () => {
+  it("renders schema pages using workspace metadata while column definitions are loading", async () => {
+    vi.spyOn(api, "listEducation").mockResolvedValue([]);
+    vi.spyOn(api, "getSchemaPageTables").mockResolvedValue({ tables: [], availableTables: [] });
+    const columns = [
+      { name: "CategoryID", dataType: "INTEGER", nullable: false, primaryKey: true, defaultValue: null },
+      { name: "HubID", dataType: "TEXT", nullable: true, primaryKey: false, defaultValue: null },
+      { name: "Category", dataType: "TEXT", nullable: false, primaryKey: false, defaultValue: null },
+    ];
+    vi.spyOn(api, "getSchemaPageTables").mockResolvedValue({
+      tables: [{ name: "BudgetCategories", columns }],
+      availableTables: [],
+    });
+    vi.spyOn(api, "getSchemaPageRecords").mockResolvedValue({
+      table: { name: "BudgetCategories", columns },
+      rows: [{ CategoryID: "12", HubID: "workspace-a", Category: "Housing" }],
+      totalCount: 1,
+      limit: 100,
+      offset: 0,
+    });
+    vi.spyOn(api, "getTableColumnDefinitions").mockImplementation(() => new Promise(() => undefined));
+    vi.spyOn(api, "getTableView").mockResolvedValue({
+      view: {
+        viewID: "Gallery",
+        tableName: "BudgetCategories",
+        name: "Gallery",
+        viewType: "Gallery",
+        workspaceState: JSON.stringify({
+          propertyTypes: { Category: "Select" },
+          propertySelectOptions: { Category: ["Housing"] },
+        }),
+        updatedAt: "2026-11-15T00:00:00Z",
+      },
+      columns: [],
+      queries: [],
+    });
+    setup("/schema/BudgetCategories");
+    expect(await screen.findByRole("heading", { name: "BudgetCategories" }, lazyScreen)).toBeInTheDocument();
+    expect(screen.getAllByText("Housing").length).toBeGreaterThan(0);
+  });
   it("exposes a captured screen render error during development", () => {
     render(
       <MemoryRouter>

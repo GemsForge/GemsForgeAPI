@@ -12,6 +12,7 @@ enum RecordTimestamp {
 enum PatchJSONValue: Decodable, Sendable {
     case null
     case string(String)
+    case strings([String])
     case number(Double)
     case bool(Bool)
 
@@ -19,6 +20,8 @@ enum PatchJSONValue: Decodable, Sendable {
         let value = try decoder.singleValueContainer()
         if value.decodeNil() {
             self = .null
+        } else if let strings = try? value.decode([String].self) {
+            self = .strings(strings)
         } else if let string = try? value.decode(String.self) {
             self = .string(string)
         } else if let bool = try? value.decode(Bool.self) {
@@ -37,7 +40,7 @@ enum PatchJSONValue: Decodable, Sendable {
         return switch self {
         case .null: nil
         case let .string(value): value
-        case .number, .bool: throw Abort(.unprocessableEntity, reason: "Expected a string value.")
+        case .number, .bool, .strings: throw Abort(.unprocessableEntity, reason: "Expected a string value.")
         }
     }
 
@@ -45,7 +48,7 @@ enum PatchJSONValue: Decodable, Sendable {
         return switch self {
         case .null: nil
         case let .number(value): value
-        case .string, .bool: throw Abort(.unprocessableEntity, reason: "Expected a numeric value.")
+        case .string, .bool, .strings: throw Abort(.unprocessableEntity, reason: "Expected a numeric value.")
         }
     }
 
@@ -53,7 +56,7 @@ enum PatchJSONValue: Decodable, Sendable {
         return switch self {
         case .null: nil
         case let .bool(value): value
-        case .string, .number: throw Abort(.unprocessableEntity, reason: "Expected a boolean value.")
+        case .string, .number, .strings: throw Abort(.unprocessableEntity, reason: "Expected a boolean value.")
         }
     }
 }

@@ -43,6 +43,7 @@ export interface ClientQueryOptions<Row> {
   rows: readonly Row[];
   searchText: (row: Row) => string;
   filterValue?: (row: Row, columnId: string) => string | undefined;
+  filterMatch?: (row: Row, columnId: string, expected: string) => boolean;
   compare?: (left: Row, right: Row, columnId: string) => number;
 }
 
@@ -120,15 +121,17 @@ export function useTableQueryState({
 /** Derive filtered, sorted, paginated results for a client-owned data set. */
 export function deriveClientQuery<Row>(
   query: TableQueryState,
-  { rows, searchText, filterValue, compare }: ClientQueryOptions<Row>,
+  { rows, searchText, filterValue, filterMatch, compare }: ClientQueryOptions<Row>,
 ): TableQueryResult<Row> {
   const normalized = normalizeTableQueryState(query);
   const search = normalized.search.toLowerCase();
   let matching = rows.filter((row) => {
     if (search && !searchText(row).toLowerCase().includes(search)) return false;
-    return Object.entries(normalized.filters).every(
-      ([columnId, expected]) => !expected || filterValue?.(row, columnId) === expected,
-    );
+    return Object.entries(normalized.filters).every(([columnId, expected]) => {
+      if (!expected) return true;
+      if (filterMatch) return filterMatch(row, columnId, expected);
+      return filterValue?.(row, columnId) === expected;
+    });
   });
 
   if (compare && normalized.sort.length) {

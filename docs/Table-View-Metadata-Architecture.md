@@ -98,6 +98,11 @@ Hub
     └── ViewQueryConfigurations
 ```
 
+Schema Builder's column semantics are managed separately in
+[`Multi-Select-Properties.md`](Multi-Select-Properties.md). A table column
+definition is Hub-scoped and describes an existing TEXT column; it is not a
+Table View presentation row and does not change the physical table schema.
+
 ### `TableViews`
 
 Stores `ViewID`, `HubID`, `TableName`, `Name`, `ViewType`, `IsDefault`,

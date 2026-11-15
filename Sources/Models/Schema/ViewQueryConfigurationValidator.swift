@@ -102,15 +102,18 @@ struct ViewQueryConfigurationValidator: Sendable {
 
     private let source: Source
     private let driftPolicy: TableViewSchemaDriftPolicy
+    private let hubID: String?
 
     init(schema: LiveSchemaResponse, driftPolicy: TableViewSchemaDriftPolicy = .preserveAndReport) {
         self.source = .schema(schema)
         self.driftPolicy = driftPolicy
+        self.hubID = nil
     }
 
-    init(database: Database, driftPolicy: TableViewSchemaDriftPolicy = .preserveAndReport) {
+    init(database: Database, hubID: String? = nil, driftPolicy: TableViewSchemaDriftPolicy = .preserveAndReport) {
         self.source = .database(database)
         self.driftPolicy = driftPolicy
+        self.hubID = hubID
     }
 
     func validate(
@@ -124,7 +127,14 @@ struct ViewQueryConfigurationValidator: Sendable {
         case .schema(let schemaValue): schema = schemaValue
         case .database(let database): schema = try await LiveSchemaService(database: database).inspect()
         }
-        return try validateAgainstSchema(nodes, schema: schema, viewID: viewID, tableName: tableName, context: context)
+        var definitions: [TableColumnDefinition] = []
+        if let hubID, case .database(let database) = source {
+            definitions = try await TableColumnDefinition.query(on: database)
+                .filter(\.$hubID == hubID)
+                .filter(\.$tableName == tableName)
+                .all()
+        }
+        return try validateAgainstSchema(nodes, schema: schema, viewID: viewID, tableName: tableName, context: context, definitions: definitions)
     }
 
     /// Validates the View's table and every persisted query column by exact
@@ -135,7 +145,8 @@ struct ViewQueryConfigurationValidator: Sendable {
         schema: LiveSchemaResponse,
         viewID: String,
         tableName: String,
-        context: TableViewReferenceContext? = nil
+        context: TableViewReferenceContext? = nil,
+        definitions: [TableColumnDefinition] = []
     ) throws -> ViewQueryConfigurationValidationResult {
         let referenceContext = context ?? TableViewReferenceContext(viewID: viewID)
         let referenceValidator = SQLiteSchemaReferenceValidator(schema: schema, driftPolicy: driftPolicy)
@@ -189,7 +200,8 @@ struct ViewQueryConfigurationValidator: Sendable {
                 valueType: valueType,
                 booleanOperator: booleanOperator,
                 direction: direction,
-                column: column
+                column: column,
+                definitions: definitions
             )
             parsed.append(ParsedNode(
                 id: id,
@@ -347,7 +359,8 @@ struct ViewQueryConfigurationValidator: Sendable {
         valueType: ViewQueryValueType?,
         booleanOperator: ViewQueryBooleanOperator?,
         direction: ViewQuerySortDirection?,
-        column: LiveSchemaColumnResponse?
+        column: LiveSchemaColumnResponse?,
+        definitions: [TableColumnDefinition]
     ) throws -> [ViewQueryValue] {
         switch nodeType {
         case .group:
@@ -365,6 +378,17 @@ struct ViewQueryConfigurationValidator: Sendable {
             try requireNil(booleanOperator, field: "BooleanOperator", id: id)
             try requireNil(direction, field: "Direction", id: id)
             try validateCompatibility(id: id, column: column, op: comparisonOperator, valueType: valueType)
+            if let definition = definitions.first(where: { $0.columnName == column.name }),
+               definition.propertyType == TableColumnPropertyType.multiSelect.rawValue {
+                guard comparisonOperator == .contains || comparisonOperator == .notEquals || comparisonOperator == .in || comparisonOperator == .equals || comparisonOperator == .isNull || comparisonOperator == .isNotNull else {
+                    throw ViewQueryConfigurationValidationError.incompatibleOperator(nodeID: id, columnName: column.name, comparisonOperator: comparisonOperator, declaredType: "MultiSelect")
+                }
+                let allowed = Set(try definition.options().map { $0.value })
+                guard operands.allSatisfy({ operand in
+                    guard case .text(let value) = operand else { return false }
+                    return allowed.contains(value)
+                }) else { throw invalidValue(id, "MultiSelect operands must match a configured option exactly") }
+            }
             return operands
         case .sort:
             guard column != nil else { throw invalidField(id, "ColumnName", "a Sort requires an exact live SQLite column reference") }

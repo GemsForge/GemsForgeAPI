@@ -358,6 +358,38 @@ export interface SchemaPageRecordCreation {
   recordID: string;
 }
 
+export type TableColumnPropertyType = "Select" | "MultiSelect" | "Status";
+export type TableColumnColor = "mint" | "gold" | "blue" | "green" | "purple" | "orange" | "red" | "gray";
+export interface TableColumnOption {
+  value: string;
+  color: TableColumnColor | null;
+}
+export interface TableColumnDefinition {
+  id: string;
+  tableName: string;
+  columnName: string;
+  propertyType: TableColumnPropertyType;
+  options: TableColumnOption[];
+}
+export interface TableColumnDefinitionInput {
+  propertyType: TableColumnPropertyType;
+  options: TableColumnOption[];
+  renames?: { from: string; to: string }[];
+}
+export interface TableColumnDefinitionWrite {
+  definition: TableColumnDefinition;
+  rowsChanged: number;
+}
+export interface TableColumnDefinitionBackfill {
+  items: Array<{
+    columnName: string;
+    propertyType: TableColumnPropertyType;
+    options: TableColumnOption[];
+    status: string;
+  }>;
+  conflicts: string[];
+}
+
 export type TablePropertyKind = "Relation" | "Lookup";
 export interface TablePropertyDefinition {
   id: string;

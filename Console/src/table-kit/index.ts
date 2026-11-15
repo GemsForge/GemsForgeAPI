@@ -27,6 +27,7 @@ export type {
 } from "./types";
 export { NewRecordUtility } from "./NewRecordUtility";
 export { defaultTableQueryState, deriveClientQuery, normalizeTableQueryState } from "./query";
+export { matchesMultiSelectOption } from "./multiSelect";
 export type {
   ClientQueryOptions,
   SortDirection,
