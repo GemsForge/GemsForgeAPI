@@ -1281,7 +1281,8 @@
     left: 0;
     width: 100%;
     min-width: 0;
-    max-height: min(76dvh, 44rem);
+    /* Modal on compact screens (role="dialog"): cover the collection it blocks instead of a 76dvh sheet. */
+    max-height: none;
     padding-bottom: max(1rem, env(safe-area-inset-bottom));
     border: 1px solid var(--wireframe-border);
     border-bottom: 0;

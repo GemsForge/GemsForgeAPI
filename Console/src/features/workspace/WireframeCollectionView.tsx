@@ -32,6 +32,7 @@ import {
 import { RecordUtilities } from "../../components/RecordUtilities";
 import { type GalleryCardSize } from "../../table-kit";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useMediaQuery } from "../../hooks/useMediaQuery";
 import { GSelectField } from "@gemsforge/ui";
 import { GemButton } from "@gemsforge/ui";
 import { GemStatusPill } from "@gemsforge/ui";
@@ -138,6 +139,9 @@ export function WireframeCollectionView<T extends WireframeRecord>({
   const [inspectorDropTargetID, setInspectorDropTargetID] = useState<string | null>(null);
   const draggedInspectorPropertyRef = useRef<string | null>(null);
   const [selectedID, setSelectedID] = useState<string | null>(null);
+  // At <=1100px the inspector covers the collection (see wireframe-mvp.css), so it behaves as a modal dialog.
+  const compactInspector = useMediaQuery("(max-width: 1100px)");
+  const inspectorRef = useRef<HTMLElement | null>(null);
   const [workspaceSelectionRevision, setWorkspaceSelectionRevision] = useState(0);
   const workspaceSelectedID = recordPageID ? decodeURIComponent(recordPageID) : selectedID;
   const [query, setQuery] = useState("");
@@ -298,6 +302,9 @@ export function WireframeCollectionView<T extends WireframeRecord>({
     if (!pendingID) return;
     pendingSelectedID.current = null;
     skipWorkspaceSaveOnce.current = true;
+    // On compact screens a restored selection would open the full-screen inspector over the list on load;
+    // the inspector opens only when the person picks a record there.
+    if (compactInspector) return;
     if (activeRecords.some((record) => record.id === pendingID)) {
       setSelectedID(pendingID);
       return;
@@ -306,7 +313,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
     // selection and trigger a follow-up save after hydration updates settle.
     setSelectedID(null);
     setWorkspaceSelectionRevision((revision) => revision + 1);
-  }, [activeRecords, savedViewsQuery.isSuccess]);
+  }, [activeRecords, savedViewsQuery.isSuccess, compactInspector]);
   const workspaceStateSnapshot: WireframeWorkspaceState = {
     title: tableTitle,
     description: tableDescription,
@@ -561,6 +568,47 @@ export function WireframeCollectionView<T extends WireframeRecord>({
     setSelectedID(null);
     if (inspectorExpanded) navigate(location.pathname.replace(/\/record\/[^/]+$/, ""));
     requestAnimationFrame(() => selectedCardRef.current?.focus());
+  };
+  const selectedRecordID = selected?.id;
+  // Compact dialog: move focus in when it opens; Escape closes; Tab stays inside (closeInspector
+  // returns focus to the selected card).
+  useEffect(() => {
+    if (!compactInspector || !selectedRecordID || inspectorExpanded) return;
+    // Remember what opened the dialog (a table cell, list row, or card) so focus can go back to it.
+    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const frame = requestAnimationFrame(() =>
+      inspectorRef.current?.querySelector<HTMLElement>('button[aria-label="Close inspector"]')?.focus(),
+    );
+    return () => {
+      cancelAnimationFrame(frame);
+      requestAnimationFrame(() => {
+        const lost = !document.activeElement || document.activeElement === document.body;
+        if (lost && opener?.isConnected) opener.focus();
+      });
+    };
+  }, [compactInspector, selectedRecordID, inspectorExpanded]);
+  const handleCompactInspectorKeyDown = (event: React.KeyboardEvent<HTMLElement>) => {
+    if (event.key === "Escape" && !event.defaultPrevented) {
+      event.preventDefault();
+      closeInspector();
+      return;
+    }
+    if (event.key !== "Tab" || !inspectorRef.current) return;
+    const focusable = [
+      ...inspectorRef.current.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      ),
+    ].filter((element) => element.offsetParent !== null);
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (!first || !last) return;
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
   };
   const moveSelectedToTrash = async () => {
     if (!selected) return;
@@ -1109,8 +1157,12 @@ export function WireframeCollectionView<T extends WireframeRecord>({
               onClick={closeInspector}
             />
             <aside
+              ref={inspectorRef}
               className={`wireframe-demo-inspector ${inspectorExpanded ? "is-expanded" : ""}`}
               aria-labelledby="wireframe-inspector-title"
+              role={compactInspector ? "dialog" : undefined}
+              aria-modal={compactInspector ? true : undefined}
+              onKeyDown={compactInspector ? handleCompactInspectorKeyDown : undefined}
               style={config.domainHue ? ({ "--gem-domain-hue": config.domainHue } as React.CSSProperties) : undefined}
             >
               <div className="demo-inspector-heading">
