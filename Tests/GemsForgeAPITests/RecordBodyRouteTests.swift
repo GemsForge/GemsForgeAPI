@@ -13,8 +13,13 @@ final class RecordBodyRouteTests: XCTestCase {
             app.databases.use(.sqlite(.memory), as: .sqlite)
             app.migrations.add(CreateAuthenticationSchema())
             app.migrations.add(CreateHubs())
+            app.migrations.add(MakeAuthenticationProviderAgnostic())
             app.migrations.add(CreateAddresses())
+            app.migrations.add(AddAddressUpdatedAt())
+            app.migrations.add(CreateFileMetadata())
+            app.migrations.add(AddAddressAttachmentReference())
             app.migrations.add(CreateTableViews())
+            app.migrations.add(AddTableViewWorkspaceState())
             app.migrations.add(CreateRecordBodies())
             try await app.autoMigrate()
             app.middleware.use(SessionAuthenticationMiddleware(operatorAccountID: "account-a"))
@@ -27,6 +32,9 @@ final class RecordBodyRouteTests: XCTestCase {
             )
             try await AddressService(database: app.db, hubID: "hub-b").save(
                 Address(id: "ADDR-B", city: "Salem", addressStatus: "Current")
+            )
+            try await AddressService(database: app.db, hubID: "hub-a").save(
+                Address(id: "ADDR-EXCERPT", city: "Cambridge", addressStatus: "Current")
             )
 
             try await app.test(.GET, "record-bodies/Addresses/ADDR-A", beforeRequest: {
@@ -101,6 +109,14 @@ final class RecordBodyRouteTests: XCTestCase {
                 XCTAssertEqual(body.markdown.utf8.count, 600_000)
                 XCTAssertEqual(body.revision, 2)
             }
+            try await app.test(.PUT, "record-bodies/Addresses/ADDR-A", beforeRequest: { request in
+                request.headers.bearerAuthorization = .init(token: tokenA)
+                try request.content.encode(RecordBodyRequest(markdown: "", baseRevision: 2))
+            }) { response async throws in
+                XCTAssertEqual(response.status, .ok)
+                let body = try response.content.decode(RecordBodyResponse.self)
+                XCTAssertEqual(body.revision, 3)
+            }
 
             try await RecordBody(
                 hubID: "hub-a",
@@ -139,10 +155,14 @@ final class RecordBodyRouteTests: XCTestCase {
             app.databases.use(.sqlite(.memory), as: .sqlite)
             app.migrations.add(CreateAuthenticationSchema())
             app.migrations.add(CreateHubs())
+            app.migrations.add(MakeAuthenticationProviderAgnostic())
             app.migrations.add(CreateDomains())
             app.migrations.add(CreateForgeKeeper())
             app.migrations.add(CreateServiceAccounts())
+            app.migrations.add(CreateFileMetadata())
+            app.migrations.add(AddServiceAccountAttachmentReference())
             app.migrations.add(CreateTableViews())
+            app.migrations.add(AddTableViewWorkspaceState())
             app.migrations.add(CreateRecordBodies())
             try await app.autoMigrate()
             app.middleware.use(SessionAuthenticationMiddleware(operatorAccountID: "account-a"))

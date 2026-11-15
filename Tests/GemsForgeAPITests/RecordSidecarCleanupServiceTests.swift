@@ -13,6 +13,7 @@ final class RecordSidecarCleanupServiceTests: XCTestCase {
             app.databases.use(.sqlite(.memory), as: .sqlite)
             app.migrations.add(CreateAuthenticationSchema())
             app.migrations.add(CreateHubs())
+            app.migrations.add(MakeAuthenticationProviderAgnostic())
             app.migrations.add(CreateTableViews())
             app.migrations.add(CreateRecordPresentations())
             app.migrations.add(CreateRecordBodies())

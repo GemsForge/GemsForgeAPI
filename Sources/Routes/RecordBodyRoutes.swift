@@ -37,13 +37,27 @@ func registerRecordBodyRoutes(_ app: Application) {
             .filter(\.$tableName == tableName)
             .sort(\.$updatedAt, .descending)
             .all()
-        return records.map {
-            RecordBodyExcerptResponse(
-                recordID: $0.recordID,
-                updatedAt: $0.updatedAt,
-                excerpt: recordBodyPlainText($0.markdown).prefix(200).description
+        var excerpts: [RecordBodyExcerptResponse] = []
+        for record in records {
+            do {
+                try await validatePresentationRecord(
+                    tableName: tableName,
+                    recordID: record.recordID,
+                    hubID: hubID,
+                    database: request.db
+                )
+            } catch let abort as Abort where abort.status == .notFound {
+                continue
+            }
+            excerpts.append(
+                RecordBodyExcerptResponse(
+                    recordID: record.recordID,
+                    updatedAt: record.updatedAt,
+                    excerpt: recordBodyPlainText(record.markdown).prefix(200).description
+                )
             )
         }
+        return excerpts
     }
 
     bodies.get(":tableName", ":recordID") { request async throws -> RecordBodyResponse in

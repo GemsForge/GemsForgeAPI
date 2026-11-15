@@ -56,6 +56,7 @@ final class FileMetadataRouteTests: XCTestCase {
             app.databases.use(.sqlite(.memory), as: .sqlite)
             app.migrations.add(CreateAuthenticationSchema())
             app.migrations.add(CreateHubs())
+            app.migrations.add(MakeAuthenticationProviderAgnostic())
             app.migrations.add(CreateFileMetadata())
             app.migrations.add(CreateRecordBodies())
             app.migrations.add(CreateAddresses())
@@ -128,6 +129,10 @@ final class FileMetadataRouteTests: XCTestCase {
                 XCTAssertEqual(metadata.relativePath, "images/receipts/receipt-0001-updated.jpg")
                 XCTAssertEqual(metadata.byteSize, 4096)
             }
+            let metadata = try await FileMetadataService(database: app.db).find(id: "FILE-0001")
+            let storedMetadata = try XCTUnwrap(metadata)
+            storedMetadata.hubID = "hub-a"
+            try await storedMetadata.save(on: app.db)
 
             try await RecordBody(
                 hubID: "hub-a",
