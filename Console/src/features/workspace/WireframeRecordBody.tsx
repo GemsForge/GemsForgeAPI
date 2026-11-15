@@ -24,12 +24,17 @@ export function WireframeRecordBody({ tableName, recordID }: { tableName: string
   const revisionRef = useRef(revision);
   const dirtyRef = useRef(dirty);
   const saveInFlight = useRef(false);
-  markdownRef.current = markdown;
-  revisionRef.current = revision;
-  dirtyRef.current = dirty;
+  const saveBodyMutation = useRef(saveBody.mutateAsync);
+
+  useEffect(() => {
+    saveBodyMutation.current = saveBody.mutateAsync;
+  }, [saveBody.mutateAsync]);
 
   useEffect(() => {
     if (!bodyQuery.data || dirtyRef.current) return;
+    markdownRef.current = bodyQuery.data.markdown;
+    revisionRef.current = bodyQuery.data.revision;
+    dirtyRef.current = false;
     setMarkdown(bodyQuery.data.markdown);
     setRevision(bodyQuery.data.revision);
   }, [bodyQuery.data]);
@@ -73,7 +78,7 @@ export function WireframeRecordBody({ tableName, recordID }: { tableName: string
       if (dirtyRef.current) {
         if (timer.current !== null) window.clearTimeout(timer.current);
         if (dirtyRef.current)
-          void saveBody.mutateAsync({ markdown: markdownRef.current, baseRevision: revisionRef.current });
+          void saveBodyMutation.current({ markdown: markdownRef.current, baseRevision: revisionRef.current });
       }
     },
     [],
@@ -161,6 +166,9 @@ export function WireframeRecordBody({ tableName, recordID }: { tableName: string
             type="button"
             tone="secondary"
             onPress={() => {
+              markdownRef.current = conflict.markdown;
+              revisionRef.current = conflict.revision;
+              dirtyRef.current = false;
               setMarkdown(conflict.markdown);
               setRevision(conflict.revision);
               setDirty(false);
