@@ -147,7 +147,7 @@ export function WireframeRecordBody({ tableName, recordID }: { tableName: string
 export function safeMarkdownURL(value: string): string {
   const trimmed = value.trim();
   if (trimmed.startsWith("/file-metadata/") && /^\/file-metadata\/[A-Za-z0-9_-]+\/content$/.test(trimmed)) return trimmed;
-  if (trimmed.startsWith("/") || trimmed.startsWith("#")) return "";
+  if (trimmed.startsWith("/") || trimmed.startsWith("#") || !/^(https?:|mailto:)/i.test(trimmed)) return "";
   try {
     const protocol = new URL(trimmed, window.location.origin).protocol;
     return ["http:", "https:", "mailto:"].includes(protocol) ? trimmed : "";

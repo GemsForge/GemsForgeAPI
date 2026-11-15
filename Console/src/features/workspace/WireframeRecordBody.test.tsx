@@ -25,6 +25,8 @@ describe("record Markdown body", () => {
     expect(safeMarkdownURL("data:image/png;base64,AA")).toBe("");
     expect(safeMarkdownURL("/file-metadata/abc_123/content")).toBe("/file-metadata/abc_123/content");
     expect(safeMarkdownURL("/other/path")).toBe("");
+    expect(safeMarkdownURL("relative/path")).toBe("");
+    expect(safeMarkdownURL("//example.com/path")).toBe("");
   });
 
   it("debounces autosave and saves immediately on blur", async () => {
