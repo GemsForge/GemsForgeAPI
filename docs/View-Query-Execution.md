@@ -38,6 +38,12 @@ columns are evaluated in persisted SortOrder with nulls last, followed by the
 primary key as a stable tie-breaker. A RecordGroup node adds the leading group
 sort and populates `groupKey` in the response.
 
+For larger custom tables, index `HubID` first. Add a composite index beginning
+with `HubID` and followed by frequently filtered columns, or by the common sort
+columns and primary key. Search uses escaped substring `LIKE` predicates and
+does not gain the same benefit from an ordinary B-tree index. Choose indexes
+from observed query patterns; the server does not create them automatically.
+
 The Console retains its existing client-side query path if the server query
 request fails. Server query support is enabled only for eligible schema-page
 tables; dedicated collections continue using their existing behavior.

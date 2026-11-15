@@ -523,7 +523,7 @@ struct ViewQueryExecutor: Sendable {
             }
             query.appendInterpolation(unsafeRaw: ")")
         case .isNull:
-            if node.valueType == .text {
+            if node.columnDataType.map(isTextColumnType) == true {
                 query.appendInterpolation(unsafeRaw: "(")
                 query.appendInterpolation(ident: columnName)
                 query.appendInterpolation(unsafeRaw: " IS NULL OR ")
@@ -534,7 +534,7 @@ struct ViewQueryExecutor: Sendable {
                 query.appendInterpolation(unsafeRaw: " IS NULL")
             }
         case .isNotNull:
-            if node.valueType == .text {
+            if node.columnDataType.map(isTextColumnType) == true {
                 query.appendInterpolation(unsafeRaw: "(")
                 query.appendInterpolation(ident: columnName)
                 query.appendInterpolation(unsafeRaw: " IS NOT NULL AND ")
@@ -615,5 +615,10 @@ struct ViewQueryExecutor: Sendable {
             .replacingOccurrences(of: "\\", with: "\\\\")
             .replacingOccurrences(of: "%", with: "\\%")
             .replacingOccurrences(of: "_", with: "\\_")
+    }
+
+    private func isTextColumnType(_ dataType: String) -> Bool {
+        let type = dataType.uppercased()
+        return type.contains("TEXT") || type.contains("CHAR") || type.contains("CLOB")
     }
 }

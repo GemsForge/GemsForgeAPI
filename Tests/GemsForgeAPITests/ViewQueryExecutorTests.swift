@@ -56,6 +56,22 @@ final class ViewQueryExecutorTests: XCTestCase {
             )
             XCTAssertEqual(escaped.total, 1)
             XCTAssertEqual(escaped.records.first?.row["ID"] ?? nil, "one")
+
+            let batch = (0..<10_000).map { index in
+                "('bench-\(index)', 'hub-a', 'Benchmark \(index)', \(index))"
+            }.joined(separator: ",")
+            try await sql.raw(SQLQueryString(stringLiteral:
+                "INSERT INTO SchemaPageFixture (ID, HubID, Name, Quantity) VALUES \(batch)"
+            )).run()
+            let started = Date.timeIntervalSinceReferenceDate
+            let benchmark = try await ViewQueryExecutor(database: app.db, hubID: "hub-a").execute(
+                tableName: "SchemaPageFixture",
+                request: SchemaPageQueryRequest(viewID: nil, nodes: emptyGroup, search: nil, limit: 50, offset: 0)
+            )
+            let elapsed = Date.timeIntervalSinceReferenceDate - started
+            XCTAssertEqual(benchmark.total, 10_002)
+            XCTAssertEqual(benchmark.records.count, 50)
+            XCTAssertLessThan(elapsed, 5, "A 10,000-row page query should complete under the CI performance bound.")
         }
     }
 }

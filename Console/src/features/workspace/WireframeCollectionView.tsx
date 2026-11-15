@@ -46,7 +46,7 @@ import { inferWireframePropertyMetadata } from "./propertyMetadata";
 import { WireframeCover, WireframeCoverCardImage, type WireframeCover as WireframeCoverValue } from "./WireframeCover";
 import { WireframePropertyIconProvider, type WireframeDateConfiguration } from "./WireframePropertyEditor";
 import { WireframePropertySettingsDialog, type WireframePropertyDetails } from "./WireframePropertySettingsDialog";
-import { api } from "../../api";
+import { APIError, api } from "../../api";
 import { useUploadImageMutation } from "../../data/workflowQueries";
 import type { TableColumnDefinition } from "../../types";
 import { useArchiveRecordMutation, useTrashEntriesQuery } from "../../data/trashQueries";
@@ -232,6 +232,11 @@ export function WireframeCollectionView<T extends WireframeRecord>({
     });
   }, [config.columnDefinitions, config.properties, direction, filter, groupBy, pageIndex, pageSize, query, sort]);
   const serverQuery = useSchemaPageQuery(presentationTableName, serverRequest, config.supportsServerQuery === true);
+  const serverFailureAllowsFallback =
+    serverQuery.isError &&
+    serverQuery.error instanceof APIError &&
+    (serverQuery.error.status === 0 || (serverQuery.error.status >= 500 && serverQuery.error.status <= 599));
+  const clientFallbackAllowed = config.supportsServerQuery !== true || serverFailureAllowsFallback;
   const trashEntriesQuery = useTrashEntriesQuery();
   const archiveRecord = useArchiveRecordMutation();
   const [archiveError, setArchiveError] = useState<string | null>(null);
@@ -268,8 +273,8 @@ export function WireframeCollectionView<T extends WireframeRecord>({
   }, [presentationTableName, schemaQuery.data, serverQuery.data]);
   const usingServerQuery = config.supportsServerQuery === true && serverQuery.isSuccess;
   const activeRecords = useMemo(
-    () => (usingServerQuery ? serverRows : config.records).filter((record) => usingServerQuery || !archivedRecordIDs.has(record.id)),
-    [archivedRecordIDs, config.records, serverRows, usingServerQuery],
+    () => (usingServerQuery ? serverRows : clientFallbackAllowed ? config.records : []).filter((record) => usingServerQuery || !archivedRecordIDs.has(record.id)),
+    [archivedRecordIDs, clientFallbackAllowed, config.records, serverRows, usingServerQuery],
   );
   const savedViewsQuery = useTableViewsQuery(presentationTableName);
   const { mutateAsync: saveWorkspaceStateAsync } = useSaveTableViewWorkspaceStateMutation(presentationTableName);
@@ -571,7 +576,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
     () => (schema ? createWireframeSchemaProperties<T>(schema.columns, activeRecords) : []),
     [activeRecords, schema],
   );
-  const clientQueryEnabled = !usingServerQuery;
+  const clientQueryEnabled = !usingServerQuery && clientFallbackAllowed;
   const matchingRecords = useMemo(
     () =>
       activeRecords.filter(
