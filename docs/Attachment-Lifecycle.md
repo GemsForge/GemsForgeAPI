@@ -123,6 +123,11 @@ before uploading. API validation remains authoritative.
 Vite proxies both `/file-metadata` and `/file-uploads` to the API. Configure
 `VITE_API_TARGET` for the running API as with other console requests.
 
+Images inserted into Markdown record bodies use the same authenticated
+`/file-metadata/:id/content` route. A metadata record referenced by a body image
+is retained until that Markdown reference is removed; see
+[Record page bodies](Record-Bodies.md).
+
 Run the frontend checks from `Console`:
 
 ```sh

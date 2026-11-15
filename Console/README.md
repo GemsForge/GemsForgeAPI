@@ -57,6 +57,7 @@ Vite proxies API paths to Vapor so the browser can use same-origin requests:
 /expense-subcategories
 /table-views
 /record-presentations
+/record-bodies
 /schema-builder
 /live-database
 ```
@@ -78,6 +79,9 @@ schema-backed properties. The API persists each view's workspace state and
 per-record presentation state within the authenticated Hub; TanStack Query
 loads and updates that server state. See [Table Views](../docs/Table-Views.md)
 for the saved-state contract.
+Record Markdown bodies use `react-markdown` with `remark-gfm`; the safe subset
+and revisioned save behavior are documented in
+[Record page bodies](../docs/Record-Bodies.md).
 
 ```mermaid
 flowchart LR
