@@ -1,7 +1,7 @@
 import Fluent
 import FluentSQLiteDriver
 import SQLKit
-import XCTVapor
+import VaporTesting
 import XCTest
 @testable import GemsForgeAPI
 
