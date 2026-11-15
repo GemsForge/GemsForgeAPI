@@ -64,6 +64,7 @@ export default defineConfig(({ mode }) => {
           "/file-metadata",
           "/file-uploads",
           "/record-presentations",
+          "/record-bodies",
           "/trash",
           "/table-views",
           "/table-import",

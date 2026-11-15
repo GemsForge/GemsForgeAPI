@@ -3869,6 +3869,48 @@ dialog::backdrop {
   max-width: 52rem;
   margin-top: 1.5rem;
 }
+
+.wireframe-record-body {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+  color: var(--gem-wireframe-text);
+}
+.wireframe-record-body-editor {
+  min-height: 14rem;
+  resize: vertical;
+}
+.wireframe-record-body-status {
+  min-height: 1.25rem;
+  margin: 0;
+  color: var(--gem-wireframe-muted);
+}
+.wireframe-record-body-preview {
+  overflow-wrap: anywhere;
+  color: var(--gem-wireframe-text);
+}
+.wireframe-record-body-preview a {
+  color: var(--gem-wireframe-action-dark);
+}
+.wireframe-record-body-preview img {
+  max-width: 100%;
+}
+.wireframe-record-body-conflict {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem;
+  color: var(--gem-wireframe-text);
+  background: var(--gem-wireframe-surface-raised);
+  border: 1px solid var(--gem-wireframe-field-border);
+  border-radius: 0.5rem;
+}
+.wireframe-record-body-inspector {
+  padding: 0.75rem 1rem;
+  border-top: 1px solid var(--gem-wireframe-border);
+}
+.wireframe-record-body-open {
+  margin: 0.75rem 1rem;
+}
 .wireframe-record-page-breadcrumb {
   max-width: 52rem;
   margin-top: 1rem;

@@ -81,6 +81,10 @@ the same table/record owner. The Console caches view and presentation state with
 TanStack Query; covers and workspace state are not stored in browser local
 storage.
 
+Markdown page bodies are stored separately in `RecordBodies` and are scoped
+by Hub, table, and record. See [Record page bodies](Record-Bodies.md) for the
+revisioned body API, supported Markdown, and attachment reference lifecycle.
+
 The owning Hub cascades to its Table Views, and a View cascades to both child
 configuration tables. A partial unique index permits at most one default View
 for each `(HubID, TableName)` while allowing any number of non-default Views.
