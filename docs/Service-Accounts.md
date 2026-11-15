@@ -61,6 +61,13 @@ for compatibility, but the Console and API no longer resolve it to an image.
 `AssociatedAddress` also remains an existing value until a validated
 normalized relationship is designed.
 
+For the Notion workspace migration tracked in [#545](https://github.com/GemsForge/GemsForgeAPI/issues/545),
+the importer must normalize `Due Date` labels through a reviewed mapping and
+store only the final four numeric characters of an account number. The pure
+`NotionImportValueMapper` supports ordinal days, month-and-day labels, and
+weekday labels; unsupported values are left for the dry-run report to flag.
+The mapper never handles credentials or writes data itself.
+
 ## Migration boundary
 
 `CreateServiceAccounts` mirrors the existing table for isolated tests only. The
