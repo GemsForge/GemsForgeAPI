@@ -31,6 +31,7 @@ import {
 } from "../../data/lifeQueries";
 import { useAppShell } from "./AppShell";
 import { WireframePageView } from "./WireframePageView";
+import { NotionImportPreviewView } from "./NotionImportPreviewView";
 
 export function WireframeSystemPage({
   children,
@@ -123,6 +124,14 @@ export function WireframeHomePage() {
           <span className="wireframe-system-card-arrow" aria-hidden="true">
             ↗
           </span>
+        </Link>
+        <Link className="wireframe-system-card" to="/import">
+          <span className="wireframe-system-card-icon"><FileSpreadsheet size={20} aria-hidden="true" /></span>
+          <span className="wireframe-system-card-copy">
+            <strong>Import data</strong>
+            <small>Review your Notion workspace</small>
+          </span>
+          <span className="wireframe-system-card-arrow" aria-hidden="true">↗</span>
         </Link>
         <Link className="wireframe-system-card" to="/domains">
           <span className="wireframe-system-card-icon">
@@ -266,7 +275,7 @@ export function WireframeSettingsPage() {
           </span>
           <span className="wireframe-system-card-copy">
             <strong>Import data</strong>
-            <small>Import records from a CSV file</small>
+            <small>Review your Notion workspace</small>
           </span>
           <span className="wireframe-system-card-arrow" aria-hidden="true">
             ↗
@@ -281,26 +290,12 @@ export function WireframeImportPage() {
   return (
     <WireframeSystemPage
       title="Import data"
-      description="Import records from a CSV file into a collection."
+      description="Review pages and databases shared with your Notion integration."
       count={0}
       showCount={false}
       activeCollection=""
     >
-      <div
-        className="import-card wireframe-system-card"
-        style={{ flexDirection: "column", alignItems: "flex-start", gap: "0.75rem", padding: "1.5rem" }}
-      >
-        <div className="wireframe-system-card-icon" style={{ width: "3rem", height: "3rem" }}>
-          <FileSpreadsheet size={22} aria-hidden="true" />
-        </div>
-        <div>
-          <strong style={{ display: "block", marginBottom: "0.3rem" }}>CSV import</strong>
-          <p className="upload-placeholder" style={{ margin: 0, fontSize: "0.8125rem" }}>
-            CSV import is coming soon. You'll be able to map columns to collection fields and preview records before
-            import.
-          </p>
-        </div>
-      </div>
+      <NotionImportPreviewView />
     </WireframeSystemPage>
   );
 }

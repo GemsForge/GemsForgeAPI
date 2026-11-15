@@ -96,6 +96,28 @@ export interface RecordBodyExcerpt {
   updatedAt: string | null;
 }
 
+export interface NotionImportPreview {
+  readOnly: boolean;
+  expiresAt: string;
+  resources: Array<{
+    notionID: string;
+    title: string;
+    notionObject: "page" | "data_source";
+    target: string;
+    rowCount: number;
+    properties: Array<{
+      name: string;
+      notionType: string;
+      proposedStorage: string;
+      requiresReview: boolean;
+    }>;
+    unmappedProperties: string[];
+  }>;
+  totalRows: number;
+  unmappedProperties: string[];
+  warnings: string[];
+}
+
 export interface APIAuthenticationSession {
   sessionToken: string;
   expiresAt: string;
@@ -144,6 +166,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 }
 
 export const api = {
+  previewNotionImport: (signal?: AbortSignal) => request<NotionImportPreview>("/notion-import/preview", { signal }),
   getTableView: (tableName: string, viewType: SavedTableViewInput["viewType"], signal?: AbortSignal) =>
     request<SavedTableView>(`/table-views/${encodeURIComponent(tableName)}/${encodeURIComponent(viewType)}`, {
       signal,

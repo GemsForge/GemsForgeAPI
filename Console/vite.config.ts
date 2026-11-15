@@ -68,6 +68,7 @@ export default defineConfig(({ mode }) => {
           "/trash",
           "/table-views",
           "/table-import",
+          "/notion-import",
           "/forgekeeper",
           "/gemhues",
           "/health",
