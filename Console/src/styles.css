@@ -136,6 +136,13 @@ a.secondary-button {
   outline: 3px solid var(--mint) !important;
   outline-offset: 3px;
 }
+/* Light surfaces outside .wireframe-demo inherit the dark-theme --mint (#78d1bd, ~1.7:1 on
+   white); use the wireframe action so the ring meets 3:1 (WCAG 1.4.11). */
+.wireframe-canvas :where(a, button, input, select, textarea, [tabindex]):focus-visible,
+.wireframe-canvas:focus-visible,
+[data-gem-select-content][data-wireframe-select] :where([role="option"], [tabindex]):focus-visible {
+  outline-color: var(--gem-wireframe-action) !important;
+}
 button,
 .primary-button,
 .secondary-button,
