@@ -2,6 +2,25 @@ import XCTest
 @testable import GemsForgeAPI
 
 final class ViewQueryConfigurationValidatorTests: XCTestCase {
+    func testMultiSelectContainsRequiresKnownOptionAndRejectsSubstringOperators() throws {
+        let validator = ViewQueryConfigurationValidator(schema: schema)
+        let definition = try TableColumnDefinition(
+            hubID: "hub-1", tableName: "Records", columnName: "Name",
+            propertyType: .multiSelect, options: [TableColumnOption(value: "Home", color: nil)]
+        )
+        let valid = [
+            ViewQueryConfiguration(id: "root", viewID: "view-1", nodeType: .group, booleanOperator: .and),
+            ViewQueryConfiguration(id: "tag", viewID: "view-1", parentQueryID: "root", nodeType: .condition, columnName: "Name", comparisonOperator: .contains, valueType: .text, value: "Home"),
+        ]
+        XCTAssertNoThrow(try validator.validateAgainstSchema(valid, schema: schema, viewID: "view-1", tableName: "Records", definitions: [definition]))
+
+        let unknown = [valid[0], ViewQueryConfiguration(id: "tag", viewID: "view-1", parentQueryID: "root", nodeType: .condition, columnName: "Name", comparisonOperator: .contains, valueType: .text, value: "Homework")]
+        XCTAssertThrowsError(try validator.validateAgainstSchema(unknown, schema: schema, viewID: "view-1", tableName: "Records", definitions: [definition]))
+
+        let substring = [valid[0], ViewQueryConfiguration(id: "tag", viewID: "view-1", parentQueryID: "root", nodeType: .condition, columnName: "Name", comparisonOperator: .startsWith, valueType: .text, value: "Home")]
+        XCTAssertThrowsError(try validator.validateAgainstSchema(substring, schema: schema, viewID: "view-1", tableName: "Records", definitions: [definition]))
+    }
+
     func testValidatesFilterTreeAndIndependentNodesAgainstLiveTypes() throws {
         let validator = ViewQueryConfigurationValidator(schema: schema)
         let nodes = [

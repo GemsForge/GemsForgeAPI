@@ -63,6 +63,7 @@ struct SavedTableColumnRequest: Content, Sendable {
 }
 
 struct SavedTableQueryRequest: Content, Sendable {
+    let id: String?
     let parentQueryID: String?
     let nodeType: ViewQueryNodeType
     let columnName: String?
@@ -129,21 +130,48 @@ func registerTableViewRoutes(_ app: Application) {
             .filter(\.$tableName == tableName)
             .filter(\.$viewType == viewType.rawValue)
             .first() ?? TableView(hubID: hubID, tableName: tableName, name: input.name, viewType: viewType, isDefault: true)
+        let viewID = view.id ?? UUID().uuidString
+        view.id = viewID
+        if !input.queries.isEmpty {
+            let proposedQueries = input.queries.map { query in
+                ViewQueryConfiguration(
+                    id: query.id ?? UUID().uuidString,
+                    viewID: viewID,
+                    parentQueryID: query.parentQueryID,
+                    nodeType: query.nodeType,
+                    columnName: query.columnName,
+                    comparisonOperator: query.comparisonOperator,
+                    valueType: query.valueType,
+                    value: query.value,
+                    booleanOperator: query.booleanOperator,
+                    direction: query.direction,
+                    sortOrder: query.sortOrder
+                )
+            }
+            do {
+                _ = try await ViewQueryConfigurationValidator(database: request.db, hubID: hubID).validate(
+                    proposedQueries,
+                    viewID: viewID,
+                    tableName: tableName,
+                    context: TableViewReferenceContext(viewID: viewID)
+                )
+            } catch let error as ViewQueryConfigurationValidationError {
+                throw Abort(.badRequest, reason: error.description)
+            }
+        }
         view.name = input.name
         // Older clients omit this field. Preserve state they do not know about.
         if let workspaceState = input.workspaceState {
             view.workspaceState = workspaceState
         }
         try await view.save(on: request.db)
-        guard let viewID = view.id else { throw Abort(.internalServerError) }
-
         try await ViewColumnConfiguration.query(on: request.db).filter(\.$viewID == viewID).delete()
         try await ViewQueryConfiguration.query(on: request.db).filter(\.$viewID == viewID).delete()
         for column in input.columns {
             try await ViewColumnConfiguration(viewID: viewID, columnName: column.columnName, isVisible: column.isVisible, sortOrder: column.sortOrder, width: column.width).save(on: request.db)
         }
         for query in input.queries {
-            try await ViewQueryConfiguration(viewID: viewID, parentQueryID: query.parentQueryID, nodeType: query.nodeType, columnName: query.columnName, comparisonOperator: query.comparisonOperator, valueType: query.valueType, value: query.value, booleanOperator: query.booleanOperator, direction: query.direction, sortOrder: query.sortOrder).save(on: request.db)
+            try await ViewQueryConfiguration(id: query.id ?? UUID().uuidString, viewID: viewID, parentQueryID: query.parentQueryID, nodeType: query.nodeType, columnName: query.columnName, comparisonOperator: query.comparisonOperator, valueType: query.valueType, value: query.value, booleanOperator: query.booleanOperator, direction: query.direction, sortOrder: query.sortOrder).save(on: request.db)
         }
 
         let columns = try await ViewColumnConfiguration.query(on: request.db).filter(\.$viewID == viewID).sort(\.$sortOrder).all()

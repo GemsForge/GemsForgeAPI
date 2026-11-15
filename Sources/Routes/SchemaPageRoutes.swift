@@ -19,6 +19,7 @@ func registerSchemaPageRoutes(_ app: Application) {
             case .unavailableDatabase: throw Abort(.serviceUnavailable, reason: error.description)
             case .recordUnavailable: throw Abort(.notFound, reason: error.description)
             case .invalidRecord: throw Abort(.unprocessableEntity, reason: error.description)
+            case .invalidPropertyValue: throw Abort(.badRequest, reason: error.description)
             }
         }
     }
@@ -37,6 +38,7 @@ func registerSchemaPageRoutes(_ app: Application) {
             case .unavailableDatabase: throw Abort(.serviceUnavailable, reason: error.description)
             case .recordUnavailable: throw Abort(.notFound, reason: error.description)
             case .invalidRecord: throw Abort(.unprocessableEntity, reason: error.description)
+            case .invalidPropertyValue: throw Abort(.badRequest, reason: error.description)
             }
         }
     }
@@ -54,6 +56,7 @@ func registerSchemaPageRoutes(_ app: Application) {
             case .unavailableDatabase: throw Abort(.serviceUnavailable, reason: error.description)
             case .recordUnavailable: throw Abort(.notFound, reason: error.description)
             case .invalidRecord: throw Abort(.notFound, reason: error.description)
+            case .invalidPropertyValue: throw Abort(.badRequest, reason: error.description)
             }
         }
     }
@@ -62,10 +65,10 @@ func registerSchemaPageRoutes(_ app: Application) {
         let hubID = try request.requireAuthenticatedHubID()
         guard let tableName = request.parameters.get("tableName"),
               let recordID = request.parameters.get("recordID") else { throw Abort(.badRequest) }
-        let values = try request.content.decode([String: PatchJSONValue].self)
+        let (values, createMissingOptions) = try decodeSchemaPageWrite(request)
         do {
             try await SchemaPageService(database: request.db, hubID: hubID)
-                .updateRecord(tableName: tableName, recordID: recordID, values: values)
+                .updateRecord(tableName: tableName, recordID: recordID, values: values, createMissingOptions: createMissingOptions)
             return .noContent
         } catch let error as SchemaPageError {
             switch error {
@@ -75,6 +78,8 @@ func registerSchemaPageRoutes(_ app: Application) {
                 throw Abort(.serviceUnavailable, reason: error.description)
             case .invalidRecord:
                 throw Abort(.unprocessableEntity, reason: error.description)
+            case .invalidPropertyValue:
+                throw Abort(.badRequest, reason: error.description)
             }
         }
     }
@@ -101,6 +106,8 @@ func registerSchemaPageRoutes(_ app: Application) {
                 throw Abort(.serviceUnavailable, reason: error.description)
             case .invalidRecord:
                 throw Abort(.unprocessableEntity, reason: error.description)
+            case .invalidPropertyValue:
+                throw Abort(.badRequest, reason: error.description)
             }
         }
     }
@@ -108,17 +115,27 @@ func registerSchemaPageRoutes(_ app: Application) {
     pages.post(":tableName", "records") { request async throws -> SchemaPageRecordCreationResponse in
         let hubID = try request.requireAuthenticatedHubID()
         guard let tableName = request.parameters.get("tableName") else { throw Abort(.badRequest) }
-        let values = try request.content.decode([String: PatchJSONValue].self)
+        let (values, createMissingOptions) = try decodeSchemaPageWrite(request)
         do {
             return try await SchemaPageService(database: request.db, hubID: hubID)
-                .createRecord(tableName: tableName, values: values)
+                .createRecord(tableName: tableName, values: values, createMissingOptions: createMissingOptions)
         } catch let error as SchemaPageError {
             switch error {
             case .tableUnavailable: throw Abort(.notFound, reason: error.description)
             case .unavailableDatabase: throw Abort(.serviceUnavailable, reason: error.description)
             case .recordUnavailable: throw Abort(.notFound, reason: error.description)
             case .invalidRecord: throw Abort(.unprocessableEntity, reason: error.description)
+            case .invalidPropertyValue: throw Abort(.badRequest, reason: error.description)
             }
         }
     }
+}
+
+private func decodeSchemaPageWrite(_ request: Request) throws -> ([String: PatchJSONValue], Bool) {
+    var values = try request.content.decode([String: PatchJSONValue].self)
+    guard let flag = values.removeValue(forKey: "createMissingOptions") else { return (values, false) }
+    guard case .bool(let enabled) = flag else {
+        throw Abort(.badRequest, reason: "createMissingOptions must be a Boolean.")
+    }
+    return (values, enabled)
 }

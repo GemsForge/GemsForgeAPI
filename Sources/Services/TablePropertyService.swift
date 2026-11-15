@@ -241,6 +241,8 @@ struct TablePropertyService: Sendable {
                 source[column] = String(value)
             case let .bool(value):
                 source[column] = value ? "1" : "0"
+            case .strings:
+                throw TablePropertyServiceError.invalidDefinition("Relation properties accept one record identifier at a time.")
             }
         }
 

@@ -31,6 +31,7 @@ enum EntryPoint {
         registerSchemaBuilderGuidanceRoutes(app)
         registerSchemaPageRoutes(app)
         registerTablePropertyRoutes(app)
+        registerTableColumnDefinitionRoutes(app)
 
         app.get("health") { _ async in
             "ok"

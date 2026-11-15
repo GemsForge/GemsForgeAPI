@@ -141,6 +141,7 @@ final class SchemaPageServiceTests: XCTestCase {
             app.migrations.add(CreateViewQueryConfigurations())
             app.migrations.add(AddTableViewWorkspaceState())
             app.migrations.add(CreateTablePropertyDefinitions())
+            app.migrations.add(CreateTableColumnDefinitions())
             app.migrations.add(CreateFileMetadata())
             app.migrations.add(CreateSchemaPageFixtures())
             try await app.autoMigrate()
