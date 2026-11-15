@@ -2,6 +2,7 @@ import type { Employment } from "../../types";
 import { useEmploymentPatchMutation } from "../../data/recordQueries";
 import { employmentTableAdapter } from "../database/recordTableAdapters";
 import { WireframeCollectionView } from "../workspace/WireframeCollectionView";
+import { domainConfigFor } from "../workspace/collectionDomains";
 import { WireframeSchemaInspector } from "../workspace/WireframeSchemaInspector";
 import { useAddressesQuery } from "../../data/lifeQueries";
 import { employmentOptions, toOptions, useEmploymentRecordActions } from "./useEmploymentRecordActions";
@@ -47,8 +48,7 @@ export function EmploymentWireframeView({ records }: { records: readonly Employm
         tableName: "Employment",
         title: "Employment",
         description: "Employers, roles, dates, and professional history.",
-        domainLabel: "Career",
-        domainHue: "#2F5FA8",
+        ...domainConfigFor("Employment"),
         recordEmoji: "💼",
         activeCollection: "Employment",
         records,

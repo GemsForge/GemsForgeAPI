@@ -1391,11 +1391,10 @@
   left: 0;
 }
 
-/* Domain 5px color bar across the top of the content area */
-.wireframe-domain-bar {
-  height: 5px;
-  margin: 0 -1rem 0;
-  background: var(--gem-domain-hue, var(--gem-wireframe-action));
+/* Domain 5px color bar across the top of the content area. A top border on the page itself spans
+   its full width at every breakpoint, whatever the page padding. */
+.wireframe-demo-main.has-domain-bar {
+  border-top: 5px solid var(--gem-domain-hue, var(--gem-wireframe-action));
 }
 
 /* Collection toolbar breadcrumb */
@@ -1618,6 +1617,11 @@
   outline: 2px solid var(--wireframe-accent, var(--gem-wireframe-action));
   outline-offset: 2px;
 }
+.wireframe-backlinks-empty {
+  margin: 0;
+  color: var(--gem-wireframe-muted);
+  font-size: 0.75rem;
+}
 
 /* Inspector toggle button (⌘I) */
 .wireframe-inspector-toggle {
@@ -1709,4 +1713,83 @@
 }
 .wireframe-new-table-hint.error {
   color: #c0392b;
+}
+
+/* Sidebar domain sections: gem-hue dot + sentence-case label, collapsible (state in localStorage). */
+.wireframe-domain-section + .wireframe-domain-section {
+  margin-top: 0.25rem;
+}
+.wireframe-domain-section-toggle {
+  display: flex;
+  width: 100%;
+  min-height: 32px;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.5rem;
+  border: 0;
+  border-radius: 0.45rem;
+  background: transparent;
+  color: var(--gem-wireframe-muted);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.wireframe-domain-section-toggle:hover {
+  background: var(--gem-wireframe-surface-raised);
+  color: var(--gem-wireframe-heading);
+}
+.wireframe-domain-section-toggle.contains-active {
+  color: var(--gem-wireframe-heading);
+}
+.wireframe-domain-section-dot {
+  width: 7px;
+  height: 7px;
+  flex: 0 0 7px;
+  border-radius: 50%;
+  background: var(--gem-domain-hue, var(--gem-wireframe-muted));
+}
+.wireframe-domain-section-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.wireframe-domain-section-chevron {
+  flex: 0 0 auto;
+  transition: transform var(--gem-motion-quick, 120ms) ease;
+}
+.wireframe-domain-section-toggle[aria-expanded="false"] .wireframe-domain-section-chevron {
+  transform: rotate(-90deg);
+}
+@media (prefers-reduced-motion: reduce) {
+  .wireframe-domain-section-chevron {
+    transition: none;
+  }
+}
+
+/* Serif page titles (#544): New York at 34px semibold. Tamagui sets fonts with atomic classes, so the
+   title and the editable title's inner text/input are matched explicitly. */
+.wireframe-demo .wireframe-page-title-serif,
+.wireframe-demo .wireframe-page-title-serif :where(span, input, textarea),
+.wireframe-record-page .wireframe-page-title-serif {
+  font-family: var(--gem-font-family-serif) !important;
+  font-size: clamp(1.75rem, 1.2rem + 1.6vw, 2.125rem) !important;
+  font-weight: 600 !important;
+  line-height: 1.18 !important;
+  letter-spacing: -0.02em !important;
+  text-wrap: balance;
+}
+.wireframe-record-page-breadcrumb a {
+  color: inherit;
+  text-decoration: none;
+}
+.wireframe-record-page-breadcrumb a:hover {
+  color: var(--gem-wireframe-heading);
+}
+.wireframe-record-page > .wireframe-domain-pill {
+  align-self: flex-start;
+  margin-top: 1.25rem;
 }

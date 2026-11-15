@@ -144,15 +144,15 @@ export function WireframeRecordInspector({
           aria-expanded={showEmpty}
           onClick={() => setShowEmpty((prev) => !prev)}
         >
-          {showEmpty ? `Hide ${emptyFields.length} empty` : `Show ${emptyFields.length} empty`}
+          {`${showEmpty ? "Hide" : "Show"} ${emptyFields.length} empty ${emptyFields.length === 1 ? "property" : "properties"}`}
           <span aria-hidden="true">{showEmpty ? "↑" : "↓"}</span>
         </button>
       )}
-      {backlinks && backlinks.length > 0 && (
-        <div className="wireframe-backlinks-panel">
-          <p className="wireframe-backlinks-heading" id="inspector-backlinks-label">
-            Linked from
-          </p>
+      <div className="wireframe-backlinks-panel">
+        <p className="wireframe-backlinks-heading" id="inspector-backlinks-label">
+          Linked from
+        </p>
+        {backlinks && backlinks.length > 0 ? (
           <ul className="wireframe-backlinks-list" aria-labelledby="inspector-backlinks-label">
             {backlinks.map((link) => (
               <li key={link.id}>
@@ -163,8 +163,11 @@ export function WireframeRecordInspector({
               </li>
             ))}
           </ul>
-        </div>
-      )}
+        ) : (
+          // No backlink graph yet (#544 non-goal): the panel shows its empty state until callers pass links.
+          <p className="wireframe-backlinks-empty">No records or pages link here yet.</p>
+        )}
+      </div>
     </div>
   );
 }

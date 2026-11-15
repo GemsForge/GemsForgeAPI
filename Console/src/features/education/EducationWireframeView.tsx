@@ -5,6 +5,7 @@ import { GemButton } from "@gemsforge/ui";
 import { educationTableAdapter } from "../database/recordTableAdapters";
 import { formatAddress } from "../addresses/formatAddress";
 import { WireframeCollectionView } from "../workspace/WireframeCollectionView";
+import { domainConfigFor } from "../workspace/collectionDomains";
 import { WireframeSchemaInspector } from "../workspace/WireframeSchemaInspector";
 import { useEducationRecordActions } from "./useEducationRecordActions";
 import { educationStatusOptions, educationTypeOptions } from "./educationCreateFields";
@@ -53,8 +54,7 @@ export function EducationWireframeView({ records }: { records: readonly Educatio
         tableName: "Education",
         title: "Education",
         description: "Education history, institutions, credentials, and related documents.",
-        domainLabel: "Learning",
-        domainHue: "#7650A8",
+        ...domainConfigFor("Education"),
         recordEmoji: "🎓",
         activeCollection: "Education",
         records,

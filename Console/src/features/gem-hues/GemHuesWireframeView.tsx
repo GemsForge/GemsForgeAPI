@@ -3,6 +3,7 @@ import type { GemHue } from "../../types";
 import { api } from "../../api";
 import { createGemHueTableAdapter } from "../database/recordTableAdapters";
 import { WireframeCollectionView } from "../workspace/WireframeCollectionView";
+import { domainConfigFor } from "../workspace/collectionDomains";
 import { WireframeSchemaInspector } from "../workspace/WireframeSchemaInspector";
 import { WireframeImagePreview } from "../workspace/WireframeImagePreview";
 import { useCreateGemHueMutation, useGemHuePatchMutation } from "../../data/recordQueries";
@@ -67,8 +68,7 @@ export function GemHuesWireframeView({ records }: { records: readonly GemHue[] }
         tableName: "GemHues",
         title: "Gem Hues",
         description: "Foundation colors, palettes, moods, and visual language for GemsForge.",
-        domainLabel: "Personal",
-        domainHue: "#A33B4A",
+        ...domainConfigFor("Gem Hues"),
         recordEmoji: "🌅",
         activeCollection: "Gem Hues",
         records,

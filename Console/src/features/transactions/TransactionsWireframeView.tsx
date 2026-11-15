@@ -3,6 +3,7 @@ import { useTransactionPatchMutation } from "../../data/recordQueries";
 import { useExpenseCategoriesQuery, useExpenseSubcategoriesQuery, useMerchantsQuery } from "../../data/lifeQueries";
 import { createTransactionTableAdapter } from "../database/recordTableAdapters";
 import { WireframeCollectionView } from "../workspace/WireframeCollectionView";
+import { domainConfigFor } from "../workspace/collectionDomains";
 import { TransactionsInspector } from "./TransactionsInspector";
 import { useTablePropertyDefinitionsQuery } from "../../data/workflowQueries";
 import { useTransactionRecordActions } from "./useTransactionRecordActions";
@@ -67,8 +68,7 @@ export function TransactionsWireframeView({ records }: { records: readonly Expen
             Subcategory or clears one that no longer belongs. This notice does not change the database.
           </>
         ),
-        domainLabel: "Money",
-        domainHue: "#A9771C",
+        ...domainConfigFor("Expense Tracker"),
         recordEmoji: "💳",
         activeCollection: "Expense Tracker",
         records,

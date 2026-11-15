@@ -694,6 +694,8 @@ export function WireframeCollectionView<T extends WireframeRecord>({
         <WireframeRecordPageView
           collectionTitle={tableTitle}
           recordTitle={config.cardTitle(selected)}
+          domainLabel={config.domainLabel}
+          domainHue={config.domainHue}
           onBack={() => navigate(location.pathname.replace(/\/record\/[^/]+$/, ""))}
           onClose={closeInspector}
           emoji={selectedEmoji}

@@ -87,7 +87,8 @@ describe("Gem Life navigation", () => {
       </QueryClientProvider>,
     );
     expect(await screen.findByRole("heading", { name: "Education" }, lazyScreen)).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Home" })).toHaveAttribute("href", "/app");
+    // The sidebar and the page breadcrumb both link Home; both must honour the /app base.
+    for (const home of screen.getAllByRole("link", { name: "Home" })) expect(home).toHaveAttribute("href", "/app");
   });
   it("renders wireframe routes on their dedicated canvas", async () => {
     vi.spyOn(api, "listEducation").mockResolvedValue([]);

@@ -3,6 +3,7 @@ import type { RecordPropertyDefinition } from "../../table-kit";
 import { useServiceAccountPatchMutation } from "../../data/recordQueries";
 import { createServiceAccountTableAdapter } from "../database/recordTableAdapters";
 import { WireframeCollectionView } from "../workspace/WireframeCollectionView";
+import { domainConfigFor } from "../workspace/collectionDomains";
 import { WireframeSchemaInspector } from "../workspace/WireframeSchemaInspector";
 import { WireframeImagePreview } from "../workspace/WireframeImagePreview";
 import { useServiceAccountRecordActions } from "./useServiceAccountRecordActions";
@@ -34,8 +35,7 @@ export function ServiceCatalogWireframeView({ records }: { records: readonly Ser
         tableName: "Services",
         title: "Service Catalog",
         description: "Recurring services, accounts, costs, and renewal details.",
-        domainLabel: "Services",
-        domainHue: "#237F8E",
+        ...domainConfigFor("Services"),
         recordEmoji: "☁️",
         activeCollection: "Services",
         records: wireframeRecords,
