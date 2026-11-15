@@ -2,8 +2,9 @@
 
 The working issue is the source of truth for assignee, labels, milestone,
 project membership, and native issue relationships. Project Status follows the
-issue's development lifecycle. The shared automation is
-`.github/workflows/sync-pr-metadata.yml`; its YAML comments document the policy.
+issue's development lifecycle. The automation is
+`.github/workflows/sync-issue-metadata.yml`, a caller for the shared workflow in
+[GemsForge/.github](https://github.com/GemsForge/.github); its YAML comments document the policy.
 
 ## One workflow, two entry points
 
@@ -55,7 +56,7 @@ The workflow can be called by the existing development automation without using
 the GitHub UI. For example, to register issue #170 under parent #168:
 
 ```sh
-gh workflow run sync-pr-metadata.yml \
+gh workflow run sync-issue-metadata.yml \
   --repo GemsForge/GemsForgeAPI \
   --ref chore/170-project-metadata-sync \
   -f issue_number=170 \
@@ -145,7 +146,9 @@ assign conflicting values for these same events.
 
 ## Verification and activation
 
-Run the tests from the repository root:
+The workflow logic and its tests live in
+[GemsForge/.github](https://github.com/GemsForge/.github). Run them from a
+checkout of that repository:
 
 ```sh
 node --test .github/tests/sync-issue-workflow.test.cjs
@@ -196,4 +199,4 @@ Numbered branch and PR events reconcile metadata. Closes, Fixes, and Resolves re
 
 GITHUB_TOKEN handles repository metadata and native relationships. PROJECTS_TOKEN handles user-owned Project #7 mutations. Never use GITHUB_TOKEN for Project mutations or commit either token.
 
-Preserve the exact test command: node --test .github/tests/sync-issue-workflow.test.cjs. Preserve live dispatch verification, API references, and security guidance.
+The sync test now runs in GemsForge/.github (`node --test .github/tests/sync-issue-workflow.test.cjs` there). Preserve live dispatch verification, API references, and security guidance.
