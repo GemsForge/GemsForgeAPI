@@ -353,6 +353,41 @@ export interface SchemaPageRecord {
   table: SchemaPageTable;
   row: Record<string, string | null>;
 }
+
+export interface TableDropMetadataCounts {
+  tableViews: number;
+  viewColumnConfigurations: number;
+  viewQueryConfigurations: number;
+  tablePropertyDefinitions: number;
+  tableColumnDefinitions: number;
+  recordPresentations: number;
+  recordBodies: number;
+  trashEntries: number;
+  attachmentReferences: number;
+}
+
+export interface TableDropPreview {
+  tableName: string;
+  rowCount: number;
+  totalDatabaseRowCount: number;
+  metadata: TableDropMetadataCounts;
+  filesThatWouldBecomeUnreferenced: Array<{ fileMetadataID: string; relativePath: string }>;
+  blockingReferences: Array<{ kind: string; table: string; hubID: string | null; name: string; reason: string }>;
+  warnings: string[];
+  confirmationToken: string;
+  expiresAt: string;
+  status: string;
+}
+
+export interface TableDropResult {
+  tableName: string;
+  rowCount: number;
+  backupFileName: string;
+  backupSizeBytes: number;
+  metadata: TableDropMetadataCounts;
+  status: string;
+}
+
 export interface SchemaPageRecordCreation {
   table: string;
   recordID: string;

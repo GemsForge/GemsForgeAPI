@@ -1,6 +1,6 @@
-import { useMemo } from "react";
-import { decodeMultiSelectValue } from "@gemsforge/ui";
-import { useLocation, useParams } from "react-router-dom";
+import { useMemo, useRef, useState } from "react";
+import { decodeMultiSelectValue, GemButton } from "@gemsforge/ui";
+import { useLocation, useOutletContext, useParams } from "react-router-dom";
 import {
   useSchemaPageRecordQuery,
   useSchemaPageRecordsQuery,
@@ -15,6 +15,7 @@ import type { SchemaPageRecords } from "../../types";
 import { createSchemaRecordOptions } from "./SchemaRecordActions";
 import { WireframeCollectionView, type WireframeRecord } from "../workspace/WireframeCollectionView";
 import { WireframeSchemaInspector } from "../workspace/WireframeSchemaInspector";
+import { TableDropDialog } from "./TableDropDialog";
 
 type SchemaRecord = Record<string, string | null> & WireframeRecord;
 
@@ -31,7 +32,10 @@ function schemaRecords(data: SchemaPageRecords | undefined): SchemaRecord[] {
 }
 
 export function WireframeSchemaPage() {
+  const { onSuccess } = useOutletContext<{ onSuccess: (message: string) => void }>();
   const { tableName = "" } = useParams();
+  const [deletePreviewOpen, setDeletePreviewOpen] = useState(false);
+  const deleteTableButtonRef = useRef<HTMLButtonElement>(null);
   const location = useLocation();
   const recordID = location.pathname.match(/\/record\/([^/]+)$/)?.[1];
   const isLegacyServiceLogoAssets = tableName === "ServiceLogoAssets";
@@ -44,6 +48,10 @@ export function WireframeSchemaPage() {
   const patchAttachment = usePatchSchemaPageAttachmentMutation(tableName);
   const patchSchemaRecord = patchRecord.mutateAsync;
   const table = result.data?.table ?? pages.data?.tables.find((candidate) => candidate.name === tableName);
+  const canOfferDeletion = Boolean(
+    table?.columns.some((column) => column.name === "HubID" && !column.nullable) &&
+    table.columns.filter((column) => column.primaryKey).length === 1,
+  );
   const records = useMemo(() => {
     const loaded = schemaRecords(result.data);
     const row = selectedRecord.data?.row;
@@ -131,6 +139,32 @@ export function WireframeSchemaPage() {
             }
           : {}),
         activeCollection: tableName,
+        tableActions: canOfferDeletion ? (
+          <>
+            <GemButton
+              ref={deleteTableButtonRef}
+              type="button"
+              variant="quiet"
+              tone="secondary"
+              className="is-danger"
+              aria-haspopup="dialog"
+              aria-expanded={deletePreviewOpen}
+              onClick={() => setDeletePreviewOpen(true)}
+            >
+              Delete table…
+            </GemButton>
+            {deletePreviewOpen ? (
+              <TableDropDialog
+                tableName={tableName}
+                onClose={() => {
+                  setDeletePreviewOpen(false);
+                  requestAnimationFrame(() => deleteTableButtonRef.current?.focus());
+                }}
+                onSuccess={onSuccess}
+              />
+            ) : null}
+          </>
+        ) : undefined,
         records,
         properties: resolvedProperties,
         columnDefinitions: definitions.data ?? [],

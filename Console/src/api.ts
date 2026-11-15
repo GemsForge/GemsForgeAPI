@@ -47,6 +47,8 @@ import type {
   TableBuilderRequest,
   UserTableCreationResult,
   UserTablePreview,
+  TableDropPreview,
+  TableDropResult,
 } from "./types";
 import { getBearerToken, notifySessionExpired } from "./auth/session";
 
@@ -103,6 +105,7 @@ export class APIError extends Error {
   constructor(
     message: string,
     public readonly status: number,
+    public readonly details?: unknown,
   ) {
     super(message);
     this.name = "APIError";
@@ -127,6 +130,7 @@ async function checkedFetch(path: string, options: RequestInit = {}): Promise<Re
     throw new APIError(
       typeof problem?.reason === "string" ? problem.reason : `${response.status} ${response.statusText}`,
       response.status,
+      problem,
     );
   }
   return response;
@@ -362,6 +366,13 @@ export const api = {
   getSchemaPageTables: (signal?: AbortSignal) => request<SchemaPageTables>("/schema-builder/tables", { signal }),
   createSchemaPage: (tableName: string) =>
     request<SchemaPageTable>(`/schema-builder/tables/${encodeURIComponent(tableName)}/page`, { method: "POST" }),
+  previewTableDrop: (tableName: string) =>
+    request<TableDropPreview>(`/live-schema/tables/${encodeURIComponent(tableName)}/drop-preview`, { method: "POST" }),
+  dropTable: (tableName: string, confirmationToken: string, typedTableName: string) =>
+    request<TableDropResult>(`/live-schema/tables/${encodeURIComponent(tableName)}/drop`, {
+      method: "POST",
+      body: JSON.stringify({ confirmationToken, typedTableName }),
+    }),
   getSchemaPageRecords: (tableName: string, offset = 0, signal?: AbortSignal) =>
     request<SchemaPageRecords>(
       `/schema-builder/tables/${encodeURIComponent(tableName)}/records?limit=100&offset=${Math.max(0, offset)}`,

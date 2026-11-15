@@ -144,14 +144,19 @@ function WireframeCanvas() {
   }, []);
   useEffect(() => () => clearTimeout(timer.current), []);
   useEffect(() => {
-    setNotice(null);
+    const navigationState = location.state as { successMessage?: unknown } | null;
+    setNotice(
+      typeof navigationState?.successMessage === "string"
+        ? { message: navigationState.successMessage, kind: "success" }
+        : null,
+    );
     document.title = "Gem Life · " + (location.pathname.split("/")[1] || "Home");
     const main = document.getElementById("main-content");
     // focus() alone keeps the previous route's scroll when main is partly visible,
     // which can leave a short page scrolled out of view.
     main?.focus({ preventScroll: true });
     main?.scrollIntoView?.({ block: "start" });
-  }, [location.pathname]);
+  }, [location.pathname, location.state]);
 
   // The signed-in canvas is a light surface; Tamagui components inside it must
   // resolve the light theme rather than the app's dark default.
