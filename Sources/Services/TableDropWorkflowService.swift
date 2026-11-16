@@ -259,6 +259,7 @@ struct TableDropWorkflowService: Sendable {
 
             try await self.deleteHubTableMetadata(TablePropertyDefinition.schema, tableName: tableName, hubID: hubID, on: sql)
             try await self.deleteHubTableMetadata(TrashEntry.schema, tableName: tableName, hubID: hubID, on: sql)
+            try await self.deleteHubTableMetadata(NotionImportReference.schema, tableName: tableName, hubID: hubID, on: sql)
             try await RecordSidecarCleanupService.deleteTableSidecars(tableName: tableName, hubID: hubID, on: transaction)
             let schema = try await LiveSchemaService(database: transaction).inspect()
             guard let targetTable = schema.tables.first(where: { $0.name == tableName }),
@@ -299,6 +300,7 @@ struct TableDropWorkflowService: Sendable {
         RecordPresentation.schema,
         RecordBody.schema,
         TrashEntry.schema,
+        NotionImportReference.schema,
     ]
 
     private func response(tableName: String, snapshot: Snapshot, token: String, expiresAt: Date) -> TableDropPreviewResponse {

@@ -19,8 +19,9 @@ the Console cannot submit SQL or arbitrary table identifiers for execution.
    transaction. A backup failure prevents deletion.
 6. In one transaction, the API removes only the authenticated Hub's views,
    query/view configuration, property and column definitions, record
-   presentations and bodies, trash entries, and attachment metadata for the
-   table. It then validates the table identifier from the inspected schema,
+   presentations and bodies, trash entries, Notion import mappings, and
+   attachment metadata for the table, so a later Notion import does not reuse
+   the dropped table's name or record IDs. It then validates the table identifier from the inspected schema,
    drops the table, verifies the result, and writes an audit row with the
    backup filename and affected counts.
 
