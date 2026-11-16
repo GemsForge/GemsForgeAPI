@@ -59,6 +59,14 @@ function recordText(record: SchemaRecord, propertyID?: string) {
   return propertyID ? record[propertyID]?.trim() || "" : "";
 }
 
+function cardPropertyText(record: SchemaRecord, property: RecordPropertyDefinition<SchemaRecord> | undefined) {
+  if (!property) return "";
+  const value = property.getValue(record);
+  return typeof value.display === "string" || typeof value.display === "number"
+    ? String(value.display).trim()
+    : recordText(record, property.id);
+}
+
 function schemaRecords(data: SchemaPageRecords | undefined): SchemaRecord[] {
   const primaryKey = data?.table.columns.find((column) => column.primaryKey)?.name;
   return (data?.rows ?? []).map((row) => ({
@@ -302,10 +310,10 @@ export function WireframeSchemaPage() {
               ? decodeMultiSelectValue(value)
               : [value];
           }),
-        cardTitle: (record) => recordText(record, titleProperty?.id) || record.id,
-        cardSubtitle: (record) => recordText(record, subtitleProperty?.id) || tableName,
+        cardTitle: (record) => cardPropertyText(record, titleProperty) || record.id,
+        cardSubtitle: (record) => cardPropertyText(record, subtitleProperty) || tableName,
         cardStatus: (record) => recordText(record, statusProperty?.id),
-        cardMeta: (record) => recordText(record, dateProperty?.id) || record.id,
+        cardMeta: (record) => cardPropertyText(record, dateProperty) || record.id,
         inspector: (record, _schemaProperties) => (
           <WireframeSchemaInspector
             record={record}
