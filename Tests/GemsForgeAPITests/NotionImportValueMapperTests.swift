@@ -22,6 +22,29 @@ final class NotionImportValueMapperTests: XCTestCase {
         XCTAssertNil(NotionImportValueMapper.accountNumberLastFour("no account digits"))
     }
 
+    func testAccountLikeNamesMatchSensitiveFieldsButNotDescriptions() {
+        for name in ["Account Number", "Acct #", "Card", "CardNumber", "Routing No", "IBAN", "Bank Num"] {
+            XCTAssertTrue(NotionImportValueMapper.isAccountLike(name), name)
+        }
+        for name in ["Account Name", "Account Type", "Account Status", "Card Type", "Bank Name", "Account Holder",
+                     "Account Notes", "Bank Annotation", "Card Nominee"] {
+            XCTAssertFalse(NotionImportValueMapper.isAccountLike(name), name)
+        }
+    }
+
+    func testAccountLikeValuesKeepOnlyFourDigitsAndPreserveDigitlessValues() {
+        XCTAssertEqual(NotionImportValueMapper.protectAccountValue("4111 2222 3333 4444"), "4444")
+        XCTAssertEqual(NotionImportValueMapper.protectAccountValue("Acct #123456789"), "6789")
+        XCTAssertEqual(NotionImportValueMapper.protectAccountValue(String(Int64(123456))), "3456")
+        XCTAssertEqual(NotionImportValueMapper.protectAccountValue(String(Int64(987654321))), "4321")
+        XCTAssertEqual(NotionImportValueMapper.protectAccountValue("pending"), "pending")
+    }
+
+    func testAccountLikeNumericScalarsKeepCorrectLastFourDigits() {
+        XCTAssertEqual(NotionImportValueMapper.protectedAccountScalar(.number(123456)), .text("3456"))
+        XCTAssertEqual(NotionImportValueMapper.protectedAccountScalar(.integer(987654321)), .text("4321"))
+    }
+
     func testDueDateMapsOrdinalAndCalendarDateLabels() {
         XCTAssertEqual(NotionImportValueMapper.dueDate("15th"), .init(day: 15, occurrence: "monthly"))
         XCTAssertEqual(NotionImportValueMapper.dueDate("21st"), .init(day: 21, occurrence: "monthly"))

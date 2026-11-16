@@ -56,6 +56,7 @@ the workspace changed or the token expired. Before writing, it creates and
 verifies a SQLite backup. The idempotency map is Hub-scoped and uses each
 Notion page ID to update the same GemLife record on a repeat run.
 
+
 `NotionImportReferences` is available through the reviewed live-migration flow
 as `notion-import-references`. Apply it with the live database migration
 preview/execute routes before importing. File copying requires
@@ -72,3 +73,5 @@ properties, and the verified backup name and size. This is a one-way import;
 the backup is the recovery point. Do not submit the commit request against
 personal data until the owner has reviewed the actual preview and approved its
 target mapping.
+
+Account-like fields in every table keep only the last four digits when a value contains digits.

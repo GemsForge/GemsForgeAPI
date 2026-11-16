@@ -40,6 +40,49 @@ enum NotionImportValueMapper {
         return String(digits.suffix(4))
     }
 
+    static func isAccountLike(_ name: String) -> Bool {
+        let pieces = name.split(whereSeparator: { !$0.isLetter && !$0.isNumber && $0 != "#" })
+        var words: [String] = []
+        for piece in pieces {
+            var start = piece.startIndex
+            var index = piece.index(after: start)
+            while index < piece.endIndex {
+                let previous = piece[piece.index(before: index)]
+                let current = piece[index]
+                if previous.isLowercase && current.isUppercase {
+                    words.append(String(piece[start..<index]).lowercased())
+                    start = index
+                }
+                index = piece.index(after: index)
+            }
+            words.append(String(piece[start...]).lowercased())
+        }
+        let normalized = words.joined()
+        if ["card", "cardnumber", "iban", "routing", "routingnumber", "accountnumber"].contains(normalized) {
+            return true
+        }
+        let subjects: Set<String> = ["account", "acct", "card", "routing", "iban", "bank"]
+        let markers: Set<String> = ["number", "num", "no", "nbr", "#"]
+        return !subjects.isDisjoint(with: words) && !markers.isDisjoint(with: words)
+    }
+
+    static func protectAccountValue(_ value: String) -> String {
+        accountNumberLastFour(value) ?? value
+    }
+
+    static func protectedAccountScalar(_ scalar: ImportScalar) -> ImportScalar? {
+        let value: String
+        switch scalar {
+        case .text(let text): value = text
+        case .number(let number):
+            value = number.rounded() == number ? String(Int64(number)) : String(number)
+        case .integer(let number): value = String(number)
+        case .bool(let flag): value = flag ? "1" : "0"
+        case .null: return nil
+        }
+        return .text(protectAccountValue(value))
+    }
+
     /// Maps Notion property types to the existing GemLife column and metadata
     /// contracts. Formula values are intentionally preserved as text fallback
     /// and marked for review because formula semantics are not imported.

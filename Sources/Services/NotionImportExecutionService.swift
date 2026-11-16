@@ -361,9 +361,9 @@ private struct NotionImportWriter: Sendable {
             }
             guard let column = columns[normalizedKey], !schema.columns.first(where: { $0.name == column })!.primaryKey,
                   column != "HubID" else { continue }
-            if column == "AccountNumber", case let .text(value) = scalar {
-                guard let lastFour = NotionImportValueMapper.accountNumberLastFour(value) else { continue }
-                values[column] = .text(lastFour)
+            if NotionImportValueMapper.isAccountLike(name) || NotionImportValueMapper.isAccountLike(column) {
+                guard let protected = NotionImportValueMapper.protectedAccountScalar(scalar) else { continue }
+                values[column] = protected
             } else {
                 values[column] = scalar
             }
