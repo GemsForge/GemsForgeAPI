@@ -30,10 +30,10 @@ final class ForgeKeeper: Model, Content, @unchecked Sendable {
     @Field(key: "Description")
     var description: String
 
-    @Timestamp(key: "DateCreated", on: .create)
+    @Timestamp(key: "DateCreated", on: .create, format: .legacyCompatible)
     var createdAt: Date?
 
-    @Timestamp(key: "DateUpdated", on: .update)
+    @Timestamp(key: "DateUpdated", on: .update, format: .legacyCompatible)
     var updatedAt: Date?
 
     init() {}

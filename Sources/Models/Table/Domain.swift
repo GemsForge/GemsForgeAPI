@@ -23,10 +23,10 @@ final class Domain: Model, Content, @unchecked Sendable {
     var description: String
 
     // Fluent fills these automatically when a record is created or updated.
-    @Timestamp(key: "DateCreated", on: .create)
+    @Timestamp(key: "DateCreated", on: .create, format: .legacyCompatible)
     var createdAt: Date?
 
-    @Timestamp(key: "DateUpdated", on: .update)
+    @Timestamp(key: "DateUpdated", on: .update, format: .legacyCompatible)
     var updatedAt: Date?
 
     init() {}
