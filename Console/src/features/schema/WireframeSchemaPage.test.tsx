@@ -3,7 +3,7 @@ import { TamaguiProvider } from "tamagui";
 import { tamaguiConfig } from "@gemsforge/ui";
 import { MemoryRouter, Outlet, Route, Routes } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { api } from "../../api";
 import { WireframeSchemaPage } from "./WireframeSchemaPage";
 
@@ -42,12 +42,16 @@ function mount(path: string) {
   );
 }
 
-function setup(properties: unknown[], values: unknown[]) {
+function setup(
+  properties: unknown[],
+  values: unknown[],
+  rows = [{ ID: "ingredient-1", HubID: "hub-1", Title: "Onion", RecipeID: "recipe-1", LegacyID: "legacy-1" }],
+) {
   vi.spyOn(api, "getSchemaPageTables").mockResolvedValue({ tables: [table], availableTables: [] });
   vi.spyOn(api, "getSchemaPageRecords").mockResolvedValue({
     table,
-    rows: [{ ID: "ingredient-1", HubID: "hub-1", Title: "Onion", RecipeID: "recipe-1", LegacyID: "legacy-1" }],
-    totalCount: 1,
+    rows,
+    totalCount: rows.length,
     limit: 100,
     offset: 0,
   });
@@ -59,7 +63,7 @@ function setup(properties: unknown[], values: unknown[]) {
   vi.spyOn(api, "getTablePropertyDefinitions").mockResolvedValue(properties as never);
   vi.spyOn(api, "getTablePropertyValues").mockResolvedValue(values as never);
   vi.spyOn(api, "getTablePropertyValuesBatch").mockImplementation(async (_tableName, recordIDs) =>
-    Object.fromEntries(recordIDs.map((id) => [id, values as never])),
+    Object.fromEntries(recordIDs.map((id, index) => [id, (rows.length > 1 ? [values[index]] : values) as never])),
   );
   vi.spyOn(api, "getTableView").mockRejectedValue(new Error("not configured"));
   vi.spyOn(api, "listRecordPresentations").mockResolvedValue([]);
@@ -151,10 +155,78 @@ describe("WireframeSchemaPage relation properties", () => {
   });
 
   it("loads relation values for the collection with one batch request for its page", async () => {
-    setup([], []);
+    const rows = [
+      { ID: "ingredient-1", HubID: "hub-1", Title: "Onion", RecipeID: "recipe-1", LegacyID: "legacy-1" },
+      { ID: "ingredient-2", HubID: "hub-1", Title: "Basil", RecipeID: "recipe-2", LegacyID: "legacy-2" },
+      { ID: "ingredient-3", HubID: "hub-1", Title: "Garlic", RecipeID: "recipe-3", LegacyID: "legacy-3" },
+    ];
+    const relationValues = [
+      { definitionID: "relation-recipes", recordID: "recipe-1", displayValue: "Tomato Soup", value: "Tomato Soup" },
+      { definitionID: "relation-recipes", recordID: "recipe-2", displayValue: "Pesto", value: "Pesto" },
+      { definitionID: "relation-recipes", recordID: "recipe-3", displayValue: "Garlic Bread", value: "Garlic Bread" },
+    ];
+    setup(
+      [
+        {
+          id: "relation-recipes",
+          tableName: "Ingredients",
+          name: "Recipes",
+          kind: "Relation",
+          sourceColumnName: "RecipeID",
+          targetTableName: "Recipes",
+          targetKeyColumnName: "ID",
+          targetDisplayColumnName: "Title",
+          relationDefinitionID: null,
+          targetColumnName: null,
+          filterByDefinitionID: null,
+          targetFilterColumnName: null,
+          sortOrder: 0,
+        },
+      ],
+      relationValues,
+      rows,
+    );
     mount("/schema/Ingredients");
+    fireEvent.click(await screen.findByRole("tab", { name: "Table view" }));
     await screen.findByText("Onion");
     expect(api.getTablePropertyValuesBatch).toHaveBeenCalledTimes(1);
-    expect(api.getTablePropertyValuesBatch).toHaveBeenCalledWith("Ingredients", ["ingredient-1"], expect.anything());
+    expect(api.getTablePropertyValuesBatch).toHaveBeenCalledWith(
+      "Ingredients",
+      ["ingredient-1", "ingredient-2", "ingredient-3"],
+      expect.anything(),
+    );
+    expect(api.getTablePropertyValues).not.toHaveBeenCalled();
+    const tomato = await screen.findByRole("link", { name: "Tomato Soup" });
+    const pesto = screen.getByRole("link", { name: "Pesto" });
+    const garlicBread = screen.getByRole("link", { name: "Garlic Bread" });
+    expect(tomato).toHaveAttribute("href", "/schema/Recipes/record/recipe-1");
+    expect(pesto).toHaveAttribute("href", "/schema/Recipes/record/recipe-2");
+    expect(garlicBread).toHaveAttribute("href", "/schema/Recipes/record/recipe-3");
+  });
+
+  it("shows a relation's display value as a gallery card subtitle", async () => {
+    setup(
+      [
+        {
+          id: "relation-recipes",
+          tableName: "Ingredients",
+          name: "Recipes",
+          kind: "Relation",
+          sourceColumnName: "RecipeID",
+          targetTableName: "Recipes",
+          targetKeyColumnName: "ID",
+          targetDisplayColumnName: "Title",
+          relationDefinitionID: null,
+          targetColumnName: null,
+          filterByDefinitionID: null,
+          targetFilterColumnName: null,
+          sortOrder: 0,
+        },
+      ],
+      [{ definitionID: "relation-recipes", recordID: "recipe-1", displayValue: "Tomato Soup", value: "Tomato Soup" }],
+    );
+    mount("/schema/Ingredients");
+    expect(await screen.findByText("Tomato Soup")).toBeInTheDocument();
+    expect(screen.queryByText("recipe-1")).not.toBeInTheDocument();
   });
 });
