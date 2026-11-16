@@ -455,7 +455,7 @@ struct NotionImportWriter: Sendable {
     private func resolveCategoryID(_ object: [String: NotionJSONValue], on database: any Database) async throws -> Int64 {
         let properties = object["properties"]?.objectValue ?? [:]
         let directCategory = properties.first(where: { Self.normalized($0.key) == "category" })?.value
-        let parentCategory = properties.first(where: { ["parent category", "category name"].contains(Self.normalized($0.key)) })?.value
+        let parentCategory = Self.budgetCategoryProperty(in: properties)
         guard let categoryProperty = directCategory ?? parentCategory,
               let scalar = Self.scalar(categoryProperty, type: categoryProperty.objectValue?["type"]?.stringValue ?? "unknown"),
               case let .text(rawValue) = scalar, !rawValue.isEmpty else {
@@ -826,13 +826,17 @@ struct NotionImportWriter: Sendable {
         return count
     }
 
-    private static func budgetTarget(for object: [String: NotionJSONValue]) -> String {
+    static func budgetTarget(for object: [String: NotionJSONValue]) -> String {
         let properties = object["properties"]?.objectValue ?? [:]
         let names = Set(properties.keys.map(normalized))
         let transactionIndicators: Set<String> = ["item", "transactiondate", "quantity", "total", "paidprice", "regularprice", "merchant"]
         if !names.isDisjoint(with: transactionIndicators) { return ExpenseTransaction.schema }
-        if names.contains("subcategory") || names.contains("subcategory name") { return ExpenseSubcategory.schema }
+        if names.contains("subcategory") || names.contains("subcategoryname") { return ExpenseSubcategory.schema }
         return ExpenseCategory.schema
+    }
+
+    static func budgetCategoryProperty(in properties: [String: NotionJSONValue]) -> NotionJSONValue? {
+        properties.first(where: { ["parentcategory", "categoryname"].contains(normalized($0.key)) })?.value
     }
 
     static func customColumns(from value: NotionJSONValue?) throws -> [TableBuilderColumnRequest] {

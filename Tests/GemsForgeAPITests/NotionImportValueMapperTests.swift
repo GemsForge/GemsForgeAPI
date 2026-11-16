@@ -6,6 +6,16 @@ import VaporTesting
 @testable import GemsForgeAPI
 
 final class NotionImportValueMapperTests: XCTestCase {
+    func testBudgetCategoryPropertiesMatchNormalizedNotionNames() throws {
+        let category: NotionJSONValue = .object(["type": .string("select"), "select": .object(["name": .string("Housing")])])
+        let subcategory: NotionJSONValue = .object(["type": .string("title"), "title": .array([.object(["plain_text": .string("Rent")])])])
+        let properties = ["Parent Category": category, "Subcategory Name": subcategory]
+        let object: [String: NotionJSONValue] = ["properties": .object(properties)]
+
+        XCTAssertEqual(NotionImportExecutionService.budgetTarget(for: object), ExpenseSubcategory.schema)
+        XCTAssertEqual(NotionImportExecutionService.budgetCategoryProperty(in: properties), category)
+    }
+
     func testStandardTargetsFillRequiredDisplayColumnsAndEnumDefaults() throws {
         func schema(_ name: String, _ columns: [String]) -> LiveSchemaTableResponse {
             LiveSchemaTableResponse(name: name, columns: columns.enumerated().map { index, name in
