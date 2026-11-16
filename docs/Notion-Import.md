@@ -30,7 +30,11 @@ account. It searches both pages and data sources, follows Notion pagination,
 queries data-source rows, and returns each visible resource, its proposed
 GemLife target, property storage types, row count, and properties that need
 review. Pages whose parent is a Notion data source are counted in that data
-source's rows, not again as standalone pages. This is read-only: it does not
+source's rows, not again as standalone pages. When search returns such a row but
+not its parent data source (for example, the source is not shared with the
+integration), the preview lists an `Unavailable data source (<id>)` entry with
+the affected row count and flags it for review; those rows are not imported and
+are excluded from the total row count. This is read-only: it does not
 write to Notion or GemLife.
 
 The preview marks unknown page targets and unsupported property types for review.

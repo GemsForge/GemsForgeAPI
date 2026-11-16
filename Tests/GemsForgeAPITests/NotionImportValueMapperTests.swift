@@ -216,6 +216,25 @@ final class NotionImportValueMapperTests: XCTestCase {
         XCTAssertEqual(NotionImportPreviewService.target(for: "Recipe", object: "page", notionObject: nestedPage), "ForgeKeeper")
     }
 
+    func testRowsWhoseDataSourceIsUnavailableAreCountedByParent() {
+        func row(_ parent: [String: NotionJSONValue]) -> NotionJSONValue { .object(["parent": .object(parent)]) }
+        let sources: [NotionJSONValue] = [.object([
+            "id": .string("source-a"),
+            "parent": .object(["type": .string("database_id"), "database_id": .string("db-a")]),
+        ])]
+        let pages: [NotionJSONValue] = [
+            row(["type": .string("data_source_id"), "data_source_id": .string("source-a"), "database_id": .string("db-a")]),
+            row(["type": .string("database_id"), "database_id": .string("db-a")]),
+            row(["type": .string("data_source_id"), "data_source_id": .string("hidden"), "database_id": .string("db-hidden")]),
+            row(["type": .string("data_source_id"), "data_source_id": .string("hidden")]),
+            row(["type": .string("page_id"), "page_id": .string("some-page")]),
+        ]
+        XCTAssertEqual(
+            NotionImportPreviewService.unavailableParentRowCounts(pages: pages, dataSources: sources),
+            ["hidden": 2]
+        )
+    }
+
     func testMarkdownRendererPreservesSupportedBlocksAndReportsUnsupportedOnes() {
         let blocks: [[String: Any]] = [
             ["type": "heading_1", "heading_1": ["rich_text": [["plain_text": "Journal"]]]],

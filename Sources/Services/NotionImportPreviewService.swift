@@ -210,6 +210,18 @@ struct NotionImportPreviewService: Sendable {
             ))
         }
 
+        for (parentID, count) in Self.unavailableParentRowCounts(pages: pages, dataSources: dataSources) {
+            resources.append(.init(
+                notionID: parentID,
+                title: "Unavailable data source (\(parentID))",
+                notionObject: "data_source",
+                target: Self.unavailableSourceTarget,
+                rowCount: count,
+                properties: [],
+                unmappedProperties: ["\(count) row(s) will not be imported: data source not shared with the Notion integration"]
+            ))
+        }
+
         resources.sort {
             if $0.notionObject != $1.notionObject { return $0.notionObject < $1.notionObject }
             return $0.title.localizedCaseInsensitiveCompare($1.title) == .orderedAscending
@@ -222,7 +234,7 @@ struct NotionImportPreviewService: Sendable {
             confirmationToken: confirmationToken,
             expiresAt: expiresAt,
             resources: resources,
-            totalRows: resources.reduce(0) { $0 + $1.rowCount },
+            totalRows: resources.filter { $0.target != Self.unavailableSourceTarget }.reduce(0) { $0 + $1.rowCount },
             unmappedProperties: unmapped,
             warnings: [
                 "This preview is read-only. It does not modify GemLife or Notion.",
@@ -285,6 +297,28 @@ struct NotionImportPreviewService: Sendable {
             if let plain = object["plain_text"]?.stringValue { return plain }
             return object["text"]?.objectValue?["content"]?.stringValue
         }.joined()
+    }
+
+    static let unavailableSourceTarget = "Not imported: data source unavailable"
+
+    /// Counts database-row pages whose parent data source (or database) was not
+    /// returned by search, keyed by the parent ID. These rows would otherwise be
+    /// skipped silently because they are excluded from the page list.
+    static func unavailableParentRowCounts(pages: [NotionJSONValue], dataSources: [NotionJSONValue]) -> [String: Int] {
+        var known = Set<String>()
+        for source in dataSources.compactMap(\.objectValue) {
+            if let id = source["id"]?.stringValue { known.insert(id) }
+            if let databaseID = source["parent"]?.objectValue?["database_id"]?.stringValue { known.insert(databaseID) }
+            if let databaseID = source["database_parent"]?.objectValue?["database_id"]?.stringValue { known.insert(databaseID) }
+        }
+        var counts: [String: Int] = [:]
+        for page in pages.compactMap(\.objectValue) where isDatabaseRow(page) {
+            let parent = page["parent"]?.objectValue ?? [:]
+            let candidates = [parent["data_source_id"]?.stringValue, parent["database_id"]?.stringValue].compactMap { $0 }
+            guard !candidates.contains(where: known.contains) else { continue }
+            counts[candidates.first ?? "unknown", default: 0] += 1
+        }
+        return counts
     }
 
     static func isDatabaseRow(_ object: [String: NotionJSONValue]) -> Bool {
