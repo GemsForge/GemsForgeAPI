@@ -158,6 +158,11 @@ describe("resource create contracts", () => {
         new Response(
           JSON.stringify([{ definitionID: relation.id, recordID: "1", displayValue: "Food", value: "Food" }]),
         ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({ "1": [{ definitionID: relation.id, recordID: "1", displayValue: "Food", value: "Food" }] }),
+        ),
       );
     vi.stubGlobal("fetch", fetch);
 
@@ -171,6 +176,9 @@ describe("resource create contracts", () => {
     await expect(api.getTablePropertyValues("Transactions", "TRX-1")).resolves.toMatchObject([
       { definitionID: relation.id, displayValue: "Food" },
     ]);
+    await expect(api.getTablePropertyValuesBatch("Transactions", ["1"])).resolves.toMatchObject({
+      "1": [{ definitionID: relation.id, displayValue: "Food" }],
+    });
     expect(fetch.mock.calls.map(([path, options]) => [path, options?.method])).toEqual([
       ["/schema-builder/tables/BudgetCategories/records/1", undefined],
       ["/schema-builder/tables/Transactions/properties", "PUT"],
@@ -179,6 +187,7 @@ describe("resource create contracts", () => {
         undefined,
       ],
       ["/schema-builder/tables/Transactions/records/TRX-1/properties", undefined],
+      ["/schema-builder/tables/Transactions/properties/values", "POST"],
     ]);
   });
 

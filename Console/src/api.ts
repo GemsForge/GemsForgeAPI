@@ -432,6 +432,11 @@ export const api = {
       `/schema-builder/tables/${encodeURIComponent(tableName)}/records/${encodeURIComponent(recordID)}/properties`,
       { signal },
     ),
+  getTablePropertyValuesBatch: (tableName: string, recordIDs: string[], signal?: AbortSignal) =>
+    request<Record<string, TablePropertyValue[]>>(
+      `/schema-builder/tables/${encodeURIComponent(tableName)}/properties/values`,
+      { method: "POST", body: JSON.stringify({ recordIDs }), signal },
+    ),
   createSchemaPageRecord: (
     tableName: string,
     values: Record<string, string | number | boolean | string[] | null>,

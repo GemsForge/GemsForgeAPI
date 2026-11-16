@@ -29,6 +29,8 @@ export const workflowQueryKeys = {
   tablePropertyValues: (tableName: string, recordID: string | null) =>
     ["table-property-values", tableName, recordID] as const,
   tablePropertyValuesForTable: (tableName: string) => ["table-property-values", tableName] as const,
+  tablePropertyValuesBatch: (tableName: string, recordIDs: readonly string[]) =>
+    ["table-property-values-batch", tableName, [...recordIDs].sort()] as const,
   guidance: ["schema-guidance"] as const,
   capabilities: ["database-capabilities"] as const,
   localDatabases: ["local-databases"] as const,
@@ -172,6 +174,14 @@ export function useTablePropertyValuesQuery(tableName: string, recordID: string 
     queryKey: workflowQueryKeys.tablePropertyValues(tableName, recordID),
     queryFn: ({ signal }) => api.getTablePropertyValues(tableName, recordID!, signal),
     enabled: Boolean(tableName && recordID) && enabled,
+  });
+}
+export function useTablePropertyValuesBatchQuery(tableName: string, recordIDs: readonly string[], enabled = true) {
+  const stableIDs = [...new Set(recordIDs)].sort();
+  return useQuery({
+    queryKey: workflowQueryKeys.tablePropertyValuesBatch(tableName, stableIDs),
+    queryFn: ({ signal }) => api.getTablePropertyValuesBatch(tableName, stableIDs, signal),
+    enabled: Boolean(tableName && stableIDs.length) && enabled,
   });
 }
 export function useCreateSchemaPageRecordMutation(tableName: string) {
