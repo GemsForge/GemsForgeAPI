@@ -2,6 +2,7 @@ import Fluent
 import Foundation
 
 /// Stable source-to-record identity for repeatable, one-way Notion imports.
+/// Data-source table allocations use the data-source ID and the `__table__` record sentinel.
 final class NotionImportReference: Model, @unchecked Sendable {
     static let schema = "NotionImportReferences"
 

@@ -35,9 +35,13 @@ write to Notion or GemLife.
 
 The preview marks unknown page targets and unsupported property types for review.
 Every unmapped Notion data source is allocated a new GemLife table and displayed
-as `New table: <TableName>`. Names avoid tables already present in the live schema,
-and repeat imports reuse the Hub's saved data-source mapping. Excluded sources
-create no table and import no rows. Formula values are represented as plain text and flagged. The
+as `New table: <TableName>`; this is the default destination, not a review flag
+by itself. Names avoid tables already present in the live schema and other names
+allocated in the same import by adding numeric suffixes (`Domains2`, `Domains3`,
+and so on). The Hub-scoped `NotionImportReferences` mapping stores the chosen
+table name against the data-source ID with record ID `__table__`, so repeat
+imports reuse that name. IDs in `excludedNotionIDs` are omitted from allocation,
+table creation, and row import. Formula values are represented as plain text and flagged. The
 current Markdown converter supports common headings, paragraphs, lists, quotes,
 code, dividers, checkboxes, and child-page titles; unsupported block types are
 reported rather than silently represented as imported content.

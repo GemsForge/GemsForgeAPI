@@ -63,16 +63,23 @@ export function NotionImportPreviewView() {
   const displayTitle = (resource: (typeof resources)[number]) =>
     (titleCounts.get(resource.title) ?? 0) > 1 ? `${resource.title} (…${resource.notionID.slice(-6)})` : resource.title;
   const matchingItemCounts = new Map<string, number>();
-  const reviewItems = (preview.data?.unmappedProperties ?? []).map((item) => {
-    const candidates = resources.filter((resource) => item.startsWith(`${resource.title}: `));
-    const occurrence = matchingItemCounts.get(item) ?? 0;
-    matchingItemCounts.set(item, occurrence + 1);
-    const resource = candidates[occurrence] ?? candidates[0];
-    return {
-      key: resource ? `${resource.notionID}-${item}` : item,
-      label: resource ? `${displayTitle(resource)}:${item.slice(resource.title.length + 1)}` : item,
-    };
-  });
+  const reviewItems = (preview.data?.unmappedProperties ?? [])
+    .filter((item) => {
+      const candidates = resources.filter((resource) => item.startsWith(`${resource.title}: `));
+      return !(
+        item.endsWith(": database target") && candidates.some((resource) => resource.target.startsWith("New table: "))
+      );
+    })
+    .map((item) => {
+      const candidates = resources.filter((resource) => item.startsWith(`${resource.title}: `));
+      const occurrence = matchingItemCounts.get(item) ?? 0;
+      matchingItemCounts.set(item, occurrence + 1);
+      const resource = candidates[occurrence] ?? candidates[0];
+      return {
+        key: resource ? `${resource.notionID}-${item}` : item,
+        label: resource ? `${displayTitle(resource)}:${item.slice(resource.title.length + 1)}` : item,
+      };
+    });
 
   return (
     <section className="notion-import-preview" aria-labelledby="notion-import-heading">

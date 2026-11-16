@@ -6,7 +6,7 @@ import VaporTesting
 @testable import GemsForgeAPI
 
 final class NotionImportValueMapperTests: XCTestCase {
-    func testTableAllocatorAvoidsLiveAndRunCollisionsAndReusesHubMapping() async throws {
+    func testPreviewAndExecutionAllocateSameNamesAndHonorExclusions() async throws {
         try await withApp(configure: { app in
             app.databases.use(.sqlite(.memory), as: .sqlite)
             app.migrations.add(CreateAuthenticationSchema())
@@ -18,22 +18,37 @@ final class NotionImportValueMapperTests: XCTestCase {
             try await AuthenticationAccount(id: "account-a").save(on: app.db)
             try await Hub(id: "hub-a", accountID: "account-a").save(on: app.db)
             try await app.db.schema("Domains").id().create()
+            try await app.db.schema("Addresses").id().create()
             let sources: [NotionJSONValue] = [
                 .object(["id": .string("b"), "title": .array([.object(["plain_text": .string("Same Title")])])]),
                 .object(["id": .string("a"), "title": .array([.object(["plain_text": .string("Same Title")])])]),
                 .object(["id": .string("c"), "title": .array([.object(["plain_text": .string("Domains")])])]),
-                .object(["id": .string("d"), "title": .array([.object(["plain_text": .string("  ")])])]),
+                .object(["id": .string("d"), "title": .array([.object(["plain_text": .string("Addresses")])])]),
+                .object(["id": .string("e"), "title": .array([.object(["plain_text": .string("  ")])])]),
             ]
-            let first = try await NotionImportTableAllocator.allocate(dataSources: sources, database: app.db, hubID: "hub-a")
+            let snapshot = NotionImportSnapshot(pages: [], dataSources: sources, rowsByDataSourceID: [
+                "a": [.object(["id": .string("row-a"), "parent": .object(["type": .string("data_source_id")])])],
+                "b": [.object(["id": .string("row-b"), "parent": .object(["type": .string("data_source_id")])])],
+                "x": [.object(["id": .string("excluded-row")])],
+            ])
+            let api = try NotionAPIClient(client: app.client, token: "test-token")
+            let previewService = NotionImportPreviewService(api: api, database: app.db, hubID: "hub-a")
+            let preview = try await previewService.response(for: snapshot, confirmationToken: "token", expiresAt: Date())
+            let first = try await NotionImportExecutionService.allocateTargets(for: snapshot, database: app.db, hubID: "hub-a")
             XCTAssertEqual(first["a"], "SameTitle")
             XCTAssertEqual(first["b"], "SameTitle2")
             XCTAssertEqual(first["c"], "Domains2")
-            XCTAssertEqual(first["d"], "Untitled")
+            XCTAssertEqual(first["d"], "Addresses2")
+            XCTAssertEqual(first["e"], "Untitled")
+            for source in sources {
+                let id = source.objectValue?["id"]?.stringValue ?? ""
+                XCTAssertEqual(preview.resources.first { $0.notionID == id }?.target, "New table: \(first[id]!)")
+            }
             try await NotionImportReference(hubID: "hub-a", notionPageID: "a", tableName: "SavedName", recordID: "__table__").save(on: app.db)
-            let second = try await NotionImportTableAllocator.allocate(dataSources: sources, database: app.db, hubID: "hub-a")
+            let second = try await NotionImportExecutionService.allocateTargets(for: snapshot, database: app.db, hubID: "hub-a")
             XCTAssertEqual(second["a"], "SavedName")
-            let excludingB = try await NotionImportTableAllocator.allocate(dataSources: sources, database: app.db, hubID: "hub-a", excluding: ["b"])
-            XCTAssertNil(excludingB["b"])
+            let excluding = try await NotionImportExecutionService.allocateTargets(for: snapshot, database: app.db, hubID: "hub-a", excluding: ["b"])
+            XCTAssertNil(excluding["b"])
         }
     }
     func testCommitRequestDefaultsExcludedIDsAndDecodesProvidedIDs() throws {

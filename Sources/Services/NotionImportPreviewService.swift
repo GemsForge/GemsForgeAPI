@@ -1,5 +1,6 @@
 import Foundation
 import Crypto
+import Fluent
 import Vapor
 
 struct NotionImportPreviewProperty: Content, Sendable {
@@ -131,8 +132,10 @@ actor NotionImportApprovals {
 /// produces a no-write mapping report. Each API collection is fully paginated.
 struct NotionImportPreviewService: Sendable {
     let api: NotionAPIClient
+    let database: any Database
+    let hubID: String
 
-    func preview(hubID: String, now: Date = Date()) async throws -> NotionImportPreviewResponse {
+    func preview(now: Date = Date()) async throws -> NotionImportPreviewResponse {
         let snapshot = try await loadSnapshot()
         let approval = await NotionImportApprovals.shared.issue(hubID: hubID, fingerprint: snapshot.fingerprint, now: now)
         return try await response(for: snapshot, confirmationToken: approval.token, expiresAt: approval.expiresAt)
@@ -154,13 +157,14 @@ struct NotionImportPreviewService: Sendable {
         return NotionImportSnapshot(pages: pages, dataSources: dataSources, rowsByDataSourceID: rowsByDataSourceID)
     }
 
-    private func response(
+    func response(
         for snapshot: NotionImportSnapshot,
         confirmationToken: String,
         expiresAt: Date
     ) async throws -> NotionImportPreviewResponse {
         let pages = snapshot.pages
         let dataSources = snapshot.dataSources
+        let tableTargets = try await NotionImportTableAllocator.allocate(dataSources: dataSources, database: database, hubID: hubID)
 
         var resources: [NotionImportPreviewResource] = []
         for page in pages {
@@ -186,11 +190,14 @@ struct NotionImportPreviewService: Sendable {
                 guard let candidate = value.objectValue,
                       let id = candidate["id"]?.stringValue,
                       Self.target(for: Self.title(from: candidate), object: "data_source") != "Review required"
+                        || tableTargets[id] != nil
                 else { return nil }
                 return id
             })
             let properties = Self.properties(from: object["properties"], rows: rows, targetSourceIDs: targetSourceIDs)
-            let target = Self.target(for: title, object: "data_source")
+            let target = Self.target(for: title, object: "data_source") == "Review required"
+                ? "New table: \(tableTargets[object["id"]?.stringValue ?? ""] ?? "Untitled")"
+                : Self.target(for: title, object: "data_source")
             resources.append(.init(
                 notionID: object["id"]?.stringValue ?? "",
                 title: title,
@@ -302,11 +309,48 @@ struct NotionImportPreviewService: Sendable {
         case "budget (archive)", "budget": return "Transactions / Categories"
         case "employment", "employment database": return "Employment"
         case "education", "education db": return "Education"
-        case "affiliations", "affiliation database", "vehicles", "vehicle database", "projects",
-             "proverbs planner", "proverbs planner 2026", "planner in proverb", "life themes",
-             "professional milestones", "think pieces":
-            return "Custom table: \(title)"
         default: return "Review required"
         }
+    }
+}
+
+/// Allocates unmapped data-source targets once for preview and execution. Existing mappings
+/// are stored in NotionImportReferences with recordID `__table__`.
+enum NotionImportTableAllocator {
+    static func allocate(
+        dataSources: [NotionJSONValue], database: any Database, hubID: String, excluding: Set<String> = []
+    ) async throws -> [String: String] {
+        let schema = try await LiveSchemaService(database: database).inspect()
+        let existingNames = Set(schema.tables.map { $0.name.lowercased() })
+        let references = try await NotionImportReference.query(on: database)
+            .filter(\.$hubID == hubID).all()
+        var persisted: [String: String] = [:]
+        for reference in references where reference.recordID == "__table__" {
+            persisted[reference.notionPageID] = reference.tableName
+        }
+        var allocated: Set<String> = []
+        var result: [String: String] = [:]
+        let builtin: [String: String] = [
+            "service expense tracker": ServiceAccount.schema,
+            "budget": ExpenseTransaction.schema, "budget (archive)": ExpenseTransaction.schema,
+            "employment": Employment.schema, "employment database": Employment.schema,
+            "education": Education.schema, "education db": Education.schema,
+        ]
+        for source in dataSources.sorted(by: { ($0.objectValue?["id"]?.stringValue ?? "") < ($1.objectValue?["id"]?.stringValue ?? "") }) {
+            guard let object = source.objectValue, let id = object["id"]?.stringValue, !excluding.contains(id) else { continue }
+            let title = NotionImportPreviewService.title(from: object)
+            if let mapped = builtin[title.lowercased()] { result[id] = mapped; continue }
+            if let prior = persisted[id] { result[id] = prior; continue }
+            let base = NotionImportExecutionService.customTableName(title)
+            var candidate = base
+            var suffix = 2
+            while existingNames.contains(candidate.lowercased()) || allocated.contains(candidate.lowercased()) {
+                candidate = "\(base)\(suffix)"
+                suffix += 1
+            }
+            allocated.insert(candidate.lowercased())
+            result[id] = candidate
+        }
+        return result
     }
 }

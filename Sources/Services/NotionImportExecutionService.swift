@@ -30,13 +30,27 @@ struct NotionImportExecutionService: Sendable {
     let hubID: String
     let backupConfiguration: LiveDatabaseBackupConfiguration?
 
+    static func customTableName(_ title: String) -> String {
+        let words = title.split(whereSeparator: { !$0.isLetter && !$0.isNumber })
+        let value = words.map { $0.prefix(1).uppercased() + $0.dropFirst() }.joined()
+        return value.isEmpty ? "Untitled" : value
+    }
+
+    static func allocateTargets(
+        for snapshot: NotionImportSnapshot, database: any Database, hubID: String, excluding: Set<String> = []
+    ) async throws -> [String: String] {
+        try await NotionImportTableAllocator.allocate(
+            dataSources: snapshot.dataSources, database: database, hubID: hubID, excluding: excluding
+        )
+    }
+
     func execute(_ request: NotionImportCommitRequest) async throws -> NotionImportCommitResponse {
         guard request.confirmImport else { throw NotionImportExecutionError.confirmationRequired }
         guard let expectedFingerprint = await NotionImportApprovals.shared.consume(
             token: request.confirmationToken, hubID: hubID
         ) else { throw NotionImportExecutionError.previewExpired }
 
-        let previewService = NotionImportPreviewService(api: api)
+        let previewService = NotionImportPreviewService(api: api, database: database, hubID: hubID)
         let snapshot = try await previewService.refreshedSnapshot()
         guard snapshot.fingerprint == expectedFingerprint else {
             throw NotionImportExecutionError.previewChanged
@@ -68,7 +82,10 @@ private struct NotionImportWriter: Sendable {
 
         let hub = try await Hub.find(hubID, on: database)
         guard let hub else { throw Abort(.unauthorized, reason: "The authenticated Hub is unavailable.") }
-        let tableMap = try await prepareCustomTables(snapshot.dataSources, excluding: excluded)
+        let targets = try await NotionImportExecutionService.allocateTargets(
+            for: snapshot, database: database, hubID: hubID, excluding: excluded
+        )
+        let tableMap = try await prepareCustomTables(snapshot.dataSources, targets: targets, excluding: excluded)
 
         let pageObjects = snapshot.pages.compactMap(\.objectValue)
             .filter { !NotionImportPreviewService.isDatabaseRow($0) }
@@ -115,11 +132,11 @@ private struct NotionImportWriter: Sendable {
             }
         }
 
-        for source in snapshot.dataSources {
+        for source in snapshot.dataSources where source.objectValue?["id"]?.stringValue.map({ !excluded.contains($0) }) ?? true {
             guard let sourceObject = source.objectValue,
                   let sourceID = sourceObject["id"]?.stringValue else { continue }
             let sourceTitle = Self.title(sourceObject)
-            guard let baseTarget = Self.targetTable(for: sourceTitle) else {
+            guard let baseTarget = targets[sourceID] else {
                 for rowValue in snapshot.rowsByDataSourceID[sourceID] ?? [] {
                     guard let object = rowValue.objectValue else { continue }
                     rows.append(.init(notionID: object["id"]?.stringValue ?? "", title: Self.title(object), target: "Review required", result: "skipped", recordID: nil, reason: "No target table mapping exists."))
@@ -160,8 +177,8 @@ private struct NotionImportWriter: Sendable {
             }
         }
 
-        unmapped.append(contentsOf: try await resolveRelationValues(snapshot))
-        unmapped.append(contentsOf: try await installPropertyMetadata(snapshot))
+        unmapped.append(contentsOf: try await resolveRelationValues(snapshot, targets: targets))
+        unmapped.append(contentsOf: try await installPropertyMetadata(snapshot, targets: targets))
 
         let skippedPages = pageObjects.filter {
             let target = NotionImportPreviewService.target(for: Self.title($0), object: "page", notionObject: $0)
@@ -551,12 +568,12 @@ private struct NotionImportWriter: Sendable {
         try await sql.raw(query).run()
     }
 
-    private func resolveRelationValues(_ snapshot: NotionImportSnapshot) async throws -> [String] {
+    private func resolveRelationValues(_ snapshot: NotionImportSnapshot, targets: [String: String]) async throws -> [String] {
         var unmapped: [String] = []
         for source in snapshot.dataSources {
             guard let sourceObject = source.objectValue,
                   let sourceID = sourceObject["id"]?.stringValue,
-                  let tableName = Self.targetTable(for: Self.title(sourceObject)) else { continue }
+                  let tableName = targets[sourceID] else { continue }
             let sourceTitle = Self.title(sourceObject)
             let sourceRows = snapshot.rowsByDataSourceID[sourceID] ?? []
             for row in sourceRows {
@@ -583,18 +600,18 @@ private struct NotionImportWriter: Sendable {
         return unmapped
     }
 
-    private func installPropertyMetadata(_ snapshot: NotionImportSnapshot) async throws -> [String] {
+    private func installPropertyMetadata(_ snapshot: NotionImportSnapshot, targets: [String: String]) async throws -> [String] {
         var unmapped: [String] = []
         let tablesBySourceID = Dictionary(uniqueKeysWithValues: snapshot.dataSources.compactMap { value -> (String, String)? in
             guard let object = value.objectValue,
                   let id = object["id"]?.stringValue,
-                  let table = Self.targetTable(for: Self.title(object)) else { return nil }
+                  let table = targets[id] else { return nil }
             return (id, table)
         })
         for source in snapshot.dataSources {
             guard let sourceObject = source.objectValue,
                   let sourceTitle = sourceObject["title"]?.arrayValue?.compactMap({ $0.objectValue?["plain_text"]?.stringValue }).joined(),
-                  let tableName = Self.targetTable(for: sourceTitle),
+                  let tableName = targets[sourceObject["id"]?.stringValue ?? ""],
                   let rawProperties = sourceObject["properties"]?.objectValue else { continue }
             let sourceSchema: LiveSchemaTableResponse
             do { sourceSchema = try await schemaTable(tableName) }
@@ -694,14 +711,13 @@ private struct NotionImportWriter: Sendable {
             ?? columns["institutionname"] ?? columns["item"]
     }
 
-    private func prepareCustomTables(_ sources: [NotionJSONValue], excluding: Set<String>) async throws -> [String: LiveSchemaTableResponse] {
+    private func prepareCustomTables(_ sources: [NotionJSONValue], targets: [String: String], excluding: Set<String>) async throws -> [String: LiveSchemaTableResponse] {
         var result: [String: LiveSchemaTableResponse] = [:]
-        for source in sources {
+        for source in sources.sorted(by: { ($0.objectValue?["id"]?.stringValue ?? "") < ($1.objectValue?["id"]?.stringValue ?? "") }) {
             guard let object = source.objectValue,
                   let sourceID = object["id"]?.stringValue,
                   !excluding.contains(sourceID) else { continue }
-            let sourceTitle = Self.title(object)
-            guard let target = Self.targetTable(for: sourceTitle),
+            guard let target = targets[sourceID],
                   ![ServiceAccount.schema, ExpenseTransaction.schema, Employment.schema, Education.schema,
                     ExpenseCategory.schema, ExpenseSubcategory.schema].contains(target) else { continue }
             guard let existing = try await LiveSchemaService(database: database).inspect().tables.first(where: { $0.name == target }) else {
@@ -714,10 +730,12 @@ private struct NotionImportWriter: Sendable {
                 let table = try await schemaTable(target)
                 result[target] = table
                 _ = try await SchemaPageService(database: database, hubID: hubID).createPage(tableName: target)
+                try await saveReference(notionID: sourceID, tableName: target, recordID: "__table__", on: database)
                 continue
             }
             result[target] = existing
             _ = try await SchemaPageService(database: database, hubID: hubID).createPage(tableName: target)
+            try await saveReference(notionID: sourceID, tableName: target, recordID: "__table__", on: database)
         }
         return result
     }
@@ -744,19 +762,6 @@ private struct NotionImportWriter: Sendable {
         return count
     }
 
-    private static func targetTable(for title: String) -> String? {
-        let target = NotionImportPreviewService.target(for: title, object: "data_source")
-        switch target {
-        case "Services": return ServiceAccount.schema
-        case "Transactions / Categories": return ExpenseTransaction.schema
-        case "Employment": return Employment.schema
-        case "Education": return Education.schema
-        default:
-            guard target.hasPrefix("Custom table: ") else { return nil }
-            return customTableName(String(target.dropFirst("Custom table: ".count)))
-        }
-    }
-
     private static func budgetTarget(for object: [String: NotionJSONValue]) -> String {
         let properties = object["properties"]?.objectValue ?? [:]
         let names = Set(properties.keys.map(normalized))
@@ -764,12 +769,6 @@ private struct NotionImportWriter: Sendable {
         if !names.isDisjoint(with: transactionIndicators) { return ExpenseTransaction.schema }
         if names.contains("subcategory") { return ExpenseSubcategory.schema }
         return ExpenseCategory.schema
-    }
-
-    private static func customTableName(_ title: String) -> String {
-        let words = title.split(whereSeparator: { !$0.isLetter && !$0.isNumber })
-        let value = words.map { $0.prefix(1).uppercased() + $0.dropFirst() }.joined()
-        return value.isEmpty ? "NotionImported" : value
     }
 
     private static func customColumns(from value: NotionJSONValue?) throws -> [TableBuilderColumnRequest] {
@@ -866,12 +865,3 @@ private struct NotionImportWriter: Sendable {
     }
 }
 
-private enum ImportScalar {
-    case text(String)
-    case number(Double)
-    case integer(Int64)
-    case bool(Bool)
-    case null
-
-    var string: String? { if case .text(let value) = self { value } else { nil } }
-}

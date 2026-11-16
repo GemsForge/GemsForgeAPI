@@ -9,8 +9,8 @@ func registerNotionImportRoutes(
     app.get("notion-import", "preview") { request async throws -> NotionImportPreviewResponse in
         do {
             let api = try NotionAPIClient(client: request.client)
-            return try await NotionImportPreviewService(api: api)
-                .preview(hubID: request.requireAuthenticatedHubID())
+            return try await NotionImportPreviewService(api: api, database: request.db, hubID: request.requireAuthenticatedHubID())
+                .preview()
         } catch let error as NotionAPIError {
             switch error {
             case .missingToken:
