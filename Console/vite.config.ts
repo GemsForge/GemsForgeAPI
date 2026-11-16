@@ -67,6 +67,8 @@ export default defineConfig(({ mode }) => {
           "/record-bodies",
           "/trash",
           "/table-views",
+          "/table-column-definitions",
+          "/live-schema",
           "/table-import",
           "/notion-import",
           "/forgekeeper",
