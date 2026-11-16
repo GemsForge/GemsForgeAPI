@@ -33,8 +33,11 @@ review. Pages whose parent is a Notion data source are counted in that data
 source's rows, not again as standalone pages. This is read-only: it does not
 write to Notion or GemLife.
 
-The preview marks unknown page/database targets and unsupported property types
-for review. Formula values are represented as plain text and flagged. The
+The preview marks unknown page targets and unsupported property types for review.
+Every unmapped Notion data source is allocated a new GemLife table and displayed
+as `New table: <TableName>`. Names avoid tables already present in the live schema,
+and repeat imports reuse the Hub's saved data-source mapping. Excluded sources
+create no table and import no rows. Formula values are represented as plain text and flagged. The
 current Markdown converter supports common headings, paragraphs, lists, quotes,
 code, dividers, checkboxes, and child-page titles; unsupported block types are
 reported rather than silently represented as imported content.

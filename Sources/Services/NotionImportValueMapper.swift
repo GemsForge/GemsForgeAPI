@@ -1,5 +1,15 @@
 import Foundation
 
+enum ImportScalar: Equatable {
+    case text(String)
+    case number(Double)
+    case integer(Int64)
+    case bool(Bool)
+    case null
+
+    var string: String? { if case .text(let value) = self { value } else { nil } }
+}
+
 /// Converts Notion-specific values into the existing Gem Life storage contract.
 /// This mapper is pure so dry-run previews can report transformations without
 /// requiring a database connection or exposing imported values in logs.
@@ -57,6 +67,11 @@ enum NotionImportValueMapper {
             }
             words.append(String(piece[start...]).lowercased())
         }
+        // Treat a trailing or leading hash glued to a word as its own marker.
+        words = words.flatMap { word -> [String] in
+            guard word.contains("#") else { return [word] }
+            return word.split(separator: "#", omittingEmptySubsequences: true).map(String.init) + ["#"]
+        }
         let normalized = words.joined()
         if ["card", "cardnumber", "iban", "routing", "routingnumber", "accountnumber"].contains(normalized) {
             return true
@@ -75,7 +90,15 @@ enum NotionImportValueMapper {
         switch scalar {
         case .text(let text): value = text
         case .number(let number):
-            value = number.rounded() == number ? String(Int64(number)) : String(number)
+            if number.isFinite, number.rounded() == number {
+                if abs(number) <= 9_007_199_254_740_992 {
+                    value = String(Int64(number))
+                } else {
+                    value = String(format: "%.0f", number)
+                }
+            } else {
+                value = String(number)
+            }
         case .integer(let number): value = String(number)
         case .bool(let flag): value = flag ? "1" : "0"
         case .null: return nil

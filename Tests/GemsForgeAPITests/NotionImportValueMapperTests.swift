@@ -1,8 +1,41 @@
 import XCTest
+import Fluent
+import FluentSQLiteDriver
+import VaporTesting
 
 @testable import GemsForgeAPI
 
 final class NotionImportValueMapperTests: XCTestCase {
+    func testTableAllocatorAvoidsLiveAndRunCollisionsAndReusesHubMapping() async throws {
+        try await withApp(configure: { app in
+            app.databases.use(.sqlite(.memory), as: .sqlite)
+            app.migrations.add(CreateAuthenticationSchema())
+            app.migrations.add(CreateHubs())
+            app.migrations.add(MakeAuthenticationProviderAgnostic())
+            app.migrations.add(CreateNotionImportReferences())
+            try await app.autoMigrate()
+        }) { app in
+            try await AuthenticationAccount(id: "account-a").save(on: app.db)
+            try await Hub(id: "hub-a", accountID: "account-a").save(on: app.db)
+            try await app.db.schema("Domains").id().create()
+            let sources: [NotionJSONValue] = [
+                .object(["id": .string("b"), "title": .array([.object(["plain_text": .string("Same Title")])])]),
+                .object(["id": .string("a"), "title": .array([.object(["plain_text": .string("Same Title")])])]),
+                .object(["id": .string("c"), "title": .array([.object(["plain_text": .string("Domains")])])]),
+                .object(["id": .string("d"), "title": .array([.object(["plain_text": .string("  ")])])]),
+            ]
+            let first = try await NotionImportTableAllocator.allocate(dataSources: sources, database: app.db, hubID: "hub-a")
+            XCTAssertEqual(first["a"], "SameTitle")
+            XCTAssertEqual(first["b"], "SameTitle2")
+            XCTAssertEqual(first["c"], "Domains2")
+            XCTAssertEqual(first["d"], "Untitled")
+            try await NotionImportReference(hubID: "hub-a", notionPageID: "a", tableName: "SavedName", recordID: "__table__").save(on: app.db)
+            let second = try await NotionImportTableAllocator.allocate(dataSources: sources, database: app.db, hubID: "hub-a")
+            XCTAssertEqual(second["a"], "SavedName")
+            let excludingB = try await NotionImportTableAllocator.allocate(dataSources: sources, database: app.db, hubID: "hub-a", excluding: ["b"])
+            XCTAssertNil(excludingB["b"])
+        }
+    }
     func testCommitRequestDefaultsExcludedIDsAndDecodesProvidedIDs() throws {
         let decoder = JSONDecoder()
         let omitted = try decoder.decode(NotionImportCommitRequest.self, from: Data(
@@ -23,11 +56,11 @@ final class NotionImportValueMapperTests: XCTestCase {
     }
 
     func testAccountLikeNamesMatchSensitiveFieldsButNotDescriptions() {
-        for name in ["Account Number", "Acct #", "Card", "CardNumber", "Routing No", "IBAN", "Bank Num"] {
+        for name in ["Account Number", "Acct #", "Acct#", "Account#", "Card#", "Card", "CardNumber", "Routing No", "IBAN", "Bank Num"] {
             XCTAssertTrue(NotionImportValueMapper.isAccountLike(name), name)
         }
         for name in ["Account Name", "Account Type", "Account Status", "Card Type", "Bank Name", "Account Holder",
-                     "Account Notes", "Bank Annotation", "Card Nominee"] {
+                     "Account Notes", "Bank Annotation", "Card Nominee", "Acct Holder"] {
             XCTAssertFalse(NotionImportValueMapper.isAccountLike(name), name)
         }
     }
@@ -43,6 +76,9 @@ final class NotionImportValueMapperTests: XCTestCase {
     func testAccountLikeNumericScalarsKeepCorrectLastFourDigits() {
         XCTAssertEqual(NotionImportValueMapper.protectedAccountScalar(.number(123456)), .text("3456"))
         XCTAssertEqual(NotionImportValueMapper.protectedAccountScalar(.integer(987654321)), .text("4321"))
+        XCTAssertEqual(NotionImportValueMapper.protectedAccountScalar(.number(1e20)), .text("0000"))
+        // Notion number fields cannot carry exact 16-digit values; text values are exact.
+        XCTAssertEqual(NotionImportValueMapper.protectedAccountScalar(.number(4_111_222_233_334_444)), .text("4444"))
     }
 
     func testDueDateMapsOrdinalAndCalendarDateLabels() {
@@ -91,20 +127,20 @@ final class NotionImportValueMapperTests: XCTestCase {
         XCTAssertTrue(properties.first { $0.name == "Total" }?.proposedStorage.contains("rollup calculation") == true)
     }
 
-    func testPreviewRecognizesWorkspaceDataSourceNames() {
+    func testPreviewRecognizesBuiltInDataSourceNames() {
         XCTAssertEqual(NotionImportPreviewService.target(for: "Employment Database", object: "data_source"), "Employment")
         XCTAssertEqual(NotionImportPreviewService.target(for: "Education DB", object: "data_source"), "Education")
         XCTAssertEqual(
             NotionImportPreviewService.target(for: "Affiliation Database", object: "data_source"),
-            "Custom table: Affiliation Database"
+            "Review required"
         )
         XCTAssertEqual(
             NotionImportPreviewService.target(for: "Vehicle Database", object: "data_source"),
-            "Custom table: Vehicle Database"
+            "Review required"
         )
         XCTAssertEqual(
             NotionImportPreviewService.target(for: "Planner in Proverb", object: "data_source"),
-            "Custom table: Planner in Proverb"
+            "Review required"
         )
     }
 
