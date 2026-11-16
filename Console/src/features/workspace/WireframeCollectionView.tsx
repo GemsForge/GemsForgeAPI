@@ -385,13 +385,16 @@ export function WireframeCollectionView<T extends WireframeRecord>({
     propertyConfigurations,
     ...(inspectorPropertyOrder ? { inspectorPropertyOrder } : {}),
   };
+  // Serialize once so the save effect depends on the snapshot's content rather
+  // than on an object identity that changes every render.
+  const serializedWorkspaceState = JSON.stringify(workspaceStateSnapshot);
   useEffect(() => {
     if (!workspaceHydrated.current || pendingSelectedID.current) return;
     if (skipWorkspaceSaveOnce.current) {
       skipWorkspaceSaveOnce.current = false;
       return;
     }
-    const serialized = JSON.stringify(workspaceStateSnapshot);
+    const serialized = serializedWorkspaceState;
     if (serialized === lastSavedWorkspaceState.current) return;
     if (workspaceSaveTimer.current !== null) window.clearTimeout(workspaceSaveTimer.current);
     const timer = window.setTimeout(() => {
@@ -407,33 +410,7 @@ export function WireframeCollectionView<T extends WireframeRecord>({
       window.clearTimeout(timer);
       if (workspaceSaveTimer.current === timer) workspaceSaveTimer.current = null;
     };
-  }, [
-    tableTitle,
-    tableDescription,
-    view,
-    workspaceSelectedID,
-    galleryCardSize,
-    galleryFillMedia,
-    galleryImageSelection,
-    query,
-    sort,
-    direction,
-    filter,
-    groupBy,
-    pageIndex,
-    pageSize,
-    tableIcon,
-    propertyIcons,
-    config.onSaveColumnDefinition,
-    propertyTypes,
-    propertySelectOptions,
-    dateConfigurations,
-    propertyConfigurations,
-    inspectorPropertyOrder,
-    workspaceSelectionRevision,
-    presentationTableName,
-    saveWorkspaceStateAsync,
-  ]);
+  }, [serializedWorkspaceState, view, workspaceSelectionRevision, presentationTableName, saveWorkspaceStateAsync]);
   const presentationsQuery = useRecordPresentationsQuery(presentationTableName);
   const bodyExcerptsQuery = useRecordBodyExcerptsQuery(presentationTableName);
   const savePresentation = useSaveRecordPresentationMutation(presentationTableName);
