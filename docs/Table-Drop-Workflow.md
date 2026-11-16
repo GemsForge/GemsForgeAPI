@@ -8,7 +8,8 @@ the Console cannot submit SQL or arbitrary table identifiers for execution.
 
 1. Open **Delete table** from an eligible schema collection. The API inspects
    the live schema and returns a read-only preview.
-2. Review the Hub row count, metadata inventory, blockers, and file references
+2. Review the Hub row count, metadata inventory (including Notion import
+   mappings), blockers, and file references
    that would become unreferenced. File contents are never removed by table
    deletion.
 3. Type the exact table name. The token expires after five minutes and can be

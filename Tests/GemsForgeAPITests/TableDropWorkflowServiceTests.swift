@@ -205,6 +205,7 @@ final class TableDropWorkflowServiceTests: XCTestCase {
 
             let preview = try await service.preview(tableName: "DropFixture", hubID: "hub-a", using: app.db)
             XCTAssertEqual(preview.metadata.recordBodies, 1)
+            XCTAssertEqual(preview.metadata.notionImportReferences, 2)
             XCTAssertEqual(preview.filesThatWouldBecomeUnreferenced.map(\.relativePath), [path.path, path.path])
             let result = try await service.confirm(
                 tableName: "DropFixture", hubID: "hub-a",

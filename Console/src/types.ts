@@ -363,6 +363,7 @@ export interface TableDropMetadataCounts {
   recordPresentations: number;
   recordBodies: number;
   trashEntries: number;
+  notionImportReferences: number;
   attachmentReferences: number;
 }
 

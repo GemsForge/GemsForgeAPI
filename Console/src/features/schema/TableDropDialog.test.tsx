@@ -34,6 +34,7 @@ const preview = {
     recordPresentations: 0,
     recordBodies: 0,
     trashEntries: 0,
+    notionImportReferences: 2,
     attachmentReferences: 0,
   },
   filesThatWouldBecomeUnreferenced: [],
@@ -65,6 +66,7 @@ describe("TableDropDialog", () => {
     const onSuccess = vi.fn();
     renderDialog(onSuccess);
     await screen.findByText(/rows in this Hub/);
+    expect(screen.getByText(/A later Notion import will create a new table/)).toBeInTheDocument();
     const confirm = screen.getByRole("button", { name: "Create backup and delete table" });
     expect(confirm).toBeDisabled();
     fireEvent.change(screen.getByLabelText(/Type GardenNotes to confirm/), { target: { value: "GardenNotes" } });

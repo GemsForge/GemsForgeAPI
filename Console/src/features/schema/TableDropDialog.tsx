@@ -129,6 +129,9 @@ export function TableDropDialog({
                 ))}
               </ul>
             </details>
+            {preview.metadata.notionImportReferences > 0 ? (
+              <p>Notion import mappings will be removed. A later Notion import will create a new table.</p>
+            ) : null}
             {preview.filesThatWouldBecomeUnreferenced.length > 0 ? (
               <div>
                 <strong>Files that will become unreferenced (file contents are kept)</strong>
