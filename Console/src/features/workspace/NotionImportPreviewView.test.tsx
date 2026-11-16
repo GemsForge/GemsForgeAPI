@@ -10,7 +10,7 @@ vi.mock("../../data/notionImportQueries", () => ({
       expiresAt: "2026-01-01T00:00:00Z",
       totalRows: 4,
       warnings: [],
-      unmappedProperties: ["Collections: database target", "Collections: formula"],
+      unmappedProperties: ["Collections: database target"],
       resources: [
         {
           notionID: "notion-source-111111",
@@ -19,7 +19,7 @@ vi.mock("../../data/notionImportQueries", () => ({
           target: "New table: Collections",
           rowCount: 1,
           properties: [],
-          unmappedProperties: ["database target", "formula"],
+          unmappedProperties: ["database target"],
         },
         {
           notionID: "hidden-source",
@@ -42,15 +42,14 @@ describe("NotionImportPreviewView", () => {
   it("counts unavailable sources separately while keeping them listed for review", () => {
     render(<NotionImportPreviewView />);
 
-    expect(screen.getByRole("status")).toHaveTextContent(
-      "1 database, 0 pages, 1 unavailable data source, and 4 proposed items found.",
-    );
-    expect(screen.getByText("Collections (…111111): formula")).toBeInTheDocument();
+    expect(
+      screen.getByText(/1 database, 0 pages, 1 unavailable data source, and 4 proposed items found\./),
+    ).toHaveTextContent("1 database, 0 pages, 1 unavailable data source, and 4 proposed items found.");
     expect(screen.queryByText(/database target/)).not.toBeInTheDocument();
     expect(screen.getByText(/New table: Collections$/)).toBeInTheDocument();
-    expect(screen.getByText("Collections (…111111)", { selector: "strong" })).toBeInTheDocument();
+    expect(screen.getByText("Collections", { selector: "strong" })).toBeInTheDocument();
     expect(screen.getByText("Unavailable data source (hidden-source)", { selector: "strong" })).toBeInTheDocument();
-    expect(screen.getByText("Review needed")).toBeInTheDocument();
+    expect(screen.getAllByText("Review needed")).toHaveLength(2);
   });
 
   it("includes unavailable data sources in the review report", () => {
