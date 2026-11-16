@@ -56,6 +56,23 @@ export function NotionImportPreviewView() {
   const resources = preview.data?.resources ?? [];
   const databases = resources.filter((resource) => resource.notionObject === "data_source");
   const pages = resources.filter((resource) => resource.notionObject === "page");
+  const titleCounts = new Map<string, number>();
+  for (const resource of resources) {
+    titleCounts.set(resource.title, (titleCounts.get(resource.title) ?? 0) + 1);
+  }
+  const displayTitle = (resource: (typeof resources)[number]) =>
+    (titleCounts.get(resource.title) ?? 0) > 1 ? `${resource.title} (…${resource.notionID.slice(-6)})` : resource.title;
+  const matchingItemCounts = new Map<string, number>();
+  const reviewItems = (preview.data?.unmappedProperties ?? []).map((item) => {
+    const candidates = resources.filter((resource) => item.startsWith(`${resource.title}: `));
+    const occurrence = matchingItemCounts.get(item) ?? 0;
+    matchingItemCounts.set(item, occurrence + 1);
+    const resource = candidates[occurrence] ?? candidates[0];
+    return {
+      key: resource ? `${resource.notionID}-${item}` : item,
+      label: resource ? `${displayTitle(resource)}:${item.slice(resource.title.length + 1)}` : item,
+    };
+  });
 
   return (
     <section className="notion-import-preview" aria-labelledby="notion-import-heading">
@@ -103,8 +120,8 @@ export function NotionImportPreviewView() {
             <div className="notion-import-message" role="status">
               <strong>{preview.data.unmappedProperties.length} mapping items need review</strong>
               <ul>
-                {preview.data.unmappedProperties.map((item, index) => (
-                  <li key={`${item}-${index}`}>{item}</li>
+                {reviewItems.map((item) => (
+                  <li key={item.key}>{item.label}</li>
                 ))}
               </ul>
             </div>
@@ -118,7 +135,7 @@ export function NotionImportPreviewView() {
               {databases.map((resource) => (
                 <details className="notion-import-resource" key={resource.notionID}>
                   <summary>
-                    <strong>{resource.title}</strong>
+                    <strong>{displayTitle(resource)}</strong>
                     <span>
                       {resource.rowCount} {resource.rowCount === 1 ? "row" : "rows"} → {resource.target}
                     </span>
@@ -127,7 +144,7 @@ export function NotionImportPreviewView() {
                   {resource.properties.length > 0 ? (
                     <div className="notion-import-property-scroll">
                       <table>
-                        <caption>Property mapping for {resource.title}</caption>
+                        <caption>Property mapping for {displayTitle(resource)}</caption>
                         <thead>
                           <tr>
                             <th scope="col">Notion property</th>
@@ -163,7 +180,7 @@ export function NotionImportPreviewView() {
             <ul className="notion-import-page-list">
               {pages.map((resource) => (
                 <li key={resource.notionID}>
-                  <strong>{resource.title}</strong>
+                  <strong>{displayTitle(resource)}</strong>
                   <span>→ {resource.target}</span>
                 </li>
               ))}
