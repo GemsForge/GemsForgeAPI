@@ -117,7 +117,11 @@ struct NotionImportWriter: Sendable {
             NotionImportPreviewService.target(
                 for: Self.title(object), object: "page", notionObject: object
             ) == "ForgeKeeper"
-        }.sorted { Self.depth(of: $0, pages: pageObjects) < Self.depth(of: $1, pages: pageObjects) }
+        }.sorted {
+            let leftDepth = Self.depth(of: $0, pages: pageObjects)
+            let rightDepth = Self.depth(of: $1, pages: pageObjects)
+            return leftDepth == rightDepth ? Self.title($0) < Self.title($1) : leftDepth < rightDepth
+        }
         for object in forgeKeeperPages {
             let id = object["id"]?.stringValue ?? ""
             let title = Self.title(object)
@@ -199,6 +203,13 @@ struct NotionImportWriter: Sendable {
         }
 
         let counts = Dictionary(grouping: rows, by: \.result)
+        for (target, targetRows) in Dictionary(grouping: rows, by: \.target).sorted(by: { $0.key < $1.key }) {
+            let targetCounts = Dictionary(grouping: targetRows, by: \.result)
+            print("Notion import \(target): created=\(targetCounts["created"]?.count ?? 0) updated=\(targetCounts["updated"]?.count ?? 0) skipped=\(targetCounts["skipped"]?.count ?? 0) failed=\(targetCounts["failed"]?.count ?? 0)")
+        }
+        for row in rows where row.result == "skipped" || row.result == "failed" {
+            print("[WARNING] Notion import \(row.result) table=\(row.target) notionID=\(row.notionID) reason=\(row.reason ?? "unspecified")")
+        }
         return NotionImportCommitResponse(
             status: "completed-with-report",
             backupFileName: backup.backupFileName,
@@ -256,12 +267,20 @@ struct NotionImportWriter: Sendable {
             }
             currentParentID = parentPage["parent"]?.objectValue?["page_id"]?.stringValue
         }
-        guard let pageID = parentNotionID,
-              let parent = pages.first(where: { $0["id"]?.stringValue == pageID }),
-              let domainID = try await domainAncestorID(of: parent, pages: pages, on: database) else {
-            throw Abort(.unprocessableEntity, reason: "ForgeKeeper page \(Self.title(object)) has no mapped Domain ancestor.")
+        if let pageID = parentNotionID,
+           let parent = pages.first(where: { $0["id"]?.stringValue == pageID }),
+           let domainID = try await domainAncestorID(of: parent, pages: pages, on: database) {
+            return (domainID, parentRecordID)
         }
-        return (domainID, parentRecordID)
+        return (try await ensureDefaultNotionDomain(on: database), parentRecordID)
+    }
+
+    private func ensureDefaultNotionDomain(on database: any Database) async throws -> String {
+        let stableID = "NOTION-DEFAULT-\(hubID)"
+        if try await Domain.find(stableID, on: database) != nil { return stableID }
+        let domain = Domain(id: stableID, title: "Notion", description: "Default domain for imported Notion pages.")
+        try await domain.save(on: database)
+        return stableID
     }
 
     private func domainAncestorID(of object: [String: NotionJSONValue], pages: [[String: NotionJSONValue]], on database: any Database) async throws -> String? {
@@ -295,15 +314,15 @@ struct NotionImportWriter: Sendable {
     private func insertRow(_ object: [String: NotionJSONValue], tableName: String, schema: LiveSchemaTableResponse, on database: any Database) async throws -> String {
         guard let sql = database as? SQLDatabase,
               let primaryKey = schema.columns.first(where: \.primaryKey) else { throw Abort(.serviceUnavailable) }
-        var values = mappedValues(object, schema: schema)
-        if schema.columns.contains(where: { $0.name == "CategoryID" }) {
+        var values = Self.mappedValues(object, schema: schema)
+        if tableName == ExpenseSubcategory.schema || tableName == ExpenseTransaction.schema {
             values["CategoryID"] = .integer(try await resolveCategoryID(object, on: database))
         }
         values["HubID"] = .text(hubID)
         if primaryKey.dataType.uppercased().contains("INT") == false {
             values[primaryKey.name] = .text(UUID().uuidString)
         }
-        try validateRequired(values, schema: schema)
+        try Self.validateRequired(values, schema: schema)
         let columns = schema.columns.filter { values[$0.name] != nil && !(primaryKey.dataType.uppercased().contains("INT") && $0.name == primaryKey.name) }
         var query = SQLQueryString("INSERT INTO \(ident: tableName) (")
         for (index, column) in columns.enumerated() {
@@ -326,8 +345,8 @@ struct NotionImportWriter: Sendable {
 
     private func updateRow(_ object: [String: NotionJSONValue], tableName: String, schema: LiveSchemaTableResponse, recordID: String, on database: any Database) async throws {
         guard let sql = database as? SQLDatabase, let primaryKey = schema.columns.first(where: \.primaryKey) else { throw Abort(.serviceUnavailable) }
-        var values = mappedValues(object, schema: schema)
-        if schema.columns.contains(where: { $0.name == "CategoryID" }) {
+        var values = Self.mappedValues(object, schema: schema)
+        if tableName == ExpenseSubcategory.schema || tableName == ExpenseTransaction.schema {
             values["CategoryID"] = .integer(try await resolveCategoryID(object, on: database))
         }
         guard !values.isEmpty else { return }
@@ -349,7 +368,7 @@ struct NotionImportWriter: Sendable {
         try await sql.raw(query).run()
     }
 
-    private func mappedValues(_ object: [String: NotionJSONValue], schema: LiveSchemaTableResponse) -> [String: ImportScalar] {
+    static func mappedValues(_ object: [String: NotionJSONValue], schema: LiveSchemaTableResponse) -> [String: ImportScalar] {
         let columns = Dictionary(schema.columns.map { (Self.normalized($0.name), $0.name) }, uniquingKeysWith: { first, _ in first })
         var values: [String: ImportScalar] = [:]
         let title = Self.title(object)
@@ -400,10 +419,34 @@ struct NotionImportWriter: Sendable {
         ] where schema.columns.contains(where: { $0.name == column }) && values[column] == nil {
             values[column] = fallback
         }
+        let propertiesByName = Dictionary(object["properties"]?.objectValue?.map { (Self.normalized($0.key), $0.value) } ?? [], uniquingKeysWith: { first, _ in first })
+        let displayFallbacks: [(String, [String])] = [
+            ("Item", ["item", "title"]), ("Category", ["category", "title"]),
+            ("Subcategory", ["subcategory", "title"]), ("InstitutionName", ["institutionname", "title"]),
+            ("EmployerName", ["employername", "title"]), ("Service", ["service", "title"]),
+            ("PositionTitle", ["positiontitle", "title"]),
+        ]
+        for (column, propertyNames) in displayFallbacks where schema.columns.contains(where: { $0.name == column }) && values[column] == nil {
+            let supplied = propertyNames.contains { name in
+                guard let property = propertiesByName[name] else { return false }
+                return Self.scalar(property, type: property.objectValue?["type"]?.stringValue ?? "unknown") != nil
+            }
+            if !supplied { values[column] = .text(title) }
+        }
+        if schema.columns.contains(where: { $0.name == "EducationType" }) {
+            let allowed = ["Education", "Certification", "Training", "Other"]
+            if case let .text(value)? = values["EducationType"], !allowed.contains(value) { values["EducationType"] = .text("Education") }
+            if values["EducationType"] == nil { values["EducationType"] = .text("Education") }
+        }
+        if schema.columns.contains(where: { $0.name == "EmploymentStatus" }) {
+            // EmploymentStatus is free-form in the repository model; retain any
+            // supplied Notion value and use the migration's safe default only when absent.
+            if values["EmploymentStatus"] == nil { values["EmploymentStatus"] = .text("Imported") }
+        }
         return values
     }
 
-    private func validateRequired(_ values: [String: ImportScalar], schema: LiveSchemaTableResponse) throws {
+    static func validateRequired(_ values: [String: ImportScalar], schema: LiveSchemaTableResponse) throws {
         for column in schema.columns where !column.nullable && column.defaultValue == nil && !column.primaryKey {
             guard values[column.name] != nil else { throw Abort(.unprocessableEntity, reason: "Required target field \(column.name) is missing from the Notion row.") }
         }
@@ -411,7 +454,9 @@ struct NotionImportWriter: Sendable {
 
     private func resolveCategoryID(_ object: [String: NotionJSONValue], on database: any Database) async throws -> Int64 {
         let properties = object["properties"]?.objectValue ?? [:]
-        guard let categoryProperty = properties.first(where: { Self.normalized($0.key) == "category" })?.value,
+        let directCategory = properties.first(where: { Self.normalized($0.key) == "category" })?.value
+        let parentCategory = properties.first(where: { ["parent category", "category name"].contains(Self.normalized($0.key)) })?.value
+        guard let categoryProperty = directCategory ?? parentCategory,
               let scalar = Self.scalar(categoryProperty, type: categoryProperty.objectValue?["type"]?.stringValue ?? "unknown"),
               case let .text(rawValue) = scalar, !rawValue.isEmpty else {
             throw Abort(.unprocessableEntity, reason: "The Budget row has no resolvable Category value.")
@@ -786,7 +831,7 @@ struct NotionImportWriter: Sendable {
         let names = Set(properties.keys.map(normalized))
         let transactionIndicators: Set<String> = ["item", "transactiondate", "quantity", "total", "paidprice", "regularprice", "merchant"]
         if !names.isDisjoint(with: transactionIndicators) { return ExpenseTransaction.schema }
-        if names.contains("subcategory") { return ExpenseSubcategory.schema }
+        if names.contains("subcategory") || names.contains("subcategory name") { return ExpenseSubcategory.schema }
         return ExpenseCategory.schema
     }
 
