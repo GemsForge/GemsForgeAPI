@@ -12,8 +12,8 @@ final class NotionImportValueMapperTests: XCTestCase {
         let properties = ["Parent Category": category, "Subcategory Name": subcategory]
         let object: [String: NotionJSONValue] = ["properties": .object(properties)]
 
-        XCTAssertEqual(NotionImportExecutionService.budgetTarget(for: object), ExpenseSubcategory.schema)
-        XCTAssertEqual(NotionImportExecutionService.budgetCategoryProperty(in: properties), category)
+        XCTAssertEqual(NotionImportWriter.budgetTarget(for: object), ExpenseSubcategory.schema)
+        XCTAssertEqual(NotionImportWriter.budgetCategoryProperty(in: properties), category)
     }
 
     func testStandardTargetsFillRequiredDisplayColumnsAndEnumDefaults() throws {
