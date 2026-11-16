@@ -8,7 +8,7 @@ vi.mock("../../data/notionImportQueries", () => ({
       readOnly: true,
       confirmationToken: "token",
       expiresAt: "2026-01-01T00:00:00Z",
-      totalRows: 2,
+      totalRows: 4,
       warnings: [],
       unmappedProperties: ["Collections: database target", "Collections: formula"],
       resources: [
@@ -22,13 +22,13 @@ vi.mock("../../data/notionImportQueries", () => ({
           unmappedProperties: ["database target", "formula"],
         },
         {
-          notionID: "notion-source-222222",
-          title: "Collections",
+          notionID: "hidden-source",
+          title: "Unavailable data source (hidden-source)",
           notionObject: "data_source",
-          target: "New table: Collections2",
-          rowCount: 1,
+          target: "Not imported: data source unavailable",
+          rowCount: 3,
           properties: [],
-          unmappedProperties: ["database target"],
+          unmappedProperties: ["data source not shared with the Notion integration"],
         },
       ],
     },
@@ -39,15 +39,18 @@ vi.mock("../../data/notionImportQueries", () => ({
 }));
 
 describe("NotionImportPreviewView", () => {
-  it("shows new table targets without treating the target alone as review required", () => {
+  it("counts unavailable sources separately while keeping them listed for review", () => {
     render(<NotionImportPreviewView />);
 
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "1 database, 0 pages, 1 unavailable data source, and 4 proposed items found.",
+    );
     expect(screen.getByText("Collections (…111111): formula")).toBeInTheDocument();
     expect(screen.queryByText(/database target/)).not.toBeInTheDocument();
     expect(screen.getByText(/New table: Collections$/)).toBeInTheDocument();
-    expect(screen.getByText(/New table: Collections2$/)).toBeInTheDocument();
     expect(screen.getByText("Collections (…111111)", { selector: "strong" })).toBeInTheDocument();
-    expect(screen.getByText("Collections (…222222)", { selector: "strong" })).toBeInTheDocument();
+    expect(screen.getByText("Unavailable data source (hidden-source)", { selector: "strong" })).toBeInTheDocument();
+    expect(screen.getByText("Review needed")).toBeInTheDocument();
   });
 
   it("includes unavailable data sources in the review report", () => {

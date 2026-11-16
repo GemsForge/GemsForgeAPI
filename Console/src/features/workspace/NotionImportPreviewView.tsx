@@ -75,7 +75,9 @@ function downloadReviewReport(preview: NotionImportPreview) {
 export function NotionImportPreviewView() {
   const preview = useNotionImportPreviewQuery();
   const resources = preview.data?.resources ?? [];
-  const databases = resources.filter((resource) => resource.notionObject === "data_source");
+  const dataSources = resources.filter((resource) => resource.notionObject === "data_source");
+  const unavailableDataSources = dataSources.filter((resource) => resource.target.startsWith(unavailableSourcePrefix));
+  const databases = dataSources.filter((resource) => !resource.target.startsWith(unavailableSourcePrefix));
   const pages = resources.filter((resource) => resource.notionObject === "page");
   const titleCounts = new Map<string, number>();
   for (const resource of resources) {
@@ -135,7 +137,11 @@ export function NotionImportPreviewView() {
         <div className="notion-import-results">
           <p role="status" className="notion-import-summary">
             {databases.length} {databases.length === 1 ? "database" : "databases"}, {pages.length}{" "}
-            {pages.length === 1 ? "page" : "pages"}, and {preview.data.totalRows} proposed items found.
+            {pages.length === 1 ? "page" : "pages"}
+            {unavailableDataSources.length > 0
+              ? `, ${unavailableDataSources.length} unavailable ${unavailableDataSources.length === 1 ? "data source" : "data sources"}`
+              : ""}
+            , and {preview.data.totalRows} proposed items found.
           </p>
           <p className="notion-import-note">
             This is a read-only mapping preview. No GemLife records have been created from it. Relations can link one
@@ -156,11 +162,11 @@ export function NotionImportPreviewView() {
           ) : null}
 
           <h4>Databases</h4>
-          {databases.length === 0 ? (
+          {dataSources.length === 0 ? (
             <p>No databases are shared with this Notion integration.</p>
           ) : (
             <div className="notion-import-resource-list">
-              {databases.map((resource) => (
+              {dataSources.map((resource) => (
                 <details className="notion-import-resource" key={resource.notionID}>
                   <summary>
                     <strong>{displayTitle(resource)}</strong>
