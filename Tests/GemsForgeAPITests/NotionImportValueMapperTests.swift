@@ -3,6 +3,19 @@ import XCTest
 @testable import GemsForgeAPI
 
 final class NotionImportValueMapperTests: XCTestCase {
+    func testCommitRequestDefaultsExcludedIDsAndDecodesProvidedIDs() throws {
+        let decoder = JSONDecoder()
+        let omitted = try decoder.decode(NotionImportCommitRequest.self, from: Data(
+            #"{"confirmationToken":"token","confirmImport":false}"#.utf8
+        ))
+        let provided = try decoder.decode(NotionImportCommitRequest.self, from: Data(
+            #"{"confirmationToken":"token","confirmImport":true,"excludedNotionIDs":["a","b"]}"#.utf8
+        ))
+
+        XCTAssertEqual(omitted.excludedNotionIDs, [])
+        XCTAssertEqual(provided.excludedNotionIDs, ["a", "b"])
+    }
+
     func testAccountNumberKeepsOnlyLastFourDigits() {
         XCTAssertEqual(NotionImportValueMapper.accountNumberLastFour("1234 5678 9012"), "9012")
         XCTAssertEqual(NotionImportValueMapper.accountNumberLastFour("****-0042"), "0042")

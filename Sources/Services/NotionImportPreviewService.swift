@@ -69,7 +69,14 @@ struct NotionImportSnapshot: Sendable, Codable {
 struct NotionImportCommitRequest: Content, Sendable {
     let confirmationToken: String
     let confirmImport: Bool
-    var excludedNotionIDs: [String] = []
+    let excludedNotionIDs: [String]
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        confirmationToken = try container.decode(String.self, forKey: .confirmationToken)
+        confirmImport = try container.decode(Bool.self, forKey: .confirmImport)
+        excludedNotionIDs = try container.decodeIfPresent([String].self, forKey: .excludedNotionIDs) ?? []
+    }
 }
 
 struct NotionImportRowResult: Content, Sendable {
