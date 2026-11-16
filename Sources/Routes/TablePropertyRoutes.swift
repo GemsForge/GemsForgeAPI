@@ -1,5 +1,9 @@
 import Vapor
 
+private struct TablePropertyBatchRequest: Content {
+    let recordIDs: [String]
+}
+
 /// Registers Hub-scoped table-property configuration and value endpoints.
 func registerTablePropertyRoutes(_ app: Application) {
     let tables = app.grouped("schema-builder", "tables")
@@ -50,6 +54,21 @@ func registerTablePropertyRoutes(_ app: Application) {
         do {
             return try await TablePropertyService(database: request.db, hubID: hubID)
                 .values(tableName: tableName, recordID: recordID)
+        } catch let error as TablePropertyServiceError {
+            throw TablePropertyRoutesNamespace.abort(error)
+        }
+    }
+
+    tables.post(":tableName", "properties", "values") { request async throws -> [String: [TablePropertyValue]] in
+        let hubID = try request.requireAuthenticatedHubID()
+        guard let tableName = request.parameters.get("tableName") else { throw Abort(.badRequest) }
+        let body = try request.content.decode(TablePropertyBatchRequest.self)
+        guard !body.recordIDs.isEmpty, body.recordIDs.count <= TablePropertyService.maximumBatchRecordIDs else {
+            throw Abort(.unprocessableEntity, reason: "Record IDs must contain between 1 and \(TablePropertyService.maximumBatchRecordIDs) items.")
+        }
+        do {
+            return try await TablePropertyService(database: request.db, hubID: hubID)
+                .values(tableName: tableName, recordIDs: body.recordIDs)
         } catch let error as TablePropertyServiceError {
             throw TablePropertyRoutesNamespace.abort(error)
         }

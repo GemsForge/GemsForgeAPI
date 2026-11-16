@@ -50,6 +50,9 @@ final class TablePropertyServiceTests: XCTestCase {
             try await app.test(.GET, "schema-builder/tables/Transactions/records/TRX-1/properties") { response in
                 XCTAssertEqual(response.status, .unauthorized)
             }
+            try await app.test(.POST, "schema-builder/tables/Transactions/properties/values") { response in
+                XCTAssertEqual(response.status, .unauthorized)
+            }
         }
     }
 
@@ -104,6 +107,24 @@ final class TablePropertyServiceTests: XCTestCase {
             XCTAssertEqual(values.first(where: { $0.definitionID == "category" })?.displayValue, "Food")
             XCTAssertEqual(values.first(where: { $0.definitionID == "subcategory" })?.displayValue, "Groceries")
             XCTAssertEqual(values.first(where: { $0.definitionID == "category-name" })?.value, "Food")
+            let batch = try await service.values(tableName: "Transactions", recordIDs: ["txn-a", "txn-inconsistent", "missing", "txn-b"])
+            XCTAssertEqual(batch.keys.sorted(), ["txn-a", "txn-b", "txn-inconsistent"])
+            XCTAssertEqual(batch["txn-a"]?.first(where: { $0.definitionID == "category" })?.displayValue, "Food")
+            XCTAssertNil(batch["txn-b"]?.first(where: { $0.definitionID == "category" })?.displayValue,
+                         "A relation into another Hub must not reveal its display value.")
+            XCTAssertNil(batch["missing"])
+            do {
+                _ = try await service.values(tableName: "Transactions", recordIDs: [])
+                XCTFail("An empty batch must be rejected.")
+            } catch let error as TablePropertyServiceError {
+                guard case .invalidDefinition = error else { return XCTFail("Unexpected error: \(error)") }
+            }
+            do {
+                _ = try await service.values(tableName: "Transactions", recordIDs: Array(repeating: "txn-a", count: TablePropertyService.maximumBatchRecordIDs + 1))
+                XCTFail("An oversized batch must be rejected.")
+            } catch let error as TablePropertyServiceError {
+                guard case .invalidDefinition = error else { return XCTFail("Unexpected error: \(error)") }
+            }
             let inconsistentValues = try await service.values(tableName: "Transactions", recordID: "txn-inconsistent")
             XCTAssertNil(inconsistentValues.first(where: { $0.definitionID == "subcategory" })?.displayValue)
 
