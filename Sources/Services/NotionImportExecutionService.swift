@@ -31,8 +31,11 @@ struct NotionImportExecutionService: Sendable {
     let backupConfiguration: LiveDatabaseBackupConfiguration?
 
     static func customTableName(_ title: String) -> String {
-        let words = title.split(whereSeparator: { !$0.isLetter && !$0.isNumber })
-        let value = words.map { $0.prefix(1).uppercased() + $0.dropFirst() }.joined()
+        let folded = title.folding(options: [.diacriticInsensitive], locale: Locale(identifier: "en_US_POSIX"))
+        let words = folded.split(whereSeparator: { !$0.isASCII || (!$0.isLetter && !$0.isNumber) })
+        var value = words.map { $0.prefix(1).uppercased() + $0.dropFirst() }.joined()
+        value = String(value.filter(\.isASCII).prefix(TableBuilderContractService.maximumIdentifierLength))
+        if value.first?.isNumber == true { value = "Table" + String(value.prefix(TableBuilderContractService.maximumIdentifierLength - 5)) }
         return value.isEmpty ? "Untitled" : value
     }
 
@@ -69,7 +72,7 @@ struct NotionImportExecutionService: Sendable {
     }
 }
 
-private struct NotionImportWriter: Sendable {
+struct NotionImportWriter: Sendable {
     let api: NotionAPIClient
     let database: any Database
     let hubID: String
@@ -356,10 +359,11 @@ private struct NotionImportWriter: Sendable {
             values[titleColumn] = .text(title)
         }
         let properties = object["properties"]?.objectValue ?? [:]
+        let importedNames = Self.normalizedPropertyNames(properties)
         for (name, property) in properties {
             let rawType = property.objectValue?["type"]?.stringValue ?? "unknown"
             if rawType == "relation" || rawType == "rollup" { continue }
-            let key = Self.normalized(name)
+            let key = Self.normalized(importedNames[name] ?? Self.normalizedColumn(name))
             let scalar = Self.scalar(property, type: rawType)
             guard let scalar else { continue }
             if key == "duedate", case let .text(label) = scalar,
@@ -720,20 +724,30 @@ private struct NotionImportWriter: Sendable {
             guard let target = targets[sourceID],
                   ![ServiceAccount.schema, ExpenseTransaction.schema, Employment.schema, Education.schema,
                     ExpenseCategory.schema, ExpenseSubcategory.schema].contains(target) else { continue }
-            guard let existing = try await LiveSchemaService(database: database).inspect().tables.first(where: { $0.name == target }) else {
-                let columns = try Self.customColumns(from: object["properties"])
-                guard let backupConfiguration else { throw NotionImportExecutionError.backupNotConfigured }
-                let createService = UserTableCreationService(backupConfiguration: backupConfiguration)
-                let request = TableBuilderRequest(tableName: target, columns: columns)
-                let preview = try await createService.preview(request, using: database)
-                _ = try await createService.execute(confirmationToken: preview.confirmationToken, using: database)
-                let table = try await schemaTable(target)
-                result[target] = table
-                _ = try await SchemaPageService(database: database, hubID: hubID).createPage(tableName: target)
-                try await saveReference(notionID: sourceID, tableName: target, recordID: "__table__", on: database)
-                continue
+            if let existing = existingTables.first(where: { $0.name == target }) {
+                result[target] = existing
+            } else {
+                guard !existingNames.contains(target.lowercased()) else { throw Abort(.conflict) }
+                let definition = try validator.validate(TableBuilderRequest(tableName: target, columns: Self.customColumns(from: object["properties"])))
+                definitions.append((sourceID, target, definition))
             }
-            result[target] = existing
+        }
+        // Every definition is validated before the first DDL or reference write.
+        for (_, target, definition) in definitions {
+            try await sqlDatabase.raw(SQLQueryString(UserTableCreationService.buildCreateTableSQL(for: definition))).run()
+            let schema = try await LiveSchemaService(database: database).inspect()
+            guard let table = schema.tables.first(where: { $0.name == target }) else { throw Abort(.internalServerError) }
+            result[target] = table
+            if let backupConfiguration {
+                try await LiveMigrationAuditService(database: database, databaseIdentity: backupConfiguration.databaseIdentity)
+                    .record(migrationName: "notion-import-create-\(target)", result: "succeeded", backupFileName: backup.backupFileName)
+            }
+        }
+        for source in sources.sorted(by: { ($0.objectValue?["id"]?.stringValue ?? "") < ($1.objectValue?["id"]?.stringValue ?? "") }) {
+            guard let object = source.objectValue, let sourceID = object["id"]?.stringValue,
+                  !excluding.contains(sourceID), let target = targets[sourceID], result[target] != nil,
+                  ![ServiceAccount.schema, ExpenseTransaction.schema, Employment.schema, Education.schema,
+                    ExpenseCategory.schema, ExpenseSubcategory.schema].contains(target) else { continue }
             _ = try await SchemaPageService(database: database, hubID: hubID).createPage(tableName: target)
             try await saveReference(notionID: sourceID, tableName: target, recordID: "__table__", on: database)
         }
@@ -771,24 +785,50 @@ private struct NotionImportWriter: Sendable {
         return ExpenseCategory.schema
     }
 
-    private static func customColumns(from value: NotionJSONValue?) throws -> [TableBuilderColumnRequest] {
+    static func customColumns(from value: NotionJSONValue?) throws -> [TableBuilderColumnRequest] {
         let properties = value?.objectValue ?? [:]
-        var names: Set<String> = []
-        return properties.compactMap { name, property in
+        let normalizedNames = normalizedPropertyNames(properties)
+        var columns: [TableBuilderColumnRequest] = []
+        for (name, property) in properties.sorted(by: { $0.key < $1.key }) {
             let type = property.objectValue?["type"]?.stringValue ?? "unknown"
-            if ["title", "rollup", "created_time", "last_edited_time", "people"].contains(type) { return nil }
-            let column = normalizedColumn(name)
-            guard !["ID", "HubID", "Title"].contains(column), names.insert(column.lowercased()).inserted else { return nil }
+            if ["title", "rollup", "created_time", "last_edited_time", "people"].contains(type) { continue }
+            let column = normalizedNames[name] ?? normalizedColumn(name)
             let storage = NotionImportValueMapper.propertyType(type).storage
             let dataType: SQLiteColumnType = storage == .number ? .real
                 : (storage == .checkbox || type == "unique_id" ? .integer : .text)
-            return TableBuilderColumnRequest(name: column, dataType: dataType, nullable: true, defaultValue: nil, primaryKey: false, unique: false)
-        }.sorted { $0.name < $1.name }
+            columns.append(TableBuilderColumnRequest(name: column, dataType: dataType, nullable: true, defaultValue: nil, primaryKey: false, unique: false))
+        }
+        return columns.sorted { $0.name < $1.name }
+    }
+
+    private static func normalizedPropertyNames(_ properties: [String: NotionJSONValue]) -> [String: String] {
+        var used: Set<String> = ["id", "hubid", "title"]
+        return Dictionary(uniqueKeysWithValues: properties.keys.sorted().map { name in
+            (name, normalizedColumn(name, used: &used))
+        })
+    }
+
+    private static func normalizedColumn(_ value: String, used: inout Set<String>) -> String {
+        let folded = value.folding(options: [.diacriticInsensitive], locale: Locale(identifier: "en_US_POSIX"))
+        let parts = folded.split(whereSeparator: { !$0.isASCII || (!$0.isLetter && !$0.isNumber) })
+        var base = parts.map { $0.prefix(1).uppercased() + $0.dropFirst() }.joined()
+        base = String(base.filter(\.isASCII).prefix(TableBuilderContractService.maximumIdentifierLength))
+        if base.first?.isNumber == true { base = "Field" + String(base.prefix(TableBuilderContractService.maximumIdentifierLength - 5)) }
+        if base.isEmpty { base = "Field" }
+        let maxLength = TableBuilderContractService.maximumIdentifierLength
+        var candidate = base
+        var suffix = 2
+        while !used.insert(candidate.lowercased()).inserted {
+            let ending = String(suffix)
+            candidate = String(base.prefix(maxLength - ending.count)) + ending
+            suffix += 1
+        }
+        return candidate
     }
 
     private static func normalizedColumn(_ value: String) -> String {
-        let parts = value.split(whereSeparator: { !$0.isLetter && !$0.isNumber })
-        return parts.map { $0.prefix(1).uppercased() + $0.dropFirst() }.joined()
+        var reserved: Set<String> = ["id", "hubid", "title"]
+        return normalizedColumn(value, used: &reserved)
     }
 
     private static func normalized(_ value: String) -> String {

@@ -6,6 +6,34 @@ import VaporTesting
 @testable import GemsForgeAPI
 
 final class NotionImportValueMapperTests: XCTestCase {
+    func testNotionNamesNormalizeToValidDistinctIdentifiers() throws {
+        let properties: NotionJSONValue = .object([
+            "10. What helps you stay consistent?": .object(["type": .string("rich_text")]),
+            "Café": .object(["type": .string("rich_text")]),
+            "☕": .object(["type": .string("rich_text")]),
+            "": .object(["type": .string("rich_text")]),
+            "id": .object(["type": .string("rich_text")]),
+            "Title": .object(["type": .string("rich_text")]),
+            "Name": .object(["type": .string("rich_text")]),
+            "name": .object(["type": .string("rich_text")]),
+        ])
+        let columns = try NotionImportWriter.customColumns(from: properties)
+        let names = columns.map(\.name)
+        XCTAssertTrue(names.contains("Field10WhatHelpsYouStayConsistent"))
+        XCTAssertTrue(names.contains("Cafe"))
+        XCTAssertTrue(names.contains("Field"))
+        XCTAssertTrue(names.contains("Field2")) // empty and emoji-only names
+        XCTAssertTrue(names.contains("Name"))
+        XCTAssertTrue(names.contains("Name2"))
+        XCTAssertFalse(names.contains { ["ID", "HubID", "Title"].contains($0) })
+        XCTAssertEqual(Set(names.map { $0.lowercased() }).count, names.count)
+        XCTAssertTrue(names.allSatisfy { (try? TableBuilderContractService().validate(TableBuilderRequest(
+            tableName: "SafeTable", columns: [TableBuilderColumnRequest(name: $0, dataType: .text, nullable: true, defaultValue: nil, primaryKey: false, unique: false)]
+        ))) != nil })
+        XCTAssertEqual(NotionImportExecutionService.customTableName("2026"), "Table2026")
+        XCTAssertEqual(NotionImportExecutionService.customTableName("☕"), "Untitled")
+    }
+
     func testPreviewAndExecutionAllocateSameNamesAndHonorExclusions() async throws {
         try await withApp(configure: { app in
             app.databases.use(.sqlite(.memory), as: .sqlite)
