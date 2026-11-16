@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { NotionImportPreviewView } from "./NotionImportPreviewView";
+import { NotionImportPreviewView, reviewReportRows } from "./NotionImportPreviewView";
 
 vi.mock("../../data/notionImportQueries", () => ({
   useNotionImportPreviewQuery: () => ({
@@ -48,5 +48,31 @@ describe("NotionImportPreviewView", () => {
     expect(screen.getByText(/New table: Collections2$/)).toBeInTheDocument();
     expect(screen.getByText("Collections (…111111)", { selector: "strong" })).toBeInTheDocument();
     expect(screen.getByText("Collections (…222222)", { selector: "strong" })).toBeInTheDocument();
+  });
+
+  it("includes unavailable data sources in the review report", () => {
+    const rows = reviewReportRows({
+      readOnly: true,
+      confirmationToken: "token",
+      expiresAt: "2026-01-01T00:00:00Z",
+      totalRows: 0,
+      warnings: [],
+      unmappedProperties: [],
+      resources: [
+        {
+          notionID: "hidden-source",
+          title: "Unavailable data source (hidden-source)",
+          notionObject: "data_source",
+          target: "Not imported: data source unavailable",
+          rowCount: 3,
+          properties: [],
+          unmappedProperties: ["3 row(s) will not be imported: data source not shared with the Notion integration"],
+        },
+      ],
+    });
+    expect(rows).toHaveLength(2);
+    expect(rows[1]).toContain('"hidden-source"');
+    expect(rows[1]).toContain('"3"');
+    expect(rows[1]).toContain("Share the data source with the Notion integration");
   });
 });

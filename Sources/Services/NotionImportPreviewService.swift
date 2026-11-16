@@ -309,7 +309,6 @@ struct NotionImportPreviewService: Sendable {
         for source in dataSources.compactMap(\.objectValue) {
             if let id = source["id"]?.stringValue { known.insert(id) }
             if let databaseID = source["parent"]?.objectValue?["database_id"]?.stringValue { known.insert(databaseID) }
-            if let databaseID = source["database_parent"]?.objectValue?["database_id"]?.stringValue { known.insert(databaseID) }
         }
         var counts: [String: Int] = [:]
         for page in pages.compactMap(\.objectValue) where isDatabaseRow(page) {

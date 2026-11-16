@@ -1,7 +1,9 @@
 import type { NotionImportPreview } from "../../api";
 import { useNotionImportPreviewQuery } from "../../data/notionImportQueries";
 
-function downloadReviewReport(preview: NotionImportPreview) {
+const unavailableSourcePrefix = "Not imported:";
+
+export function reviewReportRows(preview: NotionImportPreview): string[] {
   const cells = (values: Array<string | number>) =>
     values
       .map((value) => {
@@ -28,6 +30,20 @@ function downloadReviewReport(preview: NotionImportPreview) {
         ]),
       );
     }
+    if (resource.target.startsWith(unavailableSourcePrefix)) {
+      rows.push(
+        cells([
+          resource.notionID,
+          resource.title,
+          resource.notionObject,
+          resource.target,
+          resource.rowCount,
+          "Data source access",
+          "",
+          "Share the data source with the Notion integration, then reload the preview",
+        ]),
+      );
+    }
     for (const property of resource.properties.filter((item) => item.requiresReview)) {
       rows.push(
         cells([
@@ -43,6 +59,11 @@ function downloadReviewReport(preview: NotionImportPreview) {
       );
     }
   }
+  return rows;
+}
+
+function downloadReviewReport(preview: NotionImportPreview) {
+  const rows = reviewReportRows(preview);
   const url = URL.createObjectURL(new Blob([`\uFEFF${rows.join("\r\n")}\r\n`], { type: "text/csv;charset=utf-8" }));
   const link = document.createElement("a");
   link.href = url;
