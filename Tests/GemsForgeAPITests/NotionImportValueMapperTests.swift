@@ -85,6 +85,22 @@ final class NotionImportValueMapperTests: XCTestCase {
         )
     }
 
+    func testTargetMatchingNormalizesTitleWhitespace() {
+        XCTAssertEqual(NotionImportPreviewService.target(for: "  Employment\n Database ", object: "data_source"), "Employment")
+    }
+
+    func testPreviewTitleCollapsesWhitespaceAndFallsBackWhenEmpty() {
+        let title: [String: NotionJSONValue] = ["title": .array([
+            .object(["plain_text": .string("  Collections\n  and   Notes  ")]),
+        ])]
+        let empty: [String: NotionJSONValue] = ["title": .array([
+            .object(["plain_text": .string(" \n\t ")]),
+        ])]
+
+        XCTAssertEqual(NotionImportPreviewService.title(from: title), "Collections and Notes")
+        XCTAssertEqual(NotionImportPreviewService.title(from: empty), "Untitled")
+    }
+
     func testPreviewClassifiesDataSourcePagesAsRows() {
         for parentType in ["data_source_id", "database_id", "data_source", "database"] {
             let page: [String: NotionJSONValue] = ["parent": .object(["type": .string(parentType)])]

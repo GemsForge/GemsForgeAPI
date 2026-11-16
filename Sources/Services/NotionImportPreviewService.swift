@@ -226,17 +226,23 @@ struct NotionImportPreviewService: Sendable {
         )
     }
 
-    private static func title(from object: [String: NotionJSONValue]) -> String {
-        if let title = richText(object["title"]), !title.isEmpty { return title }
+    static func title(from object: [String: NotionJSONValue]) -> String {
+        if let title = normalizedTitle(richText(object["title"])) { return title }
         if let properties = object["properties"]?.objectValue {
             for value in properties.values {
                 guard let definition = value.objectValue,
                       definition["type"]?.stringValue == "title",
-                      let title = richText(definition["title"]), !title.isEmpty else { continue }
+                      let title = normalizedTitle(richText(definition["title"])) else { continue }
                 return title
             }
         }
         return "Untitled"
+    }
+
+    private static func normalizedTitle(_ title: String?) -> String? {
+        guard let title else { return nil }
+        let normalized = title.split(whereSeparator: \.isWhitespace).joined(separator: " ")
+        return normalized.isEmpty ? nil : normalized
     }
 
     static func properties(
@@ -280,7 +286,7 @@ struct NotionImportPreviewService: Sendable {
     }
 
     static func target(for title: String, object: String, notionObject: [String: NotionJSONValue] = [:]) -> String {
-        let key = title.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        let key = normalizedTitle(title)?.lowercased() ?? ""
         if object == "page" {
             let parent = notionObject["parent"]?.objectValue ?? [:]
             if isDatabaseRow(notionObject) { return "Database row" }
