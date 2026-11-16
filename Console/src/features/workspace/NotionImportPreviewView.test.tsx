@@ -53,7 +53,6 @@ describe("NotionImportPreviewView", () => {
   it("includes unavailable data sources in the review report", () => {
     const rows = reviewReportRows({
       readOnly: true,
-      confirmationToken: "token",
       expiresAt: "2026-01-01T00:00:00Z",
       totalRows: 0,
       warnings: [],
