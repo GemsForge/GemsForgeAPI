@@ -328,13 +328,12 @@ struct NotionImportPreviewService: Sendable {
     static func target(for title: String, object: String, notionObject: [String: NotionJSONValue] = [:]) -> String {
         let key = normalizedTitle(title)?.lowercased() ?? ""
         if object == "page" {
-            let parent = notionObject["parent"]?.objectValue ?? [:]
             if isDatabaseRow(notionObject) { return "Database row" }
             switch key {
             case "gem.personal", "gem personal": return "Hub"
             case "forgekeeper", "career", "family", "interests": return "Domain"
             default:
-                return parent["page_id"]?.stringValue == nil ? "Review required" : "ForgeKeeper"
+                return "ForgeKeeper"
             }
         }
         switch key {

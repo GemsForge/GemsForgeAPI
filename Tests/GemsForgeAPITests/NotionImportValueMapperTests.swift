@@ -6,6 +6,39 @@ import VaporTesting
 @testable import GemsForgeAPI
 
 final class NotionImportValueMapperTests: XCTestCase {
+    func testStandardTargetsFillRequiredDisplayColumnsAndEnumDefaults() throws {
+        func schema(_ name: String, _ columns: [String]) -> LiveSchemaTableResponse {
+            LiveSchemaTableResponse(name: name, columns: columns.enumerated().map { index, name in
+                LiveSchemaColumnResponse(name: name, dataType: index == 0 ? "TEXT" : "TEXT", nullable: false, primaryKey: index == 0, defaultValue: nil)
+            }, foreignKeys: [], indexes: [])
+        }
+        func row(_ title: String, properties: [String: NotionJSONValue] = [:]) -> [String: NotionJSONValue] {
+            ["id": .string("row"), "title": .array([.object(["plain_text": .string(title)])]),
+             "properties": .object(properties)]
+        }
+        let cases: [(String, [String], String, String?)] = [
+            ("Transactions", ["TransactionID", "Item", "CategoryID"], "Receipt item", "Item"),
+            ("BudgetCategories", ["CategoryID", "Category"], "Housing", "Category"),
+            ("BudgetSubcategories", ["SubcategoryID", "CategoryID", "Subcategory"], "Rent", "Subcategory"),
+            ("Education", ["EducationID", "EducationType", "InstitutionName"], "North College", "InstitutionName"),
+            ("Employment", ["EmploymentID", "EmployerName", "PositionTitle", "EmploymentStatus"], "Forge Studio", "EmployerName"),
+            ("Services", ["ServiceID", "Service"], "Water Utility", "Service"),
+        ]
+        for (table, columns, title, displayColumn) in cases {
+            var requiredColumns = columns
+            if table == "Transactions" { requiredColumns += ["Quantity", "FirstReceiptItem"] }
+            if table == "Employment" { requiredColumns += ["EmployerType", "EmploymentType"] }
+            if table == "Education" { requiredColumns += ["Status"] }
+            let targetSchema = schema(table, requiredColumns)
+            var values = NotionImportWriter.mappedValues(row(title), schema: targetSchema)
+            if table == "Transactions" || table == "BudgetSubcategories" { values["CategoryID"] = .integer(1) }
+            XCTAssertEqual(values[displayColumn!], ImportScalar.text(title), table)
+            XCTAssertNoThrow(try NotionImportWriter.validateRequired(values, schema: targetSchema), table)
+            if table == "Education" { XCTAssertEqual(values["EducationType"], ImportScalar.text("Education")) }
+            if table == "Employment" { XCTAssertEqual(values["EmploymentStatus"], ImportScalar.text("Imported")) }
+        }
+    }
+
     func testNotionNamesNormalizeToValidDistinctIdentifiers() throws {
         let properties: NotionJSONValue = .object([
             "10. What helps you stay consistent?": .object(["type": .string("rich_text")]),
@@ -214,6 +247,8 @@ final class NotionImportValueMapperTests: XCTestCase {
         ])]
         XCTAssertFalse(NotionImportPreviewService.isDatabaseRow(nestedPage))
         XCTAssertEqual(NotionImportPreviewService.target(for: "Recipe", object: "page", notionObject: nestedPage), "ForgeKeeper")
+        let workspacePage: [String: NotionJSONValue] = ["parent": .object(["type": .string("workspace")])]
+        XCTAssertEqual(NotionImportPreviewService.target(for: "Faith", object: "page", notionObject: workspacePage), "ForgeKeeper")
     }
 
     func testRowsWhoseDataSourceIsUnavailableAreCountedByParent() {
