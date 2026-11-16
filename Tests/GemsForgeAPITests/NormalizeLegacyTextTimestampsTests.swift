@@ -63,4 +63,26 @@ final class NormalizeLegacyTextTimestampsTests: XCTestCase {
             XCTAssertTrue(roots.contains { $0.title == "Fresh page updated" && $0.updatedAt != nil })
         }
     }
+
+    func testServiceLogoAssetTimestampWritesRemainReadableOnLegacyTextTable() async throws {
+        try await withApp(configure: { app in
+            app.databases.use(.sqlite(.memory), as: .sqlite)
+            guard let sql = app.db as? SQLDatabase else { throw LiveSchemaError.sqliteDatabaseRequired }
+            try await sql.raw("CREATE TABLE ServiceLogoAssets (LogoAssetID INTEGER PRIMARY KEY AUTOINCREMENT, HubID TEXT, Logo BLOB NOT NULL, MimeType TEXT NOT NULL, FileName TEXT, FileSizeBytes INTEGER, DateCreated TEXT NOT NULL, DateUpdated TEXT NOT NULL, LogoKey TEXT, FileMetadataID TEXT)").run()
+            try await sql.raw("INSERT INTO ServiceLogoAssets (Logo, MimeType, DateCreated, DateUpdated) VALUES (X'00', 'image/png', '1794864793.508033', '1794864793.508033')").run()
+            try await NormalizeLegacyTextTimestamps().prepare(on: app.db)
+        }) { app in
+            let created = ServiceLogoAsset()
+            created.logo = Data([1, 2, 3])
+            created.mimeType = "image/png"
+            created.fileName = "created.png"
+            created.fileSizeBytes = 3
+            try await created.save(on: app.db)
+            created.fileName = "updated.png"
+            try await created.update(on: app.db)
+
+            let listed = try await ServiceLogoAsset.query(on: app.db).all()
+            XCTAssertTrue(listed.contains { $0.id == created.id && $0.fileName == "updated.png" && $0.createdAt != nil && $0.updatedAt != nil })
+        }
+    }
 }

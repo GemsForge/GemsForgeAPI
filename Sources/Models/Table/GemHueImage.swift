@@ -35,10 +35,10 @@ final class GemHueImage: Model, @unchecked Sendable {
     @OptionalField(key: "FileMetadataID")
     var fileMetadataID: String?
 
-    @Timestamp(key: "DateCreated", on: .create)
+    @Timestamp(key: "DateCreated", on: .create, format: .legacyCompatible)
     var createdAt: Date?
 
-    @Timestamp(key: "DateUpdated", on: .update)
+    @Timestamp(key: "DateUpdated", on: .update, format: .legacyCompatible)
     var updatedAt: Date?
 
     init() {}
