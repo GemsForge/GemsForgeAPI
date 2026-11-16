@@ -38,9 +38,15 @@ Every unmapped Notion data source is allocated a new GemLife table and displayed
 as `New table: <TableName>`; this is the default destination, not a review flag
 by itself. Names avoid tables already present in the live schema and other names
 allocated in the same import by adding numeric suffixes (`Domains2`, `Domains3`,
-and so on). The Hub-scoped `NotionImportReferences` mapping stores the chosen
-table name against the data-source ID with record ID `__table__`, so repeat
-imports reuse that name. IDs in `excludedNotionIDs` are omitted from allocation,
+and so on). Generated table names fold diacritics, keep ASCII letters and digits,
+prefix a leading digit with `Table` (for example, `2026` becomes `Table2026`),
+and use `Untitled` when no usable characters remain. Imported property names use
+the same ASCII cleanup, prefix a leading digit with `Field` (for example,
+`10. What helps...` becomes `Field10WhatHelps`), use `Field` for empty names,
+and receive numeric suffixes for case-insensitive collisions. The Hub-scoped
+`NotionImportReferences` mapping stores the chosen table name against the
+data-source ID with record ID `__table__`, so repeat imports reuse that name.
+IDs in `excludedNotionIDs` are omitted from allocation,
 table creation, and row import. Formula values are represented as plain text and flagged. The
 current Markdown converter supports common headings, paragraphs, lists, quotes,
 code, dividers, checkboxes, and child-page titles; unsupported block types are
@@ -59,8 +65,11 @@ POST /notion-import/commit
 The JSON body must contain the `confirmationToken` from the preview,
 `confirmImport: true`, and may contain `excludedNotionIDs` for resources that
 should be skipped. The server refreshes the snapshot and rejects the request if
-the workspace changed or the token expired. Before writing, it creates and
-verifies a SQLite backup. The idempotency map is Hub-scoped and uses each
+the workspace changed or the token expired. Before writing, it validates all
+new table names and columns, then creates and verifies one SQLite backup for the
+import. New tables use the validated table-builder schema contract and DDL path
+under that backup; no additional full database backup is made per table. The
+idempotency map is Hub-scoped and uses each
 Notion page ID to update the same GemLife record on a repeat run.
 
 

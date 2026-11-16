@@ -716,6 +716,11 @@ struct NotionImportWriter: Sendable {
     }
 
     private func prepareCustomTables(_ sources: [NotionJSONValue], targets: [String: String], excluding: Set<String>) async throws -> [String: LiveSchemaTableResponse] {
+        guard let sqlDatabase = database as? SQLDatabase else { throw Abort(.internalServerError) }
+        let validator = TableBuilderContractService()
+        var definitions: [(String, String, ValidatedTableDefinition)] = []
+        let existingTables = try await LiveSchemaService(database: database).inspect().tables
+        let existingNames = Set(existingTables.map { $0.name.lowercased() })
         var result: [String: LiveSchemaTableResponse] = [:]
         for source in sources.sorted(by: { ($0.objectValue?["id"]?.stringValue ?? "") < ($1.objectValue?["id"]?.stringValue ?? "") }) {
             guard let object = source.objectValue,
