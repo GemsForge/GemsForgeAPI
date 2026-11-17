@@ -27,3 +27,6 @@ GemLifeHost/Resources/Console/*
 
 # Personal chronological setup notes; kept locally and not committed.
 PROJECT_SETUP_NOTES.md
+
+# Local and CI validation scratch databases
+.ci/
