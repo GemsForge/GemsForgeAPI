@@ -4,6 +4,7 @@ import SQLKit
 
 /// Validates and reads Hub-scoped table-level relations and computed lookups.
 struct TablePropertyService: Sendable {
+    static let maximumBatchRecordIDs = 200
     private let database: any Database
     private let hubID: String
 
@@ -178,6 +179,10 @@ struct TablePropertyService: Sendable {
     func values(tableName: String, recordID: String) async throws -> [TablePropertyValue] {
         let definitions = try await models(tableName: tableName)
         let source = try await sourceRow(tableName: tableName, recordID: recordID)
+        return try await resolveValues(definitions: definitions, source: source)
+    }
+
+    private func resolveValues(definitions: [TablePropertyDefinition], source: [String: String]) async throws -> [TablePropertyValue] {
         var values: [TablePropertyValue] = []
         for definition in definitions {
             guard let id = definition.id,
@@ -218,6 +223,55 @@ struct TablePropertyService: Sendable {
             }
         }
         return values
+    }
+
+    /// Resolves values for the Hub-owned subset of a bounded record batch.
+    func values(tableName: String, recordIDs: [String]) async throws -> [String: [TablePropertyValue]] {
+        guard !recordIDs.isEmpty, recordIDs.count <= Self.maximumBatchRecordIDs else {
+            throw TablePropertyServiceError.invalidDefinition("Record IDs must contain between 1 and \(Self.maximumBatchRecordIDs) items.")
+        }
+        try await requireRegisteredTable(tableName)
+        guard let sql = database as? SQLDatabase else { throw TablePropertyServiceError.unavailableDatabase }
+        let schema = try await LiveSchemaService(database: database).inspect()
+        guard let table = schema.tables.first(where: { $0.name == tableName }),
+              let key = table.columns.first(where: \.primaryKey),
+              Self.columnsByName(table)["HubID"] != nil else { throw TablePropertyServiceError.tableUnavailable }
+        let uniqueIDs = Array(Set(recordIDs))
+        var query = SQLQueryString("SELECT ")
+        for (index, column) in table.columns.enumerated() {
+            if index > 0 { query.appendInterpolation(unsafeRaw: ", ") }
+            query.appendInterpolation(unsafeRaw: "CAST(")
+            query.appendInterpolation(ident: column.name)
+            query.appendInterpolation(unsafeRaw: " AS TEXT) AS ")
+            query.appendInterpolation(ident: column.name)
+        }
+        query.appendInterpolation(unsafeRaw: " FROM ")
+        query.appendInterpolation(ident: tableName)
+        query.appendInterpolation(unsafeRaw: " WHERE ")
+        query.appendInterpolation(ident: key.name)
+        query.appendInterpolation(unsafeRaw: " IN (")
+        for (index, id) in uniqueIDs.enumerated() {
+            if index > 0 { query.appendInterpolation(unsafeRaw: ", ") }
+            Self.appendTyped(id, column: key, to: &query)
+        }
+        query.appendInterpolation(unsafeRaw: ") AND \"HubID\" = ")
+        query.appendInterpolation(bind: hubID)
+        let rows = try await sql.raw(query).all()
+        var sourceRows: [String: [String: String]] = [:]
+        for row in rows {
+            var source: [String: String] = [:]
+            for column in table.columns {
+                if let value = try row.decode(column: column.name, as: String?.self) { source[column.name] = value }
+            }
+            if let id = source[key.name] { sourceRows[id] = source }
+        }
+        var result: [String: [TablePropertyValue]] = [:]
+        let definitions = try await models(tableName: tableName)
+        for id in uniqueIDs {
+            guard let source = sourceRows[id] else { continue }
+            result[id] = try await resolveValues(definitions: definitions, source: source)
+        }
+        return result
     }
 
     /// Ensures edited relation columns still point to records visible in this Hub.

@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from "react";
-import { decodeMultiSelectValue, GemButton } from "@gemsforge/ui";
+import { decodeMultiSelectValue, GemButton, GStructuralField } from "@gemsforge/ui";
 import type { TamaguiElement } from "tamagui";
 import { useLocation, useOutletContext, useParams } from "react-router-dom";
 import {
@@ -9,6 +9,9 @@ import {
   usePatchSchemaPageRecordMutation,
   usePatchSchemaPageAttachmentMutation,
   useTableColumnDefinitionsQuery,
+  useTablePropertyDefinitionsQuery,
+  useTablePropertyValuesBatchQuery,
+  useRelatedRecordOptionsQuery,
   useSaveTableColumnDefinitionMutation,
 } from "../../data/workflowQueries";
 import { createLiveSchemaProperties, type RecordPropertyDefinition } from "../../table-kit";
@@ -20,8 +23,48 @@ import { TableDropDialog } from "./TableDropDialog";
 
 type SchemaRecord = Record<string, string | null> & WireframeRecord;
 
+function RelationEditor({
+  tableName,
+  definitionID,
+  label,
+  value,
+  onCommit,
+}: {
+  tableName: string;
+  definitionID: string;
+  label: string;
+  value: string;
+  onCommit: (value: string) => Promise<void>;
+}) {
+  const [search, setSearch] = useState("");
+  const options = useRelatedRecordOptionsQuery(tableName, definitionID, search, null);
+  return (
+    <GStructuralField
+      kind="relation"
+      label={label}
+      search={search}
+      onSearchChange={setSearch}
+      options={(options.data ?? []).map((option) => ({ value: option.id, label: option.name }))}
+      selectedValue={value}
+      loading={options.isFetching}
+      error={options.isError ? "Could not load related records." : undefined}
+      nullable
+      onSelect={(option) => void onCommit(option.value)}
+      onClear={() => void onCommit("")}
+    />
+  );
+}
+
 function recordText(record: SchemaRecord, propertyID?: string) {
   return propertyID ? record[propertyID]?.trim() || "" : "";
+}
+
+function cardPropertyText(record: SchemaRecord, property: RecordPropertyDefinition<SchemaRecord> | undefined) {
+  if (!property) return "";
+  const value = property.getValue(record);
+  return typeof value.display === "string" || typeof value.display === "number"
+    ? String(value.display).trim()
+    : recordText(record, property.id);
 }
 
 function schemaRecords(data: SchemaPageRecords | undefined): SchemaRecord[] {
@@ -45,6 +88,7 @@ export function WireframeSchemaPage() {
   const selectedRecord = useSchemaPageRecordQuery(tableName, recordID ? decodeURIComponent(recordID) : null);
   const patchRecord = usePatchSchemaPageRecordMutation(tableName);
   const definitions = useTableColumnDefinitionsQuery(tableName);
+  const propertyDefinitions = useTablePropertyDefinitionsQuery(tableName);
   const saveDefinition = useSaveTableColumnDefinitionMutation(tableName);
   const patchAttachment = usePatchSchemaPageAttachmentMutation(tableName);
   const patchSchemaRecord = patchRecord.mutateAsync;
@@ -61,54 +105,122 @@ export function WireframeSchemaPage() {
     const id = String((primaryKey ? row[primaryKey] : undefined) ?? "");
     return [...loaded.filter((record) => record.id !== id), { ...row, id }];
   }, [result.data, selectedRecord.data]);
-  const properties = useMemo<readonly RecordPropertyDefinition<SchemaRecord>[]>(
-    () =>
-      table
-        ? createLiveSchemaProperties<SchemaRecord>(table, async (record, propertyID, value) => {
-            const definition = (definitions.data ?? []).find((item) => item.columnName === propertyID);
-            await patchSchemaRecord({
-              recordID: record.id,
-              values: {
-                [propertyID]:
-                  definition?.propertyType === "MultiSelect" && typeof value === "string"
-                    ? value
-                        .split(";")
-                        .map((tag: string) => tag.trim())
-                        .filter(Boolean)
-                    : value,
+  const pageRecordIDs = useMemo(() => records.map((record) => record.id).filter(Boolean), [records]);
+  const pagePropertyValues = useTablePropertyValuesBatchQuery(tableName, pageRecordIDs);
+  const properties = useMemo<readonly RecordPropertyDefinition<SchemaRecord>[]>(() => {
+    const base = table
+      ? createLiveSchemaProperties<SchemaRecord>(table, async (record, propertyID, value) => {
+          const definition = (definitions.data ?? []).find((item) => item.columnName === propertyID);
+          await patchSchemaRecord({
+            recordID: record.id,
+            values: {
+              [propertyID]:
+                definition?.propertyType === "MultiSelect" && typeof value === "string"
+                  ? value
+                      .split(";")
+                      .map((tag: string) => tag.trim())
+                      .filter(Boolean)
+                  : value,
+            },
+          });
+        }).filter((property) => property.id !== "HubID")
+      : [];
+    const columnProperties = base.map((property) => {
+      const definition = (definitions.data ?? []).find((item) => item.columnName === property.id);
+      const relation = (propertyDefinitions.data ?? []).find(
+        (item) => item.kind === "Relation" && item.sourceColumnName === property.id,
+      );
+      if (relation) {
+        return {
+          ...property,
+          label: relation.name,
+          kind: "relation" as const,
+          propertyType: "Relation",
+          iconName: "Relation",
+          getValue: (current: SchemaRecord) => {
+            const currentRawID = current[property.id] ?? "";
+            const currentResolved = pagePropertyValues.data?.[current.id]?.find(
+              (item) => item.definitionID === relation.id,
+            );
+            return {
+              raw: currentRawID,
+              display: currentResolved?.displayValue ?? (currentRawID ? "Unavailable related record" : "—"),
+              href:
+                currentRawID && relation.targetTableName
+                  ? `/schema/${encodeURIComponent(relation.targetTableName)}/record/${encodeURIComponent(currentRawID)}`
+                  : undefined,
+            };
+          },
+          edit: {
+            inputType: "text" as const,
+            nullable: true,
+            onSave: async (record: unknown, value: string | number | null) =>
+              patchSchemaRecord({
+                recordID: (record as SchemaRecord).id,
+                values: { [property.id]: value === "" ? null : String(value) },
+              }),
+            renderEditor: (editor: {
+              value: string;
+              onChange: (value: string) => void;
+              onCommit: (value: string) => Promise<void>;
+            }) => (
+              <RelationEditor
+                tableName={tableName}
+                definitionID={relation.id}
+                label={relation.name}
+                value={editor.value}
+                onCommit={editor.onCommit}
+              />
+            ),
+          },
+        };
+      }
+      return definition
+        ? {
+            ...property,
+            propertyType: definition.propertyType,
+            selectOptions: definition.options,
+            edit: property.edit
+              ? {
+                  ...property.edit,
+                  options: definition.options.map((option) => ({
+                    value: option.value,
+                    label: option.value,
+                    colorToken: option.color ?? undefined,
+                  })),
+                }
+              : undefined,
+            kind:
+              definition.propertyType === "MultiSelect"
+                ? ("multiSelect" as const)
+                : definition.propertyType === "Status"
+                  ? ("status" as const)
+                  : ("select" as const),
+          }
+        : property;
+    });
+    return [
+      ...columnProperties,
+      ...(propertyDefinitions.data ?? [])
+        .filter((definition) => definition.kind === "Lookup")
+        .map(
+          (definition) =>
+            ({
+              id: definition.id,
+              label: definition.name,
+              kind: "lookup" as const,
+              propertyType: "Lookup",
+              iconName: "Lookup",
+              getValue: (current: SchemaRecord) => {
+                const value = pagePropertyValues.data?.[current.id]?.find(
+                  (item) => item.definitionID === definition.id,
+                );
+                return { raw: value?.value, display: value?.displayValue ?? "—" };
               },
-            });
-          })
-            .filter((property) => property.id !== "HubID")
-            .map((property) => {
-              const definition = (definitions.data ?? []).find((item) => item.columnName === property.id);
-              return definition
-                ? {
-                    ...property,
-                    propertyType: definition.propertyType,
-                    selectOptions: definition.options,
-                    edit: property.edit
-                      ? {
-                          ...property.edit,
-                          options: definition.options.map((option) => ({
-                            value: option.value,
-                            label: option.value,
-                            colorToken: option.color ?? undefined,
-                          })),
-                        }
-                      : undefined,
-                    kind:
-                      definition.propertyType === "MultiSelect"
-                        ? ("multiSelect" as const)
-                        : definition.propertyType === "Status"
-                          ? ("status" as const)
-                          : ("select" as const),
-                  }
-                : property;
-            })
-        : [],
-    [definitions.data, patchSchemaRecord, table],
-  );
+            }) satisfies RecordPropertyDefinition<SchemaRecord>,
+        ),
+    ];
+  }, [definitions.data, pagePropertyValues.data, patchSchemaRecord, propertyDefinitions.data, table, tableName]);
   const resolvedProperties = properties.length > 0 ? properties : [];
 
   if (result.isPending || pages.isPending || (recordID && selectedRecord.isPending))
@@ -198,10 +310,10 @@ export function WireframeSchemaPage() {
               ? decodeMultiSelectValue(value)
               : [value];
           }),
-        cardTitle: (record) => recordText(record, titleProperty?.id) || record.id,
-        cardSubtitle: (record) => recordText(record, subtitleProperty?.id) || tableName,
+        cardTitle: (record) => cardPropertyText(record, titleProperty) || record.id,
+        cardSubtitle: (record) => cardPropertyText(record, subtitleProperty) || tableName,
         cardStatus: (record) => recordText(record, statusProperty?.id),
-        cardMeta: (record) => recordText(record, dateProperty?.id) || record.id,
+        cardMeta: (record) => cardPropertyText(record, dateProperty) || record.id,
         inspector: (record, _schemaProperties) => (
           <WireframeSchemaInspector
             record={record}

@@ -50,6 +50,9 @@ final class TablePropertyServiceTests: XCTestCase {
             try await app.test(.GET, "schema-builder/tables/Transactions/records/TRX-1/properties") { response in
                 XCTAssertEqual(response.status, .unauthorized)
             }
+            try await app.test(.POST, "schema-builder/tables/Transactions/properties/values") { response in
+                XCTAssertEqual(response.status, .unauthorized)
+            }
         }
     }
 
@@ -76,7 +79,7 @@ final class TablePropertyServiceTests: XCTestCase {
                 INSERT INTO BudgetSubcategories (SubcategoryID, HubID, CategoryID, Subcategory) VALUES
                   (10, 'hub-a', 1, 'Groceries'), (11, 'hub-a', 1, 'Dining'), (20, 'hub-a', 2, 'Rent')
                 """).run()
-            try await sql.raw("INSERT INTO Transactions (TransactionID, HubID, CategoryID, SubcategoryID) VALUES ('txn-a', 'hub-a', 1, 10), ('txn-b', 'hub-a', 99, NULL), ('txn-inconsistent', 'hub-a', 1, 20)").run()
+            try await sql.raw("INSERT INTO Transactions (TransactionID, HubID, CategoryID, SubcategoryID) VALUES ('txn-a', 'hub-a', 1, 10), ('txn-b', 'hub-a', 99, NULL), ('txn-inconsistent', 'hub-a', 1, 20), ('txn-other-hub', 'hub-b', 1, 10)").run()
         }) { app in
             let service = TablePropertyService(database: app.db, hubID: "hub-a")
             let definitions = [
@@ -104,6 +107,28 @@ final class TablePropertyServiceTests: XCTestCase {
             XCTAssertEqual(values.first(where: { $0.definitionID == "category" })?.displayValue, "Food")
             XCTAssertEqual(values.first(where: { $0.definitionID == "subcategory" })?.displayValue, "Groceries")
             XCTAssertEqual(values.first(where: { $0.definitionID == "category-name" })?.value, "Food")
+            let batch = try await service.values(tableName: "Transactions", recordIDs: ["txn-a", "txn-inconsistent", "missing", "txn-b", "txn-other-hub"])
+            XCTAssertEqual(batch.keys.sorted(), ["txn-a", "txn-b", "txn-inconsistent"])
+            XCTAssertNotNil(batch["txn-a"], "This Hub's records must still be returned.")
+            XCTAssertNotNil(batch["txn-inconsistent"], "This Hub's records must still be returned.")
+            XCTAssertNotNil(batch["txn-b"], "This Hub's records must still be returned.")
+            XCTAssertNil(batch["txn-other-hub"], "Records owned by another Hub must not be returned.")
+            XCTAssertEqual(batch["txn-a"]?.first(where: { $0.definitionID == "category" })?.displayValue, "Food")
+            XCTAssertNil(batch["txn-b"]?.first(where: { $0.definitionID == "category" })?.displayValue,
+                         "A relation into another Hub must not reveal its display value.")
+            XCTAssertNil(batch["missing"])
+            do {
+                _ = try await service.values(tableName: "Transactions", recordIDs: [])
+                XCTFail("An empty batch must be rejected.")
+            } catch let error as TablePropertyServiceError {
+                guard case .invalidDefinition = error else { return XCTFail("Unexpected error: \(error)") }
+            }
+            do {
+                _ = try await service.values(tableName: "Transactions", recordIDs: Array(repeating: "txn-a", count: TablePropertyService.maximumBatchRecordIDs + 1))
+                XCTFail("An oversized batch must be rejected.")
+            } catch let error as TablePropertyServiceError {
+                guard case .invalidDefinition = error else { return XCTFail("Unexpected error: \(error)") }
+            }
             let inconsistentValues = try await service.values(tableName: "Transactions", recordID: "txn-inconsistent")
             XCTAssertNil(inconsistentValues.first(where: { $0.definitionID == "subcategory" })?.displayValue)
 

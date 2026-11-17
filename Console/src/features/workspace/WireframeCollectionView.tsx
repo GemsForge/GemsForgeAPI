@@ -1529,7 +1529,7 @@ function WireframeAgGrid<T extends WireframeRecord>({
         if (property) {
           const display = property.getValue(params.data).display;
           const value = property.getValue(params.data);
-          if ((property.kind === "url" || property.kind === "email") && value.href) {
+          if ((property.kind === "url" || property.kind === "email" || property.kind === "relation") && value.href) {
             return (
               <a
                 className="primitive-value-link"
@@ -1713,8 +1713,6 @@ function isGallerySlotVisible<T extends WireframeRecord>(
 ): boolean {
   const normalizedSlotValue = normalizeGalleryValue(slotValue);
   return properties.some((property) => {
-    if (!visiblePropertyIds.includes(property.id) && !visiblePropertyIds.includes(property.sourceField ?? ""))
-      return false;
     const value = property.getValue(record).display;
     return (
       (typeof value === "string" || typeof value === "number") &&
