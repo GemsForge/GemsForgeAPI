@@ -179,6 +179,10 @@ struct NotionImportWriter: Sendable {
                     unmapped.append(contentsOf: try await importBodyAndPresentation(object, tableName: target, recordID: recordID))
                     rows.append(.init(notionID: notionID, title: title, target: target, result: wasImported ? "updated" : "created", recordID: recordID, reason: nil))
                 } catch {
+                    let diagnosticSchema: LiveSchemaTableResponse?
+                    if let prepared = tableMap[target] { diagnosticSchema = prepared }
+                    else { diagnosticSchema = try? await schemaTable(target) }
+                    Self.logWriteError(error, target: target, object: object, schema: diagnosticSchema)
                     rows.append(.init(notionID: notionID, title: title, target: target, result: "failed", recordID: nil, reason: Self.safeReason(error)))
                 }
             }
@@ -946,6 +950,17 @@ struct NotionImportWriter: Sendable {
     private static func safeReason(_ error: Error) -> String {
         if let abort = error as? Abort { return abort.reason }
         return "The row could not be written. Review the target schema and required properties."
+    }
+
+    static func writeErrorDiagnostic(_ error: Error, involvedColumns: [String] = []) -> String {
+        let columns = involvedColumns.isEmpty ? "unknown" : involvedColumns.sorted().joined(separator: ",")
+        return "type=\(String(reflecting: type(of: error))) message=\(String(reflecting: error)) columns=\(columns)"
+    }
+
+    private static func logWriteError(_ error: Error, target: String, object: [String: NotionJSONValue], schema: LiveSchemaTableResponse?) {
+        var columns = schema.map { mappedValues(object, schema: $0).keys.sorted() } ?? []
+        if target == ExpenseTransaction.schema || target == ExpenseSubcategory.schema { columns.append("CategoryID") }
+        print("[ERROR] Notion import row write target=\(target) \(writeErrorDiagnostic(error, involvedColumns: columns))")
     }
 
     private func append(_ value: ImportScalar, to query: inout SQLQueryString) {

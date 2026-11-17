@@ -6,6 +6,14 @@ import VaporTesting
 @testable import GemsForgeAPI
 
 final class NotionImportValueMapperTests: XCTestCase {
+    func testWriteErrorDiagnosticIncludesTypeMessageAndColumnsWithoutValues() {
+        struct SampleError: Error, CustomStringConvertible { var description: String { "constraint failed: UNIQUE" } }
+        let diagnostic = NotionImportWriter.writeErrorDiagnostic(SampleError(), involvedColumns: ["CategoryID", "Category"])
+        XCTAssertTrue(diagnostic.contains("SampleError"))
+        XCTAssertTrue(diagnostic.contains("constraint failed: UNIQUE"))
+        XCTAssertTrue(diagnostic.contains("Category,CategoryID"))
+    }
+
     func testBudgetCategoryPropertiesMatchNormalizedNotionNames() throws {
         let category: NotionJSONValue = .object(["type": .string("select"), "select": .object(["name": .string("Housing")])])
         let subcategory: NotionJSONValue = .object(["type": .string("title"), "title": .array([.object(["plain_text": .string("Rent")])])])
