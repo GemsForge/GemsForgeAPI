@@ -335,6 +335,7 @@ export interface LiveSchema {
 export interface SchemaPageTable {
   name: string;
   columns: LiveSchemaColumn[];
+  supportsServerQuery?: boolean;
 }
 
 export interface SchemaPageTables {
@@ -346,6 +347,31 @@ export interface SchemaPageRecords {
   table: SchemaPageTable;
   rows: Record<string, string | null>[];
   totalCount: number;
+  limit: number;
+  offset: number;
+}
+export interface SchemaPageQueryNode {
+  id: string;
+  parentQueryID: string | null;
+  nodeType: "Group" | "Condition" | "Sort" | "RecordGroup";
+  columnName: string | null;
+  comparisonOperator: string | null;
+  valueType: string | null;
+  value: string | null;
+  booleanOperator: "AND" | "OR" | null;
+  direction: "Ascending" | "Descending" | null;
+  sortOrder: number;
+}
+export interface SchemaPageQueryRequest {
+  viewID?: string;
+  nodes?: SchemaPageQueryNode[];
+  search?: string;
+  limit?: number;
+  offset?: number;
+}
+export interface SchemaPageQueryResult {
+  records: Array<{ row: Record<string, string | null>; groupKey: string | null }>;
+  total: number;
   limit: number;
   offset: number;
 }

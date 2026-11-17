@@ -43,6 +43,23 @@ func registerSchemaPageRoutes(_ app: Application) {
         }
     }
 
+    pages.post(":tableName", "query") { request async throws -> SchemaPageQueryResponse in
+        let hubID = try request.requireAuthenticatedHubID()
+        guard let tableName = request.parameters.get("tableName") else { throw Abort(.badRequest) }
+        let input = try request.content.decode(SchemaPageQueryRequest.self)
+        do {
+            return try await ViewQueryExecutor(database: request.db, hubID: hubID).execute(tableName: tableName, request: input)
+        } catch let error as ViewQueryExecutorError {
+            switch error {
+            case .tableUnavailable, .viewUnavailable: throw Abort(.notFound, reason: error.description)
+            case .invalidRequest: throw Abort(.badRequest, reason: error.description)
+            case .unavailableDatabase: throw Abort(.serviceUnavailable, reason: error.description)
+            case .invalidQuery, .unsupportedRelationColumn, .queryLimitExceeded:
+                throw Abort(.unprocessableEntity, reason: error.description)
+            }
+        }
+    }
+
     pages.get(":tableName", "records", ":recordID") { request async throws -> SchemaPageRecordResponse in
         let hubID = try request.requireAuthenticatedHubID()
         guard let tableName = request.parameters.get("tableName"),

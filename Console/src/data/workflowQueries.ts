@@ -5,6 +5,7 @@ import type {
   TableBuilderRequest,
   TablePropertyDefinitionInput,
   TableColumnDefinitionInput,
+  SchemaPageQueryRequest,
 } from "../types";
 import { fileQueryKeys } from "./fileQueries";
 import { presentationQueryKeys } from "./presentationQueries";
@@ -20,6 +21,7 @@ export const workflowQueryKeys = {
     offset === undefined
       ? (["schema-page-records", tableName] as const)
       : (["schema-page-records", tableName, offset] as const),
+  schemaPageQuery: (tableName: string, request: SchemaPageQueryRequest) => ["schema-page-query", tableName, request] as const,
   schemaPageRecord: (tableName: string, recordID: string | null) =>
     ["schema-page-record", tableName, recordID] as const,
   tablePropertyDefinitions: (tableName: string) => ["table-property-definitions", tableName] as const,
@@ -108,6 +110,13 @@ export function useSchemaPageRecordsQuery(tableName: string, offset = 0) {
     queryKey: workflowQueryKeys.schemaPageRecords(tableName, offset),
     queryFn: ({ signal }) => api.getSchemaPageRecords(tableName, offset, signal),
     enabled: Boolean(tableName),
+  });
+}
+export function useSchemaPageQuery(tableName: string, request: SchemaPageQueryRequest, enabled = true) {
+  return useQuery({
+    queryKey: workflowQueryKeys.schemaPageQuery(tableName, request),
+    queryFn: ({ signal }) => api.querySchemaPageRecords(tableName, request, signal),
+    enabled: Boolean(tableName) && enabled,
   });
 }
 export function useSchemaPageRecordQuery(tableName: string, recordID: string | null) {

@@ -37,7 +37,7 @@ final class ViewQueryConfigurationValidatorTests: XCTestCase {
         XCTAssertEqual(result.nodes.first { $0.id == "price" }?.operands, [.decimal("20")])
     }
 
-    func testRejectsCyclesEmptyGroupsAndDependentIndependentNodes() throws {
+    func testRejectsCyclesAndDependentIndependentNodesButAllowsEmptyGroups() throws {
         let validator = ViewQueryConfigurationValidator(schema: schema)
 
         let cycle = [
@@ -49,6 +49,9 @@ final class ViewQueryConfigurationValidatorTests: XCTestCase {
                 return XCTFail("Expected a cycle error, got \(error)")
             }
         }
+
+        let empty = [ViewQueryConfiguration(id: "root", viewID: "view-1", nodeType: .group, booleanOperator: .and)]
+        XCTAssertNoThrow(try validator.validateAgainstSchema(empty, schema: schema, viewID: "view-1", tableName: "Records"))
 
         let invalid = [
             ViewQueryConfiguration(id: "root", viewID: "view-1", nodeType: .group, booleanOperator: .and),
