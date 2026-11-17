@@ -23,10 +23,10 @@ final class ServiceLogoAsset: Model, @unchecked Sendable {
     @OptionalField(key: "FileSizeBytes")
     var fileSizeBytes: Int?
 
-    @Timestamp(key: "DateCreated", on: .create)
+    @Timestamp(key: "DateCreated", on: .create, format: .legacyCompatible)
     var createdAt: Date?
 
-    @Timestamp(key: "DateUpdated", on: .update)
+    @Timestamp(key: "DateUpdated", on: .update, format: .legacyCompatible)
     var updatedAt: Date?
 
     @OptionalField(key: "LogoKey")

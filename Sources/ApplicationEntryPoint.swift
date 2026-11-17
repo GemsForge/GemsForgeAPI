@@ -36,6 +36,7 @@ enum EntryPoint {
         registerLiveSchemaRoutes(app)
         registerTableCSVImportRoutes(app)
         registerLiveMigrationRoutes(app, backupConfiguration: .fromEnvironment())
+        registerNotionImportRoutes(app)
         registerSchemaBuilderGuidanceRoutes(app)
         registerSchemaPageRoutes(app)
         registerTablePropertyRoutes(app)

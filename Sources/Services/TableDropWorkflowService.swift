@@ -25,6 +25,7 @@ struct TableDropMetadataCounts: Content, Sendable, Equatable {
     let recordPresentations: Int
     let recordBodies: Int
     let trashEntries: Int
+    let notionImportReferences: Int
     let attachmentReferences: Int
 }
 
@@ -259,6 +260,7 @@ struct TableDropWorkflowService: Sendable {
 
             try await self.deleteHubTableMetadata(TablePropertyDefinition.schema, tableName: tableName, hubID: hubID, on: sql)
             try await self.deleteHubTableMetadata(TrashEntry.schema, tableName: tableName, hubID: hubID, on: sql)
+            try await self.deleteHubTableMetadata(NotionImportReference.schema, tableName: tableName, hubID: hubID, on: sql)
             try await RecordSidecarCleanupService.deleteTableSidecars(tableName: tableName, hubID: hubID, on: transaction)
             let schema = try await LiveSchemaService(database: transaction).inspect()
             guard let targetTable = schema.tables.first(where: { $0.name == tableName }),
@@ -289,7 +291,7 @@ struct TableDropWorkflowService: Sendable {
     private static let emptyMetadataCounts = TableDropMetadataCounts(
         tableViews: 0, viewColumnConfigurations: 0, viewQueryConfigurations: 0,
         tablePropertyDefinitions: 0, tableColumnDefinitions: 0, recordPresentations: 0,
-        recordBodies: 0, trashEntries: 0, attachmentReferences: 0
+        recordBodies: 0, trashEntries: 0, notionImportReferences: 0, attachmentReferences: 0
     )
 
     static let tableNameMetadataTables: Set<String> = [
@@ -299,6 +301,7 @@ struct TableDropWorkflowService: Sendable {
         RecordPresentation.schema,
         RecordBody.schema,
         TrashEntry.schema,
+        NotionImportReference.schema,
     ]
 
     private func response(tableName: String, snapshot: Snapshot, token: String, expiresAt: Date) -> TableDropPreviewResponse {
@@ -504,6 +507,7 @@ struct TableDropWorkflowService: Sendable {
             recordPresentations: try await countMetadata(RecordPresentation.schema, tableName: tableName, hubID: hubID, on: sql),
             recordBodies: try await countMetadata(RecordBody.schema, tableName: tableName, hubID: hubID, on: sql),
             trashEntries: try await countMetadata(TrashEntry.schema, tableName: tableName, hubID: hubID, on: sql),
+            notionImportReferences: try await countMetadata(NotionImportReference.schema, tableName: tableName, hubID: hubID, on: sql),
             attachmentReferences: try await attachmentReferenceCount(tableName: tableName, hubID: hubID, on: sql)
         )
     }
@@ -639,6 +643,6 @@ struct TableDropWorkflowService: Sendable {
 
     private func auditName(tableName: String, snapshot: Snapshot) -> String {
         let counts = snapshot.metadata
-        return "drop-table:\(tableName):rows=\(snapshot.totalRowCount):metadata=views:\(counts.tableViews),viewColumns:\(counts.viewColumnConfigurations),viewQueries:\(counts.viewQueryConfigurations),properties:\(counts.tablePropertyDefinitions),columns:\(counts.tableColumnDefinitions),presentations:\(counts.recordPresentations),bodies:\(counts.recordBodies),trash:\(counts.trashEntries),attachments:\(counts.attachmentReferences)"
+        return "drop-table:\(tableName):rows=\(snapshot.totalRowCount):metadata=views:\(counts.tableViews),viewColumns:\(counts.viewColumnConfigurations),viewQueries:\(counts.viewQueryConfigurations),properties:\(counts.tablePropertyDefinitions),columns:\(counts.tableColumnDefinitions),presentations:\(counts.recordPresentations),bodies:\(counts.recordBodies),trash:\(counts.trashEntries),notionImportReferences:\(counts.notionImportReferences),attachments:\(counts.attachmentReferences)"
     }
 }

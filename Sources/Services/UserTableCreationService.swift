@@ -107,7 +107,7 @@ struct UserTableCreationService: Sendable {
                 backupConfiguration: backupConfiguration,
                 verificationFailureDetails: "The expected table was not found after creation.",
                 apply: {
-                    try await sqlDatabase.raw(SQLQueryString(buildCreateTableSQL(for: definition))).run()
+                    try await sqlDatabase.raw(SQLQueryString(Self.buildCreateTableSQL(for: definition))).run()
                 },
                 verify: {
                     let schema = try await LiveSchemaService(database: database).inspect()
@@ -128,19 +128,19 @@ struct UserTableCreationService: Sendable {
         return UserTableCreationResponse(table: definition.tableName, backupFileName: backup.backupFileName, backupSizeBytes: backup.backupSizeBytes, status: "created-and-verified")
     }
 
-    private func buildCreateTableSQL(for definition: ValidatedTableDefinition) -> String {
+    static func buildCreateTableSQL(for definition: ValidatedTableDefinition) -> String {
         let columns = definition.columns.map { column in
-            var declaration = "\(quote(column.name)) \(column.dataType.rawValue)"
+            var declaration = "\(Self.quote(column.name)) \(column.dataType.rawValue)"
             if column.primaryKey { declaration += " PRIMARY KEY" }
             else if !column.nullable { declaration += " NOT NULL" }
             if column.unique && !column.primaryKey { declaration += " UNIQUE" }
             if let defaultValue = column.defaultValue { declaration += " DEFAULT \(defaultValue)" }
             return declaration
         }.joined(separator: ", ")
-        return "CREATE TABLE \(quote(definition.tableName)) (\(columns))"
+        return "CREATE TABLE \(Self.quote(definition.tableName)) (\(columns))"
     }
 
-    private func quote(_ identifier: String) -> String {
+    private static func quote(_ identifier: String) -> String {
         "\"\(identifier.replacingOccurrences(of: "\"", with: "\"\""))\""
     }
 }

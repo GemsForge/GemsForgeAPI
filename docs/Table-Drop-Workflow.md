@@ -8,7 +8,8 @@ the Console cannot submit SQL or arbitrary table identifiers for execution.
 
 1. Open **Delete table** from an eligible schema collection. The API inspects
    the live schema and returns a read-only preview.
-2. Review the Hub row count, metadata inventory, blockers, and file references
+2. Review the Hub row count, metadata inventory (including Notion import
+   mappings), blockers, and file references
    that would become unreferenced. File contents are never removed by table
    deletion.
 3. Type the exact table name. The token expires after five minutes and can be
@@ -19,8 +20,9 @@ the Console cannot submit SQL or arbitrary table identifiers for execution.
    transaction. A backup failure prevents deletion.
 6. In one transaction, the API removes only the authenticated Hub's views,
    query/view configuration, property and column definitions, record
-   presentations and bodies, trash entries, and attachment metadata for the
-   table. It then validates the table identifier from the inspected schema,
+   presentations and bodies, trash entries, Notion import mappings, and
+   attachment metadata for the table, so a later Notion import does not reuse
+   the dropped table's name or record IDs. It then validates the table identifier from the inspected schema,
    drops the table, verifies the result, and writes an audit row with the
    backup filename and affected counts.
 

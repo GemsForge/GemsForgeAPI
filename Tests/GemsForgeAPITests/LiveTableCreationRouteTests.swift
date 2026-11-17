@@ -4,6 +4,49 @@ import XCTest
 @testable import GemsForgeAPI
 
 final class LiveTableCreationRouteTests: XCTestCase {
+    func testNotionImportReferenceMigrationIsApprovedAndBackedUp() async throws {
+        let rootDirectory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("GemsForgeAPI-NotionReferencesMigrationTests-\(UUID().uuidString)")
+        let sourceURL = rootDirectory.appendingPathComponent("GemLife.sqlite")
+        let backupDirectory = rootDirectory.appendingPathComponent("backups")
+        try FileManager.default.createDirectory(at: backupDirectory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: rootDirectory) }
+
+        let configuration = LiveDatabaseBackupConfiguration(sourceURL: sourceURL, destinationDirectory: backupDirectory)
+        try await withApp(configure: { app in
+            app.databases.use(.sqlite(.file(sourceURL.path)), as: .sqlite)
+            registerLiveMigrationRoutes(app, backupConfiguration: configuration)
+        }) { app in
+            let preview = LiveMigrationPreviewRequest(operations: [
+                LiveMigrationOperationRequest(
+                    operation: "create-table",
+                    table: NotionImportReference.schema,
+                    columns: ApprovedLiveTable.notionImportReferences.columns
+                )
+            ])
+            var token = ""
+            try await app.test(.POST, "live-database/migrations/preview", beforeRequest: { request in
+                try request.content.encode(preview)
+            }) { response async throws in
+                token = try response.content.decode(LiveMigrationPlan.self).confirmationToken
+            }
+
+            try await app.test(.POST, "live-database/migrations/execute", beforeRequest: { request in
+                try request.content.encode(LiveTableCreationRequest(confirmationToken: token))
+            }) { response async throws in
+                XCTAssertEqual(response.status, .ok)
+                let result = try response.content.decode(LiveTableCreationResponse.self)
+                XCTAssertEqual(result.table, NotionImportReference.schema)
+                XCTAssertGreaterThan(result.backupSizeBytes, 0)
+            }
+
+            let schema = try await LiveSchemaService(database: app.db).inspect()
+            let table = try XCTUnwrap(schema.tables.first { $0.name == NotionImportReference.schema })
+            XCTAssertTrue(table.columns.contains { $0.name == "NotionPageID" })
+            XCTAssertTrue(table.indexes.contains { $0.name == "uq_NotionImportReferences_Hub_Page" })
+        }
+    }
+
     func testApprovedTableRequiresPreviewTokenBackupAndVerifiesCreation() async throws {
         let rootDirectory = FileManager.default.temporaryDirectory
             .appendingPathComponent("GemsForgeAPI-LiveTableCreationTests-\(UUID().uuidString)")

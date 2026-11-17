@@ -90,6 +90,7 @@ struct SessionAuthenticationMiddleware: AsyncMiddleware {
             "/local-databases",
             "/schema-builder",
             "/operator",
+            "/notion-import",
             "/file-metadata/migrate-legacy",
         ]
         if operatorPrefixes.contains(where: { normalizedPath == $0 || normalizedPath.hasPrefix($0 + "/") }) {
